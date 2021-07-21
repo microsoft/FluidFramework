@@ -1,4 +1,4 @@
-## Upcoming Breaking changes being staged in this release
+## Breaking changes to expect in upcoming releases
 
 - [ITelemetryBaseLogger.supportsTags to be deleted](#ITelemetryBaseLogger.supportstags-to-be-deleted)
 
