@@ -66,8 +66,8 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 export interface IGenerateSummaryOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
     fullTree?: boolean,
-    /** True to ask the server what the latest summary is first */
-    refreshLatestAck: boolean,
+    /** True to ask the server what the latest summary is first; defaults to false */
+    refreshLatestAck?: boolean,
     /** Logger to use for correlated summary events */
     summaryLogger: ITelemetryLogger,
 }
