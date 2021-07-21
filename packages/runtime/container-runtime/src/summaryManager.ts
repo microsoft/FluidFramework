@@ -45,7 +45,10 @@ export interface IConnectedEvents extends IEvent {
 
 export interface IConnectedState extends IEventProvider<IConnectedEvents> {
     readonly connected: boolean;
-    // readonly clientId: string | undefined;
+    // Under current implementation this is undefined if we've never connected, otherwise it's the clientId from our
+    // latest connection (even if we've since disconnected!).  Let's not trust that here though -- instead we will
+    // pretend it is undefined if we are disconnected and keep track of "latest clientId" ourselves.
+    readonly clientId: string | undefined;
 }
 
 export interface ISummaryManagerEvents extends IEvent {
@@ -56,8 +59,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private readonly logger: ITelemetryLogger;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
-    private clientId?: string;
-    private latestClientId?: string;
+    private latestClientId: string | undefined;
     private connected = false;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
@@ -87,16 +89,14 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             "SummaryManager",
             {all:{ clientId: () => this.latestClientId }});
 
-        this.connectedState.on("connected", this.setConnected);
-        this.connectedState.on("disconnected", this.setDisconnected);
+        this.connectedState.on("connected", this.handleConnected);
+        this.connectedState.on("disconnected", this.handleDisconnected);
         this.connected = this.connectedState.connected;
-        if (this.connected) {
-            this.setClientId(context.clientId);
-        }
+        this.latestClientId = this.connectedState.clientId;
 
         // Track ops until first (write) connect
         const opsUntilFirstConnectHandler = (clientId: string, details: ISequencedClient) => {
-            if (this.opsUntilFirstConnect === -1 && clientId === this.clientId) {
+            if (this.opsUntilFirstConnect === -1 && clientId === this.connectedState.clientId) {
                 context.quorum.off("addMember", opsUntilFirstConnectHandler);
                 this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
             }
@@ -111,38 +111,26 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.refreshSummarizer();
     }
 
-    private readonly setConnected = (clientId: string) => {
-        this.updateConnected(true, clientId);
+    private readonly handleConnected = (clientId: string) => {
+        this.latestClientId = clientId;
+        this.runningSummarizer?.updateOnBehalfOf(clientId);
+        if (!this.connected) {
+            this.connected = true;
+            this.refreshSummarizer();
+        }
     };
 
-    private readonly setDisconnected = () => {
-        this.updateConnected(false);
+    private readonly handleDisconnected = () => {
+        if (this.connected) {
+            this.connected = false;
+            this.refreshSummarizer();
+        }
     };
-
-    private setClientId(clientId: string | undefined): void {
-        this.clientId = clientId;
-        if (clientId !== undefined) {
-            this.latestClientId = clientId;
-            if (this.runningSummarizer !== undefined) {
-                this.runningSummarizer.updateOnBehalfOf(clientId);
-            }
-        }
-    }
-
-    private updateConnected(connected: boolean, clientId?: string) {
-        if (this.connected === connected) {
-            return;
-        }
-
-        this.connected = connected;
-        this.setClientId(clientId);
-        this.refreshSummarizer();
-    }
 
     private getShouldSummarizeState(): ShouldSummarizeState {
-        if (!this.connected) {
+        if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.clientId !== this.clientElection.electedClientId) {
+        } else if (this.connectedState.clientId !== this.clientElection.electedClientId) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
@@ -307,8 +295,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     public dispose() {
-        this.connectedState.off("connected", this.setConnected);
-        this.connectedState.off("disconnected", this.setDisconnected);
+        this.connectedState.off("connected", this.handleConnected);
+        this.connectedState.off("disconnected", this.handleDisconnected);
         this.initialDelayTimer?.clear();
         this._disposed = true;
     }
