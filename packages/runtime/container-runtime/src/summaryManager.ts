@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, IPromiseTimerResult, PromiseTimer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
@@ -38,6 +38,16 @@ type ShouldSummarizeState =
     | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
 
+export interface IConnectedEvents extends IEvent {
+    (event: "connected", listener: (clientId: string) => void);
+    (event: "disconnected", listener: () => void);
+}
+
+export interface IConnectedState extends IEventProvider<IConnectedEvents> {
+    readonly connected: boolean;
+    // readonly clientId: string | undefined;
+}
+
 export interface ISummaryManagerEvents extends IEvent {
     (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
 }
@@ -66,6 +76,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     constructor(
         private readonly context: IContainerContext,
         private readonly clientElection: SummarizerClientElection,
+        private readonly connectedState: IConnectedState,
         parentLogger: ITelemetryLogger,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -76,7 +87,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             "SummaryManager",
             {all:{ clientId: () => this.latestClientId }});
 
-        this.connected = context.connected;
+        this.connectedState.on("connected", this.setConnected);
+        this.connectedState.on("disconnected", this.setDisconnected);
+        this.connected = this.connectedState.connected;
         if (this.connected) {
             this.setClientId(context.clientId);
         }
@@ -98,13 +111,13 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.refreshSummarizer();
     }
 
-    public setConnected(clientId: string) {
+    private readonly setConnected = (clientId: string) => {
         this.updateConnected(true, clientId);
-    }
+    };
 
-    public setDisconnected() {
+    private readonly setDisconnected = () => {
         this.updateConnected(false);
-    }
+    };
 
     private setClientId(clientId: string | undefined): void {
         this.clientId = clientId;
@@ -294,6 +307,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     public dispose() {
+        this.connectedState.off("connected", this.setConnected);
+        this.connectedState.off("disconnected", this.setDisconnected);
         this.initialDelayTimer?.clear();
         this._disposed = true;
     }

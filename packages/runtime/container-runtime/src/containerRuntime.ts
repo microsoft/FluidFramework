@@ -932,15 +932,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager = new SummaryManager(
                 context,
                 this.summarizerClientElection,
+                this, // IConnectedState
                 this.logger,
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
             );
             this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
-
-            if (this.connected) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.summaryManager.setConnected(this.context.clientId!);
-            }
         }
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
@@ -1271,15 +1267,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.setConnectionState(connected, clientId);
 
         raiseConnectedEvent(this._logger, this, connected, clientId);
-
-        if (this.summaryManager !== undefined) {
-            if (connected) {
-                assert(!!clientId, 0x129 /* "Missing clientId" */);
-                this.summaryManager.setConnected(clientId);
-            } else {
-                this.summaryManager.setDisconnected();
-            }
-        }
     }
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
