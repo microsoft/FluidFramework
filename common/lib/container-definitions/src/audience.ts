@@ -12,7 +12,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 export interface IAudience extends EventEmitter {
 
     on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    on(event: "removeMember", listener: (clientId: string) => void): this;
+    on(event: "removeMember", listener: (clientId: string, details: IClient | undefined) => void): this;
 
     /** List all clients connected to the op stream, keyed off their clientId */
     getMembers(): Map<string, IClient>;

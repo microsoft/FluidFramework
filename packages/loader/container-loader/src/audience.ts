@@ -13,7 +13,7 @@ export class Audience extends EventEmitter implements IAudience {
     private readonly members = new Map<string, IClient>();
 
     public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    public on(event: "removeMember", listener: (clientId: string) => void): this;
+    public on(event: "removeMember", listener: (clientId: string, details: IClient | undefined) => void): this;
     public on(event: string, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -30,8 +30,9 @@ export class Audience extends EventEmitter implements IAudience {
      * Removes a client from the audience
      */
     public removeMember(clientId: string) {
+        const removed = this.members.get(clientId);
         this.members.delete(clientId);
-        this.emit("removeMember", clientId);
+        this.emit("removeMember", clientId, removed);
     }
 
     /**
