@@ -305,9 +305,6 @@ export class RedisSocketIoAdapter extends Adapter {
         const startTime = Date.now();
 
         try {
-            // if (packet && packet.nsp === undefined) {
-            //     packet.nsp = "/";
-            // }
             if (packet) {
                 if (packet.data === undefined) {
                     // the data is the packet itself
@@ -334,14 +331,6 @@ export class RedisSocketIoAdapter extends Adapter {
                 throw new Error(`Invalid namespace. ${packet.nsp} !== ${this.nsp.name}`);
             }
 
-            // let opts: BroadcastOptions = args[1];
-
-            // if (!opts || !opts.rooms || opts.rooms.size === 0) {
-            //     opts = {
-            //         rooms: new Set([room]),
-            //     };
-            // }
-            // this.broadcast(packet, opts);
             const opts: BroadcastOptions = {
 				rooms: new Set([room]),
 			};
