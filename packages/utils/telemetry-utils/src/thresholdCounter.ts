@@ -16,7 +16,7 @@ export class ThresholdCounter {
     ) {}
 
     /**
-     * Sends the value if it's above the treshold
+     * Sends the value if it's above the treshold.
      */
     public send(eventName: string, value?: number) {
         this.sendInternal(eventName, value);
@@ -25,6 +25,9 @@ export class ThresholdCounter {
     /**
      * Sends the value if it's above the treshold
      * and a multiple of the threshold.
+     *
+     * To be used in scenarios where we'd like to record a
+     * threshold violation while reducing telemetry noise.
      */
     public sendIfMultiple(eventName: string, value?: number) {
         this.sendInternal(eventName, value, 0);

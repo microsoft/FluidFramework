@@ -26,6 +26,7 @@ import {
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ChildLogger, ThresholdCounter } from "@fluidframework/telemetry-utils";
 import {
     attributesBlobKey,
     createServiceEndpoints,
@@ -47,6 +48,8 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly thresholdOpsCounter: ThresholdCounter;
+    private static readonly tooManyOpsThreshold = 1000;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -79,6 +82,10 @@ export class RemoteChannelContext implements IChannelContext {
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => gcDetailsInInitialSummary(),
         );
+
+        this.thresholdOpsCounter = new ThresholdCounter(
+            RemoteChannelContext.tooManyOpsThreshold,
+            ChildLogger.create(this.runtime.logger, "RemoteChannelContext"));
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -113,6 +120,7 @@ export class RemoteChannelContext implements IChannelContext {
             assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.pending!.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending?.length);
         }
     }
 
@@ -206,6 +214,7 @@ export class RemoteChannelContext implements IChannelContext {
         for (const message of this.pending!) {
             this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
+        this.thresholdOpsCounter.send("ProcessPendingOps", this.pending?.length);
 
         // Commit changes.
         this.channel = channel;

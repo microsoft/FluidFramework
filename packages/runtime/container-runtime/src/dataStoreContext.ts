@@ -62,6 +62,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
+    ChildLogger,
     LoggingError,
     TelemetryDataTag,
     ThresholdCounter,
@@ -145,10 +146,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.clientDetails;
     }
 
-    public get logger(): ITelemetryLogger {
-        return this._containerRuntime.logger;
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._containerRuntime.deltaManager;
     }
@@ -207,6 +204,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
+    public readonly logger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
     private static readonly tooManyOpsThreshold = 1000;
 
@@ -248,6 +246,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getInitialGCSummaryDetails(),
         );
 
+        this.logger = ChildLogger.create(_containerRuntime.logger, "FluidDataStoreContext");
         this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.tooManyOpsThreshold, this.logger);
     }
 
@@ -367,7 +366,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } else {
             assert(!local, 0x142 /* "local store channel is not loaded" */);
             this.pending?.push(message);
-            this.thresholdOpsCounter.sendIfMultiple("StoreManyPendingOps", this.pending?.length);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending?.length);
         }
     }
 
@@ -576,7 +575,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
                 channel.process(op, false, undefined /* localOpMetadata */);
             }
 
-            this.thresholdOpsCounter.send("ProcessManyPendingOps", pending.length);
+            this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
             this.pending = undefined;
 
             // And now mark the runtime active
