@@ -2,106 +2,89 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-use-before-define */
+
 /**
  * An operation error maintains additional information compared to a plain {@link #Error}:
  * - The operation name
  * - A status code
  * - Extensible flags. {@see ExtendedError.FLAGS}.
  */
+import _ from "lodash";
+import { FlaggedError } from "./flaggedError";
 
-var _ = require('lodash');
-var FlaggedError = require('./flagged_error');
+export class OperationError extends Error {
+    static FLAGS = FlaggedError.FLAGS;
+    public stack: string | undefined;
+    public readonly name: string;
 
-/**
- * Instantiates an OperationError, which mimics the {@link #Error} class with added properties
- * meant for reporting the result of operations.
- * @param {string} message The error message.
- * @param {?string} operation The operation name.
- * @param {?number} statusCode The operation result as a numerical status code.
- * @param {?number} flags Flags that characterize the error. See {@link FlaggedError#FLAGS}.
- * @constructor
- * @alias property-common.OperationError
- */
-var OperationError = function (message, operation, statusCode, flags) {
-    Error.call(this, message);
-    this.name = 'OperationError';
-    this.operation = operation;
-    this.statusCode = statusCode;
-    this.flags = flags || 0;
-    var stack = Error(message).stack;
+    /**
+       * Instantiates an OperationError, which mimics the Error class with added properties
+       * meant for reporting the result of operations.
+       * @param message - The error message.
+       * @param operation - The operation name.
+       * @param statusCode - The operation result as a numerical status code.
+       * @param flags - Flags that characterize the error. See {@link FlaggedError.FLAGS}.
+       */
+    constructor(
+        message?: string,
+        public operation?: string,
+        public statusCode?: number,
+        public flags: number = 0,
+    ) {
+        super(message);
+        Object.setPrototypeOf(this, OperationError.prototype);
+        this.name = "OperationError";
+        this.stack = Error(message).stack;
+    }
 
-    Object.defineProperty(this, 'message', {
-        enumerable: false,
-        get: function () {
-            return message;
+    isQuiet() {
+        return FlaggedError.prototype.isQuiet.call(this);
+    }
+
+    isTransient() {
+        return FlaggedError.prototype.isTransient.call(this);
+    }
+
+    /**
+     * @returns A string representation of the error flags.
+     */
+    private _flagsToString() {
+        const flagArray: string[] = [];
+        _.mapValues(FlaggedError.FLAGS, (flagValue, flagName) => {
+            // eslint-disable-next-line no-bitwise
+            if ((this.flags & flagValue) === flagValue) {
+                flagArray.push(flagName);
+            }
+        });
+        return `${this.flags} [${flagArray.join(",")}]`;
+    }
+
+    toString(): string {
+        const extendedFieldsArray: string[] = [];
+        if (this.operation !== undefined) {
+            extendedFieldsArray.push(this.operation);
         }
-    });
 
-    Object.defineProperty(this, 'stack', {
-        enumerable: false,
-        get: function () {
-            return stack;
-        },
-        set: function (s) {
-            stack = s;
+        if (this.statusCode !== undefined) {
+            extendedFieldsArray.push(this.statusCode.toString());
         }
-    });
-};
 
-OperationError.prototype = Object.create(Error.prototype);
-OperationError.prototype.constructor = OperationError;
-OperationError.FLAGS = FlaggedError.FLAGS;
-OperationError.prototype.isQuiet = FlaggedError.prototype.isQuiet;
-OperationError.prototype.isTransient = FlaggedError.prototype.isTransient;
-
-/**
- * @return {string} A string representation of the error flags.
- * @private
- * @this OperationError
- */
-var _flagsToString = function () {
-    var that = this;
-    var flagArray = [];
-    _.mapValues(FlaggedError.FLAGS, function (flagValue, flagName) {
-        if ((that.flags & flagValue) === flagValue) {
-            flagArray.push(flagName);
+        if (this.flags) {
+            extendedFieldsArray.push(this._flagsToString.call(this));
         }
-    });
-    return that.flags + ' [' + flagArray.join(',') + ']';
-};
 
-/**
- * Returns a string representing the OperationError object
- * @return {string} a string representing the OperationError object
- */
-OperationError.prototype.toString = function () {
-    var extendedFieldsArray = [];
-    if (this.operation) {
-        extendedFieldsArray.push(this.operation);
+        let msg = this.name;
+
+        if (extendedFieldsArray.length > 0) {
+            msg += `[${extendedFieldsArray.join(", ")}]`;
+        }
+
+        msg += `: ${this.message}`;
+
+        if (this.stack !== undefined) {
+            msg += `, stack: ${this.stack}`;
+        }
+
+        return msg;
     }
-
-    if (this.statusCode) {
-        extendedFieldsArray.push(this.statusCode);
-    }
-
-    if (this.flags) {
-        extendedFieldsArray.push(_flagsToString.call(this));
-    }
-
-    var msg = this.name;
-
-    if (extendedFieldsArray.length > 0) {
-        msg += '[' + extendedFieldsArray.join(', ') + ']';
-    }
-
-    msg += ': ' + this.message;
-
-    if (this.stack) {
-        msg += `, stack: ${this.stack}`;
-    }
-
-    return msg;
-};
-
-module.exports = OperationError;
+}
