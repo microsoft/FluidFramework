@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// import assert from "assert";
+import assert from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-// import { TelemetryNullLogger } from "@fluidframework/common-utils";
-// import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -60,25 +58,34 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     );
 
     let mainContainer: IContainer;
-    // let mainDataStore: TestDataObject;
     let mockLogger: MockLogger;
 
     const createContainer = async (logger): Promise<IContainer> => provider.createContainer(runtimeFactory, { logger });
     const loadContainer = async (logger): Promise<IContainer> => provider.loadContainer(runtimeFactory, { logger });
-    beforeEach(async () => {
+
+    beforeEach(function() {
         provider = getTestObjectProvider();
+        // Currently, only ODSP caches new summary.
+        if (provider.driver.type !== "odsp") {
+            this.skip();
+        }
+    });
+
+    it("should fetch from cache when second client loads the container", async () => {
         mockLogger = new MockLogger();
         // Create a Container for the first client.
         mainContainer = await createContainer(mockLogger);
-
-        // Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
-        // re-sent. Do it here so that the extra events don't mess with rest of the test.
         await requestFluidObject<TestDataObject>(mainContainer, "default");
+        // second client load the container
         await loadContainer(mockLogger);
-
         await provider.ensureSynchronized();
-    });
-    it("should generate correct summary stats with summarizing once", async () => {
-        console.log(mockLogger.events);
+
+        for (const event of mockLogger.events) {
+            if (event.eventName === "fluid:telemetry:OdspDriver:ObtainSnapshot_end") {
+                assert.strictEqual(event.method, "cache", `second client fetched snapshot with ${event.method} method
+                    instead of from cache`);
+                break;
+            }
+        }
     });
 });
