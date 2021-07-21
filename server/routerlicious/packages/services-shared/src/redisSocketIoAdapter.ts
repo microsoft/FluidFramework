@@ -49,7 +49,7 @@ export interface ISocketIoRedisOptions {
     // called when receiving a message. useful for telemetry purposes
     onReceive?(channel: string, startTime: number, packet: any, error?: any): void;
 }
-// TODO: This is broken, not sure why
+
 /**
  * Custom version of the socket.io-redis adapter
  * Differences between this and socket.io-redis:
