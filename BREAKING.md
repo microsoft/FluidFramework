@@ -104,6 +104,13 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
 
+_\[edit\]_
+
+This actually was a breaking change in 0.40, in that the signature of `ITelemetryBaseLogger.send` changed to
+a more inclusive type which needs to be accounted for in implementations.  However, in releases 0.40 through 0.44,
+_no tagged events are sent to any ITelemetryBaseLogger by the Fluid Framework_.  We are preparing to do so
+soon, and will include an entry in BREAKING.md when we do.
+
 ### IContainerRuntimeDirtyable removed
 The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
 
