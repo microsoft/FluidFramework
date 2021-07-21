@@ -43,12 +43,22 @@ export interface IConnectedEvents extends IEvent {
     (event: "disconnected", listener: () => void);
 }
 
+/**
+ * IConnectedState describes an object that SummaryManager can watch to observe connection/disconnection.
+ *
+ * Under current implementation, its role will be fulfilled by the ContainerRuntime, but this could be replaced
+ * with anything else that fulfills the contract if we want to shift the layer that the SummaryManager lives at.
+ */
 export interface IConnectedState extends IEventProvider<IConnectedEvents> {
     readonly connected: boolean;
-    // Under current implementation this is undefined if we've never connected, otherwise it's the clientId from our
-    // latest connection (even if we've since disconnected!).  Although this happens to be the behavior we want,
-    // let's not trust it and instead assume clientId is undefined if we are disconnected.  We'll keep track of
-    // "latest clientId" ourselves.
+
+    /**
+     * Under current implementation this is undefined if we've never connected, otherwise it's the clientId from our
+     * latest connection (even if we've since disconnected!).  Although this happens to be the behavior we want in
+     * SummaryManager, I suspect that globally we may eventually want to modify this behavior (e.g. make clientId
+     * undefined while disconnected).  To protect against this, let's assume this field can't be trusted while
+     * disconnected and instead separately track "latest clientId" in SummaryManager.
+     */
     readonly clientId: string | undefined;
 }
 
@@ -107,7 +117,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     /**
-     * Until start is called, the SummaryManager won't begin attempting to start summarization.
+     * Until start is called, the SummaryManager won't begin attempting to start summarization.  This ensures there's
+     * a window between construction and starting where the caller can attach listeners.
      */
     public start(): void {
         this.clientElection.on("electedSummarizerChanged", this.refreshSummarizer);
