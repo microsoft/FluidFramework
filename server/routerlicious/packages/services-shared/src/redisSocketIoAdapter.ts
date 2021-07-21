@@ -10,9 +10,6 @@ import { PacketType } from "socket.io-parser";
 import * as uuid from "uuid";
 
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import winston from "winston";
-
-const log = (obj: any) => winston.info(JSON.stringify(obj));
 
 export interface ISocketIoRedisConnection {
     publish(channel: string, message: string): Promise<void>;
@@ -162,7 +159,6 @@ export class RedisSocketIoAdapter extends Adapter {
      */
     public async addAll(socketId: SocketId, roomIds: Set<Room>): Promise<void> {
         if (!this.isDefaultNamespaceAndDisable) {
-            log({ action: "addAll", socketId, roomIds: Array.from(roomIds) });
             const newRooms: Room[] = [];
 
             for (const roomId of roomIds) {
@@ -180,7 +176,7 @@ export class RedisSocketIoAdapter extends Adapter {
                     this.rooms.set(roomId, roomSocketIds);
 
                     // don't count the built in user rooms
-                    if (roomId.includes("-")) {
+                    if (socketId !== roomId) {
                         this._uniqueRoomCount++;
 
                         newRooms.push(roomId);
@@ -244,11 +240,6 @@ export class RedisSocketIoAdapter extends Adapter {
      * Broadcast packets
      */
     public broadcast(packet: any, opts: BroadcastOptions): void {
-        log({ action: "broadcast", packet, opts: {
-            rooms: Array.from(opts.rooms),
-            except: Array.from(opts.except),
-            flags: opts.flags,
-        }});
         if (this.isDefaultNamespaceAndDisable) {
             return;
         }
@@ -267,14 +258,8 @@ export class RedisSocketIoAdapter extends Adapter {
      * Publishes the packet to Redis
      */
     private publish(packet: any, opts: BroadcastOptions) {
-        log({ action: "publish", packet, opts: {
-            rooms: Array.from(opts.rooms),
-            except: Array.from(opts.except),
-            flags: opts.flags,
-        } });
         // include the room in the channel name
 		const channel = `${this.channel}${opts.rooms.values().next().value}#`;
-
         // don't provide any "opts"
 		const msg = msgpack.encode([this.uid, packet]);
 
@@ -286,7 +271,6 @@ export class RedisSocketIoAdapter extends Adapter {
      * Handles messages from the Redis subscription
      */
     private onRoomMessage(channel: string, messageBuffer: Buffer) {
-        log({ action: "onRoomMessage", channel, thisChannel: this.channel, args: msgpack.decode(messageBuffer) });
         if (!channel.startsWith(this.channel)) {
             // sent to different channel
             return;
@@ -387,7 +371,7 @@ export class RedisSocketIoAdapter extends Adapter {
                 this.rooms.delete(roomId);
 
                 // don't count the built in user rooms
-                if (roomId.includes("-")) {
+                if (socketId !== roomId) {
                     this._uniqueRoomCount--;
                     return true;
                 }
@@ -401,7 +385,6 @@ export class RedisSocketIoAdapter extends Adapter {
      * Subscribes to the rooms and starts the health checkers
      */
     private async subscribeToRooms(rooms: string[]) {
-        log({ action: "subscribeToRooms", rooms, thisChannel: this.channel, thisChannelNames: this.getChannelNames(rooms) });
         await RedisSocketIoAdapter.options.subConnection.subscribe(
             this.getChannelNames(rooms),
             this.onRoomMessage.bind(this), true);
@@ -415,7 +398,6 @@ export class RedisSocketIoAdapter extends Adapter {
      * Unsubscribes to the rooms and clears the health checkers
      */
     private async unsubscribeFromRooms(rooms: string[]) {
-        log({ action: "unsubscribeFromRooms", rooms, thisChannel: this.channel, thisChannelNames: this.getChannelNames(rooms) });
         await RedisSocketIoAdapter.options.subConnection.unsubscribe(this.getChannelNames(rooms));
 
         for (const room of rooms) {
