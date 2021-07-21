@@ -504,12 +504,10 @@ describe("Runtime", () => {
                     const submitResult = await result.summarySubmitted;
                     assertRunCounts(1, 0, 0, "on-demand should run");
 
-                    if (!submitResult.success) {
-                        throw Error("on-demand summary should submit");
-                    }
-                    if (submitResult.data.stage !== "submit") {
-                        throw Error("on-demand summary submitted data stage should be submit");
-                    }
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
                     assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
                     assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
@@ -533,9 +531,7 @@ describe("Runtime", () => {
 
                     await emitAck();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
-                    if (!ackNackResult.success) {
-                        throw Error("on-demand summary should succeed");
-                    }
+                    assert(ackNackResult.success, "on-demand summary should succeed");
                     assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
                         "should be ack");
                     assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
@@ -560,6 +556,48 @@ describe("Runtime", () => {
 
                     await emitAck();
                     assert((resolved as boolean) === true, "now already running promise should resolve now");
+                });
+
+                it("On-demand summary should fail on nack", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+
+                    const submitResult = await result.summarySubmitted;
+                    assertRunCounts(1, 0, 0, "on-demand should run");
+
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, 2,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -1,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    await emitNack();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(!ackNackResult.success, "on-demand summary should fail");
+                    assert(ackNackResult.data?.summaryAckNackOp.type === MessageType.SummaryNack,
+                        "should be nack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.errorMessage === "test-nack",
+                        "summary nack error should be test-nack");
                 });
             });
 
