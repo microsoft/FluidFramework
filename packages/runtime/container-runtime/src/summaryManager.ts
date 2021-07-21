@@ -40,7 +40,6 @@ type ShouldSummarizeState =
     | { shouldSummarize: false; stopReason: StopReason; };
 
 export interface ISummaryManagerEvents extends IEvent {
-    (event: "summarizer", listener: (clientId: string) => void);
     (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
 }
 
@@ -48,7 +47,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private readonly logger: ITelemetryLogger;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
-    private electedClientId?: string;
     private clientId?: string;
     private latestClientId?: string;
     private connected = false;
@@ -61,10 +59,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         defaultThrottleDelayFunction,
     );
     private opsUntilFirstConnect = -1;
-
-    public get summarizer() {
-        return this.electedClientId;
-    }
 
     public get disposed() {
         return this._disposed;
@@ -137,7 +131,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private getShouldSummarizeState(): ShouldSummarizeState {
         if (!this.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.clientId !== this.summarizer) {
+        } else if (this.clientId !== this.clientElection.electedClientId) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
@@ -147,13 +141,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private refreshSummarizer() {
-        // Check which client is elected as summarizer, and propagate the event if changed.
-        const newSummarizerClientId = this.clientElection.electedClientId;
-        if (newSummarizerClientId !== this.electedClientId) {
-            this.electedClientId = newSummarizerClientId;
-            this.emit("summarizer", newSummarizerClientId);
-        }
-
         // Transition states depending on shouldSummarize, which is a calculated property
         // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
