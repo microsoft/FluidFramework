@@ -76,7 +76,7 @@
                 "key": "create-new-tenants-if-going-to-production"
             }
         ],
-        "socketIoAdapter": {
+        "socketIoAdapter" : {
             "enableCustomSocketIoAdapter": true,
             "shouldDisableDefaultNamespace": false
         }
@@ -150,28 +150,11 @@
     },
     "foreman": {
         "alfred": "http://alfred:3000",
-        "queues": [
-            "paparazziQueue",
-            "augloopQueue",
-            "headlessQueue"
-        ],
+        "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
         "permissions": {
-            "paparazziQueue": [
-                "snapshot",
-                "spell",
-                "intel",
-                "translation"
-            ],
-            "augloopQueue": [
-                "augmentation"
-            ],
-            "headlessQueue": [
-                "chain-snapshot",
-                "chain-intel",
-                "chain-translation",
-                "chain-spell",
-                "chain-cache"
-            ]
+            "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
+            "augloopQueue": ["augmentation"],
+            "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache"]
         }
     },
     "paparazzi": {
@@ -197,23 +180,14 @@
     },
     "error": {
         "track": false,
-        "endpoint": ""
+        "endpoint" : ""
     },
     "worker": {
         "alfredUrl": "http://alfred:3003",
         "serverUrl": "http://localhost:3003",
         "blobStorageUrl": "http://historian:3000",
         "internalBlobStorageUrl": "http://historian:3000",
-        "permission": [
-            "snapshot",
-            "spell",
-            "intel",
-            "translation",
-            "chain-snapshot",
-            "chain-spell",
-            "chain-intel",
-            "chain-translation"
-        ]
+        "permission": ["snapshot", "spell", "intel", "translation", "chain-snapshot", "chain-spell", "chain-intel", "chain-translation"]
     },
     "tenantConfig": [
         {
