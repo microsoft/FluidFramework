@@ -33,12 +33,12 @@ export class ThresholdCounter {
         this.sendInternal(eventName, value, 0);
     }
 
-    private sendInternal(event: string, value?: number, delta?: number) {
+    private sendInternal(event: string, value?: number, deltaRemainder?: number) {
         if (value === undefined || value < this.threshold) {
             return;
         }
 
-        if (delta === undefined || value % this.threshold === delta) {
+        if (deltaRemainder === undefined || value % this.threshold === deltaRemainder) {
             this.logger.sendPerformanceEvent({
                 eventName: event,
                 value,
