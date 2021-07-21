@@ -28,7 +28,6 @@ enum SummaryManagerState {
     Starting = 1,
     Running = 2,
     Stopping = 3,
-    Disabled = -1,
 }
 
 // Please note that all reasons in this list are not errors,
@@ -67,7 +66,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     constructor(
         private readonly context: IContainerContext,
         private readonly clientElection: SummarizerClientElection,
-        private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
@@ -167,10 +165,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 // state transition will occur after it stops
                 return;
             }
-            case SummaryManagerState.Disabled: {
-                // Never switch away from disabled state
-                return;
-            }
             default: {
                 return;
             }
@@ -178,18 +172,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private start() {
-        if (!this.summariesEnabled) {
-            // If we should never summarize, lock in disabled state
-            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-            this.state = SummaryManagerState.Disabled;
-            return;
-        }
-        if (this.context.clientDetails.type === summarizerClientType) {
-            // Make sure that the summarizer client does not load another summarizer.
-            this.state = SummaryManagerState.Disabled;
-            return;
-        }
-
         this.state = SummaryManagerState.Starting;
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections

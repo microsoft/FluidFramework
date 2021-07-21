@@ -126,7 +126,7 @@ import {
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
-import { SummarizerClientElection } from "./summarizerClientElection";
+import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
     GenerateSummaryResult,
     IGeneratedSummaryStats,
@@ -677,7 +677,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
     private readonly summarizerClientElection: SummarizerClientElection;
-    private readonly summaryManager: SummaryManager;
+    // summaryManager will only be created if this client is permitted to spawn a summarizing client
+    private readonly summaryManager: SummaryManager | undefined;
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
@@ -922,19 +923,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             maxOpsSinceLastSummary,
             summarizerClientElectionEnabled,
         );
-        // Create the SummaryManager and mark the initial state
-        this.summaryManager = new SummaryManager(
-            context,
-            this.summarizerClientElection,
-            this.runtimeOptions.summaryOptions.generateSummaries !== false,
-            this.logger,
-            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
-        );
-        this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+        // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
+        if (
+            this.runtimeOptions.summaryOptions.generateSummaries !== false
+            && this.context.clientDetails.type !== summarizerClientType
+        ) {
+            // Create the SummaryManager and mark the initial state
+            this.summaryManager = new SummaryManager(
+                context,
+                this.summarizerClientElection,
+                this.logger,
+                this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+            );
+            this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
 
-        if (this.connected) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.summaryManager.setConnected(this.context.clientId!);
+            if (this.connected) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.summaryManager.setConnected(this.context.clientId!);
+            }
         }
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
@@ -981,8 +987,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message: error?.message,
         });
 
-        this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
-        this.summaryManager.dispose();
+        if (this.summaryManager !== undefined) {
+            this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
+            this.summaryManager.dispose();
+        }
         this.summarizer.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
@@ -1264,11 +1272,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         raiseConnectedEvent(this._logger, this, connected, clientId);
 
-        if (connected) {
-            assert(!!clientId, 0x129 /* "Missing clientId" */);
-            this.summaryManager.setConnected(clientId);
-        } else {
-            this.summaryManager.setDisconnected();
+        if (this.summaryManager !== undefined) {
+            if (connected) {
+                assert(!!clientId, 0x129 /* "Missing clientId" */);
+                this.summaryManager.setConnected(clientId);
+            } else {
+                this.summaryManager.setDisconnected();
+            }
         }
     }
 
