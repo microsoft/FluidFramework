@@ -188,7 +188,7 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
 }
 
 /**
- * Note: currently experiemental and under development
+ * Note: currently experimental and under development
  *
  * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
  * users to get an ISignaler without a custom DO.  Where possible, consumers should instead
