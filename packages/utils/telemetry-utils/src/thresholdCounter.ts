@@ -30,15 +30,15 @@ export class ThresholdCounter {
         this.sendInternal(eventName, value, 0);
     }
 
-    private sendInternal(event: string, val?: number, delta?: number) {
-        if (val === undefined || val < this.threshold) {
+    private sendInternal(event: string, value?: number, delta?: number) {
+        if (value === undefined || value < this.threshold) {
             return;
         }
 
-        if (delta === undefined || val % this.threshold === delta) {
+        if (delta === undefined || value % this.threshold === delta) {
             this.logger.sendPerformanceEvent({
                 eventName: event,
-                value: val,
+                value,
             });
         }
     }
