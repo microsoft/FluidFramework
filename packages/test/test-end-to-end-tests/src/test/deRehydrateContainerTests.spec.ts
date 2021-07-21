@@ -142,12 +142,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     const getSnapshotTreeFromSerializedSnapshot = (
         container: Container,
     ) => {
-        const { snapshotTree, blobs } =
-            getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
-        return {
-            snapshotTree,
-            blobs,
-        };
+        return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
     };
 
     beforeEach(async () => {
@@ -165,7 +160,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const { snapshotTree, blobs } = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -180,7 +175,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check blobs contents for protocolAttributes
             const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
-            assert(blobs.get(protocolAttributesBlobId) !== undefined, "Blobs should contain attributes blob");
+            assert(snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !== undefined,
+                "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
             const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
@@ -190,14 +186,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const res1 = getSnapshotTreeFromSerializedSnapshot(container);
-            const snapshotTree1 = res1.snapshotTree;
+            const snapshotTree1 = getSnapshotTreeFromSerializedSnapshot(container);
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const res2 = getSnapshotTreeFromSerializedSnapshot(container);
-            const snapshotTree2: ISnapshotTree = res2.snapshotTree;
+            const snapshotTree2 = getSnapshotTreeFromSerializedSnapshot(container);
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -230,7 +224,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -622,7 +616,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");

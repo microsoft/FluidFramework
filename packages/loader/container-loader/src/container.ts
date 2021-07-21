@@ -390,7 +390,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _attachState = AttachState.Detached;
 
     public readonly storage: IDocumentStorageService;
-    private readonly storageBlobs = new Map<string, ArrayBufferLike>();
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -645,7 +644,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
                 return this.storageService;
             },
-            this.storageBlobs,
         );
 
         const isDomAvailable = typeof document === "object" &&
@@ -1311,10 +1309,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-        const { snapshotTree, blobs } = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-        blobs.forEach((value, key) => {
-            this.storageBlobs.set(key, value);
-        });
+        const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
+        (this.storage as ContainerStorageAdapter).loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
