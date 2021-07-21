@@ -199,6 +199,19 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	private readonly transactionFactory: (revisionView: RevisionView) => GenericTransaction<TChange>;
 
 	/**
+	 * Cache entry for the highest revision.
+	 * `undefined` when not cached.
+	 */
+	private highestRevisionCacheEntry?: EditCacheEntry<TChange>;
+
+	/**
+	 * @returns true if the highest revision is cached.
+	 */
+	public highestRevisionCached(): boolean {
+		return this.highestRevisionCacheEntry !== undefined;
+	}
+
+	/**
 	 * Create a new LogViewer
 	 * @param log - the edit log which revisions will be based on.
 	 * @param baseTree - the tree used in the view corresponding to the 0th revision. Defaults to `initialTree`.
@@ -247,6 +260,10 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * being interleaved with remote edits.
 	 */
 	private handleEditAdded(edit: Edit<TChange>, isLocal: boolean, wasLocal: boolean): void {
+		// Clear highestRevisionCacheEntry, since what revision is highest might change.
+		// Note that as an optimization we could skip clearing this when a local edit is sequenced.
+		this.highestRevisionCacheEntry = undefined;
+
 		if (isLocal) {
 			this.unappliedSelfEdits.push(edit.id);
 		} else if (wasLocal) {
@@ -335,6 +352,12 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	private getStartingPoint(revision: Revision): { startRevision: Revision } & EditCacheEntry<TChange> {
 		// Per the documentation for revision, the returned view should be the output of the edit at the largest index <= `revision`.
 		const revisionClamped = Math.min(revision, this.log.length);
+
+		// If the highest revision is requested, and it's cached, use highestRevisionCacheEntry.
+		if (revisionClamped === this.log.length && this.highestRevisionCacheEntry !== undefined) {
+			return { ...this.highestRevisionCacheEntry, startRevision: revisionClamped };
+		}
+
 		let current: EditCacheEntry<TChange>;
 		let startRevision: Revision;
 		const { numberOfSequencedEdits } = this.log;
@@ -419,6 +442,11 @@ export class CachingLogViewer<TChange> implements LogViewer {
 				'Local revision view cached out of order.'
 			);
 			this.localRevisionCache.push(computedCacheEntry);
+		}
+
+		// Only update highestRevisionCacheEntry if this snapshot is the highest revision.
+		if (revision >= this.log.length) {
+			this.highestRevisionCacheEntry = computedCacheEntry;
 		}
 
 		this.processEditStatus(editingResult.status, this.log.getIdAtIndex(editIndex), cached);

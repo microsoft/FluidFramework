@@ -265,6 +265,21 @@ describe('CachingLogViewer', () => {
 		expect(viewer.getEditResultInSession(3).status).equals(EditStatus.Invalid);
 	});
 
+	it('caches the highest revision', async () => {
+		const log = getSimpleLog();
+		const viewer = getCachingLogViewerAssumeAppliedEdits(log, simpleRevisionViewNoTraits);
+		expect(viewer.highestRevisionCached()).to.be.false;
+		await requestAllRevisionViews(viewer, log);
+		expect(viewer.highestRevisionCached()).to.be.true;
+		log.addLocalEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))));
+		log.addSequencedEdit(newEdit(Insert.create([makeEmptyNode()], StablePlace.atEndOf(rightTraitLocation))), {
+			sequenceNumber: 3,
+			referenceSequenceNumber: 2,
+			minimumSequenceNumber: 2,
+		});
+		expect(viewer.highestRevisionCached()).to.be.false;
+	});
+
 	it('evicts least recently set cached revision views for sequenced edits', async () => {
 		let editsProcessed = 0;
 		const log = getSimpleLog(CachingLogViewer.sequencedCacheSizeMax * 2);
