@@ -326,21 +326,15 @@ describe('Array Operations', function() {
             for (let insertPosition of[0, 1, 3, 5, 7, 12]) {
                 it(`Position ${insertPosition}`, () => {
                     testRebaseDistributivity([
-                            createArrayCS({
-                                insert: [
+                            createArrayCS({ insert: [
                                     [1, generateNamedEntities(1)]
-                                ]
-                            }),
-                            createArrayCS({
-                                insert: [
+                                ] }),
+                            createArrayCS({ insert: [
                                     [6, generateNamedEntities(1)]
-                                ]
-                            }),
-                            createArrayCS({
-                                insert: [
+                                ] }),
+                            createArrayCS({ insert: [
                                     [9, generateNamedEntities(1)]
-                                ]
-                            }),
+                                ] }),
                             createArrayCS({
                                 remove: [
                                     [2, generateNamedEntities(4)],
@@ -349,116 +343,80 @@ describe('Array Operations', function() {
                                 ]
                             })
                         ],
-                        createArrayCS({
-                            insert: [
+                        createArrayCS({ insert: [
                                 [insertPosition, generateNamedEntities(1)]
-                            ]
-                        }),
-                        createArrayCS({
-                            insert: [
+                            ] }),
+                        createArrayCS({ insert: [
                                 [0, generateNamedEntities(10)]
-                            ]
-                        })
+                            ] })
                     );
                 });
             };
         });
         it("Rebasing an insert with respect to a remove + insert", () => {
             testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    insert: [
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(3)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
             testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    insert: [
+                createArrayCS({ insert: [
                         [3, generateNamedEntities(3)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
         });
         it("remove + insert at start of array", () => {
             testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    insert: [
+                createArrayCS({ insert: [
                         [3, generateNamedEntities(1)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Rebased remove that cancels out", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [0, generateNamedEntities(3)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    remove: [
+                createArrayCS({ remove: [
                         [1, generateNamedEntities(2)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
             let arrayCS = getArrayCS(deltacS);
             expect(arrayCS.insert[0][1].length).to.equal(3);
@@ -466,176 +424,118 @@ describe('Array Operations', function() {
         });
         it("Insert in between two removes 1", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        insert: [
+                    createArrayCS({ insert: [
                             [2, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [0, generateNamedEntities(2)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [1, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [0, generateNamedEntities(2)]
-                        ]
-                    }),
+                        ] }),
                 ],
-                createArrayCS({
-                    insert: [
+                createArrayCS({ insert: [
                         [1, generateNamedEntities(1)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Insert in between two removes 2", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        insert: [
+                    createArrayCS({ insert: [
                             [4, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [2, generateNamedEntities(2)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [3, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [2, generateNamedEntities(2)]
-                        ]
-                    }),
+                        ] }),
                 ],
-                createArrayCS({
-                    insert: [
+                createArrayCS({ insert: [
                         [3, generateNamedEntities(1)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Inserts in between three removes", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        insert: [
+                    createArrayCS({ insert: [
                             [4, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [6, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [2, generateNamedEntities(2)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [3, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        remove: [
+                        ] }),
+                    createArrayCS({ remove: [
                             [4, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [2, generateNamedEntities(2)]
-                        ]
-                    }),
+                        ] }),
                 ],
-                createArrayCS({
-                    insert: [
+                createArrayCS({ insert: [
                         [3, generateNamedEntities(1)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Adjacent remove with insert at the beginning of the remove range", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [1, generateNamedEntities(1)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [1, generateNamedEntities(2)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    remove: [
+                createArrayCS({ remove: [
                         [1, generateNamedEntities(1, [3])]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(10)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Remove operation that cancels out", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [8, generateNamedEntities(2)]
-                        ]
-                    }),
-                    createArrayCS({
-                        insert: [
+                        ] }),
+                    createArrayCS({ insert: [
                             [8, generateNamedEntities(1)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    remove: [
+                createArrayCS({ remove: [
                         [8, generateNamedEntities(1, [3])]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(14)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Remove operation that cancels out 2", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [8, generateNamedEntities(3)]
-                        ]
-                    }),
+                        ] }),
                     createArrayCS({
                         insert: [
                             //[8, generateNamedEntities(1)],
@@ -644,36 +544,26 @@ describe('Array Operations', function() {
                         ]
                     })
                 ],
-                createArrayCS({
-                    remove: [
+                createArrayCS({ remove: [
                         [8, generateNamedEntities(1, [3])]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(14)]
-                    ]
-                })
+                    ] })
             );
         });
         it("Remove operation that cancels out in the middle of a range", () => {
             let deltacS = testRebaseDistributivity([
-                    createArrayCS({
-                        remove: [
+                    createArrayCS({ remove: [
                             [4, generateNamedEntities(1)]
-                        ]
-                    })
+                        ] })
                 ],
-                createArrayCS({
-                    remove: [
+                createArrayCS({ remove: [
                         [3, generateNamedEntities(3)]
-                    ]
-                }),
-                createArrayCS({
-                    insert: [
+                    ] }),
+                createArrayCS({ insert: [
                         [0, generateNamedEntities(14)]
-                    ]
-                })
+                    ] })
             );
         });
     });
@@ -1100,114 +990,4 @@ describe('Array Operations', function() {
             }
         }
     });
-});
-testApplyAssociativity(initial, ops);
-});
-
-it("Failed case", () => {
-let initial = createArrayCS({
-    "insert": [
-        [0, generateNamedEntities(10)]
-    ]
-}, 'insert');
-
-const ops = [createArrayCS({
-        "insert": [
-            [0, generateNamedEntities(5)],
-        ]
-    }),
-    createArrayCS({
-        "remove": [
-            [4, generateNamedEntities(1)]
-        ],
-        "insert": [
-            [5, generateNamedEntities(3)]
-        ]
-    }),
-];
-testApplyAssociativity(initial, ops);
-});
-});
-
-describe("Apply with removes in both changesets", () => {
-for (let startInsertA of[true, false]) {
-    for (let startInsertB of[true, false]) {
-        for (let removeInsertA of[true, false]) {
-            for (let removeInsertB of[true, false]) {
-                for (let removeInsideInsertB of['adjacent', 'separate', false]) {
-
-                    let insertNames = [];
-                    if (startInsertA) {
-                        insertNames.push("at start of A");
-                    }
-                    if (startInsertB) {
-                        insertNames.push("at start of B");
-                    }
-                    if (removeInsertA) {
-                        insertNames.push("before remove in A");
-                    }
-                    if (removeInsertB) {
-                        insertNames.push("before remove in B");
-                    }
-                    if (removeInsideInsertB) {
-                        insertNames.push("inside remove range in B (" + removeInsideInsertB + ")");
-                    }
-                    let title = "with ";
-                    if (insertNames.length === 0) {
-                        title += "no inserts";
-                    } else {
-                        title += "inserts " + insertNames.join(", ");
-                    }
-                    it(title, () => {
-                        let insertsA = [];
-                        let insertsB = [];
-                        let offset = 0;
-                        if (startInsertA) {
-                            insertsA.push([0, generateNamedEntities(1)]);
-                            offset += 1;
-                        }
-                        if (removeInsertA) {
-                            insertsA.push([5, generateNamedEntities(1)]);
-                            offset += 1;
-                        }
-
-                        let removesB = [
-                            [5 + offset, generateNamedEntities(3)]
-                        ];
-                        if (startInsertB) {
-                            insertsB.push([0, generateNamedEntities(1)]);
-                        }
-                        if (removeInsertB) {
-                            insertsB.push([5 + offset, generateNamedEntities(1)]);
-                        }
-                        if (removeInsideInsertB) {
-                            let removeOffset = removeInsideInsertB === "separate" ? 1 : 0;
-
-                            insertsB.push([6 + offset + removeOffset, generateNamedEntities(1)]);
-                            removesB = [
-                                [5 + offset + removeOffset, generateNamedEntities(1)],
-                                [6 + offset + removeOffset, generateNamedEntities(1)],
-                            ];
-                        }
-                        let CS1 = createArrayCS({
-                            insert: insertsA,
-                            remove: [
-                                [5, generateNamedEntities(3)]
-                            ]
-                        });
-                        let CS2 = createArrayCS({
-                            insert: insertsB,
-                            remove: removesB
-                        });
-
-                        let CS = new ChangeSet(CS1);
-                        CS.applyChangeSet(CS2);
-                        validateChangeSet(CS.getSerializedChangeSet());
-                    });
-                }
-            }
-        }
-    }
-}
-});
 });
