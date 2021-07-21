@@ -49,7 +49,7 @@ export class RemoteChannelContext implements IChannelContext {
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly thresholdOpsCounter: ThresholdCounter;
-    private static readonly tooManyOpsThreshold = 1000;
+    private static readonly pendingOpsCountThreshold = 1000;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -84,7 +84,7 @@ export class RemoteChannelContext implements IChannelContext {
         );
 
         this.thresholdOpsCounter = new ThresholdCounter(
-            RemoteChannelContext.tooManyOpsThreshold,
+            RemoteChannelContext.pendingOpsCountThreshold,
             ChildLogger.create(this.runtime.logger, "RemoteChannelContext"));
     }
 

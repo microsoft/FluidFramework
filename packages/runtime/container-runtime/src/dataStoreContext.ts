@@ -206,7 +206,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     public readonly logger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
-    private static readonly tooManyOpsThreshold = 1000;
+    private static readonly pendingOpsCountThreshold = 1000;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -247,7 +247,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         );
 
         this.logger = ChildLogger.create(_containerRuntime.logger, "FluidDataStoreContext");
-        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.tooManyOpsThreshold, this.logger);
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.logger);
     }
 
     public dispose(): void {
