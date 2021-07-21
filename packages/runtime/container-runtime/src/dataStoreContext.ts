@@ -61,7 +61,11 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import {
+    LoggingError,
+    TelemetryDataTag,
+    ThresholdTelemetrySender,
+} from "@fluidframework/telemetry-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -203,6 +207,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly thresholdOpsCounter: ThresholdTelemetrySender;
+    private static readonly tooManyOpsThreshold = 1000;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -241,6 +247,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getInitialGCSummaryDetails(),
         );
+
+        this.thresholdOpsCounter = new ThresholdTelemetrySender(FluidDataStoreContext.tooManyOpsThreshold, this.logger);
     }
 
     public dispose(): void {
@@ -359,6 +367,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } else {
             assert(!local, 0x142 /* "local store channel is not loaded" */);
             this.pending?.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StoreManyPendingOps", this.pending?.length);
         }
     }
 
@@ -562,13 +571,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
 
-            if (pending.length > 0) {
-                // Apply all pending ops
-                for (const op of pending) {
-                    channel.process(op, false, undefined /* localOpMetadata */);
-                }
+            // Apply all pending ops
+            for (const op of pending) {
+                channel.process(op, false, undefined /* localOpMetadata */);
             }
 
+            this.thresholdOpsCounter.send("ProcessManyPendingOps", pending.length);
             this.pending = undefined;
 
             // And now mark the runtime active
