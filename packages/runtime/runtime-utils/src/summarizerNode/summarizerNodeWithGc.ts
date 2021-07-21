@@ -144,6 +144,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
+        if (!this.gcDisabled) {
+            // Load GC details from the initial summary, if it's not already loaded. If this is the first time this
+            // node is being summarized, the used routes in it are needed to find out if this node has changed since
+            // last summary. If it hasn't changed, the GC data in it needs to be returned as part of the summary.
+            await this.loadInitialGCSummaryDetails();
+        }
+
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
         //  summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
