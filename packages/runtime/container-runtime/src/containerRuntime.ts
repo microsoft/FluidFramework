@@ -930,6 +930,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.logger,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
         );
+        this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
 
         if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -980,6 +981,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message: error?.message,
         });
 
+        this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
         this.summaryManager.dispose();
         this.summarizer.dispose();
         this.dataStores.dispose();
@@ -1476,9 +1478,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.audience!;
     }
 
-    public raiseContainerWarning(warning: ContainerWarning) {
+    public readonly raiseContainerWarning = (warning: ContainerWarning) => {
         this.context.raiseContainerWarning(warning);
-    }
+    };
 
     /**
      * @deprecated - // back-compat: marked deprecated in 0.35

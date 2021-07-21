@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, IPromiseTimerResult, PromiseTimer } from "@fluidframework/common-utils";
+import { IDisposable, IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { delay, IPromiseTimerResult, PromiseTimer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
@@ -40,7 +39,12 @@ type ShouldSummarizeState =
     | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
 
-export class SummaryManager extends EventEmitter implements IDisposable {
+export interface ISummaryManagerEvents extends IEvent {
+    (event: "summarizer", listener: (clientId: string) => void);
+    (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
+}
+
+export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
     private readonly initialDelayTimer?: PromiseTimer;
@@ -120,11 +124,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
-    public on(event: "summarizer", listener: (clientId: string) => void): this;
-    public on(event: string, listener: (...args: any[]) => void): this {
-        return super.on(event, listener);
-    }
-
     private updateConnected(connected: boolean, clientId?: string) {
         if (this.connected === connected) {
             return;
@@ -191,10 +190,6 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         }
     }
 
-    private raiseContainerWarning(warning: ISummarizingWarning) {
-        this.context.raiseContainerWarning(warning);
-    }
-
     private start() {
         if (!this.summariesEnabled) {
             // If we should never summarize, lock in disabled state
@@ -214,13 +209,15 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         const delayMs = this.startThrottler.getDelay();
         if (delayMs >= defaultThrottleMaxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
-            this.raiseContainerWarning(
-                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false));
+            this.emit(
+                "summarizerWarning",
+                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false),
+            );
         }
 
         this.createSummarizer(delayMs).then((summarizer) => {
             summarizer.on("summarizingError",
-                (warning: ISummarizingWarning) => this.raiseContainerWarning(warning));
+                (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
             this.run(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({
