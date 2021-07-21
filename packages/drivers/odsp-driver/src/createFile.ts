@@ -21,21 +21,21 @@ import {
     OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
-    IOdspSnapshot,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
-    ISnapshotCacheValue,
     getOrigin,
+    ISnapshotValue,
+    ISnapshotCacheValueWithVersion,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToIOdspSnapshot } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -81,14 +81,10 @@ export async function createNewFluidFile(
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, "Summary handle is undefined");
         // converting summary and getting sequence number
-        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, summaryHandle);
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const sequenceNumber = documentAttributes.sequenceNumber;
-
+        const snapshot: ISnapshotValue = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
         // caching the converted summary
-        const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
-        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+        const cacheValue: ISnapshotCacheValueWithVersion = { ...snapshot, version: 2 };
+        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), cacheValue);
     }
 
     return odspResolvedUrl;
