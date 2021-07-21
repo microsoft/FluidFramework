@@ -276,8 +276,12 @@ async function fetchLatestSnapshotCore(
                 } else if (canCache) {
                     const fluidEpoch = response.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
+                    const snapshotValueWithVersion: ISnapshotCacheValueWithVersion = {
+                        ...snapshot,
+                        version: 2,
+                    };
                     const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value: { ...snapshot, version: 2 } as ISnapshotCacheValueWithVersion,
+                        value: snapshotValueWithVersion,
                         fluidEpoch,
                         version: 2,
                     };
