@@ -7,10 +7,12 @@
  * @fileoverview In this file,we will test property-common.DeterministicRandomGenerator
  */
 
-const DeterministicRandomGenerator = require('..').DeterministicRandomGenerator;
+import { expect } from "chai";
+import { DeterministicRandomGenerator } from "../deterministicRandomGenerator";
 
-describe('property-common.DeterministicRandomGenerator', function () {
-    it('should exist', function () {
+describe("property-common.DeterministicRandomGenerator", function() {
+    it("should exist", function() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         expect(DeterministicRandomGenerator).to.exist;
     });
 });
