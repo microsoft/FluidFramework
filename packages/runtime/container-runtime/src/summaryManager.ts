@@ -102,11 +102,15 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         };
         context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        clientElection.on("electedSummarizerChanged", () => this.refreshSummarizer());
-
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
+    }
 
+    /**
+     * Until start is called, the SummaryManager won't begin attempting to start summarization.
+     */
+    public start(): void {
+        this.clientElection.on("electedSummarizerChanged", this.refreshSummarizer);
         this.refreshSummarizer();
     }
 
@@ -132,14 +136,14 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private refreshSummarizer() {
+    private readonly refreshSummarizer = () => {
         // Transition states depending on shouldSummarize, which is a calculated property
         // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
         switch (this.state) {
             case SummaryManagerState.Off: {
                 if (shouldSummarizeState.shouldSummarize) {
-                    this.start();
+                    this.startSummarization();
                 }
                 return;
             }
@@ -163,9 +167,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 return;
             }
         }
-    }
+    };
 
-    private start() {
+    private startSummarization() {
         this.state = SummaryManagerState.Starting;
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
@@ -181,7 +185,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.createSummarizer(delayMs).then((summarizer) => {
             summarizer.on("summarizingError",
                 (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
-            this.run(summarizer);
+            this.runSummarizer(summarizer);
         }, (error) => {
             this.logger.sendErrorEvent({
                 eventName: "CreateSummarizerError",
@@ -191,7 +195,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         });
     }
 
-    private run(summarizer: ISummarizer) {
+    private runSummarizer(summarizer: ISummarizer) {
         this.state = SummaryManagerState.Running;
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -216,7 +220,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private tryRestart(): void {
         const shouldSummarizeState = this.getShouldSummarizeState();
         if (shouldSummarizeState.shouldSummarize) {
-            this.start();
+            this.startSummarization();
         } else {
             this.state = SummaryManagerState.Off;
         }
@@ -288,6 +292,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     public dispose() {
+        this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
         this.connectedState.off("connected", this.handleConnected);
         this.connectedState.off("disconnected", this.handleDisconnected);
         this.initialDelayTimer?.clear();

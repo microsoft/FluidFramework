@@ -937,6 +937,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
             );
             this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+            this.summaryManager.start();
         }
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
