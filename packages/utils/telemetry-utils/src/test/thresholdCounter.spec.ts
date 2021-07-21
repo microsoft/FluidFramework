@@ -51,7 +51,7 @@ describe("ThresholdCounter", () => {
 
         assert.strictEqual(logger.events.length, 2);
         assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
-        assert.deepStrictEqual(logger.events[1], { eventName : "event_1", value: threshold + 1 });
+        assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold + 1 });
     });
 
     it("Send only if value is multiple", () => {
@@ -62,6 +62,6 @@ describe("ThresholdCounter", () => {
 
         assert.strictEqual(logger.events.length, 2);
         assert.deepStrictEqual(logger.events[0], { eventName: "event_1", value: threshold });
-        assert.deepStrictEqual(logger.events[1], { eventName : "event_1", value: threshold * 1 });
+        assert.deepStrictEqual(logger.events[1], { eventName: "event_2", value: threshold * 2 });
     });
 });
