@@ -1,12 +1,16 @@
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)
+- [Loader access in data stores is removed](#loader-access-in-data-stores-is-removed)
 
 ### Property removed from the ContainerRuntime class
 - the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
 
 ### attach() should only be called once
 `Container.attach()` will now throw if called more than once. Once called, it is responsible for retrying on retriable errors or closing the container on non-retriable errors.
+
+### Loader access in data stores is removed
+Following the deprecation warning [Loader in data stores deprecated](#loader-in-data-stores-deprecated), the associated APIs have now been removed.  In addition to the original deprecation notes, users will automatically have an `ILoader` available on the container scope object as the `ILoader` property if the container was created through a `Loader`.
 
 ## 0.43 Breaking changes
 
