@@ -44,21 +44,21 @@ describe("ThresholdTelemetrySender", () => {
     });
 
     it("Send only if it passes threshold", () => {
-        sender.send("event", threshold);
-        sender.send("event", threshold + 1);
-        sender.send("event", threshold - 1);
-        sender.send("event", 0);
+        sender.send("event_1", threshold);
+        sender.send("event_2", threshold + 1);
+        sender.send("event_3", threshold - 1);
+        sender.send("event_4", 0);
 
-        assert.strictEqual(logger.events.length, 1);
-        assert.strictEqual(logger.events[0], {});
-        assert.strictEqual(logger.events[1], {});
+        assert.strictEqual(logger.events.length, 2);
+        assert.strictEqual(logger.events[0], { event : "event_1", threshold });
+        assert.strictEqual(logger.events[1], { event : "event_1", threshold + 1 });
     });
 
     it("Send only if value is multiple", () => {
-        sender.sendIfMultiple("event", threshold);
-        sender.sendIfMultiple("event", threshold * 2);
-        sender.sendIfMultiple("event", threshold - 1);
-        sender.sendIfMultiple("event", 0);
+        sender.sendIfMultiple("event_1", threshold);
+        sender.sendIfMultiple("event_2", threshold * 2);
+        sender.sendIfMultiple("event_3", threshold - 1);
+        sender.sendIfMultiple("event_4", 0);
 
         assert.strictEqual(logger.events.length, 2);
         assert.strictEqual(logger.events[0], {});

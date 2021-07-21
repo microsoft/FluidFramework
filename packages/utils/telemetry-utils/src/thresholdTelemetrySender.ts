@@ -27,7 +27,7 @@ export class ThresholdTelemetrySender {
         if (delta === undefined || value % this.threshold === delta) {
             this.logger.sendPerformanceEvent({
                 eventName: event,
-                count: value,
+                [value]: value,
             });
         }
     }
