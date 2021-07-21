@@ -713,9 +713,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
 
-                // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
-                // to be a path from the root.
-                gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                if (contextSummary.gcData !== undefined) {
+                    // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
+                    // to be a path from the root.
+                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                }
             }));
 
         this.updateGCNodes(gcDataBuilder);
@@ -746,9 +748,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         0x180 /* "getAttachSummary should always return a tree" */);
                     summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 
-                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
-                    // to be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                    if (contextSummary.gcData !== undefined) {
+                        // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
+                        // to be a path from the root.
+                        gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
+                    }
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
