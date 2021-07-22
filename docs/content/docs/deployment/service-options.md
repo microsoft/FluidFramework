@@ -1,5 +1,5 @@
 ---
-title: Available Fluid Services
+title: Available Fluid services
 menuPosition: 1
 status: placeholder
 ---

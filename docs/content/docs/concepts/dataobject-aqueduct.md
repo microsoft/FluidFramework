@@ -172,7 +172,7 @@ of data objects as well as defining the data objects that can be created within 
 objects cannot be consumed except for when they are within a Container.
 
 The Aqueduct library provides the
-ContainerRuntimeFactoryWithDefaultDataStore](./src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts)
+[ContainerRuntimeFactoryWithDefaultDataStore](./src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts)
 that enables you as a container developer to:
 
 - Define the registry of data objects that can be created
