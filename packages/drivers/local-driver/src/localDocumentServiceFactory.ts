@@ -46,7 +46,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, "create empty file not supported");
+        assert(!!createNewSummary, 0x202 /* "create empty file not supported" */);
         const pathName = new URL(resolvedUrl.url).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
