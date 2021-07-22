@@ -13,14 +13,14 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { DefaultSummarizerHeuristics, DisabledSummarizerHeuristics } from "./summarizerHeuristics";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
     ISubmitSummaryOptions,
     ISummarizer,
-    ISummarizerHeuristics,
+    ISummarizeHeuristicData,
+    ISummarizeHeuristicRunner,
     ISummarizerInternalsProvider,
     ISummarizerOptions,
-    ISummaryAttempt,
     OnDemandSummarizeResult,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -47,8 +47,7 @@ export class RunningSummarizer implements IDisposable {
         configuration: ISummaryConfiguration,
         internalsProvider: Pick<ISummarizer, "stop">
             & Pick<ISummarizerInternalsProvider, "submitSummary">,
-        lastOpSeqNumber: number,
-        firstAck: ISummaryAttempt,
+        heuristicData: ISummarizeHeuristicData,
         raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
         options?: Readonly<Partial<ISummarizerOptions>>,
@@ -60,8 +59,7 @@ export class RunningSummarizer implements IDisposable {
             summaryWatcher,
             configuration,
             internalsProvider,
-            lastOpSeqNumber,
-            firstAck,
+            heuristicData,
             raiseSummarizingError,
             summaryCollection,
             options);
@@ -69,7 +67,7 @@ export class RunningSummarizer implements IDisposable {
         await summarizer.waitStart();
 
         // Run the heuristics after starting
-        summarizer.heuristics.run();
+        summarizer.heuristicRunner?.run();
         return summarizer;
     }
 
@@ -80,7 +78,7 @@ export class RunningSummarizer implements IDisposable {
     private summarizingLock: Promise<void> | undefined;
     private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
-    private readonly heuristics: ISummarizerHeuristics;
+    private readonly heuristicRunner?: ISummarizeHeuristicRunner;
     private readonly generator: SummaryGenerator;
     private readonly logger: ITelemetryLogger;
 
@@ -92,8 +90,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly configuration: ISummaryConfiguration,
         private readonly internalsProvider: Pick<ISummarizer, "stop">
             & Pick<ISummarizerInternalsProvider, "submitSummary">,
-        lastOpSeqNumber: number,
-        firstAck: ISummaryAttempt,
+        private readonly heuristicData: ISummarizeHeuristicData,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryCollection: SummaryCollection,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
@@ -101,13 +98,12 @@ export class RunningSummarizer implements IDisposable {
         this.logger = ChildLogger.create(
             baseLogger, "Running", { all: { summaryGenTag: () => this.generator.getSummarizeCount() } });
 
-        this.heuristics = disableHeuristics
-            ? new DisabledSummarizerHeuristics(lastOpSeqNumber, firstAck)
-            : new DefaultSummarizerHeuristics(
+        if (!disableHeuristics) {
+            this.heuristicRunner = new SummarizeHeuristicRunner(
+                heuristicData,
                 configuration,
-                (reason) => this.trySummarize(reason),
-                lastOpSeqNumber,
-                firstAck);
+                (reason) => this.trySummarize(reason));
+        }
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
         // configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides
@@ -123,9 +119,9 @@ export class RunningSummarizer implements IDisposable {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime,
-                    refSequenceNumber: this.heuristics.lastAttempt.refSequenceNumber,
-                    summarySequenceNumber: this.heuristics.lastAttempt.summarySequenceNumber,
-                    timePending: Date.now() - this.heuristics.lastAttempt.summaryTime,
+                    refSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
+                    summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
+                    timePending: Date.now() - this.heuristicData.lastAttempt.summaryTime,
                 });
             });
         // Set up pending ack timeout by op timestamp differences for previous summaries.
@@ -133,8 +129,8 @@ export class RunningSummarizer implements IDisposable {
             if (this.pendingAckTimer.hasTimer) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MissingSummaryAckFoundByOps",
-                    refSequenceNumber: this.heuristics.lastAttempt.refSequenceNumber,
-                    summarySequenceNumber: this.heuristics.lastAttempt.summarySequenceNumber,
+                    refSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
+                    summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
                 });
                 this.pendingAckTimer.clear();
             }
@@ -142,7 +138,7 @@ export class RunningSummarizer implements IDisposable {
 
         this.generator = new SummaryGenerator(
             this.pendingAckTimer,
-            this.heuristics,
+            this.heuristicData,
             this.internalsProvider,
             this.raiseSummarizingError,
             this.summaryWatcher,
@@ -152,7 +148,7 @@ export class RunningSummarizer implements IDisposable {
 
     public dispose(): void {
         this.summaryWatcher.dispose();
-        this.heuristics.dispose();
+        this.heuristicRunner?.dispose();
         this.generator.dispose();
         this.pendingAckTimer.clear();
         this._disposed = true;
@@ -165,7 +161,7 @@ export class RunningSummarizer implements IDisposable {
      * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
      */
     public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
-        this.heuristics.lastAttempt.refSequenceNumber === summaryOpRefSeq
+        this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
             ? this.logger
             : undefined;
 
@@ -198,14 +194,14 @@ export class RunningSummarizer implements IDisposable {
         if (error !== undefined) {
             return;
         }
-        this.heuristics.lastOpSequenceNumber = op.sequenceNumber;
+        this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
         // Check for ops requesting summary
         if (op.type === MessageType.Save) {
             // TODO: cast is only required until TypeScript version 4.3
             this.trySummarize(`save;${op.clientId}: ${op.contents}` as `save;${string}: ${string}`);
         } else {
-            this.heuristics.run();
+            this.heuristicRunner?.run();
         }
     }
 
@@ -221,7 +217,7 @@ export class RunningSummarizer implements IDisposable {
             return;
         }
         this.stopping = true;
-        if (this.heuristics.runOnClose()) {
+        if (this.heuristicRunner?.runOnClose()) {
             // This resolves when the current pending summary gets an ack or fails.
             // We wait for the result in case a safe summary is needed, and to get
             // better telemetry.
@@ -245,7 +241,7 @@ export class RunningSummarizer implements IDisposable {
         this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
         if (checkNotTimeout(maybeLastAck)) {
-            this.heuristics.initialize({
+            this.heuristicData.initialize({
                 refSequenceNumber: maybeLastAck.summaryOp.referenceSequenceNumber,
                 summaryTime: maybeLastAck.summaryOp.timestamp,
                 summarySequenceNumber: maybeLastAck.summaryOp.sequenceNumber,
@@ -343,7 +339,7 @@ export class RunningSummarizer implements IDisposable {
         if (this.tryWhileSummarizing) {
             this.tryWhileSummarizing = false;
             if (!this.stopping && !this._disposed) {
-                this.heuristics.run();
+                this.heuristicRunner?.run();
             }
         }
     }

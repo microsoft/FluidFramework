@@ -5,12 +5,11 @@
 
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { ISummarizerHeuristics, ISummaryAttempt } from "./summarizerTypes";
+import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummaryAttempt } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
-const minOpsForLastSummary = 50;
-
-class BaseSummarizerHeuristics {
+/** Simple implementation of class for tracking summarize heuristic data. */
+export class SummarizeHeuristicData implements ISummarizeHeuristicData {
     protected _lastAttempt: ISummaryAttempt;
     public get lastAttempt(): ISummaryAttempt {
         return this._lastAttempt;
@@ -49,28 +48,31 @@ class BaseSummarizerHeuristics {
 /**
  * This class contains the heuristics for when to summarize.
  */
-export class DefaultSummarizerHeuristics extends BaseSummarizerHeuristics implements ISummarizerHeuristics {
+export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     private readonly idleTimer: Timer;
 
     public constructor(
+        private readonly heuristicData: ISummarizeHeuristicData,
         private readonly configuration: ISummaryConfiguration,
         private readonly trySummarize: (reason: SummarizeReason) => void,
-        lastOpSequenceNumber: number,
-        firstAck: ISummaryAttempt,
+        private readonly minOpsForAttemptOnClose = 50,
     ) {
-        super(lastOpSequenceNumber, firstAck);
         this.idleTimer = new Timer(
             this.configuration.idleTime,
             () => this.trySummarize("idle"));
     }
 
+    public countOpsSinceLastAck(): number {
+        return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastAck.refSequenceNumber;
+    }
+
     public run() {
-        const timeSinceLastSummary = Date.now() - this.lastAck.summaryTime;
-        const opCountSinceLastSummary = this.lastOpSequenceNumber - this.lastAck.refSequenceNumber;
+        const timeSinceLastSummary = Date.now() - this.heuristicData.lastAck.summaryTime;
+        const outstandingOps = this.countOpsSinceLastAck();
         if (timeSinceLastSummary > this.configuration.maxTime) {
             this.idleTimer.clear();
             this.trySummarize("maxTime");
-        } else if (opCountSinceLastSummary > this.configuration.maxOps) {
+        } else if (outstandingOps > this.configuration.maxOps) {
             this.idleTimer.clear();
             this.trySummarize("maxOps");
         } else {
@@ -79,8 +81,8 @@ export class DefaultSummarizerHeuristics extends BaseSummarizerHeuristics implem
     }
 
     public runOnClose(): boolean {
-        const outstandingOps = this.lastOpSequenceNumber - this.lastAck.refSequenceNumber;
-        if (outstandingOps > minOpsForLastSummary) {
+        const outstandingOps = this.countOpsSinceLastAck();
+        if (outstandingOps > this.minOpsForAttemptOnClose) {
             this.trySummarize("lastSummary");
             return true;
         }
@@ -89,20 +91,5 @@ export class DefaultSummarizerHeuristics extends BaseSummarizerHeuristics implem
 
     public dispose() {
         this.idleTimer.clear();
-    }
-}
-
-export class DisabledSummarizerHeuristics extends BaseSummarizerHeuristics implements ISummarizerHeuristics {
-    public run() {
-        // Intentionally do nothing; heuristics are disabled.
-    }
-
-    public dispose() {
-        // Intentionally do nothing; no resources to dispose.
-    }
-
-    public runOnClose() {
-        // Intentionally do nothing; heuristics are disabled.
-        return false;
     }
 }

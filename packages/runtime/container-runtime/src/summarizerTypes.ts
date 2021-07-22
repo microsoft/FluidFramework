@@ -227,7 +227,7 @@ export interface ISummarizer
 }
 
 /**
- * Data about a summary attempt
+ * Data about an attempt to summarize.
  */
  export interface ISummaryAttempt {
     /**
@@ -246,7 +246,8 @@ export interface ISummarizer
     summarySequenceNumber?: number;
 }
 
-export interface ISummarizerHeuristics {
+/** Data relevant for summary heuristics. */
+export interface ISummarizeHeuristicData {
     /** Last received op sequence number */
     lastOpSequenceNumber: number;
 
@@ -272,7 +273,10 @@ export interface ISummarizerHeuristics {
 
     /** Mark that the last sent summary attempt has received an ack */
     ackLastSent(): void;
+}
 
+/** Responsible for running heuristics determining when to summarize. */
+export interface ISummarizeHeuristicRunner {
     /** Runs the heuristic to determine if it should try to summarize */
     run(): void;
 

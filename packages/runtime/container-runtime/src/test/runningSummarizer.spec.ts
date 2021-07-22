@@ -19,9 +19,10 @@ import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils
 import { RunningSummarizer } from "../runningSummarizer";
 import { ISummarizerOptions, SummarizerStopReason } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
+import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
 describe("Runtime", () => {
-    describe("Container Runtime", () => {
+    describe("Summarization", () => {
         describe("RunningSummarizer", () => {
             let stopCall: number;
             let runCount: number;
@@ -176,8 +177,7 @@ describe("Runtime", () => {
                             stopCall++;
                         },
                     },
-                    0,
-                    { refSequenceNumber: 0, summaryTime: Date.now() },
+                    new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
                     summaryCollection,
                     summarizerOptions,

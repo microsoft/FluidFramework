@@ -12,7 +12,7 @@ import {
     IBroadcastSummaryResult,
     ISubmitSummaryOptions,
     ISummarizeResults,
-    ISummarizerHeuristics,
+    ISummarizeHeuristicData,
     ISummarizerInternalsProvider,
     SubmitSummaryResult,
     SummarizeResultPart,
@@ -126,7 +126,7 @@ export class SummaryGenerator {
     private readonly summarizeTimer: Timer;
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
-        private readonly heuristics: ISummarizerHeuristics,
+        private readonly heuristicData: ISummarizeHeuristicData,
         private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "submitSummary">,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
@@ -186,8 +186,8 @@ export class SummaryGenerator {
             reason,
             refreshLatestAck,
             fullTree,
-            timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempt.summaryTime,
-            timeSinceLastSummary: Date.now() - this.heuristics.lastAck.summaryTime,
+            timeSinceLastAttempt: Date.now() - this.heuristicData.lastAttempt.summaryTime,
+            timeSinceLastSummary: Date.now() - this.heuristicData.lastAck.summaryTime,
         });
         // Helper functions to report failures and return.
         const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
@@ -219,8 +219,8 @@ export class SummaryGenerator {
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
             generateTelemetryProps = {
                 refSequenceNumber,
-                opsSinceLastAttempt: refSequenceNumber - this.heuristics.lastAttempt.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristics.lastAck.refSequenceNumber,
+                opsSinceLastAttempt: refSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
+                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastAck.refSequenceNumber,
             };
             if (summaryData.stage !== "base") {
                 generateTelemetryProps = {
@@ -253,7 +253,7 @@ export class SummaryGenerator {
         } catch (error) {
             return fail("submitSummaryFailure", error, generateTelemetryProps);
         } finally {
-            this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
+            this.heuristicData.recordAttempt(summaryData?.referenceSequenceNumber);
             this.summarizeTimer.clear();
         }
 
@@ -267,12 +267,12 @@ export class SummaryGenerator {
                 return fail("summaryOpWaitTimeout");
             }
 
-            const broadcastDuration = Date.now() - this.heuristics.lastAttempt.summaryTime;
+            const broadcastDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
             resultsBuilder.summaryOpBroadcasted.resolve({
                 success: true,
                 data: { summarizeOp, broadcastDuration },
             });
-            this.heuristics.lastAttempt.summarySequenceNumber = summarizeOp.sequenceNumber;
+            this.heuristicData.lastAttempt.summarySequenceNumber = summarizeOp.sequenceNumber;
             this.logger.sendTelemetryEvent({
                 eventName: "SummaryOp",
                 timeWaiting: broadcastDuration,
@@ -289,14 +289,14 @@ export class SummaryGenerator {
             this.pendingAckTimer.clear();
 
             // Update for success/failure
-            const ackNackDuration = Date.now() - this.heuristics.lastAttempt.summaryTime;
+            const ackNackDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
             const telemetryProps: Record<string, number> = {
                 timeWaiting: ackNackDuration,
                 sequenceNumber: ackNack.sequenceNumber,
                 summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             };
             if (ackNack.type === MessageType.SummaryAck) {
-                this.heuristics.ackLastSent();
+                this.heuristicData.ackLastSent();
                 summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckNackOp: ackNack,

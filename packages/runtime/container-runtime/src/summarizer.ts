@@ -34,6 +34,7 @@ import {
     OnDemandSummarizeResult,
     SummarizerStopReason,
 } from "./summarizerTypes";
+import { SummarizeHeuristicData } from "./summarizerHeuristics";
 
 const summarizingError = "summarizingError";
 
@@ -200,11 +201,13 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
             this /* Pick<ISummarizerInternalsProvider, "submitSummary"> */,
-            this.runtime.deltaManager.lastSequenceNumber,
-            { /** Initial summary attempt */
-                refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-                summaryTime: Date.now(),
-            } as const,
+            new SummarizeHeuristicData(
+                this.runtime.deltaManager.lastSequenceNumber,
+                { /** Initial summary attempt */
+                    refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+                    summaryTime: Date.now(),
+                } as const,
+            ),
             (description: string) => {
                 if (!this._disposed) {
                     this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
