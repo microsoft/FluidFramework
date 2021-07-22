@@ -2168,9 +2168,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        return this.clientDetails.type === summarizerClientType
-            ? this.summarizer.summarizeOnDemand(...args)
-            : this.summaryManager.summarizeOnDemand(...args);
+        return this.summaryManager !== undefined
+            ? this.summaryManager.summarizeOnDemand(...args)
+            : this.summarizer.summarizeOnDemand(...args);
     };
 }
 
