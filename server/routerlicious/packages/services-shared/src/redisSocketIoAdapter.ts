@@ -70,9 +70,9 @@ export class RedisSocketIoAdapter extends Adapter {
     private static shouldDisableDefaultNamespace: boolean;
 
     /**
-	 * Map of room id to socket ids
-	 * Shows what sockets are in a given room
-	 */
+     * Map of room id to socket ids
+     * Shows what sockets are in a given room
+     */
     public rooms: Map<Room, Set<SocketId>> = new Map();
     /**
      * Map of socket id to room ids
@@ -120,39 +120,39 @@ export class RedisSocketIoAdapter extends Adapter {
     }
 
     /**
-	 * Gets a list of sockets by sid.
-	 */
-	public async sockets(rooms: Set<Room>): Promise<Set<SocketId>> {
-		const sids = new Set<SocketId>();
+     * Gets a list of sockets by sid.
+     */
+    public async sockets(rooms: Set<Room>): Promise<Set<SocketId>> {
+        const sids = new Set<SocketId>();
 
-		if (rooms.size) {
-			for (const room of rooms) {
-				const roomSockets = this.rooms.get(room);
-				if (roomSockets) {
-					for (const id of roomSockets) {
-						if (this.nsp.sockets.has(id)) {
-							sids.add(id);
-						}
-					}
-				}
-			}
-		} else {
-			for (const id of this.sids.keys()) {
-				if (this.nsp.sockets.has(id)) {
-					sids.add(id);
-				}
-			}
-		}
+        if (rooms.size) {
+            for (const room of rooms) {
+                const roomSockets = this.rooms.get(room);
+                if (roomSockets) {
+                    for (const id of roomSockets) {
+                        if (this.nsp.sockets.has(id)) {
+                            sids.add(id);
+                        }
+                    }
+                }
+            }
+        } else {
+            for (const id of this.sids.keys()) {
+                if (this.nsp.sockets.has(id)) {
+                    sids.add(id);
+                }
+            }
+        }
 
-		return sids;
-	}
+        return sids;
+    }
 
-	/**
-	 * Gets the list of rooms a given socket has joined.
-	 */
-	public socketRooms(id: SocketId): Set<Room> | undefined {
-		return this.sids.get(id);
-	}
+    /**
+     * Gets the list of rooms a given socket has joined.
+     */
+    public socketRooms(id: SocketId): Set<Room> | undefined {
+        return this.sids.get(id);
+    }
 
     /**
      * Add a socket to a list of rooms
@@ -259,9 +259,9 @@ export class RedisSocketIoAdapter extends Adapter {
      */
     private publish(packet: any, opts: BroadcastOptions) {
         // include the room in the channel name
-		const channel = `${this.channel}${opts.rooms.values().next().value}#`;
+        const channel = `${this.channel}${opts.rooms.values().next().value}#`;
         // don't provide any "opts"
-		const msg = msgpack.encode([this.uid, packet]);
+        const msg = msgpack.encode([this.uid, packet]);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         RedisSocketIoAdapter.options.pubConnection.publish(channel, msg);
@@ -332,8 +332,8 @@ export class RedisSocketIoAdapter extends Adapter {
             }
 
             const opts: BroadcastOptions = {
-				rooms: new Set([room]),
-			};
+                rooms: new Set([room]),
+            };
 
             // only allow room broadcasts
             super.broadcast(packet, opts);

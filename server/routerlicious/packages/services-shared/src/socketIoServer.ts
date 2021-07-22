@@ -29,7 +29,7 @@ class SocketIoSocket implements core.IWebSocket {
     }
 
     public async join(id: string): Promise<void> {
-        await this.socket.join(id);
+        return this.socket.join(id);
     }
 
     public async emit(event: string, ...args: any[]) {
@@ -117,10 +117,14 @@ export function create(
     const io = new Server(server, {
         // enable compatibility with socket.io v2 clients
         allowEIO3: true,
+        // ensure long polling is never used
+        transports: [ "websocket" ],
         cors: {
-            // Explicitly allow all origins. As a service that has potential to host countless different client apps,
+            // Explicitly allow all origins by reflecting request origin.
+            // As a service that has potential to host countless different client apps,
             // it would impossible to hardcode or configure restricted CORS policies.
-            origin: "*",
+            origin: true,
+            credentials: true,
         },
         adapter,
     });
