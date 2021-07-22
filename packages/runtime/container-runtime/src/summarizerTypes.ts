@@ -46,6 +46,17 @@ export interface ISummarizerInternalsProvider {
     ): Promise<void>;
 }
 
+/** Options that control the behavior of a running summarizer. */
+export interface ISummarizerOptions {
+    /**
+     * Set to true to disable the default heuristics from running; false by default.
+     * This affects only the heuristics around when a summarizer should
+     * submit summaries. So when it is disabled, summarizer clients should
+     * not be expected to summarize unless an on-demand summary is requested.
+     */
+    disableHeuristics: boolean;
+}
+
 export interface ISummarizingWarning extends ContainerWarning {
     readonly errorType: "summarizingError";
     readonly logged: boolean;
@@ -206,7 +217,7 @@ export interface ISummarizerEvents extends IEvent {
 export interface ISummarizer
     extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
     stop(reason?: SummarizerStopReason): void;
-    run(onBehalfOf: string): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
 
     /** Attempts to generate a summary on demand. */
@@ -214,4 +225,57 @@ export interface ISummarizer
         reason: string,
         options: Omit<ISubmitSummaryOptions, "summaryLogger">,
     ): OnDemandSummarizeResult;
+}
+
+/** Data about an attempt to summarize used for heuristics. */
+export interface ISummarizeAttempt {
+    /** Reference sequence number when summary was generated or attempted */
+    readonly refSequenceNumber: number;
+
+    /** Time of summary attempt after it was sent or attempted */
+    readonly summaryTime: number;
+
+    /** Sequence number of summary op */
+    summarySequenceNumber?: number;
+}
+
+/** Data relevant for summary heuristics. */
+export interface ISummarizeHeuristicData {
+    /** Latest received op sequence number */
+    lastOpSequenceNumber: number;
+
+    /** Most recent summary attempt from this client */
+    readonly lastAttempt: ISummarizeAttempt;
+
+    /** Most recent summary that received an ack */
+    readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
+
+    /**
+     * Initializes lastAttempt and lastSuccessfulAttempt based on the last summary.
+     * @param lastSummary - last ack summary
+     */
+    initialize(lastSummary: ISummarizeAttempt): void;
+
+    /**
+     * Records a summary attempt. If the attempt was successfully sent,
+     * provide the reference sequence number, otherwise it will be set
+     * to the last seen op sequence number.
+     * @param referenceSequenceNumber - reference sequence number of sent summary
+     */
+    recordAttempt(referenceSequenceNumber?: number): void;
+
+    /** Mark that the last sent summary attempt has received an ack */
+    markLastAttemptAsSuccessful(): void;
+}
+
+/** Responsible for running heuristics determining when to summarize. */
+export interface ISummarizeHeuristicRunner {
+    /** Runs the heuristic to determine if it should try to summarize */
+    run(): void;
+
+    /** Runs a different heuristic to check if it should summarize before closing */
+    runOnClose(): boolean;
+
+    /** Disposes of resources */
+    dispose(): void;
 }

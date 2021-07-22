@@ -13,7 +13,7 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { createSummarizingWarning } from "./summarizer";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { Throttler } from "./throttler";
-import { ISummarizer, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
+import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
@@ -91,6 +91,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         private readonly connectedState: IConnectedState,
         parentLogger: ITelemetryLogger,
         initialDelayMs: number = defaultInitialDelayMs,
+        private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
         super();
 
@@ -216,7 +217,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         PerformanceEvent.timedExecAsync(
             this.logger,
             { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },
-            async () => summarizer.run(clientId),
+            async () => summarizer.run(clientId, this.summarizerOptions),
         ).finally(() => {
             this.runningSummarizer = undefined;
             this.tryRestart();
