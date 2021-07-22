@@ -134,7 +134,7 @@ export interface TreeNode extends Anchor, TreeNodeData, Sequence<Trait>, Query<T
 	// TODO: Once the API is in a more polished state consider adding short hand versions for predecessor and successor.
 	adjacentPlace(side: Side): Place;
 
-	// Below here only available if loaded and valid.
+	// Below here only available if loaded and valid (may throw).
 
 	/**
 	 * Parent of this Node.
@@ -183,12 +183,7 @@ interface Query<TChild> extends RawTreeNode<TChild> {
 // Only needed when using TreeNode[Symbol.iterator]
 
 export interface Trait extends TraitSection {
-	/**
-	 * Parent of this Node.
-	 *
-	 * undefined if this node is the root.
-	 */
-	readonly parent?: TreeNode;
+	readonly parent: TreeNode;
 	readonly label: TraitLabel;
 }
 

@@ -64,7 +64,7 @@ export interface Command<TOptions extends Serializable, TAnchorSet extends Ancho
 	 * While commands may get rerun, they are not required to produce exactly the same results,
 	 * and may fail with CommandInvalid if they can not handle the context in which they are run.
 	 */
-	id: CommandId;
+	readonly id: CommandId;
 	// TODO: Maybe include localized string information/metadata here?
 	// There should be a way to generate human readable command descriptions for change history, undo etc.
 }
@@ -294,18 +294,3 @@ export function commandInvalid(): never {
 }
 
 export type CommandRegistry = readonly Command<any, any, any>[];
-
-// callbacks to inform the registry about commands being used.
-// TODO: do we need these? if so, use events instead?
-// beforeCommandApplied(commandId: CommandId, anchors?: object, parameters?: object);
-// afterCommandApplied(commandId: CommandId, anchors?: object, parameters?: object);
-
-// Could add events like these.
-// These really only make sense for linear histories, so could apply within a transaction, or to sequenced edits, but not to checkouts in general.
-interface ChangeListener {
-	AfterCreate(nodes: TreeNode[]);
-	AfterInsert(range: Range);
-	BeforeDetach(range: Range);
-	BeforeDestroy(nodes: TreeNode[]);
-	ValueChange<T>(node: TreeNode, oldValue: T, newValue: T);
-}
