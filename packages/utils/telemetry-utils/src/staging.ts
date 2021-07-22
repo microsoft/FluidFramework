@@ -15,7 +15,7 @@ export interface IFluidErrorBase extends Readonly<Error> {
 }
 
 export function isFluidError(e: any): e is IFluidErrorBase {
-    return typeof e.fluidErrorCode === "string";
+    return typeof e?.fluidErrorCode === "string";
 }
 
 /** type guard to ensure it has an errorType e.g. via IErrorBase */
