@@ -19,3 +19,5 @@ bundleAnalysis
 
 # Misc pipeline artifacts
 artifacts
+
+docs/resources/_gen/

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling";
 
-describe.only("EventEmitterWithErrorHandling", () => {
+describe("EventEmitterWithErrorHandling", () => {
     it("forwards events", ()=> {
         const emitter = new EventEmitterWithErrorHandling();
         let passedArg: number | undefined;

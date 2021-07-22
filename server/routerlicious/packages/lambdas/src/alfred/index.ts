@@ -213,7 +213,11 @@ export function configureWebSocketServices(
                 await tenantManager.verifyToken(claims.tenantId, token);
             } catch (err) {
                 // eslint-disable-next-line prefer-promise-reject-errors
-                return Promise.reject({ code: 403, message: "Invalid token" });
+                return Promise.reject({
+                    // if we don't understand the error, be lenient and allow retry
+                    code: err?.response?.status ?? 401,
+                    message: err?.response?.data ?? "Invalid token",
+                });
             }
 
             const clientId = generateClientId();

@@ -955,14 +955,15 @@ class DataBinder {
 
     // For each root, recursively traverse the property hierarchy and instantiate bindings.
     _.each(rootsToRules, (in_rules, in_root) => {
-      const pathArr = PathHelper.tokenizePathString(in_root);
+      const out_pathDelimiters = [];
+      const pathArr = PathHelper.tokenizePathString(in_root, out_pathDelimiters);
       if (in_root[0] === '/') {
         pathArr.shift();
       }
 
       // we need to resolve the references along the way to our subtree but not at the leaf!
       const subTreeRootElement = new PropertyElement(this._workspace.root);
-      subTreeRootElement.becomeChild(pathArr, RESOLVE_NO_LEAFS);
+      subTreeRootElement.becomeChild(pathArr, RESOLVE_NO_LEAFS, out_pathDelimiters);
 
       // Only recurse if the property exists. If it is not there, it is bad user input
       if (subTreeRootElement.isValid()) {
@@ -1046,10 +1047,11 @@ class DataBinder {
     };
 
     const startPath = in_activationRule.startPath;
-    const pathArr = PathHelper.tokenizePathString(startPath.substr(1));
+    const out_pathDelimiters = [];
+    const pathArr = PathHelper.tokenizePathString(startPath.substr(1), out_pathDelimiters);
     // we need to resolve the references along the way to our subtree but not at the leaf!
     const subTreeRootElement = new PropertyElement(this._workspace.root);
-    subTreeRootElement.becomeChild(pathArr, RESOLVE_NO_LEAFS);
+    subTreeRootElement.becomeChild(pathArr, out_pathDelimiters, RESOLVE_NO_LEAFS);
 
     if (!subTreeRootElement.isValid()) {
       // Nothing to do, the property was never created
@@ -2051,6 +2053,7 @@ class DataBinder {
    */
   _preTraversalCallBack(in_context) {
     var opType = in_context.getOperationType();
+    let delims = [];
 
     // compute current property and node
     var oldProperty = in_context.getUserData().property;
@@ -2060,7 +2063,6 @@ class DataBinder {
     if (in_context.getPropertyContainerType() === 'template') {
       const asString = tokenizedPathSegments.toString();
       if (asString.indexOf('.') !== -1 || asString.indexOf('"') !== -1) {
-        let delims;
         tokenizedPathSegments = PathHelper.tokenizePathString(asString, delims);
       }
     }
@@ -2074,11 +2076,11 @@ class DataBinder {
     } else {
       if (opType === 'remove') {
         newProperty = undefined;
-        newTreeNode = oldTreeNode.getChild(tokenizedPathSegments);
+        newTreeNode = oldTreeNode.getChild(tokenizedPathSegments, undefined, delims);
       } else {
         newProperty = oldProperty.get(tokenizedPathSegments, RESOLVE_NEVER);
         console.assert(newProperty);
-        newTreeNode = oldTreeNode.getChild(tokenizedPathSegments);
+        newTreeNode = oldTreeNode.getChild(tokenizedPathSegments, undefined, delims);
         if (!newTreeNode && opType !== 'insert') {
           console.error('Unexpected error during ChangeSet processing. Probably Properties were modified inside a' +
             ' callback. Please consider using dataBinder.requestChangesetPostProcessing() instead.');

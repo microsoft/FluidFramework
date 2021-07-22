@@ -23,8 +23,8 @@ const NodeProperty = require('./node_property');
  * @alias property-properties.NamedNodeProperty
  * @category Other Collections
  */
-var NamedNodeProperty = function(in_params) {
-  NodeProperty.call(this, in_params);
+var NamedNodeProperty = function (in_params) {
+    NodeProperty.call(this, in_params);
 };
 
 NamedNodeProperty.prototype = Object.create(NodeProperty.prototype);

@@ -13,17 +13,17 @@ import {
     IDeltaManagerEvents,
     IDeltaQueue,
     ICriticalContainerError,
-    ContainerErrorType,
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse, LoggingError } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
+    DriverError,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { isSystemMessage } from "@fluidframework/protocol-base";
@@ -54,9 +54,11 @@ import {
     DeltaStreamConnectionForbiddenError,
 } from "@fluidframework/driver-utils";
 import {
+    ThrottlingWarning,
     CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
+    wrapError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
@@ -67,17 +69,15 @@ const DefaultChunkSize = 16 * 1024;
 function getNackReconnectInfo(nackContent: INackContent) {
     const reason = `Nack: ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
-    return createGenericNetworkError(reason, canRetry, nackContent.retryAfter, { statusCode: nackContent.code });
+    const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
+    return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
-function createReconnectError(prefix: string, err: any) {
-    const error = CreateContainerError(err);
-    const error2 = Object.create(error);
-    error2.message = `${prefix}: ${error.message}`;
-    error2.canRetry = true;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return error2;
-}
+const createReconnectError = (prefix: string, err: any) =>
+    wrapError(
+        err,
+        (errorMessage: string) => createGenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+    );
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;
@@ -636,10 +636,9 @@ export class DeltaManager
                         break;
                     }
 
-                    const error = CreateContainerError(origError);
-
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
+                        const error = CreateContainerError(origError);
                         this.close(error);
                         // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
@@ -661,7 +660,7 @@ export class DeltaManager
                     delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
 
                     if (retryDelayFromError !== undefined) {
-                        this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, error);
+                        this.emitDelayInfo(this.deltaStreamDelayId, retryDelayFromError, origError);
                     }
                     await waitForConnectedState(delayMs);
                 }
@@ -731,14 +730,13 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = new LoggingError("Op is sent in read-only document state", {
-                errorType: ContainerErrorType.genericError,
+            const error = CreateContainerError("Op is sent in read-only document state", {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,
                 storageOnly: this.readOnlyInfo.storageOnly,
             });
-            this.close(CreateContainerError(error));
+            this.close(error);
             return -1;
         }
 
@@ -915,32 +913,26 @@ export class DeltaManager
         }
     }
 
-    public emitDelayInfo(
-        id: string,
-        delayMs: number,
-        error: ICriticalContainerError,
-    ) {
+    /**
+     * Emit info about a delay in service communication on account of throttling.
+     * @param id - Id of the connection that is delayed
+     * @param delayMs - Duration of the delay
+     * @param error - error objecct indicating the throttling
+     */
+    public emitDelayInfo(id: string, delayMs: number, error: unknown) {
         const timeNow = Date.now();
         this.throttlingIdSet.add(id);
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delayMs;
 
-            // Add 'throttling' properties to an error with safely extracted properties:
-            const throttlingWarning: IThrottlingWarning = {
-                errorType: ContainerErrorType.throttlingError,
-                message: `Service busy/throttled: ${error.message}`,
-                retryAfterSeconds: delayMs / 1000,
-            };
-            const reconfiguredError: IThrottlingWarning = {
-                ...CreateContainerError(error),
-                ...throttlingWarning,
-            };
-            this.emit("throttled", reconfiguredError);
+            const throttlingWarning: IThrottlingWarning =
+                ThrottlingWarning.wrap(error, "Service busy/throttled", delayMs / 1000 /* retryAfterSeconds */);
+            this.emit("throttled", throttlingWarning);
         }
     }
 
     private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
-        const messages = messagesArg instanceof Array ? messagesArg : [messagesArg];
+        const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
         this.enqueueMessages(messages, "opHandler");
     };
 
@@ -1018,9 +1010,13 @@ export class DeltaManager
         // If we asked for "write" and got "read", then file is read-only
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
+
+        // This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
+        // removed after those packages have released and become ubiquitous.
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
             0x0e7 /* "claims/connectionMode mismatch" */);
         assert(!readonly || this.connectionMode === "read", 0x0e8 /* "readonly perf with write connection" */);
+
         this.set_readonlyPermissions(readonly);
 
         this.refreshDelayInfo(this.deltaStreamDelayId);
@@ -1160,12 +1156,12 @@ export class DeltaManager
      * Disconnect the current connection and reconnect.
      * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
      * @param requestedMode - Read or write
-     * @param reconnectInfo - Error reconnect information including whether or not to reconnect
+     * @param error - Error reconnect information including whether or not to reconnect
      * @returns A promise that resolves when the connection is reestablished or we stop trying
      */
     private async reconnectOnError(
         requestedMode: ConnectionMode,
-        error: ICriticalContainerError,
+        error: DriverError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.

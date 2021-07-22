@@ -9,16 +9,16 @@ import {
     createGroupOp,
     IJSONSegment,
     ISegment,
-    PropertySet,
     LocalReferenceCollection,
+    PropertySet,
 } from "@fluidframework/merge-tree";
 import {
     IChannelAttributes,
     IFluidDataStoreRuntime,
     IChannelServices,
-    Jsonable,
-    JsonablePrimitive,
     IChannelFactory,
+    Serializable,
+    Jsonable,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion";
@@ -93,7 +93,7 @@ export class PaddingSegment extends BaseSegment {
     }
 }
 
-export type SparseMatrixItem = Jsonable<JsonablePrimitive | IFluidHandle>;
+export type SparseMatrixItem = Serializable;
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     public static readonly typeString = "RunSegment";
     public static is(segment: ISegment): segment is RunSegment {
@@ -192,7 +192,7 @@ export function positionToRowCol(position: number) {
 /**
  * @deprecated - SparseMatrix is an abandoned prototype.  Please use SharedMatrix instead.
  */
- export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
+export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     /**
      * Create a new sparse matrix
      *
@@ -245,6 +245,7 @@ export function positionToRowCol(position: number) {
         const { segment, offset } =
             this.getContainingSegment(pos);
         if (RunSegment.is(segment)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return segment.items[offset];
         } else if (PaddingSegment.is(segment)) {
             return undefined;

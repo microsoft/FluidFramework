@@ -35,8 +35,8 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @alias property-properties.MapProperty
  * @category Maps
  */
-var MapProperty = function( in_params, in_scope ) {
-  IndexedCollectionBaseProperty.call( this, in_params );
+var MapProperty = function (in_params, in_scope) {
+  IndexedCollectionBaseProperty.call(this, in_params);
 
   this._scope = in_scope;
   this._contextKeyType = in_params.contextKeyType || 'string';
@@ -54,7 +54,7 @@ MapProperty.prototype._context = 'map';
  * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
  * @return {string} The typeid
  */
-MapProperty.prototype.getFullTypeid = function(in_hideCollection) {
+MapProperty.prototype.getFullTypeid = function (in_hideCollection) {
   if (in_hideCollection) {
     return this._typeid;
   } else {
@@ -69,7 +69,7 @@ MapProperty.prototype.getFullTypeid = function(in_hideCollection) {
  *
  * @return {boolean} Is it a leaf with regard to flattening?
  */
-MapProperty.prototype._isFlattenLeaf = function() {
+MapProperty.prototype._isFlattenLeaf = function () {
   return true;
 };
 
@@ -82,10 +82,10 @@ MapProperty.prototype._isFlattenLeaf = function() {
  * @see {setValues}
  * @private
  */
-MapProperty.prototype._setValuesInternal = function(in_values, in_typed) {
+MapProperty.prototype._setValuesInternal = function (in_values, in_typed) {
   if (this._containsPrimitiveTypes) {
     var that = this;
-    _.each(in_values, function(value, key) {
+    _.each(in_values, function (value, key) {
       if (that.has(key)) {
         that.remove(key);
       }
@@ -94,8 +94,8 @@ MapProperty.prototype._setValuesInternal = function(in_values, in_typed) {
     });
   } else {
     var that = this;
-    _.each(in_values, function(value, key) {
-      var property = that.get(String(key), {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
+    _.each(in_values, function (value, key) {
+      var property = that.get(String(key), { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
       // if key exists in set replace its value else insert a new key/value
       if (property) {
         if (property instanceof Property.ValueProperty || property instanceof Property.StringProperty) {
@@ -132,7 +132,7 @@ MapProperty.prototype._setValuesInternal = function(in_values, in_typed) {
  * @see {setValues}
  * @override
  */
-MapProperty.prototype._setValues = function(in_values, in_typed, in_initial) {
+MapProperty.prototype._setValues = function (in_values, in_typed, in_initial) {
   if (in_initial) {
     this.clear();
   }
@@ -148,7 +148,7 @@ MapProperty.prototype._setValues = function(in_values, in_typed, in_initial) {
  * @throws if trying to set a value to a path that leads to a Property other than ValueProperty or StringProperty
  * @override
  */
-MapProperty.prototype.setValues = function(in_values) {
+MapProperty.prototype.setValues = function (in_values) {
   var checkoutView = this._getCheckoutView();
   if (checkoutView !== undefined) {
     checkoutView.pushNotificationDelayScope();
@@ -171,7 +171,7 @@ MapProperty.prototype.setValues = function(in_values) {
       }
     }
   */
-MapProperty.prototype.getValues = function() {
+MapProperty.prototype.getValues = function () {
   var ids = this.getIds();
   var result = {};
   for (var i = 0; i < ids.length; i++) {
@@ -193,7 +193,7 @@ MapProperty.prototype.getValues = function() {
  * @return {string} The path segment to resolve the child property under this property
  * @protected
  */
-MapProperty.prototype._getPathSegmentForChildNode = function(in_childNode) {
+MapProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
   return '[' + PathHelper.quotePathSegmentIfNeeded(in_childNode._id) + ']';
 };
 
@@ -206,7 +206,7 @@ MapProperty.prototype._getPathSegmentForChildNode = function(in_childNode) {
  * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
  * @protected
  */
-MapProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType) {
+MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
   // Base Properties only support paths separated via dots
   if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
     return this._entries[in_segment];
@@ -228,10 +228,10 @@ MapProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType)
  * @throws if in_key is not a string
  * @throws if the property is a root property
  */
-MapProperty.prototype.insert = function(in_key, in_property) {
+MapProperty.prototype.insert = function (in_key, in_property) {
   ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
   if (this._entries[in_key] !== undefined) {
-    throw new Error( MSG.PROPERTY_ALREADY_EXISTS + in_key);
+    throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
   }
   if (in_property instanceof BaseProperty) {
     in_property._validateInsertIn(this, in_key);
@@ -253,7 +253,7 @@ MapProperty.prototype.insert = function(in_key, in_property) {
  * @throws if trying to remove an entry that does not exist
  * @return {*} the item removed
  */
-MapProperty.prototype.remove = function(in_key) {
+MapProperty.prototype.remove = function (in_key) {
   var item = this.get(in_key);
   this._removeByKey(in_key, true);
   return item;
@@ -270,7 +270,7 @@ MapProperty.prototype.remove = function(in_key) {
  * @throws if trying to insert a property that has a parent
  * @throws if in_key is not a string or a number
  */
-MapProperty.prototype.set = function(in_key, in_property) {
+MapProperty.prototype.set = function (in_key, in_property) {
   this._checkIsNotReadOnly(true);
   if (this._entries[in_key] !== in_property) {
     if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
@@ -299,7 +299,7 @@ MapProperty.prototype.set = function(in_key, in_property) {
  *
  * @return {Object} The map with all entries in the map.
  */
-MapProperty.prototype.getEntriesReadOnly = function() {
+MapProperty.prototype.getEntriesReadOnly = function () {
   return this._entries;
 };
 
@@ -318,15 +318,15 @@ MapProperty.prototype.getEntriesReadOnly = function() {
  * @return {property-properties.Property|*|undefined} The entry in the collection or undefined
  *     if none could be found
  */
-MapProperty.prototype.get = function(in_ids, in_options) {
+MapProperty.prototype.get = function (in_ids, in_options) {
   if (_.isArray(in_ids)) {
     // Forward handling of arrays to the BaseProperty function
     return ContainerProperty.prototype.get.call(this, in_ids, in_options);
   } else {
     in_options = in_options || {};
     in_options.referenceResolutionMode =
-        in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-                                                            in_options.referenceResolutionMode;
+      in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
+        in_options.referenceResolutionMode;
 
     var prop = this;
     if (in_ids === PATH_TOKENS.ROOT) {
@@ -356,7 +356,7 @@ MapProperty.prototype.get = function(in_ids, in_options) {
  * @param {string} in_id - Name of the property
  * @return {boolean} True if the property exists, otherwise false.
  */
-MapProperty.prototype.has = function(in_id) {
+MapProperty.prototype.has = function (in_id) {
   return this._entries[in_id] !== undefined;
 };
 
@@ -368,7 +368,7 @@ MapProperty.prototype.has = function(in_id) {
  * @return {Array.<property-properties.BaseProperty | *>} Array with all entries of the map. This array
  *     is a shallow copy which can be modified by the caller without effects on the map.
  */
-MapProperty.prototype.getAsArray = function() {
+MapProperty.prototype.getAsArray = function () {
   return _.values(this._entries);
 };
 
@@ -379,7 +379,7 @@ MapProperty.prototype.getAsArray = function() {
  *
  * @return {Array.<string>} The keys
  */
-MapProperty.prototype.getIds = function() {
+MapProperty.prototype.getIds = function () {
   return Object.keys(this._entries);
 };
 
@@ -390,7 +390,7 @@ MapProperty.prototype.getIds = function() {
  * @override
  * @private
  */
-MapProperty.prototype._getScope = function() {
+MapProperty.prototype._getScope = function () {
   var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
   if (scope !== undefined) {
@@ -403,9 +403,9 @@ MapProperty.prototype._getScope = function() {
 /**
  * Deletes all values from the Map
  */
-MapProperty.prototype.clear = function() {
+MapProperty.prototype.clear = function () {
   var that = this;
-  this.getIds().forEach(function(id) {
+  this.getIds().forEach(function (id) {
     that.remove(id);
   });
 };

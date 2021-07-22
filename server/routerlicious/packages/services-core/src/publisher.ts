@@ -16,7 +16,7 @@ export interface ITopic {
 /**
  * Basic interface used to publish messages to a topic
  */
-export interface IPublisher {
+export interface IPublisher<T = any> {
     /**
      * Subscribe to events about the publisher
      */
@@ -34,7 +34,35 @@ export interface IPublisher {
     emit?(topic: string, event: string, ...args: any[]): Promise<void>;
 
     /**
+     * Used to emit a batch to a topic
+     * This will be used in place of "to().emit()" & "emit()" when defined
+     */
+    emitBatch?(topic: string, batch: IMessageBatch<T>): Promise<void>;
+
+    /**
      * Closes the publisher
      */
     close(): Promise<void>;
+}
+
+export interface IMessageBatch<T> {
+    /**
+     * Tenant id for the batch
+     */
+    tenantId: string;
+
+    /**
+     * Document id for the batch
+     */
+    documentId: string;
+
+    /**
+     * Event name (topic)
+     */
+    event: string;
+
+    /**
+     * List of messages
+     */
+    messages: T[];
 }

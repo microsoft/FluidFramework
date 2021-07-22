@@ -123,7 +123,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         // Create a sub dataStore of type TestFluidObject and verify that it is attached.
         const subDataStore = await createFluidObject(dataStore.context, "default");
         dataStore.root.set("attachKey", subDataStore.handle);
-        assert.strictEqual(subDataStore.context.storage, undefined, "No storage should be there!!");
 
         // Get the sub dataStore's root channel and verify that it is attached.
         const testChannel = await subDataStore.runtime.getChannel("root");

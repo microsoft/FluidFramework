@@ -88,7 +88,7 @@ export interface ICodeAllowList {
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
-// @public
+// @public @deprecated
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
@@ -160,7 +160,7 @@ export interface IContainerContext extends IDisposable {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
@@ -174,11 +174,13 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly serviceConfiguration: IClientConfiguration | undefined;
     // (undocumented)
-    readonly storage: IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     // (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
+    // (undocumented)
+    readonly taggedLogger?: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }
@@ -194,7 +196,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
-    (event: "disconnected" | "attaching" | "attached", listener: () => void): any;
+    (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     // (undocumented)
@@ -299,7 +301,6 @@ export interface IErrorBase {
     readonly errorType: string;
     // (undocumented)
     readonly message: string;
-    sequenceNumber?: number;
 }
 
 // @public
@@ -373,7 +374,7 @@ export interface ILoaderHeader {
     // (undocumented)
     [LoaderHeader.loadMode]: IContainerLoadMode;
     // (undocumented)
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 // @public (undocumented)
@@ -448,7 +449,7 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
 // @public
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
 }
 
 // @public

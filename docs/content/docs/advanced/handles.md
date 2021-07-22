@@ -17,7 +17,7 @@ This section covers how to consume and use Fluid handles.
   1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
      a DDS.
   2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only
-     way to make this possible is to store _references_ (which is what a handle is) to the collaborative objects in
+     way to make this possible is to store *references* (which is what a handle is) to the collaborative objects in
      the DDSes.
 
 - Handles encapsulate where the underlying object instance exists within the Fluid runtime and how to retrieve it.
@@ -134,12 +134,12 @@ protected async hasInitialized() {
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 
 [Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[undo-redo]: {{< relref "/docs/apis/undo-redo.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
 
 <!-- Classes and interfaces -->
 

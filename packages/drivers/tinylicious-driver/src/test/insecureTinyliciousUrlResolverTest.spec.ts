@@ -30,6 +30,23 @@ describe("Insecure Url Resolver Test", () => {
         assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
     });
 
+    it("Should resolve url with custom domain and port", async () => {
+        const customEndpoint = "http://custom-endpoint.io";
+        const customFluidEndpoint = "fluid://custom-endpoint.io";
+        const customPort = 1234;
+        const customResolver = new InsecureTinyliciousUrlResolver(customPort,customEndpoint);
+        const testRequest: IRequest = {
+            url: `${documentId}`,
+            headers: {},
+        };
+
+        const resolvedUrl = await customResolver.resolve(testRequest);
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        const expectedResolvedUrl = `${customFluidEndpoint}/tinylicious/${documentId}`;
+        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+    });
+
     it("Should resolve url with data object ids", async () => {
         const path = "dataObject1/dataObject2";
         const testRequest: IRequest = {

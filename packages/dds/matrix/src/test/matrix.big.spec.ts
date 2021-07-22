@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelServices, Serializable } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
@@ -21,7 +21,7 @@ const enum Const {
 
 // Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 // equivalent, and then returns the 2nd matrix.
-async function summarize<T extends Serializable>(matrix: SharedMatrix<T>) {
+async function summarize<T>(matrix: SharedMatrix<T>) {
     // Create a summary
     const objectStorage = MockStorage.createFromSummary(matrix.summarize().summary);
 

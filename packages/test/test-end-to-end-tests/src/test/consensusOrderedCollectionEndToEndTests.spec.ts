@@ -244,6 +244,13 @@ function generate(
                 assert.strictEqual(value, "testValue");
                 return ConsensusResult.Release;
             });
+
+            // Needs to make sure the acquire get sent and sequenced before wait/acquire/complete in collection2
+            await provider.opProcessingController.processOutgoing();
+
+            // processOutgoing pauses all processing afterwards, just resume everything.
+            provider.opProcessingController.resumeProcessing();
+
             const waitAcquireCompleteP = waitAcquireAndComplete(collection2);
 
             assert.equal(await acquireReleaseP, true);

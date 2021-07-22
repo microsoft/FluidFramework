@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Deferred, assert } from "@fluidframework/common-utils";
+import { IDisposable, IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
     IDocumentMessage,
@@ -192,17 +192,18 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
     }
 }
 
-export type SummaryCollectionOpActions =
-    Partial<Record<
-        MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default",
-        (op: ISequencedDocumentMessage, sc: SummaryCollection) => void
-    >>;
+export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
+export interface ISummaryCollectionOpEvents extends IEvent {
+    (event: OpActionEventName, listener: OpActionEventListener);
+}
+
 /**
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
  */
-export class SummaryCollection {
+export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     // key: clientId
     private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();
     // key: summarySeqNum
@@ -216,6 +217,10 @@ export class SummaryCollection {
 
     public get latestAck(): IAckedSummary | undefined { return this.lastAck; }
 
+    public emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean {
+        return super.emit(event, ...args);
+    }
+
     public get opsSinceLastAck() {
         return this.deltaManager.lastSequenceNumber -
             (this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
@@ -224,8 +229,8 @@ export class SummaryCollection {
     public constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,
-        private readonly opActions: SummaryCollectionOpActions,
     ) {
+        super();
         this.deltaManager.on(
             "op",
             (op) => this.handleOp(op));
@@ -311,7 +316,7 @@ export class SummaryCollection {
                 ) {
                     this.pendingAckTimerTimeoutCallback?.();
                 }
-                this.opActions.default?.(op, this);
+                this.emit("default", op);
 
                 return;
             }
@@ -339,7 +344,7 @@ export class SummaryCollection {
         }
         this.pendingSummaries.set(op.sequenceNumber, summary);
         this.lastSummaryTimestamp = op.timestamp;
-        this.opActions.summarize?.(op, this);
+        this.emit(MessageType.Summarize, op);
     }
 
     private handleSummaryAck(op: ISummaryAckMessage) {
@@ -377,7 +382,7 @@ export class SummaryCollection {
             };
             this.refreshWaitNextAck.resolve();
             this.refreshWaitNextAck = new Deferred<void>();
-            this.opActions.summaryAck?.(op, this);
+            this.emit(MessageType.SummaryAck, op);
         }
     }
 
@@ -387,7 +392,7 @@ export class SummaryCollection {
         if (summary) {
             summary.ackNack(op);
             this.pendingSummaries.delete(seq);
-            this.opActions.summaryNack?.(op, this);
+            this.emit(MessageType.SummaryNack, op);
         }
     }
 }

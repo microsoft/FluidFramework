@@ -10,7 +10,7 @@ import {
     IFluidLastEditedTracker,
     IProvideFluidLastEditedTracker,
     LastEditedTrackerDataObject,
-} from "@fluidframework/last-edited-experimental";
+} from "@fluid-experimental/last-edited";
 import { IFluidHTMLView, IProvideFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Vltava } from "../vltava";
 

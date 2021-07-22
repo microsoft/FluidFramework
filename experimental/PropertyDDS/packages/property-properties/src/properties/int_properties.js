@@ -10,11 +10,12 @@
 const ValueProperty = require('./value_property');
 const _castFunctors = require('./primitive_type_casts');
 const _ = require('lodash');
-const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
-const Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-const Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
-const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const {
+  ConsoleUtils,
+  constants: { MSG },
+  Datastructures: { Uint64, Int64 }
+} = require('@fluid-experimental/property-common');
 
 /**
  * A primitive property for an signed 8 bit integer value.
@@ -25,7 +26,7 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  * @alias property-properties.Int8Property
  * @category Value Properties
  */
-var Int8Property = function(in_params) {
+var Int8Property = function (in_params) {
   ValueProperty.call(this, in_params);
   // default for this property type is '0'
   this._data = 0;
@@ -45,7 +46,7 @@ Int8Property.prototype._castFunctor = _castFunctors.Int8;
  * @alias property-properties.Int16Property
  * @category Value Properties
  */
-var Int16Property = function(in_params) {
+var Int16Property = function (in_params) {
   ValueProperty.call(this, in_params);
   // default for this property type is '0'
   this._data = 0;
@@ -65,7 +66,7 @@ Int16Property.prototype._castFunctor = _castFunctors.Int16;
  * @alias property-properties.Int32Property
  * @category Value Properties
  */
-var Int32Property = function(in_params) {
+var Int32Property = function (in_params) {
   ValueProperty.call(this, in_params);
   // default for this property type is '0'
   this._data = 0;
@@ -87,7 +88,7 @@ Int32Property.prototype._castFunctor = _castFunctors.Int32;
  * @abstract
  * @category Value Properties
  */
-var Integer64Property = function(in_params) {
+var Integer64Property = function (in_params) {
   ValueProperty.call(this, in_params);
   // default for this property type is '0, 0'
   this._data = new this.DataConstructor();
@@ -105,7 +106,7 @@ Integer64Property.prototype.DataConstructor = undefined;
  * @return {boolean} true if the value was actually changed
  * @throws if in_value is a string that contains characters other than numbers
  */
-Integer64Property.prototype._setValue = function(in_value, in_reportToView) {
+Integer64Property.prototype._setValue = function (in_value, in_reportToView) {
   var oldLowValue = this._data.getValueLow();
   var oldHighValue = this._data.getValueHigh();
 
@@ -126,14 +127,14 @@ Integer64Property.prototype._setValue = function(in_value, in_reportToView) {
 /**
  * @return {number} the higher 32 bit integer part
  */
-Integer64Property.prototype.getValueHigh = function() {
+Integer64Property.prototype.getValueHigh = function () {
   return this._data.getValueHigh();
 };
 
 /**
  * @return {number} the lower 32 bit integer part
  */
-Integer64Property.prototype.getValueLow = function() {
+Integer64Property.prototype.getValueLow = function () {
   return this._data.getValueLow();
 };
 
@@ -142,7 +143,7 @@ Integer64Property.prototype.getValueLow = function() {
  * @throws if in_high is not a number
  * @return {boolen} true if the value was actually changed
  */
-Integer64Property.prototype.setValueHigh = function(in_high) {
+Integer64Property.prototype.setValueHigh = function (in_high) {
   ConsoleUtils.assert(_.isNumber(in_high), MSG.IN_HIGH_MUST_BE_NUMBER + in_high);
   var changed = this._data.getValueHigh() !== in_high;
 
@@ -159,7 +160,7 @@ Integer64Property.prototype.setValueHigh = function(in_high) {
  * @throws if in_low is not a number
  * @return {boolen} true if the value was actually changed
  */
-Integer64Property.prototype.setValueLow = function(in_low) {
+Integer64Property.prototype.setValueLow = function (in_low) {
   ConsoleUtils.assert(_.isNumber(in_low), MSG.IN_LOW_MUST_BE_NUMBER + in_low);
   var changed = this._data.getValueLow() !== in_low;
 
@@ -174,7 +175,7 @@ Integer64Property.prototype.setValueLow = function(in_low) {
 /**
  * @inheritdoc
  */
-Integer64Property.prototype._deserialize = function(in_serializedObj, in_reportToView, in_filteringOptions) {
+Integer64Property.prototype._deserialize = function (in_serializedObj, in_reportToView, in_filteringOptions) {
   if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
     return undefined;
   } else {
@@ -188,7 +189,7 @@ Integer64Property.prototype._deserialize = function(in_serializedObj, in_reportT
 /**
  * @inheritdoc
  */
-Integer64Property.prototype._applyChangeset = function(in_changeSet, in_reportToView, in_filteringOptions) {
+Integer64Property.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions) {
   if (!ChangeSet.isEmptyChangeSet(in_changeSet)) {
     if (!_.isArray(in_changeSet)) {
       in_changeSet = in_changeSet.value;
@@ -215,8 +216,8 @@ Integer64Property.prototype._applyChangeset = function(in_changeSet, in_reportTo
  * @return {*} The serialized representation of this property
  * @private
  */
-Integer64Property.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
-                                                   in_dirtinessType, in_includeReferencedRepositories) {
+Integer64Property.prototype._serialize = function (in_dirtyOnly, in_includeRootTypeid,
+  in_dirtinessType, in_includeReferencedRepositories) {
   if (in_dirtyOnly) {
     if (this._isDirty(in_dirtinessType)) {
       return [this._data.getValueLow(), this._data.getValueHigh()];
@@ -237,28 +238,8 @@ var BIT32 = 4294967296;
  *      the base to use for representing numeric values.
  * @return {string} A string representing the specified Integer64 object.
  */
-Integer64Property.prototype.toString = function(in_radix) {
-  var radix = in_radix || 10;
-  ConsoleUtils.assert(_.isNumber(radix), MSG.IN_RADIX_MUST_BE_NUMBER + in_radix);
-  if (radix < 2 || 36 < radix) {
-    throw new Error(MSG.BASE_OUT_OF_RANGE + radix);
-  }
-  var high = this.getValueHigh();
-  var low = this.getValueLow();
-  var result = '';
-  var sign = !(this._data instanceof Uint64) && (high & 0x80000000);
-  if (sign) {
-    high = ~high;
-    low = BIT32 - low;
-  }
-  do {
-    var mod = (high % radix) * BIT32 + low;
-    high = Math.floor(high / radix);
-    low = Math.floor(mod / radix);
-    result = (mod % radix).toString(radix) + result;
-  } while (high || low);
-
-  return sign ? '-' + result : result;
+Integer64Property.prototype.toString = function (in_radix) {
+  return this._data.toString(in_radix);
 };
 
 /**
@@ -272,7 +253,7 @@ Integer64Property.prototype.toString = function(in_radix) {
  * @throws if the property is a Uint64 property and in_string is a negative number
  * @throws if in_string contains characters other than numbers
  */
-Integer64Property.prototype.fromString = function(in_string, in_radix) {
+Integer64Property.prototype.fromString = function (in_string, in_radix) {
   ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
   var int = this._castFunctor(in_string, in_radix);
 
@@ -289,7 +270,7 @@ Integer64Property.prototype.fromString = function(in_string, in_radix) {
  * @alias property-properties.Int64Property
  * @category Value Properties
  */
-var Int64Property = function(in_params) {
+var Int64Property = function (in_params) {
   Integer64Property.call(this, in_params);
 };
 Int64Property.prototype = Object.create(Integer64Property.prototype);
@@ -306,7 +287,7 @@ Int64Property.prototype._castFunctor = _castFunctors.Int64;
  * @alias property-properties.Uint64Property
  * @category Value Properties
  */
-var Uint64Property = function(in_params) {
+var Uint64Property = function (in_params) {
   Integer64Property.call(this, in_params);
 };
 Uint64Property.prototype = Object.create(Integer64Property.prototype);

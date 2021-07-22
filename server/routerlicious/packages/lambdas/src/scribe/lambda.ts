@@ -363,8 +363,10 @@ export class ScribeLambda implements IPartitionLambda {
             } catch (error) {
                 this.context.log?.error(`Protocol error ${error}`,
                     {
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
                     });
             }
         }
@@ -438,12 +440,24 @@ export class ScribeLambda implements IPartitionLambda {
         }
     }
 
+    /**
+     * Protocol head is the sequence number of the last summary
+     * This method updates the protocol head to the new summary sequence number
+     * @param protocolHead The sequence number of the new summary
+     */
     private async updateProtocolHead(protocolHead: number) {
-        if (this.serviceConfiguration.scribe.nackMessages.enable &&
-            this.serviceConfiguration.scribe.nackMessages.maxOps >= (this.sequenceNumber - this.protocolHead)) {
-            // we were over the limit, so we must have been nacking messages
-            // tell deli to stop
-            await this.sendNackMessage(undefined);
+        if (this.serviceConfiguration.scribe.nackMessages.enable) {
+            const opsSincePreviousSummary = this.sequenceNumber - this.protocolHead;
+            if (opsSincePreviousSummary >= this.serviceConfiguration.scribe.nackMessages.maxOps) {
+                // we were over the limit, so we must have been nacking messages
+
+                // verify this new summary will get out us of this state
+                const opsSinceNewSummary = this.sequenceNumber - protocolHead;
+                if (opsSinceNewSummary < this.serviceConfiguration.scribe.nackMessages.maxOps) {
+                    // tell deli to stop nacking future messages
+                    await this.sendNackMessage(undefined);
+                }
+            }
         }
 
         this.protocolHead = protocolHead;

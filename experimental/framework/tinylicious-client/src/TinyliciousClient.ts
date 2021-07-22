@@ -8,12 +8,14 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
-} from "@fluid-experimental/fluid-static";
+    RootDataObject,
+} from "@fluid-experimental/fluid-framework";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
@@ -23,13 +25,14 @@ import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,
     TinyliciousContainerServices,
+    TinyliciousResources,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
 /**
- * TinyliciousClientInstance provides the ability to have a Fluid object backed by a Tinylicious service
+ * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
  */
-export class TinyliciousClientInstance {
+export class TinyliciousClient {
     public readonly documentServiceFactory: IDocumentServiceFactory;
     public readonly urlResolver: IUrlResolver;
 
@@ -37,6 +40,7 @@ export class TinyliciousClientInstance {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
             serviceConnectionConfig?.port,
+            serviceConnectionConfig?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             tokenProvider,
@@ -46,7 +50,7 @@ export class TinyliciousClientInstance {
     public async createContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -61,7 +65,7 @@ export class TinyliciousClientInstance {
     public async getContainer(
         serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
+    ): Promise<TinyliciousResources> {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -75,11 +79,12 @@ export class TinyliciousClientInstance {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]>  {
-        const rootDataObject = (await container.request({ url: "/" })).value;
-        const fluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices = this.getContainerServices(container);
-        return [fluidContainer, containerServices];
+    ): Promise<TinyliciousResources>  {
+        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
+        const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
+        const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
+        return tinyliciousResources;
     }
 
     private getContainerServices(
@@ -119,63 +124,7 @@ export class TinyliciousClientInstance {
         } else {
             // Request must be appropriate and parseable by resolver.
             container = await loader.resolve({ url: tinyliciousContainerConfig.id });
-            // If we didn't create the container properly, then it won't function correctly.  So we'll throw if we got a
-            // new container here, where we expect this to be loading an existing container.
-            if (container.existing === undefined) {
-                throw new Error("Attempted to load a non-existing container");
-            }
         }
         return container;
-    }
-}
-
-/**
- * TinyliciousClient static class with singular global instance that lets the developer define
- * all Container interactions with the Tinylicious service
- */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class TinyliciousClient {
-    private static globalInstance: TinyliciousClientInstance | undefined;
-
-    static init(serviceConnectionConfig?: TinyliciousConnectionConfig) {
-        if (TinyliciousClient.globalInstance) {
-            console.log(
-                `TinyliciousClient has already been initialized. Using existing instance of
-                TinyliciousClient instead.`,
-            );
-        }
-        TinyliciousClient.globalInstance = new TinyliciousClientInstance(
-            serviceConnectionConfig,
-        );
-    }
-
-    static async createContainer(
-        serviceConfig: TinyliciousContainerConfig,
-        objectConfig: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
-        if (!TinyliciousClient.globalInstance) {
-            throw new Error(
-                "TinyliciousClient has not been properly initialized before attempting to create a container",
-            );
-        }
-        return TinyliciousClient.globalInstance.createContainer(
-            serviceConfig,
-            objectConfig,
-        );
-    }
-
-    static async getContainer(
-        serviceConfig: TinyliciousContainerConfig,
-        objectConfig: ContainerSchema,
-    ): Promise<[container: FluidContainer, containerServices: TinyliciousContainerServices]> {
-        if (!TinyliciousClient.globalInstance) {
-            throw new Error(
-                "TinyliciousClient has not been properly initialized before attempting to get a container",
-            );
-        }
-        return TinyliciousClient.globalInstance.getContainer(
-            serviceConfig,
-            objectConfig,
-        );
     }
 }

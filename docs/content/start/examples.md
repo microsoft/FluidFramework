@@ -3,6 +3,7 @@ title: Examples
 menuPosition: 4
 aliases:
   - "/docs/get-started/examples/"
+  - "/docs/start/examples/"
 ---
 
 We've included several example apps in a [GitHub repository](https://github.com/microsoft/FluidExamples) to demonstrate
@@ -16,7 +17,7 @@ The [Fluid Draft.js](https://github.com/microsoft/FluidExamples/tree/main/draft-
 Fluid Framework to take an existing project and make it collaborative. This example also demonstrates
 how to build an app that supports real-time updates in a rich text editor.
 
-Try out Draft.js in the [Playground](/playground/?path=/docs/react-demos-draft-js--demo).
+[Click here to try out Draft.js in the Playground.](/playground/?path=/docs/react-demos-draft-js--demo)
 
 ## Brainstorming
 
@@ -27,7 +28,7 @@ shows how simple experiences become compelling when you make them collaborative.
 maps (Shared Maps) to update the state of sticky notes as well as keep track of who added which ideas and who
 voted for those ideas.
 
-Try out Brainstorm in the [Playground](/playground/?path=/docs/react-demos-brainstorm--demo).
+[Click here to try out Brainstorm in the Playground.](/playground/?path=/docs/react-demos-brainstorm--demo)
 
 ## Sudoku
 
@@ -37,4 +38,4 @@ margin-right: auto;">
 The [Sudoku](https://github.com/microsoft/FluidExamples/tree/main/sudoku) example demonstrates how to build
 a collaborative game. This example includes key features like presence.
 
-Try out Sudoku in the [Playground](/playground/?path=/docs/react-demos-sudoku--demo).
+[Click here to try out Sudoku in the Playground.](/playground/?path=/docs/react-demos-sudoku--demo)

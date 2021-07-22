@@ -19,6 +19,7 @@ async function main() {
         .option("-dbg, --debug", "Debug child processes via --inspect-brk")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
+        .option("-b, --browserAuth", "Enables browser auth which may require a user to open a url in a browser.")
         .parse(process.argv);
 
     const driver: TestDriverTypes = commander.driver;
@@ -28,6 +29,7 @@ async function main() {
     const log: string | undefined = commander.log;
     const verbose: true | undefined = commander.verbose;
     const seed: number | undefined = commander.seed;
+    const browserAuth: true | undefined = commander.browserAuth;
 
     const profile = getProfile(profileArg);
 
@@ -38,7 +40,7 @@ async function main() {
     await orchestratorProcess(
             driver,
             { ...profile, name: profileArg },
-            { testId, debug, verbose, seed });
+            { testId, debug, verbose, seed, browserAuth });
 }
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
@@ -46,7 +48,7 @@ async function main() {
 async function orchestratorProcess(
     driver: TestDriverTypes,
     profile: ILoadTestConfig & { name: string },
-    args: { testId?: string, debug?: true, verbose?: true, seed?: number },
+    args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
 ) {
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
@@ -54,7 +56,8 @@ async function orchestratorProcess(
     const testDriver = await createTestDriver(
         driver,
         seed,
-        undefined);
+        undefined,
+        args.browserAuth);
 
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined
@@ -62,9 +65,7 @@ async function orchestratorProcess(
         : await initialize(testDriver, seed);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
-    console.log(`Connecting to ${args.testId ? "existing" : "new"} with seed 0x${seed.toString(16)}`);
-    console.log(`Container targeting with url: ${url }`);
-    console.log("Seed: ", seedArg);
+    console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
     console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
@@ -78,17 +79,17 @@ async function orchestratorProcess(
             "--url", url,
             "--seed", seedArg,
         ];
-        if (args.debug) {
+        if (args.debug === true) {
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
         }
-        if(args.verbose) {
+        if(args.verbose === true) {
             childArgs.push("--verbose");
-            console.log(childArgs.join(" "));
         }
 
         runnerArgs.push(childArgs);
     }
+    console.log(runnerArgs[0].join(" "));
     try{
         await Promise.all(runnerArgs.map(async (childArgs)=>{
             const process = child_process.spawn(
