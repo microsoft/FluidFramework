@@ -19,41 +19,13 @@ import {
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
-export type RaceTimerResult<T> = {
-    /**
-     * Result will be "cancel" if it was canceled by a call to clear.
-     * Result will be "timeout" if the timeout elapsed.
-     */
-    readonly result: IPromiseTimerResult["timerResult"];
-    readonly error?: undefined;
-} | {
-    /**
-     * Result will be "timeoutError" for unhandled timer error.
-     * Result will be "error" for promise rejection.
-     */
-    readonly result: "timeoutError" | "error";
-    readonly error: any;
-} | {
-    /**
-     * Result will be done with the promise value if it succeeds
-     * before the timer expires or is canceled.
-     */
-    readonly result: "done";
-    readonly value: T;
-};
 /** Helper function to wait for a promise or PromiseTimer to elapse. */
 export const raceTimer = async <T>(
     promise: Promise<T>,
     timer: Promise<IPromiseTimerResult>,
-): Promise<RaceTimerResult<T>> => Promise.race([
-    promise.then(
-        (value) => ({ result: "done", value } as const),
-        (error) => ({ result: "error", error } as const),
-    ),
-    timer.then(
-        (result) => ({ result: result.timerResult } as const),
-        (error) => ({ result: "timeoutError", error } as const),
-    ),
+): Promise<{ result: "done"; value: T } | { result: IPromiseTimerResult["timerResult"] }> => Promise.race([
+    promise.then((value) => ({ result: "done", value } as const)),
+    timer.then(({ timerResult: result }) => ({ result } as const)),
 ]);
 
 // Send some telemetry if generate summary takes too long
@@ -113,21 +85,11 @@ const summarizeErrors = {
      */
     summaryOpWaitTimeout: "Timeout while waiting for summarize op broadcast",
     /**
-     * An unexpected error was encountered while waiting for the summarize op
-     * to be broadcast. This may be a promise rejection or timer cancellation.
-     */
-    summaryOpWaitFailure: "Unexpected error while waiting for summarize op broadcast",
-    /**
      * The summaryAckWaitTimeout time has elapsed before receiving either a
      * summaryAck or summaryNack op from the server in response to this
      * summarize attempt. It is expected that the server should respond.
      */
     summaryAckWaitTimeout: "Timeout while waiting for summaryAck/summaryNack op",
-    /**
-     * An unexpected error was encountered while waiting for the summaryAck/summaryNack
-     * op to be sent from the server. This may be a promise rejection or timer cancellation.
-     */
-    summaryAckWaitFailure: "Unexpected error while waiting for summaryAck/summaryNack op",
     /**
      * The server responded with a summaryNack op, thus rejecting this
      * summarize attempt.
@@ -303,10 +265,8 @@ export class SummaryGenerator {
 
             // Wait for broadcast
             const waitBroadcastResult = await raceTimer(summary.waitBroadcast(), pendingTimeoutP);
-            if (waitBroadcastResult.result === "timeout") {
+            if (waitBroadcastResult.result !== "done") {
                 return fail("summaryOpWaitTimeout");
-            } else if (waitBroadcastResult.result !== "done") {
-                return fail("summaryOpWaitFailure", waitBroadcastResult.error, { result: waitBroadcastResult.result });
             }
             const summarizeOp = waitBroadcastResult.value;
 
@@ -326,10 +286,8 @@ export class SummaryGenerator {
 
             // Wait for ack/nack
             const waitAckNackResult = await raceTimer(summary.waitAckNack(), pendingTimeoutP);
-            if (waitAckNackResult.result === "timeout") {
+            if (waitAckNackResult.result !== "done") {
                 return fail("summaryAckWaitTimeout");
-            } else if (waitAckNackResult.result !== "done") {
-                return fail("summaryAckWaitFailure", waitAckNackResult.error, { result: waitAckNackResult.result });
             }
             const ackNackOp = waitAckNackResult.value;
             this.pendingAckTimer.clear();
