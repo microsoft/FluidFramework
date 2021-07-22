@@ -14,7 +14,6 @@ import {
     IFluidErrorBuilder,
     hasErrorType,
     isFluidError,
-    ExtensibleObject,
     isILoggingError,
     isErrorLike,
     IFluidErrorMetadata,
@@ -71,22 +70,25 @@ const isRwLoggingError = (x: any): x is RwLoggingError =>
     typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
 
 /**
- * Mixes in the given properties, accessible henceforth via ILoggingError.getTelemetryProperties
+ * NOTE: Consider normalizeError before opting to call this directly
+ * Mixes in the given properties to the given error object, then accessible via ILoggingError.getTelemetryProperties
+ * @param errorObject - An object (MUST be non-null non-array object type, not frozen) to add telemetry features to
+ * @param props - The telemetry props to add to the errorObject
  * @returns the same object that was passed in, now also implementing ILoggingError.
  */
-export function mixinTelemetryProps<T extends Record<string, unknown>>(
-    error: T,
+export function mixinTelemetryProps<T>(
+    errorObject: T,
     props: ITelemetryProperties,
 ): T & ILoggingError {
-    assert(isRegularObject(error) && !Object.isFrozen(error), "Cannot mixin Telemetry Props");
+    assert(isRegularObject(errorObject) && !Object.isFrozen(errorObject), "Cannot mixin Telemetry Props");
 
-    if (isRwLoggingError(error)) {
-        error.addTelemetryProperties(props);
-        return error;
+    if (isRwLoggingError(errorObject)) {
+        errorObject.addTelemetryProperties(props);
+        return errorObject;
     }
 
     // Even though it's not exposed, fully implement RwLoggingError for subsequent calls to mixinTelemetryProps
-    const loggingError = error as T & RwLoggingError;
+    const loggingError = errorObject as T & RwLoggingError;
 
     const propsForError = {...props};
     loggingError.getTelemetryProperties = () => propsForError;
@@ -114,7 +116,7 @@ export function mixinTelemetryProps<T extends Record<string, unknown>>(
     const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
 
     const newError = newErrorFn(message);
-    mixinTelemetryProps(newError as ExtensibleObject<T>, props);
+    mixinTelemetryProps(newError, props);
 
     if (stack !== undefined) {
         Object.assign(newError, { stack });

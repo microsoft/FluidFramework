@@ -39,8 +39,3 @@ export const isErrorLike = (x: any): x is Error =>
     typeof(x?.message) === "string" &&
     typeof(x?.name) === "string" &&
     (x?.stack === undefined || typeof(x?.stack) === "string");
-
-/**
- * This type adds Record, and should only be used on a proper Object
- * that can accept additional properties being added */
-export type ExtensibleObject<T> = T & Record<string, unknown>;
