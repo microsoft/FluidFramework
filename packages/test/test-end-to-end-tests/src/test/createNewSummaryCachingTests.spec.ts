@@ -9,10 +9,9 @@ import {
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -22,9 +21,12 @@ class TestDataObject extends DataObject {
     public get _root() {
         return this.root;
     }
+    public get _context() {
+        return this.context;
+    }
 }
 
-describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
+describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -57,11 +59,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         flattenRuntimeOptions(runtimeOptions),
     );
 
-    let mainContainer: IContainer;
     let mockLogger: MockLogger;
-
-    const createContainer = async (logger): Promise<IContainer> => provider.createContainer(runtimeFactory, { logger });
-    const loadContainer = async (logger): Promise<IContainer> => provider.loadContainer(runtimeFactory, { logger });
 
     beforeEach(function() {
         provider = getTestObjectProvider();
@@ -74,18 +72,21 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
     it("should fetch from cache when second client loads the container", async () => {
         mockLogger = new MockLogger();
         // Create a Container for the first client.
-        mainContainer = await createContainer(mockLogger);
-        await requestFluidObject<TestDataObject>(mainContainer, "default");
+        const mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
+        assert.strictEqual(mainContainer.attachState, "Attached", "container was not attached");
+        const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
+        await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+
         // second client load the container
-        await loadContainer(mockLogger);
+        const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
+        const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
+        assert(defaultDataStore !== undefined, "data store within loaded container is not loaded");
         await provider.ensureSynchronized();
 
-        for (const event of mockLogger.events) {
-            if (event.eventName === "fluid:telemetry:OdspDriver:ObtainSnapshot_end") {
-                assert.strictEqual(event.method, "cache", `second client fetched snapshot with ${event.method} method
-                    instead of from cache`);
-                break;
-            }
-        }
+        const fetchEvent = mockLogger.events.find((event) =>
+            event.eventName === "fluid:telemetry:OdspDriver:ObtainSnapshot_end");
+            assert(fetchEvent !== undefined, "odsp obtain snapshot event does not exist ");
+            assert.strictEqual(fetchEvent.method, "cache",
+                `second client fetched snapshot with ${fetchEvent.method} method instead of from cache`);
     });
 });
