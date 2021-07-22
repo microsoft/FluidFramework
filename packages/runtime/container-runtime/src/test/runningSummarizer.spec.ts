@@ -13,14 +13,16 @@ import {
     ISummaryNack,
     ISummaryProposal,
     MessageType,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../runningSummarizer";
-import { SummarizerStopReason } from "../summarizerTypes";
+import { ISummarizerOptions, SummarizerStopReason } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
+import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
 describe("Runtime", () => {
-    describe("Container Runtime", () => {
+    describe("Summarization", () => {
         describe("RunningSummarizer", () => {
             let stopCall: number;
             let runCount: number;
@@ -34,8 +36,8 @@ describe("Runtime", () => {
             const summarizerClientId = "test";
             const onBehalfOfClientId = "behalf";
             let lastRefSeq = 0;
-            let lastClientSeq = -1000; // negative/decrement for test
-            let lastSummarySeq = 0; // negative/decrement for test
+            let lastClientSeq: number;
+            let lastSummarySeq: number;
             const summaryConfig: ISummaryConfiguration = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
@@ -122,7 +124,9 @@ describe("Runtime", () => {
                     `${errorPrefix}unexpected refreshLatestAck count`);
             }
 
-            const startRunningSummarizer = async (): Promise<void> => {
+            const startRunningSummarizer = async (
+                summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
+            ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
                     summarizerClientId,
                     onBehalfOfClientId,
@@ -130,7 +134,7 @@ describe("Runtime", () => {
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
                     {
-                        generateSummary: async (options) => {
+                        submitSummary: async (options) => {
                             runCount++;
 
                             const { fullTree = false, refreshLatestAck = false } = options;
@@ -154,6 +158,7 @@ describe("Runtime", () => {
                                 generateDuration: 0,
                                 uploadDuration: 0,
                                 submitOpDuration: 0,
+                                summaryTree: { type: SummaryType.Tree, tree: {} },
                                 summaryStats: {
                                     treeNodeCount: 0,
                                     blobNodeCount: 0,
@@ -163,6 +168,7 @@ describe("Runtime", () => {
                                     summarizedDataStoreCount: 0,
                                     unreferencedBlobSize: 0,
                                 },
+                                gcData: { gcNodes: {} },
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
                             } as const;
@@ -171,10 +177,10 @@ describe("Runtime", () => {
                             stopCall++;
                         },
                     },
-                    0,
-                    { refSequenceNumber: 0, summaryTime: Date.now() },
+                    new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
                     summaryCollection,
+                    summarizerOptions,
                 );
             };
 
@@ -194,6 +200,8 @@ describe("Runtime", () => {
                 fullTreeRunCount = 0;
                 refreshLatestAckRunCount = 0;
                 lastRefSeq = 0;
+                lastClientSeq = -1000; // negative/decrement for test
+                lastSummarySeq = 0; // negative/decrement for test
                 mockLogger = new MockLogger();
                 mockDeltaManager = new MockDeltaManager();
                 summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
@@ -348,6 +356,26 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0);
                     deferGenerateSummary.resolve();
                 });
+
+                it("Should summarize one last time before closing >50 ops", async () => {
+                    await emitNextOp(51); // hard-coded to 50 for now
+                    const stopP = summarizer.waitStop();
+                    await flushPromises();
+                    await emitAck();
+                    await stopP;
+
+                    assertRunCounts(1, 0, 0, "should perform lastSummary");
+                });
+
+                it("Should not summarize one last time before closing <=50 ops", async () => {
+                    await emitNextOp(50); // hard-coded to 50 for now
+                    const stopP = summarizer.waitStop();
+                    await flushPromises();
+                    await emitAck();
+                    await stopP;
+
+                    assertRunCounts(0, 0, 0, "should not perform lastSummary");
+                });
             });
 
             describe("Safe Retries", () => {
@@ -486,10 +514,120 @@ describe("Runtime", () => {
                 });
             });
 
+            describe("On-demand Summaries", () => {
+                beforeEach(async () => {
+                    await startRunningSummarizer();
+                });
+
+                it("Should create an on-demand summary", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+
+                    const submitResult = await result.summarySubmitted;
+                    assertRunCounts(1, 0, 0, "on-demand should run");
+
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, 2,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -1,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    await emitAck();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(ackNackResult.success, "on-demand summary should succeed");
+                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                        "should be ack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                        "summary ack handle should be test-ack-handle");
+                });
+
+                it("Should return already running for on-demand summary", async () => {
+                    // Should start running by heuristics
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert(result.alreadyRunning !== undefined, "summary should already be running");
+
+                    let resolved = false;
+                    result.alreadyRunning.then(
+                        () => resolved = true,
+                        () => { throw Error("already running promise should not reject"); });
+
+                    await flushPromises();
+                    assert(resolved === false, "already running promise should not resolve yet");
+
+                    await emitAck();
+                    assert((resolved as boolean) === true, "now already running promise should resolve now");
+                });
+
+                it("On-demand summary should fail on nack", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+
+                    const submitResult = await result.summarySubmitted;
+                    assertRunCounts(1, 0, 0, "on-demand should run");
+
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, 2,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -1,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    await emitNack();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(!ackNackResult.success, "on-demand summary should fail");
+                    assert(ackNackResult.data?.summaryAckNackOp.type === MessageType.SummaryNack,
+                        "should be nack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.errorMessage === "test-nack",
+                        "summary nack error should be test-nack");
+                });
+            });
+
             describe("Summary Start", () => {
                 it("Should summarize immediately if summary ack is missing at startup", async () => {
                     assertRunCounts(0, 0, 0);
-                    // Simulate as summary op was in opstream.
+                    // Simulate as summary op was in op stream.
                     const summaryTimestamp = Date.now();
                     emitBroadcast(summaryTimestamp);
 
@@ -530,6 +668,69 @@ describe("Runtime", () => {
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_end", summaryGenTag: runCount, reason: "maxOps" },
                     ]), "unexpected log sequence 3");
+                });
+            });
+
+            describe("Disabled Heuristics", () => {
+                it("Should not summarize after time or ops", async () => {
+                    await startRunningSummarizer({ disableHeuristics: true });
+
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after maxOps");
+
+                    await tickAndFlushPromises(summaryConfig.idleTime + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after idleTime");
+
+                    await tickAndFlushPromises(summaryConfig.maxTime + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after maxTime");
+
+                    await emitNextOp(summaryConfig.maxOps * 3 + 10000);
+                    await tickAndFlushPromises(summaryConfig.maxTime * 3 + summaryConfig.idleTime * 3 + 10000);
+                    assertRunCounts(0, 0, 0, "make extra sure");
+                });
+
+                it("Should not summarize before closing", async () => {
+                    await startRunningSummarizer({ disableHeuristics: true });
+
+                    await emitNextOp(51); // hard-coded to 50 for now
+                    const stopP = summarizer.waitStop();
+                    await flushPromises();
+                    await emitAck();
+                    await stopP;
+
+                    assertRunCounts(0, 0, 0, "should not perform lastSummary");
+                });
+
+                it("Should not summarize immediately if summary ack is missing at startup when disabled", async () => {
+                    assertRunCounts(0, 0, 0);
+                    // Simulate as summary op was in op stream.
+                    const summaryTimestamp = Date.now();
+                    emitBroadcast(summaryTimestamp);
+
+                    let startStatus: "starting" | "started" | "failed" = "starting";
+                    startRunningSummarizer({ disableHeuristics: true }).then(
+                        () => startStatus = "started", () => startStatus = "failed");
+                    await flushPromises();
+                    assert.strictEqual(startStatus, "starting",
+                        "RunningSummarizer should still be starting since outstanding summary op");
+
+                    // Still should be waiting
+                    await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime - 1);
+                    assert.strictEqual(startStatus, "starting",
+                        "RunningSummarizer should still be starting since timestamp is within maxAckWaitTime");
+
+                    // Emit next op after maxAckWaitTime
+                    // clock.tick(summaryConfig.maxAckWaitTime + 1000);
+                    await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime);
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:MissingSummaryAckFoundByOps" },
+                    ]), "unexpected log sequence 1");
+
+                    assert.strictEqual(startStatus, "started",
+                        "RunningSummarizer should be started from the above op");
+
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(0, 0, 0, "Should not run summarizer");
                 });
             });
         });

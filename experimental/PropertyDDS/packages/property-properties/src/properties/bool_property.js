@@ -18,10 +18,10 @@ const _castFunctors = require('./primitive_type_casts');
  * @alias property-properties.BoolProperty
  * @category Value Properties
  */
-var BoolProperty = function(in_params) {
-  ValueProperty.call( this, in_params );
-  // default for this property type is 'false'
-  this._data = false;
+var BoolProperty = function (in_params) {
+    ValueProperty.call(this, in_params);
+    // default for this property type is 'false'
+    this._data = false;
 };
 BoolProperty.prototype = Object.create(ValueProperty.prototype);
 

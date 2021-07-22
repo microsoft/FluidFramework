@@ -228,7 +228,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
         await assert.rejects(
             container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
-            /(attaching container with blobs is not yet implemented)|(create empty file not supported)/,
+            /(0x206)|(0x202)/,
         );
     });
 });
