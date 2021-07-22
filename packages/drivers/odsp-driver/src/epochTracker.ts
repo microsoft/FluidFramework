@@ -252,11 +252,13 @@ export class EpochTracker implements IPersistedFileCache {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
-                normalizeError(epochError, { props: {
-                    fromCache,
-                    clientEpoch: this.fluidEpoch,
-                    fetchType,
-                }});
+                normalizeError(epochError,
+                    { props: {
+                        fromCache,
+                        clientEpoch: this.fluidEpoch,
+                        fetchType,
+                    }},
+                    true /* strict */);
                 this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.removeEntries();

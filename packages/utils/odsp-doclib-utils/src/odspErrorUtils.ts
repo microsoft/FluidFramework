@@ -183,7 +183,7 @@ export function enrichOdspError(
             props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
-    normalizeError(error, { props });
+    normalizeError(error, { props }, true /* strict */);
     return error;
 }
 

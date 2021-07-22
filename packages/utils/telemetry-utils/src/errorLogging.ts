@@ -56,6 +56,7 @@ import {
  * @param annotations - Annotations to apply to the normalized error:
  * annotations.props - telemetry props to log with the error
  * annotations.errorCodeIfNone - fluidErrorCode to mention if error isn't already an IFluidErrorBase
+ * @param strict - If true, then throw if the given error can't be patched. Otherwise, create and return a new object
  */
  export function normalizeError(
     error: unknown,
@@ -63,6 +64,7 @@ import {
         props?: ITelemetryProperties,
         errorCodeIfNone?: string,
     } = {},
+    strict: boolean = false,
 ): IFluidErrorBase {
     // If we already have a valid Fluid Error, then just mixin telemetry props
     if (isFluidError(error)) {
@@ -79,6 +81,8 @@ import {
             ? error.name
             : typeof(error);
     } else {
+        assert(!strict, "normalizeError cannot patch the given non-object or frozen error (strict: true)");
+
         // We can't patch error itself, so wrap it in a new LoggingError for the builder
         const newErrorFn = (errMsg: string) => new LoggingError(errMsg);
         fluidErrorBuilder = wrapError<LoggingError>(error, newErrorFn) as FluidErrorBuilder;

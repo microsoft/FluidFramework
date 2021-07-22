@@ -106,7 +106,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             : wrapError(originalError, newErrorFn);
 
         if (message !== undefined) {
-            normalizeError(error, { props: extractSafePropertiesFromMessage(message) });
+            normalizeError(error, { props: extractSafePropertiesFromMessage(message) }, true /* strict */);
         }
         return error;
     }
@@ -139,7 +139,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
         : wrapError(originalError, newErrorFn);
 
     if (props !== undefined) {
-        normalizeError(error, { props });
+        normalizeError(error, { props }, true /* strict */);
     }
     return error;
 }
