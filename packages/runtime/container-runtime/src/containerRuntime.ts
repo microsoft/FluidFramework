@@ -929,7 +929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
         if (
             this.runtimeOptions.summaryOptions.generateSummaries !== false
-            && this.context.clientDetails.type !== summarizerClientType
+            && SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
         ) {
             // Create the SummaryManager and mark the initial state
             this.summaryManager = new SummaryManager(
