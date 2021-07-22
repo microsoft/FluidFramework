@@ -274,7 +274,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public summarizeOnDemand(
         reason: string,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
     ): OnDemandSummarizeResult {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
             throw Error("Summarizer is not running or already disposed.");

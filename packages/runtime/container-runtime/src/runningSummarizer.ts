@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
-    IGenerateSummaryOptions,
+    ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
     OnDemandSummarizeResult,
@@ -317,7 +317,7 @@ export class RunningSummarizer implements IDisposable {
 
     public summarizeOnDemand(
         reason: string,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
     ): OnDemandSummarizeResult {
         // Check for concurrent summary attempts. If one is found,
         // return a promise that caller can await before trying again.

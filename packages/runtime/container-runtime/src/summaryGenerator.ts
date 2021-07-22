@@ -199,7 +199,7 @@ const summarizeErrors = {
 }
 
 class SummarizeResultBuilder {
-    public readonly summarySubmitted = new Deferred<SummarizeResultPart<GenerateSummaryResult>>();
+    public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
     public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
     public fail(message: string, error: any) {

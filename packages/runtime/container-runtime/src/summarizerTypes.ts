@@ -160,7 +160,7 @@ export type SummarizeResultPart<T> = {
 
 export interface ISummarizeResults {
     /** Resolves when we generate, upload, and submit the summary. */
-    readonly summarySubmitted: Promise<SummarizeResultPart<GenerateSummaryResult>>;
+    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
     /** Resolves when we observe our summarize op broadcast. */
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     /** Resolves when we receive a summaryAck or summaryNack. */
@@ -218,6 +218,6 @@ export interface ISummarizer
     /** Attempts to generate a summary on demand. */
     summarizeOnDemand(
         reason: string,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
     ): OnDemandSummarizeResult;
 }
