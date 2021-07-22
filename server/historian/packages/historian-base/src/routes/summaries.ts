@@ -26,18 +26,18 @@ export function create(
         throttleIdSuffix: utils.Constants.throttleIdSuffix,
     };
 
-    async function createSnapshot(
+    async function createSummary(
         tenantId: string,
         authorization: string,
         params: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
-        return service.createSnapshot(params);
+        return service.createSummary(params);
     }
 
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const commitP = createSnapshot(request.params.tenantId, request.get("Authorization"), request.body);
+            const commitP = createSummary(request.params.tenantId, request.get("Authorization"), request.body);
 
             utils.handleResponse(
                 commitP,
