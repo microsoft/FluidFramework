@@ -8,12 +8,12 @@ import { Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframe
 import { ISummaryConfiguration, MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    GenerateSummaryResult,
     IAckNackSummaryResult,
     IBroadcastSummaryResult,
-    IGenerateSummaryOptions,
+    ISubmitSummaryOptions,
     ISummarizeResults,
     ISummarizerInternalsProvider,
+    SubmitSummaryResult,
     SummarizeResultPart,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
@@ -95,7 +95,7 @@ const summarizeErrors = {
      * it to storage, or submitting the op. It could be a result of
      * the client becoming disconnected while generating or an actual error.
      */
-    generateSummaryFailure: "Error while generating or submitting summary",
+    submitSummaryFailure: "Error while generating, uploading, or submitting summary",
     /**
      * The summaryAckWaitTimeout time has elapsed before receiving the summarize op
      * sent by this summarize attempt. It is expected to be broadcast quickly.
@@ -199,7 +199,7 @@ const summarizeErrors = {
 }
 
 class SummarizeResultBuilder {
-    public readonly summarySubmitted = new Deferred<SummarizeResultPart<GenerateSummaryResult>>();
+    public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
     public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
     public fail(message: string, error: any) {
@@ -230,7 +230,7 @@ export class SummaryGenerator {
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristics: SummarizerHeuristics,
-        private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
+        private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "submitSummary">,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
@@ -250,7 +250,7 @@ export class SummaryGenerator {
      */
     public summarize(
         reason: SummarizeReason,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
     ): ISummarizeResults {
         ++this.summarizeCount;
         const resultsBuilder = new SummarizeResultBuilder();
@@ -280,7 +280,7 @@ export class SummaryGenerator {
 
     private async summarizeCore(
         reason: SummarizeReason,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
         resultsBuilder: SummarizeResultBuilder,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;
@@ -307,10 +307,10 @@ export class SummaryGenerator {
         // Wait to generate and send summary
         this.summarizeTimer.start();
         // Use record type to prevent unexpected value types
-        let summaryData: GenerateSummaryResult | undefined;
+        let summaryData: SubmitSummaryResult | undefined;
         let generateTelemetryProps: Record<string, string | number | boolean | undefined> = {};
         try {
-            summaryData = await this.internalsProvider.generateSummary({
+            summaryData = await this.internalsProvider.submitSummary({
                 fullTree,
                 refreshLatestAck,
                 summaryLogger: this.logger,
@@ -351,10 +351,10 @@ export class SummaryGenerator {
 
             this.logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
             if (summaryData.stage !== "submit") {
-                return fail("generateSummaryFailure", summaryData.error, generateTelemetryProps);
+                return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
             }
         } catch (error) {
-            return fail("generateSummaryFailure", error, generateTelemetryProps);
+            return fail("submitSummaryFailure", error, generateTelemetryProps);
         } finally {
             this.heuristics.recordAttempt(summaryData?.referenceSequenceNumber);
             this.summarizeTimer.clear();
