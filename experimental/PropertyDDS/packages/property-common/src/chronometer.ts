@@ -1,14 +1,12 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 /**
  * @fileoverview A chronometer implementation backed by a high resolution timer. Implementation
  *   falls back to milliseconds precision when high resolution timers are not supported.
  */
-
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 declare let process: any;
 

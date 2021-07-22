@@ -1,7 +1,7 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 export * from "./constants";
 export * from "./consoleUtils";
@@ -13,3 +13,4 @@ export * from "./deferredPromise";
 export * from "./deterministicRandomGenerator";
 export * from "./hashCalculator";
 export * from "./datastructures";
+export { EventEmitter } from "events";

@@ -1,9 +1,9 @@
-/* eslint-disable no-bitwise */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-unused-expressions */
+
+/* eslint-disable no-bitwise */
 /* globals assert */
 /**
  * @fileoverview Tests the functions exported by error_objects/http_error_no_stack.js

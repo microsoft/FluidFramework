@@ -1,8 +1,9 @@
-/* eslint-disable no-bitwise */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable no-bitwise */
 
 /**
  * @fileoverview Tests the functions exported by error_objects/operation_error.js

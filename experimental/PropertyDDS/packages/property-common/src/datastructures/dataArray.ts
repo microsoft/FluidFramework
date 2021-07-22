@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 /**
  @fileoverview The data arrays definition file.
