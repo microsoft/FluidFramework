@@ -30,6 +30,7 @@ import {
     ISummarizerInternalsProvider,
     ISummarizerRuntime,
     ISummarizingWarning,
+    OnDemandSummarizeResult,
     SummarizerStopReason,
 } from "./summarizerTypes";
 
@@ -269,6 +270,16 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.stop("parentNoLongerSummarizer");
         }
         return result;
+    }
+
+    public summarizeOnDemand(
+        reason: string,
+        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult {
+        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
+            throw Error("Summarizer is not running or already disposed.");
+        }
+        return this.runningSummarizer.summarizeOnDemand(reason, options);
     }
 
     private async handleSummaryAcks() {
