@@ -47,7 +47,14 @@ export interface ISummarizerInternalsProvider {
     ): Promise<void>;
 }
 
+/** Options that control the behavior of a running summarizer. */
 export interface ISummarizerOptions {
+    /**
+     * Set to true to disable the default heuristics from running; false by default.
+     * This affects only the heuristics around when a summarizer should
+     * submit summaries. So when it is disabled, summarizer clients should
+     * not be expected to summarize unless an on-demand summary is requested.
+     */
     disableHeuristics: boolean;
 }
 

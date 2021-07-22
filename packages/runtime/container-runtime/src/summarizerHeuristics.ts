@@ -22,6 +22,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
     constructor(
         public lastOpSequenceNumber: number,
+        /** Baseline attempt data used for comparisons with subsequent attempts/calculations. */
         attemptBaseline: ISummaryAttempt,
     ) {
         this._lastAttempt = attemptBaseline;
@@ -62,17 +63,17 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             () => this.trySummarize("idle"));
     }
 
-    public countOpsSinceLastAck(): number {
+    public get opsSinceLastAck(): number {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
     public run() {
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
-        const outstandingOps = this.countOpsSinceLastAck();
+        const opsSinceLastAck = this.opsSinceLastAck;
         if (timeSinceLastSummary > this.configuration.maxTime) {
             this.idleTimer.clear();
             this.trySummarize("maxTime");
-        } else if (outstandingOps > this.configuration.maxOps) {
+        } else if (opsSinceLastAck > this.configuration.maxOps) {
             this.idleTimer.clear();
             this.trySummarize("maxOps");
         } else {
@@ -81,8 +82,8 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public runOnClose(): boolean {
-        const outstandingOps = this.countOpsSinceLastAck();
-        if (outstandingOps > this.minOpsForAttemptOnClose) {
+        const opsSinceLastAck = this.opsSinceLastAck;
+        if (opsSinceLastAck > this.minOpsForAttemptOnClose) {
             this.trySummarize("lastSummary");
             return true;
         }
