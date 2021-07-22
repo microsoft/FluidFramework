@@ -15,85 +15,12 @@ import {
     isILoggingError,
     isErrorLike,
 } from "./staging";
-
-/** @returns true if value is an object but neither null nor an array */
-const isRegularObject = (value: any): boolean => {
-    return value !== null && !Array.isArray(value) && typeof value === "object";
-};
-
-/** Inspect the given error for common "safe" props and return them */
-export function extractLogSafeErrorProperties(error: any) {
-    const removeMessageFromStack = (stack: string, errorName?: string) => {
-        const stackFrames = stack.split("\n");
-        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
-        }
-        return stackFrames.join("\n");
-    };
-
-    const message = (typeof error?.message === "string")
-        ? error.message as string
-        : String(error);
-
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
-        message,
-    };
-
-    if (isRegularObject(error)) {
-        const { errorType, stack, name } = error;
-
-        if (typeof errorType === "string") {
-            safeProps.errorType = errorType;
-        }
-
-        if (typeof stack === "string") {
-            const errorName = (typeof name === "string") ? name : undefined;
-            safeProps.stack = removeMessageFromStack(stack, errorName);
-        }
-    }
-
-    return safeProps;
-}
-
-/**
- * Read-Write Logging Error.  Not exported.
- * This type alias includes addTelemetryProperties, and applies to objects even if not instanceof LoggingError\
- */
-type RwLoggingError = LoggingError;
-
-/** Type guard for RwLoggingError.  Not exported. */
-const isRwLoggingError = (x: any): x is RwLoggingError =>
-    typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
-
-/**
- * NOTE: Consider normalizeError before opting to call this directly
- * Mixes in the given properties to the given error object, then accessible via ILoggingError.getTelemetryProperties
- * @param errorObject - An object (MUST be non-null non-array object type, not frozen) to add telemetry features to
- * @param props - The telemetry props to add to the errorObject
- * @returns the same object that was passed in, now also implementing ILoggingError.
- */
-export function mixinTelemetryProps<T>(
-    errorObject: T,
-    props: ITelemetryProperties,
-): T & ILoggingError {
-    assert(isRegularObject(errorObject) && !Object.isFrozen(errorObject), "Cannot mixin Telemetry Props");
-
-    if (isRwLoggingError(errorObject)) {
-        errorObject.addTelemetryProperties(props);
-        return errorObject;
-    }
-
-    // Even though it's not exposed, fully implement RwLoggingError for subsequent calls to mixinTelemetryProps
-    const loggingError = errorObject as T & RwLoggingError;
-
-    const propsForError = {...props};
-    loggingError.getTelemetryProperties = () => propsForError;
-    loggingError.addTelemetryProperties =
-        (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
-
-    return loggingError;
-}
+import {
+    extractLogSafeErrorProperties,
+    isRegularObject,
+    mixinTelemetryProps,
+    copyProps,
+} from "./internalHelpers";
 
 /**
  * Take an unknown error object and extract certain known properties to be included in a new error object.
@@ -123,45 +50,14 @@ export function mixinTelemetryProps<T>(
 }
 
 /**
- * Patch the given builder with all existing properties on the template
- * @returns The same object as builder, but with additional properties
- */
-function patchFluidErrorBuilder(
-    builder: FluidErrorBuilder,
-    template: IFluidErrorBase,
-): IFluidErrorBase {
-    assert(!Object.isFrozen(builder), "Cannot patch frozen error builder");
-
-    builder.errorType = template.errorType;
-    builder.fluidErrorCode = template.fluidErrorCode;
-    if (template.message !== undefined) {
-        builder.message = template.message;
-    }
-    if (template.name !== undefined) {
-        builder.name = template.name;
-    }
-    if (template.stack !== undefined) {
-        builder.stack = template.stack;
-    }
-    // This cast is legit since we certainly added the only two required properties of IFluidErrorBase
-    return builder as IFluidErrorBase;
-}
-
-function mixinTelemetryPropsWithFluidError(error: IFluidErrorBase, props?: ITelemetryProperties) {
-    const { errorType, fluidErrorCode } = error;
-    return mixinTelemetryProps(error, { ...props, errorType, fluidErrorCode });
-}
-
-/** Helper type that makes IFluidErrorBuilder's props mutable and optional for building one up on an existing object */
-type FluidErrorBuilder = {
-    -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
-};
-
-/**
  * Normalize the given error object yielding a valid Fluid Error
  * @returns The same error object passed in if possible, normalized and with any provided annotations applied
+ * @param error - The error to normalize, ideally by patching in the properties of IFluidErrorBase
+ * @param annotations - Annotations to apply to the normalized error:
+ * annotations.props - telemetry props to log with the error
+ * annotations.errorCodeIfNone - fluidErrorCode to mention if error isn't already an IFluidErrorBase
  */
-export function normalizeError(
+ export function normalizeError(
     error: unknown,
     annotations: {
         props?: ITelemetryProperties,
@@ -207,15 +103,48 @@ export function normalizeError(
     return mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
 }
 
-/** Copy props from source onto target, overwriting any keys that are already set on target */
-function copyProps(target: unknown, source: ITelemetryProperties) {
-    Object.assign(target, source);
+/**
+ * Helper type, not exported.
+ * Makes IFluidErrorBuilder's props mutable and optional for building one up on an existing object
+ */
+ type FluidErrorBuilder = {
+    -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
+};
+
+/**
+ * Patch the given builder with all existing properties on the template
+ * @returns The same object as builder, but with additional properties
+ */
+function patchFluidErrorBuilder(builder: FluidErrorBuilder, template: IFluidErrorBase): IFluidErrorBase {
+    assert(!Object.isFrozen(builder), "Cannot patch frozen error builder");
+
+    builder.errorType = template.errorType;
+    builder.fluidErrorCode = template.fluidErrorCode;
+    if (template.message !== undefined) {
+        builder.message = template.message;
+    }
+    if (template.name !== undefined) {
+        builder.name = template.name;
+    }
+    if (template.stack !== undefined) {
+        builder.stack = template.stack;
+    }
+    // This cast is legit since we certainly added the only two required properties of IFluidErrorBase
+    return builder as IFluidErrorBase;
+}
+
+/** Mixin the telemetry props, along with errorType and fluidErrorCode */
+function mixinTelemetryPropsWithFluidError(error: IFluidErrorBase, props?: ITelemetryProperties) {
+    const { errorType, fluidErrorCode } = error;
+
+    // This is a back-compat move, so old loggers will include errorType and fluidErrorCode via prepareErrorObject
+    return mixinTelemetryProps(error, { ...props, errorType, fluidErrorCode });
 }
 
 /**
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
- export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
+export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 
