@@ -1,6 +1,6 @@
 ---
 title: Tinylicious
-menuPosition: 3
+menuPosition: 1
 status: placeholder
 ---
 

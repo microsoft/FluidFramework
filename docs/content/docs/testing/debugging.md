@@ -1,6 +1,6 @@
 ---
-title: Testing and debugging
-menuPosition: 2
+title: Debugging
+menuPosition: 4
 status: placeholder
 ---
 
