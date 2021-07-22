@@ -18,9 +18,11 @@ import { ContainerWarning, IDeltaManager } from "@fluidframework/container-defin
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
+    ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData, ISummaryStats } from "@fluidframework/runtime-definitions";
 import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -64,8 +66,8 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 export interface ISubmitSummaryOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
     fullTree?: boolean,
-    /** True to ask the server what the latest summary is first */
-    refreshLatestAck: boolean,
+    /** True to ask the server what the latest summary is first; defaults to false */
+    refreshLatestAck?: boolean,
     /** Logger to use for correlated summary events */
     summaryLogger: ITelemetryLogger,
 }
@@ -91,8 +93,12 @@ export interface IBaseSummarizeResult {
 /** Results of submitSummary after generating the summary tree. */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
     readonly stage: "generate";
-    /** Generated summary tree and stats. */
+    /** Generated summary tree. */
+    readonly summaryTree: ISummaryTree;
+    /** Stats for generated summary tree. */
     readonly summaryStats: IGeneratedSummaryStats;
+    /** Garbage collection data gathered while generating the summary. */
+    readonly gcData: IGarbageCollectionData;
     /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
 }
@@ -131,6 +137,43 @@ export type SubmitSummaryResult =
     | IGenerateSummaryTreeResult
     | IUploadSummaryResult
     | ISubmitSummaryOpResult;
+
+export interface IBroadcastSummaryResult {
+    readonly summarizeOp: ISummaryOpMessage;
+    readonly broadcastDuration: number;
+}
+
+export interface IAckNackSummaryResult {
+    readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
+    readonly ackNackDuration: number;
+}
+
+export type SummarizeResultPart<T> = {
+    success: true;
+    data: T;
+} | {
+    success: false;
+    data: T | undefined;
+    message: string;
+    error: any;
+};
+
+export interface ISummarizeResults {
+    /** Resolves when we generate, upload, and submit the summary. */
+    readonly summarySubmitted: Promise<SummarizeResultPart<GenerateSummaryResult>>;
+    /** Resolves when we observe our summarize op broadcast. */
+    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
+    /** Resolves when we receive a summaryAck or summaryNack. */
+    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
+}
+
+export type OnDemandSummarizeResult = (ISummarizeResults & {
+    /** Indicates that an already running summarize attempt does not exist. */
+    readonly alreadyRunning?: undefined;
+}) | {
+    /** Resolves when an already running summarize attempt completes. */
+    readonly alreadyRunning: Promise<void>;
+};
 
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
@@ -171,4 +214,10 @@ export interface ISummarizer
     stop(reason?: SummarizerStopReason): void;
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
+
+    /** Attempts to generate a summary on demand. */
+    summarizeOnDemand(
+        reason: string,
+        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult;
 }

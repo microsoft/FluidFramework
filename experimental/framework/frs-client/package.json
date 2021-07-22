@@ -41,6 +41,7 @@
     "@fluidframework/runtime-utils": "^0.44.0",
     "@fluidframework/server-services-client": "^0.1027.0",
     "@fluidframework/test-runtime-utils": "^0.44.0",
+    "axios": "^0.21.1",
     "debug": "^4.1.1"
   },
   "devDependencies": {

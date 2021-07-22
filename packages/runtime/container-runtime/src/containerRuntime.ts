@@ -21,7 +21,6 @@ import {
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
-    ILoader,
     IRuntime,
     ContainerWarning,
     ICriticalContainerError,
@@ -126,11 +125,12 @@ import {
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
-import { SummarizerClientElection } from "./summarizerClientElection";
+import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
     SubmitSummaryResult,
     IGeneratedSummaryStats,
     ISubmitSummaryOptions,
+    ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerRuntime,
 } from "./summarizerTypes";
@@ -647,10 +647,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get closeFn(): (error?: ICriticalContainerError) => void {
         return this.context.closeFn;
-    }
-
-    public get loader(): ILoader {
-        return this.context.loader;
     }
 
     public get flushMode(): FlushMode {
@@ -1739,12 +1735,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } catch (error) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
+            const { summary: summaryTree, stats: partialStats, gcData } = summarizeResult;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
             // summarized dataStore count is total dataStore count minus handle count
-            const dataStoreTree = this.disableIsolatedChannels ? summarizeResult.summary :
-                summarizeResult.summary.tree[channelsTreeName];
+            const dataStoreTree = this.disableIsolatedChannels ? summaryTree : summaryTree.tree[channelsTreeName];
 
             assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
@@ -1753,11 +1749,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
-                ...summarizeResult.stats,
+                ...partialStats,
             };
             const generateSummaryData = {
                 referenceSequenceNumber: summaryRefSeqNum,
+                summaryTree,
                 summaryStats,
+                gcData,
                 generateDuration: trace.trace().duration,
             } as const;
 
@@ -2168,6 +2166,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public getPendingLocalState() {
         return this.pendingStateManager.getLocalState();
     }
+
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+        return this.clientDetails.type === summarizerClientType
+            ? this.summarizer.summarizeOnDemand(...args)
+            : this.summaryManager.summarizeOnDemand(...args);
+    };
 }
 
 /**
