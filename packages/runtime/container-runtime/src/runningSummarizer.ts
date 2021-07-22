@@ -9,12 +9,15 @@ import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
+    ISummaryNack,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
+    ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
+    OnDemandSummarizeResult,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -42,7 +45,7 @@ export class RunningSummarizer implements IDisposable {
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
         internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "generateSummary">,
+            & Pick<ISummarizerInternalsProvider, "submitSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         raiseSummarizingError: (description: string) => void,
@@ -85,7 +88,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
         private readonly internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "generateSummary">,
+            & Pick<ISummarizerInternalsProvider, "submitSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private readonly raiseSummarizingError: (description: string) => void,
@@ -278,17 +281,23 @@ export class RunningSummarizer implements IDisposable {
                     await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
                 }
                 const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as `retry${number}` : reason;
-                const result = await this.generator.summarize(attemptReason, options);
-                if (result.success) {
+                const result = await this.generator.summarize(attemptReason, options).receivedSummaryAckOrNack;
+                await this.generator.waitSummarizing();
+                if (result.success && result.data.summaryAckNackOp.type === MessageType.SummaryAck) {
+                    // Note: checking for MessageType.SummaryAck is redundant since success is false for nack.
                     return;
                 }
                 // Check for retryDelay in summaryNack response.
-                if (result.retryDelaySeconds !== undefined && result.retryDelaySeconds > 0) {
+                // TODO: cast needed until dep on protocol-definitions version bump
+                const summaryNack = result.data?.summaryAckNackOp.type === MessageType.SummaryNack
+                    ? result.data.summaryAckNackOp.contents as ISummaryNack & { message?: string; retryAfter?: number; }
+                    : undefined;
+                if (summaryNack?.retryAfter !== undefined && summaryNack.retryAfter > 0) {
                     if (overrideDelaySeconds !== undefined) {
                         // Retry the same step only once per retryAfter response.
                         attemptPhase++;
                     }
-                    overrideDelaySeconds = result.retryDelaySeconds;
+                    overrideDelaySeconds = summaryNack.retryAfter;
                 } else {
                     attemptPhase++;
                     overrideDelaySeconds = undefined;
@@ -300,14 +309,38 @@ export class RunningSummarizer implements IDisposable {
         })().finally(() => {
             summarizingLock.resolve();
             this.summarizingLock = undefined;
-            if (this.tryWhileSummarizing) {
-                this.tryWhileSummarizing = false;
-                if (!this.stopping && !this._disposed) {
-                    this.heuristics.run();
-                }
-            }
+            this.checkRerunHeuristics();
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
         });
+    }
+
+    public summarizeOnDemand(
+        reason: string,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult {
+        // Check for concurrent summary attempts. If one is found,
+        // return a promise that caller can await before trying again.
+        if (this.summarizingLock !== undefined) {
+            // The heuristics are blocking concurrent summarize attempts.
+            return { alreadyRunning: this.summarizingLock };
+        }
+        if (this.generator.isSummarizing()) {
+            // Another summary is currently being generated.
+            return { alreadyRunning: this.generator.waitSummarizing() };
+        }
+        const result = this.generator.summarize(`onDemand;${reason}` as `onDemand;${string}`, options);
+        result.receivedSummaryAckOrNack.finally(() => this.checkRerunHeuristics());
+        return result;
+    }
+
+    /** After summarizing, we should rerun the heuristics to see if we already need to summarize again. */
+    private checkRerunHeuristics() {
+        if (this.tryWhileSummarizing) {
+            this.tryWhileSummarizing = false;
+            if (!this.stopping && !this._disposed) {
+                this.heuristics.run();
+            }
+        }
     }
 }

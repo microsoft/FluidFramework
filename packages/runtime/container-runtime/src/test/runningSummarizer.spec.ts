@@ -13,6 +13,7 @@ import {
     ISummaryNack,
     ISummaryProposal,
     MessageType,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../runningSummarizer";
@@ -34,8 +35,8 @@ describe("Runtime", () => {
             const summarizerClientId = "test";
             const onBehalfOfClientId = "behalf";
             let lastRefSeq = 0;
-            let lastClientSeq = -1000; // negative/decrement for test
-            let lastSummarySeq = 0; // negative/decrement for test
+            let lastClientSeq: number;
+            let lastSummarySeq: number;
             const summaryConfig: ISummaryConfiguration = {
                 idleTime: 5000, // 5 sec (idle)
                 maxTime: 5000 * 12, // 1 min (active)
@@ -130,7 +131,7 @@ describe("Runtime", () => {
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
                     {
-                        generateSummary: async (options) => {
+                        submitSummary: async (options) => {
                             runCount++;
 
                             const { fullTree = false, refreshLatestAck = false } = options;
@@ -154,6 +155,7 @@ describe("Runtime", () => {
                                 generateDuration: 0,
                                 uploadDuration: 0,
                                 submitOpDuration: 0,
+                                summaryTree: { type: SummaryType.Tree, tree: {} },
                                 summaryStats: {
                                     treeNodeCount: 0,
                                     blobNodeCount: 0,
@@ -163,6 +165,7 @@ describe("Runtime", () => {
                                     summarizedDataStoreCount: 0,
                                     unreferencedBlobSize: 0,
                                 },
+                                gcData: { gcNodes: {} },
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
                             } as const;
@@ -194,6 +197,8 @@ describe("Runtime", () => {
                 fullTreeRunCount = 0;
                 refreshLatestAckRunCount = 0;
                 lastRefSeq = 0;
+                lastClientSeq = -1000; // negative/decrement for test
+                lastSummarySeq = 0; // negative/decrement for test
                 mockLogger = new MockLogger();
                 mockDeltaManager = new MockDeltaManager();
                 summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
@@ -483,6 +488,116 @@ describe("Runtime", () => {
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
+                });
+            });
+
+            describe("On-demand Summaries", () => {
+                beforeEach(async () => {
+                    await startRunningSummarizer();
+                });
+
+                it("Should create an on-demand summary", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+
+                    const submitResult = await result.summarySubmitted;
+                    assertRunCounts(1, 0, 0, "on-demand should run");
+
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, 2,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -1,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    await emitAck();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(ackNackResult.success, "on-demand summary should succeed");
+                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                        "should be ack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                        "summary ack handle should be test-ack-handle");
+                });
+
+                it("Should return already running for on-demand summary", async () => {
+                    // Should start running by heuristics
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert(result.alreadyRunning !== undefined, "summary should already be running");
+
+                    let resolved = false;
+                    result.alreadyRunning.then(
+                        () => resolved = true,
+                        () => { throw Error("already running promise should not reject"); });
+
+                    await flushPromises();
+                    assert(resolved === false, "already running promise should not resolve yet");
+
+                    await emitAck();
+                    assert((resolved as boolean) === true, "now already running promise should resolve now");
+                });
+
+                it("On-demand summary should fail on nack", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const result = summarizer.summarizeOnDemand("test", {});
+                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+
+                    const submitResult = await result.summarySubmitted;
+                    assertRunCounts(1, 0, 0, "on-demand should run");
+
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, 2, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, 2,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -1,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    await emitNack();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(!ackNackResult.success, "on-demand summary should fail");
+                    assert(ackNackResult.data?.summaryAckNackOp.type === MessageType.SummaryNack,
+                        "should be nack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.errorMessage === "test-nack",
+                        "summary nack error should be test-nack");
                 });
             });
 

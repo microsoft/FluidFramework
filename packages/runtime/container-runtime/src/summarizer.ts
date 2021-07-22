@@ -24,12 +24,13 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
-    GenerateSummaryResult,
-    IGenerateSummaryOptions,
+    SubmitSummaryResult,
+    ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerRuntime,
     ISummarizingWarning,
+    OnDemandSummarizeResult,
     SummarizerStopReason,
 } from "./summarizerTypes";
 
@@ -197,7 +198,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
-            this /* Pick<ISummarizerInternalsProvider, "generateSummary"> */,
+            this /* Pick<ISummarizerInternalsProvider, "submitSummary"> */,
             this.runtime.deltaManager.lastSequenceNumber,
             { /** Initial summary attempt */
                 refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
@@ -254,14 +255,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         }
     }
 
-    public async setSummarizer(): Promise<ISummarizer> {
-        this.runtime.nextSummarizerD = new Deferred<ISummarizer>();
-        return this.runtime.nextSummarizerD.promise;
-    }
-
-    /** Implementation of SummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryResult> {
-        const result = this.internalsProvider.generateSummary(options);
+    /** Implementation of SummarizerInternalsProvider.submitSummary */
+    public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+        const result = this.internalsProvider.submitSummary(options);
 
         if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
             && this.runtime.clientId !== this.runtime.summarizerClientId) {
@@ -269,6 +265,16 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.stop("parentNoLongerSummarizer");
         }
         return result;
+    }
+
+    public summarizeOnDemand(
+        reason: string,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
+    ): OnDemandSummarizeResult {
+        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
+            throw Error("Summarizer is not running or already disposed.");
+        }
+        return this.runningSummarizer.summarizeOnDemand(reason, options);
     }
 
     private async handleSummaryAcks() {
