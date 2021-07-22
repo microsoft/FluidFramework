@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
-import { ISummaryConfiguration, MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     GenerateSummaryResult,
@@ -13,6 +13,7 @@ import {
     IBroadcastSummaryResult,
     IGenerateSummaryOptions,
     ISummarizeResults,
+    ISummarizerHeuristics,
     ISummarizerInternalsProvider,
     SummarizeResultPart,
 } from "./summarizerTypes";
@@ -28,26 +29,6 @@ export const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefine
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
 const maxSummarizeTimeoutCount = 5; // Double and resend 5 times
-
-/**
- * Data about a summary attempt
- */
-export interface ISummaryAttempt {
-    /**
-     * Reference sequence number when summary was generated or attempted
-     */
-    readonly refSequenceNumber: number;
-
-    /**
-     * Time of summary attempt after it was sent or attempted
-     */
-    readonly summaryTime: number;
-
-    /**
-     * Sequence number of summary op
-     */
-    summarySequenceNumber?: number;
-}
 
 export type SummarizeReason =
     /**
@@ -114,90 +95,6 @@ const summarizeErrors = {
     summaryNack: "Server rejected summary via summaryNack op",
 } as const;
 
-/**
- * This class contains the heuristics for when to summarize.
- */
- export class SummarizerHeuristics {
-    private _lastAttempted: ISummaryAttempt;
-    private _lastAcked: ISummaryAttempt;
-    /**
-     * Last sent summary attempt
-     */
-    public get lastAttempted(): ISummaryAttempt {
-        return this._lastAttempted;
-    }
-    /**
-     * Last acked summary attempt
-     */
-    public get lastAcked(): ISummaryAttempt {
-        return this._lastAcked;
-    }
-    private readonly idleTimer: Timer;
-    public constructor(
-        private readonly configuration: ISummaryConfiguration,
-        private readonly trySummarize: (reason: SummarizeReason) => void,
-        /**
-         * Last received op sequence number
-         */
-        public lastOpSeqNumber: number,
-        firstAck: ISummaryAttempt,
-    ) {
-        this._lastAttempted = firstAck;
-        this._lastAcked = firstAck;
-        this.idleTimer = new Timer(
-            this.configuration.idleTime,
-            () => this.trySummarize("idle"));
-    }
-    /**
-     * Sets the last attempted summary and last acked summary.
-     * @param lastSummary - last acked summary
-     */
-    public initialize(lastSummary: ISummaryAttempt) {
-        this._lastAttempted = lastSummary;
-        this._lastAcked = lastSummary;
-    }
-    /**
-     * Records a summary attempt. If the attempt was successfully sent,
-     * provide the reference sequence number, otherwise it will be set
-     * to the last seen op sequence number.
-     * @param refSequenceNumber - reference sequence number of sent summary
-     */
-    public recordAttempt(refSequenceNumber?: number) {
-        this._lastAttempted = {
-            refSequenceNumber: refSequenceNumber ?? this.lastOpSeqNumber,
-            summaryTime: Date.now(),
-        };
-    }
-    /**
-     * Mark the last sent summary attempt as acked.
-     */
-    public ackLastSent() {
-        this._lastAcked = this.lastAttempted;
-    }
-    /**
-     * Runs the heuristic to determine if it should try to summarize.
-     */
-    public run() {
-        const timeSinceLastSummary = Date.now() - this.lastAcked.summaryTime;
-        const opCountSinceLastSummary = this.lastOpSeqNumber - this.lastAcked.refSequenceNumber;
-        if (timeSinceLastSummary > this.configuration.maxTime) {
-            this.idleTimer.clear();
-            this.trySummarize("maxTime");
-        } else if (opCountSinceLastSummary > this.configuration.maxOps) {
-            this.idleTimer.clear();
-            this.trySummarize("maxOps");
-        } else {
-            this.idleTimer.restart();
-        }
-    }
-    /**
-     * Disposes of resources.
-     */
-    public dispose() {
-        this.idleTimer.clear();
-    }
-}
-
 class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<GenerateSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
@@ -229,7 +126,7 @@ export class SummaryGenerator {
     private readonly summarizeTimer: Timer;
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
-        private readonly heuristics: SummarizerHeuristics,
+        private readonly heuristics: ISummarizerHeuristics,
         private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "generateSummary">,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
@@ -289,8 +186,8 @@ export class SummaryGenerator {
             reason,
             refreshLatestAck,
             fullTree,
-            timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempted.summaryTime,
-            timeSinceLastSummary: Date.now() - this.heuristics.lastAcked.summaryTime,
+            timeSinceLastAttempt: Date.now() - this.heuristics.lastAttempt.summaryTime,
+            timeSinceLastSummary: Date.now() - this.heuristics.lastAck.summaryTime,
         });
         // Helper functions to report failures and return.
         const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
@@ -322,8 +219,8 @@ export class SummaryGenerator {
             const { referenceSequenceNumber: refSequenceNumber } = summaryData;
             generateTelemetryProps = {
                 refSequenceNumber,
-                opsSinceLastAttempt: refSequenceNumber - this.heuristics.lastAttempted.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristics.lastAcked.refSequenceNumber,
+                opsSinceLastAttempt: refSequenceNumber - this.heuristics.lastAttempt.refSequenceNumber,
+                opsSinceLastSummary: refSequenceNumber - this.heuristics.lastAck.refSequenceNumber,
             };
             if (summaryData.stage !== "base") {
                 generateTelemetryProps = {
@@ -370,12 +267,12 @@ export class SummaryGenerator {
                 return fail("summaryOpWaitTimeout");
             }
 
-            const broadcastDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
+            const broadcastDuration = Date.now() - this.heuristics.lastAttempt.summaryTime;
             resultsBuilder.summaryOpBroadcasted.resolve({
                 success: true,
                 data: { summarizeOp, broadcastDuration },
             });
-            this.heuristics.lastAttempted.summarySequenceNumber = summarizeOp.sequenceNumber;
+            this.heuristics.lastAttempt.summarySequenceNumber = summarizeOp.sequenceNumber;
             this.logger.sendTelemetryEvent({
                 eventName: "SummaryOp",
                 timeWaiting: broadcastDuration,
@@ -392,7 +289,7 @@ export class SummaryGenerator {
             this.pendingAckTimer.clear();
 
             // Update for success/failure
-            const ackNackDuration = Date.now() - this.heuristics.lastAttempted.summaryTime;
+            const ackNackDuration = Date.now() - this.heuristics.lastAttempt.summaryTime;
             const telemetryProps: Record<string, number> = {
                 timeWaiting: ackNackDuration,
                 sequenceNumber: ackNack.sequenceNumber,

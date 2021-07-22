@@ -47,6 +47,10 @@ export interface ISummarizerInternalsProvider {
     ): Promise<void>;
 }
 
+export interface ISummarizerOptions {
+    disableHeuristics: boolean;
+}
+
 export interface ISummarizingWarning extends ContainerWarning {
     readonly errorType: "summarizingError";
     readonly logged: boolean;
@@ -212,7 +216,7 @@ export interface ISummarizer
      */
     setSummarizer(): Promise<ISummarizer>;
     stop(reason?: SummarizerStopReason): void;
-    run(onBehalfOf: string): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
 
     /** Attempts to generate a summary on demand. */
@@ -220,4 +224,61 @@ export interface ISummarizer
         reason: string,
         options: Omit<IGenerateSummaryOptions, "summaryLogger">,
     ): OnDemandSummarizeResult;
+}
+
+/**
+ * Data about a summary attempt
+ */
+ export interface ISummaryAttempt {
+    /**
+     * Reference sequence number when summary was generated or attempted
+     */
+    readonly refSequenceNumber: number;
+
+    /**
+     * Time of summary attempt after it was sent or attempted
+     */
+    readonly summaryTime: number;
+
+    /**
+     * Sequence number of summary op
+     */
+    summarySequenceNumber?: number;
+}
+
+export interface ISummarizerHeuristics {
+    /** Last received op sequence number */
+    lastOpSequenceNumber: number;
+
+    /** Last sent summary attempt */
+    readonly lastAttempt: ISummaryAttempt;
+
+    /** Last summary attempt that received an ack */
+    readonly lastAck: ISummaryAttempt;
+
+    /**
+     * Initializes lastAttempt and lastAck based on the last summary.
+     * @param lastSummary - last ack summary
+     */
+    initialize(lastSummary: ISummaryAttempt): void;
+
+    /**
+     * Records a summary attempt. If the attempt was successfully sent,
+     * provide the reference sequence number, otherwise it will be set
+     * to the last seen op sequence number.
+     * @param referenceSequenceNumber - reference sequence number of sent summary
+     */
+    recordAttempt(referenceSequenceNumber?: number): void;
+
+    /** Mark that the last sent summary attempt has received an ack */
+    ackLastSent(): void;
+
+    /** Runs the heuristic to determine if it should try to summarize */
+    run(): void;
+
+    /** Runs a different heuristic to check if it should summarize before closing */
+    runOnClose(): boolean;
+
+    /** Disposes of resources */
+    dispose(): void;
 }

@@ -13,23 +13,24 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { DefaultSummarizerHeuristics, DisabledSummarizerHeuristics } from "./summarizerHeuristics";
 import {
     IGenerateSummaryOptions,
     ISummarizer,
+    ISummarizerHeuristics,
     ISummarizerInternalsProvider,
+    ISummarizerOptions,
+    ISummaryAttempt,
     OnDemandSummarizeResult,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
     checkNotTimeout,
-    ISummaryAttempt,
     SummarizeReason,
-    SummarizerHeuristics,
     SummaryGenerator,
 } from "./summaryGenerator";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
-const minOpsForLastSummary = 50;
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
@@ -50,6 +51,7 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
+        options?: Readonly<Partial<ISummarizerOptions>>,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             clientId,
@@ -61,7 +63,8 @@ export class RunningSummarizer implements IDisposable {
             lastOpSeqNumber,
             firstAck,
             raiseSummarizingError,
-            summaryCollection);
+            summaryCollection,
+            options);
 
         await summarizer.waitStart();
 
@@ -77,7 +80,7 @@ export class RunningSummarizer implements IDisposable {
     private summarizingLock: Promise<void> | undefined;
     private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
-    private readonly heuristics: SummarizerHeuristics;
+    private readonly heuristics: ISummarizerHeuristics;
     private readonly generator: SummaryGenerator;
     private readonly logger: ITelemetryLogger;
 
@@ -93,15 +96,18 @@ export class RunningSummarizer implements IDisposable {
         firstAck: ISummaryAttempt,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryCollection: SummaryCollection,
+        { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
         this.logger = ChildLogger.create(
             baseLogger, "Running", { all: { summaryGenTag: () => this.generator.getSummarizeCount() } });
 
-        this.heuristics = new SummarizerHeuristics(
-            configuration,
-            (reason) => this.trySummarize(reason),
-            lastOpSeqNumber,
-            firstAck);
+        this.heuristics = disableHeuristics
+            ? new DisabledSummarizerHeuristics(lastOpSeqNumber, firstAck)
+            : new DefaultSummarizerHeuristics(
+                configuration,
+                (reason) => this.trySummarize(reason),
+                lastOpSeqNumber,
+                firstAck);
 
         // Cap the maximum amount of time client will wait for a summarize op ack to maxSummarizeAckWaitTime
         // configuration.maxAckWaitTime is composed from defaults, server values, and runtime overrides
@@ -117,9 +123,9 @@ export class RunningSummarizer implements IDisposable {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime,
-                    refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
-                    summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
-                    timePending: Date.now() - this.heuristics.lastAttempted.summaryTime,
+                    refSequenceNumber: this.heuristics.lastAttempt.refSequenceNumber,
+                    summarySequenceNumber: this.heuristics.lastAttempt.summarySequenceNumber,
+                    timePending: Date.now() - this.heuristics.lastAttempt.summaryTime,
                 });
             });
         // Set up pending ack timeout by op timestamp differences for previous summaries.
@@ -127,8 +133,8 @@ export class RunningSummarizer implements IDisposable {
             if (this.pendingAckTimer.hasTimer) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MissingSummaryAckFoundByOps",
-                    refSequenceNumber: this.heuristics.lastAttempted.refSequenceNumber,
-                    summarySequenceNumber: this.heuristics.lastAttempted.summarySequenceNumber,
+                    refSequenceNumber: this.heuristics.lastAttempt.refSequenceNumber,
+                    summarySequenceNumber: this.heuristics.lastAttempt.summarySequenceNumber,
                 });
                 this.pendingAckTimer.clear();
             }
@@ -159,7 +165,7 @@ export class RunningSummarizer implements IDisposable {
      * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
      */
     public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
-        this.heuristics.lastAttempted.refSequenceNumber === summaryOpRefSeq
+        this.heuristics.lastAttempt.refSequenceNumber === summaryOpRefSeq
             ? this.logger
             : undefined;
 
@@ -192,7 +198,7 @@ export class RunningSummarizer implements IDisposable {
         if (error !== undefined) {
             return;
         }
-        this.heuristics.lastOpSeqNumber = op.sequenceNumber;
+        this.heuristics.lastOpSequenceNumber = op.sequenceNumber;
 
         // Check for ops requesting summary
         if (op.type === MessageType.Save) {
@@ -215,10 +221,8 @@ export class RunningSummarizer implements IDisposable {
             return;
         }
         this.stopping = true;
-        const outstandingOps = this.heuristics.lastOpSeqNumber - this.heuristics.lastAcked.refSequenceNumber;
-        if (outstandingOps > minOpsForLastSummary) {
-            this.trySummarize("lastSummary");
-            // This resolves when the current pending summary is acked or fails.
+        if (this.heuristics.runOnClose()) {
+            // This resolves when the current pending summary gets an ack or fails.
             // We wait for the result in case a safe summary is needed, and to get
             // better telemetry.
             await Promise.all([

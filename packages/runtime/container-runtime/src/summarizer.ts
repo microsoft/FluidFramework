@@ -28,6 +28,7 @@ import {
     IGenerateSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
+    ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
     OnDemandSummarizeResult,
@@ -91,9 +92,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
-    public async run(onBehalfOf: string): Promise<void> {
+    public async run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
         try {
-            await this.runCore(onBehalfOf);
+            await this.runCore(onBehalfOf, options);
         } catch (error) {
             this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */));
             throw error;
@@ -144,7 +145,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return create404Response(request);
     }
 
-    private async runCore(onBehalfOf: string): Promise<void> {
+    private async runCore(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
         const startResult = await this.runCoordinator.waitStart();
@@ -210,6 +211,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 }
             },
             this.summaryCollection,
+            options,
         );
         this.runningSummarizer = runningSummarizer;
 
