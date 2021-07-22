@@ -5,6 +5,7 @@
 - [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [fileOverwrittenInStorage](#fileOverwrittenInStorage)
 - [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
+- [ITelemetryBaseLogger.send signature change](#ITelemetryBaseLogger.send-signature-change) _(as of @fluidframework/common-definitions@0.20.1)_
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.
@@ -32,6 +33,14 @@ Please use `DriverErrorType.fileOverwrittenInStorage` instead of `OdspErrorType.
 
 ### absolutePath use in IFluidHandle is deprecated
 Rather than retrieving the absolute path, ostensibly to be stored, one should instead store the handle itself. To load, first retrieve the handle and then call `get` on it to get the actual object. Note that it is assumed that the container is responsible both for mapping an external URI to an internal object and for requesting resolved objects with any remaining tail of the external URI. For example, if a container has some map that maps `/a --> <some handle>`, then a request like `request(/a/b/c)` should flow like `request(/a/b/c) --> <some handle> --> <object> -->  request(/b/c)`.
+
+### ITelemetryBaseLogger.send signature change
+**A breaking change was made in @fluid-framework/common-definitions 0.20.1, compared to the initial 0.39 release**
+
+The type of the `event` parameter of `ITelemetryBaseLogger.send` changed to a more inclusive type which needs to be accounted for in implementations.
+However, in 0.39, _no tagged events are sent to any ITelemetryBaseLogger by the Fluid Framework_, so tags can initially be ignored.
+See [UPCOMING.md in main](https://github.com/microsoft/FluidFramework/blob/4a5920457a1d867f3071a13bfd5a5fa8c2025ca9/UPCOMING.md) for
+more info on the transition plan.
 
 ## 0.38 Breaking changes
 - [IPersistedCache changes](#IPersistedCache-changes)

@@ -41,6 +41,7 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
  */
 export interface ITelemetryBaseLogger {
     /**
+     * @deprecated - Tag support is assumed starting in an upcoming client release, likely 0.45
      * An optional boolean which indicates to the user of this interface that tags (i.e. `ITaggedTelemetryPropertyType`
      * objects) are in use. Eventually this will be a required property, but this is a stopgap that allows older hosts
      * to continue to pass through telemetry without trouble (this property will simply show up undefined), while our
