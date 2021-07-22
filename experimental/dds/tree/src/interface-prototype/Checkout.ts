@@ -3,12 +3,12 @@ import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { ICheckoutEvents } from '../Checkout';
 import { Change, ConstraintEffect } from '../default-edits';
 import { OrderedEditSet } from '../EditLog';
-import { ChangeNode as BuildNode } from '../generic';
+import { initialTree } from '../InitialTree';
+import { LogViewer } from '../LogViewer';
 // This file uses these as opaque id types:
 // the user of these APIs should not know or care if they are short IDs or not, other than that they must be converted to StableId if stored for use outside of the shared tree it was acquired from.
 // In practice, these would most likely be implemented as ShortId numbers.
-import { Definition, NodeId, TraitLabel, EditId, DetachedSequenceId } from '../Identifiers';
-import { LogViewer, Revision } from '../LogViewer';
+import { Definition, NodeId, TraitLabel, EditId } from '../Identifiers';
 
 // TODO: we are just reusing the exiting Snapshot type.
 // This existing type does not support partial checkout:
@@ -23,7 +23,8 @@ import { LogViewer, Revision } from '../LogViewer';
 // Probably something more like TreeNodeHandle and/or the non-mutating subset of TreeNode.
 import { Snapshot } from '../Snapshot';
 import { Anchor, AnchorData, PlaceData, RangeData, StableId, TreeNodeData } from './Anchors';
-import { DetachedSequence, Place, Range, TreeNode } from './TreeAnchors';
+import { DetachedRange, Place, Range, TreeNode } from './TreeAnchors';
+import { TreeDescriptor } from './TreeNodeDescriptor';
 import { areSafelyAssignable, isTrue } from './TypeCheck';
 
 // Some branded ID types.
@@ -69,39 +70,38 @@ export interface Command<TOptions extends Serializable, TAnchorSet extends Ancho
 }
 
 // TODO: maybe add more things to this, or move it Anchor.
-export interface CommandContext extends IdSerializer, LogViewer, OrderedEditSet<Change> {
+export interface CommandContext extends IdSerializer, LogViewer {
+	readonly history: OrderedEditSet<Change>;
+
 	runCommand<TOptions extends Serializable, TAnchorSet extends AnchorSet, TResult>(
 		command: Command<TOptions, TAnchorSet, TResult>,
 		parameters: TOptions,
 		anchors: DecontextualizedAnchorSet<TAnchorSet> // Anchors will be contextualized into the tree provided to the command.
 	): TResult;
 
+	create(...descriptors: TreeDescriptor[]): DetachedRange;
+
+	move(destination: PlaceData, ...nodes: (TreeNodeData | RangeData)[]): Range;
+
 	/**
 	 * Detach this range from the tree.
 	 *
 	 * This range will point to the detached nodes, but the same range is also returned as the a more strongly typed DetachedSequence.
 	 */
-	detach(range: RangeData): DetachedSequence;
+	detach(...nodes: (TreeNodeData | RangeData)[]): DetachedRange;
 
-	// Could include moveTo(place) here, though it would be redundant with place.insert(range)
+	delete(...nodes: (TreeNodeData | RangeData)[]): void;
 
 	// Add a a constraint that this range is valid to the current transaction.
 	useAsConstraint(range: RangeData, effect: ConstraintEffect): void;
 
-	// Implicitly detaches or builds if needed then inserts (aka moves)?
-	insert(
-		destination: PlaceData,
-		source: TreeNodeData | RangeData | DetachedSequence | DetachedSequenceId | BuildNode
-	): Range;
-
-	// If the insert API is ambiguous we can add a move.
-	// move(destination: Place, source: TreeNodeData | RangeData | DetachedSequence | DetachedSequenceId);
-
-	setValue(newValue: Serializable): void;
+	setValue(node: TreeNodeData, newValue: Serializable): void;
 }
 
 // TODO: actually implement this as a NodeId based anchor using the standard root node id.
-export const root: TreeNodeData = (undefined as unknown) as TreeNodeData;
+export const root: TreeNodeData = (initialTree.identifier as unknown) as TreeNodeData;
+// Root detached range.
+export const rootRange: RangeData = ('root' as unknown) as RangeData;
 
 /**
  * A view of a tree.
@@ -114,7 +114,7 @@ export interface Tree extends EventEmitterWithErrorHandling<ICheckoutEvents> {
 	 * This is updated copy on write, and thus may be held onto arbitrarily but will not update:
 	 * to observe actual updates, either hold onto the Tree itself, subscribe to the ViewChange event, or use a mutable view provided by the specific Tree.
 	 */
-	currentView: Snapshot;
+	readonly currentView: Snapshot;
 
 	/**
 	 * Get a handle into the tree from anchors which might have come from another context
@@ -258,11 +258,11 @@ export function anchorDataFromNodeId(id: NodeId): TreeNodeData {
 
 // Misc things
 
-interface AnchorSet {
+export interface AnchorSet {
 	[key: string]: Anchor;
 }
 
-type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
+export type DecontextualizedAnchorSet<TAnchorSet extends AnchorSet> = {
 	[Property in keyof TAnchorSet]: Decontextualize<TAnchorSet[Property]>;
 };
 

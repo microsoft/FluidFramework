@@ -22,37 +22,42 @@ import { Sequence, SequenceIterator } from './Sequence';
  */
 export interface Place extends Anchor, PlaceData {
 	/**
+	 * Construct a range from this Place to `end`.
+	 * PlaceData must be after this in same trait for result to be valid.
+	 */
+	rangeTo(end: PlaceData): Range;
+
+	// Below here only available if loaded and valid.
+
+	/**
 	 * Iterate the trait (or DetachedSequence) containing this node, starting at this node.
 	 */
 	iteratorFromHere(): SequenceIterator<TreeNode, Place>;
 
 	/**
 	 * Parent of this Place.
-	 *
-	 * undefined if this Place at the root.
-	 *
-	 * TODO: Clarify how how the API works around the root.
 	 */
-	readonly parent?: NodeParent;
+	readonly parent: NodeParent;
 
 	/**
 	 * @returns the adjacent node, anchored by its NodeId, or `undefined` if an end of the trait is reached.
 	 */
 	// TODO: add optional anchor policy parameters?
 	adjacentNode(side: Side): TreeNode | undefined;
-
-	/**
-	 * Construct a range from this Place to `end`.
-	 * PlaceData must be after this in same trait for result to be valid.
-	 */
-	rangeTo(end: PlaceData): Range;
 }
 
-export type NodeParent = Trait | DetachedSequence;
+export type NodeParent = Trait | DetachedRange;
 
-export interface DetachedSequence extends Sequence<TreeNode, Place> {
-	// TODO: Only needed to interop with currently build, remove after new builder?
-	id: DetachedSequenceId;
+/**
+ * A root of the forest.
+ */
+export interface DetachedRange extends Range {
+	readonly start: DetachedPlace;
+	readonly end: DetachedPlace;
+}
+
+export interface DetachedPlace extends Place {
+	readonly parent: DetachedRange;
 }
 
 /**
@@ -120,14 +125,22 @@ export enum ContentsConstraint {
  * TODO: Trait iterator is invalidated by edits?
  */
 export interface TreeNode extends Anchor, TreeNodeData, Sequence<Trait>, Query<TreeNode> {
+	readonly id: NodeId;
+
+	// TODO: add optional anchor policy parameters.
+	// This should probably default to a basic successor/predecessor anchor,
+	// but allow opting into more expensive once when needed (ex: when you know its going into an edit or will need to be used across changes that could otherwise invalidate it)
+	//
+	// TODO: Once the API is in a more polished state consider adding short hand versions for predecessor and successor.
+	adjacentPlace(side: Side): Place;
+
+	// Below here only available if loaded and valid.
+
 	/**
 	 * Parent of this Node.
-	 *
-	 * undefined if this node is the root.
 	 */
-	readonly parent?: NodeParent;
+	readonly parent: NodeParent;
 
-	readonly id: NodeId;
 	readonly definition: Definition;
 
 	// TODO: support value that might not have been loaded (maybe just use ensureLoaded for this? maybe have a way to load it separately).
@@ -151,13 +164,6 @@ export interface TreeNode extends Anchor, TreeNodeData, Sequence<Trait>, Query<T
 
 	// TODO: do we want to allow using the "json" objects as Anchors?
 	// Should they have methods?
-
-	// TODO: add optional anchor policy parameters.
-	// This should probably default to a basic successor/predecessor anchor,
-	// but allow opting into more expensive once when needed (ex: when you know its going into an edit or will need to be used across changes that could otherwise invalidate it)
-	//
-	// TODO: Once the API is in a more polished state consider adding short hand versions for predecessor and successor.
-	adjacentPlace(side: Side): Place;
 }
 
 interface Query<TChild> extends RawTreeNode<TChild> {

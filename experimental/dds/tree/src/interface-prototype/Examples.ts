@@ -42,7 +42,7 @@ export const insertExample = {
 	): TreeNode => {
 		const definition = context.loadDefinition(def);
 		const identifier = context.loadNodeId(id);
-		const range = context.insert(place, { definition, identifier, traits: {} });
+		const range = context.move(place, context.create({ definition, identifier }));
 		return range.start.adjacentNode(Side.After) ?? fail();
 	},
 };
@@ -161,17 +161,15 @@ export const moveToFront = {
 	id: '64cacbb8-a52c-47ce-bf68-88be3d2cbd80' as CommandId,
 	run: (context: CommandContext, options: Empty, { target }: { target: TreeNode }): void => {
 		const before = target.adjacentPlace(Side.Before);
-		const range = before.rangeTo(target.adjacentPlace(Side.After));
-		const parent = target.parent ?? commandInvalid();
-		const trait = parent as Trait; // TODO: better way to do this.
-		const end = trait.iteratorFromEnd().current(); // Assuming this is anchored based on the end of the trait, not relative to what ever node is last.
+		// Assuming iteratorFromEnd is anchored based on the end of the trait, not relative to what ever node is last.
+		const end = target.parent.iteratorFromEnd().current();
 
 		// This enforces that the move to front is not changing which trait the target is in.
 		// If target is moved to another trait before moved before this gets applied, this will detect it and make it conflicted.
 		// The application could then rerun this command to fix it, moving it to the end of its new trait.
 		context.useAsConstraint(before.rangeTo(end), ConstraintEffect.InvalidAndDiscard);
 
-		context.insert(end, range);
+		context.move(end, target);
 	},
 };
 
@@ -185,7 +183,7 @@ function sort(context: CommandContext, target: Range, cmp: (a: TreeNode, b: Tree
 	const sorted = [...target].sort(cmp);
 	for (let i = 1; i < sorted.length; i++) {
 		const src = sorted[i].adjacentPlace(Side.Before).rangeTo(sorted[i].adjacentPlace(Side.After));
-		context.insert(sorted[i - 1].adjacentPlace(Side.After), src);
+		context.move(sorted[i - 1].adjacentPlace(Side.After), src);
 	}
 }
 
@@ -213,8 +211,8 @@ export const undo: Command<{ editId: StableId }, Empty, void> = {
 
 		// This is what it looks like using the snapshot level API.
 		const id = context.loadEditId(editId);
-		const editIndex = context.getIndexOfId(id);
-		const edit = context.getEditInSessionAtIndex(editIndex);
+		const editIndex = context.history.getIndexOfId(id);
+		const edit = context.history.getEditInSessionAtIndex(editIndex);
 		const snapshotBefore = context.getSnapshotInSession(editIndex);
 
 		// Apply the revert edit and set it as the new revertible edit.
