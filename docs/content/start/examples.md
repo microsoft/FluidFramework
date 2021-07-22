@@ -1,6 +1,6 @@
 ---
 title: Examples
-menuPosition: 5
+menuPosition: 4
 aliases:
   - "/docs/get-started/examples/"
   - "/docs/start/examples/"
