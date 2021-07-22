@@ -187,7 +187,7 @@ export class SummaryGenerator {
             refreshLatestAck,
             fullTree,
             timeSinceLastAttempt: Date.now() - this.heuristicData.lastAttempt.summaryTime,
-            timeSinceLastSummary: Date.now() - this.heuristicData.lastAck.summaryTime,
+            timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
         });
         // Helper functions to report failures and return.
         const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
@@ -220,7 +220,7 @@ export class SummaryGenerator {
             generateTelemetryProps = {
                 refSequenceNumber,
                 opsSinceLastAttempt: refSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastAck.refSequenceNumber,
+                opsSinceLastSummary: refSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
             };
             if (summaryData.stage !== "base") {
                 generateTelemetryProps = {
@@ -296,7 +296,7 @@ export class SummaryGenerator {
                 summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
             };
             if (ackNack.type === MessageType.SummaryAck) {
-                this.heuristicData.ackLastSent();
+                this.heuristicData.markLastAttemptAsSuccessful();
                 summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
                     summaryAckNackOp: ackNack,

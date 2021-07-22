@@ -15,22 +15,22 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
         return this._lastAttempt;
     }
 
-    protected _lastAck: ISummaryAttempt;
-    public get lastAck(): ISummaryAttempt {
-        return this._lastAck;
+    protected _lastSuccessfulSummary: Readonly<ISummaryAttempt>;
+    public get lastSuccessfulSummary(): Readonly<ISummaryAttempt> {
+        return this._lastSuccessfulSummary;
     }
 
     constructor(
         public lastOpSequenceNumber: number,
-        firstAck: ISummaryAttempt,
+        attemptBaseline: ISummaryAttempt,
     ) {
-        this._lastAttempt = firstAck;
-        this._lastAck = firstAck;
+        this._lastAttempt = attemptBaseline;
+        this._lastSuccessfulSummary = { ...attemptBaseline };
     }
 
-    public initialize(lastSummary: ISummaryAttempt) {
+    public initialize(lastSummary: Readonly<ISummaryAttempt>) {
         this._lastAttempt = lastSummary;
-        this._lastAck = lastSummary;
+        this._lastSuccessfulSummary = { ...lastSummary };
     }
 
     public recordAttempt(refSequenceNumber?: number) {
@@ -40,8 +40,8 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
         };
     }
 
-    public ackLastSent() {
-        this._lastAck = this.lastAttempt;
+    public markLastAttemptAsSuccessful() {
+        this._lastSuccessfulSummary = { ...this.lastAttempt };
     }
 }
 
@@ -63,11 +63,11 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
     }
 
     public countOpsSinceLastAck(): number {
-        return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastAck.refSequenceNumber;
+        return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
     public run() {
-        const timeSinceLastSummary = Date.now() - this.heuristicData.lastAck.summaryTime;
+        const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         const outstandingOps = this.countOpsSinceLastAck();
         if (timeSinceLastSummary > this.configuration.maxTime) {
             this.idleTimer.clear();

@@ -226,39 +226,31 @@ export interface ISummarizer
     ): OnDemandSummarizeResult;
 }
 
-/**
- * Data about an attempt to summarize.
- */
- export interface ISummaryAttempt {
-    /**
-     * Reference sequence number when summary was generated or attempted
-     */
+/** Data about an attempt to summarize. */
+export interface ISummaryAttempt {
+    /** Reference sequence number when summary was generated or attempted */
     readonly refSequenceNumber: number;
 
-    /**
-     * Time of summary attempt after it was sent or attempted
-     */
+    /** Time of summary attempt after it was sent or attempted */
     readonly summaryTime: number;
 
-    /**
-     * Sequence number of summary op
-     */
+    /** Sequence number of summary op */
     summarySequenceNumber?: number;
 }
 
 /** Data relevant for summary heuristics. */
 export interface ISummarizeHeuristicData {
-    /** Last received op sequence number */
+    /** Latest received op sequence number */
     lastOpSequenceNumber: number;
 
-    /** Last sent summary attempt */
+    /** Most recent summary attempt from this client */
     readonly lastAttempt: ISummaryAttempt;
 
-    /** Last summary attempt that received an ack */
-    readonly lastAck: ISummaryAttempt;
+    /** Most recent summary that received an ack */
+    readonly lastSuccessfulSummary: Readonly<ISummaryAttempt>;
 
     /**
-     * Initializes lastAttempt and lastAck based on the last summary.
+     * Initializes lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
      */
     initialize(lastSummary: ISummaryAttempt): void;
@@ -272,7 +264,7 @@ export interface ISummarizeHeuristicData {
     recordAttempt(referenceSequenceNumber?: number): void;
 
     /** Mark that the last sent summary attempt has received an ack */
-    ackLastSent(): void;
+    markLastAttemptAsSuccessful(): void;
 }
 
 /** Responsible for running heuristics determining when to summarize. */

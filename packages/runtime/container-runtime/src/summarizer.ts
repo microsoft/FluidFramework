@@ -203,7 +203,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this /* Pick<ISummarizerInternalsProvider, "submitSummary"> */,
             new SummarizeHeuristicData(
                 this.runtime.deltaManager.lastSequenceNumber,
-                { /** Initial summary attempt */
+                { /** summary attempt baseline for heuristics */
                     refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
                     summaryTime: Date.now(),
                 } as const,
