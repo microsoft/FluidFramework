@@ -22,7 +22,7 @@ const audience = containerServices.audience;
 
 {{% callout tip %}}
 
-The backing container controls the audience by adding and removing members as part of processing ops (see [Total Order Broadcast & Eventual Consistency]({{< relref tob.md >}})).  This means audience membership reflects the container's processed ops rather than live information from the service, and delays in op processing may also produce outdated audience information.
+The backing container controls the audience by adding and removing members as part of processing [signals]({{< relref signals.md >}}).  This means audience membership reflects the container's processed signals rather than live information from the service, and delays in signal receipt or processing may also produce outdated audience information.
 
 {{% /callout %}}
 
