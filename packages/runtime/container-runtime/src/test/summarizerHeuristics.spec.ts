@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerHeuristics";
-import { ISummarizeHeuristicData, ISummaryAttempt } from "../summarizerTypes";
+import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
 
 describe("Runtime", () => {
@@ -47,7 +47,7 @@ describe("Runtime", () => {
                 maxOps = defaultSummaryConfig.maxOps,
                 maxAckWaitTime = defaultSummaryConfig.maxAckWaitTime,
                 run = true,
-            }: Partial<ISummaryConfiguration & ISummaryAttempt & {
+            }: Partial<ISummaryConfiguration & ISummarizeAttempt & {
                 lastOpSequenceNumber: number;
                 minOpsForAttemptOnClose: number;
                 run: boolean;

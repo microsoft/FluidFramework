@@ -233,8 +233,8 @@ export interface ISummarizer
     ): OnDemandSummarizeResult;
 }
 
-/** Data about an attempt to summarize. */
-export interface ISummaryAttempt {
+/** Data about an attempt to summarize used for heuristics. */
+export interface ISummarizeAttempt {
     /** Reference sequence number when summary was generated or attempted */
     readonly refSequenceNumber: number;
 
@@ -251,16 +251,16 @@ export interface ISummarizeHeuristicData {
     lastOpSequenceNumber: number;
 
     /** Most recent summary attempt from this client */
-    readonly lastAttempt: ISummaryAttempt;
+    readonly lastAttempt: ISummarizeAttempt;
 
     /** Most recent summary that received an ack */
-    readonly lastSuccessfulSummary: Readonly<ISummaryAttempt>;
+    readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
     /**
      * Initializes lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
      */
-    initialize(lastSummary: ISummaryAttempt): void;
+    initialize(lastSummary: ISummarizeAttempt): void;
 
     /**
      * Records a summary attempt. If the attempt was successfully sent,

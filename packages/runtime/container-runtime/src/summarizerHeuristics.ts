@@ -5,31 +5,31 @@
 
 import { Timer } from "@fluidframework/common-utils";
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
-import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummaryAttempt } from "./summarizerTypes";
+import { ISummarizeHeuristicData, ISummarizeHeuristicRunner, ISummarizeAttempt } from "./summarizerTypes";
 import { SummarizeReason } from "./summaryGenerator";
 
 /** Simple implementation of class for tracking summarize heuristic data. */
 export class SummarizeHeuristicData implements ISummarizeHeuristicData {
-    protected _lastAttempt: ISummaryAttempt;
-    public get lastAttempt(): ISummaryAttempt {
+    protected _lastAttempt: ISummarizeAttempt;
+    public get lastAttempt(): ISummarizeAttempt {
         return this._lastAttempt;
     }
 
-    protected _lastSuccessfulSummary: Readonly<ISummaryAttempt>;
-    public get lastSuccessfulSummary(): Readonly<ISummaryAttempt> {
+    protected _lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
+    public get lastSuccessfulSummary(): Readonly<ISummarizeAttempt> {
         return this._lastSuccessfulSummary;
     }
 
     constructor(
         public lastOpSequenceNumber: number,
         /** Baseline attempt data used for comparisons with subsequent attempts/calculations. */
-        attemptBaseline: ISummaryAttempt,
+        attemptBaseline: ISummarizeAttempt,
     ) {
         this._lastAttempt = attemptBaseline;
         this._lastSuccessfulSummary = { ...attemptBaseline };
     }
 
-    public initialize(lastSummary: Readonly<ISummaryAttempt>) {
+    public initialize(lastSummary: Readonly<ISummarizeAttempt>) {
         this._lastAttempt = lastSummary;
         this._lastSuccessfulSummary = { ...lastSummary };
     }
