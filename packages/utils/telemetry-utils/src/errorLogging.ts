@@ -235,7 +235,7 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
  *
  * PLEASE take care to properly tag properties set on this object
  */
- export class LoggingError extends Error implements ILoggingError {
+export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
