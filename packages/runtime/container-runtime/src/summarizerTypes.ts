@@ -8,7 +8,6 @@ import {
     IEventProvider,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { Deferred } from "@fluidframework/common-utils";
 import {
     IFluidRouter,
     IFluidRunnable,
@@ -56,7 +55,6 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly summarizerClientId: string | undefined;
-    nextSummarizerD?: Deferred<ISummarizer>;
     closeFn(): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     on(event: "disconnected", listener: () => void): this;
@@ -207,10 +205,6 @@ export interface ISummarizerEvents extends IEvent {
 
 export interface ISummarizer
     extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
-    /**
-     * Returns a promise that will be resolved with the next Summarizer after context reload
-     */
-    setSummarizer(): Promise<ISummarizer>;
     stop(reason?: SummarizerStopReason): void;
     run(onBehalfOf: string): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;

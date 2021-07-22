@@ -255,11 +255,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         }
     }
 
-    public async setSummarizer(): Promise<ISummarizer> {
-        this.runtime.nextSummarizerD = new Deferred<ISummarizer>();
-        return this.runtime.nextSummarizerD.promise;
-    }
-
     /** Implementation of SummarizerInternalsProvider.submitSummary */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const result = this.internalsProvider.submitSummary(options);
