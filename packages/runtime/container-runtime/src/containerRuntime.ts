@@ -132,6 +132,7 @@ import {
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
+    ISummarizerOptions,
     ISummarizerRuntime,
 } from "./summarizerTypes";
 
@@ -246,6 +247,9 @@ export interface ISummaryRuntimeOptions {
      * THis defaults to false (disabled) and must be explicitly set to true to enable.
      */
     summarizerClientElection?: boolean;
+
+    /** Options that control the running summarizer behavior. */
+    summarizerOptions?: Readonly<Partial<ISummarizerOptions>>;
 }
 
 /**
@@ -925,6 +929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
             this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+            this.runtimeOptions.summaryOptions.summarizerOptions,
         );
 
         if (this.connected) {

@@ -784,7 +784,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x0d5 /* "closed" */);
 
         // If container is already attached or attach is in progress, throw an error.
-        assert(this._attachState === AttachState.Detached && !this.attachStarted, 0x205 /* "attach() called more than once" */);
+        assert(this._attachState === AttachState.Detached && !this.attachStarted,
+            0x205 /* "attach() called more than once" */);
         this.attachStarted = true;
 
         // If attachment blobs were uploaded in detached state we will go through a different attach flow
