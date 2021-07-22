@@ -4,27 +4,17 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    IDisposable,
-    ITelemetryLogger,
-} from "@fluidframework/common-definitions";
-import {
-    delay,
-    IPromiseTimerResult,
-    PromiseTimer,
-} from "@fluidframework/common-utils";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { delay, IPromiseTimerResult, PromiseTimer } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
-import {
-    IContainerContext,
-    LoaderHeader,
-} from "@fluidframework/container-definitions";
+import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ISummarizer, createSummarizingWarning, ISummarizingWarning, SummarizerStopReason } from "./summarizer";
-import { SummaryCollection } from "./summaryCollection";
+import { createSummarizingWarning } from "./summarizer";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { Throttler } from "./throttler";
+import { ISummarizer, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
@@ -47,7 +37,7 @@ enum SummaryManagerState {
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
 type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize" | "disposed">;
 type ShouldSummarizeState =
-    | { shouldSummarize: true; shouldStart: boolean; }
+    | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
 
 export class SummaryManager extends EventEmitter implements IDisposable {
@@ -78,11 +68,9 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     constructor(
         private readonly context: IContainerContext,
-        summaryCollection: SummaryCollection,
         private readonly clientElection: SummarizerClientElection,
         private readonly summariesEnabled: boolean,
         parentLogger: ITelemetryLogger,
-        maxOpsSinceLastSummary: number,
         initialDelayMs: number = defaultInitialDelayMs,
     ) {
         super();
@@ -106,7 +94,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
         };
         context.quorum.on("addMember", opsUntilFirstConnectHandler);
 
-        clientElection.on("shouldSummarizeStateChanged", () => this.refreshSummarizer());
+        clientElection.on("electedSummarizerChanged", () => this.refreshSummarizer());
 
         this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
         this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
@@ -154,14 +142,8 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
             return { shouldSummarize: false, stopReason: "disposed" };
-        } else if (this.clientElection.hasSummarizersInQuorum) {
-            // Need to wait for any other existing summarizer clients to close,
-            // because they can live longer than their parent container.
-            // TODO: We will need to remove this check when we allow elected summarizer
-            // to change, because they could get stuck in quorum.
-            return { shouldSummarize: true, shouldStart: false };
         } else {
-            return { shouldSummarize: true, shouldStart: true };
+            return { shouldSummarize: true };
         }
     }
 
@@ -173,13 +155,12 @@ export class SummaryManager extends EventEmitter implements IDisposable {
             this.emit("summarizer", newSummarizerClientId);
         }
 
-        // Transition states depending on shouldSummarize, which is a calculated
-        // property that is only true if this client is connected and has the
-        // computed summarizer client id
+        // Transition states depending on shouldSummarize, which is a calculated property
+        // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
         switch (this.state) {
             case SummaryManagerState.Off: {
-                if (shouldSummarizeState.shouldSummarize && shouldSummarizeState.shouldStart) {
+                if (shouldSummarizeState.shouldSummarize) {
                     this.start();
                 }
                 return;
@@ -274,7 +255,7 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
     private tryRestart(): void {
         const shouldSummarizeState = this.getShouldSummarizeState();
-        if (shouldSummarizeState.shouldSummarize && shouldSummarizeState.shouldStart) {
+        if (shouldSummarizeState.shouldSummarize) {
             this.start();
         } else {
             this.state = SummaryManagerState.Off;
@@ -345,6 +326,14 @@ export class SummaryManager extends EventEmitter implements IDisposable {
 
         return summarizer;
     }
+
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+        if (this.runningSummarizer === undefined) {
+            throw Error("No running summarizer client");
+            // TODO: could spawn a summarizer client temporarily.
+        }
+        return this.runningSummarizer.summarizeOnDemand(...args);
+    };
 
     public dispose() {
         this.initialDelayTimer?.clear();

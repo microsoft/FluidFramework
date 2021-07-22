@@ -50,7 +50,6 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     readAndParseFromBlobs,
-    canRetryOnError,
     runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
@@ -428,8 +427,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private messageCountAfterDisconnection: number = 0;
     private _loadedFromVersion: IVersion | undefined;
     private _resolvedUrl: IFluidResolvedUrl | undefined;
-    private cachedAttachSummary: ISummaryTree | undefined;
-    private attachInProgress = false;
+    private attachStarted = false;
     private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
@@ -754,7 +752,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
-        this._deltaManager.close();
 
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
@@ -786,36 +783,35 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.loaded, 0x0d4 /* "not loaded" */);
         assert(!this.closed, 0x0d5 /* "closed" */);
 
-        // If container is already attached or attach is in progress, return.
-        if (this._attachState === AttachState.Attached || this.attachInProgress) {
-            return;
-        }
+        // If container is already attached or attach is in progress, throw an error.
+        assert(this._attachState === AttachState.Detached && !this.attachStarted, "attach() called more than once");
+        this.attachStarted = true;
 
-        this.attachInProgress = true;
+        // If attachment blobs were uploaded in detached state we will go through a different attach flow
+        const hasAttachmentBlobs = this.loader.services.detachedBlobStorage !== undefined
+            && this.loader.services.detachedBlobStorage.size > 0;
+
         try {
             assert(this.deltaManager.inbound.length === 0, 0x0d6 /* "Inbound queue should be empty when attaching" */);
-            // Only take a summary if the container is in detached state, otherwise we could have local changes.
-            // In failed attach call, we would already have a summary cached.
-            if (this._attachState === AttachState.Detached) {
+
+            let summary: ISummaryTree;
+            if (!hasAttachmentBlobs) {
                 // Get the document state post attach - possibly can just call attach but we need to change the
                 // semantics around what the attach means as far as async code goes.
                 const appSummary: ISummaryTree = this.context.createSummary();
                 const protocolSummary = this.captureProtocolSummary();
-                this.cachedAttachSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+                summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                 // Set the state as attaching as we are starting the process of attaching container.
                 // This should be fired after taking the summary because it is the place where we are
                 // starting to attach the container to storage.
                 // Also, this should only be fired in detached container.
                 this._attachState = AttachState.Attaching;
-                this.emit("attaching");
+                this.context.notifyAttaching();
             }
-            assert(!!this.cachedAttachSummary,
-                0x0d7 /* "Summary should be there either by this attach call or previous attach call!!" */);
 
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
-            const summary = this.cachedAttachSummary;
             // Actually go and create the resolved document
             if (this.service === undefined) {
                 this.service = await runWithRetry(
@@ -836,11 +832,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._resolvedUrl = resolvedUrl;
             await this.connectStorageService();
 
-            // This we can probably just pass the storage service to the blob manager - although ideally
-            // there just isn't a blob manager
+            // upload blobs here (NYI)
+
+            // post summary here
+            if (hasAttachmentBlobs) {
+                const appSummary: ISummaryTree = this.context.createSummary();
+                const protocolSummary = this.captureProtocolSummary();
+                summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+                this._attachState = AttachState.Attaching;
+                this.context.notifyAttaching();
+
+                await this.storageService.uploadSummaryWithContext(summary, {
+                    referenceSequenceNumber: 0,
+                    ackHandle: undefined,
+                    proposalHandle: undefined,
+                });
+
+                assert(!hasAttachmentBlobs, "attaching container with blobs is not yet implemented");
+            }
+
             this._attachState = AttachState.Attached;
             this.emit("attached");
-            this.cachedAttachSummary = undefined;
 
             // Propagate current connection state through the system.
             this.propagateConnectionState();
@@ -848,12 +861,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
         } catch(error) {
-            if (!canRetryOnError(error)) {
-                this.close(error);
-            }
+            this.close(error);
             throw error;
-        } finally {
-            this.attachInProgress = false;
         }
     }
 
@@ -1206,7 +1215,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
             existing,
-            attributes,
             codeDetails,
             snapshot,
             pendingLocalState,
@@ -1295,7 +1303,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // The load context - given we seeded the quorum - will be great
         await this.instantiateContextDetached(
             false, // existing
-            attributes,
         );
 
         this.propagateConnectionState();
@@ -1319,7 +1326,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.instantiateContextDetached(
             true, // existing
-            attributes,
             snapshotTree,
         );
 
@@ -1817,7 +1823,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async instantiateContextDetached(
         existing: boolean,
-        attributes: IDocumentAttributes,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
     ) {
@@ -1828,7 +1833,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         await this.instantiateContext(
             existing,
-            attributes,
             codeDetails,
             snapshot,
             pendingLocalState,
@@ -1837,7 +1841,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async instantiateContext(
         existing: boolean,
-        attributes: IDocumentAttributes,
         codeDetails: IFluidCodeDetails,
         snapshot?: ISnapshotTree,
         pendingLocalState?: unknown,
@@ -1857,7 +1860,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.codeLoader,
             codeDetails,
             snapshot,
-            attributes,
             new DeltaManagerProxy(this._deltaManager),
             new QuorumProxy(this.protocolHandler.quorum),
             loader,

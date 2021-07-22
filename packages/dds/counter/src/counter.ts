@@ -162,6 +162,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         this._value = content.value;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     */
     protected registerCore() {
     }
 
@@ -195,6 +198,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         }
     }
 
+    /**
+     * Not implemented.
+     */
     protected applyStashedOp() {
         throw new Error("not implemented");
     }

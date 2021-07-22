@@ -79,7 +79,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore i
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, getSocketIOClient: () => Promise<SocketIOClientStatic>, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)

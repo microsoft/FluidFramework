@@ -86,7 +86,7 @@ export interface IContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void);
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "attaching" | "attached", listener: () => void);
+    (event: "disconnected" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);

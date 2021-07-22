@@ -21,7 +21,6 @@ import {
     IContainerContext,
     IDeltaManager,
     IDeltaSender,
-    ILoader,
     IRuntime,
     ContainerWarning,
     ICriticalContainerError,
@@ -83,7 +82,6 @@ import {
     NamedFluidDataStoreRegistryEntries,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    ISummaryStats,
     IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
@@ -107,7 +105,7 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
-import { ISummarizerRuntime, ISummarizerInternalsProvider, Summarizer, IGenerateSummaryOptions } from "./summarizer";
+import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
@@ -118,6 +116,7 @@ import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
+    electedSummarizerBlobName,
     gcFeature,
     IContainerRuntimeMetadata,
     metadataBlobName,
@@ -125,8 +124,16 @@ import {
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
-import { OrderedClientElection } from "./orderedClientElection";
-import { SummarizerClientElection } from "./summarizerClientElection";
+import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
+import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import {
+    SubmitSummaryResult,
+    IGeneratedSummaryStats,
+    ISubmitSummaryOptions,
+    ISummarizer,
+    ISummarizerInternalsProvider,
+    ISummarizerRuntime,
+} from "./summarizerTypes";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -155,36 +162,6 @@ export interface ContainerRuntimeMessage {
     contents: any;
     type: ContainerMessageType;
 }
-
-export interface IGeneratedSummaryStats extends ISummaryStats{
-    dataStoreCount: number;
-    summarizedDataStoreCount: number;
-}
-
-export interface IGeneratedSummaryData {
-    readonly summaryStats: IGeneratedSummaryStats;
-    readonly generateDuration?: number;
-}
-
-export interface IUploadedSummaryData {
-    readonly handle: string;
-    readonly uploadDuration?: number;
-}
-
-export interface IUnsubmittedSummaryData extends Partial<IGeneratedSummaryData>, Partial<IUploadedSummaryData> {
-    readonly referenceSequenceNumber: number;
-    readonly submitted: false;
-    readonly error: any;
-}
-
-export interface ISubmittedSummaryData extends IGeneratedSummaryData, IUploadedSummaryData {
-    readonly referenceSequenceNumber: number;
-    readonly submitted: true;
-    readonly clientSequenceNumber: number;
-    readonly submitOpDuration?: number;
-}
-
-export type GenerateSummaryData = IUnsubmittedSummaryData | ISubmittedSummaryData;
 
 // Consider idle 5s of no activity. And snapshot if a minute has gone by with no snapshot.
 const IdleDetectionTime = 5000;
@@ -261,8 +238,14 @@ export interface ISummaryRuntimeOptions {
     // Defaults to TRUE (disabled) for now.
     disableIsolatedChannels?: boolean;
 
-    // Defaults to 3000 ops
+    // Defaults to 7000 ops
     maxOpsSinceLastSummary?: number;
+
+    /**
+     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+     * THis defaults to false (disabled) and must be explicitly set to true to enable.
+     */
+    summarizerClientElection?: boolean;
 }
 
 /**
@@ -598,12 +581,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
 
         const runtime = new ContainerRuntime(
             context,
             registry,
             metadata,
+            electedSummarizerData,
             chunks,
             combinedRuntimeOptions,
             containerScope,
@@ -664,10 +649,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.closeFn;
     }
 
-    public get loader(): ILoader {
-        return this.context.loader;
-    }
-
     public get flushMode(): FlushMode {
         return this._flushMode;
     }
@@ -691,6 +672,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
+    private readonly summarizerClientElection: SummarizerClientElection;
     private readonly summaryManager: SummaryManager;
     private readonly summaryCollection: SummaryCollection;
 
@@ -767,13 +749,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
         metadata: IContainerRuntimeMetadata | undefined,
+        electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
-        // The `existing` property  is to be removed after the state
-        // is refactored into IRuntimeFactory. See #3429
-        public readonly existing: boolean,
+        existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -887,7 +868,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         });
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
-        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 3000;
+        const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
         const defaultAction = () => {
             if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                 this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
@@ -917,20 +898,34 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
+        const orderedClientCollection = new OrderedClientCollection(
+            this.logger,
+            this.context.deltaManager,
+            this.context.quorum,
+        );
+        const orderedClientElectionForSummarizer = new OrderedClientElection(
+            this.logger,
+            orderedClientCollection,
+            electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
+            SummarizerClientElection.isClientEligible,
+        );
+        const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
+            this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
+        this.summarizerClientElection = new SummarizerClientElection(
+            this.logger,
+            this.summaryCollection,
+            orderedClientElectionForSummarizer,
+            maxOpsSinceLastSummary,
+            summarizerClientElectionEnabled,
+        );
         // Create the SummaryManager and mark the initial state
         this.summaryManager = new SummaryManager(
             context,
-            this.summaryCollection,
-            new SummarizerClientElection(
-                this.logger,
-                this.summaryCollection,
-                new OrderedClientElection(this.context.quorum),
-                maxOpsSinceLastSummary,
-            ),
+            this.summarizerClientElection,
             this.runtimeOptions.summaryOptions.generateSummaries !== false,
             this.logger,
-            maxOpsSinceLastSummary,
-            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs);
+            this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+        );
 
         if (this.connected) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -983,8 +978,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.summaryManager.dispose();
         this.summarizer.dispose();
-
         this.dataStores.dispose();
+        this.pendingStateManager.dispose();
 
         this.emit("dispose");
         this.removeAllListeners();
@@ -1150,6 +1145,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const content = JSON.stringify([...this.chunkMap]);
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
+        const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
+        addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
+
         const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
@@ -1529,7 +1527,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        assert(this.blobManager.blobCount === 0, 0x1fa /* "attaching container with blobs is not yet implemented" */);
         if (attachState === AttachState.Attaching) {
             assert(this.attachState === AttachState.Attaching,
                 0x12d /* "Container Context should already be in attaching state" */);
@@ -1654,8 +1651,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return summarizeResult as IChannelSummarizeResult;
     }
 
-    /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryData> {
+    /**
+     * Generates the summary tree, uploads it to storage, and then submits the summarize op.
+     * This is intended to be called by the summarizer, since it is the implementation of
+     * ISummarizerInternalsProvider.submitSummary.
+     * It takes care of state management at the container level, including pausing inbound
+     * op processing, updating SummarizerNode state tracking, and garbage collection.
+     * @param options - options controlling how the summary is generated or submitted
+     */
+    public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
         if (refreshLatestAck) {
@@ -1705,14 +1709,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { continue: true };
             };
 
-            const attemptData: Omit<IUnsubmittedSummaryData, "error"> = {
-                referenceSequenceNumber: summaryRefSeqNum,
-                submitted: false,
-            };
-
             let continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { ...attemptData, error: continueResult.error };
+                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error: continueResult.error };
             }
 
             // If the GC version that this container is loaded from differs from the current GC version that this
@@ -1734,33 +1733,35 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
                 });
             } catch (error) {
-                return { ...attemptData, error };
+                return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
+            const { summary: summaryTree, stats: partialStats, gcData } = summarizeResult;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
             // summarized dataStore count is total dataStore count minus handle count
-            const dataStoreTree = this.disableIsolatedChannels ? summarizeResult.summary :
-                summarizeResult.summary.tree[channelsTreeName];
+            const dataStoreTree = this.disableIsolatedChannels ? summaryTree : summaryTree.tree[channelsTreeName];
 
-            assert(dataStoreTree.type === SummaryType.Tree, "summary is not a tree");
+            assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
             const handleCount = Object.values(dataStoreTree.tree).filter(
                 (value) => value.type === SummaryType.Handle).length;
 
-            const stats: IGeneratedSummaryStats = {
+            const summaryStats: IGeneratedSummaryStats = {
                 dataStoreCount: this.dataStores.size,
                 summarizedDataStoreCount: this.dataStores.size - handleCount,
-                ...summarizeResult.stats,
+                ...partialStats,
             };
-
-            const generateData: IGeneratedSummaryData = {
-                summaryStats: stats,
+            const generateSummaryData = {
+                referenceSequenceNumber: summaryRefSeqNum,
+                summaryTree,
+                summaryStats,
+                gcData,
                 generateDuration: trace.trace().duration,
-            };
+            } as const;
 
             continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { ...attemptData, ...generateData, error: continueResult.error };
+                return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
             const lastAck = this.summaryCollection.latestAck;
@@ -1781,7 +1782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             try {
                 handle = await this.storage.uploadSummaryWithContext(summarizeResult.summary, summaryContext);
             } catch (error) {
-                return { ...attemptData, ...generateData, error };
+                return { stage: "generate", ...generateSummaryData, error };
             }
 
             const parent = summaryContext.ackHandle;
@@ -1792,31 +1793,30 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 message,
                 parents: parent ? [parent] : [],
             };
-            const uploadData: IUploadedSummaryData = {
+            const uploadData = {
+                ...generateSummaryData,
                 handle,
                 uploadDuration: trace.trace().duration,
-            };
+            } as const;
 
             continueResult = checkContinue();
             if (!continueResult.continue) {
-                return { ...attemptData, ...generateData, ...uploadData, error: continueResult.error };
+                return { stage: "upload", ...uploadData, error: continueResult.error };
             }
 
             let clientSequenceNumber: number;
             try {
                 clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
             } catch (error) {
-                return { ...attemptData, ...generateData, ...uploadData, error };
+                return { stage: "upload", ...uploadData, error };
             }
 
-            const submitData: ISubmittedSummaryData = {
-                ...attemptData,
-                ...generateData,
+            const submitData = {
+                stage: "submit",
                 ...uploadData,
-                submitted: true,
                 clientSequenceNumber,
                 submitOpDuration: trace.trace().duration,
-            };
+            } as const;
 
             this.summarizerNode.completeSummary(handle);
 
@@ -2118,7 +2118,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Update the summaryGCVersion if GC is enabled and the latest summary tracked by this container was updated.
         if (this.gcEnabled && result.latestSummaryUpdated) {
             // Since there is not proposal handle for this summary, it should not have been tracked.
-            assert(!result.wasSummaryTracked, "Summary without proposal handle should not have been tracked");
+            assert(!result.wasSummaryTracked,
+                0x1fd /* "Summary without proposal handle should not have been tracked" */);
             // Update summaryGCVersion from the snapshot that was used to update the latest summary.
             await this.updateSummaryGCVersionFromSnapshot(result.snapshot);
         }
@@ -2165,6 +2166,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public getPendingLocalState() {
         return this.pendingStateManager.getLocalState();
     }
+
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
+        return this.clientDetails.type === summarizerClientType
+            ? this.summarizer.summarizeOnDemand(...args)
+            : this.summaryManager.summarizeOnDemand(...args);
+    };
 }
 
 /**

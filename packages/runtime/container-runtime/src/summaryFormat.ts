@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
@@ -94,6 +97,7 @@ export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | u
 
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
+export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
@@ -147,4 +151,24 @@ export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats
         tree: { [channelsTreeName]: summarizeResult.summary },
     };
     summarizeResult.stats.treeNodeCount++;
+}
+
+export async function getFluidDataStoreAttributes(
+    storage: IDocumentStorageService,
+    snapshot: ISnapshotTree,
+): Promise<ReadFluidDataStoreAttributes> {
+    // Note: storage can be undefined in special case while detached.
+    const attributes = storage !== undefined
+        ? await readAndParse<ReadFluidDataStoreAttributes>(
+            storage, snapshot.blobs[dataStoreAttributesBlobName])
+        : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
+            snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
+    // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
+    // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
+    // However the feature of loading a detached container from snapshot, is added when the
+    // snapshotFormatVersion is at least "0.1" (1), so we don't expect it to be anything else.
+    const formatVersion = getAttributesFormatVersion(attributes);
+    assert(formatVersion > 0,
+        0x1d5 /* `Invalid snapshot format version ${attributes.snapshotFormatVersion}` */);
+    return attributes;
 }

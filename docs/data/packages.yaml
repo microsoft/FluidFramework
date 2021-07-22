@@ -5,58 +5,20 @@ distributed-data-structures:
 - "@fluidframework/map"
 - "@fluidframework/matrix"
 - "@fluidframework/ordered-collection"
+# - "@fluid-experimental/property-dds"
 - "@fluidframework/register-collection"
 - "@fluidframework/sequence"
 - custom:
     title: "SharedString"
     url: "/docs/apis/sequence/sharedstring/"
-- "@fluidframework/shared-object-base"
-- "@fluidframework/synthesize"
-- "@fluidframework/shared-summary-block"
-data-stores:
-- "@fluidframework/core-interfaces"
-- "@fluidframework/datastore-definitions"
-- "@fluidframework/datastore"
-container-runtime:
-- "@fluidframework/container-runtime-definitions"
-- "@fluidframework/container-runtime"
-- "@fluidframework/runtime-utils"
-- "@fluidframework/runtime-definitions"
+- "@fluid-experimental/task-manager"
 libraries:
+- "@fluid-experimental/fluid-framework"
 - "@fluidframework/aqueduct"
-- "@fluidframework/undo-redo"
-- "@fluidframework/view-adapters"
-- "@fluidframework/view-interfaces"
-- "@fluidframework/request-handler"
-hosts:
-- "@fluidframework/base-host"
-loader:
-- "@fluidframework/container-definitions"
-- "@fluidframework/container-loader"
-- "@fluidframework/container-utils"
-- "@fluidframework/execution-context-loader"
-- "@fluidframework/web-code-loader"
-tools:
-- "@fluidframework/debugger"
-driver:
-- "@fluidframework/driver-utils"
-- "@fluidframework/driver-base"
-- "@fluidframework/driver-definitions"
-- "@fluidframework/file-driver"
-- "@fluidframework/iframe-driver"
-- "@fluidframework/odsp-driver"
-- "@fluidframework/replay-driver"
-- "@fluidframework/routerlicious-driver"
-miscellaneous:
-- "@fluidframework/common-utils"
+definitions:
 - "@fluidframework/common-definitions"
-- "@fluidframework/dds-interceptions"
-- "@fluidframework/telemetry-utils"
-- "@fluidframework/test-utils"
-protocol:
+- "@fluidframework/container-definitions"
+- "@fluidframework/core-interfaces"
+- "@fluidframework/driver-definitions"
 - "@fluidframework/protocol-base"
 - "@fluidframework/protocol-definitions"
-experimental:
-- "@fluidframework/data-object-base"
-- "@fluid-experimental/react-inputs"
-- "@fluid-experimental/react"

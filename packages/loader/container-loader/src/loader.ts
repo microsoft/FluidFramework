@@ -260,7 +260,9 @@ export interface ILoaderServices {
  * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
  * blobs in detached containers.
  */
- export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+ };
 
  /**
  * To be included in the `IClientDetails.environment` value for the `IRequest` header
@@ -364,7 +366,10 @@ export class Loader implements IHostLoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
+            return resolved.container.request({
+                ...request,
+                url: `${resolved.parsed.path}${resolved.parsed.query}`,
+            });
         });
     }
 

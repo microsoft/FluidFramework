@@ -54,32 +54,23 @@ export class RouterliciousTestDriver implements ITestDriver {
             tenantId,
             tenantSecret,
             serviceEndpoint,
-            process.env.BUILD_BUILD_ID,
             api,
         );
     }
 
     public readonly type = "routerlicious";
     public get version() { return this.api.version; }
-    private readonly testIdPrefix: string;
     constructor(
         private readonly bearerSecret: string,
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
-        testIdPrefix: string | undefined,
         private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
-        this.testIdPrefix = `${testIdPrefix ?? ""}-`;
-    }
-
-    public createDocumentId(testId: string) {
-        return this.testIdPrefix + testId;
     }
 
     async createContainerUrl(testId: string): Promise<string> {
-        // eslint-disable-next-line max-len
-        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(this.createDocumentId(testId))}`;
+        return `${this.serviceEndpoints.hostUrl}/${encodeURIComponent(this.tenantId)}/${encodeURIComponent(testId)}`;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
@@ -97,15 +88,15 @@ export class RouterliciousTestDriver implements ITestDriver {
 
     createUrlResolver(): InsecureUrlResolver {
         return new InsecureUrlResolver(
-                this.serviceEndpoints.hostUrl,
-                this.serviceEndpoints.ordererUrl,
-                this.serviceEndpoints.deltaStorageUrl,
-                this.tenantId,
-                this.bearerSecret,
-                true);
+            this.serviceEndpoints.hostUrl,
+            this.serviceEndpoints.ordererUrl,
+            this.serviceEndpoints.deltaStorageUrl,
+            this.tenantId,
+            this.bearerSecret,
+            true);
     }
 
     createCreateNewRequest(testId: string): IRequest {
-        return this.createUrlResolver().createCreateNewRequest(this.createDocumentId(testId));
+        return this.createUrlResolver().createCreateNewRequest(testId);
     }
 }

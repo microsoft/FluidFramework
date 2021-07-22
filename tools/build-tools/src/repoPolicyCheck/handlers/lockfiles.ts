@@ -11,7 +11,7 @@ import {
 
 const filePattern = /^.*?[^_]package-lock\.json$/i; // Ignore _package-lock.json
 const urlPattern = /(https?[^"@]+)(\/@.+|\/[^/]+\/-\/.+tgz)/g;
-const versionPattern = /"lockfileVersion"\s*:\s*1\s*,/g;
+const versionPattern = /"lockfileVersion"\s*:\s*\b1\b/g;
 
 export const handlers: Handler[] = [
     {
