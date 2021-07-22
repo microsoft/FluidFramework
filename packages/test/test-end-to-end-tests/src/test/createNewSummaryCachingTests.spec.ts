@@ -71,22 +71,28 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
 
     it("should fetch from cache when second client loads the container", async () => {
         mockLogger = new MockLogger();
+
         // Create a Container for the first client.
         const mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
         assert.strictEqual(mainContainer.attachState, "Attached", "container was not attached");
         const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
-        await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        mainDataStore._root.set("dataStore2", dataStore2.handle);
 
-        // second client load the container
+        // second client loads the container
         const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
-        assert(defaultDataStore !== undefined, "data store within loaded container is not loaded");
+        const handle2 = await defaultDataStore._root.wait("dataStore2");
+        const testDataStore = await handle2.get();
+
+        assert(testDataStore.context.isLoaded, "default data store within loaded container is not loaded");
+        assert(testDataStore.context.isLoaded, "2nd data store within loaded container is not loaded");
         await provider.ensureSynchronized();
 
         const fetchEvent = mockLogger.events.find((event) =>
             event.eventName === "fluid:telemetry:OdspDriver:ObtainSnapshot_end");
-            assert(fetchEvent !== undefined, "odsp obtain snapshot event does not exist ");
-            assert.strictEqual(fetchEvent.method, "cache",
-                `second client fetched snapshot with ${fetchEvent.method} method instead of from cache`);
+        assert(fetchEvent !== undefined, "odsp obtain snapshot event does not exist ");
+        assert.strictEqual(fetchEvent.method, "cache",
+            `second client fetched snapshot with ${fetchEvent.method} method instead of from cache`);
     });
 });
