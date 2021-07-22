@@ -935,7 +935,6 @@ export class LocalDetachedFluidDataStoreContext
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
-        snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
     ) {
         super(
@@ -946,7 +945,7 @@ export class LocalDetachedFluidDataStoreContext
             scope,
             createSummarizerNode,
             bindChannel,
-            snapshotTree,
+            undefined,
             isRootDataStore,
         );
         this.detachedRuntimeCreation = true;

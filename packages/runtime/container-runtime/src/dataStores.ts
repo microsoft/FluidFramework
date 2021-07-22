@@ -245,7 +245,6 @@ export class DataStores implements IDisposable {
             this.runtime.scope,
             this.getCreateChildSummarizerNodeFn(id, { type: CreateSummarizerNodeSource.Local }),
             (cr: IFluidDataStoreChannel) => this.bindFluidDataStore(cr),
-            undefined,
             isRoot,
         );
         this.contexts.addUnbound(context);

@@ -181,7 +181,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         return this.createNonRootInstanceCore(
             parentContext.containerRuntime,
             [...parentContext.packagePath, this.type],
-            false, // existing
             initialState);
     }
 
@@ -202,7 +201,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         return this.createNonRootInstanceCore(
             peerContext.containerRuntime,
             peerContext.packagePath,
-            false, // existing#?
             initialState);
     }
 
@@ -223,7 +221,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         return this.createNonRootInstanceCore(
             runtime,
             [this.type],
-            true, // existing
             initialState);
     }
 
@@ -249,11 +246,10 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     protected async createNonRootInstanceCore(
         containerRuntime: IContainerRuntimeBase,
         packagePath: Readonly<string[]>,
-        existing: boolean,
         initialState?: S,
     ): Promise<TObj> {
         const context = containerRuntime.createDetachedDataStore(packagePath);
-        return this.createInstanceCore(context, existing, initialState);
+        return this.createInstanceCore(context, /* existing */ false, initialState);
     }
 
     protected async createInstanceCore(
