@@ -50,7 +50,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
     }
 
     public async getChannel(): Promise<IChannel> {
-        assert(this.channel !== undefined, "Channel should be defined");
+        assert(this.channel !== undefined, 0x207 /* "Channel should be defined" */);
         return this.channel;
     }
 
@@ -193,7 +193,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
             this.services.value.objectStorage,
             ".attributes");
 
-        assert(this.factory === undefined, "Factory should be undefined before loading");
+        assert(this.factory === undefined, 0x208 /* "Factory should be undefined before loading" */);
         this.factory = this.registry.get(attributes.type);
         if (this.factory === undefined) {
             throw new Error(`Channel Factory ${attributes.type} not registered`);
@@ -249,7 +249,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
         dirtyFn: (address: string) => void,
     ) {
         super(id, registry, runtime, () => this.services);
-        assert(type !== undefined, "Factory Type should be defined");
+        assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
         this.factory = registry.get(type);
         if (this.factory === undefined) {
             throw new Error(`Channel Factory ${type} not registered`);
