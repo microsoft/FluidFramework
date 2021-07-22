@@ -9,10 +9,19 @@ import { ILoggingError } from "@fluidframework/common-definitions";
 //        THIS CODE TO BE MOVED TO COMMON-DEFINITIONS AND COMMON-UTILS       //
 // ///////////////////////////////////////////////////////////////////////// //
 
-export interface IFluidErrorBase extends Readonly<Error> {
-    readonly errorType: string;
-    readonly fluidErrorCode: string;
+interface IFluidErrorMetadata {
+    errorType: string;
+    fluidErrorCode: string;
 }
+
+/**
+ * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
+ * It includes Error's properties but as optional, plus errorType and fluidErrorCode strings.
+ */
+export type IFluidErrorBase = Readonly<IFluidErrorMetadata & Partial<Error>>;
+
+/** A Partial and non-readonly version of IFluidErrorBase, for building up an object to meet IFluidErrorBase */
+export type IFluidErrorBuilder = Partial<IFluidErrorMetadata> & Partial<Error>;
 
 export function isFluidError(e: any): e is IFluidErrorBase {
     return typeof e?.fluidErrorCode === "string";
@@ -30,12 +39,6 @@ export const isErrorLike = (x: any): x is Error =>
     typeof(x?.message) === "string" &&
     typeof(x?.name) === "string" &&
     (x?.stack === undefined || typeof(x?.stack) === "string");
-
-/** This type lets you mixin T onto an existing object */
-export type Builder<T> = {
-    // Remove readonly and make all properties optional
-    -readonly [Property in keyof T]?: T[Property];
-};
 
 /**
  * This type adds Record, and should only be used on a proper Object

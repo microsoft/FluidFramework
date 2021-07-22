@@ -187,11 +187,11 @@ describe("Logger", () => {
             });
         });
         //* REMOVE THIS .ONLY!!!!!!
-        describe.only("annotateError", () => {
+        describe.only("normalizeError", () => {
             function checkOutput(actual: IFluidErrorBase, expected: IFluidErrorBase): boolean {
                 if (typeof(actual.stack) === "string") {
                     Object.assign(actual, { stack: "" });
-                };
+                }
                 return actual.errorType === expected.errorType
                     && actual.fluidErrorCode === expected.fluidErrorCode
                     && actual.message === expected.message
