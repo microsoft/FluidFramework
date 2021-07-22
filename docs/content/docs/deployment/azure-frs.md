@@ -9,9 +9,7 @@ Azure Fluid Relay service (FRS) is a cloud-hosted Fluid service. You can connect
 
 The sections below will explain how to use `FrsClient` in your own application.
 
-{{< callout important >}}
-The steps below assume you are onboarded to Azure Fluid Relay service. Azure Fluid Relay is currently in _Private Preview_.
-{{< /callout >}}
+{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
 # Connecting to the Service
 
