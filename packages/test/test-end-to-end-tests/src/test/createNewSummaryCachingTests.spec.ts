@@ -15,6 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { AttachState } from "@fluidframework/container-definitions";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
@@ -72,9 +73,11 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
     it("should fetch from cache when second client loads the container", async () => {
         mockLogger = new MockLogger();
 
-        // Create a Container for the first client.
+        // Create a container for the first client.
         const mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
-        assert.strictEqual(mainContainer.attachState, "Attached", "container was not attached");
+        assert.strictEqual(mainContainer.attachState, AttachState.Attached, "container was not attached");
+
+        // getting default data store and create a new data store
         const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
         const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
         mainDataStore._root.set("dataStore2", dataStore2.handle);
@@ -82,13 +85,13 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         // second client loads the container
         const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
         const defaultDataStore = await requestFluidObject<TestDataObject>(container2, "default");
+
+        // getting the non-default data store and validate it is loaded
         const handle2 = await defaultDataStore._root.wait("dataStore2");
-        const testDataStore = await handle2.get();
+        const testDataStore: TestDataObject = await handle2.get();
+        assert(testDataStore !== undefined, "2nd data store within loaded container is not loaded");
 
-        assert(testDataStore.context.isLoaded, "default data store within loaded container is not loaded");
-        assert(testDataStore.context.isLoaded, "2nd data store within loaded container is not loaded");
-        await provider.ensureSynchronized();
-
+        // validate the snapshot was fetched from cache
         const fetchEvent = mockLogger.events.find((event) =>
             event.eventName === "fluid:telemetry:OdspDriver:ObtainSnapshot_end");
         assert(fetchEvent !== undefined, "odsp obtain snapshot event does not exist ");
