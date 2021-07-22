@@ -11,7 +11,7 @@
 
 import _ from "lodash";
 import { guidToUint32x4, hashCombine4xUint32 } from "./guidUtils";
-import { HashCalculator } from "./hashCalculator";
+import { calculateHash } from "./hashCalculator";
 
 /**
  * Random number generator that creates a deterministic sequence of random numbers based on an initial seed GUID
@@ -25,7 +25,7 @@ export class DeterministicRandomGenerator {
     _guid2: Uint32Array;
     _result: Uint32Array;
 
-    /*
+    /**
      * @param in_seed - The initial seed (it can be either a GUID or a number)
      * which is used to initialize the random number generator
      *
@@ -35,9 +35,7 @@ export class DeterministicRandomGenerator {
         if (_.isString(in_seed)) {
             this._guid1 = guidToUint32x4(in_seed);
         } else {
-            const hashCalculator = new HashCalculator();
-            hashCalculator.pushFloat64(in_seed);
-            this._guid1 = guidToUint32x4(hashCalculator.getHash());
+            this._guid1 = guidToUint32x4(calculateHash(String(in_seed)));
         }
         this._guid2 = new Uint32Array(4);
         this._guid2[0] = (this._guid1[0] + 1) >>> 0;

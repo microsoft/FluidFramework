@@ -9,10 +9,9 @@
 
 import semver from "semver";
 import { expect } from "chai";
-import { Datastructures } from "../../index";
+import { SortedCollection } from "../../index";
 
 describe("SortedCollection", function() {
-    const { SortedCollection } = Datastructures;
     let collection;
     beforeEach(function() {
         collection = new SortedCollection();
@@ -69,7 +68,7 @@ describe("SortedCollection", function() {
     });
 
     it("should test against adding values for keys that are of type number or string", function() {
-        const collection2 = new SortedCollection();
+        const collection2 = new SortedCollection<string>();
         collection2.add("6.0.0", "6.0.0");
         collection2.add(6.0, "6.0");
         collection2.add(6.2, "6.2");

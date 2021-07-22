@@ -6,13 +6,17 @@
  * @fileoverview In this file, we will test the functions exported by deep_copy.js
  */
 import { expect } from "chai";
-import { Datastructures } from "../../index";
+import {
+    Int32DataArray,
+    UniversalDataArray,
+    Int8DataArray,
+    BoolDataArray,
+}  from "../../index";
 let error;
-const { DataArrays } = Datastructures;
 
 describe("BaseDataArray", function() {
     it("should set, insert and remove some values in a (TypedArray) DataArray", function() {
-        const myDataArray = new DataArrays.Int32DataArray(5);
+        const myDataArray = new Int32DataArray(5);
         try {
             myDataArray.set(0, [1, 2, 3, 4, 5]);
             myDataArray.insertRange(2, [31, 32, 33]);
@@ -27,7 +31,7 @@ describe("BaseDataArray", function() {
     });
 
     it("should set, insert and remove some values in a UniversalArray", function() {
-        const myDataArray = new DataArrays.UniversalDataArray(5);
+        const myDataArray = new UniversalDataArray(5);
         try {
             console.log("UniversalArray: ", myDataArray);
             myDataArray.set(0, ["1", "2", "3", "4", "5"]);
@@ -43,7 +47,7 @@ describe("BaseDataArray", function() {
     });
 
     it("should get all elements from array", function() {
-        const myDataArray = new DataArrays.Int8DataArray(5);
+        const myDataArray = new Int8DataArray(5);
         myDataArray.set(0, [1, 2, 3, 4, 5]);
         const subArray = myDataArray.getValueRange(0, 5);
         expect(subArray.length).to.equal(5);
@@ -52,7 +56,7 @@ describe("BaseDataArray", function() {
 
 describe("BoolDataArray", function() {
     it("should set, insert and remove some values", function() {
-        const myDataArray = new DataArrays.BoolDataArray(5);
+        const myDataArray = new BoolDataArray(5);
 
         try {
             myDataArray.set(0, [1, 0, false, 1, true]);
@@ -68,7 +72,7 @@ describe("BoolDataArray", function() {
     });
 
     it("should get all elements from array", function() {
-        const myDataArray = new DataArrays.BoolDataArray(5);
+        const myDataArray = new BoolDataArray(5);
         myDataArray.set(0, [true, false, true, false, false]);
         const subArray = myDataArray.getValueRange(1, 4);
         expect(subArray.length).to.equal(3);

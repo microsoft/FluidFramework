@@ -26,8 +26,8 @@ export function joinPaths(in_string1: string = "", in_string2: string = "", in_s
 
     if (!in_string1 ||
         !in_string2 ||
-        in_string1.substr(-separator.length) === separator ||
-        in_string2.substr(0, separator.length) === separator) {
+        in_string1.substr(-in_separator.length) === in_separator ||
+        in_string2.substr(0, in_separator.length) === in_separator) {
         separator = "";
     }
     return in_string1 + separator + in_string2;

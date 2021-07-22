@@ -17,14 +17,10 @@ export class SortedCollection<T> extends Collection<T> {
 
     /**
      * A sorted collection class.
-     * @param {string=} in_name a friendly name to describe this collection. If undefined
+     * @param in_name - a friendly name to describe this collection. If undefined
      * the collection will have a default "Untitled Collection" assigned to its name.
-     * @param {function=} in_type optional parameter pointing to the constructor
+     * @param in_type - optional parameter pointing to the constructor
      * of a type this Collection will host.
-     * @constructor
-     * @alias property-common.Datastructures.SortedCollection
-     * @extends property-common.Datastructures.Collection
-     * @private
      */
     constructor(in_name?: string, in_type?) {
         super(in_name, in_type);
@@ -32,10 +28,10 @@ export class SortedCollection<T> extends Collection<T> {
 
     /**
      * Set the comparison function. By default the keys will be sorted wrt their ASCII code.
-     * @param {function(string, string)} in_fn The function to compare two entries.
+     * @param in_fn - The function to compare two entries.
      *  the return value of this function must convey to the following cases:
-     *  - if a > b, then the return value must be greater than 0
-     *  - if a < b, then the return value must be less than 0
+     *  - if a \> b, then the return value must be greater than 0
+     *  - if a \< b, then the return value must be less than 0
      *  - if a == b, then the return value must be 0
      */
     setComparisonFunction(in_fn?: (x: string, y: string) => number) {
@@ -45,11 +41,11 @@ export class SortedCollection<T> extends Collection<T> {
 
     /**
      * Add an item to the collection. Sort the list of keys in an ascending order.
-     * @param {string|number} in_key Key to store the value under
-     * @param in_value Value to store in the collection
-     * @return {object} Return the value passed in
+     * @param in_key - Key to store the value under
+     * @param in_value - Value to store in the collection
+     * @returns Return the value passed in
      */
-    add(in_key, in_value: T) {
+    add(in_key: string | number, in_value: T) {
         const toReturn = super.add(in_key, in_value);
 
         this._sortedKeys.push(in_key.toString());
@@ -67,10 +63,10 @@ export class SortedCollection<T> extends Collection<T> {
      * caller would have to keep a list – somewhere else – of the things he can
      * and cannot remove.
      *
-     * @param {string|number} in_key the key we wish to remove
-     * @return {boolean} true if the key exists and was removed, false otherwise.
+     * @param in_key - the key we wish to remove
+     * @returns true if the key exists and was removed, false otherwise.
      */
-    remove(in_key) {
+    remove(in_key: string) {
         const toReturn = super.remove(in_key);
         this._sortedKeys = _.without(this._sortedKeys, in_key);
         return toReturn;
@@ -78,10 +74,10 @@ export class SortedCollection<T> extends Collection<T> {
 
     /**
      * Copy the items of in_collection to this collection.
-     * @return {property-common.Datastructures.SortedCollection} cloned SortedCollection
+     * @returns cloned SortedCollection
      */
-    clone() {
-        const newCol = new SortedCollection(this._name, this._type);
+    clone(): SortedCollection<T> {
+        const newCol = new SortedCollection<T>(this._name, this._type);
         newCol.setComparisonFunction(this._comparisonFunction);
         newCol.bulkAdd(this._items);
         return newCol;
@@ -91,12 +87,11 @@ export class SortedCollection<T> extends Collection<T> {
      * Internal function use to search (binary search) for the nearest index that
      * the given key would be inserted.
      * i.e. given the array [10, 20, 30, 40, 50] the index that 35 should be inserted at is 3
-     * @param {Array<*>} in_array - Target array
-     * @param {string} in_key - Key to check against
-     * @return {number} The index at which the key would be inserted in
-     * @private
+     * @param in_array - Target array
+     * @param in_key - Key to check against
+     * @returns The index at which the key would be inserted in
      */
-    _binarySearchNearestIndex(in_array: string[], in_key: string): number {
+    private _binarySearchNearestIndex(in_array: string[], in_key: string): number {
         if (this._comparisonFunction === undefined) {
             return _.sortedIndex(in_array, in_key);
         } else {
@@ -133,10 +128,10 @@ export class SortedCollection<T> extends Collection<T> {
      * Return the nearest next item to the given key i.e.
      * For the given list of keys ['1.0.1', '2.0.0', '2.2.0', '7.0.1'] the nearest next item to 6.0.1 is
      * the item mapped by '7.0.1'
-     * @param {string|number} in_key The key to check against in order to get the nearest next item
-     * @return {*|undefined} The nearest next item
+     * @param in_key - The key to check against in order to get the nearest next item
+     * @returns  The nearest next item
      */
-    getNearestNextItem(in_key) {
+    getNearestNextItem(in_key: string) {
         const closestNextIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());
         if (closestNextIndex === this.getCount()) {
             return undefined;
@@ -149,8 +144,8 @@ export class SortedCollection<T> extends Collection<T> {
      * Return the nearest previous item to the given key i.e.
      * For the given list of keys ['1.0.1', '2.0.0', '2.2.0', '7.0.1'] the nearest previous item to 6.0.1 is
      * the item mapped by '7.0.1'
-     * @param  in_key The key to check against in order to get the nearest previous item
-     * @return The nearest previous item
+     * @param in_key - The key to check against in order to get the nearest previous item
+     * @returns The nearest previous item
      */
     getNearestPreviousItem(in_key: string | number) {
         const closestPreviousIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());

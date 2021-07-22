@@ -9,9 +9,7 @@
 
 import _ from "lodash";
 import { expect } from "chai";
-import { Datastructures } from "../../index";
-
-const { Collection } = Datastructures;
+import { Collection } from "../../index";
 
 describe("collection", function() {
     const createObject = () => ({
@@ -49,6 +47,7 @@ describe("collection", function() {
 
         expect(collection.bulkAdd(objectToAdd)).to.equal(collection);
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(true);
@@ -78,6 +77,7 @@ describe("collection", function() {
         collection.bulkAdd(objectToAdd);
         collection.bulkRemove(objectToAdd);
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
 
         expect(itemExists).to.equal(false);
@@ -120,24 +120,6 @@ describe("collection", function() {
         const collection = new Collection("collection1", Array);
 
         expect(collection.getType()).to.equal(Array);
-
-        done();
-    });
-
-    it("should join with another collection", function(done) {
-        const collection = new Collection();
-
-        const objectToAdd = createObject();
-
-        collection.bulkAdd(objectToAdd);
-
-        const collection2 = new Collection();
-
-        expect(collection2.joinInPlace(collection)).to.equal(collection2);
-
-        const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
-
-        expect(itemExists).to.equal(true);
 
         done();
     });

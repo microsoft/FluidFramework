@@ -5,8 +5,6 @@
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 /**
  * @fileoverview Collection class definition
- * @module Core
- * @private
  */
 import _ from "lodash";
 
@@ -24,14 +22,10 @@ export class Collection<T> {
     protected _order: (string | number)[] = [];
 
     /**
-     * @classdesc Use in_type to make this a typed Collection.
-     * @param _name a friendly name to describe this collection. If undefined
+     * @param _name - a friendly name to describe this collection. If undefined
      * the collection will have a default "Untitled Collection" assigned to its name.
-     * @param _type optional parameter pointing to the constructor
+     * @param _type - optional parameter pointing to the constructor
      * of a type this Collection will host.
-     * @constructor
-     * @private
-     * @alias property-common.Datastructures.Collection
      */
     constructor(protected _name = "Untitled Collection", protected _type?: new () => any) {
     }
@@ -50,9 +44,9 @@ export class Collection<T> {
     }
 
     /**
-     * @param {Number|String|CONSTANTS.TUID} in_key Key to store the value under
-     * @param {object} in_value Value to store in the collection
-     * @return {object} Return the value passed in
+     * @param in_key - Key to store the value under
+     * @param in_value - Value to store in the collection
+     * @returns Return the value passed in
      */
     add(in_key: number | string, in_value: T): T {
         this._checkIsNewKey(in_key);
@@ -67,8 +61,8 @@ export class Collection<T> {
 
     /**
      * Bulk add items.
-     * @param {object} in_items List of key-value pairs to be stored in the collection
-     * @return {object} this collection after add
+     * @param in_items - List of key-value pairs to be stored in the collection
+     * @returns this collection after add
      */
     bulkAdd(in_items: { [key: string]: T }) {
         _.each(in_items, (item, key) => {
@@ -79,8 +73,8 @@ export class Collection<T> {
 
     /**
      * Bulk remove items.
-     * @param in_items List of key-value items to be removed
-     * @return this collection after add
+     * @param in_items - List of key-value items to be removed
+     * @returns this collection after add
      */
     bulkRemove(in_items: { [key: string]: T }) {
         _.each(in_items, (item, key) => {
@@ -92,7 +86,7 @@ export class Collection<T> {
 
     /**
      * Test if this collection is empty
-     * @return {Boolean} true if empty, false otherwise
+     * @returns true if empty, false otherwise
      * */
     isEmpty() {
         return _.isEmpty(this._items);
@@ -100,7 +94,7 @@ export class Collection<T> {
 
     /**
      * Return the first item in the collection, null if empty
-     * @return {object|undefined} - first item, or undefined if empty
+     * @returns first item, or undefined if empty
      * */
     getFirstItem(): T | undefined {
         const index = _.first(this._order);
@@ -109,7 +103,7 @@ export class Collection<T> {
 
     /**
      * Return the last item in the collection, null if empty
-     * @return - last item, or undefined if empty
+     * @returns - last item, or undefined if empty
      * */
     getLastItem(): T | undefined {
         const index = _.last(this._order);
@@ -117,38 +111,25 @@ export class Collection<T> {
     }
 
     /**
-     * @return {function|undefined} Returns the type of collection (Array, etc.)
+     * @returns Returns the type of collection (Array, etc.)
      */
     getType() {
         return this._type;
     }
 
     /**
-     * @return {string} Returns the name of the collection
+     * @returns Returns the name of the collection
      */
-    getName() {
+    getName(): string {
         return this._name;
     }
 
     /**
-     * Join another collection to this one
-     * @param {Collection} in_collection Collection to join
-     * @return {Collection} Return this collection after it has been joined
-     */
-    joinInPlace(in_collection) {
-        if (in_collection.getType() !== this.getType()) {
-            throw new Error("Input object type doesn't match this collection's type");
-        }
-
-        return this.bulkAdd(in_collection.items);
-    }
-
-    /**
      * Filter out by function
-     * @param {function(string, *)} in_filterFunction with arguments key and item
-     * @return {Collection} New filtered collection
+     * @param in_filterFunction - with arguments key and item
+     * @returns  New filtered collection
      */
-    filter(in_filterFunction: (key: string, item: T) => boolean) {
+    filter(in_filterFunction: (key: string, item: T) => boolean): Collection<T> {
         const rtn = new Collection<T>();
 
         const filterCb = function(in_key, in_item) {
@@ -165,13 +146,13 @@ export class Collection<T> {
 
     /**
      * Filter out all keys NOT matching the in_filterKey
-     * @param {*|Array} in_filterKey a single key or an array of keys, if the
+     * @param in_filterKey - a single key or an array of keys, if the
      * item matches any of the keys it will be filtered in.
-     * @return {Collection} New filtered collection with all the items
+     * @returns New filtered collection with all the items
      * matching at least one key.
      */
-    filterByKey(in_filterKey) {
-        const rtn = new Collection();
+    filterByKey(in_filterKey: string | string[]): Collection<T> {
+        const rtn = new Collection<T>();
 
         let filterCb;
 
@@ -197,11 +178,11 @@ export class Collection<T> {
 
     /**
      * Filter out all keys NOT matching the in_filterValue
-     * @param {object} in_filterValue Value to filter on
-     * @return {Collection} Return a filtered collection
+     * @param in_filterValue - Value to filter on
+     * @returns Return a filtered collection
      */
-    filterByValue(in_filterValue) {
-        const rtn = new Collection();
+    filterByValue(in_filterValue: T): Collection<T> {
+        const rtn = new Collection<T>();
 
         const filterCb = function(in_key, in_item) {
             if (in_item === in_filterValue) {
@@ -223,10 +204,10 @@ export class Collection<T> {
      * caller would have to keep a list – somewhere else – of the things he can
      * and cannot remove.
      *
-     * @param {String|Number} in_key the key we wish to remove
-     * @return {Boolean} true if the key exists and was removed, false otherwise.
+     * @param in_key - the key we wish to remove
+     * @returns true if the key exists and was removed, false otherwise.
      */
-    remove(in_key) {
+    remove(in_key: number | string): boolean {
         if (!this.has(in_key)) {
             return false;
         }
@@ -244,15 +225,15 @@ export class Collection<T> {
 
     /**
      * Return the number of items in this Collection
-     * @return {Number} the number of items in the collection
+     * @returns the number of items in the collection
      */
-    getCount() {
+    getCount(): number {
         return this._order.length;
     }
 
     /**
      * Returns this collection as an ordered Array
-     * @return {Array} Array including the values
+     * @returns Array including the values
      */
     getAsArray() {
         const rtnArr: T[] = new Array(this.getCount());
@@ -265,8 +246,8 @@ export class Collection<T> {
     }
 
     /**
-     * @param {string|number|CONSTANTS.GUID} in_key the key we are looking for
-     * @return {boolean} true if the item exists
+     * @param in_key - the key we are looking for
+     * @returns true if the item exists
      */
     has(in_key: string | number): boolean {
         return Object.prototype.hasOwnProperty.call(this._items, in_key);
@@ -274,21 +255,20 @@ export class Collection<T> {
 
     /**
      * Return an item associated with the given key
-     * @param {string|number|CONSTANTS.GUID} in_key the key for the item in this
+     * @param in_key - the key for the item in this
      * Collection
-     * @return {*} The item
+     * @returns The item
      */
-    item(in_key) {
+    item(in_key: number | string) {
         return this._items[in_key];
     }
 
     /**
      * Checks if this is a new key in the collection. Throw if already exists.
-     * @param {Number|String} in_key The key to check against
-     * @return {Boolean} true if key is new
-     * @private
+     * @param in_key - The key to check against
+     * @returns true if key is new
      */
-    _checkIsNewKey(in_key) {
+    private _checkIsNewKey(in_key: number | string) {
         if (this.has(in_key)) {
             throw new Error(`${MSGS.KEY_ALREADY_EXISTS} ${in_key}`);
         }
@@ -298,11 +278,10 @@ export class Collection<T> {
 
     /**
      * Checks if the key exists in the collection. Throw if not.
-     * @param {Number|String} in_key the key to check against
-     * @return {Boolean} true if key exists
-     * @private
+     * @param in_key - the key to check against
+     * @returns true if key exists
      */
-    _checkKeyExists(in_key) {
+    private _checkKeyExists(in_key: number | string) {
         if (!this.has(in_key)) {
             throw new Error(`${MSGS.KEY_DOES_NOT_EXIST} ${in_key}`);
         }
@@ -313,9 +292,9 @@ export class Collection<T> {
     /**
      * Set an existing key to a value. If key doesn't exist this call will throw
      * an error.
-     * @param in_key the key we want to modify
-     * @param  in_value the value we are to set at this key
-     * @return {*} returns the value passed in
+     * @param in_key - the key we want to modify
+     * @param  in_value - the value we are to set at this key
+     * @returns the value passed in
      */
     set(in_key: string, in_value: T) {
         this._checkKeyExists(in_key);
@@ -328,7 +307,7 @@ export class Collection<T> {
     /**
      * Iterate over this collection and run the callback with passing the key and
      * item in the iteration loop.
-     * @param {function(in_key, in_item)} in_callback a function that we will call on each item
+     * @param  in_callback - a function that we will call on each item
      * of this collection. If the callback returns false then the iteration will exit early.
      */
     iterate(in_callback) {
@@ -343,7 +322,7 @@ export class Collection<T> {
     /**
      * Iterate over this collection starting from the tail and run the callback with passing the key and
      * item in the iteration loop.
-     * @param {function(in_key, in_item)} in_callback a function that we will call on each item
+     * @param in_callback - a function that we will call on each item
      * of this collection. If the callback returns false then the iteration will exit early.
      */
     iterateFromTail(in_callback) {
@@ -358,9 +337,9 @@ export class Collection<T> {
     }
 
     /**
-     * @return {object} Return an object containing the items of this collection
+     * @returns Return an object containing the items of this collection
      */
-    getItems() {
+    getItems(): { [key: string]: T } {
         const result = {};
 
         _.each(this._items, function(item, key) {
@@ -372,15 +351,14 @@ export class Collection<T> {
 
     /**
      * Return the list of keys
-     * @return {Array} List of keys
+     * @returns List of keys
      */
-    getKeys() {
+    getKeys(): string[] {
         return Object.keys(this._items);
     }
 
     /**
      * Method used to get the first element in the collection along with its key.
-     * @return {object} {item, key}
      */
     peak() {
         return {
@@ -390,8 +368,8 @@ export class Collection<T> {
     }
 
     /**
-     * Clear this collection
-     * @return {Collection} this collection
+     * Clear this collectionreturns
+     * @returns this collection
      */
     clear() {
         if (_.isEmpty(this._items)) {
@@ -412,22 +390,22 @@ export class Collection<T> {
 
     /**
      * Copy the items of in_collection to this collection.
-     * @param {Collection} in_collection the collection we want to
+     * @param in_collection - the collection we want to
      * copy from.
-     * @return {Collection} new Collection
+     * @returns new Collection
      */
-    clone() {
-        const newCol = new Collection(this._name, this._type);
+    clone(): Collection<T> {
+        const newCol = new Collection<T>(this._name, this._type);
         newCol.bulkAdd(this._items);
         return newCol;
     }
 
     /**
      * Copy the items of in_collection to this collection.
-     * @param {Collection} in_collection the collection we want to
+     * @param in_collection - the collection we want to
      * copy from.
      */
-    copy(in_collection) {
+    copy(in_collection: Collection<T>) {
         this.clear();
         const its = in_collection.items;
 

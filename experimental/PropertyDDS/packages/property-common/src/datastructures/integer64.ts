@@ -24,23 +24,20 @@ const BIT32 = 4294967296;
  *
  * @param low  - lower 32 bit
  * @param high - higher 32 bit
- * @constructor
- * @protected
- * @alias property-common.Datastructures.Integer64
  */
 export class Integer64 {
     constructor(protected low = 0, protected high = 0) {
     }
 
     /**
-     * @return {number} the higher 32 bit integer part
+     * @returns the higher 32 bit integer part
      */
     getValueHigh() {
         return this.high;
     }
 
     /**
-     * @return {number} the lower 32 bit integer part
+     * @returns the lower 32 bit integer part
      */
     getValueLow() {
         return this.low;
@@ -72,16 +69,15 @@ export class Integer64 {
 /**
  * stringToInt function parses a string argument updates object's lower and higher 32 bit integer parts.
  *
- * @param in_signed If the expect response should be signed or unsigned.
- * @param in_string The value to parse. Leading whitespace in the string argument is ignored.
- * @param in_radix An integer between 2 and 36 that represents the
+ * @param in_signed - If the expect response should be signed or unsigned.
+ * @param in_string - The value to parse. Leading whitespace in the string argument is ignored.
+ * @param in_radix - An integer between 2 and 36 that represents the
  *     radix (the base in mathematical numeral systems) of the above mentioned string.
  * @throws if in_string is not a string
  * @throws if in_radix is entered but is not a number between 2 and 36
  * @throws if the property is a Uint64 property and in_string is a negative number
  * @throws if in_string contains characters other than numbers
- * @return low and high bits of Int64
- * @ignore
+ * @returns low and high bits of Int64
  */
 function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): number[] {
     ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);
@@ -144,15 +140,7 @@ export class Int64 extends Integer64 {
 
 /**
  * A data representation class for the unsigned 64 bit integer type
- *
- * @param {number} inlow  - lower 32 bit
- * @param {number} inhigh - higher 32 bit
- * @constructor
- * @extends property-common.Datastructures.Integer64
- * @alias property-common.Datastructures.Uint64
- * @private
  */
-
 export class Uint64 extends Integer64 {
     static fromString(in_string: string, in_radix = 10) {
         const [low, high] = _stringToInt64.call(this, false, in_string, in_radix);
