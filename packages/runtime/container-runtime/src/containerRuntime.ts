@@ -127,9 +127,9 @@ import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
 import { ISerializedElection, OrderedClientCollection, OrderedClientElection } from "./orderedClientElection";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
-    GenerateSummaryResult,
+    SubmitSummaryResult,
     IGeneratedSummaryStats,
-    IGenerateSummaryOptions,
+    ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerOptions,
@@ -1656,8 +1656,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return summarizeResult as IChannelSummarizeResult;
     }
 
-    /** Implementation of ISummarizerInternalsProvider.generateSummary */
-    public async generateSummary(options: IGenerateSummaryOptions): Promise<GenerateSummaryResult> {
+    /**
+     * Generates the summary tree, uploads it to storage, and then submits the summarize op.
+     * This is intended to be called by the summarizer, since it is the implementation of
+     * ISummarizerInternalsProvider.submitSummary.
+     * It takes care of state management at the container level, including pausing inbound
+     * op processing, updating SummarizerNode state tracking, and garbage collection.
+     * @param options - options controlling how the summary is generated or submitted
+     */
+    public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
 
         if (refreshLatestAck) {

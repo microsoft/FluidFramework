@@ -15,7 +15,7 @@ import {
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DefaultSummarizerHeuristics, DisabledSummarizerHeuristics } from "./summarizerHeuristics";
 import {
-    IGenerateSummaryOptions,
+    ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerHeuristics,
     ISummarizerInternalsProvider,
@@ -46,7 +46,7 @@ export class RunningSummarizer implements IDisposable {
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
         internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "generateSummary">,
+            & Pick<ISummarizerInternalsProvider, "submitSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         raiseSummarizingError: (description: string) => void,
@@ -91,7 +91,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
         private readonly internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "generateSummary">,
+            & Pick<ISummarizerInternalsProvider, "submitSummary">,
         lastOpSeqNumber: number,
         firstAck: ISummaryAttempt,
         private readonly raiseSummarizingError: (description: string) => void,
@@ -321,7 +321,7 @@ export class RunningSummarizer implements IDisposable {
 
     public summarizeOnDemand(
         reason: string,
-        options: Omit<IGenerateSummaryOptions, "summaryLogger">,
+        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
     ): OnDemandSummarizeResult {
         // Check for concurrent summary attempts. If one is found,
         // return a promise that caller can await before trying again.
