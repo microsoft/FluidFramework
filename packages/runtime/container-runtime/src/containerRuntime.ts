@@ -920,6 +920,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summarizerClientElectionEnabled,
         );
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
+        if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
+            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+        }
         if (
             this.runtimeOptions.summaryOptions.generateSummaries !== false
             && this.context.clientDetails.type !== summarizerClientType
@@ -2168,9 +2171,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        return this.summaryManager !== undefined
-            ? this.summaryManager.summarizeOnDemand(...args)
-            : this.summarizer.summarizeOnDemand(...args);
+        if (this.clientDetails.type === summarizerClientType) {
+            return this.summarizer.summarizeOnDemand(...args);
+        } else if (this.summaryManager !== undefined) {
+            return this.summaryManager.summarizeOnDemand(...args);
+        } else {
+            // If we're not the summarizer, and we don't have a summaryManager, we expect that
+            // generateSummaries is turned off.
+            throw new Error(
+                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+            );
+        }
     };
 }
 
