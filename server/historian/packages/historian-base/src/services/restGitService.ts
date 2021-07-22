@@ -169,12 +169,12 @@ export class RestGitService {
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
     }
 
-    public async createSnapshot(snapshotParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
-        const snapshotResponse = await this.post<IWriteSummaryResponse>(
+    public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        const summaryResponse = await this.post<IWriteSummaryResponse>(
             `/repos/fluid/git/summaries`,
-             snapshotParams);
+             summaryParams);
 
-        return snapshotResponse;
+        return summaryResponse;
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {

@@ -17,7 +17,7 @@ import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
-import * as snapshots from "./snapshots";
+import * as summaries from "./summaries";
 /* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
@@ -33,7 +33,7 @@ export interface IRoutes {
         contents: Router;
         headers: Router;
     };
-    snapshots: Router;
+    summaries: Router;
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
@@ -56,6 +56,6 @@ export function create(
             contents: contents.create(store, tenantService, cache, throttler, asyncLocalStorage),
             headers: headers.create(store, tenantService, cache, throttler, asyncLocalStorage),
         },
-        snapshots: snapshots.create(store, tenantService, cache, throttler, asyncLocalStorage),
+        summaries: summaries.create(store, tenantService, cache, throttler, asyncLocalStorage),
     };
 }
