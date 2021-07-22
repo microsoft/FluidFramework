@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -151,10 +150,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get connected(): boolean {
         return this._containerRuntime.connected;
-    }
-
-    public get loader(): ILoader {
-        return this._containerRuntime.loader;
     }
 
     public get IFluidHandleContext() {
@@ -411,7 +406,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
+            gcData: this.summarizerNode.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
@@ -832,7 +827,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
+            gcData: this.summarizerNode.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
