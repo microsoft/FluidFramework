@@ -26,7 +26,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.39.5",
+    "@fluidframework/container-definitions": "^0.39.7",
     "@fluidframework/container-loader": "^0.44.0",
     "@fluidframework/core-interfaces": "^0.39.5",
     "@fluidframework/driver-definitions": "^0.39.6",

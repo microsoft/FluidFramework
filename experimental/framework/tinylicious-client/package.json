@@ -37,7 +37,7 @@
     "@fluid-experimental/fluid-framework": "^0.44.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/container-definitions": "^0.39.5",
+    "@fluidframework/container-definitions": "^0.39.7",
     "@fluidframework/container-loader": "^0.44.0",
     "@fluidframework/driver-definitions": "^0.39.6",
     "@fluidframework/protocol-definitions": "^0.1024.0",
