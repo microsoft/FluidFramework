@@ -19,7 +19,11 @@ Each FRS tenant you create is assigned a *tenant ID* and its own unique *tenant 
 The secret key is a *shared secret*. Your app/service knows it, and FRS knows it. This means that you can sign data
 using that secret key, and FRS can verify that it is you who signed those requests because it also has that key.
 
-In summary, the secret key is how the Azure Fluid Relay service knows that requests are coming from your app or service. This is critical, because once the Azure Fluid Relay service can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's important that the secret is handled securely. **Anyone with access to the secret can impersonate your application when communicating with Azure Fluid Relay.**
+In summary, the secret key is how the Azure Fluid Relay service knows that requests are coming from your app or service. This is critical, because once the Azure Fluid Relay service can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's important that the secret is handled securely.
+
+{{% callout warning %}}
+Anyone with access to the secret can impersonate your application when communicating with Azure Fluid Relay service.
+{{% /callout %}}
 
 Now you have a mechanism to establish trust. You can sign some data, send it to the Azure Fluid Relay service, and the service can validate whether the
 data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard way method for encoding
@@ -32,7 +36,7 @@ The specifics of JWTs are beyond the scope of this article. For more details abo
 
 {{% /callout %}}
 
-JSON Web Tokens are a signed bit of JSON data that can include additional data about the rights conferred by the
+JSON Web Tokens are a signed bit of JSON that can include additional information about the rights conferred by the
 JWT. The Azure Fluid Relay service uses signed JWTs for establishing trust with calling clients.
 
 The next question is: what data should you send?
