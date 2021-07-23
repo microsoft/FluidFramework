@@ -24,14 +24,15 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
-    SubmitSummaryResult,
     ISubmitSummaryOptions,
+    IOnDemandSummarizeOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
     OnDemandSummarizeResult,
+    SubmitSummaryResult,
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
@@ -272,10 +273,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return result;
     }
 
-    public summarizeOnDemand(
-        reason: string,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
-    ): OnDemandSummarizeResult {
+    public summarizeOnDemand(reason: string, options: IOnDemandSummarizeOptions): OnDemandSummarizeResult {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
             throw Error("Summarizer is not running or already disposed.");
         }

@@ -72,13 +72,20 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
-export interface ISubmitSummaryOptions {
+export interface IBaseSummarizeOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-    fullTree?: boolean,
+    readonly fullTree?: boolean,
     /** True to ask the server what the latest summary is first; defaults to false */
-    refreshLatestAck?: boolean,
+    readonly refreshLatestAck?: boolean,
+}
+
+export interface ISubmitSummaryOptions extends IBaseSummarizeOptions {
     /** Logger to use for correlated summary events */
-    summaryLogger: ITelemetryLogger,
+    readonly summaryLogger: ITelemetryLogger,
+}
+
+export interface IOnDemandSummarizeOptions extends IBaseSummarizeOptions {
+    readonly afterSequenceNumber?: number;
 }
 
 /**
@@ -221,10 +228,7 @@ export interface ISummarizer
     updateOnBehalfOf(onBehalfOf: string): void;
 
     /** Attempts to generate a summary on demand. */
-    summarizeOnDemand(
-        reason: string,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
-    ): OnDemandSummarizeResult;
+    summarizeOnDemand(reason: string, options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
 }
 
 /** Data about an attempt to summarize used for heuristics. */

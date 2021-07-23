@@ -9,8 +9,8 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IAckNackSummaryResult,
+    IBaseSummarizeOptions,
     IBroadcastSummaryResult,
-    ISubmitSummaryOptions,
     ISummarizeResults,
     ISummarizeHeuristicData,
     ISummarizerInternalsProvider,
@@ -95,7 +95,7 @@ const summarizeErrors = {
     summaryNack: "Server rejected summary via summaryNack op",
 } as const;
 
-class SummarizeResultBuilder {
+export class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
     public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
@@ -147,10 +147,10 @@ export class SummaryGenerator {
      */
     public summarize(
         reason: SummarizeReason,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
+        options: IBaseSummarizeOptions,
+        resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
         ++this.summarizeCount;
-        const resultsBuilder = new SummarizeResultBuilder();
 
         if (this.summarizing !== undefined) {
             // We do not expect this case. Log the error and let it try again anyway.
@@ -177,7 +177,7 @@ export class SummaryGenerator {
 
     private async summarizeCore(
         reason: SummarizeReason,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
+        options: IBaseSummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;

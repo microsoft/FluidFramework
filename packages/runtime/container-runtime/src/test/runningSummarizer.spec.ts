@@ -622,6 +622,148 @@ describe("Runtime", () => {
                     assert(ackNackResult.data.summaryAckNackOp.contents.errorMessage === "test-nack",
                         "summary nack error should be test-nack");
                 });
+
+                it("Should create an on-demand summary after specified sequence number", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const afterSequenceNumber = 9;
+                    const result = summarizer.summarizeOnDemand("test", { afterSequenceNumber });
+                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+
+                    await emitNextOp(6);
+                    assertRunCounts(0, 0, 0, "on-demand should not run yet, still 1 op short");
+
+                    await emitNextOp(1);
+                    assertRunCounts(1, 0, 0, "on-demand should run");
+
+                    const submitResult = await result.summarySubmitted;
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, 9, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, 9,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -1,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    await emitAck();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(ackNackResult.success, "on-demand summary should succeed");
+                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                        "should be ack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                        "summary ack handle should be test-ack-handle");
+                });
+
+                it("Should create an on-demand summary after specified sequence number after heuristics", async () => {
+                    const afterSequenceNumber = summaryConfig.maxOps * 2 + 10;
+
+                    // Should start running by heuristics
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(1, 0, 0);
+
+                    const result = summarizer.summarizeOnDemand("test", { afterSequenceNumber });
+                    assert(result.alreadyRunning === undefined, "summary should not return alreadyRunning");
+                    let submitRan = false;
+                    result.summarySubmitted.then(() => { submitRan = true; }, () => {});
+
+                    // Even after finishing first heuristic summary, on-demand shouldn't run yet.
+                    await emitAck();
+
+                    // Should start running by heuristics again.
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(2, 0, 0);
+                    await emitNextOp(20); // make sure on-demand is ready
+                    assert(submitRan === false, "on-demand summary should not run until 2nd heuristic ack");
+
+                    // After this ack, it should start running on-demand summary.
+                    await emitAck();
+                    assert((submitRan as boolean) === true, "on-demand summary should run");
+                    assertRunCounts(3, 0, 0);
+
+                    const submitResult = await result.summarySubmitted;
+                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.data.stage === "submit",
+                        "on-demand summary submitted data stage should be submit");
+
+                    const expectedRefSeqNum = summaryConfig.maxOps * 2 + 22;
+                    assert.strictEqual(submitResult.data.referenceSequenceNumber, expectedRefSeqNum, "ref seq num");
+                    assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+                    const broadcastResult = await result.summaryOpBroadcasted;
+                    assert(broadcastResult.success, "summary op should be broadcast");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.referenceSequenceNumber, expectedRefSeqNum,
+                        "summarize op ref seq num should be same as summary seq");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.sequenceNumber, -3,
+                        "summarize op seq number should match test negative counter");
+                    assert.strictEqual(broadcastResult.data.summarizeOp.contents.handle, "test-broadcast-handle",
+                        "summarize op handle should be test-broadcast-handle");
+
+                    // Verify that heuristics are blocked while waiting for ack
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(3, 0, 0);
+
+                    await emitAck();
+                    const ackNackResult = await result.receivedSummaryAckOrNack;
+                    assert(ackNackResult.success, "on-demand summary should succeed");
+                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                        "should be ack");
+                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                        "summary ack handle should be test-ack-handle");
+                });
+
+                it("Should fail an on-demand summary if stopping", async () => {
+                    summarizer.waitStop().catch(() => {});
+                    const result1 = summarizer.summarizeOnDemand("test1", {});
+                    const result2 = summarizer.summarizeOnDemand("test2", { afterSequenceNumber: 0 });
+                    assert(!result1.alreadyRunning && !result2.alreadyRunning, "should not be already running");
+
+                    const allResults = await Promise.all([
+                        result1.summarySubmitted,
+                        result1.summaryOpBroadcasted,
+                        result1.receivedSummaryAckOrNack,
+                        result2.summarySubmitted,
+                        result2.summaryOpBroadcasted,
+                        result2.receivedSummaryAckOrNack,
+                    ]);
+                    for (const result of allResults) {
+                        assert(!result.success, "all results should fail");
+                    }
+                });
+
+                it("Should fail an on-demand summary if disposed", async () => {
+                    summarizer.dispose();
+                    const result1 = summarizer.summarizeOnDemand("test1", {});
+                    const result2 = summarizer.summarizeOnDemand("test2", { afterSequenceNumber: 0 });
+                    assert(!result1.alreadyRunning && !result2.alreadyRunning, "should not be already running");
+
+                    const allResults = await Promise.all([
+                        result1.summarySubmitted,
+                        result1.summaryOpBroadcasted,
+                        result1.receivedSummaryAckOrNack,
+                        result2.summarySubmitted,
+                        result2.summaryOpBroadcasted,
+                        result2.receivedSummaryAckOrNack,
+                    ]);
+                    for (const result of allResults) {
+                        assert(!result.success, "all results should fail");
+                    }
+                });
             });
 
             describe("Summary Start", () => {
