@@ -5,12 +5,12 @@ menuPosition: 4
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/). The following image shows the time stamp application open in four browsers. Each has a button labelled **click** and beside it a UNIX Epoch time. The same time in all four. The cursor is on the button in one browser.
 
-![Four browsers with the Timestamp app open in them.](/images/Four-clients-1.PNG)
+![Four browsers with the Timestamp app open in them.](./images/Four-clients-1.PNG)
 
 The following image shows the same four clients one second after the **click** button was pressed. Note that the timestamp has updated to the very same time in all four browsers.
 
 
-![Four browsers with the Timestamp app open in them one second after the button has been pushed.](/images/Four-clients-2.PNG)
+![Four browsers with the Timestamp app open in them one second after the button has been pushed.](./images/Four-clients-2.PNG)
 
 {{< callout note >}}
 
