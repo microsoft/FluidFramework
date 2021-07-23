@@ -58,8 +58,7 @@
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore": "^0.45.0",
     "@fluidframework/datastore-definitions": "^0.45.0",
-    "@fluidframework/driver-definitions": "^0.39.7"
-,
+    "@fluidframework/driver-definitions": "^0.39.7",
     "@fluidframework/local-driver": "^0.45.0",
     "@fluidframework/map": "^0.45.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",

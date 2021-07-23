@@ -61,8 +61,7 @@
     "@fluidframework/container-definitions": "^0.39.7",
     "@fluidframework/container-utils": "^0.45.0",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.39.7"
-,
+    "@fluidframework/driver-definitions": "^0.39.7",
     "@fluidframework/driver-utils": "^0.45.0",
     "@fluidframework/protocol-base": "^0.1027.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",

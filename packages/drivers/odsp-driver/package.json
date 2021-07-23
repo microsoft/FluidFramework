@@ -59,8 +59,7 @@
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/driver-base": "^0.45.0",
-    "@fluidframework/driver-definitions": "^0.39.7"
-,
+    "@fluidframework/driver-definitions": "^0.39.7",
     "@fluidframework/driver-utils": "^0.45.0",
     "@fluidframework/gitresources": "^0.1027.0",
     "@fluidframework/odsp-doclib-utils": "^0.45.0",
