@@ -838,25 +838,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                 // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
                 // support blob handles that only know about the local IDs
-                const redirectTable = new Map<string, string | undefined>();
+                const redirectTable = new Map<string, string>();
                 // if new blobs are added while uploading, upload them too
                 while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
-                    for (const id of this.loader.services.detachedBlobStorage.getIds()) {
-                        if (!redirectTable.has(id)) {
-                            redirectTable.set(id, undefined);
-                        }
-                    }
-                    for (const [localId, storageId] of redirectTable) {
-                        if (storageId === undefined) {
-                            const blob = await this.loader.services.detachedBlobStorage.readBlob(localId);
-                            const response = await this.storageService.createBlob(blob);
-                            redirectTable.set(localId, response.id);
-                        }
+                    const newIds = this.loader.services.detachedBlobStorage.getIds().filter(
+                        (id) => !redirectTable.has(id));
+                    for (const id of newIds) {
+                        const blob = await this.loader.services.detachedBlobStorage.readBlob(id);
+                        const response = await this.storageService.createBlob(blob);
+                        redirectTable.set(id, response.id);
                     }
                 }
 
                 // take summary and upload
-                const appSummary: ISummaryTree = this.context.createSummary(redirectTable as Map<string, string>);
+                const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
