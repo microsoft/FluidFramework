@@ -76,12 +76,12 @@ const isRwLoggingError = (x: any): x is RwLoggingError =>
 export function mixinTelemetryProps<T>(
     errorObject: T,
     props: ITelemetryProperties,
-): T & ILoggingError {
+): asserts errorObject is T & ILoggingError {
     assert(isRegularObject(errorObject) && !Object.isFrozen(errorObject), "Cannot mixin Telemetry Props");
 
     if (isRwLoggingError(errorObject)) {
         errorObject.addTelemetryProperties(props);
-        return errorObject;
+        return;
     }
 
     // Even though it's not exposed, fully implement RwLoggingError for subsequent calls to mixinTelemetryProps
@@ -91,6 +91,4 @@ export function mixinTelemetryProps<T>(
     loggingError.getTelemetryProperties = () => propsForError;
     loggingError.addTelemetryProperties =
         (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
-
-    return loggingError;
 }

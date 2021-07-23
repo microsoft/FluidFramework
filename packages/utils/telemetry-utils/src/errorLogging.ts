@@ -22,6 +22,14 @@ import {
     copyProps,
 } from "./internalHelpers";
 
+/** Metadata to annotate an error object when annotating or normalizing it */
+export interface FluidErrorAnnotations {
+    /** Telemetry props to log with the error */
+    props?: ITelemetryProperties;
+    /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
+    errorCodeIfNone?: string;
+}
+
 /**
  * Take an unknown error object and extract certain known properties to be included in a new error object.
  * The stack is preserved, along with any safe-to-log telemetry props.
@@ -29,7 +37,7 @@ import {
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
- export function wrapError<T>(
+export function wrapError<T>(
     error: any,
     newErrorFn: (m: string) => T,
 ): T {
@@ -50,70 +58,93 @@ import {
 }
 
 /**
- * Normalize the given error object yielding a valid Fluid Error
+ * Normalize the given error yielding a valid Fluid Error
  * @returns The same error object passed in if possible, normalized and with any provided annotations applied
  * @param error - The error to normalize, ideally by patching in the properties of IFluidErrorBase
- * @param annotations - Annotations to apply to the normalized error:
- * annotations.props - telemetry props to log with the error
- * annotations.errorCodeIfNone - fluidErrorCode to mention if error isn't already an IFluidErrorBase
- * @param strict - If true, then throw if the given error can't be patched. Otherwise, create and return a new object
+ * @param annotations - Annotations to apply to the normalized error
  */
- export function normalizeError(
+export function normalizeError(
     error: unknown,
-    annotations: {
-        props?: ITelemetryProperties,
-        errorCodeIfNone?: string,
-    } = {},
-    strict: boolean = false,
+    annotations: FluidErrorAnnotations = {},
 ): IFluidErrorBase {
-    // If we already have a valid Fluid Error, then just mixin telemetry props
-    if (isFluidError(error)) {
-        return mixinTelemetryPropsWithFluidError(error, annotations.props);
-    }
-
-    // We will get an object (ideally the passed-in error itself) and patch in any missing properties of IFluidErrorBase
-    let fluidErrorBuilder: FluidErrorBuilder;
-    let errorTypeIfNone: string;
     if (isRegularObject(error) && !Object.isFrozen(error)) {
-        // error is an object we can patch, use it as the builder directly
-        fluidErrorBuilder = error as FluidErrorBuilder;
-        errorTypeIfNone = isErrorLike(error)
-            ? error.name
-            : typeof(error);
-    } else {
-        assert(!strict, "normalizeError cannot patch the given non-object or frozen error (strict: true)");
-
-        // We can't patch error itself, so wrap it in a new LoggingError for the builder
-        const newErrorFn = (errMsg: string) => new LoggingError(errMsg);
-        fluidErrorBuilder = wrapError<LoggingError>(error, newErrorFn) as FluidErrorBuilder;
-        errorTypeIfNone = !isRegularObject(error) ? typeof(error) : "wrappedFrozenError";
+        // We can simply annotate the error and return it
+        annotateErrorObject(error, annotations);
+        return error;
     }
 
+    // We can't annotate the error, so we have to wrap it
+    const newErrorFn = (errMsg: string) => new LoggingError(errMsg);
+    const fluidErrorBuilder = wrapError<LoggingError>(error, newErrorFn) as FluidErrorBuilder;
+    const errorTypeIfNone = !isRegularObject(error) ? typeof(error) : "wrappedFrozenError";
     const fluidError = patchFluidErrorBuilder(
         fluidErrorBuilder,
-        {
-            errorType: typeof fluidErrorBuilder.errorType === "string"
-                ? fluidErrorBuilder.errorType
-                : `none (${errorTypeIfNone})`,
-            fluidErrorCode: annotations.errorCodeIfNone === undefined
-                ? "none" // We already know fluidErrorBuilder doesn't have a fluidErrorCode
-                : `none (${annotations.errorCodeIfNone})`,
-            stack: typeof fluidErrorBuilder.stack === "string"
-                ? undefined // This means don't patch the stack property (since it's already ok)
-                : new Error("<<generated stack>>").stack,
-        },
+        getFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
     );
 
-    return mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
+    mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
+    return fluidError;
+}
+
+/**
+ * Annotate the given error object, such that it becomes a valid Fluid Error (and is asserted so via a type guard)
+ * If the object is not suitable for annotation (e.g. it's frozen), this will throw.
+ * @param error - The error to annotate, ideally by patching in the properties of IFluidErrorBase
+ * @param annotations - Annotations to apply to the normalized error
+ */
+export function annotateErrorObject(
+    errorObject: unknown,
+    annotations: FluidErrorAnnotations = {},
+): asserts errorObject is IFluidErrorBase {
+    // If errorObject isn't suitable to annotate as IFluidErrorBase, bail.
+    assert(isRegularObject(errorObject) && !Object.isFrozen(errorObject),
+        "Cannot annotate a non-object or frozen error");
+
+    // If we already have a valid Fluid Error, then just mixin telemetry props and return
+    if (isFluidError(errorObject)) {
+        mixinTelemetryPropsWithFluidError(errorObject, annotations.props);
+        return;
+    }
+
+    // Patch in any missing properties of IFluidErrorBase
+    const fluidErrorBuilder = errorObject as FluidErrorBuilder;
+    const errorTypeIfNone = isErrorLike(errorObject)
+        ? errorObject.name
+        : typeof(errorObject);
+    const fluidError = patchFluidErrorBuilder(
+        fluidErrorBuilder,
+        getFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
+    );
+
+    mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
 }
 
 /**
  * Helper type, not exported.
  * Makes IFluidErrorBuilder's props mutable and optional for building one up on an existing object
  */
- type FluidErrorBuilder = {
+type FluidErrorBuilder = {
     -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
 };
+
+/** Returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder */
+function getFluidErrorTemplate(
+    fluidErrorBuilder: FluidErrorBuilder,
+    errorTypeIfNone: string,
+    errorCodeIfNone: string | undefined,
+): IFluidErrorBase {
+    return {
+        errorType: typeof fluidErrorBuilder.errorType === "string"
+            ? fluidErrorBuilder.errorType
+            : `none (${errorTypeIfNone})`,
+        fluidErrorCode: errorCodeIfNone === undefined
+            ? "none" // We already know fluidErrorBuilder doesn't have a fluidErrorCode
+            : `none (${errorCodeIfNone})`,
+        stack: typeof fluidErrorBuilder.stack === "string"
+            ? undefined // This means don't patch the stack property (since it's already ok)
+            : new Error("<<generated stack>>").stack,
+    };
+}
 
 /**
  * Patch the given builder with all existing properties on the template
@@ -138,11 +169,14 @@ function patchFluidErrorBuilder(builder: FluidErrorBuilder, template: IFluidErro
 }
 
 /** Mixin the telemetry props, along with errorType and fluidErrorCode */
-function mixinTelemetryPropsWithFluidError(error: IFluidErrorBase, props?: ITelemetryProperties) {
+function mixinTelemetryPropsWithFluidError(
+    error: IFluidErrorBase,
+    props?: ITelemetryProperties,
+) {
     const { errorType, fluidErrorCode } = error;
 
     // This is a back-compat move, so old loggers will include errorType and fluidErrorCode via prepareErrorObject
-    return mixinTelemetryProps(error, { ...props, errorType, fluidErrorCode });
+    mixinTelemetryProps(error, { ...props, errorType, fluidErrorCode });
 }
 
 /**
