@@ -72,7 +72,7 @@
     "@fluid-example/flow-util-lib": "^0.45.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/core-interfaces": "^0.39.5",
+    "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/data-object-base": "^0.45.0",
     "@fluidframework/map": "^0.45.0",
     "@fluidframework/merge-tree": "^0.45.0",
