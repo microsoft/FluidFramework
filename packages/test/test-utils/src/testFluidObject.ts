@@ -13,6 +13,7 @@ import {
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { instantiateExisting } from "@fluidframework/runtime-utils";
 import { ITestFluidObject } from "./interfaces";
 
 /**
@@ -135,7 +136,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
     public async instantiateDataStore(
         context: IFluidDataStoreContext,
-        existing: boolean,
+        existing?: boolean,
     ): Promise<FluidDataStoreRuntime> {
         const dataTypes = new Map<string, IChannelFactory>();
 
@@ -166,7 +167,13 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
             });
 
         const runtime = new runtimeClass(context, dataTypes);
-        const routerP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject, existing);
+        const routerP = TestFluidObject.load(
+            runtime,
+            runtime,
+            context,
+            factoryEntriesMapForObject,
+            instantiateExisting(context, existing),
+        );
 
         return runtime;
     }
