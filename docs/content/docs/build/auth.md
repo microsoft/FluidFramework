@@ -16,7 +16,7 @@ The information below is based on Azure Fluid Relay service but also applies to
 
 {{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
-Each FRS tenant you create is assigned a *tenant ID* and *secret key*.
+Each FRS tenant you create is assigned a *tenant ID* and its own unique *tenant secret key*.
 
 The secret key is a *shared secret*. Your app/service knows it, and FRS knows it. This means that you can sign data
 using that secret key, and FRS can verify that it is you who signed those requests because it also has that key.
