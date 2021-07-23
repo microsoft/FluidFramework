@@ -94,7 +94,6 @@ export class DocumentPartition {
                 // So the DocumentPartition will see that message in the queue above, and checkpoint it
                 // since the document was marked as corrupted.
                 this.markAsCorrupt(error);
-                context.error(error, { restart: false, tenantId, documentId });
                 this.q.resume();
             });
     }
