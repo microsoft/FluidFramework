@@ -19,10 +19,7 @@ Each FRS tenant you create is assigned a *tenant ID* and its own unique *tenant 
 The secret key is a *shared secret*. Your app/service knows it, and FRS knows it. This means that you can sign data
 using that secret key, and FRS can verify that it is you who signed those requests because it also has that key.
 
-In summary, the secret key is how FRS knows that requests are coming from your app or service. This is critical, because
-once FRS can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's
-important that the secret is handled securely. **Anyone with access to the secret can impersonate your application to
-FRS.**
+In summary, the secret key is how the Azure Fluid Relay service knows that requests are coming from your app or service. This is critical, because once the Azure Fluid Relay service can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's important that the secret is handled securely. **Anyone with access to the secret can impersonate your application when communicating with Azure Fluid Relay.**
 
 Now you have a mechanism to establish trust. You can sign some data, send it to FRS, and FRS can validate whether the
 data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard way method for encoding
