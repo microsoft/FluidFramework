@@ -87,7 +87,7 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 * [Introduction to JWTs](https://jwt.io/introduction)
 * [Payload claims in Azure Fluid Relay](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims)
-* [Scopes in Azure Fluid Relay](need a url)
+* Scopes in Azure Fluid Relay
 * [Signing requests](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
 
 {{% /callout %}}
@@ -102,10 +102,8 @@ token provider is useful for testing, but in production scenarios you must use a
 ### A secure serverless token provider
 
 One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
-provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Function to generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
-
-An example of such a function is available at <https://github.com/microsoft/FrsAzureFunctions>. There is a
-corresponding `FrsAzFunctionTokenProvider` for this Function in the `@fluid-experimental/frs-client` package.
+provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Function to
+generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
 
 ## Adding custom data to tokens
 
@@ -122,7 +120,10 @@ In this case the user would sign into your application using AAD, through which 
 your Azure Function. The Azure Function itself behaves the same, but it's now only accessible to people who have also
 authenticated with AAD.
 
-Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated to the Function will then be able to relay that token to the Azure Fluid Relay service from their client application. This two-step approach allows you to use your own custom authentication process in conjunction with the Azure Fluid Relay service.
+Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated
+to the Function will then be able to relay that token to the Azure Fluid Relay service from their client application.
+This two-step approach allows you to use your own custom authentication process in conjunction with the Azure Fluid
+Relay service.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
 <!-- Links -->
