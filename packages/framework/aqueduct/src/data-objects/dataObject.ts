@@ -62,8 +62,12 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(existing: boolean): Promise<void> {
-        if (!existing) {
+    public async initializeInternal(existing?: boolean): Promise<void> {
+        const backCompatExisting = existing === undefined
+            ? this.context.existing === true
+            : existing;
+
+        if (!backCompatExisting) {
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
@@ -83,7 +87,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
             }
         }
 
-        await super.initializeInternal(existing);
+        await super.initializeInternal(backCompatExisting);
     }
 
     protected getUninitializedErrorString(item: string) {
