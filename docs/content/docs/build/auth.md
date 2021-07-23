@@ -36,7 +36,7 @@ The specifics of JWTs are beyond the scope of this article. For more details abo
 {{% /callout %}}
 
 JSON Web Tokens are a signed bit of JSON data that can include additional data about the rights conferred by the
-JWT. The data within the token is readable by a service like FRS.
+JWT. The Azure Fluid Relay service uses signed JWTs for establishing trust with calling clients.
 
 The next question is: what data should you send?
 
