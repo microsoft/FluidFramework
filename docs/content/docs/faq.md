@@ -246,4 +246,4 @@ This also applies to Blazor, Xamarin, MAUI, and other mobile frameworks.
 
 ### What browsers are supported?
 
-{{% include file="_includes/browsers.md" %}}
+{{% include file="docs/_includes/browsers.md" %}}
