@@ -9,7 +9,7 @@ important piece of infrastructure to secure. Fluid Framework is a layered archit
 primarily a concern of the *driver* layer (see [Architecture]({{< relref "architecture.md" >}})). This means that the
 specifics of authentication could differ based on the Fluid service and its driver.
 
-The information below is based on Azure Fluid Relay service but also applies to
+The information below is based on Azure Fluid Relay service (FRS) but also applies to
 [Tinylicious]({{< relref "tinylicious.md" >}}). Other Fluid services may differ.
 
 ## Azure Fluid Relay service
@@ -37,7 +37,7 @@ The specifics of JWTs are beyond the scope of this article. For more details abo
 
 {{% /callout %}}
 
-JSON Web Tokens are a signed bit of JSON data that can include additional data about a or the rights conferred by the
+JSON Web Tokens are a signed bit of JSON data that can include additional data about the rights conferred by the
 JWT. The data within the token is readable by a service like FRS.
 
 The next question is: what data should you send?
@@ -105,3 +105,5 @@ organization's auth system.
 In this case the user would sign into your application using AAD, through which you would obtain a token to use to call
 your Azure Function. The Azure Function itself behaves the same, but it's now only accessible to people who have also
 authenticated with AAD.
+
+Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated to the Function will then be able to relay that token to FRS from their client application. This two-step approach allows you to use your own custom authentication process in conjunction with FRS.
