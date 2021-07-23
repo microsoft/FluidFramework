@@ -160,7 +160,7 @@ export interface IContainerContext extends IDisposable {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
@@ -179,6 +179,8 @@ export interface IContainerContext extends IDisposable {
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
+    // (undocumented)
+    readonly taggedLogger?: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }

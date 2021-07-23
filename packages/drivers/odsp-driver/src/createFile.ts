@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import {
     fetchIncorrectResponse,
@@ -14,24 +14,28 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
 import {
     IOdspSummaryTree,
     OdspSummaryTreeValue,
     OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
+    IOdspSnapshot,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+    createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
+    ISnapshotCacheValue,
     getOrigin,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { convertCreateNewSummaryTreeToIOdspSnapshot } from "./createNewUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -48,19 +52,46 @@ export async function createNewFluidFile(
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree | undefined,
     epochTracker: EpochTracker,
+    fileEntry: IFileEntry,
+    createNewCaching: boolean,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
         throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
     }
 
-    const itemId = createNewSummary === undefined
-        ? await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker)
-        : await createNewFluidFileFromSummary(getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+    let itemId: string;
+    let summaryHandle: string = "";
+
+    if (createNewSummary === undefined) {
+        itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
+    } else {
+        const content = await createNewFluidFileFromSummary(
+            getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
+        itemId = content.itemId;
+        summaryHandle = content.id;
+    }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
-    return resolver.resolve({ url: odspUrl });
+    const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
+    fileEntry.resolvedUrl = odspResolvedUrl;
+
+    if (createNewSummary !== undefined && createNewCaching) {
+        assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
+        // converting summary and getting sequence number
+        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, summaryHandle);
+        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
+        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
+        const sequenceNumber = documentAttributes.sequenceNumber;
+
+        // caching the converted summary
+        const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
+        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+    }
+
+    return odspResolvedUrl;
 }
 
 export async function createNewEmptyFluidFile(
@@ -115,7 +146,7 @@ export async function createNewFluidFileFromSummary(
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,
     epochTracker: EpochTracker,
-): Promise<string> {
+): Promise<ICreateFileResponse> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
     const encodedFilename = encodeURIComponent(newFileInfo.filename);
     const baseUrl =
@@ -152,7 +183,7 @@ export async function createNewFluidFileFromSummary(
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
                     ...fetchResponse.commonSpoHeaders,
                 });
-                return content.itemId;
+                return content;
             },
             { end: true, cancel: "error" });
     });

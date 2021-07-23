@@ -50,3 +50,6 @@ nyc
 # Generated modules
 intel_modules/
 temp_modules/
+
+bench/dist/
+bench/profile.txt

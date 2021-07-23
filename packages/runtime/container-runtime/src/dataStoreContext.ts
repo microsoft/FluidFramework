@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -26,7 +25,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -71,6 +70,7 @@ import {
     ReadFluidDataStoreAttributes,
     WriteFluidDataStoreAttributes,
     getAttributesFormatVersion,
+    getFluidDataStoreAttributes,
 } from "./summaryFormat";
 
 function createAttributes(
@@ -150,10 +150,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public get connected(): boolean {
         return this._containerRuntime.connected;
-    }
-
-    public get loader(): ILoader {
-        return this._containerRuntime.loader;
     }
 
     public get IFluidHandleContext() {
@@ -410,7 +406,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
+            gcData: this.summarizerNode.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
@@ -696,7 +692,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
-            // Need to rip through snapshot and use that to populate extraBlobs
+            // Need to get through snapshot and use that to populate extraBlobs
             const attributes =
                 await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
@@ -769,14 +765,14 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: Readonly<string[]>,
+        pkg: Readonly<string[]> | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        protected readonly isRootDataStore: boolean,
+        protected isRootDataStore: boolean | undefined,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -831,7 +827,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
+            gcData: this.summarizerNode.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
@@ -848,25 +844,28 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isRootDataStore !== undefined,
-            0x153 /* "isRootDataStore should be available in local data store" */);
-
         let snapshot = this.snapshotTree;
+        let attributes: ReadFluidDataStoreAttributes;
         if (snapshot !== undefined) {
+            // Get the dataStore attributes.
             // Note: storage can be undefined in special case while detached.
-            const attributes = this.storage !== undefined
-                ? await readAndParse<ReadFluidDataStoreAttributes>(
-                    this.storage, snapshot.blobs[dataStoreAttributesBlobName])
-                : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-                    snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
-
+            attributes = await getFluidDataStoreAttributes(this.storage, snapshot);
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
                 assert(snapshot !== undefined,
                     0x1ff /* "isolated channels subtree should exist in local datastore snapshot" */);
             }
+            if (this.pkg === undefined) {
+                this.pkg = JSON.parse(attributes.pkg) as string[];
+                // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                // roots in the document but they won't break.
+                this.isRootDataStore = attributes.isRootDataStore ?? true;
+            }
         }
+        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
+        assert(this.isRootDataStore !== undefined,
+            0x153 /* "isRootDataStore should be available in local data store" */);
 
         return {
             pkg: this.pkg,
@@ -890,14 +889,14 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
     constructor(
         id: string,
-        pkg: string[],
+        pkg: string[] | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
-        isRootDataStore: boolean,
+        isRootDataStore: boolean | undefined,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
