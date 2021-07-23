@@ -25,7 +25,7 @@ var TypeIdHelper = {};
  * @param {string} in_typeid - The typeid we want to check
  * @return {boolean} Is this a base type?
  */
-TypeIdHelper.isPrimitiveType = function(in_typeid) {
+TypeIdHelper.isPrimitiveType = function (in_typeid) {
     var primitiveTypes = templateSchemaJson['$defs']['primitive-typeid']['enum'];
 
     if (in_typeid === undefined || in_typeid === '') {
@@ -44,7 +44,7 @@ TypeIdHelper.isPrimitiveType = function(in_typeid) {
  * @param {string} in_param - The typeid we want to check
  * @return {boolean} Is this a base template typeid?
  */
-TypeIdHelper.isTemplateTypeid = function(in_param) {
+TypeIdHelper.isTemplateTypeid = function (in_param) {
     return typeof in_param === 'string' && (in_param.indexOf(':') !== -1);
 };
 
@@ -54,7 +54,7 @@ TypeIdHelper.isTemplateTypeid = function(in_param) {
  * @param {string} in_typeid - The typeid we want to check
  * @return {boolean} Is this a reserved type?
  */
-TypeIdHelper.isReservedType = function(in_typeid) {
+TypeIdHelper.isReservedType = function (in_typeid) {
     var reservedTypes = templateSchemaJson['$defs']['reserved-typeid']['enum'];
     return reservedTypes.indexOf(in_typeid) >= 0;
 };
@@ -64,7 +64,7 @@ TypeIdHelper.isReservedType = function(in_typeid) {
  * @param {string} in_typeid The typeid to check against
  * @return {Array} Array of size two
  */
-TypeIdHelper.extractVersion = function(in_typeid) {
+TypeIdHelper.extractVersion = function (in_typeid) {
     if (!in_typeid) {
         throw new Error(MSG.TYPEID_NOT_DEFINED);
     }
@@ -83,7 +83,7 @@ TypeIdHelper.extractVersion = function(in_typeid) {
  * @return {{typeid: string, context:string, isEnum:boolean}} Returns the typeid without context, the context and
  *     if we have an enum type
  */
-TypeIdHelper.extractContext = function(in_typeid) {
+TypeIdHelper.extractContext = function (in_typeid) {
     var bracketIndex = in_typeid.indexOf('<');
     if (bracketIndex !== -1 &&
         in_typeid[in_typeid.length - 1] === '>') {
@@ -136,7 +136,7 @@ TypeIdHelper.extractContext = function(in_typeid) {
  *
  * @return {string} The combined typeid string
  */
-TypeIdHelper.createSerializationTypeId = function(in_typeid, in_context, in_enum) { // in_enum
+TypeIdHelper.createSerializationTypeId = function (in_typeid, in_context, in_enum) { // in_enum
     if (in_typeid === 'BaseProperty') {
         // Special case for BaseProperties. These get represented as a collection
         // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>
@@ -160,7 +160,7 @@ TypeIdHelper.createSerializationTypeId = function(in_typeid, in_context, in_enum
  * @param {string} in_typeid - The typeid to check
  * @return {boolean} Is this a reference property typeid?
  */
-TypeIdHelper.isReferenceTypeId = function(in_typeid) { // in_enum
+TypeIdHelper.isReferenceTypeId = function (in_typeid) { // in_enum
     return in_typeid === 'Reference' ||
         (in_typeid.substr(0, 10) === 'Reference<' && in_typeid.substr(-1) === '>');
 };
@@ -171,7 +171,7 @@ TypeIdHelper.isReferenceTypeId = function(in_typeid) { // in_enum
  * @param {string} in_typeid - The typeid to process
  * @return {string} The type of the referenced property
  */
-TypeIdHelper.extractReferenceTargetTypeIdFromReference = function(in_typeid) { // in_enum
+TypeIdHelper.extractReferenceTargetTypeIdFromReference = function (in_typeid) { // in_enum
     if (in_typeid.substr(0, 10) === 'Reference<') {
         // Extract the type from the TypeID
         return in_typeid.substr(10, in_typeid.length - 11);
@@ -187,7 +187,7 @@ TypeIdHelper.extractReferenceTargetTypeIdFromReference = function(in_typeid) { /
  * @param {string} in_param - The typeid we want to check
  * @return {boolean} Is this a base template typeid?
  */
-TypeIdHelper.isSchemaTypeid = function(in_param) {
+TypeIdHelper.isSchemaTypeid = function (in_param) {
     return typeof in_param === 'string' && (in_param.indexOf(':') !== -1);
 };
 
@@ -199,7 +199,7 @@ TypeIdHelper.isSchemaTypeid = function(in_param) {
  *
  * @return {String} referenced typeid or in_param if it is not a reference
  */
-TypeIdHelper.extractTypeId = function(in_param) {
+TypeIdHelper.extractTypeId = function (in_param) {
     var matches = in_param.match(/\<(.*?)\>/); // eslint-disable-line
     if (matches !== null && matches.length > 0) {
         return matches[0].replace(/[\<\>]/gi, ''); // eslint-disable-line
@@ -220,7 +220,7 @@ TypeIdHelper.extractTypeId = function(in_param) {
  * @throws if in_typeid or in_baseTypeid are not native typeid
  * @return {boolean} True if in_baseTypeid is a parent of in_typeid
  */
-TypeIdHelper.nativeInheritsFrom = function(in_typeid, in_baseTypeid) {
+TypeIdHelper.nativeInheritsFrom = function (in_typeid, in_baseTypeid) {
     if (!in_typeid || !in_baseTypeid) {
         throw new Error(MSG.TYPEID_NOT_DEFINED);
     }
@@ -266,7 +266,7 @@ TypeIdHelper.nativeInheritsFrom = function(in_typeid, in_baseTypeid) {
  * @public
  * @return {Array<string>} return a list of primitiveTypeIds
  */
-TypeIdHelper.getPrimitiveTypeIds = function() {
+TypeIdHelper.getPrimitiveTypeIds = function () {
     return templateSchemaJson['$defs']['primitive-typeid']['enum'];
 };
 
@@ -276,7 +276,7 @@ TypeIdHelper.getPrimitiveTypeIds = function() {
  * @public
  * @return {Array<string>} return a list of reservedTypeIds
  */
-TypeIdHelper.getReservedTypeIds = function() {
+TypeIdHelper.getReservedTypeIds = function () {
     return templateSchemaJson['$defs']['reserved-typeid']['enum'];
 };
 

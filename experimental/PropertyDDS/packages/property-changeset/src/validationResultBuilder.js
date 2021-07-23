@@ -13,7 +13,7 @@
  * @param {string} in_typeid A template typeid.
  * @constructor
  */
-var ValidationResultBuilder = function(in_typeid) {
+var ValidationResultBuilder = function (in_typeid) {
     this._result = {
         isValid: true,
         errors: [],
@@ -35,7 +35,7 @@ var ValidationResultBuilder = function(in_typeid) {
      * }
      */
     Object.defineProperty(this, 'result', {
-        get: function() {
+        get: function () {
             return this._result;
         }
     });
@@ -45,7 +45,7 @@ var ValidationResultBuilder = function(in_typeid) {
  * Add a validation error.
  * @param {Error} in_error An Error instance.
  */
-ValidationResultBuilder.prototype.addError = function(in_error) {
+ValidationResultBuilder.prototype.addError = function (in_error) {
     this._result.isValid = false;
     // remove empty error messages before logging.
     if (in_error.message) {
@@ -57,7 +57,7 @@ ValidationResultBuilder.prototype.addError = function(in_error) {
  * Add a validation warning.
  * @param {string} in_msg A warning description.
  */
-ValidationResultBuilder.prototype.addWarning = function(in_msg) {
+ValidationResultBuilder.prototype.addWarning = function (in_msg) {
     this._result.warnings.push(in_msg);
 };
 
@@ -66,7 +66,7 @@ ValidationResultBuilder.prototype.addWarning = function(in_msg) {
  * @return {boolean} True if validation produced no error, false otherwise. Warnings don't affect
  *   this value.
  */
-ValidationResultBuilder.prototype.isValid = function() {
+ValidationResultBuilder.prototype.isValid = function () {
     return this._result.isValid;
 };
 

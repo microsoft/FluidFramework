@@ -27,7 +27,7 @@ var Utils = {};
  * @constructor
  * @private
  */
-Utils.TraversalContext = function() {
+Utils.TraversalContext = function () {
     this._fullPath = '';
     this._lastSegment = '';
     this._lastSegmentString = '';
@@ -57,7 +57,7 @@ Utils.TraversalContext = function() {
  * Stop the traversal for all nodes below the currently processed one
  * @private
  */
-Utils.TraversalContext.prototype.stopTraversal = function() {
+Utils.TraversalContext.prototype.stopTraversal = function () {
     this._traversalStopped = true;
 };
 
@@ -66,7 +66,7 @@ Utils.TraversalContext.prototype.stopTraversal = function() {
  * @return {string} one of 'insert', 'modify' or 'remove'
  * @private
  */
-Utils.TraversalContext.prototype.getOperationType = function() {
+Utils.TraversalContext.prototype.getOperationType = function () {
     return this._operationType;
 };
 
@@ -76,7 +76,7 @@ Utils.TraversalContext.prototype.getOperationType = function() {
  * @return {string} The full path
  * @private
  */
-Utils.TraversalContext.prototype.getFullPath = function() {
+Utils.TraversalContext.prototype.getFullPath = function () {
     return this._fullPath;
 };
 
@@ -89,7 +89,7 @@ Utils.TraversalContext.prototype.getFullPath = function() {
  * @private
  * @return {string|number} The last segment index
  */
-Utils.TraversalContext.prototype.getLastSegment = function() {
+Utils.TraversalContext.prototype.getLastSegment = function () {
     return this._lastSegment;
 };
 
@@ -102,7 +102,7 @@ Utils.TraversalContext.prototype.getLastSegment = function() {
  * @private
  * @return {string|number} The last segment index
  */
-Utils.TraversalContext.prototype.getLastSegmentEscaped = function() {
+Utils.TraversalContext.prototype.getLastSegmentEscaped = function () {
     if (this._propertyContainerType === 'NodeProperty' ||
         this._propertyContainerType === 'map' ||
         this._propertyContainerType === 'set' ||
@@ -118,7 +118,7 @@ Utils.TraversalContext.prototype.getLastSegmentEscaped = function() {
  * @param {object} in_context change set traversal context
  * @return {Boolean} Wether the object is empty
  */
-const _isEmptyObject = function(in_context) {
+const _isEmptyObject = function (in_context) {
     return _.isObject(in_context._nestedChangeSet) && _.isEmpty(in_context._nestedChangeSet);
 };
 
@@ -142,7 +142,7 @@ const PRIMITIVE_TYPES = {
  * @private
  * @return {Boolean} Wether the context is at a leaf
  */
-Utils.TraversalContext.prototype.isLeafNode = function() {
+Utils.TraversalContext.prototype.isLeafNode = function () {
     return PRIMITIVE_TYPES[this._typeid] || _isEmptyObject(this) || this.getOperationType() === 'remove';
 };
 
@@ -151,7 +151,7 @@ Utils.TraversalContext.prototype.isLeafNode = function() {
  * @private
  * @return {string|number} The last segment index
  */
-Utils.TraversalContext.prototype.getPostLastSegment = function() {
+Utils.TraversalContext.prototype.getPostLastSegment = function () {
     if (this._propertyContainerType === 'array') {
         if (this._operationType === 'remove') {
             return this._lastSegment + this._arrayIteratorOffset - this._arrayLocalIndex;
@@ -168,7 +168,7 @@ Utils.TraversalContext.prototype.getPostLastSegment = function() {
  * @return {string|undefined} The typeid or undefined, if the current operation type is 'remove'
  * @private
  */
-Utils.TraversalContext.prototype.getTypeid = function() {
+Utils.TraversalContext.prototype.getTypeid = function () {
     return this._typeid;
 };
 
@@ -179,7 +179,7 @@ Utils.TraversalContext.prototype.getTypeid = function() {
  * @return {property-changeset.SerializedChangeSet} The ChangeSet
  * @private
  */
-Utils.TraversalContext.prototype.getNestedChangeSet = function() {
+Utils.TraversalContext.prototype.getNestedChangeSet = function () {
     return this._nestedChangeSet;
 };
 
@@ -189,7 +189,7 @@ Utils.TraversalContext.prototype.getNestedChangeSet = function() {
  * @param {property-changeset.SerializedChangeSet} in_newNestedChangeset The new content
  * @private
  */
-Utils.TraversalContext.prototype.replaceNestedChangeSet = function(in_newNestedChangeset) {
+Utils.TraversalContext.prototype.replaceNestedChangeSet = function (in_newNestedChangeset) {
     var parent = this.getParentNestedChangeSet();
     if (this.getPropertyContainerType() === 'template') {
         parent = parent[this.getTypeid()];
@@ -213,7 +213,7 @@ Utils.TraversalContext.prototype.replaceNestedChangeSet = function(in_newNestedC
  * @return {property-changeset.SerializedChangeSet} The parent ChangeSet
  * @private
  */
-Utils.TraversalContext.prototype.getParentNestedChangeSet = function() {
+Utils.TraversalContext.prototype.getParentNestedChangeSet = function () {
     return this._parentNestedChangeSet;
 };
 
@@ -222,7 +222,7 @@ Utils.TraversalContext.prototype.getParentNestedChangeSet = function() {
  * @return {{typeid: string, context:string, isEnum:boolean}} The split typeid
  * @private
  */
-Utils.TraversalContext.prototype.getSplitTypeID = function() {
+Utils.TraversalContext.prototype.getSplitTypeID = function () {
     return this._splitTypeId;
 };
 
@@ -232,7 +232,7 @@ Utils.TraversalContext.prototype.getSplitTypeID = function() {
  * @param {*} in_userData - The user data
  * @private
  */
-Utils.TraversalContext.prototype.setUserData = function(in_userData) {
+Utils.TraversalContext.prototype.setUserData = function (in_userData) {
     this._userData = in_userData;
 };
 
@@ -242,7 +242,7 @@ Utils.TraversalContext.prototype.setUserData = function(in_userData) {
  * @return {*} The user data
  * @private
  */
-Utils.TraversalContext.prototype.getUserData = function() {
+Utils.TraversalContext.prototype.getUserData = function () {
     return this._userData;
 };
 
@@ -251,7 +251,7 @@ Utils.TraversalContext.prototype.getUserData = function() {
  * @return {property-changeset.Utils.TraversalContext} The cloned object
  * @private
  */
-Utils.TraversalContext.prototype.clone = function() {
+Utils.TraversalContext.prototype.clone = function () {
     var result = new Utils.TraversalContext();
     result._fullPath = this._fullPath;
     result._lastSegment = this._lastSegment;
@@ -285,7 +285,7 @@ Utils.TraversalContext.prototype.clone = function() {
  * @return {String} The type of the property container
  * @private
  */
-Utils.TraversalContext.prototype.getPropertyContainerType = function() {
+Utils.TraversalContext.prototype.getPropertyContainerType = function () {
     return this._propertyContainerType;
 };
 
@@ -295,7 +295,7 @@ Utils.TraversalContext.prototype.getPropertyContainerType = function() {
  * @return {Number} The index
  * @private
  */
-Utils.TraversalContext.prototype.getArrayOperationIndex = function() {
+Utils.TraversalContext.prototype.getArrayOperationIndex = function () {
     return this._arrayOperationIndex;
 };
 
@@ -305,7 +305,7 @@ Utils.TraversalContext.prototype.getArrayOperationIndex = function() {
  * @return {Number} The index
  * @private
  */
-Utils.TraversalContext.prototype.getArrayOperationOffset = function() {
+Utils.TraversalContext.prototype.getArrayOperationOffset = function () {
     return this._arrayOperationOffset;
 };
 
@@ -317,7 +317,7 @@ Utils.TraversalContext.prototype.getArrayOperationOffset = function() {
  * @return {Number} The index
  * @private
  */
-Utils.TraversalContext.prototype.getArrayLocalIndex = function() {
+Utils.TraversalContext.prototype.getArrayLocalIndex = function () {
     return this._arrayLocalIndex;
 };
 
@@ -327,7 +327,7 @@ Utils.TraversalContext.prototype.getArrayLocalIndex = function() {
  * @private
  * @return {Number} The offset
  */
-Utils.TraversalContext.prototype.getArrayIteratorOffset = function() {
+Utils.TraversalContext.prototype.getArrayIteratorOffset = function () {
     return this._arrayIteratorOffset;
 };
 
@@ -339,7 +339,7 @@ Utils.TraversalContext.prototype.getArrayIteratorOffset = function() {
  * @private
  * @return {String} The path
  */
-Utils.TraversalContext.prototype.getFullPostPath = function() {
+Utils.TraversalContext.prototype.getFullPostPath = function () {
     return this._fullPostPath;
 };
 
@@ -348,7 +348,7 @@ Utils.TraversalContext.prototype.getFullPostPath = function() {
  * @private
  * @return {Number} The Depth
  */
-Utils.TraversalContext.prototype.getStackDepth = function() {
+Utils.TraversalContext.prototype.getStackDepth = function () {
     return this._stackDepth;
 };
 
@@ -358,7 +358,7 @@ Utils.TraversalContext.prototype.getStackDepth = function() {
  * @private
  * @return {Array<String>} The types traversed
  */
-Utils.TraversalContext.prototype.getTypeStack = function() {
+Utils.TraversalContext.prototype.getTypeStack = function () {
     return this._typeStack;
 };
 
@@ -367,7 +367,7 @@ Utils.TraversalContext.prototype.getTypeStack = function() {
  * @private
  * @return {Array<String>} The names traversed
  */
-Utils.TraversalContext.prototype.getParentStack = function() {
+Utils.TraversalContext.prototype.getParentStack = function () {
     return this._parentStack;
 };
 
@@ -376,7 +376,7 @@ Utils.TraversalContext.prototype.getParentStack = function() {
  * @private
  * @return {Array<String>} The container types traversed
  */
-Utils.TraversalContext.prototype.getContainerStack = function() {
+Utils.TraversalContext.prototype.getContainerStack = function () {
     return this._containerStack;
 };
 
@@ -385,7 +385,7 @@ Utils.TraversalContext.prototype.getContainerStack = function() {
  * @private
  * @return {Array<object>} The validation checks traversed
  */
-Utils.TraversalContext.prototype.getUserStack = function() {
+Utils.TraversalContext.prototype.getUserStack = function () {
     return this._userStack;
 };
 
@@ -401,7 +401,7 @@ Utils.TraversalContext.prototype.getUserStack = function() {
  * @param {property-changeset.Utils.TraversalContext}           in_context -  The
  *   traversal context for the currently processed property
  */
-var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, // eslint-disable-line complexity
+var _traverseChangeSetRecursively = function (in_preCallback, in_postCallback, // eslint-disable-line complexity
     in_context) {
     var pathSeparator = in_context._fullPath !== '' ? PROPERTY_PATH_DELIMITER : '';
     var currentPath = in_context._fullPath;
@@ -440,7 +440,7 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
 
     // Process an individual change recursively, by preparing the traversal context and invoking
     // _traverseChangeSetRecursively
-    var processChange = function(in_segment,
+    var processChange = function (in_segment,
         in_subChangeSet,
         in_nestedTypeid,
         in_escape,
@@ -645,7 +645,7 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
  * @param {function}                                       in_levelCallback -
  *   A callback for when a node is reached
  */
-var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallback, // eslint-disable-line complexity
+var _traverseChangeSetRecursivelyAsync = function (in_preCallback, in_postCallback, // eslint-disable-line complexity
     in_context, in_levelCallback) {
     var pathSeparator;
     var currentPath;
@@ -664,7 +664,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
 
     async.series([
 
-        function(next) {
+        function (next) {
             if (in_preCallback) {
                 in_preCallback(in_context, next);
             } else {
@@ -672,7 +672,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
             }
         },
 
-        function(next) {
+        function (next) {
             pathSeparator = in_context._fullPath !== '' ? PROPERTY_PATH_DELIMITER : '';
             currentPath = in_context._fullPath;
             currentPostPath = in_context._fullPostPath;
@@ -696,7 +696,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                 TypeIdHelper.isPrimitiveType(in_context._splitTypeId.typeid) ||
                 in_context._splitTypeId.isEnum) {
                 if (in_postCallback) {
-                    in_postCallback(postOrderContext, function() {
+                    in_postCallback(postOrderContext, function () {
                         next('break');
                     });
                 } else {
@@ -708,14 +708,14 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
 
         },
 
-        function(next) {
+        function (next) {
             var currentTypeIdContext = in_context._splitTypeId.context;
 
             in_context._parentNestedChangeSet = nestedChangeSet;
 
             // Process an individual change recursively, by preparing the traversal context and invoking
             // _traverseChangeSetRecursively
-            var processChange = function(in_segment,
+            var processChange = function (in_segment,
                 in_subChangeSet,
                 in_nestedTypeid,
                 in_escape,
@@ -727,7 +727,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                 in_callback) {
 
                 async.series([
-                    function(n2) {
+                    function (n2) {
                         try {
                             // Update the path
                             in_context._lastSegment = in_segment;
@@ -779,7 +779,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                             n2(ex);
                         }
                     },
-                    function(n2) {
+                    function (n2) {
                         in_context._stackDepth--;
                         in_context._typeStack.pop();
                         in_context._parentStack.pop();
@@ -789,13 +789,13 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                         in_context._parentNestedChangeSet = nestedChangeSet;
                         n2();
                     }
-                ], function(err) {
+                ], function (err) {
                     in_callback(err);
                 });
             };
 
             async.series([
-                function(n3) {
+                function (n3) {
                     // If this property is a collection, we set the correct type, otherwise we assume it is a NodeProperty
                     var propertyContainerType = (splitTypeId.context === 'map' ||
                         splitTypeId.context === 'set' ||
@@ -810,14 +810,14 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                         var modifyCounter = 0;
 
                         async.whilst(
-                            function(callback) {
+                            function (callback) {
                                 callback(null, !arrayIterator.atEnd());
                             },
-                            function(n4) {
+                            function (n4) {
                                 switch (arrayIterator.type) {
                                     case ArrayChangeSetIterator.types.INSERT:
                                         in_context._operationType = 'insert';
-                                        async.eachOfSeries(arrayIterator.operation[1], function(item, i, n5) {
+                                        async.eachOfSeries(arrayIterator.operation[1], function (item, i, n5) {
                                             // The typeid is stored inline for arrays
                                             var typeid = item.typeid;
                                             ConsoleUtils.assert(typeid, MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID);
@@ -833,7 +833,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                                 arrayIterator.offset,
                                                 n5
                                             );
-                                        }, function(res) {
+                                        }, function (res) {
                                             insertCounter++;
                                             arrayIterator.next();
                                             n4();
@@ -843,7 +843,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     case ArrayChangeSetIterator.types.REMOVE:
                                         in_context._operationType = 'remove';
 
-                                        async.timesSeries(arrayIterator.operation[1], function(i, n5) {
+                                        async.timesSeries(arrayIterator.operation[1], function (i, n5) {
                                             // For removals, we don't have a typeid and we use the ChangeSet
                                             // of the removal operation as nested
                                             // ChangeSet -- TODO: doing this is maybe not really nice here
@@ -859,7 +859,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                                 arrayIterator.offset,
                                                 n5
                                             );
-                                        }, function() {
+                                        }, function () {
                                             removeCounter++;
                                             arrayIterator.next();
                                             n4();
@@ -869,7 +869,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     case ArrayChangeSetIterator.types.MODIFY:
                                         in_context._operationType = 'modify';
 
-                                        async.timesSeries(arrayIterator.operation[1].length, function(i, n5) {
+                                        async.timesSeries(arrayIterator.operation[1].length, function (i, n5) {
                                             // The typeid is stored inline for arrays
                                             var typeid = arrayIterator.operation[1][i].typeid;
                                             ConsoleUtils.assert(typeid, MSG.NON_PRIMITIVE_ARRAY_NO_TYPEID);
@@ -885,7 +885,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                                 arrayIterator.offset,
                                                 n5
                                             );
-                                        }, function() {
+                                        }, function () {
                                             modifyCounter++;
                                             arrayIterator.next();
                                             n4();
@@ -897,7 +897,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                         n4(new Error(MSG.UNKNOWN_OPERATOR + arrayIterator.type));
                                 }
                             },
-                            function(err) {
+                            function (err) {
                                 in_context._operationType = oldOperationType;
                                 n3(err);
                             }
@@ -906,13 +906,13 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
 
                         // Process insertion of dynamic property, maps and sets
                         async.series([
-                            function(n4) {
+                            function (n4) {
                                 if (nestedChangeSet.remove) {
                                     oldOperationType = in_context._operationType;
                                     in_context._operationType = 'remove';
                                     var paths = nestedChangeSet.remove;
                                     if (_.isArray(paths)) {
-                                        async.timesSeries(paths.length, function(i, n5) {
+                                        async.timesSeries(paths.length, function (i, n5) {
                                             // For removals in irreversible CSs, we don't have a typeid and we use the ChangeSet of the
                                             // removal operation as nested ChangeSet
                                             processChange(
@@ -927,17 +927,17 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                                 undefined,
                                                 n5
                                             );
-                                        }, function(err) {
+                                        }, function (err) {
                                             in_context._operationType = oldOperationType;
                                             n4(err);
                                         });
                                     } else {
                                         // for removals in reversible changesets we have an object containing the types
                                         var typeids = _.keys(nestedChangeSet.remove);
-                                        async.timesSeries(typeids.length, function(i, n5) {
+                                        async.timesSeries(typeids.length, function (i, n5) {
                                             var typeid = typeids[i];
                                             paths = _.keys(nestedChangeSet.remove[typeid]);
-                                            async.timesSeries(paths.length, function(j, n6) {
+                                            async.timesSeries(paths.length, function (j, n6) {
                                                 processChange(
                                                     paths[j],
                                                     nestedChangeSet.remove[typeid][paths[j]],
@@ -951,7 +951,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                                     n6
                                                 );
                                             }, n5);
-                                        }, function(err) {
+                                        }, function (err) {
                                             in_context._operationType = oldOperationType;
                                             n4(err);
                                         });
@@ -960,7 +960,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     n4();
                                 }
                             },
-                            function(n4) {
+                            function (n4) {
                                 if (nestedChangeSet.insert) {
                                     // Once we have reached an insert operation all subsequent operations are inserts
                                     oldOperationType = in_context._operationType;
@@ -968,26 +968,26 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     // Maps and NodeProperties group the insertions by type
                                     var typeids = _.keys(nestedChangeSet.insert);
 
-                                    async.timesSeries(typeids.length, function(i, n5) {
-                                            var typeid = typeids[i];
-                                            var paths = _.keys(nestedChangeSet.insert[typeid]);
+                                    async.timesSeries(typeids.length, function (i, n5) {
+                                        var typeid = typeids[i];
+                                        var paths = _.keys(nestedChangeSet.insert[typeid]);
 
-                                            async.timesSeries(paths.length, function(j, n6) {
-                                                processChange(
-                                                    paths[j],
-                                                    nestedChangeSet.insert[typeid][paths[j]],
-                                                    typeid,
-                                                    true,
-                                                    propertyContainerType,
-                                                    undefined,
-                                                    undefined,
-                                                    undefined,
-                                                    undefined,
-                                                    n6
-                                                );
-                                            }, n5);
-                                        },
-                                        function(err) {
+                                        async.timesSeries(paths.length, function (j, n6) {
+                                            processChange(
+                                                paths[j],
+                                                nestedChangeSet.insert[typeid][paths[j]],
+                                                typeid,
+                                                true,
+                                                propertyContainerType,
+                                                undefined,
+                                                undefined,
+                                                undefined,
+                                                undefined,
+                                                n6
+                                            );
+                                        }, n5);
+                                    },
+                                        function (err) {
                                             in_context._operationType = oldOperationType;
                                             n4(err);
                                         });
@@ -995,15 +995,15 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     n4();
                                 }
                             },
-                            function(n4) {
+                            function (n4) {
                                 if (nestedChangeSet.modify) {
                                     // Maps and NodeProperties group modifications by type
                                     var typeids = _.keys(nestedChangeSet.modify);
-                                    async.timesSeries(typeids.length, function(i, n5) {
+                                    async.timesSeries(typeids.length, function (i, n5) {
                                         var typeid = typeids[i];
                                         var paths = _.keys(nestedChangeSet.modify[typeid]);
 
-                                        async.timesSeries(paths.length, function(j, n6) {
+                                        async.timesSeries(paths.length, function (j, n6) {
                                             processChange(
                                                 paths[j],
                                                 nestedChangeSet.modify[typeid][paths[j]],
@@ -1023,17 +1023,17 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                 }
                             },
 
-                            function(n4) {
+                            function (n4) {
                                 // Process nested properties
                                 if (splitTypeId.context === 'single') {
                                     var typeids = _.keys(nestedChangeSet);
 
-                                    async.timesSeries(typeids.length, function(i, n5) {
+                                    async.timesSeries(typeids.length, function (i, n5) {
                                         var typeid = typeids[i];
                                         if (!isReservedKeyword(typeid)) {
                                             var paths = _.keys(nestedChangeSet[typeid]);
 
-                                            async.timesSeries(paths.length, function(j, n6) {
+                                            async.timesSeries(paths.length, function (j, n6) {
                                                 processChange(
                                                     paths[j],
                                                     nestedChangeSet[typeid][paths[j]],
@@ -1056,7 +1056,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                 }
                             },
 
-                            function(n4) {
+                            function (n4) {
                                 if (in_postCallback) {
                                     in_postCallback(postOrderContext, n4);
                                 } else {
@@ -1068,7 +1068,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                 }
             ], next);
         }
-    ], function(err) {
+    ], function (err) {
         if (err === 'break') {
             in_levelCallback();
         } else {
@@ -1100,7 +1100,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
  *
  * @alias property-changeset.Utils.traverseChangeSetRecursively
  */
-Utils.traverseChangeSetRecursively = function(in_changeSet, in_params) {
+Utils.traverseChangeSetRecursively = function (in_changeSet, in_params) {
     ConsoleUtils.assert(in_params.preCallback || in_params.postCallback);
     // Initialize the traversal context
     var context = new Utils.TraversalContext();
@@ -1153,7 +1153,7 @@ Utils.traverseChangeSetRecursively = function(in_changeSet, in_params) {
  *
  * @alias property-changeset.Utils.traverseChangeSetRecursivelyAsync
  */
-Utils.traverseChangeSetRecursivelyAsync = function(in_changeSet, in_params, in_finalizer) {
+Utils.traverseChangeSetRecursivelyAsync = function (in_changeSet, in_params, in_finalizer) {
     ConsoleUtils.assert(in_params.preCallback || in_params.postCallback);
     // Initialize the traversal context
     var context = new Utils.TraversalContext();
@@ -1189,10 +1189,10 @@ Utils.traverseChangeSetRecursivelyAsync = function(in_changeSet, in_params, in_f
  *
  * @return {Array<String>} All typeids that appear in the ChangeSet
  */
-Utils.extractTypeids = function(in_changeSet) {
+Utils.extractTypeids = function (in_changeSet) {
     var result = {};
     Utils.traverseChangeSetRecursively(in_changeSet, {
-        preCallback: function(in_context) {
+        preCallback: function (in_context) {
             if (in_context.getOperationType() === 'insert' ||
                 in_context.getOperationType() === 'modify') {
                 in_context.getUserData()[in_context.getTypeid()] = true;
@@ -1216,12 +1216,12 @@ Utils.extractTypeids = function(in_changeSet) {
  *   The returned object has members key (string), corresponding to the type and value with the
  *   definition (object)
  */
-Utils.enumerateSchemas = function(in_changeSet, in_callback, in_finalizer) {
+Utils.enumerateSchemas = function (in_changeSet, in_callback, in_finalizer) {
     var result = [];
 
     if (in_changeSet.insertTemplates) {
         var keys = Object.keys(in_changeSet.insertTemplates);
-        async.eachSeries(keys, function(k, next) {
+        async.eachSeries(keys, function (k, next) {
             in_callback({
                 key: k,
                 value: in_changeSet.insertTemplates[k]
@@ -1241,11 +1241,11 @@ Utils.enumerateSchemas = function(in_changeSet, in_callback, in_finalizer) {
  * @private
  * @param {property-changeset.SerializedChangeSet} io_changeSet    - The ChangeSet to process
  */
-Utils._stripTypeids = function(io_changeSet) {
+Utils._stripTypeids = function (io_changeSet) {
 
     var result = {};
     Utils.traverseChangeSetRecursively(io_changeSet, {
-        preCallback: function(in_context) {
+        preCallback: function (in_context) {
             if (in_context.getFullPath() === '') {
                 // We do nothing for the root
                 return;
@@ -1292,7 +1292,7 @@ Utils._stripTypeids = function(io_changeSet) {
     });
 
     // Remove all existing keys from the ChangeSet
-    _.forEach(_.keys(io_changeSet), function(key) { delete io_changeSet[key]; });
+    _.forEach(_.keys(io_changeSet), function (key) { delete io_changeSet[key]; });
 
     // Assign from the result user data
     _.extend(io_changeSet, result);
@@ -1307,12 +1307,12 @@ Utils._stripTypeids = function(io_changeSet) {
  * @return { {insert: Object, modify: Object} } Returns the applied operations to entries of the given typeid.
  *                                              The returned maps for insert and modify map paths to ChangeSets
  */
-Utils.getChangesByType = function(in_typeid, in_changeSet, in_excludetypeids) {
+Utils.getChangesByType = function (in_typeid, in_changeSet, in_excludetypeids) {
     var result = {};
 
     // We search for the typeid by traversing the whole ChangeSet recursively
     Utils.traverseChangeSetRecursively(in_changeSet, {
-        preCallback: function(in_context) {
+        preCallback: function (in_context) {
             // If we found and instance of the requested typeid, we store it under its path
             if (in_context.getTypeid() === in_typeid) {
                 var userData = in_context.getUserData();
@@ -1355,7 +1355,7 @@ Utils.getChangesByType = function(in_typeid, in_changeSet, in_excludetypeids) {
  * {insert: Object|undefined, modify: Object|undefined, remove: boolean|undefined}
  * </pre>
  */
-Utils.getChangesByPath = function(in_path, in_root, in_changeSet, in_excludetypeids) {
+Utils.getChangesByPath = function (in_path, in_root, in_changeSet, in_excludetypeids) {
     // if we're asked for the root, just return the root (in a modify)
     if (in_path === '') {
         return { modify: in_changeSet };
@@ -1367,7 +1367,7 @@ Utils.getChangesByPath = function(in_path, in_root, in_changeSet, in_excludetype
     // Recursively traverse the ChangeSet and search for the path
     var result = {};
     Utils.traverseChangeSetRecursively(in_changeSet, {
-        preCallback: function(in_context) {
+        preCallback: function (in_context) {
             // We ignore the root
             if (in_context.getFullPath() === '') {
                 return;
@@ -1495,7 +1495,7 @@ Utils.getChangesByPath = function(in_path, in_root, in_changeSet, in_excludetype
  *     lookup into the paths map. This frees the keyspace with duplicated underscores for the use by the calling
  *     application.
  */
-Utils.getChangesToTokenizedPaths = function(in_paths,
+Utils.getChangesToTokenizedPaths = function (in_paths,
     in_changeSet,
     in_callback,
     in_options) {
@@ -1517,7 +1517,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
             k[2] !== '_';
     };
 
-    var _convertLevelToMap = function(obj) {
+    var _convertLevelToMap = function (obj) {
         let thisLevel = new Map();
         Object.entries(obj).forEach(([k, v]) => {
             if (_isUserData(k)) {
@@ -1530,7 +1530,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
         return thisLevel;
     };
 
-    var _convertMapToLevel = function(map) {
+    var _convertMapToLevel = function (map) {
         let thisLevel = {};
         for (const [k, v] of map) {
             if (_isUserData(k)) {
@@ -1566,7 +1566,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
 
     // Recursively traverse the ChangeSet and search for the path
     Utils.traverseChangeSetRecursively(in_changeSet, {
-        preCallback: function(in_context) {
+        preCallback: function (in_context) {
             var userData = in_context.getUserData();
             var currentSubPaths = userData.currentSubPaths;
 
@@ -1632,7 +1632,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
                 in_context.stopTraversal();
             }
         },
-        postCallback: function(in_context) {
+        postCallback: function (in_context) {
             for (var i = 0; i < in_context.getUserData().numberOfSegments; i++) {
                 currentTokenizedPath.pop();
             }
@@ -1838,7 +1838,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
  * @throws if the container type is array, set or unknown (should never happen)
  * @private
  */
-var _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_changeSet, in_isLeaf) {
+var _filterChangeSetBySegment = function (in_objectToPopulate, in_context, in_changeSet, in_isLeaf) {
     var nestedChangeSet = {};
     if (in_context.getPropertyContainerType() === 'NodeProperty' ||
         in_context.getPropertyContainerType() === 'map' ||
@@ -1924,7 +1924,7 @@ var _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_cha
  * @throws if a path given resolves into an array or set
  * @return {property-changeset.SerializedChangeSet} - Filtered ChangeSet
  */
-Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
+Utils.getFilteredChangeSetByPaths = function (in_changeSet, in_paths) {
     var pathsToObj;
 
     if (_.isArray(in_paths)) {
@@ -1942,7 +1942,7 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
     var toPurge = {};
 
     let redundantPaths = new Map();
-    Utils.getChangesToTokenizedPaths(pathsToObj, in_changeSet, function(
+    Utils.getChangesToTokenizedPaths(pathsToObj, in_changeSet, function (
         context, nestedObj, tokenizedPath, contractedPathSegment
     ) {
         if (context.getFullPath() === '') {
@@ -1969,7 +1969,7 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
             var currentEntryInPathsToObj = pathsToObj;
 
             var pathsToDelete = [];
-            _.each(tokenizedPath, function(segment, index) {
+            _.each(tokenizedPath, function (segment, index) {
                 if (index === 0) {
                     parentPath += PathHelper.quotePathSegmentIfNeeded(segment);
                     changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
@@ -2072,7 +2072,7 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
         var lastSegment = context.getLastSegmentEscaped();
         if (contractedPathSegment &&
             ((lastSegment.indexOf('.') !== -1 ||
-                    (lastSegment.length > 0 && lastSegment[0] === '"')) &&
+                (lastSegment.length > 0 && lastSegment[0] === '"')) &&
                 PathHelper.tokenizePathString(lastSegment).length > 1)
         ) {
             toPurge[context.getFullPath()] = {
@@ -2087,7 +2087,7 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
 
     // Delete entries from the change set that we do not want.
     // We can enter this case when dealing with folded paths.
-    _.each(toPurge, function(item, fullPath) {
+    _.each(toPurge, function (item, fullPath) {
         delete item.changeSet[item.typeid][item.pathToPurge];
         if (_.isEmpty(item.changeSet[item.typeid])) {
             delete item.changeSet[item.typeid];
@@ -2134,19 +2134,19 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
  * @return {Map} A tree structured representation of the tokenized paths that can be
  *     passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
  */
-Utils.convertPathArrayToTree = function(in_paths) {
+Utils.convertPathArrayToTree = function (in_paths) {
     in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
     var pathsToProcess = new Set(in_paths);
 
     // create an array of arrays splitting by .
-    var tokenizedPaths = in_paths.map(function(path) {
+    var tokenizedPaths = in_paths.map(function (path) {
         return PathHelper.tokenizePathString(path);
     });
 
     // Create a tree representation of the paths that are passed as an input so that
     // we can leverage getChangesToTokenizedPaths and only be notified on paths
     // that we care about.
-    var pathsToObj = _.reduce(tokenizedPaths, function(memo, tokenizedPath) {
+    var pathsToObj = _.reduce(tokenizedPaths, function (memo, tokenizedPath) {
         var obj = memo;
         var path = '';
         var segment;
@@ -2208,14 +2208,14 @@ Utils.convertPathArrayToTree = function(in_paths) {
  * @throws if a path given resolves into an array or set
  * @return {property-changeset.SerializedChangeSet} - Filtered ChangeSet
  */
-Utils.excludePathsFromChangeSet = function(in_changeSet, in_paths) {
+Utils.excludePathsFromChangeSet = function (in_changeSet, in_paths) {
     if (!in_changeSet || !in_paths || _.isEmpty(in_paths)) {
         return in_changeSet;
     }
 
     in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
     // create an array of arrays splitting by .
-    const tokenizedPaths = _.map(in_paths, function(path) {
+    const tokenizedPaths = _.map(in_paths, function (path) {
         return PathHelper.tokenizePathString(path);
     });
 
@@ -2257,11 +2257,11 @@ Utils.excludePathsFromChangeSet = function(in_changeSet, in_paths) {
  * @param {boolean|undefined} [in_options.includeTypeidInfo] - Flag to include the typeid info
  * @return {object} - Flat list of paths
  */
-Utils.extractPathsFromChangeSet = function(in_changeSet, in_options) {
+Utils.extractPathsFromChangeSet = function (in_changeSet, in_options) {
     var paths = {};
     in_options = in_options || {};
     Utils.traverseChangeSetRecursively(in_changeSet, {
-        preCallback: function(context) {
+        preCallback: function (context) {
             var fullPath = context.getFullPath();
             paths[fullPath] = paths[fullPath] || {};
             if (in_options.includeOperation) {
