@@ -64,7 +64,7 @@ own user permissions model if you wish.
 }.[Signature]
 ```
 
-Every request to FRS must be signed with a valid JWT. The FRS documentation contains additional details about [how to
+Every request to Azure Fluid Relay must be signed with a valid JWT. The Azure Fluid Relay documentation contains additional details about [how to
 sign the token][1]. Fluid delegates the responsibility of creating and signing these tokens to a *token provider.*
 
 [1]: (https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
@@ -72,8 +72,8 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 {{% callout title="More information" %}}
 
 * [Introduction to JWTs](https://jwt.io/introduction)
-* [Payload claims in FRS](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims)
-* [Scopes in FRS](need a url)
+* [Payload claims in Azure Fluid Relay](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims)
+* [Scopes in Azure Fluid Relay](need a url)
 * [Signing requests](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
 
 {{% /callout %}}
