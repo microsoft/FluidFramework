@@ -85,6 +85,7 @@ module.exports = {
         "proper-names": { // MD044
             "code_blocks": false,
             "names": [
+                "Azure Fluid Relay service",
                 "Fluid Framework",
                 "JavaScript",
                 "JSON",

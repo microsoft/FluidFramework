@@ -1,4 +1,4 @@
-const markdownMagic = require("markdown-magic");
+const markdownMagic = require("@tylerbu/markdown-magic");
 const pathLib = require("path");
 const process = require("process");
 
