@@ -240,7 +240,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         initialState?: S,
     ): Promise<TObj> {
         const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-        return this.createInstanceCore(context, /* existing */ false, initialState);
+        return this.createInstanceCore(context, initialState);
     }
 
     protected async createNonRootInstanceCore(
@@ -249,12 +249,11 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
         initialState?: S,
     ): Promise<TObj> {
         const context = containerRuntime.createDetachedDataStore(packagePath);
-        return this.createInstanceCore(context, /* existing */ false, initialState);
+        return this.createInstanceCore(context, initialState);
     }
 
     protected async createInstanceCore(
         context: IFluidDataStoreContextDetached,
-        existing: boolean,
         initialState?: S,
     ): Promise<TObj> {
         const { instance, runtime } = await createDataObject(
@@ -263,7 +262,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeClass,
-            existing,
+            false, // existing
             initialState);
 
         await context.attachRuntime(this, runtime);
