@@ -7,8 +7,8 @@ editor: tylerbutler
 Security is critical to modern web applications. Fluid Framework, as a part of your web application architecture, is an
 important piece of infrastructure to secure. Fluid Framework is a layered architecture, and auth-related concepts are implemented based on the Fluid service it's connecting to. This means that the specifics of authentication will differ based on the Fluid service.
 
-The information below is based on Azure Fluid Relay service but also applies to
-[Tinylicious]({{< relref "tinylicious.md" >}}). Other Fluid services may differ.
+The information below is based on Azure Fluid Relay service. Other Fluid services may differ. See [Available Fluid
+services]({{< relref "service-options.md" >}}) for more information.
 
 ## Azure Fluid Relay service
 
@@ -16,8 +16,9 @@ The information below is based on Azure Fluid Relay service but also applies to
 
 Each FRS tenant you create is assigned a *tenant ID* and its own unique *tenant secret key*.
 
-The secret key is a *shared secret*. Your app/service knows it, and FRS knows it. This means that you can sign data
-using that secret key, and FRS can verify that it is you who signed those requests because it also has that key.
+The secret key is a *shared secret*. Your app/service knows it, and the Azure Fluid Relay service knows it. Since the
+tenant secret key is uniquely tied to your tenant, using it to sign requests guarantees to the Azure Fluid Relay service
+that the requests are coming from an authorized user of the tenant.
 
 In summary, the secret key is how the Azure Fluid Relay service knows that requests are coming from your app or service. This is critical, because once the Azure Fluid Relay service can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's important that the secret is handled securely.
 
@@ -46,7 +47,7 @@ send the *container ID* (called `documentId` in the JWT) so FRS knows which cont
 need to also set the *scopes (permissions)* that the request is permitted to use -- this allows you to establish your
 own user permissions model if you wish.
 
-```json {linenos=inline,hl_lines=["5-6",9]}
+```json {linenos=inline,hl_lines=["5-10",13]}
 {
   "alg": "HS256",
   "typ": "JWT"
