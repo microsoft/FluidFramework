@@ -16,7 +16,6 @@ import { ILoggingError } from "@fluidframework/common-definitions";
 export interface IFluidErrorBase extends Readonly<Partial<Error>> {
     readonly errorType: string;
     readonly fluidErrorCode: string;
-    //* readonly message: string;   ???  To match legacy IErrorBase and IDriverErrorBase
 }
 
 /** type guard for IFluidErrorBase interface */

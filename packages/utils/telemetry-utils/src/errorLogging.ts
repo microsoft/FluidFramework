@@ -88,7 +88,7 @@ export function normalizeError(
 /**
  * Annotate the given error object, such that it becomes a valid Fluid Error (and is asserted so via a type guard)
  * If the object is not suitable for annotation (e.g. it's frozen), this will throw.
- * @param error - The error to annotate, ideally by patching in the properties of IFluidErrorBase
+ * @param error - The error to annotate by patching in the properties of IFluidErrorBase
  * @param annotations - Annotations to apply to the normalized error
  */
 export function annotateErrorObject(
