@@ -1009,9 +1009,13 @@ export class DeltaManager
         // If we asked for "write" and got "read", then file is read-only
         // But if we ask read, server can still give us write.
         const readonly = !connection.claims.scopes.includes(ScopeType.DocWrite);
+
+        // This connection mode validation logic is moving to the driver layer in 0.44.  These two asserts can be
+        // removed after those packages have released and become ubiquitous.
         assert(requestedMode === "read" || readonly === (this.connectionMode === "read"),
             0x0e7 /* "claims/connectionMode mismatch" */);
         assert(!readonly || this.connectionMode === "read", 0x0e8 /* "readonly perf with write connection" */);
+
         this.set_readonlyPermissions(readonly);
 
         this.refreshDelayInfo(this.deltaStreamDelayId);

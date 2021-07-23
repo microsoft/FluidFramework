@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import registerDebug from "debug";
-
-export const debug = registerDebug("math");
+module.exports = {
+    "extends": [
+        "@fluidframework/eslint-config-fluid/eslint7"
+    ],
+    "rules": {}
+}

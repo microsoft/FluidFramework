@@ -19,18 +19,18 @@ const DeterministicRandomGenerator = require('./deterministic_random_generator')
 const { HashCalculator } = require('./hash_calculator');
 
 module.exports = {
-  constants,
-  ConsoleUtils,
-  Chronometer,
-  Strings,
-  Datastructures,
-  GuidUtils,
-  Events,
-  OperationError,
-  HTTPError,
-  HTTPErrorNoStack,
-  FlaggedError,
-  DeferredPromise,
-  DeterministicRandomGenerator,
-  HashCalculator
+    constants,
+    ConsoleUtils,
+    Chronometer,
+    Strings,
+    Datastructures,
+    GuidUtils,
+    Events,
+    OperationError,
+    HTTPError,
+    HTTPErrorNoStack,
+    FlaggedError,
+    DeferredPromise,
+    DeterministicRandomGenerator,
+    HashCalculator
 };
