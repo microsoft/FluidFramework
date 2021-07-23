@@ -96,7 +96,7 @@ const frsClientConfig = {
 
 ### Move Fluid data to the view
 
-1. The FRS will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. We need a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the FrsClient configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The FRS will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the FrsClient configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
 
     ```js
     const getFluidData = async () => {
