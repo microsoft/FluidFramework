@@ -40,7 +40,7 @@
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/container-definitions": "^0.39.7",
     "@fluidframework/container-runtime-definitions": "^0.44.0",
-    "@fluidframework/core-interfaces": "^0.39.5",
+    "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/request-handler": "^0.44.0",
     "@fluidframework/runtime-utils": "^0.44.0",
     "css-loader": "^1.0.0",
