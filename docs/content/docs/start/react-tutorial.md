@@ -16,7 +16,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 ## Create the project
 
 1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Fluid Projects`.
-1. Run the following command at the prompt. (Note that the CLI is np**x**, not npm. It was installed when you installed npm.)
+1. Run the following command at the prompt. (Note that the CLI is np**x**, not npm. It was installed when you installed Node.js.)
 
     ```dotnetcli
     npx create-react-app fluid-react-tutorial --use-npm
@@ -27,8 +27,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;experimental/fluid&#x2011;framework |Contains the SharedMap [DataObject](https://fluidframework.com/docs/glossary/#dataobject) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._|
-    |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid Relay Service (FRS) server and defines the starting schema for the [container](https://fluidframework.com/docs/concepts/containers-runtime/). In this tutorial, the FRS server will run on localhost.|
+    |fluid&#x2011;experimental/fluid&#x2011;framework |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._|
+    |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid Relay service (FRS) server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test server called Tinylicious.|
     &nbsp;
 
     Run the following command to install the libraries.
@@ -65,7 +65,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 Add the following helper function to the file below the `import` statements. Note the following about this code:
 
-- Every [container](https://fluidframework.com/docs/glossary/#container) must have a unique ID. For the ID, this application will use a truncated version of the UNIX epoch time when the container is first created.
+- Every [Fluid container][] must have a unique ID. For the ID, this application will use a truncated version of the UNIX epoch time when the container is first created.
 - The ID is stored in the `window.location.hash` property.
 - The function is called in a useEffect hook that you create in a later step, so it is called every time the application (re)renders.
 
@@ -83,7 +83,7 @@ const getContainerId = () => {
 
 ### Configure the FRS client
 
-Add the following constant below the helper function. This object configures the FRS client to connect with an FRS server that runs on localhost. Note that in a production application, you would use a real Secure Token Service to protect access to the FRS server, but during development you can use the dummy service `InsecureTokenProvider`.
+Add the following constant below the helper function. This object configures the FRS client to connect with an FRS server that runs on localhost. Note that in a production application, you would use a real security token service to protect access to the FRS server, but during development you can use the dummy service `InsecureTokenProvider`.
 
 ```js
 const frsClientConfig = {
@@ -236,11 +236,6 @@ Open a new Command Prompt and navigate to the root of the project; for example, 
 npm run start
 ```
 
-{{< callout note >}}
-
-If you are prompted to run the application server on another port, press Enter to accept.
-
-{{< /callout >}}
 
 Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Press the **Get Time** button on any client and see the value change and synchronize on all the clients.
 
