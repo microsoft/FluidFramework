@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import { isILoggingError } from "./staging";
-import { extractLogSafeErrorProperties } from "./internalHelpers";
+import { extractLogSafeErrorProperties } from "./errorLoggingInternalHelpers";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.

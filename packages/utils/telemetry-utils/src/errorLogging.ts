@@ -20,7 +20,7 @@ import {
     isRegularObject,
     mixinTelemetryProps,
     copyProps,
-} from "./internalHelpers";
+} from "./errorLoggingInternalHelpers";
 
 /** Metadata to annotate an error object when annotating or normalizing it */
 export interface FluidErrorAnnotations {
