@@ -202,8 +202,8 @@ export class ContainerContext implements IContainerContext {
         return this.container.attachState;
     }
 
-    public createSummary(): ISummaryTree {
-        return this.runtime.createSummary();
+    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+        return (this.runtime as any).createSummary(blobRedirectTable) as ISummaryTree;
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -275,10 +275,6 @@ export class ContainerContext implements IContainerContext {
 
     public notifyAttaching() {
         this.runtime.setAttachState(AttachState.Attaching);
-    }
-
-    setBlobRedirectTable(table: Map<string, string>) {
-        (this.runtime as any).setBlobRedirectTable(table);
     }
 
     // #region private

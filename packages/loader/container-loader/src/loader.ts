@@ -262,8 +262,10 @@ export interface ILoaderServices {
  */
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
-    // return an array of all blob IDs
-    all(): string[];
+    /**
+     * Return an array of all blob IDs present in storage
+     */
+    getIds(): string[];
  };
 
  /**

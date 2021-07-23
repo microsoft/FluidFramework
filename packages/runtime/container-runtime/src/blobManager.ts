@@ -76,18 +76,20 @@ export class BlobManager {
         });
     }
 
-    public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
-        if (this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId) || this.detachedBlobIds.has(blobId)) {
-            return new BlobHandle(
-                `${BlobManager.basePath}/${blobId}`,
-                this.routeContext,
-                async () => this.getStorage().readBlob(blobId),
-            );
-        }
+    private hasBlob(id: string): boolean {
+        return this.blobIds.has(id) || this.pendingBlobIds.has(id) ||
+            this.detachedBlobIds.has(id) || !!this.redirectTable?.has(id);
+    }
 
-        const storageId = this.redirectTable?.get(blobId);
-        assert(storageId !== undefined, 0x11f /* "requesting unknown blobs" */);
-        return this.getBlob(storageId);
+    public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
+        assert(this.hasBlob(blobId), 0x11f /* "requesting unknown blobs" */);
+
+        const storageId = this.redirectTable?.get(blobId) ?? blobId;
+        return new BlobHandle(
+            `${BlobManager.basePath}/${storageId}`,
+            this.routeContext,
+            async () => this.getStorage().readBlob(storageId),
+        );
     }
 
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {

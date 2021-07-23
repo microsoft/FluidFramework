@@ -1539,11 +1539,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.setAttachState(attachState);
     }
 
-    public setBlobRedirectTable(table: Map<string, string>) {
-        return this.blobManager.setRedirectTable(table);
-    }
+    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+        if (blobRedirectTable) {
+            this.blobManager.setRedirectTable(blobRedirectTable);
+        }
 
-    public createSummary(): ISummaryTree {
         const summarizeResult = this.dataStores.createSummary();
         if (!this.disableIsolatedChannels) {
             // Wrap data store summaries in .channels subtree.
