@@ -88,6 +88,11 @@ export class DocumentPartition {
                 this.q.resume();
             },
             (error) => {
+                // There is no need to pass the message to be checkpointed to markAsCorrupt().
+                // The message, in this case, would be the head in the DocumentContext (the DocumentLambda
+                // that creates this DocumentPartition will also put the same message in the queue.
+                // So the DocumentPartition will see that message in the queue above, and checkpoint it
+                // since the document was marked as corrupted.
                 this.markAsCorrupt(error);
                 context.error(error, { restart: false, tenantId, documentId });
                 this.q.resume();
