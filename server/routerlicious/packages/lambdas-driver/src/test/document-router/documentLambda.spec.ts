@@ -155,7 +155,7 @@ describe("document-router", () => {
 
                     context.on("error", (error, errorData: IContextErrorData) => {
                         assert.ok(error);
-                        assert.ok(errorData.restart);
+                        assert.ok(!errorData.restart);
                         resolve();
                     });
 
