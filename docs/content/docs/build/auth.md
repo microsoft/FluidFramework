@@ -30,6 +30,8 @@ Now you have a mechanism to establish trust. You can sign some data, send it to 
 data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard way method for encoding
 authentication and user-related data with a signature for verification: JSON Web Tokens (JWTs).
 
+## JWTs and Azure Fluid Relay service
+
 {{% callout note %}}
 
 The specifics of JWTs are beyond the scope of this article. For more details about the JWT standard see
@@ -47,7 +49,7 @@ send the *container ID* (called `documentId` in the JWT) so FRS knows which cont
 need to also set the *scopes (permissions)* that the request is permitted to use -- this allows you to establish your
 own user permissions model if you wish.
 
-```json {linenos=inline,hl_lines=["5-10",13]}
+```json {linenos=inline,hl_lines=["5-6",13]}
 {
   "alg": "HS256",
   "typ": "JWT"
@@ -64,6 +66,17 @@ own user permissions model if you wish.
   "ver": "1.0"
 }.[Signature]
 ```
+
+{{% callout tip %}}
+
+Note that the token also includes user information (see lines 7-9 above). You can use this to augment the user
+information that is automatically available to Fluid code using the [audience][] feature. See [Adding custom data to
+tokens][custom] for more information.
+
+[audience]: {{< relref "audience.md" >}}
+[custom]: {{< relref "#adding-custom-data-to-tokens" >}}
+
+{{% /callout %}}
 
 Every request to Azure Fluid Relay must be signed with a valid JWT. The Azure Fluid Relay documentation contains additional details about [how to
 sign the token][1]. Fluid delegates the responsibility of creating and signing these tokens to a *token provider.*
@@ -96,7 +109,7 @@ corresponding `FrsAzFunctionTokenProvider` for this Function in the `@fluid-expe
 
 ## Adding custom data to tokens
 
-Why would you do this? How does it work?
+{{< unwritten-section >}}
 
 ## Connecting user auth to Fluid service auth
 
@@ -110,3 +123,43 @@ your Azure Function. The Azure Function itself behaves the same, but it's now on
 authenticated with AAD.
 
 Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated to the Function will then be able to relay that token to the Azure Fluid Relay service from their client application. This two-step approach allows you to use your own custom authentication process in conjunction with the Azure Fluid Relay service.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers-runtime.md" >}}
+
+<!-- Packages -->
+
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+
+<!-- Sequence methods -->
+
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
