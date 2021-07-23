@@ -52,7 +52,8 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.39.6",
+    "@fluidframework/driver-definitions": "^0.39.7"
+,
     "@fluidframework/local-driver": "^0.45.0",
     "@fluidframework/odsp-doclib-utils": "^0.45.0",
     "@fluidframework/odsp-driver": "^0.45.0",
