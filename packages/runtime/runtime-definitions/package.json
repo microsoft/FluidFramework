@@ -30,11 +30,7 @@
     "@fluidframework/common-utils": "^0.31.0",
     "@fluidframework/container-definitions": "^0.39.7",
     "@fluidframework/core-interfaces": "^0.39.7",
-<<<<<<< HEAD
-    "@fluidframework/driver-definitions": "^0.39.7",
-=======
     "@fluidframework/driver-definitions": "^0.39.6",
->>>>>>> parent of b6f13aa837... update driver-definitions dep.
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@types/node": "^12.19.0"
   },

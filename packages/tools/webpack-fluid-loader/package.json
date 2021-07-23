@@ -62,11 +62,7 @@
     "@fluidframework/container-definitions": "^0.39.7",
     "@fluidframework/container-loader": "^0.45.0",
     "@fluidframework/core-interfaces": "^0.39.7",
-<<<<<<< HEAD
-    "@fluidframework/driver-definitions": "^0.39.7",
-=======
     "@fluidframework/driver-definitions": "^0.39.6",
->>>>>>> parent of b6f13aa837... update driver-definitions dep.
     "@fluidframework/driver-utils": "^0.45.0",
     "@fluidframework/local-driver": "^0.45.0",
     "@fluidframework/odsp-doclib-utils": "^0.45.0",
