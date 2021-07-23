@@ -74,11 +74,11 @@ export function normalizeError(
 
     // We can't annotate the error, so we have to wrap it
     const newErrorFn = (errMsg: string) => new LoggingError(errMsg);
-    const fluidErrorBuilder = wrapError<LoggingError>(error, newErrorFn) as FluidErrorBuilder;
+    const errorObject = wrapError<LoggingError>(error, newErrorFn);
     const errorTypeIfNone = !isRegularObject(error) ? typeof(error) : "wrappedFrozenError";
     const fluidError = patchFluidErrorBuilder(
-        fluidErrorBuilder,
-        prepareFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
+        errorObject as FluidErrorBuilder,
+        prepareFluidErrorTemplate(errorObject, errorTypeIfNone, annotations.errorCodeIfNone),
     );
 
     mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
@@ -100,13 +100,12 @@ export function annotateErrorObject(
         "Cannot annotate a non-object or frozen error");
 
     // Patch in any missing properties of IFluidErrorBase
-    const fluidErrorBuilder = errorObject as FluidErrorBuilder;
     const errorTypeIfNone = isErrorLike(errorObject)
         ? errorObject.name
         : typeof(errorObject);
     const fluidError = patchFluidErrorBuilder(
-        fluidErrorBuilder,
-        prepareFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
+        errorObject as FluidErrorBuilder,
+        prepareFluidErrorTemplate(errorObject, errorTypeIfNone, annotations.errorCodeIfNone),
     );
 
     mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
@@ -120,9 +119,17 @@ type FluidErrorBuilder = {
     -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
 };
 
+/**
+ * Helper type, not exported.
+ * Makes IFluidErrorBuilder's props all type unknown for querying if they're already valid
+ */
+ type FluidErrorProperties = {
+    -readonly [P in keyof IFluidErrorBase]: unknown;
+};
+
 /** Returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder */
 function prepareFluidErrorTemplate(
-    fluidErrorBuilder: FluidErrorBuilder,
+    originalError: unknown,
     errorTypeIfNone: string,
     errorCodeIfNone: string | undefined,
 ): IFluidErrorBase {
@@ -130,18 +137,27 @@ function prepareFluidErrorTemplate(
     const fullErrorCodeIfNone = errorCodeIfNone === undefined
         ? "none"
         : `none (${errorCodeIfNone})`;
+    const { errorType, fluidErrorCode, message, name, stack } = originalError as FluidErrorProperties;
     return {
         errorType:
-            typeof fluidErrorBuilder.errorType === "string"
-                ? fluidErrorBuilder.errorType
+            typeof errorType === "string"
+                ? errorType
                 : fullErrorTypeIfNone,
         fluidErrorCode:
-            typeof fluidErrorBuilder.fluidErrorCode === "string"
-                ? fluidErrorBuilder.fluidErrorCode
+            typeof fluidErrorCode === "string"
+                ? fluidErrorCode
                 : fullErrorCodeIfNone,
+        message:
+            typeof message === "string" || message === undefined
+                ? undefined  // Don't patch - it's already valid
+                : String(message),
+        name:
+            typeof name === "string" || name === undefined
+                ? undefined  // Don't patch - it's already valid
+                : String(name),
         stack:
-            typeof fluidErrorBuilder.stack === "string"
-                ? undefined // This means don't patch the stack property (since it's already ok)
+            typeof stack === "string"
+                ? undefined  // Don't patch - it's already valid
                 : new Error("<<generated stack>>").stack,
     };
 }

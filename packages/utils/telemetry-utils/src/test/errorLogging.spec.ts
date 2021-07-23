@@ -276,28 +276,54 @@ describe("Error Logging", () => {
     });
 });
 describe("Error Propagation", () => {
-    const patchableTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase }} = {
+    class NamedError extends Error { name = "CoolErrorName"; }
+    // These are cases where the input object can be patched to adhere to IFluidErrorBase
+    const patchableTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase & { stack: "<<from input>>" | "<<generated stack>>"} }} = {
         "Valid Fluid Error": () => ({
             input: {
                 errorType: "sometype",
                 fluidErrorCode: "somecode",
                 message: "Hello",
-                name: "Error",
             },
             expectedOutput: {
                 errorType: "sometype",
                 fluidErrorCode: "somecode",
                 message: "Hello",
-                name: "Error",
+                stack: "<<generated stack>>",
+            },
+        }),
+        "Fluid Error minus errorType": () => ({
+            input: {
+                fluidErrorCode: "somecode",
+                message: "Hello",
+            },
+            expectedOutput: {
+                errorType: "none (object)",
+                fluidErrorCode: "somecode",
+                message: "Hello",
+                stack: "<<generated stack>>",
+            },
+        }),
+        "Fluid Error minus fluidErrorCode": () => ({
+            input: {
+                errorType: "sometype",
+                message: "Hello",
+            },
+            expectedOutput: {
+                errorType: "sometype",
+                fluidErrorCode: "<none>",
+                message: "Hello",
+                stack: "<<generated stack>>",
             },
         }),
         "Error object": () => ({
-            input: new Error("boom"),
+            input: new NamedError("boom"),
             expectedOutput: {
-                errorType: "none (Error)",
+                errorType: "none (CoolErrorName)",
                 fluidErrorCode: "<none>",
                 message: "boom",
-                name: "Error",
+                name: "CoolErrorName",
+                stack: "<<from input>>",
             },
         }),
         "LoggingError": () => ({
@@ -307,6 +333,7 @@ describe("Error Propagation", () => {
                 fluidErrorCode: "<none>",
                 message: "boom",
                 name: "Error",
+                stack: "<<from input>>",
             },
         }),
         "Empty object": () => ({
@@ -314,6 +341,26 @@ describe("Error Propagation", () => {
             expectedOutput: {
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
+                stack: "<<generated stack>>",
+            },
+        }),
+        "object with stack": () => ({
+            input: { message: "whatever", stack: "fake stack goes here" },
+            expectedOutput: {
+                errorType: "none (object)",
+                fluidErrorCode: "<none>",
+                message: "whatever",
+                stack: "<<from input>>",
+            },
+        }),
+        "object with non-string message and name": () => ({
+            input: { message: 4, name: true },
+            expectedOutput: {
+                errorType: "none (object)",
+                fluidErrorCode: "<none>",
+                message: "4",
+                name: "true",
+                stack: "<<generated stack>>",
             },
         }),
     };
@@ -384,6 +431,7 @@ describe("Error Propagation", () => {
         assert.strictEqual(actual.message, expected.message, "message should match");
         assert.strictEqual(actual.name, expected.name, "name should match");
         assert.strictEqual(typeof actual.stack, "string", "stack should be present as a string");
+        assert.equal(expected.stack === "<<generated stack>>", (actual.stack?.indexOf("<<generated stack>>") ?? -1) >= 0);
         assert(mixinStub.calledWith(actual, { ...annotations.props, errorType: expected.errorType, fluidErrorCode: expectedErrorCode }),
             "mixinTelemetryProps should have been called as expected");
     }
@@ -391,7 +439,7 @@ describe("Error Propagation", () => {
         before(() => { mixinStub = sinon.stub(helpers, "mixinTelemetryProps"); });
         afterEach(() => { mixinStub.reset(); });
         after(() => { mixinStub.restore(); });
-        function testTemplate(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
+        function runTests(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
             for (const testCase of Object.keys(testCases)) {
                 for (const annotationCase of Object.keys(annotationCases)) {
                     it(`${description}: ${testCase} (${annotationCase})`, () => {
@@ -410,9 +458,9 @@ describe("Error Propagation", () => {
             }
         }
 
-        testTemplate("patchable", patchableTestCases, true /* expectPatching */);
-        testTemplate("frozen", frozenTestCases, false /* expectPatching */);
-        testTemplate("non-object", nonObjectTestCases, false /* expectPatching */);
+        runTests("patchable", patchableTestCases, true /* expectPatching */);
+        runTests("frozen", frozenTestCases, false /* expectPatching */);
+        runTests("non-object", nonObjectTestCases, false /* expectPatching */);
     });
     describe("annotateErrorObject", () => {
         before(() => { mixinStub = sinon.stub(helpers, "mixinTelemetryProps"); });
