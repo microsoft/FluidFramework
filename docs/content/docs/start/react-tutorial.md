@@ -33,7 +33,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     |Library |Description |
     |---|---|
     |fluid&#x2011;experimental/fluid&#x2011;framework |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._|
-    |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid Relay service (FRS) server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test server called Tinylicious.|
+    |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
     &nbsp;
 
     Run the following command to install the libraries.
@@ -229,7 +229,7 @@ if (localTimestamp) {
 
 ## Start the Fluid server and run the application
 
-In the Command Prompt, run the following command to start the FRS server. Note that `tinylicious` is the name of the FRS that runs on localhost.
+In the Command Prompt, run the following command to start the Fluid service. Note that `tinylicious` is the name of the Fluid service that runs on localhost.
 
 ```dotnetcli
 npx tinylicious
