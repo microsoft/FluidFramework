@@ -42,7 +42,7 @@ If you want to re-use a snippet in multiple places, place the snippet file in `d
 it in a Markdown file like so:
 
 ```golang
-{{%/* include file="docs/_includes/node-versions.md" */%}}
+{{%/* include file="_includes/node-versions.md" */%}}
 ```
 
 
