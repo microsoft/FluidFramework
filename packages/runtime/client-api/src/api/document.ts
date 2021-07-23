@@ -64,13 +64,6 @@ export class Document extends EventEmitter {
         return this.runtime.deltaManager;
     }
 
-    /**
-     * Flag indicating whether the document already existed at the time of load
-     */
-    public get existing(): boolean {
-        return this.runtime.existing;
-    }
-
     public get options(): ILoaderOptions {
         return this.runtime.options;
     }
@@ -90,6 +83,7 @@ export class Document extends EventEmitter {
         public readonly context: IFluidDataStoreContext,
         private readonly root: ISharedMap,
         private readonly closeFn: () => void,
+        public readonly existing: boolean,
     ) {
         super();
     }

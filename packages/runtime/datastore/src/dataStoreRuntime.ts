@@ -110,7 +110,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public static load(
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
-        existing?: boolean,
+        existing: boolean,
     ): FluidDataStoreRuntime {
         return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
     }
@@ -177,7 +177,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
     public readonly documentId: string;
     public readonly id: string;
-    public existing: boolean;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
@@ -195,7 +194,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        existing?: boolean,
+        public readonly existing: boolean,
     ) {
         super();
 
@@ -207,9 +206,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         );
         this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
-        this.existing = existing === undefined
-            ? dataStoreContext.existing === true
-            : existing;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();

@@ -54,8 +54,8 @@ class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidD
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
-        return sharedTextComponent.instantiateDataStore(context);
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+        return sharedTextComponent.instantiateDataStore(context, existing);
     }
 
     public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {

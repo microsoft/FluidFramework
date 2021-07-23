@@ -57,12 +57,13 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry);
+        const backCompatExisting = instantiateExisting(context, existing);
+        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, backCompatExisting);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
         // depending of if a new store is being created or an existing store
         // is being loaded.
-        const instance = this.instantiate(context, runtime, instantiateExisting(context, existing));
+        const instance = this.instantiate(context, runtime, backCompatExisting);
 
         return runtime;
     }

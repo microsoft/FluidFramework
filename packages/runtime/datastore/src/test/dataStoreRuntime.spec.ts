@@ -17,7 +17,7 @@ describe("FluidDataStoreRuntime Tests", () => {
     let dataStoreContext: MockFluidDataStoreContext;
     let sharedObjectRegistry: ISharedObjectRegistry;
     const loadRuntime = (context: IFluidDataStoreContext, registry: ISharedObjectRegistry) =>
-        FluidDataStoreRuntime.load(context, registry);
+        FluidDataStoreRuntime.load(context, registry, /* existing */ false);
 
     beforeEach(() => {
         dataStoreContext = new MockFluidDataStoreContext();

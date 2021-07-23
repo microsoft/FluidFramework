@@ -166,13 +166,14 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
+        const backCompatExisting = instantiateExisting(context, existing);
+        const runtime = new runtimeClass(context, dataTypes, backCompatExisting);
         const routerP = TestFluidObject.load(
             runtime,
             runtime,
             context,
             factoryEntriesMapForObject,
-            instantiateExisting(context, existing),
+            backCompatExisting,
         );
 
         return runtime;

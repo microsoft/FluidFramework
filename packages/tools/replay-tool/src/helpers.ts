@@ -177,8 +177,9 @@ function mixinDataStoreWithAnyChannel(
         constructor(
             dataStoreContext: IFluidDataStoreContext,
             sharedObjectRegistry: ISharedObjectRegistry,
+            existing: boolean,
         ) {
-            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry));
+            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry), existing);
         }
     } as typeof FluidDataStoreRuntime;
 }

@@ -35,7 +35,12 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject, RequestParser, create404Response } from "@fluidframework/runtime-utils";
+import {
+    instantiateExisting,
+    requestFluidObject,
+    RequestParser,
+    create404Response,
+} from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
@@ -56,9 +61,10 @@ export class SharedTextRunner
     public static async load(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
+        existing: boolean,
     ): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
-        await runner.initialize();
+        await runner.initialize(existing);
 
         return runner;
     }
@@ -111,11 +117,11 @@ export class SharedTextRunner
         }
     }
 
-    private async initialize(): Promise<void> {
-        this.collabDoc = await Document.load(this.runtime);
+    private async initialize(existing: boolean): Promise<void> {
+        this.collabDoc = await Document.load(this.runtime, existing);
         this.rootView = this.collabDoc.getRoot();
 
-        if (!this.runtime.existing) {
+        if (!existing) {
             const insightsMapId = "insights";
 
             const insights = this.collabDoc.createMap(insightsMapId);
@@ -226,7 +232,9 @@ export class SharedTextRunner
                 this.runtime,
                 this.context,
                 this.rootView,
-                () => { throw new Error("Can't close document"); }),
+                () => { throw new Error("Can't close document"); },
+                true, /* existing */
+            ),
             this.sharedString,
             image,
             {});
@@ -285,21 +293,26 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext) {
+export function instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
     const runtimeClass = mixinRequestHandler(
         async (request: IRequest) => {
             const router = await routerP;
             return router.request(request);
         });
 
-    const runtime = new runtimeClass(context, new Map([
-        SharedMap.getFactory(),
-        SharedString.getFactory(),
-        SharedCell.getFactory(),
-        SharedObjectSequence.getFactory(),
-        SharedNumberSequence.getFactory(),
-    ].map((factory) => [factory.type, factory])));
-    const routerP = SharedTextRunner.load(runtime, context);
+    const backCompatExisting = instantiateExisting(context, existing);
+    const runtime = new runtimeClass(
+        context,
+        new Map([
+            SharedMap.getFactory(),
+            SharedString.getFactory(),
+            SharedCell.getFactory(),
+            SharedObjectSequence.getFactory(),
+            SharedNumberSequence.getFactory(),
+        ].map((factory) => [factory.type, factory])),
+        backCompatExisting,
+    );
+    const routerP = SharedTextRunner.load(runtime, context, backCompatExisting);
 
     return runtime;
 }

@@ -28,7 +28,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { create404Response, instantiateExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -45,7 +45,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         private readonly dataStoreFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
     { }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const document = await routerP;
@@ -61,24 +61,29 @@ export class Chaincode implements IFluidDataStoreFactory {
             },
             this.dataStoreFactory);
 
-        const runtime = new runtimeClass(context, new Map([
-            map.SharedMap.getFactory(),
-            sequence.SharedString.getFactory(),
-            ink.Ink.getFactory(),
-            cell.SharedCell.getFactory(),
-            sequence.SharedObjectSequence.getFactory(),
-            sequence.SharedNumberSequence.getFactory(),
-            ConsensusQueue.getFactory(),
-            ConsensusRegisterCollection.getFactory(),
-            sequence.SparseMatrix.getFactory(),
-            map.SharedDirectory.getFactory(),
-            sequence.SharedIntervalCollection.getFactory(),
-            SharedMatrix.getFactory(),
-        ].map((factory) => [factory.type, factory])));
+        const backCompatExisting = instantiateExisting(context, existing);
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                map.SharedMap.getFactory(),
+                sequence.SharedString.getFactory(),
+                ink.Ink.getFactory(),
+                cell.SharedCell.getFactory(),
+                sequence.SharedObjectSequence.getFactory(),
+                sequence.SharedNumberSequence.getFactory(),
+                ConsensusQueue.getFactory(),
+                ConsensusRegisterCollection.getFactory(),
+                sequence.SparseMatrix.getFactory(),
+                map.SharedDirectory.getFactory(),
+                sequence.SharedIntervalCollection.getFactory(),
+                SharedMatrix.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            backCompatExisting,
+        );
 
         // Initialize core data structures
         let root: map.ISharedMap;
-        if (!runtime.existing) {
+        if (!backCompatExisting) {
             root = map.SharedMap.create(runtime, rootMapId);
             root.bindToContext();
 
@@ -89,7 +94,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         // Create the underlying Document
         const createDocument = async () => {
             root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-            return new Document(runtime, context, root, this.closeFn);
+            return new Document(runtime, context, root, this.closeFn, backCompatExisting);
         };
 
         const routerP = createDocument();
