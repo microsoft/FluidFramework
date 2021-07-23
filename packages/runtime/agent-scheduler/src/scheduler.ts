@@ -27,10 +27,10 @@ import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 const UnattachedClientId = `${uuid()}_unattached`;
 
 class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
-        if (!runtime.existing) {
+        if (existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
             consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
@@ -372,7 +372,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
         existing: boolean,
     ) {
         super(dataStoreContext, sharedObjectRegistry, existing);
-        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext);
+        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
     }
     public async request(request: IRequest) {
         const response = await super.request(request);

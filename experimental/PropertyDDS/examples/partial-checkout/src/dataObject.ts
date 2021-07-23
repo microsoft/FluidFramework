@@ -41,8 +41,8 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for dice rolls.
      */
-    protected async initialize() {
-        if (this.runtime.existing) {
+     protected async initialize(existing: boolean) {
+        if (existing) {
             const treeHandle = await this.root.wait<IFluidHandle<SharedPropertyTree>>(propertyKey);
             if (this._queryString !== undefined) {
                 // The absolutePath of the DDS should not be updated. Instead, a new handle can be created with the new
@@ -87,11 +87,11 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
     }
 
     public create() {
-        /* this.initialize(); */
+        /* this.initialize(false); */
         console.log("A");
     }
     public async load() {
-        /* this.initialize(); */
+        /* this.initialize(true); */
         console.log("B");
     }
 
@@ -99,7 +99,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         const url = request.url;
         console.log(url);
         this._queryString = url.split("?")[1];
-        await this.initialize();
+        await this.initialize(false);
         return super.request(request);
     }
 }

@@ -253,7 +253,7 @@ export interface IFluidDataStoreContext extends
      */
     readonly packagePath: readonly string[];
     /**
-     * TODO: should remove after detachedNew is in place
+     * @deprecated #6346
      */
     readonly existing: boolean;
     readonly options: ILoaderOptions;

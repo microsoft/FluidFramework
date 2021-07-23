@@ -194,7 +194,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
-        public readonly existing: boolean,
+        existing: boolean,
     ) {
         super();
 
@@ -297,11 +297,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         this.attachListener();
         // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = this.existing ? BindState.Bound : BindState.NotBound;
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
-        if (this.existing) {
+        if (existing) {
             this.deferredAttached.resolve();
         }
     }

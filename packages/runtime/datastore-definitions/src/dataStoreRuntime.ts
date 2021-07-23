@@ -64,8 +64,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly documentId: string;
 
-    readonly existing: boolean;
-
     readonly connected: boolean;
 
     /**
