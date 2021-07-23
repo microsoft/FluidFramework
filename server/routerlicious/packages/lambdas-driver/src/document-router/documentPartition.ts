@@ -51,7 +51,7 @@ export class DocumentPartition {
                             optionalPromise
                                 .then(callback as any)
                                 .catch((error) => {
-                                    this.markAsCorrupt(message, error);
+                                    this.markAsCorrupt(error, message);
                                     callback();
                                 });
                             return;
@@ -63,7 +63,7 @@ export class DocumentPartition {
                 } catch (error) {
                     // TODO dead letter queue for bad messages, etc... when the lambda is throwing an exception
                     // for now we will simply continue on to keep the queue flowing
-                    this.markAsCorrupt(message, error);
+                    this.markAsCorrupt(error, message);
                 }
 
                 // Handle the next message
@@ -88,8 +88,9 @@ export class DocumentPartition {
                 this.q.resume();
             },
             (error) => {
-                context.error(error, { restart: true, tenantId, documentId });
-                this.q.kill();
+                this.markAsCorrupt(error);
+                context.error(error, { restart: false, tenantId, documentId });
+                this.q.resume();
             });
     }
 
@@ -133,7 +134,7 @@ export class DocumentPartition {
      * Marks this document partition as corrupt
      * Future messages will be checkpointed but no real processing will happen
      */
-    private markAsCorrupt(message: IQueuedMessage, error: any) {
+    private markAsCorrupt(error: any, message?: IQueuedMessage) {
         this.corrupt = true;
         this.context.log?.error(
             `Marking document as corrupted due to error: ${inspect(error)}`,
@@ -144,7 +145,9 @@ export class DocumentPartition {
                 },
             });
         this.context.error(error, { restart: false, tenantId: this.tenantId, documentId: this.documentId });
-        this.context.checkpoint(message);
+        if (message) {
+            this.context.checkpoint(message);
+        }
     }
 
     private updateActivityTime() {
