@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/common-definitions";
 import {
     IFluidErrorBase,
-    isFluidError,
     isILoggingError,
     isErrorLike,
 } from "./staging";
@@ -79,7 +78,7 @@ export function normalizeError(
     const errorTypeIfNone = !isRegularObject(error) ? typeof(error) : "wrappedFrozenError";
     const fluidError = patchFluidErrorBuilder(
         fluidErrorBuilder,
-        getFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
+        prepareFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
     );
 
     mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
@@ -100,12 +99,6 @@ export function annotateErrorObject(
     assert(isRegularObject(errorObject) && !Object.isFrozen(errorObject),
         "Cannot annotate a non-object or frozen error");
 
-    // If we already have a valid Fluid Error, then just mixin telemetry props and return
-    if (isFluidError(errorObject)) {
-        mixinTelemetryPropsWithFluidError(errorObject, annotations.props);
-        return;
-    }
-
     // Patch in any missing properties of IFluidErrorBase
     const fluidErrorBuilder = errorObject as FluidErrorBuilder;
     const errorTypeIfNone = isErrorLike(errorObject)
@@ -113,7 +106,7 @@ export function annotateErrorObject(
         : typeof(errorObject);
     const fluidError = patchFluidErrorBuilder(
         fluidErrorBuilder,
-        getFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
+        prepareFluidErrorTemplate(fluidErrorBuilder, errorTypeIfNone, annotations.errorCodeIfNone),
     );
 
     mixinTelemetryPropsWithFluidError(fluidError, annotations.props);
@@ -128,21 +121,28 @@ type FluidErrorBuilder = {
 };
 
 /** Returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder */
-function getFluidErrorTemplate(
+function prepareFluidErrorTemplate(
     fluidErrorBuilder: FluidErrorBuilder,
     errorTypeIfNone: string,
     errorCodeIfNone: string | undefined,
 ): IFluidErrorBase {
+    const fullErrorTypeIfNone = `none (${errorTypeIfNone})`;
+    const fullErrorCodeIfNone = errorCodeIfNone === undefined
+        ? "none"
+        : `none (${errorCodeIfNone})`;
     return {
-        errorType: typeof fluidErrorBuilder.errorType === "string"
-            ? fluidErrorBuilder.errorType
-            : `none (${errorTypeIfNone})`,
-        fluidErrorCode: errorCodeIfNone === undefined
-            ? "none" // We already know fluidErrorBuilder doesn't have a fluidErrorCode
-            : `none (${errorCodeIfNone})`,
-        stack: typeof fluidErrorBuilder.stack === "string"
-            ? undefined // This means don't patch the stack property (since it's already ok)
-            : new Error("<<generated stack>>").stack,
+        errorType:
+            typeof fluidErrorBuilder.errorType === "string"
+                ? fluidErrorBuilder.errorType
+                : fullErrorTypeIfNone,
+        fluidErrorCode:
+            typeof fluidErrorBuilder.fluidErrorCode === "string"
+                ? fluidErrorBuilder.fluidErrorCode
+                : fullErrorCodeIfNone,
+        stack:
+            typeof fluidErrorBuilder.stack === "string"
+                ? undefined // This means don't patch the stack property (since it's already ok)
+                : new Error("<<generated stack>>").stack,
     };
 }
 

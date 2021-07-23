@@ -8,8 +8,9 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateErrorObject } from "../errorLogging";
 import { IFluidErrorBase } from "../staging";
+import { mixinTelemetryProps } from "../errorLoggingInternalHelpers";
 
 describe("Logger", () => {
     describe("Error Logging", () => {
@@ -187,7 +188,7 @@ describe("Logger", () => {
             });
         });
         //* REMOVE THIS .ONLY!!!!!!
-        describe.only("normalizeError", () => {
+        describe.skip("normalizeError", () => {
             function checkOutput(actual: IFluidErrorBase, expected: IFluidErrorBase): boolean {
                 if (typeof(actual.stack) === "string") {
                     Object.assign(actual, { stack: "" });
@@ -254,13 +255,61 @@ describe("Logger", () => {
                 });
             }
         });
-        //* Most of these can be uncommented and flipped from annotate to mixin
-        describe("mixinTelemetryProps", () => {
+        describe.only("mixinTelemetryProps", () => {
+            it("LoggingError is annotated", () => {
+                const loggingError = new LoggingError("msg");
+                mixinTelemetryProps(loggingError, { p1: 1 });
+
+                assert(loggingError.getTelemetryProperties().p1 === 1);
+            });
+            it("Custom Read/Write Logging Error is annotated", () => {
+                let atpCalled = false;
+                const loggingError = {
+                    getTelemetryProperties: () => {},
+                    addTelemetryProperties: () => { atpCalled = true; },
+                };
+                mixinTelemetryProps(loggingError, { p1: 1 });
+
+                assert(atpCalled);
+            });
+            it("Arbitrary object get telemetry prop functions mixed in", () => {
+                const obj = {};
+                mixinTelemetryProps(obj, { p1: 1 });
+
+                assert(obj.getTelemetryProperties().p1 === 1);
+
+                const atp: (p: ITelemetryProperties) => void = (obj as any).addTelemetryProperties;
+                atp({ p2: 2 });
+                assert(obj.getTelemetryProperties().p2 === 2);
+                atp({ p1: "one" });
+                assert(obj.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
+            });
+            it("non-objects or frozen objects result in assert", () => {
+                const frozenError = new LoggingError("foo");
+                Object.freeze(frozenError);
+                const inputs = [
+                    null,
+                    undefined,
+                    false,
+                    true,
+                    3.14,
+                    Symbol("Unique"),
+                    () => {},
+                    [],
+                    [1,2,3],
+                    frozenError,
+                ];
+                inputs.forEach(
+                    (err) => {
+                        assert.throws(() => { mixinTelemetryProps(err, { p1: 1 }); }, "Cannot annotate a non-object or frozen error");
+                    });
+            });
+        });
+        describe.only("annotateErrorObject", () => {
             // it("LoggingError is annotated", () => {
             //     const loggingError = new LoggingError("msg");
-            //     const retVal = annotateError(loggingError, { p1: 1 });
+            //     mixinTelemetryProps(loggingError, { p1: 1 });
 
-            //     assert(retVal === loggingError);
             //     assert(loggingError.getTelemetryProperties().p1 === 1);
             // });
             // it("Custom Read/Write Logging Error is annotated", () => {
@@ -269,17 +318,14 @@ describe("Logger", () => {
             //         getTelemetryProperties: () => {},
             //         addTelemetryProperties: () => { atpCalled = true; },
             //     };
-            //     const retVal = normalizeError(loggingError, { p1: 1 });
+            //     mixinTelemetryProps(loggingError, { p1: 1 });
 
-            //     assert(retVal as any === loggingError);
             //     assert(atpCalled);
             // });
             // it("Arbitrary object get telemetry prop functions mixed in", () => {
             //     const obj = {};
-            //     const retVal = normalizeError(obj, { p1: 1 });
+            //     mixinTelemetryProps(obj, { p1: 1 });
 
-            //     assert(retVal === obj);
-            //     assert(isILoggingError(obj));
             //     assert(obj.getTelemetryProperties().p1 === 1);
 
             //     const atp: (p: ITelemetryProperties) => void = (obj as any).addTelemetryProperties;
@@ -288,22 +334,26 @@ describe("Logger", () => {
             //     atp({ p1: "one" });
             //     assert(obj.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
             // });
-            // it("non-objects result in new LoggingError", () => {
-            //     const inputs = [
-            //         null,
-            //         undefined,
-            //         false,
-            //         true,
-            //         3.14,
-            //         Symbol("Unique"),
-            //         () => {},
-            //         [],
-            //         [1,2,3],
-            //     ];
-            //     const annotated = inputs.map((i) => normalizeError(i, { p1: 1 }));
-
-            //     assert(annotated.every((a) => a instanceof LoggingError));
-            // });
+            it("non-objects or frozen objects result in assert", () => {
+                const frozenError = new LoggingError("foo");
+                Object.freeze(frozenError);
+                const inputs: any[] = [
+                    null,
+                    undefined,
+                    false,
+                    true,
+                    3.14,
+                    Symbol("Unique"),
+                    () => {},
+                    [],
+                    [1,2,3],
+                    frozenError,
+                ];
+                inputs.forEach(
+                    (err) => {
+                        assert.throws(() => { annotateErrorObject(err); }, "Cannot mixin Telemetry Props");
+                    });
+            });
         });
         describe("LoggingError", () => {
             it("ctor props are assigned to the object", () => {
