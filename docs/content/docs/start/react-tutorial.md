@@ -9,7 +9,6 @@ In this tutorial, you'll learn about using the Fluid Framework by building a sim
 
 The following image shows the same four clients one second after the **click** button was pressed. Note that the timestamp has updated to the very same time in all four browsers.
 
-
 ![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-2.PNG)
 
 {{< callout note >}}
