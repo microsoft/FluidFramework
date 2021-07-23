@@ -391,7 +391,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         return [this.type, Promise.resolve(new AgentSchedulerFactory())];
     }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
