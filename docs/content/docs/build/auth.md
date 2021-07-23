@@ -12,39 +12,42 @@ specifics of authentication could differ based on the Fluid service and its driv
 The information below is based on Azure Fluid Relay service but also applies to
 [Tinylicious]({{< relref "tinylicious.md" >}}). Other Fluid services may differ.
 
-{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
-
 ## Azure Fluid Relay service
 
-FRS provides you a tenant ID and secret key.
+{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
+
+Each FRS tenant you create is assigned a *tenant ID* and *secret key*.
 
 The secret key is a *shared secret*. Your app/service knows it, and FRS knows it. This means that you can sign data
 using that secret key, and FRS can verify that it is you who signed those requests because it also has that key.
 
 In summary, the secret key is how FRS knows that requests are coming from your app or service. This is critical, because
-once FRS can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's so
-important that the secret is handled securely. Anyone with access to it can impersonate your application to FRS.
+once FRS can trust that it's *your app* making the requests, it can trust the data you send. This is also why it's
+important that the secret is handled securely. **Anyone with access to the secret can impersonate your application to
+FRS.**
 
 Now you have a mechanism to establish trust. You can sign some data, send it to FRS, and FRS can validate whether the
 data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard way method for encoding
-authentication and user-related data with a signature for verification: JSON Web Tokens (JWT).
+authentication and user-related data with a signature for verification: JSON Web Tokens (JWTs).
 
-The next question is: what data should you send?
+{{% callout note %}}
 
-### JSON Web Tokens (JWT)
-
-{{% callout %}}
-
-Something.
+The specifics of JWTs are beyond the scope of this article. For more details about the JWT standard see
+<https://jwt.io/introduction>.
 
 {{% /callout %}}
 
-JSON Web Tokens are the data format that Tinylicious and Azure Fluid Relay service (FRS) use for authentication.
+JSON Web Tokens are a signed bit of JSON data that can include additional data about a or the rights conferred by the
+JWT. The data within the token is readable by a service like FRS.
 
+The next question is: what data should you send?
 
-The specifics of JWTs are beyond the scope of this article.
+You need to send your *tenant ID* so that FRS can look up the right secret key to validate your request. You need to
+send the *container ID* (called `documentId` in the JWT) so FRS knows which container the request is about. Finally, you
+need to also set the *scopes (permissions)* that the request is permitted to use -- this allows you to establish your
+own user permissions model if you wish.
 
-```json
+```json {linenos=inline,hl_lines=["5-6",9]}
 {
   "alg": "HS256",
   "typ": "JWT"
@@ -58,21 +61,47 @@ The specifics of JWTs are beyond the scope of this article.
 }.[Signature]
 ```
 
+Every request to FRS must be signed with a valid JWT. The FRS documentation contains additional details about [how to
+sign the token][1]. Fluid delegates the responsibility of creating and signing these tokens to a *token provider.*
 
-{{% callout %}}
+[1]: (https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
 
-The sections below assume you're familiar with
+{{% callout title="More information" %}}
+
+* [Introduction to JWTs](https://jwt.io/introduction)
+* [Payload claims in FRS](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims)
+* [Scopes in FRS](need a url)
+* [Signing requests](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
 
 {{% /callout %}}
 
+## The token provider
 
+A token provider is responsible for creating and signing tokens that the Fluid runtime then uses to make requests to the
+service (FRS in this case). You are expected to provide your own token provider implementation for most scenarios.
+However, Fluid provides an `InsecureTokenProvider` that accepts your FRS tenant secret and returns signed tokens. This
+token provider is useful for testing, but in production scenarios you should use a more secure token provider.
 
-You need to send your tenant ID so that FRS can look up the right secret key to validate your request. You need to send
-the container ID so FRS knows which container the request is about. Finally, you need to also set the scopes
-(permissions) that the request is permitted to use -- this allows you to establish your own permissions model if you
-wish.
+### A secure serverless token provider
 
+One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
+provider. This enables you to store the FRS secret on a secure server. Your application calls the Function to generate
+tokens rather than signing them locally like the `InsecureTokenProvider` does.
 
+An example of such a function is available at <https://github.com/microsoft/FrsAzureFunctions>. There is a
+corresponding `FrsAzFunctionTokenProvider` for this Function in the `@fluid-experimental/frs-client` package.
 
-[FRS JWT]: https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md
-[claims]: https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims
+## Adding custom data to tokens
+
+Why would you do this? How does it work?
+
+## Connecting user auth to Fluid service auth
+
+You do this in your token provider. For example, you could make your Azure Function token provider authenticated. If an
+application tries to call the Function it would fail unless authenticated with your auth system. If you're using Azure
+Active Directory, for example, you might create an AAD application for your Azure Function, and tie it to your
+organization's auth system.
+
+In this case the user would sign into your application using AAD, through which you would obtain a token to use to call
+your Azure Function. The Azure Function itself behaves the same, but it's now only accessible to people who have also
+authenticated with AAD.
