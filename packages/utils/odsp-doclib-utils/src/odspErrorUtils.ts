@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { normalizeError, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { annotateErrorObject, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -183,7 +183,7 @@ export function enrichOdspError(
             props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
-    normalizeError(error, { props }, true /* strict */);
+    annotateErrorObject(error, { props });
     return error;
 }
 

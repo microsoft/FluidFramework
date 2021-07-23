@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     wrapError,
-    normalizeError,
+    annotateErrorObject,
     LoggingError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
@@ -106,7 +106,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             : wrapError(originalError, newErrorFn);
 
         if (message !== undefined) {
-            normalizeError(error, { props: extractSafePropertiesFromMessage(message) }, true /* strict */);
+            annotateErrorObject(error, { props: extractSafePropertiesFromMessage(message) });
         }
         return error;
     }
@@ -139,7 +139,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
         : wrapError(originalError, newErrorFn);
 
     if (props !== undefined) {
-        normalizeError(error, { props }, true /* strict */);
+        annotateErrorObject(error, { props });
     }
     return error;
 }
