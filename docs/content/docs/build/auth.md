@@ -5,9 +5,7 @@ editor: tylerbutler
 ---
 
 Security is critical to modern web applications. Fluid Framework, as a part of your web application architecture, is an
-important piece of infrastructure to secure. Fluid Framework is a layered architecture, and auth-related concepts are
-primarily a concern of the *driver* layer (see [Architecture]({{< relref "architecture.md" >}})). This means that the
-specifics of authentication could differ based on the Fluid service and its driver.
+important piece of infrastructure to secure. Fluid Framework is a layered architecture, and auth-related concepts are implemented based on the Fluid service it's connecting to. This means that the specifics of authentication will differ based on the Fluid service.
 
 The information below is based on Azure Fluid Relay service (FRS) but also applies to
 [Tinylicious]({{< relref "tinylicious.md" >}}). Other Fluid services may differ.
@@ -54,6 +52,10 @@ own user permissions model if you wish.
 }.{
   "documentId": "azureFluidDocumentId",
   "scopes": [ "doc:read", "doc:write", "summary:write" ],
+  "user": {
+    "name": "TestUser",
+    "id": "Test-Id-123"
+  },
   "iat": 1599098963,
   "exp": 1599098963,
   "tenantId": "AzureFluidTenantId",
