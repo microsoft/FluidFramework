@@ -80,16 +80,15 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 ## The token provider
 
-A token provider is responsible for creating and signing tokens that the Fluid runtime then uses to make requests to the
-service (FRS in this case). You are expected to provide your own token provider implementation for most scenarios.
+A token provider is responsible for creating and signing tokens that the `@fluid-experimental/frs-client` uses to make requests to the
+Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
 However, Fluid provides an `InsecureTokenProvider` that accepts your FRS tenant secret and returns signed tokens. This
-token provider is useful for testing, but in production scenarios you should use a more secure token provider.
+token provider is useful for testing, but in production scenarios you must use a secure token provider.
 
 ### A secure serverless token provider
 
 One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
-provider. This enables you to store the FRS secret on a secure server. Your application calls the Function to generate
-tokens rather than signing them locally like the `InsecureTokenProvider` does.
+provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Function to generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
 
 An example of such a function is available at <https://github.com/microsoft/FrsAzureFunctions>. There is a
 corresponding `FrsAzFunctionTokenProvider` for this Function in the `@fluid-experimental/frs-client` package.
@@ -109,4 +108,4 @@ In this case the user would sign into your application using AAD, through which 
 your Azure Function. The Azure Function itself behaves the same, but it's now only accessible to people who have also
 authenticated with AAD.
 
-Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated to the Function will then be able to relay that token to FRS from their client application. This two-step approach allows you to use your own custom authentication process in conjunction with FRS.
+Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated to the Function will then be able to relay that token to the Azure Fluid Relay service from their client application. This two-step approach allows you to use your own custom authentication process in conjunction with the Azure Fluid Relay service.
