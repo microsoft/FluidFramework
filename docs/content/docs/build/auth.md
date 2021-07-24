@@ -14,7 +14,7 @@ services]({{< relref "service-options.md" >}}) for more information.
 
 {{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
-Each FRS tenant you create is assigned a *tenant ID* and its own unique *tenant secret key*.
+Each Azure Fluid Relay service tenant you create is assigned a *tenant ID* and its own unique *tenant secret key*.
 
 The secret key is a *shared secret*. Your app/service knows it, and the Azure Fluid Relay service knows it. Since the
 tenant secret key is uniquely tied to your tenant, using it to sign requests guarantees to the Azure Fluid Relay service
@@ -44,10 +44,10 @@ JWT. The Azure Fluid Relay service uses signed JWTs for establishing trust with 
 
 The next question is: what data should you send?
 
-You need to send your *tenant ID* so that FRS can look up the right secret key to validate your request. You need to
-send the *container ID* (called `documentId` in the JWT) so FRS knows which container the request is about. Finally, you
-need to also set the *scopes (permissions)* that the request is permitted to use -- this allows you to establish your
-own user permissions model if you wish.
+You need to send your *tenant ID* so that Azure Fluid Relay service can look up the right secret key to validate your
+request. You need to send the *container ID* (called `documentId` in the JWT) so Azure Fluid Relay service knows which
+container the request is about. Finally, you need to also set the *scopes (permissions)* that the request is permitted
+to use -- this allows you to establish your own user permissions model if you wish.
 
 ```json {linenos=inline,hl_lines=["5-6",13]}
 {
@@ -94,10 +94,10 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 ## The token provider
 
-A token provider is responsible for creating and signing tokens that the `@fluid-experimental/frs-client` uses to make requests to the
-Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
-However, Fluid provides an `InsecureTokenProvider` that accepts your FRS tenant secret and returns signed tokens. This
-token provider is useful for testing, but in production scenarios you must use a secure token provider.
+A token provider is responsible for creating and signing tokens that the `@fluid-experimental/frs-client` uses to make
+requests to the Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
+However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret and returns signed tokens. This token
+provider is useful for testing, but in production scenarios you must use a secure token provider.
 
 ### A secure serverless token provider
 

@@ -3,7 +3,7 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service (FRS) is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `FrsClient` in your own application.
 
@@ -124,4 +124,5 @@ Alongside the user ID and name, `FrsMember` objects also hold an array of `conne
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 
-**Congratulations!** You have now successfully connected your Fluid container to the FRS service and fetched back user details for the members in your collaborative session!!
+**Congratulations!** You have now successfully connected your Fluid container to the Azure Fluid Relay service and
+fetched back user details for the members in your collaborative session!!
