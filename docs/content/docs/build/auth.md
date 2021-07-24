@@ -125,7 +125,7 @@ to the Function will then be able to relay that token to the Azure Fluid Relay s
 This two-step approach allows you to use your own custom authentication process in conjunction with the Azure Fluid
 Relay service.
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->

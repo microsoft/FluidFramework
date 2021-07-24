@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 const markdownMagic = require("@tylerbu/markdown-magic");
 const pathLib = require("path");
 const process = require("process");
