@@ -35,7 +35,7 @@ const { fluidContainer, containerServices } = await client.createContainer(/*ser
 const map = fluidContainer.initialObjects.customMap;
 ```
 
-At this point, you can directly start using the `map` object within our application. Including the `SharedMap` as part of initial objects ensures that the DDS is available the moment the async call to `createContainer` finishes.
+At this point, you can directly start using the `map` object within your application. Including the `SharedMap` as part of initial objects ensures that the DDS is available the moment the async call to `createContainer` finishes.
 
 Similarly, if you are loading an existing container, the process stays largely identical with the only difference being that you use `getContainer` instead of `createContainer`.
 
@@ -65,7 +65,7 @@ const { fluidContainer, containerServices } = await client.getContainer(/*servic
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from our initial objects above. The only caveat here is that you will need to maintain a pointer to our newly created object. To store it in another `SharedMap`, please see the **Storing shared objects** section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
+Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the **Storing shared objects** section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
 
 ### Using the DDS API
 
@@ -75,18 +75,17 @@ A `SharedMap` instance can also be created from within your own custom data obje
 const newMap = SharedMap.create(this.runtime, id);
 ```
 
-`DataObject` classes also provides by default a `root` object, which is a [SharedDirectory]({{< relref "directory.md" >}})) that is always available and can be used to store the map. The `SharedMap` itself also provides a `handle` property that can be thought of as a serializable way to store it. Now that you have a way to serialize the map and a place where to put it, you can do the following to store the map in the `root`:
+`DataObject` classes also provide by default a `root` [SharedDirectory]({{< relref "directory.md" >}}) object that is always available and provides a location to store the map. The `SharedMap` itself also provides a [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}) property that can be thought of as a serializable form of the map. Now that you have a way to serialize the map and a place where to put it, you can do the following to store the map in the `root`:
 ```javascript
 const newMapKey = "uniqueMapId";
 this.root.set(newMapKey, newMap.handle);
 ```
-And then, we can load it back in the following manner:
+And then, you can load it back in the following manner:
 ```javascript
-const newMapHandle = this.root.get<IFluidHandle<SharedCounter>>(newMapKey);
-
+const newMapHandle = this.root.get(newMapKey);
 const newMapLoaded = await newMapHandle.get();
 ```
-`newMapLoaded` now points to the same DDS as our initial `newMap`
+`newMapLoaded` now points to the same DDS as your initial `newMap`
 
 ## API Functionality
 
@@ -96,7 +95,7 @@ The `SharedMap` object provides a number of functions to allow you to edit the k
 - `get(key)` - Returns the latest value stored on the key or `undefined` if it does not exist
 - `has(key)` - Checks to see if the key is available. This can be used as a boolean check prior to using `get` to avoid returning an `undefined` value
 - `keys()` - Returns all the keys that have been set for this map
-- `entries()` - Returns an iterator for all values stored on the map. This can be easily converted into an array by doing `Array.from(this.map.entries())`
+- `entries()` - Returns an iterator for all values stored on the map. This can be easily converted into an array by doing `Array.from(map.entries())`
 - `delete(key)` - Removes the key from the map
 {{< callout note >}}
 
@@ -116,7 +115,7 @@ The `SharedMap` object will emit events any time a value on it changes, whether 
 - `valueChanged` - Fired anytime the map is modified due to a key being added, updated, or removed
 - `clear` - Fired when `clear()` is called to alert clients that all data from the map has been removed
 
-If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's `SharedMap` objects will fire the `valueChanged` event.
+If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event.
 
 As such, you can use these events in order to keep your application state in sync with all changes various clients are making to the map.
 
@@ -144,11 +143,13 @@ updateLabel();
 map.on('valueChanged', updateLabel);
 ```
 
-In the code above, whenever a user clicks the button, it sets a new random value on our map's `dataKey`. This will result in a `valueChanged` event being fired for all of the clients who have this container open. Since `updateLabel` is a callback set up to update the view anytime this event gets fired, the view will always refresh with the new value for all users whenever any of the users clicks on the button.
+In the code above, whenever a user clicks the button, it sets a new random value on your map's `dataKey`. This will result in a `valueChanged` event being fired for all of the clients who have this container open. Since `updateLabel` is a callback set up to update the view anytime this event gets fired, the view will always refresh with the new value for all users whenever any of the users clicks on the button.
 
 The `valueChanged` event listener can also take in as parameters:
 - a `changed` object of type `IValueChanged` which provides the `key` that was updated and what the `previousValue` was
 - a `local` boolean that indicates if the current client was the one that initiated the change
+
+Let's update the code to now use these parameters to add a bit of color to the UI!
 
 ```javascript
 const map = fluidContainer.initialObjects.customMap;
@@ -175,14 +176,19 @@ Now, with the changes in `updateLabel`, the view will appropriately re-render to
 
 ## Usage guides
 
-Let's walk through three different types of values you may want to store in a `SharedMap`.
+`SharedMap` supports storing
+- primitives (strings, numbers, booleans, etc.)
+- [objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) 
+- shared objects (DDSes, data objects)
+
+Let's walk through each of these different types and look at best practices on how to use them with the `SharedMap` APIs.
 
 ### Storing primitives
 
 As you saw in the examples above, storing and fetching primitve values from a `SharedMap` are as simple as calling the `set`/`get` functions on the same key. The common paradigm to follow is:
 1. Create a listener callback for updating the app state using `get` to fetch the latest data. This gets triggered on a `valueChanged` event
 2. Adding some app functionality, whether that is through user action or otherwise, to call `set` with new data
-3. Observe the `set` call trigger the `valueChanged` event for all remote clients and see the view state get updated
+3. Observe the `set` call trigger the `valueChanged` event for local and remote clients and see all of their local app states get updated
 
 Whichever client was the last to fire a `set` call will have its value be the current value on the key.
 
@@ -221,7 +227,7 @@ And each task may also have multiple fields, including the person that it is ass
 
 Now, the next question to ask is which of these fields you'd like to be individually collaborative. For the sake of this example, let's assume that the `title` and `description` are user-entered values that you'd like people to be able to edit together whereas the `assignedTo` person data is something that you receive from a backend service call that you'd like to store with your object. You can change which person the task gets assigned to but the actual metadata of each person is based off of the returned value from the service.
 
-The most direct -- *but ultimately flawed* -- approach here would be to just to store the entire object into our `SharedMap` under a singular key.
+The most direct -- *but ultimately flawed* -- approach here would be to just to store the entire object into the `SharedMap` under a singular key.
 
 This would look something like this:
 ```json
@@ -241,8 +247,8 @@ Now lets consider the scenario where two users begin to edit the task at the sam
 
 Each time that User A makes an edit, `map.set("task1", editedTask)` will get called where `editedTask` will hold the new `title` values. Similarly, whenever User B makes an edit, `map.set("task1", editedTask)` will also be called but `description` will now hold the updated values. However, since `SharedMap` uses the LWW merge strategy, whichever user sent their `editedTask` last will overwrite the others edit. If User A's `set` occurs last, `task1` will now hold the updates to the `title` but will have overwritten User B's updates to `description`. Similarly, if User B's `set` occurs last, `description` will be updated but not `title`.
 
-To avoid this clash, we can have two strategies:
-1. We can store each of these values in their own key and only hold the key at which they are stored in the `task1` object itself. This would mean our `SharedMap` could have an object like:
+There are two strategies to avoid this clash:
+1. We can store each of these values in their own key and only hold the key at which they are stored in the `task1` object itself. This would mean your `SharedMap` could have an object like:
 
 ```json
 {
@@ -275,35 +281,35 @@ const task = map.get("task1");
 map.set(task.descriptionKey, editedDescription)
 ```
 
-Now, each user would be updating the fields independently and one would not be overwriting the other, as the parent `task1` object isn't the one that is being set each time but rather it just holds the pointers to each of the separate fields being edited.
+Now, each user would be updating the fields independently and one would not be overwriting the other, as the parent `task1` object isn't the one that is being set each time but rather just holding the pointers to each of the separate fields being edited.
 
-2. One of the caveats of the above approach is that both the tasks as well as their values are now all stored at the same level within the map. I.e. if we call `map.values()`, it will provide both the tasks themselves as well as each of their individual fields. Instead, we can have each task be stored in its own `SharedMap` and have a parent `SharedMap` that keeps track of all of the different tasks under it. We will take a look at this in the **Nested shared objects example** section below.
+2. One of the caveats of the above approach is that both the tasks as well as their values are now all stored at the same level within the map. I.e. if you call `map.values()`, it will provide both the tasks themselves as well as each of their individual fields. Instead, you can have each task be stored in its own `SharedMap` and have a parent `SharedMap` that keeps track of all of the different tasks under it. We will take a look at this in the **Nested shared objects example** section below.
 
-Now, you may be asking if we would need to do the same for `assignedTo` object. The answer is "yes" if the fields in this object were also something we would be expecting users modularly edit. However, if this object will always be set together then we can keep it under the same key.
+Now, you may be asking if you would need to do the same for `assignedTo` object. The answer is "yes" if the fields in this object were also something you would be expecting users modularly edit. However, if this object will always be set together then you can keep it under the same key. Since this user metadata is coming as a singular blob from a service, you can use the latter in this scenario.
 
 ```javascript
 // Pseudocode for a function that makes a backend call to fetch a roster of all users in an array
 const users = await getAvailableUsers();
 
-// Let's say that the user we want the task assigned to is at index pickedUserIndex
+// Let's say that the user the task is assigned to is at index pickedUserIndex
 const pickedUser = users[pickedUserIndex];
 
-// Now we store this user object as a whole into the SharedMap
+// Now store this user object as a whole into the SharedMap
 const task = map.get("task1");
 map.set(task.assignedToKey, pickedUser)
 ```
 
-This will work as expected **because we are storing the entire object each time** instead of specific fields.
+This will work as expected **because the entire object is being stored each time** instead of specific fields.
 
-One way to think about this is that each value stored into the `SharedMap` is a unit of collaboration. Any time we want users to be able to collaborate on invidual pieces of an object, it should be appropriately stored in separate keys.
+One way to think about this is that each value stored into the `SharedMap` is a unit of collaboration. Any time you want users to be able to collaborate on invidual pieces of an object, it should be appropriately stored in separate keys.
 
 ### Storing shared objects
 
 One of the powerful features of DDSes is that they are infintely nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
-This is done using the concept of [handles]{{< relref "data-modeling.md##using-handles-to-store-and-retrieve-fluid-objects" >}}). Handles provide a way for you to serialize your data object into a form that it can be stored into another DDS and loaded back from it.
+This is done using the concept of [handles]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}). Handles provide a way for you to serialize your data object into a form that it can be stored into another DDS and loaded back from it.
 
-To do this with `SharedMap`, all we need to is specify a initial map as part of our `initialObjects` in our `ContainerSchema` and add the `SharedMap` type to `dynamicObjectTypes`.
+To do this with `SharedMap`, all you need to do is specify an initial map as part of the `initialObjects` in the `ContainerSchema` and add the `SharedMap` type to `dynamicObjectTypes`.
 
 ```javascript
 const schema = {
@@ -315,7 +321,7 @@ const schema = {
 }
 ```
 
-Now, we can dynamically create additional `SharedMap` instances and store their handles into the initial map that is always provided in our container.
+Now, you can dynamically create additional `SharedMap` instances and store their handles into the initial map that is always provided in the container.
 
 ```javascript
 const schema = {
@@ -332,13 +338,13 @@ const initialMap = fluidContainer.initialObjects.initialMap;
 
 const newSharedMap = fluidContainer.create(SharedMap);
 
-initialMap.set("newSharedMapHandle", newSharedMap.handle);
+initialMap.set("newSharedMapKey", newSharedMap.handle);
 ```
 
-Now, anytime we are looking to load the `newSharedMap` back at a later time, all we have to do is load it back from the stored handle.
+Now, anytime you are looking to load the `newSharedMap` back at a later time, all you have to do is load it back from the stored handle.
 
 ```javascript
-const newSharedMapHandle = initialMap.get("newSharedMapHandle");
+const newSharedMapHandle = initialMap.get("newSharedMapKey");
 const newSharedMap = await newSharedMapHandle.get();
 ```
 
@@ -350,7 +356,7 @@ Loading any DDS from its handle is an asynchronous operation. Whereas objects de
 
 #### Nested shared objects example
 
-Let's take another look at our example from the **Storing objects** section above to see how you can update it to use nested `SharedMaps` so you can introduce some data hierarchy and avoid having a flat map that has both the tasks and their fields themselves on the same level. To do so, let's start from our earlier model but with two tasks now.
+Let's take another look at the example from the **Storing objects** section above to see how it can be updated to use nested `SharedMaps`. This will introduce some data hierarchy and avoid having a flat map that has both the tasks and their fields themselves on the same level. To do so, let's start from the earlier model but with two tasks now.
 
 ```json
 {
@@ -374,9 +380,9 @@ Let's take another look at our example from the **Storing objects** section abov
     }
 }
 ```
-Here, we can have each task itself be its own `SharedMap` and have a parent `SharedMap` hold all of the handles to each task.
+Here, you can have each task itself be its own `SharedMap` and have a parent `SharedMap` hold all of the handles to each task.
 
-Then, our initial map would look like:
+Then, the initial map would look like:
 ```json
 {
     "task1": task1MapHandle,
@@ -409,7 +415,7 @@ And the `task2` map would have:
 ```
 With this nested map structure, you are able to both ensure that each field that will be collaboratively edited is stored separately and that you have a hierarchy in how you store the data in your `SharedMap` that reflects the app's data model.
 
-Whenever a new task is created, we can call `container.create` to get a new `SharedMap` instance and store its handle into the `initialMap` that is provided as an `initialObject`. Since each additional task map would need its own unique key, you can use a random string generator, such as [uuid](https://www.npmjs.com/package/uuid), to create a new one each time and avoid any clashes.
+Whenever a new task is created, you can call `container.create` to get a new `SharedMap` instance and store its handle into the `initialMap` that is provided as an `initialObject`. Since each additional task map would need its own unique key, you can use a random string generator, such as [uuid](https://www.npmjs.com/package/uuid), to create a new one each time and avoid any clashes.
 
 ```javascript
 const schema = {
@@ -432,7 +438,7 @@ initialMap.set(newTaskId, newTask.handle);
 
 At this point, you can use `intialMap.keys()` to see all of the various task IDs that are available or `initialMap.values()` to return all of the task handles.
 
-Say you wanted to fetch back a specific task, with ID `task123` and allow the user to edit its description, all you'd need to is:
+Say you wanted to fetch back a specific task, with ID `task123` and allow the user to edit its description.
 
 ```javascript
 const taskHandle = initialMap.get("task123");
