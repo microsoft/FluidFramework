@@ -206,7 +206,7 @@ export class RunningSummarizer implements IDisposable {
         this.heuristicData.lastOpSequenceNumber = sequenceNumber;
 
         if (this.tryRunEnqueuedSummary()) {
-            // Check for enqueued on-demand summaries
+            // Intentionally do nothing; check for enqueued on-demand summaries
         } else if (type === MessageType.Save) {
             // Check for ops requesting summary
             // Note: as const is only required until TypeScript version 4.3
@@ -369,6 +369,7 @@ export class RunningSummarizer implements IDisposable {
                 resultsBuilder: new SummarizeResultBuilder(),
             };
         }
+        this.tryRunEnqueuedSummary();
         return this.enqueuedSummary.resultsBuilder.build();
     }
 
@@ -398,7 +399,7 @@ export class RunningSummarizer implements IDisposable {
             || this.summarizingLock !== undefined
             || this.generator.isSummarizing()
         ) {
-            // If no enqueued summary or
+            // If no enqueued summary is ready or a summary is already in progress, take no action.
             return false;
         }
         this.generator.summarize(
