@@ -73,7 +73,7 @@ Summary ops summarize the state of distributed data structures, so Fluid objects
 data structures) don't need to do anything to participate in summarization; it happens automatically, and all
 Fluid objects' data structures will be summarized.
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->

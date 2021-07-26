@@ -30,13 +30,13 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @alias property-properties.SetProperty
  * @category Other Collections
  */
-var SetProperty = function( in_params, in_scope ) {
-  IndexedCollectionBaseProperty.call( this, in_params );
+var SetProperty = function (in_params, in_scope) {
+    IndexedCollectionBaseProperty.call(this, in_params);
 
-  this._scope = in_scope;
+    this._scope = in_scope;
 
-  /** Contains the actual entries of the set, indexed by their GUID */
-  this._entries = {};
+    /** Contains the actual entries of the set, indexed by their GUID */
+    this._entries = {};
 };
 
 SetProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
@@ -52,32 +52,32 @@ SetProperty.prototype._typeid = 'NamedProperty';
  *
  * @return {boolean} Is it a leaf with regard to flattening?
  */
-SetProperty.prototype._isFlattenLeaf = function() {
-  return true;
+SetProperty.prototype._isFlattenLeaf = function () {
+    return true;
 };
 
-  /**
- * Returns an object with all the nested values contained in this property
- * @return {object} an object representing the values of your property
- * for example: {
- *   position: {
- *    x: 2,
- *    y: 5
- *   }
- * }
- */
-SetProperty.prototype.getValues = function() {
-  var ids = this.getIds();
-  var result = {};
-  for (var i = 0; i < ids.length; i++) {
-    var child = this.get(ids[i]);
-    if (child instanceof Property.ValueProperty || child instanceof Property.StringProperty) {
-      result[ids[i]] = this.get(ids[i]).getValue();
-    } else {
-      result[ids[i]] = child.getValues();
+/**
+* Returns an object with all the nested values contained in this property
+* @return {object} an object representing the values of your property
+* for example: {
+*   position: {
+*    x: 2,
+*    y: 5
+*   }
+* }
+*/
+SetProperty.prototype.getValues = function () {
+    var ids = this.getIds();
+    var result = {};
+    for (var i = 0; i < ids.length; i++) {
+        var child = this.get(ids[i]);
+        if (child instanceof Property.ValueProperty || child instanceof Property.StringProperty) {
+            result[ids[i]] = this.get(ids[i]).getValue();
+        } else {
+            result[ids[i]] = child.getValues();
+        }
     }
-  }
-  return result;
+    return result;
 };
 
 /**
@@ -85,12 +85,12 @@ SetProperty.prototype.getValues = function() {
  * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
  * @return {string} The typeid
  */
-SetProperty.prototype.getFullTypeid = function(in_hideCollection) {
-  if (in_hideCollection) {
-    return this._typeid;
-  } else {
-    return TypeIdHelper.createSerializationTypeId(this._typeid, 'set');
-  }
+SetProperty.prototype.getFullTypeid = function (in_hideCollection) {
+    if (in_hideCollection) {
+        return this._typeid;
+    } else {
+        return TypeIdHelper.createSerializationTypeId(this._typeid, 'set');
+    }
 };
 
 /**
@@ -101,8 +101,8 @@ SetProperty.prototype.getFullTypeid = function(in_hideCollection) {
  * @return {string} The path segment to resolve the child property under this property
  * @protected
  */
-SetProperty.prototype._getPathSegmentForChildNode = function(in_childNode) {
-  return '[' + in_childNode.getGuid() + ']';
+SetProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
+    return '[' + in_childNode.getGuid() + ']';
 };
 
 /**
@@ -114,13 +114,13 @@ SetProperty.prototype._getPathSegmentForChildNode = function(in_childNode) {
  * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
  * @protected
  */
-SetProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType) {
-  // Base Properties only support paths separated via dots
-  if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-    return this._entries[in_segment];
-  } else {
-    return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-  }
+SetProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
+    // Base Properties only support paths separated via dots
+    if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
+        return this._entries[in_segment];
+    } else {
+        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+    }
 };
 
 /**
@@ -131,14 +131,14 @@ SetProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType)
  * @throws if trying to insert a property that has a parent
  * @throws if a property already exists with the same guid as in_property
  */
-SetProperty.prototype.insert = function(in_property) {
-  if (in_property instanceof NamedProperty ||
-      in_property instanceof NamedNodeProperty) {
-    var guid = in_property.getGuid();
-    this._insert(guid, in_property, true);
-  } else {
-    throw new Error( MSG.CANT_INSERT_NON_NAMED_PROPERTIES );
-  }
+SetProperty.prototype.insert = function (in_property) {
+    if (in_property instanceof NamedProperty ||
+        in_property instanceof NamedNodeProperty) {
+        var guid = in_property.getGuid();
+        this._insert(guid, in_property, true);
+    } else {
+        throw new Error(MSG.CANT_INSERT_NON_NAMED_PROPERTIES);
+    }
 };
 
 /**
@@ -148,19 +148,19 @@ SetProperty.prototype.insert = function(in_property) {
  *
  * @param {NamedProperty|NamedNodeProperty|Object} in_property - The property to add to the list
  */
-SetProperty.prototype.set = function(in_property) {
-  this._checkIsNotReadOnly(true);
+SetProperty.prototype.set = function (in_property) {
+    this._checkIsNotReadOnly(true);
 
-  if (in_property instanceof NamedProperty || in_property instanceof NamedNodeProperty) {
-    var guid = in_property.getGuid();
-    if (this.has(guid)) {
-      this.remove(guid);
+    if (in_property instanceof NamedProperty || in_property instanceof NamedNodeProperty) {
+        var guid = in_property.getGuid();
+        if (this.has(guid)) {
+            this.remove(guid);
+        }
+
+        this.insert(in_property);
+    } else {
+        throw new Error(MSG.CANT_INSERT_NON_NAMED_PROPERTIES);
     }
-
-    this.insert(in_property);
-  } else {
-    throw new Error(MSG.CANT_INSERT_NON_NAMED_PROPERTIES);
-  }
 };
 
 /**
@@ -170,15 +170,15 @@ SetProperty.prototype.set = function(in_property) {
  * @return {property-properties.NamedProperty} the property that was removed.
  * @throws if trying to remove an entry that does not exist
  */
-SetProperty.prototype.remove = function(in_entry) {
-  if (_.isString(in_entry)) {
-    var item = this.get(in_entry);
-    this._removeByKey(in_entry, true);
-    return item;
-  } else {
-    this._removeByKey(in_entry.getGuid(), true);
-    return in_entry;
-  }
+SetProperty.prototype.remove = function (in_entry) {
+    if (_.isString(in_entry)) {
+        var item = this.get(in_entry);
+        this._removeByKey(in_entry, true);
+        return item;
+    } else {
+        this._removeByKey(in_entry.getGuid(), true);
+        return in_entry;
+    }
 };
 
 /**
@@ -190,8 +190,8 @@ SetProperty.prototype.remove = function(in_entry) {
  *
  * @return {Object<String, property-properties.NamedProperty>} The map with all entries in the set.
  */
-SetProperty.prototype.getEntriesReadOnly = function() {
-  return this._entries;
+SetProperty.prototype.getEntriesReadOnly = function () {
+    return this._entries;
 };
 
 /**
@@ -199,8 +199,8 @@ SetProperty.prototype.getEntriesReadOnly = function() {
  *
  * @return {Array.<string>} An array of all the property ids
  */
-SetProperty.prototype.getIds = function() {
-  return Object.keys( this._entries );
+SetProperty.prototype.getIds = function () {
+    return Object.keys(this._entries);
 };
 
 /**
@@ -217,28 +217,28 @@ SetProperty.prototype.getIds = function() {
  *
  * @return {property-properties.NamedProperty|undefined} The entry in the collection or undefined if none could be found
  */
-SetProperty.prototype.get = function(in_ids, in_options) {
-  if (_.isArray(in_ids)) {
-    // Forward handling of arrays to the BaseProperty function
-    return ContainerProperty.prototype.get.call(this, in_ids, in_options);
-  } else {
-    var prop = this;
-    in_options = in_options || {};
-    in_options.referenceResolutionMode =
-        in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-                                                           in_options.referenceResolutionMode;
-    if (in_ids === PATH_TOKENS.ROOT) {
-      prop = prop.getRoot();
-    } else if (in_ids === PATH_TOKENS.UP) {
-      prop = prop.getParent();
-    } else if (in_ids === PATH_TOKENS.REF) {
-      throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+SetProperty.prototype.get = function (in_ids, in_options) {
+    if (_.isArray(in_ids)) {
+        // Forward handling of arrays to the BaseProperty function
+        return ContainerProperty.prototype.get.call(this, in_ids, in_options);
     } else {
-      prop = prop._entries[in_ids];
-    }
+        var prop = this;
+        in_options = in_options || {};
+        in_options.referenceResolutionMode =
+            in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
+                in_options.referenceResolutionMode;
+        if (in_ids === PATH_TOKENS.ROOT) {
+            prop = prop.getRoot();
+        } else if (in_ids === PATH_TOKENS.UP) {
+            prop = prop.getParent();
+        } else if (in_ids === PATH_TOKENS.REF) {
+            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+        } else {
+            prop = prop._entries[in_ids];
+        }
 
-    return prop;
-  }
+        return prop;
+    }
 };
 
 /**
@@ -247,8 +247,8 @@ SetProperty.prototype.get = function(in_ids, in_options) {
  * @param {string} in_id - Name of the property
  * @return {boolean} True if the property exists, otherwise false.
  */
-SetProperty.prototype.has = function(in_id) {
-  return this._entries[in_id] !== undefined;
+SetProperty.prototype.has = function (in_id) {
+    return this._entries[in_id] !== undefined;
 };
 
 /**
@@ -259,24 +259,24 @@ SetProperty.prototype.has = function(in_id) {
  *   properties with that typeid, else use the set's typeid (support polymorphic items).
  * @private
  */
-SetProperty.prototype._setValuesInternal = function(in_properties, in_typed) {
-  this._checkIsNotReadOnly(true);
+SetProperty.prototype._setValuesInternal = function (in_properties, in_typed) {
+    this._checkIsNotReadOnly(true);
 
-  var that = this;
-  _.each(in_properties, function(property) {
-    if (property instanceof BaseProperty) {
-      that.set(property);
-    } else {
-      // If value is a JSON object (i.e: passed through a default value), create the property and add it to the set.
-      if (in_typed) {
-        that.set(Property.PropertyFactory._createProperty(
-          property.typeid || that._typeid, null, property.value, that._getScope()));
-      } else {
-        that.set(Property.PropertyFactory._createProperty(
-          that._typeid, null, property, that._getScope()));
-      }
-    }
-  });
+    var that = this;
+    _.each(in_properties, function (property) {
+        if (property instanceof BaseProperty) {
+            that.set(property);
+        } else {
+            // If value is a JSON object (i.e: passed through a default value), create the property and add it to the set.
+            if (in_typed) {
+                that.set(Property.PropertyFactory._createProperty(
+                    property.typeid || that._typeid, null, property.value, that._getScope()));
+            } else {
+                that.set(Property.PropertyFactory._createProperty(
+                    that._typeid, null, property, that._getScope()));
+            }
+        }
+    });
 };
 
 /**
@@ -289,12 +289,12 @@ SetProperty.prototype._setValuesInternal = function(in_properties, in_typed) {
  *   or if the function is called directly with the values to set.
  * @override
  */
-SetProperty.prototype._setValues = function(in_properties, in_typed, in_initial) {
-  if (in_initial) {
-    this.clear();
-  }
+SetProperty.prototype._setValues = function (in_properties, in_typed, in_initial) {
+    if (in_initial) {
+        this.clear();
+    }
 
-  this._setValuesInternal(in_properties, in_typed);
+    this._setValuesInternal(in_properties, in_typed);
 };
 
 /**
@@ -304,15 +304,15 @@ SetProperty.prototype._setValues = function(in_properties, in_typed, in_initial)
  * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
  * @override
  */
-SetProperty.prototype.setValues = function(in_properties) {
-  var checkoutView = this._getCheckoutView();
-  if (checkoutView !== undefined) {
-    checkoutView.pushNotificationDelayScope();
-    SetProperty.prototype._setValues.call(this, in_properties, false, false);
-    checkoutView.popNotificationDelayScope();
-  } else {
-    SetProperty.prototype._setValues.call(this, in_properties, false, false);
-  }
+SetProperty.prototype.setValues = function (in_properties) {
+    var checkoutView = this._getCheckoutView();
+    if (checkoutView !== undefined) {
+        checkoutView.pushNotificationDelayScope();
+        SetProperty.prototype._setValues.call(this, in_properties, false, false);
+        checkoutView.popNotificationDelayScope();
+    } else {
+        SetProperty.prototype._setValues.call(this, in_properties, false, false);
+    }
 };
 
 /**
@@ -323,8 +323,8 @@ SetProperty.prototype.setValues = function(in_properties) {
  * @return {Array.<property-properties.NamedProperty>} Array with all entries of the set. This array is a shallow copy
  * which can be modified by the caller without effects on the set.
  */
-SetProperty.prototype.getAsArray = function() {
-  return _.values(this._entries);
+SetProperty.prototype.getAsArray = function () {
+    return _.values(this._entries);
 };
 
 /**
@@ -334,24 +334,24 @@ SetProperty.prototype.getAsArray = function() {
  * @override
  * @private
  */
-SetProperty.prototype._getScope = function() {
-  var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
+SetProperty.prototype._getScope = function () {
+    var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-  if (scope !== undefined) {
-    return scope;
-  } else {
-    return this._scope;
-  }
+    if (scope !== undefined) {
+        return scope;
+    } else {
+        return this._scope;
+    }
 };
 
 /**
  * Delete all values from Set
  */
-SetProperty.prototype.clear = function() {
-  var that = this;
-  this.getIds().forEach(function(id) {
-    that.remove(id);
-  });
+SetProperty.prototype.clear = function () {
+    var that = this;
+    this.getIds().forEach(function (id) {
+        that.remove(id);
+    });
 };
 
 module.exports = SetProperty;
