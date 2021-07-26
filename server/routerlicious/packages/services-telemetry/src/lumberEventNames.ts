@@ -12,4 +12,7 @@ export enum LumberEventName {
 
     // Unit Testing
     UnitTestEvent = "UnitTestEvent",
+
+    // Lambdas
+    DeliHandler = "DeliHandler",
 }

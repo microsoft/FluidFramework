@@ -28,6 +28,10 @@ export enum SchemaProperties {
     statusCode = "statusCode",
 }
 
+export enum CommonProperties {
+    restart = "restart",
+}
+
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber
 // to process and emit collected data to the appropriate transports.
 export interface ILumberjackEngine {
