@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -48,8 +49,9 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
-    private static readonly pendingOpsCountThreshold = 1000;
+    private static readonly pendingOpsCountThreshold = 300;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -83,9 +85,11 @@ export class RemoteChannelContext implements IChannelContext {
             async () => gcDetailsInInitialSummary(),
         );
 
+        this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
         this.thresholdOpsCounter = new ThresholdCounter(
             RemoteChannelContext.pendingOpsCountThreshold,
-            ChildLogger.create(this.runtime.logger, "RemoteChannelContext"));
+            this.subLogger,
+        );
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

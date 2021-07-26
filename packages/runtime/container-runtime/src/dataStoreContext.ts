@@ -146,6 +146,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.clientDetails;
     }
 
+    public get logger(): ITelemetryLogger {
+        return this._containerRuntime.logger;
+    }
+
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this._containerRuntime.deltaManager;
     }
@@ -204,9 +208,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
-    public readonly logger: ITelemetryLogger;
+    private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
-    private static readonly pendingOpsCountThreshold = 1000;
+    private static readonly pendingOpsCountThreshold = 300;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -246,8 +250,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async () => this.getInitialGCSummaryDetails(),
         );
 
-        this.logger = ChildLogger.create(_containerRuntime.logger, "FluidDataStoreContext");
-        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.logger);
+        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
     }
 
     public dispose(): void {
