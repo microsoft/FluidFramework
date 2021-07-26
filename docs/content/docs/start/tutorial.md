@@ -1,5 +1,5 @@
 ---
-title: Tutorial
+title: 'Tutorial: Create a Fluid Framework application'
 menuPosition: 3
 aliases:
   - "/docs/get-started/tutorial/"
