@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/test-dds-utils",
-  "version": "0.39.8",
+  "version": "0.39.9",
   "private": true,
   "description": "Fluid DDS test utilities",
   "homepage": "https://fluidframework.com",
@@ -46,7 +46,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/shared-object-base": "^0.39.8",
+    "@fluidframework/shared-object-base": "^0.39.9",
     "assert": "^2.0.0"
   },
   "devDependencies": {

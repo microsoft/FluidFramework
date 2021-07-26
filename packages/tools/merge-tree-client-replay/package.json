@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/merge-tree-client-replay",
-  "version": "0.39.8",
+  "version": "0.39.9",
   "private": true,
   "description": "A tool that lets the user to replay ops.",
   "homepage": "https://fluidframework.com",
@@ -30,12 +30,12 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.30.0",
-    "@fluidframework/container-runtime": "^0.39.8",
-    "@fluidframework/file-driver": "^0.39.8",
-    "@fluidframework/merge-tree": "^0.39.8",
+    "@fluidframework/container-runtime": "^0.39.9",
+    "@fluidframework/file-driver": "^0.39.9",
+    "@fluidframework/merge-tree": "^0.39.9",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/runtime-definitions": "^0.39.8",
-    "@fluidframework/sequence": "^0.39.8",
+    "@fluidframework/runtime-definitions": "^0.39.9",
+    "@fluidframework/sequence": "^0.39.9",
     "assert": "^2.0.0"
   },
   "devDependencies": {
