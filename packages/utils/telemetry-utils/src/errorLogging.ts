@@ -119,14 +119,6 @@ type FluidErrorBuilder = {
     -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
 };
 
-/**
- * Helper type, not exported.
- * Makes IFluidErrorBuilder's props all type unknown for querying if they're already valid
- */
- type FluidErrorProperties = {
-    -readonly [P in keyof IFluidErrorBase]: unknown;
-};
-
 /** Returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder */
 function prepareFluidErrorTemplate(
     originalError: unknown,
@@ -137,7 +129,9 @@ function prepareFluidErrorTemplate(
     const fullErrorCodeIfNone = errorCodeIfNone === undefined
         ? "none"
         : `none (${errorCodeIfNone})`;
-    const { errorType, fluidErrorCode, message, name, stack } = originalError as FluidErrorProperties;
+    // Pull each of IFluidErrorBase's properties off the originalError, regardless of their type
+    const { errorType, fluidErrorCode, message, name, stack } =
+        originalError as { [P in keyof IFluidErrorBase]: unknown; };
     return {
         errorType:
             typeof errorType === "string"
