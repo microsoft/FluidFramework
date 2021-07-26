@@ -30,7 +30,7 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
-        if (existing) {
+        if (!existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
             consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
