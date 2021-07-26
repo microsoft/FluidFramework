@@ -2,7 +2,7 @@
 title: Introducing distributed data structures
 menuPosition: 4
 aliases:
-  - "docs/concepts/dds/"
+  - "/docs/concepts/dds/"
 author: tylerbutler
 editor: sambroner
 ---
@@ -226,7 +226,7 @@ These DDSes are used for storing sequential data. They are all optimistic.
 * [SharedString][] -- a specialized data structure for handling collaborative text.
 * [Ink][] -- a specialized data structure for ink data.
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->

@@ -19,9 +19,9 @@ Fluid clients require a centralized service that all connected clients use to se
 
 Each service specific package adhere to a common API structure and has the primary goal of creating and retrieving container objects.
 
-The [Tinylicious service]({{< relref "Tinylicious" >}}) is a local testing service and is used in Fluid examples throughout this documentation. Other services include the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) service which enables high-scale production scenarios.
+The [Tinylicious service]({{< relref "Tinylicious" >}}) is a local testing service and is used in Fluid examples throughout this documentation. Other services include the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) which enables high-scale production scenarios.
 
-See [Supported service-specific client packages](#Supported-service-specific-client-packages) for more details.
+See [Supported service-specific client packages](#service-specific-client-packages) for more details.
 
 ### Container
 
@@ -48,10 +48,8 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 The Tinylicious service is a local Fluid service. This documentation uses `@fluid-experimental/tinylicious-client` (or simply `client`). For specifics about each service-specific client implementation see their corresponding documentation.
 
-#### Supported service-specific client packages
-
 - `@fluid-experimental/tinylicious-client` -- the client for the [Tinylicious]({{< relref "Tinylicious" >}}) service.
-- `@fluid-experimental/frs-client` -- the client for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) service.
+- `@fluid-experimental/frs-client` -- the client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
 
 ### The `fluid-framework` package
 

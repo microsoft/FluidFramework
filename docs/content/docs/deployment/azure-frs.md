@@ -3,17 +3,13 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-# Introduction
-
-Azure Fluid Relay service (FRS) is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `FrsClient` in your own application.
 
-{{< callout important >}}
-The steps below assume you are onboarded to Azure Fluid Relay service. Azure Fluid Relay is currently in _Private Preview_.
-{{< /callout >}}
+{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
-# Connecting to the Service
+## Connecting to the Service
 
 To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `frs-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
 
@@ -35,16 +31,16 @@ const client = new FrsClient(config);
 
 Now that you have an instance of `FrsClient`, you can start using it to create or load Fluid containers!
 
-## Token providers
+### Token providers
 
 Coming soon!
 
-# Managing containers
+## Managing containers
 
 The `FrsClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
 
-- A _container config_ that defines the ID of the container and an optional entry point for logging.
-- A _container schema_ that defines the container data model.
+* A *container config* that defines the ID of the container and an optional entry point for logging.
+* A *container schema* that defines the container data model.
 
 ```javascript
 const schema = {
@@ -65,7 +61,7 @@ For the further information on how to start recording logs being emitted by Flui
 
 The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling]({{< relref "data-modeling.md" >}}) to learn more about how to establish the schema and use the `FluidContainer` object.
 
-# Getting Audience Details
+## Getting Audience Details
 
 Calls to `createContainer` and `getContainer` return an `FrsResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
 
@@ -99,8 +95,9 @@ audience.on("membersChanged", onAudienceChanged);
 ```
 
 `audience` provides two functions that will return `FrsMember` objects that have a user ID and user name:
-- `getMembers` returns a map of all the users connected to the container. These values will change anytime a member joins or leaves the container.
-- `getMyself` returns the current user on this client.
+
+* `getMembers` returns a map of all the users connected to the container. These values will change anytime a member joins or leaves the container.
+* `getMyself` returns the current user on this client.
 
 `audience` also emits events for when the roster of members changes. `membersChanged` will fire for any roster changes, whereas `memberAdded` and `memberRemoved` will fire for their respective changes with the `clientId` and `member` values that have been modified. After any of these events fire, a new call to `getMembers` will return the updated member roster.
 
@@ -127,4 +124,5 @@ Alongside the user ID and name, `FrsMember` objects also hold an array of `conne
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 
-**Congratulations!** You have now succesfully connected your Fluid container to the FRS service and fetched back user details for the members in your collaborative session!!
+**Congratulations!** You have now successfully connected your Fluid container to the Azure Fluid Relay service and
+fetched back user details for the members in your collaborative session!!

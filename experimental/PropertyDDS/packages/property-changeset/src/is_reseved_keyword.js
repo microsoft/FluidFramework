@@ -11,12 +11,12 @@
  * @return {boolean} - True if it is a reserved keyword
  */
 var isReservedKeyword = function(in_key) {
-  return in_key === 'insert' ||
-         in_key === 'remove' ||
-         in_key === 'modify' ||
-         in_key === '.children' || // To be removed
-         in_key === 'typeid' ||
-         in_key === 'insertTemplates';
+    return in_key === 'insert' ||
+        in_key === 'remove' ||
+        in_key === 'modify' ||
+        in_key === '.children' || // To be removed
+        in_key === 'typeid' ||
+        in_key === 'insertTemplates';
 };
 
 module.exports = isReservedKeyword;

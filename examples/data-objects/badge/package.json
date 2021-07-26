@@ -38,7 +38,7 @@
     "@fluidframework/aqueduct": "^0.45.0",
     "@fluidframework/cell": "^0.45.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^0.39.5",
+    "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore-definitions": "^0.45.0",
     "@fluidframework/map": "^0.45.0",
     "@fluidframework/sequence": "^0.45.0",

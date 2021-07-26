@@ -1,5 +1,5 @@
 ---
-title: Tutorial
+title: 'Tutorial: Create a Fluid Framework application'
 menuPosition: 3
 aliases:
   - "/docs/get-started/tutorial/"
@@ -192,7 +192,7 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivEleme
 
 The [full code for this application is available](https://github.com/microsoft/FluidHelloWorld) for you to try out. Try opening it in multiple browser windows to see the changes reflected between clients.
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->
