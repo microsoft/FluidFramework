@@ -15,7 +15,7 @@ import {
     TokenFetchOptions,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
-import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
+import { IOdspSnapshot, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -23,7 +23,6 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
-    ISnapshotCacheValueWithVersion,
     ISnapshotValue,
 } from "./odspUtils";
 import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
@@ -276,14 +275,10 @@ async function fetchLatestSnapshotCore(
                 } else if (canCache) {
                     const fluidEpoch = response.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
-                    const snapshotValueWithVersion: ISnapshotCacheValueWithVersion = {
-                        ...snapshot,
-                        version: 2,
-                    };
                     const valueWithEpoch: IVersionedValueWithEpoch = {
-                        value: snapshotValueWithVersion,
+                        value: snapshot,
                         fluidEpoch,
-                        version: 2,
+                        version: persistedCacheValueVersion,
                     };
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     putInCache(valueWithEpoch);

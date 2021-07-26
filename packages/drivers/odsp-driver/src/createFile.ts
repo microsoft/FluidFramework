@@ -29,7 +29,6 @@ import {
     INewFileInfo,
     getOrigin,
     ISnapshotValue,
-    ISnapshotCacheValueWithVersion,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -83,8 +82,7 @@ export async function createNewFluidFile(
         // converting summary and getting sequence number
         const snapshot: ISnapshotValue = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
         // caching the converted summary
-        const cacheValue: ISnapshotCacheValueWithVersion = { ...snapshot, version: 2 };
-        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), cacheValue);
+        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
 
     return odspResolvedUrl;

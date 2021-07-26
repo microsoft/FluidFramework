@@ -50,10 +50,6 @@ export interface ISnapshotValue {
     sequenceNumber: number | undefined,
 }
 
-export interface ISnapshotCacheValueWithVersion extends ISnapshotValue {
-    version: number,
-}
-
 export interface IOdspResponse<T> {
     content: T;
     headers: Map<string, string>;
