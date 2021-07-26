@@ -49,7 +49,6 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
-    readAndParseFromBlobs,
     runWithRetry,
 } from "@fluidframework/driver-utils";
 import {
@@ -782,7 +781,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x0d5 /* "closed" */);
 
         // If container is already attached or attach is in progress, throw an error.
-        assert(this._attachState === AttachState.Detached && !this.attachStarted, "attach() called more than once");
+        assert(this._attachState === AttachState.Detached && !this.attachStarted,
+            0x205 /* "attach() called more than once" */);
         this.attachStarted = true;
 
         // If attachment blobs were uploaded in detached state we will go through a different attach flow
@@ -847,7 +847,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     proposalHandle: undefined,
                 });
 
-                assert(!hasAttachmentBlobs, "attaching container with blobs is not yet implemented");
+                assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
             }
 
             this._attachState = AttachState.Attached;
@@ -1311,14 +1311,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         (this.storage as ContainerStorageAdapter).loadSnapshotForRehydratingContainer(snapshotTree);
-        const attributes = await this.getDocumentAttributes(undefined, snapshotTree);
+        const attributes = await this.getDocumentAttributes(this.storage, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, undefined, snapshotTree);
+            await this.loadAndInitializeProtocolState(attributes, this.storage, snapshotTree);
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1352,7 +1352,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async getDocumentAttributes(
-        storage: IDocumentStorageService | undefined,
+        storage: IDocumentStorageService,
         tree: ISnapshotTree | undefined,
     ): Promise<IDocumentAttributes> {
         if (tree === undefined) {
@@ -1369,8 +1369,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             ? tree.trees[".protocol"].blobs.attributes
             : tree.blobs[".attributes"];
 
-        const attributes = storage !== undefined ? await readAndParse<IDocumentAttributes>(storage, attributesHash)
-            : readAndParseFromBlobs<IDocumentAttributes>(tree.trees[".protocol"].blobs, attributesHash);
+        const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 
         // Backward compatibility for older summaries with no term
         if (attributes.term === undefined) {
@@ -1382,7 +1381,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async loadAndInitializeProtocolState(
         attributes: IDocumentAttributes,
-        storage: IDocumentStorageService | undefined,
+        storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
     ): Promise<ProtocolOpHandler> {
         let members: [string, ISequencedClient][] = [];
@@ -1391,20 +1390,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         if (snapshot !== undefined) {
             const baseTree = ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
-            if (storage !== undefined) {
-                [members, proposals, values] = await Promise.all([
-                    readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
-                    readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
-                    readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
-                ]);
-            } else {
-                members = readAndParseFromBlobs<[string, ISequencedClient][]>(snapshot.trees[".protocol"].blobs,
-                    baseTree.blobs.quorumMembers);
-                proposals = readAndParseFromBlobs<[number, ISequencedProposal, string[]][]>(
-                    snapshot.trees[".protocol"].blobs, baseTree.blobs.quorumProposals);
-                values = readAndParseFromBlobs<[string, ICommittedProposal][]>(snapshot.trees[".protocol"].blobs,
-                    baseTree.blobs.quorumValues);
-            }
+            [members, proposals, values] = await Promise.all([
+                readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
+                readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
+                readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
+            ]);
         }
 
         const protocolHandler = await this.initializeProtocolState(

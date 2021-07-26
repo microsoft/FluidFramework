@@ -26,7 +26,7 @@
         {{- if ne .URL "" -}}
         {{ $isCurrentPage := eq .URL $current.RelPermalink }}
         <li class="panel {{if $isCurrentPage }}active{{end}}">
-            <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ .Name }}"
+            <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ default .Name .Title }}"
                 href="{{.URL}}" data-parent="#main-nav">{{ .Name }}</a>
             {{- else -}}
         <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
@@ -38,7 +38,7 @@
                 {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
                 {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
                 <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{ .RelPermalink }}" {{ if $isCurrentPage }}aria-label="Current Page: {{ .Title | safeHTML }} " {{ end }}>
+                    <a href="{{ .RelPermalink }}" {{ if $isCurrentPage }}aria-label="Current Page: {{ (default .Name .Title) | safeHTML }} " {{ end }}>
                         {{ .Title }} </a>
                 </li>
                 {{- end }}
