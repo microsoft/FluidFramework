@@ -17,11 +17,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../runningSummarizer";
-import { SummarizerStopReason } from "../summarizerTypes";
+import { ISummarizerOptions, SummarizerStopReason } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
+import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
 describe("Runtime", () => {
-    describe("Container Runtime", () => {
+    describe("Summarization", () => {
         describe("RunningSummarizer", () => {
             let stopCall: number;
             let runCount: number;
@@ -123,7 +124,9 @@ describe("Runtime", () => {
                     `${errorPrefix}unexpected refreshLatestAck count`);
             }
 
-            const startRunningSummarizer = async (): Promise<void> => {
+            const startRunningSummarizer = async (
+                summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
+            ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
                     summarizerClientId,
                     onBehalfOfClientId,
@@ -131,7 +134,7 @@ describe("Runtime", () => {
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
                     {
-                        generateSummary: async (options) => {
+                        submitSummary: async (options) => {
                             runCount++;
 
                             const { fullTree = false, refreshLatestAck = false } = options;
@@ -174,10 +177,10 @@ describe("Runtime", () => {
                             stopCall++;
                         },
                     },
-                    0,
-                    { refSequenceNumber: 0, summaryTime: Date.now() },
+                    new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
                     summaryCollection,
+                    summarizerOptions,
                 );
             };
 
@@ -352,6 +355,26 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(2, 0, 0);
                     deferGenerateSummary.resolve();
+                });
+
+                it("Should summarize one last time before closing >50 ops", async () => {
+                    await emitNextOp(51); // hard-coded to 50 for now
+                    const stopP = summarizer.waitStop();
+                    await flushPromises();
+                    await emitAck();
+                    await stopP;
+
+                    assertRunCounts(1, 0, 0, "should perform lastSummary");
+                });
+
+                it("Should not summarize one last time before closing <=50 ops", async () => {
+                    await emitNextOp(50); // hard-coded to 50 for now
+                    const stopP = summarizer.waitStop();
+                    await flushPromises();
+                    await emitAck();
+                    await stopP;
+
+                    assertRunCounts(0, 0, 0, "should not perform lastSummary");
                 });
             });
 
@@ -604,7 +627,7 @@ describe("Runtime", () => {
             describe("Summary Start", () => {
                 it("Should summarize immediately if summary ack is missing at startup", async () => {
                     assertRunCounts(0, 0, 0);
-                    // Simulate as summary op was in opstream.
+                    // Simulate as summary op was in op stream.
                     const summaryTimestamp = Date.now();
                     emitBroadcast(summaryTimestamp);
 
@@ -645,6 +668,69 @@ describe("Runtime", () => {
                     assert(mockLogger.matchEvents([
                         { eventName: "Running:Summarize_end", summaryGenTag: runCount, reason: "maxOps" },
                     ]), "unexpected log sequence 3");
+                });
+            });
+
+            describe("Disabled Heuristics", () => {
+                it("Should not summarize after time or ops", async () => {
+                    await startRunningSummarizer({ disableHeuristics: true });
+
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after maxOps");
+
+                    await tickAndFlushPromises(summaryConfig.idleTime + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after idleTime");
+
+                    await tickAndFlushPromises(summaryConfig.maxTime + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after maxTime");
+
+                    await emitNextOp(summaryConfig.maxOps * 3 + 10000);
+                    await tickAndFlushPromises(summaryConfig.maxTime * 3 + summaryConfig.idleTime * 3 + 10000);
+                    assertRunCounts(0, 0, 0, "make extra sure");
+                });
+
+                it("Should not summarize before closing", async () => {
+                    await startRunningSummarizer({ disableHeuristics: true });
+
+                    await emitNextOp(51); // hard-coded to 50 for now
+                    const stopP = summarizer.waitStop();
+                    await flushPromises();
+                    await emitAck();
+                    await stopP;
+
+                    assertRunCounts(0, 0, 0, "should not perform lastSummary");
+                });
+
+                it("Should not summarize immediately if summary ack is missing at startup when disabled", async () => {
+                    assertRunCounts(0, 0, 0);
+                    // Simulate as summary op was in op stream.
+                    const summaryTimestamp = Date.now();
+                    emitBroadcast(summaryTimestamp);
+
+                    let startStatus: "starting" | "started" | "failed" = "starting";
+                    startRunningSummarizer({ disableHeuristics: true }).then(
+                        () => startStatus = "started", () => startStatus = "failed");
+                    await flushPromises();
+                    assert.strictEqual(startStatus, "starting",
+                        "RunningSummarizer should still be starting since outstanding summary op");
+
+                    // Still should be waiting
+                    await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime - 1);
+                    assert.strictEqual(startStatus, "starting",
+                        "RunningSummarizer should still be starting since timestamp is within maxAckWaitTime");
+
+                    // Emit next op after maxAckWaitTime
+                    // clock.tick(summaryConfig.maxAckWaitTime + 1000);
+                    await emitNextOp(1, summaryTimestamp + summaryConfig.maxAckWaitTime);
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:MissingSummaryAckFoundByOps" },
+                    ]), "unexpected log sequence 1");
+
+                    assert.strictEqual(startStatus, "started",
+                        "RunningSummarizer should be started from the above op");
+
+                    await emitNextOp(summaryConfig.maxOps + 1);
+                    assertRunCounts(0, 0, 0, "Should not run summarizer");
                 });
             });
         });

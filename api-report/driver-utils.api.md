@@ -295,7 +295,7 @@ export class RateLimiter {
 // @public
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function readAndParseFromBlobs<T>(blobs: {
     [index: string]: string;
 }, id: string): T;
