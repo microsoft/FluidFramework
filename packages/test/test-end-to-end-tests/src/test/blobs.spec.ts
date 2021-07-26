@@ -33,7 +33,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 
     public get size() { return this.blobCount; }
 
-    public getIds(): string[] {
+    public getBlobIds(): string[] {
         return Array.from(this.blobs.keys()).map((id) => id.toString());
     }
 

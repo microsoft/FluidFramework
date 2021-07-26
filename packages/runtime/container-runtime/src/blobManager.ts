@@ -60,8 +60,6 @@ export class BlobManager {
     // map of detached blob IDs to IDs used by storage. used to support blob handles given out while detached
     private redirectTable: Map<string, string> | undefined;
 
-    public get blobCount() { return this.blobIds.size; }
-
     constructor(
         private readonly routeContext: IFluidHandleContext,
         private readonly getStorage: () => IDocumentStorageService,
@@ -77,8 +75,7 @@ export class BlobManager {
     }
 
     private hasBlob(id: string): boolean {
-        return this.blobIds.has(id) || this.pendingBlobIds.has(id) ||
-            this.detachedBlobIds.has(id) || !!this.redirectTable?.has(id);
+        return this.blobIds.has(id) || this.detachedBlobIds.has(id);
     }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -95,6 +92,7 @@ export class BlobManager {
     public async createBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         if (this.runtime.attachState === AttachState.Attaching) {
             // blob upload is not supported in "Attaching" state
+            this.logger.sendTelemetryEvent({ eventName: "CreateBlobWhileAttaching" });
             await new Promise<void>((res) => this.runtime.once("attached", res));
         }
 

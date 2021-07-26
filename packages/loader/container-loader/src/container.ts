@@ -841,7 +841,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const redirectTable = new Map<string, string>();
                 // if new blobs are added while uploading, upload them too
                 while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
-                    const newIds = this.loader.services.detachedBlobStorage.getIds().filter(
+                    const newIds = this.loader.services.detachedBlobStorage.getBlobIds().filter(
                         (id) => !redirectTable.has(id));
                     for (const id of newIds) {
                         const blob = await this.loader.services.detachedBlobStorage.readBlob(id);
