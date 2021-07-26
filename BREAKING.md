@@ -1,4 +1,10 @@
 ## 0.44 Breaking changes
+- [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
+
+### Property removed from IFluidDataStoreRuntime
+- the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
+
+## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)
 - [Loader access in data stores is removed](#loader-access-in-data-stores-is-removed)
