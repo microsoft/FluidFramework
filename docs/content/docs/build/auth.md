@@ -107,7 +107,7 @@ generate tokens rather than signing them locally like the `InsecureTokenProvider
 
 ## Adding custom data to tokens
 
-{{< unwritten-section >}}
+{{< placeholder >}}
 
 ## Connecting user auth to Fluid service auth
 

@@ -1,9 +1,11 @@
 ---
 title: Grouped Ops
-menuPosition: 4
+menuPosition: 6
+status: unwritten
+discussion: 5468
+aliases:
+  - "/docs/advanced/grouped-ops/"
 ---
-
-{{< ArticleStatus 5468 >}}
 
 Grouped ops provide a guarantee that all ops within a group will be ordered as a whole group.
 
