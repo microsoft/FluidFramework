@@ -38,12 +38,10 @@ import { IOdspCache } from "./odspCache";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
-    ISnapshotCacheValue,
     ISnapshotValue,
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
-import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
 
 /* eslint-disable max-len */
 
@@ -415,8 +413,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    let cachedSnapshot: ISnapshotCacheValue | ISnapshotValue | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotCacheValue | ISnapshotValue | undefined> =
+                    let cachedSnapshot: ISnapshotValue | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotValue | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                     let method: string;
@@ -447,13 +445,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         }
                     }
                     event.end({ method });
-                    // If the cached snapshot value does not contains version, then it means it if of older(IOdspSnapshot)
-                    // format. So convert it to ISnapshotTree/blobs etc.
-                    if (method === "cache" && !(cachedSnapshot as any).version) {
-                        const oldformatSnapshot = cachedSnapshot as ISnapshotCacheValue;
-                        return convertOdspSnapshotToSnapsohtTreeAndBlobs(oldformatSnapshot.snapshot);
-                    }
-                    return cachedSnapshot as ISnapshotValue;
+                    return cachedSnapshot;
                 });
 
             // Successful call, redirect future calls to getVersion only!

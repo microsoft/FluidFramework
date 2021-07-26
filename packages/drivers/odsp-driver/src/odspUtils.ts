@@ -38,11 +38,6 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
-export interface ISnapshotCacheValue {
-    snapshot: IOdspSnapshot;
-    sequenceNumber: number | undefined;
-}
-
 export interface ISnapshotValue {
     snapshotTree: ISnapshotTree,
     blobs: Map<string, ArrayBuffer>,
