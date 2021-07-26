@@ -173,7 +173,8 @@ export class SharedTextRunner
             this.collabDoc,
             this.sharedString.id,
             options.translationFromLanguage as string,
-            options.translationToLanguage as string)
+            options.translationToLanguage as string,
+            existing)
             .catch((error) => {
                 console.error("Problem adding translation", error);
             });
@@ -217,7 +218,6 @@ export class SharedTextRunner
                 this.context,
                 this.rootView,
                 () => { throw new Error("Can't close document"); },
-                true, /* existing */
             ),
             this.sharedString,
             image,

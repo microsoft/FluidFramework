@@ -23,7 +23,7 @@ export class Document {
             root = await runtime.getChannel(rootMapId) as ISharedMap;
         }
 
-        return new Document(runtime, root, existing);
+        return new Document(runtime, root);
     }
 
     /**
@@ -32,7 +32,6 @@ export class Document {
      private constructor(
         public runtime: IFluidDataStoreRuntime,
         private readonly root: ISharedMap,
-        public readonly existing: boolean,
     ) { }
 
     public getRoot(): ISharedMap {

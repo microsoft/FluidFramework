@@ -1,8 +1,12 @@
 ## 0.45 Breaking changes
 - [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
+- [Changes to client-api Document](#changes-to-client-api-Document)
 
 ### Property removed from IFluidDataStoreRuntime
 - the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` function has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
+
+### Changes to client-api Document
+- The `existing` property from the `Document` class in `@fluid-internal/client-api` has been removed. It can be assumed that the property would have always been `true`.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

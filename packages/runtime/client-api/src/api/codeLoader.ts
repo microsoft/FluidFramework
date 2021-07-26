@@ -94,7 +94,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         // Create the underlying Document
         const createDocument = async () => {
             root = await runtime.getChannel(rootMapId) as map.ISharedMap;
-            return new Document(runtime, context, root, this.closeFn, backCompatExisting);
+            return new Document(runtime, context, root, this.closeFn);
         };
 
         const routerP = createDocument();
