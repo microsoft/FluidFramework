@@ -35,7 +35,7 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import {
-    instantiateExisting,
+    isContextExisting,
     RequestParser,
     create404Response,
 } from "@fluidframework/runtime-utils";
@@ -284,7 +284,7 @@ export function instantiateDataStore(context: IFluidDataStoreContext, existing?:
             return router.request(request);
         });
 
-    const backCompatExisting = instantiateExisting(context, existing);
+    const backCompatExisting = isContextExisting(context, existing);
     const runtime = new runtimeClass(
         context,
         new Map([

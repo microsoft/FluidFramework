@@ -35,7 +35,7 @@ export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
  * context. To be removed after `existing` is a required parameter in
  * IFluidDataStoreFactory.instantiateDataStore
  */
-export const instantiateExisting = (context: IFluidDataStoreContext, existing?: boolean): boolean =>
+export const isContextExisting = (context: IFluidDataStoreContext, existing?: boolean): boolean =>
     existing === undefined
         ? context.existing === true
         : existing;

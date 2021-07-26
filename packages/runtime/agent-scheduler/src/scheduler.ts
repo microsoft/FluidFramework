@@ -18,7 +18,7 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { instantiateExisting } from "@fluidframework/runtime-utils";
+import { isContextExisting } from "@fluidframework/runtime-utils";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
@@ -403,6 +403,6 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        return new AgentSchedulerRuntime(context, dataTypes, instantiateExisting(context, existing));
+        return new AgentSchedulerRuntime(context, dataTypes, isContextExisting(context, existing));
     }
 }

@@ -27,7 +27,7 @@ import {
     FluidObjectSymbolProvider,
     DependencyContainer,
 } from "@fluidframework/synthesize";
-import { instantiateExisting } from "@fluidframework/runtime-utils";
+import { isContextExisting } from "@fluidframework/runtime-utils";
 
 import {
     IDataObjectProps,
@@ -159,7 +159,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
             this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeClass,
-            instantiateExisting(context, existing));
+            isContextExisting(context, existing));
 
         return runtime;
     }

@@ -33,7 +33,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { instantiateExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { isContextExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -488,7 +488,7 @@ class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFacto
                 return router.request(request);
             });
 
-        const backCompatExisting = instantiateExisting(context, existing);
+        const backCompatExisting = isContextExisting(context, existing);
         const runtime = new runtimeClass(
             context,
             new Map([

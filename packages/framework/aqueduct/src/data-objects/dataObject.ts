@@ -9,7 +9,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
-import { RequestParser, create404Response, instantiateExisting } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response, isContextExisting } from "@fluidframework/runtime-utils";
 import { IEvent } from "@fluidframework/common-definitions";
 import { PureDataObject } from "./pureDataObject";
 
@@ -63,7 +63,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
      * Caller is responsible for ensuring this is only invoked once.
      */
     public async initializeInternal(existing?: boolean): Promise<void> {
-        const backCompatExisting = instantiateExisting(this.context, existing);
+        const backCompatExisting = isContextExisting(this.context, existing);
 
         if (!backCompatExisting) {
             // Create a root directory and register it before calling initializingFirstTime

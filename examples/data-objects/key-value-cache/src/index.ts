@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
-import { instantiateExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { isContextExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
@@ -114,7 +114,7 @@ export class KeyValueFactoryComponent
                 return router.request(request);
             });
 
-        const backCompatExisting = instantiateExisting(context, existing);
+        const backCompatExisting = isContextExisting(context, existing);
         const runtime = new runtimeClass(
             context,
             new Map([

@@ -28,7 +28,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { create404Response, instantiateExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { create404Response, isContextExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -61,7 +61,7 @@ export class Chaincode implements IFluidDataStoreFactory {
             },
             this.dataStoreFactory);
 
-        const backCompatExisting = instantiateExisting(context, existing);
+        const backCompatExisting = isContextExisting(context, existing);
         const runtime = new runtimeClass(
             context,
             new Map([
