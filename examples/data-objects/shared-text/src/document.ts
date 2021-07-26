@@ -23,9 +23,7 @@ export class Document {
             root = await runtime.getChannel(rootMapId) as ISharedMap;
         }
 
-        const document = new Document(runtime, root, existing);
-
-        return document;
+        return new Document(runtime, root, existing);
     }
 
     /**

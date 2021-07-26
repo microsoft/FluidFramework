@@ -41,13 +41,13 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
      * DataObject, by registering an event listener for dice rolls.
      */
-     protected async initialize(existing: boolean) {
+    protected async initialize(existing: boolean) {
         if (existing) {
             const treeHandle = await this.root.wait<IFluidHandle<SharedPropertyTree>>(propertyKey);
             if (this._queryString !== undefined) {
                 // The absolutePath of the DDS should not be updated. Instead, a new handle can be created with the new
                 // path. To be fixed with this issue - https://github.com/microsoft/FluidFramework/issues/6036
-                (treeHandle as any).absolutePath += `?${  this._queryString}`;
+                (treeHandle as any).absolutePath += `?${this._queryString}`;
             }
             this._tree = await treeHandle.get();
         } else {

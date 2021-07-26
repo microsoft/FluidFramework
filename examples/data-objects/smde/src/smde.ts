@@ -39,7 +39,7 @@ export class Smde extends EventEmitter implements
     IFluidRouter,
     IFluidHTMLView {
     public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
-            const collection = new Smde(runtime, context);
+        const collection = new Smde(runtime, context);
         await collection.initialize(existing);
 
         return collection;
