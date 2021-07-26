@@ -82,7 +82,12 @@ export interface IRuntime extends IDisposable {
      */
     processSignal(message: any, local: boolean);
 
-    createSummary(): ISummaryTree;
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     * @param blobRedirectTable - A table passed during the attach process. Used to support blobs in detached container
+     * by mapping IDs assigned locally while detached to IDs assigned by storage after attach.
+     */
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
 
     /**
      * Propagate the container state when container is attaching or attached.
