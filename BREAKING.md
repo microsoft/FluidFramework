@@ -1,12 +1,25 @@
 ## 0.45 Breaking changes
 - [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
 - [Changes to client-api Document](#changes-to-client-api-Document)
+- [Changes to PureDataObject](#changes-to-PureDataObject)
+- [Changes to DataObject](#changes-to-DataObject)
+- [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
 
 ### Property removed from IFluidDataStoreRuntime
 - the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` function has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
 
 ### Changes to client-api Document
 - The `existing` property from the `Document` class in `@fluid-internal/client-api` has been removed. It can be assumed that the property would have always been `true`.
+
+### Changes to PureDataObject
+- The `initializeInternal` function, the `finishInitialization` and the `getDataObject` static function have a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to DataObject
+- The `initializeInternal` function has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to PureDataObjectFactory
+- The `instantiateDataStore` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
+
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
