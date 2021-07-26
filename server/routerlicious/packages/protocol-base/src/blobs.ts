@@ -112,21 +112,6 @@ export class BlobTreeEntry {
 }
 
 /**
- * Basic implementation of a commit ITreeEntry
- */
-export class CommitTreeEntry {
-    public readonly mode = FileMode.Commit;
-    public readonly type = TreeEntry.Commit;
-
-    /**
-     * Creates a commit ITreeEntry
-     * @param path - path of entry
-     * @param value - commit value
-     */
-    constructor(public readonly path: string, public readonly value: string) { }
-}
-
-/**
  * Basic implementation of a tree ITreeEntry
  */
 export class TreeTreeEntry {

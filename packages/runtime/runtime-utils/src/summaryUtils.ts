@@ -214,9 +214,6 @@ export function convertToSummaryTreeWithStats(
                 break;
             }
 
-            case TreeEntry.Commit:
-                throw new Error("Should not have Commit TreeEntry in summary");
-
             default:
                 throw new Error("Unexpected TreeEntry type");
         }

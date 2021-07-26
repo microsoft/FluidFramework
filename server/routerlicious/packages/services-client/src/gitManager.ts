@@ -263,10 +263,6 @@ export class GitManager implements IGitManager {
                     entriesP.push(treeBlobP);
                     break;
 
-                case api.TreeEntry.Commit:
-                    entriesP.push(Promise.resolve({ sha: entry.value as string, url: "" }));
-                    break;
-
                 default:
                     return Promise.reject(new Error("Unknown entry type"));
             }

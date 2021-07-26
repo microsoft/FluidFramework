@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, CommitTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
+import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
     ITree,
     TreeEntry,
@@ -122,9 +122,7 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
                 normalizedEntries.push(new AttachmentTreeEntry(entry.path, (entry.value).id));
                 break;
             }
-            case TreeEntry.Commit:
-                normalizedEntries.push(new CommitTreeEntry(entry.path, entry.value));
-                break;
+
             default:
                 throw new Error("Unknown entry type");
         }
