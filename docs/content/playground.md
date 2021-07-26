@@ -1,5 +1,5 @@
 ---
 type: "page"
 layout: "playground"
-skip_content_id: "#storybook-preview-iframe"
+skip_content_id: "docs-root"
 ---
