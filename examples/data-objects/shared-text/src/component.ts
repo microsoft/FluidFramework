@@ -19,7 +19,6 @@ import {
     IFluidLoadable,
     IRequest,
     IResponse,
-    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import {
@@ -37,7 +36,6 @@ import {
 } from "@fluidframework/sequence";
 import {
     instantiateExisting,
-    requestFluidObject,
     RequestParser,
     create404Response,
 } from "@fluidframework/runtime-utils";
@@ -46,14 +44,6 @@ import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
-
-/**
- * Helper function to retrieve the handle for the default component route
- */
-async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle> {
-    const component = await requestFluidObject(await runtimeP, "");
-    return component.IFluidLoadable.handle;
-}
 
 export class SharedTextRunner
     extends EventEmitter
@@ -151,11 +141,6 @@ export class SharedTextRunner
             }
             this.rootView.set("text", newString.handle);
 
-            const containerRuntime = this.context.containerRuntime;
-            const math = await getHandle(containerRuntime.createDataStore("@fluid-example/math"));
-
-            this.rootView.set("math", math);
-
             insights.set(newString.id, this.collabDoc.createMap().handle);
 
             // The flowContainerMap MUST be set last
@@ -209,7 +194,6 @@ export class SharedTextRunner
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
-        require("katex/dist/katex.min.css");
         /* eslint-enable @typescript-eslint/no-require-imports,
         import/no-internal-modules, import/no-unassigned-import */
 

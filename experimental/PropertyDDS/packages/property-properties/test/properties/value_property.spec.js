@@ -8,13 +8,13 @@
  * @fileoverview In this file, we will test ValueProperty
  *    object described in /src/properties/value_property.js
  */
-describe('ValueProperty', function() {
+describe('ValueProperty', function () {
   var ValueProperty, PropertyFactory, OurTestTemplate, Int64, Uint64;
 
   /**
    * Get all the objects we need in this test here.
    */
-  before(function() {
+  before(function () {
     ValueProperty = require('../../src/properties/value_property');
     PropertyFactory = require('../..').PropertyFactory;
     Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
@@ -29,16 +29,17 @@ describe('ValueProperty', function() {
       }, {
         id: 'MyBool', typeid: 'Bool'
       }
-      ]};
+      ]
+    };
     PropertyFactory._reregister(OurTestTemplate);
   });
 
-  describe('Allocating ValueProperty object with all parameters', function() {
-    it('should succeed', function(done) {
+  describe('Allocating ValueProperty object with all parameters', function () {
+    it('should succeed', function (done) {
       var vp;
       var error;
       try {
-        vp = new ValueProperty({id: 'goodId'});
+        vp = new ValueProperty({ id: 'goodId' });
       } catch (e) {
         error = e;
       } finally {
@@ -49,13 +50,13 @@ describe('ValueProperty', function() {
     });
   });
 
-  describe('API methods', function() {
-    it('.getValue should work', function() {
+  describe('API methods', function () {
+    it('.getValue should work', function () {
       var myProp = PropertyFactory.create('Bool');
       myProp.setValue(true);
       expect(myProp.getValue()).to.equal(true);
     });
-    it('.setValue should work to set the value and return nothing', function() {
+    it('.setValue should work to set the value and return nothing', function () {
       var myProp = PropertyFactory.create('Int32');
       expect(myProp.getValue()).to.equal(0);
       expect(myProp.setValue(88)).to.be.undefined;
@@ -63,8 +64,8 @@ describe('ValueProperty', function() {
     });
   });
 
-  describe('Setting a ValueProperty to the same value should not dirty it', function() {
-    it('should not be dirty', function(done) {
+  describe('Setting a ValueProperty to the same value should not dirty it', function () {
+    it('should not be dirty', function (done) {
       var error;
       var vp;
       try {
@@ -90,38 +91,38 @@ describe('ValueProperty', function() {
     });
   });
 
-  it('value properties should support default values', function() {
-    expect(PropertyFactory.create('Int8',      undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Uint8',     undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Int16',     undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Uint16',    undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Int32',     undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Uint32',    undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Int64',     undefined,
+  it('value properties should support default values', function () {
+    expect(PropertyFactory.create('Int8', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Uint8', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Int16', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Uint16', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Int32', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Uint32', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Int64', undefined,
       new Int64(10, 10)).value).to.deep.equal(new Int64(10, 10));
-    expect(PropertyFactory.create('Uint64',    undefined,
+    expect(PropertyFactory.create('Uint64', undefined,
       new Uint64(10, 10)).value).to.deep.equal(new Uint64(10, 10));
-    expect(PropertyFactory.create('Float32',   undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Float64',   undefined, 10).value).to.equal(10);
-    expect(PropertyFactory.create('Bool',      undefined, false).value).to.equal(false);
-    expect(PropertyFactory.create('Bool',      undefined, true).value).to.equal(true);
-    expect(PropertyFactory.create('String',    undefined, 'test').value).to.equal('test');
+    expect(PropertyFactory.create('Float32', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Float64', undefined, 10).value).to.equal(10);
+    expect(PropertyFactory.create('Bool', undefined, false).value).to.equal(false);
+    expect(PropertyFactory.create('Bool', undefined, true).value).to.equal(true);
+    expect(PropertyFactory.create('String', undefined, 'test').value).to.equal('test');
     expect(PropertyFactory.create('Reference', undefined, '/').value).to.equal('/');
   });
 
-  describe('ValueProperty serialize/deserialize tests', function() {
-    it('should correctly serialize/deserialize', function() {
-      var int32Prop =  PropertyFactory.create('Int32');
+  describe('ValueProperty serialize/deserialize tests', function () {
+    it('should correctly serialize/deserialize', function () {
+      var int32Prop = PropertyFactory.create('Int32');
       int32Prop.value = 11;
 
-      var serialized = int32Prop.serialize({'dirtyOnly': true});
+      var serialized = int32Prop.serialize({ 'dirtyOnly': true });
       expect(serialized).to.equal(11);
       int32Prop.cleanDirty();
       serialized = int32Prop._serialize(true);
       assert.deepEqual(serialized, {});
 
-      var anotherInt32Prop =  PropertyFactory.create('Int32');
-      var deserializeResult = anotherInt32Prop.deserialize(int32Prop.serialize({'dirtyOnly': false}));
+      var anotherInt32Prop = PropertyFactory.create('Int32');
+      var deserializeResult = anotherInt32Prop.deserialize(int32Prop.serialize({ 'dirtyOnly': false }));
       expect(deserializeResult).to.equal(11);
       deserializeResult = anotherInt32Prop.deserialize(int32Prop._serialize(false));
       assert.deepEqual(deserializeResult, undefined);
