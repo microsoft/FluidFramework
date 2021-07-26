@@ -11,6 +11,8 @@ import {
     IGetRefParamsExternal,
     ICreateRefParamsExternal,
     IPatchRefParamsExternal,
+    IWholeSummaryPayload,
+    IWriteSummaryResponse,
     BasicRestWrapper,
     RestWrapper,
 } from "@fluidframework/server-services-client";
@@ -49,14 +51,19 @@ export class RestGitService {
         private readonly storage: ITenantStorage,
         private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
+        private readonly tenantId: string,
+        private readonly documentId: string,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         const defaultHeaders: OutgoingHttpHeaders = {
             "User-Agent": userAgent,
+            "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
         };
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+
+        winston.info(`base url: ${storage.url}, Storage-Routing-Id: ${this.getStorageRoutingHeaderValue()}`);
 
         this.restWrapper = new BasicRestWrapper(
             storage.url,
@@ -93,7 +100,7 @@ export class RestGitService {
 
     public async getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/repos/${this.getRepoPath()}/contents/${path}?${query}`);
+        return this.get(`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query}`);
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
@@ -149,9 +156,9 @@ export class RestGitService {
                 config: { enabled: true },
             };
             const params = encodeURIComponent(JSON.stringify(getRefParams));
-            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}?config=${params}`);
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${encodeURIComponent(ref)}?config=${params}`);
         }
-        return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
+        return this.get(`/repos/${this.getRepoPath()}/git/refs/${encodeURIComponent(ref)}`);
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
@@ -160,6 +167,14 @@ export class RestGitService {
             params.config.enabled = false;
         }
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
+    }
+
+    public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        const summaryResponse = await this.post<IWriteSummaryResponse>(
+            `/repos/fluid/git/summaries`,
+             summaryParams);
+
+        return summaryResponse;
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -276,6 +291,11 @@ export class RestGitService {
                 };
             },
             useCache);
+    }
+
+    private getStorageRoutingHeaderValue()
+    {
+        return `${this.tenantId}:${this.documentId}`;
     }
 
     /**

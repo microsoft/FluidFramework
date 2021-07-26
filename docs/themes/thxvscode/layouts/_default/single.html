@@ -4,7 +4,7 @@
 
 {{ define "main" }}
 
-{{ $hasContent := gt (len .Content) 0 }}
+{{ $hasContent := gt (len (default "" .Content)) 0 }}
 
 <div class="container body-content docs">
     <div class="row">

@@ -12,12 +12,12 @@ const ArrayChangeSetIterator = require('./changeset_operations/array_changeset_i
 const { rebaseToRemoteChanges } = require('./rebase');
 
 module.exports = {
-  TemplateSchema,
-  TemplateValidator,
-  TypeIdHelper,
-  ChangeSet,
-  Utils,
-  PathHelper,
-  ArrayChangeSetIterator,
-  rebaseToRemoteChanges
+    TemplateSchema,
+    TemplateValidator,
+    TypeIdHelper,
+    ChangeSet,
+    Utils,
+    PathHelper,
+    ArrayChangeSetIterator,
+    rebaseToRemoteChanges
 };
