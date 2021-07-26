@@ -229,4 +229,21 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
             "Error: 0x1fa",
         );
     });
+
+    it("serialize/rehydrate container with blobs", async function() {
+        // regression test to make sure BlobManager doesn't include attachment entries in snapshot while detached
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+
+        dataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+
+        const snapshot = container.serialize();
+        await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+    });
 });

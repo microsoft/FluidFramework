@@ -52,8 +52,9 @@ export class BlobManager {
     public static readonly basePath = "_blobs";
     private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
     private readonly blobIds: Set<string> = new Set();
+    private readonly detachedBlobIds: Set<string> = new Set();
 
-    public get blobCount() { return this.blobIds.size; }
+    public get blobCount() { return this.blobIds.size + this.detachedBlobIds.size; }
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
@@ -92,7 +93,7 @@ export class BlobManager {
         );
 
         if (this.runtime.attachState === AttachState.Detached) {
-            this.blobIds.add(response.id);
+            this.detachedBlobIds.add(response.id);
             return handle;
         }
 
