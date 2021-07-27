@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
     ILoggingError,
     ITaggedTelemetryPropertyType,
@@ -83,7 +82,7 @@ export function normalizeError(
 
     if (isFluidError(error) && !Object.isFrozen(error)) {
         // We can simply annotate the error and return it
-        annotateFluidError(error, annotations);
+        mixinTelemetryPropsWithFluidError(error, annotations);
         return error;
     }
 
@@ -95,21 +94,6 @@ export function normalizeError(
 
     mixinTelemetryPropsWithFluidError(fluidError, annotations);
     return fluidError;
-}
-
-//* Add new tsdoc comment
-export function annotateFluidError(
-    fluidError: Omit<IFluidErrorBase, "fluidErrorCode">, // Temporary, for back-compat
-    annotations: FluidErrorAnnotations = {},
-) {
-    // Temporary, for back-compat
-    patchOldValidError(fluidError);
-
-    // This assert would only be hit if someone did some dubious casting, or intentionally froze a known fluidError.
-    assert(isFluidError(fluidError) && !Object.isFrozen(fluidError),
-        "Cannot annotate the given fluidError");
-
-    mixinTelemetryPropsWithFluidError(fluidError, annotations);
 }
 
 //* Write tsdoc comments
@@ -157,6 +141,24 @@ function mixinTelemetryPropsWithFluidError(
 
     // This is a back-compat move, so old loggers will include errorType and fluidErrorCode via prepareErrorObject
     mixinTelemetryProps(error, { ...annotations.props, errorType, fluidErrorCode, normalizeHint });
+}
+
+/**
+ * @deprecated - Use normalizeError instead
+ * Annotate the given error object with the given logging props
+ * @returns The same error object passed in if possible, with telemetry props functionality mixed in
+ */
+ export function annotateError(
+    error: unknown,
+    props: ITelemetryProperties,
+): ILoggingError {
+    if (isRegularObject(error) && !Object.isFrozen(error)) {
+        mixinTelemetryProps(error, props);
+        return error;
+    }
+
+    const message = String(error);
+    return new LoggingError(message, props);
 }
 
 /**

@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateFluidError, FluidErrorAnnotations } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateError, FluidErrorAnnotations } from "../errorLogging";
 import { IFluidErrorBase } from "../staging";
 import * as helpers from "../errorLoggingInternalHelpers";
 
@@ -479,7 +479,7 @@ describe.skip("Error Propagation", () => {
                     const annotations = annotationCases[annotationCase];
 
                     // Act
-                    annotateFluidError(input, annotations);
+                    annotateError(input, {});  //* NOPE
 
                     // Assert
                     assertMatching(input, expectedOutput, annotations);
@@ -489,13 +489,13 @@ describe.skip("Error Propagation", () => {
         for (const testCase of Object.keys(nonObjectTestCases)) {
             it(`${testCase} (non-objects)`, () => {
                 const { input } = nonObjectTestCases[testCase]();
-                assert.throws(() => { annotateFluidError(input); }, /Cannot annotate a non-object or frozen error/);
+                assert.throws(() => { annotateError(input, {}); }, /Cannot annotate a non-object or frozen error/);
             });
         }
         for (const testCase of Object.keys(frozenTestCases)) {
             it(`${testCase} (frozen)`, () => {
                 const { input } = frozenTestCases[testCase]();
-                assert.throws(() => { annotateFluidError(input); }, /Cannot annotate a non-object or frozen error/);
+                assert.throws(() => { annotateError(input, {}); }, /Cannot annotate a non-object or frozen error/);
             });
         }
     });
