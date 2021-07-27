@@ -75,18 +75,11 @@ export function normalizeError(
         return error;
     }
 
-    const originalErrorObject = isRegularObject(error) ? error : { message: String(error) };
-
     // We'll construct a new fluid error copying certain properties over if present
-    const errorTypeIfNone3 = hasErrorType(error)
-        ? error.errorType  //* BUT: we won't be copying over other props or functions that errorType may imply
-        : isErrorLike(error)
-            ? error.name
-            : typeof(error);
-    const fluidError = patchFluidErrorBuilder(
-        new LoggingError(""), //* Could just do {}
-        prepareFluidErrorTemplate(originalErrorObject, errorTypeIfNone3),
-    );
+    const originalErrorObject = isRegularObject(error)
+        ? error
+        : { message: String(error) };
+    const fluidError = createFluidErrorFromUnknownErrorObject(originalErrorObject);
 
     mixinTelemetryPropsWithFluidError(fluidError, annotations);
     return fluidError;
@@ -95,7 +88,7 @@ export function normalizeError(
 //* Add new tsdoc comment
 export function annotateFluidError(
     fluidError: IFluidErrorBase,
-    annotations: FluidErrorAnnotations = {},  //* Just take props, not errorCodeIfNone
+    annotations: FluidErrorAnnotations = {},
 ): asserts fluidError is IFluidErrorBase {
     // This assert would only be hit if someone did some dubious casting, or intentionally froze a known fluidError.
     assert(isFluidError(fluidError) && !Object.isFrozen(fluidError),
@@ -104,34 +97,22 @@ export function annotateFluidError(
     mixinTelemetryPropsWithFluidError(fluidError, annotations);
 }
 
-/**
- * Helper type, not exported.
- * Makes IFluidErrorBuilder's props mutable and optional for building one up on an existing object
- */
-type FluidErrorBuilder = {
-    -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
-};
-
-/**
- * Prepares a template IFluidErrorBase based on the inputs provided, for use with patchFluidErrorBuilder
- * @param originalErrorObject - Object to check for IFluidErrorBase properties to use for the template
- * @param errorTypeIfNone - errorType to use if none is found on originalErrorObject
- * @param errorCodeIfNone - fluidErrorCode to use if none is found on originalErrorObject
- * @returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder
- */
-function prepareFluidErrorTemplate(
+//* Write tsdoc comments
+function createFluidErrorFromUnknownErrorObject(
     originalErrorObject: unknown,
-    errorTypeIfNone: string,
 ): IFluidErrorBase {
-    const fullErrorTypeIfNone = `none (${errorTypeIfNone})`;
+    const defaultErrorType = isErrorLike(originalErrorObject)
+        ? `none (${originalErrorObject.name})`
+        : `none (${typeof(originalErrorObject)})`;
+
     // Pull each of IFluidErrorBase's properties off the originalError, regardless of their type
     const { errorType, fluidErrorCode, message, name, stack } =
         originalErrorObject as { [P in keyof IFluidErrorBase]: unknown; };
     return {
         errorType:
             typeof errorType === "string"
-                ? errorType
-                : fullErrorTypeIfNone,
+                ? errorType  //* BUT: we won't be copying over other props or functions that errorType may imply
+                : defaultErrorType,
         fluidErrorCode:
             typeof fluidErrorCode === "string"
                 ? fluidErrorCode
@@ -149,28 +130,6 @@ function prepareFluidErrorTemplate(
                 ? stack
                 : new Error("<<generated stack>>").stack,
     };
-}
-
-/**
- * Patch the given builder with all existing properties on the template
- * @returns The same object as builder, but with additional properties
- */
-function patchFluidErrorBuilder(builder: FluidErrorBuilder, template: IFluidErrorBase): IFluidErrorBase {
-    assert(!Object.isFrozen(builder), "Cannot patch frozen error builder");
-
-    builder.errorType = template.errorType;
-    builder.fluidErrorCode = template.fluidErrorCode;
-    if (template.message !== undefined) {
-        builder.message = template.message;
-    }
-    if (template.name !== undefined) {
-        builder.name = template.name;
-    }
-    if (template.stack !== undefined) {
-        builder.stack = template.stack;
-    }
-    // This cast is legit since we certainly added the only two required properties of IFluidErrorBase
-    return builder as IFluidErrorBase;
 }
 
 /** Mixin the telemetry props, along with errorType, fluidErrorCode and normalizeHint */
