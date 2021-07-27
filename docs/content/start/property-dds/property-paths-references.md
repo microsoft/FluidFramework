@@ -32,7 +32,7 @@ root.insert('map', map);
 
 // Now we can resolve paths
 root.resolvePath('point.x');
-root.resolvePath('map[point].x');
+root.resolvePath('map[point2].x');
 ```
 
 By default, property paths are **relative paths**. The traversal starts at the property on which the `resolvePath`
