@@ -8,7 +8,7 @@ import { IProducer } from "./queue";
 
 /**
  * Combines multiple producers to one.
- * This produces message to all the producers concurrently
+ * This produces messages to all the producers concurrently
  * and waits for all the sends to finish
  */
 export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
