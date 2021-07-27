@@ -14,15 +14,15 @@ Primitive Properties are strictly typed and can have on of the following types:
 | **Float32**   |   A 32 bit floating point value (according to IEEE 754) |
 | **Float64**   |  A 64 bit floating point value (according to IEEE 754) |
 | **Int8**      | A signed 8 bit integer value (with a valid range from −128 to 127) |
-| **Uint8**     | A unsigned 8 bit integer value (with a valid range from 0 to 255) |
+| **Uint8**     | An unsigned 8 bit integer value (with a valid range from 0 to 255) |
 | **Int16**     | A signed 16 bit integer value (with a valid range from −32768 to 32767) |
-| **Uint16**    | A unsigned 16 bit integer value (with a valid range from 0 to 65536) |
+| **Uint16**    | An unsigned 16 bit integer value (with a valid range from 0 to 65536) |
 | **Int32**     | A signed 32 bit integer value (with a valid range from −2,147,483,648 to 2,147,483,647) |
 | **Uint32**    | An unsigned 32 bit integer value (with a valid range from 0 to 4,294,967,295) |
 | **Int64**     | A signed 64 bit integer value (with a valid range from -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807) |
 | **Uint64**    | An unsigned 64 bit integer value (with a valid range from 0 to 18,446,744,073,709,551,615) |
 | **Bool**      | A boolean value, either true or false |
-| **String**    | An unicode string |
+| **String**    | A Unicode string |
 | **Reference** | A reference to another property. It is a string that must contain a path. See Reference Properties |
 | **Enum**      | An enumeration. It is a type whose value is restricted to a range of predefined values |
 

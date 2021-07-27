@@ -61,7 +61,7 @@ rootProperty.prettyPrint();
 ### What is Property Factory?
 
 The is a factory object for instantiating Properties. It comes with a set of rich primitive types (Float32, Enum, Uint16
-, Uint32, etc. and custom types) For a more detailed explanation please refer to the
+, Uint32, etc. and custom types). For a more detailed explanation please refer to the
 [PropertyFactory Section]({{< ref "property-factory.md" >}}).
 
 Changes are always local only and will only modify your local property hierarchy. To share the changes you will have to

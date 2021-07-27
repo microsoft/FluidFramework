@@ -6,7 +6,7 @@ menuPosition: 2
 A *Property Sets Schema* defines the structure of a Property Set. It defines which child properties exist in a
 property and which types they have.
 
-The following example shows a possible schema for your rectangle. This example is only meant to show the various possibilities in defining schemas and is not necessarily showing the best way to define a rectangle.
+The following example shows a possible schema for your rectangle. This example is only meant to show the various possibilities in defining schemas and is not necessarily the best way to define a rectangle.
 
 ```json
 {
