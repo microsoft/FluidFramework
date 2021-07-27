@@ -9,7 +9,7 @@ The sections below will explain how to use `FrsClient` in your own application.
 
 {{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
-## Connecting to the Service
+## Connecting to the service
 
 To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `frs-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
 
@@ -33,7 +33,7 @@ Now that you have an instance of `FrsClient`, you can start using it to create o
 
 ### Token providers
 
-Coming soon!
+{{< placeholder >}}
 
 ## Managing containers
 
@@ -61,7 +61,7 @@ For the further information on how to start recording logs being emitted by Flui
 
 The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling]({{< relref "data-modeling.md" >}}) to learn more about how to establish the schema and use the `FluidContainer` object.
 
-## Getting Audience Details
+## Getting audience details
 
 Calls to `createContainer` and `getContainer` return an `FrsResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
 
@@ -125,4 +125,4 @@ Alongside the user ID and name, `FrsMember` objects also hold an array of `conne
 These functions and events can be combined to present a real-time view of the users in the current session.
 
 **Congratulations!** You have now successfully connected your Fluid container to the Azure Fluid Relay service and
-fetched back user details for the members in your collaborative session!!
+fetched back user details for the members in your collaborative session!

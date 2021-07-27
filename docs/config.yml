@@ -39,6 +39,7 @@ menu:
   - name: "Playground"
     url: "/playground/"
     weight: -40
+    title: "Playground: The playground provides a way to interact with Fluid objects running side by side in the browser, see what's possible, and explore the source code for the demos."
 
   old_section:
   - identifier: "quick-start"

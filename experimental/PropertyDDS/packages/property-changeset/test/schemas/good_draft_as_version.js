@@ -7,16 +7,16 @@
  * Test data for property set template schema testing
  */
 (function() {
-  /**
-   * @namespace property-changeset.Test
-   * @alias good_draft_as_version.js
-   * Namespace containing all schema-related data for property set validation
-   */
-  var templateSchema = {
-    'typeid': 'autodesk:GoodDraftAsVersion-draft',
-    'properties': [
-      { 'id': 'int', 'typeid': 'Int32'}
-    ]
-  };
-  module.exports = templateSchema;
+    /**
+     * @namespace property-changeset.Test
+     * @alias good_draft_as_version.js
+     * Namespace containing all schema-related data for property set validation
+     */
+    var templateSchema = {
+        'typeid': 'autodesk:GoodDraftAsVersion-draft',
+        'properties': [
+            { 'id': 'int', 'typeid': 'Int32' }
+        ]
+    };
+    module.exports = templateSchema;
 })();
