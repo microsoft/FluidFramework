@@ -422,12 +422,12 @@ export async function asyncFunctionThrowsCorrectly(
 	asyncFunction: () => Promise<unknown>,
 	expectedError: string
 ): Promise<boolean> {
-	let errorMessage;
+	let errorMessage: string | undefined;
 
 	try {
 		await asyncFunction();
 	} catch (error) {
-		errorMessage = error.message;
+		errorMessage = (error as Error).message;
 	}
 
 	return errorMessage === expectedError;
