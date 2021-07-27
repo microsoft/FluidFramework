@@ -295,7 +295,7 @@ describe("JS-Object-like property accessing ", function() {
                 });
 
                 it("should throw if not in in the same tree and referenced via absolute path", function() {
-                    const prop = PropertyFactory.create("NodeProperty", "single");
+                    const prop = PropertyFactory.create<NodeProperty>("NodeProperty", "single");
                     prop.insert("ref", PropertyFactory.create("Reference", "single", "/myTestProperty.myF32Number"));
                     const proxiedProp = PropertyProxy.proxify(prop);
                     expect(() => { proxiedProp.ref = 5; }).toThrow("PropertyProxy-009");

@@ -6,20 +6,25 @@ import { NamedProperty, PropertyFactory, SetProperty } from "@fluid-experimental
 
 import { PropertyProxy } from "./propertyProxy";
 import { PropertyProxyErrors } from "./errors";
-import { Utilities } from "./utilities";
+import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external::SetProperty}.
- * @param {ComponentSet} target The {@link ComponentMap} that holds a reference
+ * @param {ComponentSet} target The {@link ComponentSet} that holds a reference
  * to the {@link external:SetProperty SetProperty}.
  * @return {Iterator} An iterator.
  * @hidden
  */
-const createSetIterator = (target) => function*() {
+const createSetIterator = (target: ComponentSet) => function*() {
     const property = target.getProperty();
     const keys = property.getIds();
-    for (let i = 0; i < keys.length; i++) {
-        yield PropertyProxy.proxify(property.get(keys[i]));
+    for (const key of keys) {
+        const property_to_proxy = property.get(key);
+        if (property_to_proxy) {
+            yield PropertyProxy.proxify(property_to_proxy);
+        } else {
+            throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+        }
     }
 };
 
@@ -109,9 +114,14 @@ class ComponentSet extends Set {
     entries() {
         const keys = this.property.getIds();
         const entriesIterator = function*(this: ComponentSet): Generator<[any, any]> {
-            for (let i = 0; i < keys.length; i++) {
-                const proxy = PropertyProxy.proxify(this.property.get(keys[i])!);
-                yield [proxy, proxy];
+            for (const key of keys) {
+                const property_to_proxy = this.property.get(key);
+                if (property_to_proxy) {
+                    const proxy = PropertyProxy.proxify(property_to_proxy);
+                    yield [proxy, proxy];
+                } else {
+                    throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+                }
             }
         };
 
@@ -123,9 +133,14 @@ class ComponentSet extends Set {
      */
     forEach(func: (value, key, set) => void) {
         const keys = this.property.getIds();
-        for (let i = 0; i < keys.length; i++) {
-            const value = PropertyProxy.proxify(this.property.get(keys[i])!);
-            func(value, value, this);
+        for (const key of keys) {
+            const property_to_proxy = this.property.get(key);
+            if (property_to_proxy) {
+                const value = PropertyProxy.proxify(property_to_proxy);
+                func(value, value, this);
+            } else {
+                throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+            }
         }
     }
 
@@ -152,15 +167,19 @@ class ComponentSet extends Set {
      */
     // TODO(marcus): any is a workaround since it is not quite clear what
     // should have a field guid, I assume its the proxyfied property but I cant be sure yet
-    _getGuid(value: NamedProperty | any) {
-        // The set property uses the guid field of NamedProperty for equality
-        let guid = value.guid;
+    _getGuid(value: NamedProperty | { guid?: string }) {
+        // The set property uses the guid field of NamedProperty for equalit
+        let guid: string | undefined;
+
+        if ("guid" in value) {
+            guid = value.guid;
+        }
         // It might be that the user inserts a value ist not proxied
-        if (!guid) {
+        if (guid === undefined && forceType<NamedProperty>(value)) {
             guid = value.getId();
         }
         // If there is still no valid guid
-        if (!guid) {
+        if (guid === undefined) {
             throw new Error(PropertyProxyErrors.INVALID_GUID);
         }
         return guid;

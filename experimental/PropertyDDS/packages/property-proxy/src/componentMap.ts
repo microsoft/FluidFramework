@@ -22,12 +22,12 @@ import { forceType, Utilities } from "./utilities";
 const createMapIterator = (target) => function*(): Generator<[any, any]> {
     const property = target.getProperty();
     const keys = property.getIds();
-    for (let i = 0; i < keys.length; i++) {
-        const propertyAtKey = property.get(keys[i]);
+    for (const key of keys) {
+        const propertyAtKey = property.get(key);
         if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
-            yield [keys[i], PropertyProxy.proxify(propertyAtKey)];
+            yield [key, PropertyProxy.proxify(propertyAtKey)];
         } else {
-            yield [keys[i], propertyAtKey];
+            yield [key, propertyAtKey];
         }
     }
 };
@@ -138,15 +138,15 @@ class ComponentMap extends Map {
      */
     forEach(func: (value, key, map) => void) {
         const keys = this.property.getIds();
-        for (let i = 0; i < keys.length; i++) {
-            const value = this.property.get(keys[i])!;
+        for (const key of keys) {
+            const value = this.property.get(key)!;
             // TODO(marcus): should this ever not be the case? in case its a value property
             // the proxify method would return the appropriate type like number, string etc.
             // so the else branch is unnecessary ?
             if (PropertyFactory.instanceOf(value, "BaseProperty")) {
-                func(PropertyProxy.proxify(value), keys[i], this);
+                func(PropertyProxy.proxify(value), key, this);
             } else {
-                func(value, keys[i], this);
+                func(value, key, this);
             }
         }
     }
@@ -164,8 +164,8 @@ class ComponentMap extends Map {
     keys() {
         const keys = this.property.getIds();
         const keyIterator = function*() {
-            for (let i = 0; i < keys.length; i++) {
-                yield keys[i];
+            for (const key of keys) {
+                yield key;
             }
         };
         return keyIterator();
@@ -206,8 +206,8 @@ class ComponentMap extends Map {
     values() {
         const keys = this.property.getIds();
         const valuesIterator = function*(this: ComponentMap) {
-            for (let i = 0; i < keys.length; i++) {
-                const propertyAtKey = this.property.get(keys[i])!;
+            for (const key of keys) {
+                const propertyAtKey = this.property.get(key)!;
                 if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
                     yield PropertyProxy.proxify(propertyAtKey);
                 } else {

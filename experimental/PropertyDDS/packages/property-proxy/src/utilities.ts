@@ -40,6 +40,7 @@ export function excludeType<T>(value: any | T): value is T {
  * Utility class for the PropertyProxy proxy that consolidates commonly used functionality.
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Utilities {
     /**
     * Wraps a function with push/pophNotificationDelayScope.
@@ -254,7 +255,7 @@ export class Utilities {
      * @param key The key to check.
      * @return True if `key` contains an asterisk.
      */
-    static containsAsterisk(key: string): boolean {
+    static containsAsterisk(key: any): boolean {
         return (String(key) === key && key[key.length - 1] === "*");
     }
 
@@ -341,7 +342,7 @@ export class Utilities {
  * @return An array of the entries contained in the passed Iterable.
  * @hidden
  */
-function _getElementsArray<T = any>(value: Iterable<T>): T[] {
+function _getElementsArray<T = any>(value?: Iterable<T>): T[] {
     if (!value || typeof value[Symbol.iterator] !== "function" || String(value) === value) {
         throw new Error(PropertyProxyErrors.NON_ITERABLE);
     }

@@ -4,10 +4,10 @@
  */
 /* eslint-disable no-param-reassign */
 
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties";
+import { PropertyFactory, BaseProperty, ReferenceArrayProperty } from "@fluid-experimental/property-properties";
 import { PropertyProxy, proxySymbol } from "./propertyProxy";
 import { PropertyProxyErrors } from "./errors";
-import { Utilities } from "./utilities";
+import { forceType, Utilities } from "./utilities";
 import { ComponentArray } from "./componentArray";
 
 /**
@@ -21,7 +21,7 @@ import { ComponentArray } from "./componentArray";
  * @return False if the passed length is less than 0, true otherwise.
  * @hidden
  */
-function setLength(target: ComponentArray, length: number | string): boolean {
+function setLength(target: ComponentArray, length: number | string | any): boolean {
     const newLength = Number(length) === length ? parseInt(length as unknown as string, 10) : 0;
     if (newLength < 0) {
         throw new RangeError("Invalid array length");
@@ -91,6 +91,7 @@ export const arrayProxyHandler = {
                     } finally {
                         target.lastCalledMethod = "";
                     }
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return result;
                 };
             }
@@ -110,13 +111,20 @@ export const arrayProxyHandler = {
                     return property.getValue(key);
                 } else {
                     if (asteriskFound) {
-                        return PropertyProxy.proxify(property.get(key,
-                            { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
+                        const property_to_proxy = property.get(key,
+                            { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS });
+                        if (property_to_proxy) {
+                            return PropertyProxy.proxify(property_to_proxy);
+                        } else {
+                            throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+                        }
                     } else {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return Utilities.proxifyInternal(property, key, caretFound, isReferenceArray);
                     }
                 }
             }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return Reflect.get(target, key);
         }
     },
@@ -171,36 +179,45 @@ export const arrayProxyHandler = {
      * @param {Object} value The value to be set.
      * @return {Boolean} Returns a boolean.
      */
-    set(target, key, value) {
-        const asteriskFound = Utilities.containsAsterisk(key);
-        if (asteriskFound) {
+    set(target: ComponentArray, key: string, value: object) {
+        const asteriskFound = Utilities.containsAsterisk(String(key));
+        if (asteriskFound && forceType<string>(key)) {
             key = key.slice(0, -1);
         }
 
-        if (!isNaN(key) && key >= 0) {
+        // TODO(marcus): the force type is here because we pass potentially a
+        // string into isNan which can be a number like "0"
+        if (!isNaN(Number(key)) && Number(key) >= 0) {
             const property = target.getProperty();
             const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");
 
             let insert = false;
-            if (key >= property.getLength()) {
-                setLength(target, parseInt(key, 10) + 1);
+            if (Number(key) >= property.getLength()) {
+                setLength(target, parseInt(String(key), 10) + 1);
                 // Trying to set something that was currently not in the array, means a new reference path is inserted
                 insert = true;
             }
 
             const specialCases = setTrapSpecialCases.includes(target.lastCalledMethod);
 
-            if (isReferenceArray && !specialCases && !asteriskFound && !insert) {
+            if (isReferenceArray && forceType<ReferenceArrayProperty>(property)
+                && !specialCases && !asteriskFound && !insert) {
                 Utilities.setValueOfReferencedProperty(property, key, value);
             } else {
                 if (asteriskFound && !isReferenceArray) {
                     throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
                 }
-                if (property.isPrimitiveType() || property.get(key).getContext() === "single") {
+                if (property.isPrimitiveType() || property.get(key)!.getContext() === "single") {
                     Utilities.throwOnIterableForSingleProperty(value);
-                    property.set(key, Utilities.prepareElementForInsertion(property, value, target.lastCalledMethod));
+                    property.set(Number(key),
+                        Utilities.prepareElementForInsertion(property, value, target.lastCalledMethod));
                 } else {
-                    Utilities.assign(property.get(key), value);
+                    const child = property.get(key);
+                    if (child) {
+                        Utilities.assign(child, value);
+                    } else {
+                        throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+                    }
                 }
             }
             return true;
