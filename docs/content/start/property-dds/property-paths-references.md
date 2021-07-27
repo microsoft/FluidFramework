@@ -86,7 +86,7 @@ let {PathHelper} = require('@fluid-experimental/property-changeset');
 root.resolvePath(PropertyUtils.PathHelper.quotePathSegmentIfNeeded('"doubleQuotes"'));
 ```
 
-A path that starts with a ``/`` it is an **absolute path**. This means the resolution will start at the root of the
+A path that starts with a ``/`` is an **absolute path**. This means the resolution will start at the root of the
 PropertySets tree, no matter which of the properties in the tree is used as starting point of the resolution.
 
 ```javascript
