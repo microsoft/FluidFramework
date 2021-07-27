@@ -6,11 +6,11 @@
 import {
     PropertyFactory, BaseProperty,
     ContainerProperty, NodeProperty,
-} from "@fluid-experimental/property-properties"
+} from "@fluid-experimental/property-properties";
 
-import { PropertyProxy, proxySymbol } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
-import { Utilities, forceType } from './utilities';
+import { PropertyProxy, proxySymbol } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
+import { Utilities, forceType } from "./utilities";
 import { ProxyType, ReferenceType } from "./interfaces";
 
 /**
@@ -71,7 +71,7 @@ export const proxyHandler = {
             const property = target.getProperty();
             let propertyAtKey = property.get(key,
                 { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })!;
-            const isReferenceProperty = PropertyFactory.instanceOf(propertyAtKey, 'Reference');
+            const isReferenceProperty = PropertyFactory.instanceOf(propertyAtKey, "Reference");
             if (!asteriskFound && isReferenceProperty && forceType<ReferenceType>(propertyAtKey)) {
                 Utilities.setValueOfReferencedProperty(propertyAtKey, undefined, value);
             } else {

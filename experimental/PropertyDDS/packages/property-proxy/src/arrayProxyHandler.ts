@@ -4,11 +4,11 @@
  */
 /* eslint-disable no-param-reassign */
 
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
-import { PropertyProxy, proxySymbol } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
-import { Utilities } from './utilities';
-import { ComponentArray } from './componentArray';
+import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties";
+import { PropertyProxy, proxySymbol } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
+import { Utilities } from "./utilities";
+import { ComponentArray } from "./componentArray";
 
 /**
  * Set the length of the {@link external:ArrayProperty ArrayProperty} referenced by the inputted {@link ComponentArray}.
@@ -24,7 +24,7 @@ import { ComponentArray } from './componentArray';
 function setLength(target: ComponentArray, length: number | string): boolean {
     const newLength = Number(length) === length ? parseInt(length as unknown as string, 10) : 0;
     if (newLength < 0) {
-        throw new RangeError('Invalid array length');
+        throw new RangeError("Invalid array length");
     }
 
     const property = target.getProperty();
@@ -40,8 +40,8 @@ function setLength(target: ComponentArray, length: number | string): boolean {
         // Fill the array with empty but valid values (instead of 'undefined')
         const itemProps: (string | BaseProperty)[] = [];
         for (let i = currentLength; i < newLength; i++) {
-            if (PropertyFactory.instanceOf(property, 'Reference', 'array')) {
-                itemProps.push('');
+            if (PropertyFactory.instanceOf(property, "Reference", "array")) {
+                itemProps.push("");
             } else {
                 itemProps.push(PropertyFactory.create(property.getTypeid()));
             }
@@ -56,12 +56,12 @@ function setLength(target: ComponentArray, length: number | string): boolean {
 /**
  * @hidden
  */
-const getTrapSpecialCases = ['copyWithin', 'reverse', 'swap'];
+const getTrapSpecialCases = ["copyWithin", "reverse", "swap"];
 
 /**
  * @hidden
  */
-const setTrapSpecialCases = getTrapSpecialCases.concat(['fill', 'sort']);
+const setTrapSpecialCases = getTrapSpecialCases.concat(["fill", "sort"]);
 
 /**
  * The Proxy Handler that defines the traps for the {@link ComponentArray} class and
@@ -77,8 +77,8 @@ export const arrayProxyHandler = {
      * @return {Object | external:BaseProperty | Function} The accessed primitive, Property or function.
      */
     get(target: ComponentArray, key: string, receiver) {
-        if (typeof target[key] === 'function') {
-            if (key === 'constructor') {
+        if (typeof target[key] === "function") {
+            if (key === "constructor") {
                 // Always return the constructor for the base Array class.
                 return [][key];
             } else {
@@ -89,12 +89,12 @@ export const arrayProxyHandler = {
                     try {
                         result = Reflect.apply(reflected, receiver, args);
                     } finally {
-                        target.lastCalledMethod = '';
+                        target.lastCalledMethod = "";
                     }
                     return result;
                 };
             }
-        } else if (key === 'length') {
+        } else if (key === "length") {
             return target.getProperty().getLength();
         } else {
             const asteriskFound = Utilities.containsAsterisk(key);
@@ -103,9 +103,9 @@ export const arrayProxyHandler = {
                 key = key.slice(0, -1);
             }
 
-            if (typeof key !== 'symbol' && Number(key) >= 0 && Number(key) < target.getProperty().getLength()) {
+            if (typeof key !== "symbol" && Number(key) >= 0 && Number(key) < target.getProperty().getLength()) {
                 const property = target.getProperty();
-                const isReferenceArray = PropertyFactory.instanceOf(property, 'Reference', 'array');
+                const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");
                 if (isReferenceArray && (asteriskFound || getTrapSpecialCases.includes(target.lastCalledMethod))) {
                     return property.getValue(key);
                 } else {
@@ -129,7 +129,7 @@ export const arrayProxyHandler = {
      * @return {Object} The Descriptor
      */
     getOwnPropertyDescriptor(target, key) {
-        if (key !== 'length') {
+        if (key !== "length") {
             if (key === proxySymbol) {
                 return { configurable: true, enumerable: true, value: key, writable: false };
             } else {
@@ -150,7 +150,7 @@ export const arrayProxyHandler = {
      * @param {String} key The name of the property/function that is to be accessed.
      * @return {Boolean} True if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
      */
-    has: (target, key) => key === 'swap' || key in [] || key === proxySymbol ||
+    has: (target, key) => key === "swap" || key in [] || key === proxySymbol ||
         (key >= 0 && key < target.getProperty().getLength()),
 
     /**
@@ -179,7 +179,7 @@ export const arrayProxyHandler = {
 
         if (!isNaN(key) && key >= 0) {
             const property = target.getProperty();
-            const isReferenceArray = PropertyFactory.instanceOf(property, 'Reference', 'array');
+            const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");
 
             let insert = false;
             if (key >= property.getLength()) {
@@ -196,7 +196,7 @@ export const arrayProxyHandler = {
                 if (asteriskFound && !isReferenceArray) {
                     throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
                 }
-                if (property.isPrimitiveType() || property.get(key).getContext() === 'single') {
+                if (property.isPrimitiveType() || property.get(key).getContext() === "single") {
                     Utilities.throwOnIterableForSingleProperty(value);
                     property.set(key, Utilities.prepareElementForInsertion(property, value, target.lastCalledMethod));
                 } else {
@@ -204,7 +204,7 @@ export const arrayProxyHandler = {
                 }
             }
             return true;
-        } else if (key === 'length') {
+        } else if (key === "length") {
             return setLength(target, value);
         } else {
             target[key] = value;

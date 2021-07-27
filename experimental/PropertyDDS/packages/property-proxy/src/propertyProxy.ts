@@ -9,22 +9,22 @@ import {
 } from "@fluid-experimental/property-properties";
 import { PathHelper } from "@fluid-experimental/property-changeset";
 
-import { arrayProxyHandler } from './arrayProxyHandler';
-import { proxyHandler } from './proxyHandler';
+import { arrayProxyHandler } from "./arrayProxyHandler";
+import { proxyHandler } from "./proxyHandler";
 
-import { ComponentArray } from './componentArray';
-import { ComponentMap } from './componentMap';
-import { ComponentSet } from './componentSet';
-import { PropertyProxyErrors } from './errors';
+import { ComponentArray } from "./componentArray";
+import { ComponentMap } from "./componentMap";
+import { ComponentSet } from "./componentSet";
+import { PropertyProxyErrors } from "./errors";
 
-import { IParentAndPathOfReferencedProperty } from './IParentAndPathOfReferencedProperty';
+import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
 import { forceType } from "./utilities";
 import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
 
 /**
  * This symbol is available on properties proxied via the PropertyProxy.[[proxify]] method.
  */
-export const proxySymbol = Symbol('property-proxy');
+export const proxySymbol = Symbol("property-proxy");
 /**
  * Class that contains the [[proxify]] and [[getParentOfReferencedProperty]] methods.
  * @public
@@ -36,8 +36,7 @@ export class PropertyProxy {
      * @param key - The key of the referenced property in the Reference(Array/Map)Property.
      * @public
      */
-    static getParentOfReferencedProperty(property: ReferenceType, key?: string | number)
-        : IParentAndPathOfReferencedProperty {
+    static getParentOfReferencedProperty(property: ReferenceType, key?: string | number): IParentAndPathOfReferencedProperty {
         const keys = (key === undefined ? [] : [key]);
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for getValue
@@ -52,19 +51,19 @@ export class PropertyProxy {
         let relativePathFromParent;
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for get
-        if (!PropertyFactory.instanceOf((<any>property.get)(...keys), 'BaseProperty')) {
+        if (!PropertyFactory.instanceOf((<any>property.get)(...keys), "BaseProperty")) {
             if (types.includes(PathHelper.TOKEN_TYPES.ARRAY_TOKEN)) {
                 // This happens when accessing a primitive array/map entry
                 // Split key into array id and index
                 relativePathFromParent = tokens.pop();
-                if (tokens[0] === '/') {
+                if (tokens[0] === "/") {
                     tokens.shift();
                     referencedPropertyParent = property.getRoot().get(tokens);
                 } else {
                     const parent = property.getParent() as ContainerProperty;
                     if (types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN)) {
                         referencedPropertyParent = parent
-                            .resolvePath(path.slice(0, path.lastIndexOf('[')));
+                            .resolvePath(path.slice(0, path.lastIndexOf("[")));
                     } else {
                         referencedPropertyParent = parent.get(tokens);
                     }
@@ -83,9 +82,9 @@ export class PropertyProxy {
             relativePathFromParent = PathHelper.tokenizePathString(relativePathFromParent)[0];
         }
 
-        if (PropertyFactory.instanceOf(referencedPropertyParent, 'Reference') ||
-            PropertyFactory.instanceOf(referencedPropertyParent, 'Reference', 'array') ||
-            PropertyFactory.instanceOf(referencedPropertyParent, 'Reference', 'map')) {
+        if (PropertyFactory.instanceOf(referencedPropertyParent, "Reference") ||
+            PropertyFactory.instanceOf(referencedPropertyParent, "Reference", "array") ||
+            PropertyFactory.instanceOf(referencedPropertyParent, "Reference", "map")) {
             ({ referencedPropertyParent, relativePathFromParent } =
                 PropertyProxy.getParentOfReferencedProperty(referencedPropertyParent, relativePathFromParent));
         }
@@ -130,17 +129,17 @@ export class PropertyProxy {
      * @public
      */
     static proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
-        if (PropertyFactory.instanceOf(property, 'BaseProperty')) {
+        if (PropertyFactory.instanceOf(property, "BaseProperty")) {
             const context = property.getContext();
             let proxy;
             switch (context) {
-                case 'array':
+                case "array":
                     proxy = new Proxy(new ComponentArray(property as ArrayProperty), arrayProxyHandler);
                     break;
-                case 'map':
+                case "map":
                     proxy = new ComponentMap(property as MapProperty);
                     break;
-                case 'set':
+                case "set":
                     proxy = new ComponentSet(property as SetProperty);
                     break;
                 default:
@@ -165,7 +164,7 @@ export class PropertyProxy {
                     }
                     break;
             }
-            if (!property.isPrimitiveType() && (context !== 'single')) {
+            if (!property.isPrimitiveType() && (context !== "single")) {
                 Object.defineProperty(proxy, proxySymbol, {
                     enumerable: false,
                     configurable: true,

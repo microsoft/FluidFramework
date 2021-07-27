@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { NamedProperty, PropertyFactory, SetProperty } from "@fluid-experimental/property-properties"
+import { NamedProperty, PropertyFactory, SetProperty } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
-import { Utilities } from './utilities';
+import { PropertyProxy } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
+import { Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external::SetProperty}.
@@ -32,14 +32,14 @@ const createSetIterator = (target) => function*() {
 class ComponentSet extends Set {
     // workaround, necessary for typescript to handle Object.defineProperty
     // https://github.com/microsoft/TypeScript/issues/28694
-    private property!: SetProperty
+    private readonly property!: SetProperty;
     /**
      * Sets the {@link external:SetProperty SetProperty} to operate on sets the Symbol.iterator attribute.
      * @param {external:SetProperty} property The {@link external:SetProperty SetProperty} to operate on.
      */
     constructor(property: SetProperty) {
         super();
-        Object.defineProperty(this, 'property', { enumerable: false, value: property });
+        Object.defineProperty(this, "property", { enumerable: false, value: property });
         this[Symbol.iterator] = createSetIterator(this);
     }
 
@@ -65,11 +65,11 @@ class ComponentSet extends Set {
      */
     add(value: NamedProperty) {
         let valueIsProperty = false;
-        if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
+        if (PropertyFactory.instanceOf(value, "BaseProperty")) {
             valueIsProperty = true;
         } else {
             /* eslint-disable-next-line no-param-reassign */
-            value = PropertyFactory.create(this.property.getTypeid(), 'single', value);
+            value = PropertyFactory.create(this.property.getTypeid(), "single", value);
         }
 
         // Only delete if value is already a property

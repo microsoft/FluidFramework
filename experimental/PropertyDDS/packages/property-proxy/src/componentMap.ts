@@ -6,11 +6,11 @@
 import {
     PropertyFactory, BaseProperty,
     MapProperty, ReferenceMapProperty,
-} from "@fluid-experimental/property-properties"
+} from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
-import { forceType, Utilities } from './utilities';
+import { PropertyProxy } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
+import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.
@@ -24,7 +24,7 @@ const createMapIterator = (target) => function*(): Generator<[any, any]> {
     const keys = property.getIds();
     for (let i = 0; i < keys.length; i++) {
         const propertyAtKey = property.get(keys[i]);
-        if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
+        if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
             yield [keys[i], PropertyProxy.proxify(propertyAtKey)];
         } else {
             yield [keys[i], propertyAtKey];
@@ -41,14 +41,14 @@ const createMapIterator = (target) => function*(): Generator<[any, any]> {
 class ComponentMap extends Map {
     // workaround, necessary for typescript to handle Object.defineProperty
     // https://github.com/microsoft/TypeScript/issues/28694
-    private property!: MapProperty
+    private readonly property!: MapProperty;
     /**
      * Sets the {@link external:MapProperty MapProperty} to operate on sets the Symbol.iterator attribute.
      * @param property The {@link external:MapProperty MapProperty} to operate on.
      */
     constructor(property: MapProperty) {
         super();
-        Object.defineProperty(this, 'property', { enumerable: false, value: property });
+        Object.defineProperty(this, "property", { enumerable: false, value: property });
         this[Symbol.iterator] = createMapIterator(this);
     }
 
@@ -117,7 +117,7 @@ class ComponentMap extends Map {
         }
 
         if (this.property.has(key)) {
-            const isReferenceMap = PropertyFactory.instanceOf(this.property, 'Reference', 'map');
+            const isReferenceMap = PropertyFactory.instanceOf(this.property, "Reference", "map");
             if (isReferenceMap && asteriskFound) {
                 return this.property.getValue(key);
             } else {
@@ -143,7 +143,7 @@ class ComponentMap extends Map {
             // TODO(marcus): should this ever not be the case? in case its a value property
             // the proxify method would return the appropriate type like number, string etc.
             // so the else branch is unnecessary ?
-            if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
+            if (PropertyFactory.instanceOf(value, "BaseProperty")) {
                 func(PropertyProxy.proxify(value), keys[i], this);
             } else {
                 func(value, keys[i], this);
@@ -175,7 +175,7 @@ class ComponentMap extends Map {
      * @inheritdoc
      */
     set(key: string, value: any) {
-        if (typeof key !== 'string') {
+        if (typeof key !== "string") {
             throw new Error(PropertyProxyErrors.ONLY_STRING_KEYS);
         }
 
@@ -185,11 +185,11 @@ class ComponentMap extends Map {
         }
 
         if (this.property.has(key)) {
-            if (!asteriskFound && PropertyFactory.instanceOf(this.property, 'Reference', 'map')
+            if (!asteriskFound && PropertyFactory.instanceOf(this.property, "Reference", "map")
                 && forceType<ReferenceMapProperty>(this.property)) {
                 Utilities.setValueOfReferencedProperty(this.property, key, value);
             } else {
-                if (asteriskFound && !PropertyFactory.instanceOf(this.property, 'Reference', 'map')) {
+                if (asteriskFound && !PropertyFactory.instanceOf(this.property, "Reference", "map")) {
                     throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
                 }
                 this.property.set(key, Utilities.prepareElementForInsertion(this.property, value));
@@ -208,7 +208,7 @@ class ComponentMap extends Map {
         const valuesIterator = function*(this: ComponentMap) {
             for (let i = 0; i < keys.length; i++) {
                 const propertyAtKey = this.property.get(keys[i])!;
-                if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
+                if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
                     yield PropertyProxy.proxify(propertyAtKey);
                 } else {
                     yield propertyAtKey;

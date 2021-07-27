@@ -15,11 +15,11 @@ import {
     EnumArrayProperty,
     MapProperty,
     SetProperty,
-} from "@fluid-experimental/property-properties"
+} from "@fluid-experimental/property-properties";
 
-import { ComponentMap } from './componentMap';
-import { PropertyProxy } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
+import { ComponentMap } from "./componentMap";
+import { PropertyProxy } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
 import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
 
 export type ElementType = any | BaseProperty | PropertyProxy;
@@ -75,14 +75,14 @@ export class Utilities {
      */
     static prepareElementForInsertion(property: BaseProperty, element: ElementType, caller?: string): any {
         // Check if element exists and is a proxied property
-        if (element && typeof element.getProperty === 'function' &&
-            PropertyFactory.instanceOf(element.getProperty(), 'BaseProperty')) {
+        if (element && typeof element.getProperty === "function" &&
+            PropertyFactory.instanceOf(element.getProperty(), "BaseProperty")) {
             element = element.getProperty();
         }
-        if (PropertyFactory.instanceOf(element, 'BaseProperty')) {
+        if (PropertyFactory.instanceOf(element, "BaseProperty")) {
             if (property.isPrimitiveType() &&
-                !PropertyFactory.instanceOf(property, 'Reference', 'array') &&
-                !PropertyFactory.instanceOf(property, 'Reference', 'map')) {
+                !PropertyFactory.instanceOf(property, "Reference", "array") &&
+                !PropertyFactory.instanceOf(property, "Reference", "map")) {
                 if (element.isPrimitiveType()) {
                     return element.getValue();
                 } else {
@@ -90,15 +90,15 @@ export class Utilities {
                 }
             } else {
                 // Some special cases to allow out of the box functionality for arrays
-                if (element.getParent() && property.getContext() === 'array' && forceType<ArrayProperty>(property)) {
-                    if (caller === 'copyWithin' || caller === 'fill') {
+                if (element.getParent() && property.getContext() === "array" && forceType<ArrayProperty>(property)) {
+                    if (caller === "copyWithin" || caller === "fill") {
                         return element.clone();
-                    } else if (caller === 'reverse' || caller === 'sort' || caller === 'swap') {
+                    } else if (caller === "reverse" || caller === "sort" || caller === "swap") {
                         const idxString = element.getRelativePath(element.getParent());
                         const idx = parseInt(idxString.substr(1).slice(0, -1), 10);
                         const removed = property.remove(idx);
                         // Put in a dummy to keep the original array length, will be overwritten anyway
-                        property.insert(idx, PropertyFactory.create(property.getTypeid(), 'single'));
+                        property.insert(idx, PropertyFactory.create(property.getTypeid(), "single"));
                         return removed;
                     } else {
                         return element;
@@ -108,15 +108,15 @@ export class Utilities {
                 }
             }
         } else {
-            if (property.getContext() !== 'single' && element && typeof element !== 'string' &&
-                element[Symbol.iterator] && typeof element[Symbol.iterator] === 'function') {
+            if (property.getContext() !== "single" && element && typeof element !== "string" &&
+                element[Symbol.iterator] && typeof element[Symbol.iterator] === "function") {
                 throw new Error(PropertyProxyErrors.ITERABLE_INSERTION);
             }
-            if (property.getContext() === 'array' || property.getContext() === 'map') {
-                if (property.isPrimitiveType() || property.getFullTypeid().includes('array<enum<')) {
+            if (property.getContext() === "array" || property.getContext() === "map") {
+                if (property.isPrimitiveType() || property.getFullTypeid().includes("array<enum<")) {
                     return element;
                 } else {
-                    return PropertyFactory.create(property.getTypeid(), 'single', element);
+                    return PropertyFactory.create(property.getTypeid(), "single", element);
                 }
             } else {
                 return element;
@@ -136,10 +136,10 @@ export class Utilities {
             value = value.getProperty();
         }
 
-        if (context === 'single') {
+        if (context === "single") {
             // Allow setting the value from a property
-            if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
-                if (PropertyFactory.instanceOf(property, 'Reference') && forceType<ReferenceProperty>(property)) {
+            if (PropertyFactory.instanceOf(value, "BaseProperty")) {
+                if (PropertyFactory.instanceOf(property, "Reference") && forceType<ReferenceProperty>(property)) {
                     property.set(value);
                 } else {
                     property.deserialize(value.serialize());
@@ -156,15 +156,15 @@ export class Utilities {
             }
         } else {
             let valueContext;
-            if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
+            if (PropertyFactory.instanceOf(value, "BaseProperty")) {
                 valueContext = value.getContext();
             }
 
             Utilities.wrapWithPushPopNotificationDelayScope(property, () => {
-                if (context === 'array' && forceType<ArrayProperty>(property)) {
+                if (context === "array" && forceType<ArrayProperty>(property)) {
                     const proxiedArray = PropertyProxy.proxify(property);
                     property.clear();
-                    if (valueContext === 'array') {
+                    if (valueContext === "array") {
                         // Assigning an ArrayProperty fills the target with clones of the entries.
                         if (value.isPrimitiveType()) {
                             proxiedArray.getProperty().setValues(value.getValues());
@@ -177,10 +177,10 @@ export class Utilities {
                         const elements = _getElementsArray(value);
                         elements.forEach((el) => proxiedArray.push(el));
                     }
-                } else if (context === 'map' && forceType<MapProperty>(property)) {
+                } else if (context === "map" && forceType<MapProperty>(property)) {
                     const proxiedMap = PropertyProxy.proxify(property);
                     proxiedMap.clear();
-                    if (valueContext === 'map') {
+                    if (valueContext === "map") {
                         // Assigning a MapProperty fills the target with clones of the entries.
                         if (value.isPrimitiveType()) {
                             proxiedMap.getProperty().setValues(value.getValues());
@@ -196,7 +196,7 @@ export class Utilities {
                 } else { // context === 'set'
                     const proxiedSet = PropertyProxy.proxify(property as MapProperty);
                     proxiedSet.clear();
-                    if (valueContext === 'set' && forceType<SetProperty>(value)) {
+                    if (valueContext === "set" && forceType<SetProperty>(value)) {
                         PropertyProxy.proxify(value).forEach((el) => {
                             proxiedSet.add(el.getProperty().clone());
                         });
@@ -215,8 +215,8 @@ export class Utilities {
      * @param value The value to be checked.
      */
     static throwOnIterableForSingleProperty(value: any) {
-        if (value && typeof value !== 'string' &&
-            value[Symbol.iterator] && typeof value[Symbol.iterator] === 'function') {
+        if (value && typeof value !== "string" &&
+            value[Symbol.iterator] && typeof value[Symbol.iterator] === "function") {
             throw new Error(PropertyProxyErrors.ASSIGN_ITERABLE_TO_SINGLE);
         }
     }
@@ -255,7 +255,7 @@ export class Utilities {
      * @return True if `key` contains an asterisk.
      */
     static containsAsterisk(key: string): boolean {
-        return (String(key) === key && key[key.length - 1] === '*');
+        return (String(key) === key && key[key.length - 1] === "*");
     }
 
     /**
@@ -264,7 +264,7 @@ export class Utilities {
      * @return True if `key` contains a caret.
      */
     static containsCaret(key: string): boolean {
-        return (String(key) === key && key[key.length - 1] === '^');
+        return (String(key) === key && key[key.length - 1] === "^");
     }
 
     /**
@@ -285,12 +285,12 @@ export class Utilities {
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for get
         const propertyAtKey = (<any>property.get)(key)!;
-        if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
+        if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
             if (caretFound && propertyAtKey.isPrimitiveType()) {
-                if (PropertyFactory.instanceOf(propertyAtKey, 'Enum') && forceType<EnumProperty>(propertyAtKey)) {
+                if (PropertyFactory.instanceOf(propertyAtKey, "Enum") && forceType<EnumProperty>(propertyAtKey)) {
                     return propertyAtKey.getEnumString();
-                } else if (PropertyFactory.instanceOf(propertyAtKey, 'Uint64') ||
-                    PropertyFactory.instanceOf(propertyAtKey, 'Int64')) {
+                } else if (PropertyFactory.instanceOf(propertyAtKey, "Uint64") ||
+                    PropertyFactory.instanceOf(propertyAtKey, "Int64")) {
                     return propertyAtKey.toString();
                 }
             }
@@ -298,7 +298,7 @@ export class Utilities {
         } else {
             // property is a ReferenceProperty that references a primitive entry of a map/set.
             if (caretFound) {
-                const contextIsSingle = context === 'single';
+                const contextIsSingle = context === "single";
                 let other_property: BaseProperty = property;
                 if (!contextIsSingle && isReferenceCollection) {
                     // TODO(marcus): "as" reference type cast is has to be done because we cant differentiate
@@ -320,11 +320,11 @@ export class Utilities {
 
                 const typeid = other_property.getTypeid();
                 const fullTypeid = other_property.getFullTypeid();
-                if (typeid === 'Uint64') {
-                    return PropertyFactory.create('Uint64', 'single', propertyAtKey).toString();
-                } else if (typeid === 'Int64') {
-                    return PropertyFactory.create('Int64', 'single', propertyAtKey).toString();
-                } else if (fullTypeid.includes('<enum<')
+                if (typeid === "Uint64") {
+                    return PropertyFactory.create("Uint64", "single", propertyAtKey).toString();
+                } else if (typeid === "Int64") {
+                    return PropertyFactory.create("Int64", "single", propertyAtKey).toString();
+                } else if (fullTypeid.includes("<enum<")
                     && forceType<EnumArrayProperty>(other_property) && forceType<number>(key)) {
                     return other_property.getEnumString(key);
                 }
@@ -342,7 +342,7 @@ export class Utilities {
  * @hidden
  */
 function _getElementsArray<T = any>(value: Iterable<T>): T[] {
-    if (!value || typeof value[Symbol.iterator] !== 'function' || String(value) === value) {
+    if (!value || typeof value[Symbol.iterator] !== "function" || String(value) === value) {
         throw new Error(PropertyProxyErrors.NON_ITERABLE);
     }
     return [...value];

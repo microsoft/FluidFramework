@@ -20,7 +20,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:genver": "",
+    "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
