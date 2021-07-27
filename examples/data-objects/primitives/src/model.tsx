@@ -60,13 +60,8 @@ export class DdsCollection extends DataObject implements IFluidHTMLView {
         rerender();
     }
 
-    public readonly getMap = async (name: string) => {
-        const mapHandle: IFluidHandle<ISharedMap> | undefined = this.mapDir.get(name);
-        if (mapHandle === undefined) {
-            return undefined;
-        }
-
-        return mapHandle.get();
+    public readonly hasMap = (name: string) => {
+        return this.mapDir.get(name) !== undefined;
     };
 
     public readonly getMaps = async () => {

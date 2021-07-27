@@ -51,7 +51,7 @@ export class DdsCollectionView extends React.Component<IDdsCollectionProps, IDds
         const newMapNameEl = this.newMapTextInput.current ?? undefined;
         if (newMapNameEl !== undefined) {
             const newMapName = newMapNameEl.value;
-            if (newMapName.length > 0 && this.props.ddsCollection.getMap(newMapName) === undefined) {
+            if (newMapName.length > 0 && !this.props.ddsCollection.hasMap(newMapName)) {
                 this.props.ddsCollection.addMap(newMapName);
 
                 // clear
