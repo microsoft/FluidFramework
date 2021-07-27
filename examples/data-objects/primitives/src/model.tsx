@@ -98,7 +98,6 @@ export class DdsCollection extends DataObject implements IFluidHTMLView {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  */
  export const DdsCollectionFactory =
-    // eslint-disable-next-line @typescript-eslint/ban-types
     new DataObjectFactory<DdsCollection, undefined, undefined, IEvent> (
         DdsCollectionName,
         DdsCollection,
