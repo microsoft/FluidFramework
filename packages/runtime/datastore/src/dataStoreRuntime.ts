@@ -169,7 +169,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
-    public readonly documentId: string;
+    // public readonly documentId: string;
     public readonly id: string;
     public existing: boolean;
     public readonly options: ILoaderOptions;
@@ -198,7 +198,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             undefined,
             {all:{ dataStoreId: uuid() }},
         );
-        this.documentId = dataStoreContext.documentId;
+        // this.documentId = dataStoreContext.documentId;
         this.id = dataStoreContext.id;
         this.existing = dataStoreContext.existing;
         this.options = dataStoreContext.options;
