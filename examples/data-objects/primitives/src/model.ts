@@ -10,10 +10,6 @@ import {
 import { IEvent } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import React from "react";
-import ReactDOM from "react-dom";
-import { DdsCollectionView } from "./view";
 
 export interface INamedMap {
     name: string;
@@ -25,9 +21,7 @@ export const DdsCollectionName = "DdsCollection";
 /**
  * Basic DDS examples using view interfaces and stock component classes.
  */
-export class DdsCollection extends DataObject implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
-
+export class DdsCollection extends DataObject {
     private internalMapDir: IDirectory | undefined;
     protected get mapDir(): IDirectory { return this.tryGetDds(this.internalMapDir, "mapDir"); }
 
@@ -44,20 +38,6 @@ export class DdsCollection extends DataObject implements IFluidHTMLView {
     protected async hasInitialized() {
         this.internalMapDir = this.root.getSubDirectory("map");
         this.mapDir.on("containedValueChanged", () => { this.emit("mapsChanged"); });
-    }
-
-    /**
-     * Render the primitives.
-     */
-    public render(div: HTMLElement) {
-        const rerender = () => {
-            ReactDOM.render(
-                <DdsCollectionView ddsCollection={this} />,
-                div,
-            );
-        };
-
-        rerender();
     }
 
     public readonly hasMap = (name: string) => {

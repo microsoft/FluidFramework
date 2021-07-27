@@ -39,9 +39,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/map": "^0.45.0",
-    "@fluidframework/view-interfaces": "^0.45.0",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react": "^16.10.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
@@ -49,7 +47,6 @@
     "@fluidframework/webpack-fluid-loader": "^0.45.0",
     "@types/node": "^12.19.0",
     "@types/react": "^16.9.15",
-    "@types/react-dom": "^16.9.4",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",
