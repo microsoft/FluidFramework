@@ -1565,21 +1565,6 @@ const BinaryPropertyError = {
         "repository referenced by branch: ",
 };
 
-const CONNECTIVITY_RETRYABLE_ERRORS = {
-    ESOCKETTIMEDOUT: "ESOCKETTIMEDOUT",
-    ECONNRESET: "ECONNRESET",
-    ECONNREFUSED: "ECONNREFUSED",
-    ETIMEDOUT: "ETIMEDOUT",
-    SOCKET_HANG_UP: "socket hang up",
-    WEBSOCKET_ERROR: "websocket error",
-    TRANSPORT_CLOSE: "transport close",
-    REQUEST_ABORTED: "The request has been aborted",
-    RECONNECTION_IN_PROCESS: "Reconnection in process",
-    UNAVAILABLE_PSS_INSTANCE: "The PSS instance for this branch is temporarily unavailable",
-    CS_UNAVAILABLE: "Collaboration service temporarily unavailable",
-};
-
-const DETACHED_HEAD = "DETACHED HEAD";
 const PROPERTY_PATH_DELIMITER = ".";
 const MESSAGE_CONSTANTS = {
     ...BinaryPropertyError,
@@ -1594,9 +1579,7 @@ const MESSAGE_CONSTANTS = {
     ...ServerError,
 };
 
-export {
-    CONNECTIVITY_RETRYABLE_ERRORS,
-    MESSAGE_CONSTANTS as MSG,
+export const constants = {
+    MSG: MESSAGE_CONSTANTS,
     PROPERTY_PATH_DELIMITER,
-    DETACHED_HEAD,
 };

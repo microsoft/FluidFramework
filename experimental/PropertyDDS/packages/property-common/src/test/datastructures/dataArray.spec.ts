@@ -11,7 +11,7 @@ import {
     UniversalDataArray,
     Int8DataArray,
     BoolDataArray,
-}  from "../../index";
+} from "../../index";
 let error;
 
 describe("BaseDataArray", function() {

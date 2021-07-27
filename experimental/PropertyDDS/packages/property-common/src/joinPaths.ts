@@ -2,13 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/**
- * @fileoverview implements a joinPaths routine to merge two paths.
- */
 
 /**
- *
- * Helper functions for string processing
+ * @fileoverview implements a joinPaths routine to merge two paths.
  */
 
 /**

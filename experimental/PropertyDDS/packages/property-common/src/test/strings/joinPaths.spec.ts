@@ -5,12 +5,12 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /**
- * @fileoverview In this file,we will test property-common.Strings.joinPaths
+ * @fileoverview In this file,we will test property-common.joinPaths
  */
 import { expect } from "chai";
 import { joinPaths } from "../../index";
 
-describe("property-common.Strings.joinPaths", function() {
+describe("property-common.joinPaths", function() {
     it("should exist", function() {
         expect(joinPaths).to.exist;
     });

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview In this file, we will test property-common.Chronometer
  */

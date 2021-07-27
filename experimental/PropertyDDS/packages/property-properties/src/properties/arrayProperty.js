@@ -1660,7 +1660,7 @@ ArrayProperty.prototype.getFullTypeid = function (in_hideCollection) {
 ArrayProperty.prototype._dataArrayCreate = function (in_length) {
     // This really creates a generic array for custom type arrays. For primitive arrays, like
     // 'StringArrayProperty' or 'Float32ArrayProperty', you need to overload this function.
-    this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+    this._dataArrayRef = new UniversalDataArray(in_length);
     for (var i = 0; i < in_length; i++) {
         var element = Property.PropertyFactory._createProperty(this.getTypeid(), null, undefined, this._scope);
         element._setParent(this);

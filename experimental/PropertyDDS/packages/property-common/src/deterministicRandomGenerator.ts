@@ -10,7 +10,7 @@
 /* eslint-disable no-bitwise */
 
 import _ from "lodash";
-import { guidToUint32x4, hashCombine4xUint32 } from "./guidUtils";
+import { GuidUtils } from "./guidUtils";
 import { calculateHash } from "./hashCalculator";
 
 /**
@@ -33,9 +33,9 @@ export class DeterministicRandomGenerator {
     constructor(in_seed: string | number) {
         // Initialize the internal state from the given initial guid
         if (_.isString(in_seed)) {
-            this._guid1 = guidToUint32x4(in_seed);
+            this._guid1 = GuidUtils.guidToUint32x4(in_seed);
         } else {
-            this._guid1 = guidToUint32x4(calculateHash(String(in_seed)));
+            this._guid1 = GuidUtils.guidToUint32x4(calculateHash(String(in_seed)));
         }
         this._guid2 = new Uint32Array(4);
         this._guid2[0] = (this._guid1[0] + 1) >>> 0;
@@ -67,7 +67,7 @@ export class DeterministicRandomGenerator {
      */
     irandom(in_max?: number): number {
         // Create a new hash
-        hashCombine4xUint32(this._guid1, this._guid2, this._result);
+        GuidUtils.hashCombine4xUint32(this._guid1, this._guid2, this._result);
 
         // Permute the hashes
         for (let i = 0; i < 4; i++) {

@@ -11,7 +11,9 @@
  */
 
 import { expect } from "chai";
-import {
+import { GuidUtils } from "../guidUtils";
+
+const {
     initializeGUIDGenerator,
     generateGUID,
     uint32x4ToGUID,
@@ -20,7 +22,7 @@ import {
     base16ToBase64,
     combineGuids,
     isGUID,
-} from "../guidUtils";
+} = GuidUtils;
 
 const testGuid = function(re, base64) {
     describe("generateGuid", function() {

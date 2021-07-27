@@ -11,7 +11,7 @@ const BaseProperty = require('./baseProperty');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
-const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
+const { UniversalDataArray } = require('@fluid-experimental/property-common');
 const _ = require('lodash');
 const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const ReferenceProperty = require('./referenceProperty');
@@ -224,7 +224,7 @@ ReferenceArrayProperty.prototype._resolvePathSegment = function (in_segment, in_
  * @param {Number} in_length      the initial length of the array
  */
 ReferenceArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+  this._dataArrayRef = new UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, '');
   }

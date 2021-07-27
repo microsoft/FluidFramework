@@ -16,7 +16,7 @@ describe('Test Uint64Property', function () {
      */
     before(function () {
         PropertyFactory = require('../..').PropertyFactory;
-        Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
+        Uint64 = require('@fluid-experimental/property-common').Uint64;
         MSG = require('@fluid-experimental/property-common').constants.MSG
     });
 

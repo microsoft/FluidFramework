@@ -25,6 +25,20 @@ export class DeferredPromise<T> implements Promise<T> {
         throw new Error("Method not implemented.");
     }
 
+    /**
+     * Fetches a node style callback that fulfills the promise when called.
+     * @returns A node style callback that fulfills the promise when called.
+     */
+    getCb() {
+        return (error, result) => {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (error) {
+                return this.reject(error);
+            }
+            return this.resolve(result);
+        };
+    }
+
     public async then<TResult1 = T, TResult2 = never>(
         onfulfilled?: ((value: T) =>
             TResult1 | PromiseLike<TResult1>) | undefined | null,

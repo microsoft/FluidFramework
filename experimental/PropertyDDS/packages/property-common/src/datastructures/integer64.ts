@@ -9,10 +9,10 @@
 
 import _ from "lodash";
 import { ConsoleUtils } from "../consoleUtils";
-import { MSG } from "../constants";
+import { constants } from "../constants";
 
 const BIT32 = 4294967296;
-
+const { MSG } = constants;
 /**
  * A data representation class for 64 bit integer types.
  * This is necessary since js doesn't support 64bit
