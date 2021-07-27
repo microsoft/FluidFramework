@@ -9,5 +9,15 @@ module.exports = {
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    },
+    "rules": {
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/consistent-type-assertions": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "@typescript-eslint/ban-types": "off",
+        "prefer-rest-params": "off",
+
     }
 }

@@ -91,7 +91,6 @@ export const arrayProxyHandler = {
                     } finally {
                         target.lastCalledMethod = "";
                     }
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                     return result;
                 };
             }
@@ -119,12 +118,10 @@ export const arrayProxyHandler = {
                             throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
                         }
                     } else {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return Utilities.proxifyInternal(property, key, caretFound, isReferenceArray);
                     }
                 }
             }
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return Reflect.get(target, key);
         }
     },

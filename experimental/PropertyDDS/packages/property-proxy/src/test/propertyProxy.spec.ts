@@ -171,11 +171,11 @@ describe("JS-Object-like property accessing ", function() {
             it("should be able to delete primitive and non-primitive properties", function() {
                 let removed = delete state.myFirstPrimitivePropertyInsertedViaProxy;
                 expect(removed).toEqual(true);
-                expect(rootNode.get("myFirstPrimitivePropertyInsertedViaProxy")).toBeUndefined;
+                expect(rootNode.get("myFirstPrimitivePropertyInsertedViaProxy")).toBeUndefined();
 
                 removed = delete state.myFirstNonPrimitivePropertyInsertedViaProxy;
                 expect(removed).toEqual(true);
-                expect(rootNode.get("myFirstNonPrimitivePropertyInsertedViaProxy")).toBeUndefined;
+                expect(rootNode.get("myFirstNonPrimitivePropertyInsertedViaProxy")).toBeUndefined();
 
                 // Trying to delete something that is not a child of a NodeProperty should throw
                 expect(() => { delete state.myTestProperty.myVector; }).toThrow("PropertyProxy-006");
@@ -462,11 +462,11 @@ describe("JS-Object-like property accessing ", function() {
 
                 it("for loop", function() {
                     let sum = 0;
-                    for (let i = 0; i < state.myTestProperty.myReferenceArray.length; ++i) {
-                        if (state.myTestProperty.myReferenceArray[i].x) {
-                            sum += state.myTestProperty.myReferenceArray[i].x;
+                    for (const element of state.myTestProperty.myReferenceArray) {
+                        if (element.x) {
+                            sum += element.x;
                         } else {
-                            sum += state.myTestProperty.myReferenceArray[i];
+                            sum += element;
                         }
                     }
 
@@ -1028,8 +1028,8 @@ describe("JS-Object-like property accessing ", function() {
                 beforeAll(function() {
                     refMap = rootNode.resolvePath("myTestProperty.myReferenceMap");
                     const refMapIds = refMap.getIds();
-                    for (let i = 0; i < refMapIds.length; ++i) {
-                        const entry = refMap.get(refMapIds[i]);
+                    for (const id of refMapIds) {
+                        const entry = refMap.get(id);
                         if (PropertyFactory.instanceOf(entry, "BaseProperty")) {
                             if (PropertyFactory.instanceOf(entry, "ContainerProperty") && entry.has("x")) {
                                 refMapSum += entry.get("x").getValue();
@@ -1132,8 +1132,8 @@ describe("JS-Object-like property accessing ", function() {
                     const rM = state.myTestProperty.myReferenceMap;
                     const refMapIds = refMap.getIds();
 
-                    for (let i = 0; i < refMapIds.length; ++i) {
-                        expect(rM.get(`${refMapIds[i]}*`)).toEqual(refMap.getValue(refMapIds[i]));
+                    for (const id of refMapIds) {
+                        expect(rM.get(`${id}*`)).toEqual(refMap.getValue(id));
                     }
                 });
 
@@ -1732,6 +1732,7 @@ describe("JS-Object-like property accessing ", function() {
                     const testArray = state.myTestProperty.myI32Array;
                     const tempArray: any[] = [];
                     // The array is defined as [0,10,20,30,...]
+                    // eslint-disable-next-line @typescript-eslint/prefer-for-of
                     for (let i = 0; i < testArray.length; i++) {
                         tempArray.push(testArray[i]);
                     }

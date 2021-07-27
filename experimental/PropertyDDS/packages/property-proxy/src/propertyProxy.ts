@@ -29,6 +29,8 @@ export const proxySymbol = Symbol("property-proxy");
  * Class that contains the [[proxify]] and [[getParentOfReferencedProperty]] methods.
  * @public
  */
+
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class PropertyProxy {
     /**
      * This utility function returns the parent property of a referenced property.
@@ -36,7 +38,8 @@ export class PropertyProxy {
      * @param key - The key of the referenced property in the Reference(Array/Map)Property.
      * @public
      */
-    static getParentOfReferencedProperty(property: ReferenceType, key?: string | number): IParentAndPathOfReferencedProperty {
+    static getParentOfReferencedProperty(property: ReferenceType, key?: string | number):
+        IParentAndPathOfReferencedProperty {
         const keys = (key === undefined ? [] : [key]);
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for getValue
