@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { DdsCollectionName } from "./main";
+import { DdsCollectionName } from "./model";
 import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
 
 /**
