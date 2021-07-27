@@ -8,11 +8,17 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
-import { SharedMap, IDirectory } from "@fluidframework/map";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { DdsCollectionView } from "./view";
+
+export interface INamedMap {
+    name: string;
+    map: ISharedMap;
+}
 
 export const DdsCollectionName = "DdsCollection";
 
@@ -44,18 +50,34 @@ export class DdsCollection extends DataObject implements IFluidHTMLView {
      * Render the primitives.
      */
     public render(div: HTMLElement) {
-        const mapCreate = (name: string) => SharedMap.create(this.runtime, name);
         const rerender = () => {
             ReactDOM.render(
-                <div>
-                    <DdsCollectionView mapDir={this.mapDir} mapCreate={mapCreate} />
-                </div>,
+                <DdsCollectionView ddsCollection={this} />,
                 div,
             );
         };
 
         rerender();
     }
+
+    public readonly getMap = async (name: string) => {
+        const mapHandle: IFluidHandle<ISharedMap> | undefined = this.mapDir.get(name);
+        if (mapHandle === undefined) {
+            return undefined;
+        }
+
+        return mapHandle.get();
+    };
+
+    public readonly getMaps = async () => {
+        const namedMaps: INamedMap[] = [];
+        for (const [name, mapHandle] of this.mapDir) {
+            const map = await (mapHandle as IFluidHandle<ISharedMap>).get();
+            namedMaps.push({ name, map });
+        }
+        namedMaps.sort((a, b) => a.name.localeCompare(b.name));
+        return namedMaps;
+    };
 
     public readonly addMap = (name: string) => {
         const newMap = SharedMap.create(this.runtime, name);

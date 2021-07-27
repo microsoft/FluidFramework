@@ -4,17 +4,15 @@
  */
 
 import React from "react";
-import { ISharedMap, SharedMap, IDirectory } from "@fluidframework/map";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IMapProps, MapView } from "./map";
+import { MapView } from "./map";
+import { DdsCollection, INamedMap } from "./model";
 
 interface IDdsCollectionProps {
-    mapDir: IDirectory;
-    mapCreate: (name: string) => SharedMap;
+    ddsCollection: DdsCollection;
 }
 
 interface IDdsCollectionState {
-    maps: IMapProps[];
+    maps: INamedMap[];
 }
 
 export class DdsCollectionView extends React.Component<IDdsCollectionProps, IDdsCollectionState> {
@@ -39,36 +37,22 @@ export class DdsCollectionView extends React.Component<IDdsCollectionProps, IDds
 
     componentDidMount() {
         this.getMaps();
-        this.props.mapDir.on("containedValueChanged", () => this.getMaps());
+        this.props.ddsCollection.on("mapsChanged", () => this.getMaps());
     }
 
     private getMaps(): void {
-        this.getMapsCore().then(
+        this.props.ddsCollection.getMaps().then(
             (maps) => this.setState({ maps }),
             (error) => console.log(error),
         );
-    }
-
-    private async getMapsCore(): Promise<IMapProps[]> {
-        const maps: IMapProps[] = [];
-        await Promise.all(Array.from(this.props.mapDir.keys()).map(async (name) => {
-            const handle = await this.props.mapDir.wait<IFluidHandle<ISharedMap>>(name);
-            if (handle !== undefined) {
-                const map = await handle.get();
-                maps.push({ name, map });
-            }
-        }));
-        return maps.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     private addMap(e: HTMLButtonElement) {
         const newMapNameEl = this.newMapTextInput.current ?? undefined;
         if (newMapNameEl !== undefined) {
             const newMapName = newMapNameEl.value;
-            if (newMapName.length > 0 && this.props.mapDir.get(newMapName) === undefined) {
-                const newMap = this.props.mapCreate(newMapName);
-                newMap.bindToContext();
-                this.props.mapDir.set(newMapName, newMap.handle);
+            if (newMapName.length > 0 && this.props.ddsCollection.getMap(newMapName) === undefined) {
+                this.props.ddsCollection.addMap(newMapName);
 
                 // clear
                 newMapNameEl.value = "";
