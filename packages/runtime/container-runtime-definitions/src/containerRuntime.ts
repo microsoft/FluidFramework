@@ -137,4 +137,11 @@ export interface IContainerRuntime extends
      * @param request - request to resolve
      */
     resolveHandle(request: IRequest): Promise<IResponse>;
+
+    /**
+     * Submits a container runtime level signal to be sent to other clients.
+     * @param type - Type of the signal.
+     * @param content - Content of the signal.
+     */
+     submitSignal(type: string, content: any): void;
 }
