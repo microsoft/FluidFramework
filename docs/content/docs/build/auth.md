@@ -27,7 +27,7 @@ Anyone with access to the secret can impersonate your application when communica
 {{% /callout %}}
 
 Now you have a mechanism to establish trust. You can sign some data, send it to the Azure Fluid Relay service, and the service can validate whether the
-data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard way method for encoding
+data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard method for encoding
 authentication and user-related data with a signature for verification: JSON Web Tokens (JWTs).
 
 ## JWTs and Azure Fluid Relay service
