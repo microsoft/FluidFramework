@@ -1,35 +1,65 @@
 # @fluidframework/sequence
 
-Every item in a **SharedSegmentSequence** is at a specific position starting at 0, kind of like an array. However, it
-differs from an array in that the positions can move as local and remote collaborators make modifications to the
-sequence. There are a number of different sequence types:
+The **SharedSequence** distributed data structures are a set of list-like data structures. They offer similar
+capabilities and differ largely based on the type of data that is stored within the sequence. There are several
+different sequence types:
 
-- SharedString for storing and collaborating on a sequence of text.
-- SharedNumberSequence for storing and collaborating on a sequence of numbers.
-- SharedObjectSequence for storing and collaborating on a sequence of JSON-serializable objects.
+- SharedNumberSequence for storing and simultaneously editing a sequence of numbers.
+- SharedObjectSequence for storing and simultaneously editing a sequence of JSON-serializable objects.
+- SharedString for storing storing and simultaneously editing a sequence of text. Note that SharedString is a sequence
+  DDS but it has additional specialized features and behaviors for working with text.
 
-As the name suggests SharedSegmentSequence, or sequence for short, are made of segments. Segments are the leaf nodes of
-the tree data structure that enables collaboration and backs the sequence. Segments may be split and merged as
-modifications are made to the sequence. Every segment has a length from 1, to the length of the sequence. The length of
-the sequence will be the combined length of all the segments.
+All the sequence DDSes share a common base class, SharedSegmentSequence. For the remainder of this document, the term
+*sequence* refers to this base class.
 
-When talking about positions in a sequence we use the terms *near*, and *far*. The nearest position in a sequence is 0,
+*Item*s are the individual units that are stored within the sequence (i.e. in a SharedString the items are characters),
+but regardless of the type of data stored in the sequence, every item in a sequence is at a specific *position* starting
+at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
+editors make modifications to the sequence.
+
+As its name suggests, SharedSegmentSequence is composed of *segments*. Segments are the unit that the sequence works
+with internally, and contain items within them. Thus, every segment has a length of at least 1 -- that is, it contains
+at least one item -- and segments may be split and merged arbitrarily as the sequence is edited. This means the length
+of the sequence is not the number of segments, but rather the sum of the length of all the segments.
+
+For example, consider a SharedNumberSequence that is initially empty. User A adds the numbers 0, 1 and 2 to the
+sequence. Its length is now 3 -- it contains 3 items. Internally, however, the sequence could have either 1, 2, or 3
+segments.
+
+```bash
+Segments: [S1] [S2] [S3]
+   Items:  0    1    2
+
+Segments: [  S1  ]  [S2]
+   Items:  0    1    2
+
+Segments: [    S1     ]
+   Items:  0    1    2
+```
+
+In typical use, the splitting and merging of segments is an implementation detail that is not relevant to using the
+sequence. However, it is possible to enumerate the segments that intersect a range of positions for performance reasons.
+In this case it is important to not retain references to the segments (outside of the enumeration), and to make no
+assumptions based on the length of the segments themselves.
+
+<!-- When talking about positions in a sequence we use the terms *near*, and *far*. The nearest position in a sequence is 0,
 and the farthest position is its length. When comparing two positions the nearer position is closer to 0, and the
-farther position is closer to the length.
+farther position is closer to the length. -->
 
 ## Using a Sequence
 
 Sequences support three basic operations: insert, remove, and annotate. Insert and remove are used to add and remove
-segments from the sequence, while annotate is used to add metadata to segments.
+items from the sequence, while annotate is used to add metadata to items.
 
-Insert operations on the sequence take a single position argument along with the content. This position is inclusive.
-This position can any position in the sequence including 0, and the length of the sequence.
+Insert operations on the sequence take a single position argument along with the content. This position is inclusive and
+can be any position in the sequence including 0, to insert at the beginning of the sequence, and the length of the
+sequence, to insert at the end.
 
 ```typescript
     //   content:
     // positions:
 
-    // insert text a positions 0
+    // insert text at positions 0
     sharedString.insertText(0, "hi");
     //   content: hi
     // positions: 01
@@ -49,10 +79,10 @@ This position can any position in the sequence including 0, and the length of th
     // positions: 012345678
 ```
 
-Remove operations take a start and an end position. The start position is similar to the insert's position, in that is
-can be any position in the sequence and is inclusive. However, unlike insert the start position cannot be the length of
-the sequence, as nothing exists there yet. The end position is exclusive and must be greater than the start, so it can
-be any value from 1 to the length of the sequence.
+Remove operations take a start and an end position, referred to as a *range*. The start position is inclusive and can be
+any position in the sequence from 0 to its `length - 1`. The start position cannot be the length of the sequence like it
+can in insert, because there is nothing at that position. The end position is exclusive and must be greater than the
+start, so it can be any value from 1 to *n* (where *n* is the length of the sequence).
 
 ```typescript
     //   content: hi world!
@@ -69,11 +99,11 @@ be any value from 1 to the length of the sequence.
     // positions:
 ```
 
-Annotate operations can add or remove map-like properties to or from content of the sequence. They can store any JSON
-serializable data and have similar behavior to a SharedMap. Annotate takes a start and end position which work the same
-way as the start and end of the remove operation. In addition to start and end annotate also takes a map-like properties
-object. Each key of the provided properties object will be set on each position of the specified range. Setting a
-property key to null will remove that property from the positions in the range.
+Annotate operations can add or remove map-like properties to or from items in the sequence. They can store any JSON
+serializable data and have the same merge behavior as a [SharedMap][] (last writer wins). Annotate takes a start and end
+position which work the same way as the start and end of the remove operation. In addition to start and end, annotate
+also takes a map-like properties object. Each key of the provided properties object will be set on each position of the
+specified range. Setting a property key to null will remove that property from the positions in the range.
 
 ```typescript
     //   content: hi world
@@ -112,35 +142,113 @@ property key to null will remove that property from the positions in the range.
     // props5 = { decoration: "underline" }
 ```
 
-Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This even provides the ranges
+Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
 affected by the operation, the type of the operation, and the properties that were changes by the operation.
 
-## How Collaboration Works
+## Sequence merge strategy
 
-The Fluid sequence data structures are eventually consistent, which means all collaborators will end up in the same
+The Fluid sequence data structures are eventually consistent, which means all editors will end up in the same
 final state. However, the intermediate states seen by each collaborator may not be seen by other collaborators. These
 intermediate states occur when two or more collaborators modify the same position in the sequence which results in a
 conflict.
 
-The basic strategy for insert conflict resolution in the sequence is to merge *far*. This strategy depends on a
-fundamental property of the Fluid Framework, which is guaranteed ordering. So, if two or more collaborators perform an
-operation on a sequence, the operations will be given an ordering and all clients will see those operations in the same
-order. What this means for the merge *far* strategy for resolving conflicting inserts is that the first operation will
-be placed in the conflicting position when it is received. When the next insert with the same position arrives and is
-applied it will be placed at the specified position and the previous inserts content position will be increased by the
-length of the incoming content pushing is farther towards the length of the sequence. This is what we call merging
-*far*.
+Consider a sequence like this:
 
-Like insert the strategies for remove and annotate also rely on guaranteed ordering. For remove and annotate only
-content visible to the collaborator creating the operation will be modified, any content ordered after the won't be.
+```bash
+    //   content: hi mar
+    // positions: 012345
+```
 
-For remove this means we can't have an insert and a remove at the same time, as they will have an order, and all
-collaborators will see the operations in the same order. We also detect overlapping removes made by different
-collaborators, the resolutions here is straightforward -- the content is removed.
+Now two users simultaneously insert characters at the end of the sequence. One inserts `k` and the other inserts a `c`.
+This is an *insert conflict*. The basic strategy for insert conflict resolution in the sequence is to merge *far*,
+closer to the end of the sequence.
 
-As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy here is last one wins.
-So, if two collaborators set the same key on the annotate properties the operation that gets ordered last will
+This merge strategy is possible because of a fundamental property of the Fluid Framework, which is guaranteed ordering.
+That is, while the two inserts occurred simultaneously, the operations will be given a global order and all clients will
+see the order of the operations when applying them locally. This enables each client to converge to the same state
+eventually.
+
+In the earlier example, assuming the `k` operation was ordered before the `c` operation, then the `k` would be
+inserted at position 6 first. Then the `c` op is applied -- this is the merge conflict. The `c` op is inserted at the
+position requested (6), and the `k` is pushed out towards the end of the sequence.
+
+```bash
+    //   content: hi mar
+    // positions: 012345
+
+    // insert(6, "k")
+    // k op is ordered first
+    //   content: hi mark
+    // positions: 0123456
+
+    // insert(6, "c")
+    // c op is now applied, pushing the k towards the end of the sequence
+    //   content: hi marck
+    // positions: 01234567
+
+```
+
+This same logic applies if multiple items are inserted at the same position -- the earlier ordered items will be pushed
+towards the end of the sequence as the later items are merged.
+
+### Merge strategies for remove
+
+Like insert, the strategies for remove and annotate also use the guaranteed ordering provided by the Fluid Framework.
+Consider again the example from above. Now one user inserts a `y` at position 6, and another user removes the `c` and
+the `k` (positions 6 and 7).
+
+```bash
+    //   content: hi marck
+    // positions: 01234567
+
+    // REMOVE BEFORE INSERT
+    // remove(6, 7)
+    // remove op now applied
+    //   content: hi mar
+    // positions: 012345
+
+    // insert(6, "y")
+    // no merge conflict -- position 6 is empty
+    //   content: hi mary
+    // positions: 0123456
+
+    // OR
+
+    // INSERT BEFORE REMOVE
+    // insert(6, "y")
+    // y op is now applied, pushing the c and k towards the end of the sequence
+    //   content: hi maryck
+    // positions: 012345678
+
+    // remove(6, 7)
+    // remove op now applied, but only removes content ordered before it
+    //   content: hi mary
+    // positions: 0123456
+```
+
+The key to this merge behavior is that a remove operation will only remove content that was visible to it when the
+operation was made. In the example above, the remove op adjusted the range it removed, ensuring only the `ck` was
+removed.
+
+Another way to consider this behavior is that a remove operation will only remove content that was inserted earlier in
+the order. Anything inserted after a remove operation will be ignored. The sequence also detects overlapping remove
+operations, and the merge resolution is straightforward -- the data is removed.
+
+As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy used is last writer
+wins. If two collaborators set the same key on the annotate properties the operation that gets ordered last will
 determine the value.
+
+## SharedObjectSequence and SharedNumberSequence
+
+SharedObjectSequence and SharedNumberSequence are very similar distributed data structures. The only difference is the
+type of content they support. SharedNumberSequence only supports numbers as content, while SharedObjectSequence supports
+any JSON serializable object. Both DDSes support inserting, removing, and annotating content. Each item -- that is, each
+number or object -- will occupy a single position in the sequence.
+
+An important note is that, unlike an array, positions are not guaranteed remain constant. The position of an item can
+change as content is added or removed from the sequence. To track or pass a reference to a specific piece of content
+within the sequence you should find its segment via `segment = s.getContainingSegment(position)` and then use
+`pos = s.getPosition(segment)` to get its current position in the tree.
 
 ## SharedString
 
@@ -174,15 +282,4 @@ to 0, and the farther position is closer to the length.
   - [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/CollaborativeTextArea.tsx)
   - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/collaborativeInput.tsx)
 
-## SharedObjectSequence and SharedNumberSequence
-
-SharedObjectSequence and SharedNumberSequence are very similar distributed data structures. The only difference is the
-type of content they support. SharedNumberSequence only supports numbers as content, while SharedObjectSequence supports
-any JSON serializable object. Both DDSes support inserting, removing, and annotating content. Each piece of content --
-that is, each number or object -- will occupy a single position in the sequence. The length of the sequence is the count
-of content items in the sequence.
-
-An important note is that, unlike an array, positions are not guaranteed remain constant. The position of an item can
-change as content is added or removed from the sequence. To track or pass a reference to a specific piece of content
-within the sequence you should find its segment via `segment = s.getContainingSegment(position)` and then use
-`pos = s.getPosition(segment)` to get its current position in the tree.
+[SharedMap]: https://fluidframework.com/docs/data-structures/map/
