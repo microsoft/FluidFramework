@@ -14,7 +14,6 @@ import {
     wrapError,
     annotateFluidError,
     LoggingError,
-    IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -106,9 +105,8 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             ? originalError
             : wrapError(originalError, newErrorFn);
 
-        //* Bad cast
         if (message !== undefined) {
-            annotateFluidError(error as IFluidErrorBase, { props: extractSafePropertiesFromMessage(message) });
+            annotateFluidError(error, { props: extractSafePropertiesFromMessage(message) });
         }
         return error;
     }
@@ -140,9 +138,8 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
         ? originalError
         : wrapError(originalError, newErrorFn);
 
-    //* Bad cast
     if (props !== undefined) {
-        annotateFluidError(error as IFluidErrorBase, { props });
+        annotateFluidError(error, { props });
     }
     return error;
 }

@@ -16,7 +16,7 @@ import {
     IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent, annotateFluidError, IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, annotateFluidError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
@@ -252,8 +252,7 @@ export class EpochTracker implements IPersistedFileCache {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
-                //* need to ensure fluidErrorCode
-                annotateFluidError(epochError as IFluidErrorBase,
+                annotateFluidError(epochError,
                     { props: {
                         fromCache,
                         clientEpoch: this.fluidEpoch,

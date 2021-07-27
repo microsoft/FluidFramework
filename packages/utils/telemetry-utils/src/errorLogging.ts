@@ -14,7 +14,7 @@ import {
     isILoggingError,
     isErrorLike,
     isFluidError,
-    hasErrorType,
+    isOldValidError,
 } from "./staging";
 import {
     extractLogSafeErrorProperties,
@@ -58,6 +58,15 @@ export function wrapError<T>(
     return newError;
 }
 
+function patchOldValidError(
+    oldValidError: Omit<IFluidErrorBase, "fluidErrorCode">,
+): asserts oldValidError is IFluidErrorBase {
+    const patchMe: { fluidErrorCode?: string } = oldValidError as any;
+    if (patchMe.fluidErrorCode === undefined) {
+        patchMe.fluidErrorCode = "";
+    }
+}
+
 /**
  * Normalize the given error yielding a valid Fluid Error
  * @returns A valid Fluid Error with any provided annotations applied
@@ -68,7 +77,10 @@ export function normalizeError(
     error: unknown,
     annotations: FluidErrorAnnotations = {},
 ): IFluidErrorBase {
-    //* NOTE - Callers who have an "old"-style "trusted" error should patch it themselves to hit this code path
+    if (isOldValidError(error)) {
+        patchOldValidError(error);
+    }
+
     if (isFluidError(error) && !Object.isFrozen(error)) {
         // We can simply annotate the error and return it
         annotateFluidError(error, annotations);
@@ -87,9 +99,12 @@ export function normalizeError(
 
 //* Add new tsdoc comment
 export function annotateFluidError(
-    fluidError: IFluidErrorBase,
+    fluidError: Omit<IFluidErrorBase, "fluidErrorCode">, // Temporary, for back-compat
     annotations: FluidErrorAnnotations = {},
-): asserts fluidError is IFluidErrorBase {
+) {
+    // Temporary, for back-compat
+    patchOldValidError(fluidError);
+
     // This assert would only be hit if someone did some dubious casting, or intentionally froze a known fluidError.
     assert(isFluidError(fluidError) && !Object.isFrozen(fluidError),
         "Cannot annotate the given fluidError");
