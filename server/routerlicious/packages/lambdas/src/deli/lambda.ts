@@ -188,9 +188,13 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
         const lumberJackMetric = DefaultServiceConfiguration.enableLumberTelemetryFramework ?
             Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
-        lumberJackMetric?.setProperties(new Map([[BaseTelemetryProperties.tenantId, this.tenantId],
-            [BaseTelemetryProperties.documentId, this.documentId]]));
-        setQueuedMessageProperties(rawMessage, lumberJackMetric);
+
+        if (lumberJackMetric)
+        {
+            lumberJackMetric.setProperties(new Map([[BaseTelemetryProperties.tenantId, this.tenantId],
+                [BaseTelemetryProperties.documentId, this.documentId]]));
+            setQueuedMessageProperties(rawMessage, lumberJackMetric);
+        }
 
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
@@ -252,7 +256,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
         const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
-        this.setDeliStateMetrics(checkpoint, lumberJackMetric);
+        if (lumberJackMetric)
+        {
+            this.setDeliStateMetrics(checkpoint, lumberJackMetric);
+        }
 
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
