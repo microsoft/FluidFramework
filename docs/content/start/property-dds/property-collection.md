@@ -9,7 +9,7 @@ two different types of collections:
 **Primitive Collections**
   Primitive collections are strictly typed with one of the Primitive Property Types (e.g. a String array or Float64
   map). These collections directly contain the literal values of the given type. They do not support polymorphism, all
-  entries have to be of the same type The collection itself is a leaf in the PropertySet   tree. This means, there are
+  entries have to be of the same type. The collection itself is a leaf in the PropertySet tree. This means, there are
   no Property objects for the entries of the collection. All interactions (e.g. setting and getting the values of
   entries) with the collection are done via the object for collection property. It is not possible to address the
   entries of a primitive collection via a path (since paths always refer to property objects).
