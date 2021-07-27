@@ -1,6 +1,6 @@
 ---
 title: 'Tutorial: Create a Fluid Framework application with React'
-menuPosition: 4
+menuPosition: 3
 ---
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/). The following image shows the time stamp application open in four browsers. Each has a button labelled **click** and beside it a UNIX Epoch time. The same time in all four. The cursor is on the button in one browser.
@@ -31,7 +31,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;experimental/fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. _This object will hold the most recent timestamp update made by any client._|
+    |fluid&#x2011;experimental/fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
     |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
     &nbsp;
 
@@ -47,13 +47,13 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import './App.css';
-    
+
     function App() {
       return (
-  
+
       );
     }
-    
+
     export default App;
     ```
 
@@ -85,9 +85,12 @@ const getContainerId = () => {
 };
 ```
 
-### Configure the FRS client
+### Configure the `FrsClient`
 
-Add the following constant below the helper function. This object configures the FRS client to connect with an FRS server that runs on localhost. Note that in a production application, you would use a real security token service to protect access to the FRS server, but during development you can use the dummy service `InsecureTokenProvider`.
+Add the following constant below the helper function. This object configures the Azure Fluid Relay service client to
+connect with a Fluid service that runs on localhost. Note that in a production application, you would use a real security token
+service to protect access to the Azure Fluid Relay service (see [Authentication & authorization]({{< relref "auth.md" >}})), but during development you can use the dummy service
+`InsecureTokenProvider`.
 
 ```js
 const frsClientConfig = {
@@ -100,13 +103,13 @@ const frsClientConfig = {
 
 ### Move Fluid data to the view
 
-1. The FRS will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the FrsClient configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the `FrsClient` configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
 
     ```js
     const getFluidData = async () => {
 
         // TODO 1: Configure the container.
-        // TODO 2: Get the container from the Frs service.
+        // TODO 2: Get the container from the Fluid service.
         // TODO 3: Return the Fluid timestamp object.
     }
     ```
@@ -168,11 +171,11 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
     React.useEffect(() => {
         if (fluidSharedMap) {
-    
+
             // TODO 4: Set the value of the localTimestamp state object that will appear in the UI.
             // TODO 5: Register handlers.
             // TODO 6: Delete handler registration when the React App component is dismounted.
-    
+
         } else {
             return; // Do nothing because there is no Fluid SharedMap object yet.
         }
@@ -187,11 +190,11 @@ To ensure that both local and remote changes to the timestamp are reflected in t
     ```js
     const { sharedTimestamp } = fluidSharedMap;
     const updateLocalTimestamp = () => setLocalTimestamp({ time: sharedTimestamp.get("time") });
-    
+
     updateLocalTimestamp();
     ```
 
-1. To ensure that the `localTimestamp` state is updated whenever the `fluidSharedMap` is changed _even by other clients_, replace `TODO 5` with the following code. Note that because `updateLocalTimestamp` calls the state-setting function `setTimestamp`, a rerender is triggered whenever any client changes the Fluid `fluidSharedMap`.
+1. To ensure that the `localTimestamp` state is updated whenever the `fluidSharedMap` is changed *even by other clients*, replace `TODO 5` with the following code. Note that because `updateLocalTimestamp` calls the state-setting function `setTimestamp`, a rerender is triggered whenever any client changes the Fluid `fluidSharedMap`.
 
     ```js
     sharedTimestamp.on("valueChanged", updateLocalTimestamp);
@@ -208,7 +211,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 Below the `useEffect` hook, replace the `return ();` line with the following code. Note about this code:
 
 - If the `localTimestamp` state has not been initialized, a blank screen is rendered.
-- The `sharedTimestamp.set` method sets the _key_ of the `fluidSharedMap` object to "time" and the _value_ to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
+- The `sharedTimestamp.set` method sets the *key* of the `fluidSharedMap` object to "time" and the *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
 - All other clients update too because the Fluid server propagates the change to the `fluidSharedMap` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
 
 ```js
@@ -255,40 +258,42 @@ When you make changes to the code the project will automatically rebuild and the
 
 {{< /callout >}}
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "/docs/concepts/containers-runtime.md" >}}
+[Fluid container]: {{< relref "containers-runtime.md" >}}
 
 <!-- Packages -->
 
-[Aqueduct]: {{< relref "/apis/aqueduct.md" >}}
-[undo-redo]: {{< relref "/apis/undo-redo.md" >}}
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/apis/ink/ink.md" >}}
-[SharedCell]: {{< relref "/apis/cell/sharedcell.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
 [SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/apis/map/sharedmap.md" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
 [SharedMatrix]: {{< relref "SharedMatrix" >}}
 [SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/apis/sequence/sharedobjectsequence.md" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
 [SharedSequence]: {{< relref "SharedSequence" >}}
 [SharedString]: {{< relref "SharedString" >}}
-[Quorum]: {{< relref "/apis/protocol-base/quorum.md" >}}
 
 <!-- Sequence methods -->
 
-[sequence.insert]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/apis/sequence/sequencedeltaevent.md" >}}
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
