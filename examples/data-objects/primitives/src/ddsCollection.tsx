@@ -6,7 +6,7 @@
 import React from "react";
 import { ISharedMap, SharedMap, IDirectory } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IMapProps, MapComponent } from "./map";
+import { IMapProps, MapView } from "./map";
 
 interface IDdsCollectionProps {
     mapDir: IDirectory;
@@ -33,7 +33,7 @@ export class DdsCollectionComponent extends React.Component<IDdsCollectionProps,
                     <button onClick={(e) => this.addMap(e.currentTarget)}>Add Map</button>
                 </span>
             </div>
-            {this.state.maps.map((map) => <MapComponent key={map.name} name={map.name} map={map.map}></MapComponent>)}
+            {this.state.maps.map((map) => <MapView key={map.name} name={map.name} map={map.map}></MapView>)}
         </div>;
     }
 
