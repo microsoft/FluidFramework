@@ -32,3 +32,8 @@ export const isErrorLike = (x: any): x is Error =>
     typeof(x?.message) === "string" &&
     typeof(x?.name) === "string" &&
     (x?.stack === undefined || typeof(x?.stack) === "string");
+
+/** type guard to ensure it has an errorType */
+export const hasErrorType = (error: any): error is { errorType: string } => {
+    return (typeof error?.errorType === "string");
+};
