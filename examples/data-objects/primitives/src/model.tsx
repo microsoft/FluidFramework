@@ -5,11 +5,13 @@
 
 import {
     DataObject,
+    DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
+import { SharedMap, IDirectory } from "@fluidframework/map";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
-import { SharedMap, IDirectory } from "@fluidframework/map";
 import { DdsCollectionView } from "./view";
 
 export const DdsCollectionName = "DdsCollection";
@@ -68,3 +70,18 @@ export class DdsCollection extends DataObject implements IFluidHTMLView {
         return dds;
     }
 }
+
+/**
+ * The DataObjectFactory declares the component and defines any additional distributed data structures.
+ * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ */
+ export const DdsCollectionFactory =
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    new DataObjectFactory<DdsCollection, undefined, undefined, IEvent> (
+        DdsCollectionName,
+        DdsCollection,
+        [
+            SharedMap.getFactory(),
+        ],
+        {},
+    );

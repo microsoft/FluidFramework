@@ -7,8 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { DdsCollectionName } from "./model";
-import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
+import { DdsCollectionFactory, DdsCollectionName } from "./model";
 
 /**
  * This does setup for the Container. The ContainerRuntimeFactoryWithDefaultDataStore also enables dynamic loading in
@@ -22,8 +21,8 @@ import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory
  * components.
  */
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
-    PrimitivesInstantiationFactory,
+    DdsCollectionFactory,
     new Map([
-        [DdsCollectionName, Promise.resolve(PrimitivesInstantiationFactory)],
+        [DdsCollectionName, Promise.resolve(DdsCollectionFactory)],
     ]),
 );
