@@ -364,25 +364,22 @@ describe("Error Propagation", () => {
             },
         }),
     };
-    const frozenInputs =
-        Object.keys(patchableTestCases).map((key) => {
-            const input = patchableTestCases[key]().input;
-            Object.freeze(input);
-            return { label: key, input };
-        });
-    const frozenTestCases = frozenInputs.reduce((cases, { label, input }, i) => {
-        const { message } = helpers.extractLogSafeErrorProperties(input);
-        cases[label] = () => ({
-            input,
-            expectedOutput: {
-                errorType: "none (wrappedFrozenError)",
-                fluidErrorCode: "<none>",
-                message,
-                name: "Error",
-            },
-        });
-        return cases;
-    }, {});
+    const frozenTestCases = {
+        "Frozen Fluid Error": () => ({
+            input: Object.freeze({
+                errorType: "sometype",
+                fluidErrorCode: "somecode",
+                message: "Hello",
+            }),
+        }),
+        "Frozen arbitrary object": () => ({
+            input: Object.freeze({
+                foo: "foo",
+                one: 1,
+                bool: true,
+            }),
+        }),
+    };
     const nonObjectInputs = {
         nullValue: null,
         undef: undefined,
@@ -408,10 +405,10 @@ describe("Error Propagation", () => {
         return cases;
     }, {});
     const annotationCases: Record<string, FluidErrorAnnotations> = {
-        none: {},
+        noAnnotations: {},
         justErrorCodeIfNone: { errorCodeIfNone: "foo" },
         justProps: { props: { foo: "bar", one: 1, u: undefined, t: true } },
-        all: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
+        allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
     };
 
     let mixinStub: sinon.SinonStub;
@@ -459,8 +456,14 @@ describe("Error Propagation", () => {
         }
 
         runTests("patchable", patchableTestCases, true /* expectPatching */);
-        runTests("frozen", frozenTestCases, false /* expectPatching */);
         runTests("non-object", nonObjectTestCases, false /* expectPatching */);
+
+        for (const testCase of Object.keys(frozenTestCases)) {
+            it(`${testCase} (frozen)`, () => {
+                const { input } = frozenTestCases[testCase]();
+                assert.throws(() => { normalizeError(input); }, /Cannot normalize a frozen error object/);
+            });
+        }
     });
     describe("annotateErrorObject", () => {
         before(() => { mixinStub = sinon.stub(helpers, "mixinTelemetryProps"); });

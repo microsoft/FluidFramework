@@ -66,16 +66,17 @@ export function normalizeError(
     error: unknown,
     annotations: FluidErrorAnnotations = {},
 ): IFluidErrorBase {
-    if (isRegularObject(error) && !Object.isFrozen(error)) {
+    if (isRegularObject(error)) {
+        assert(!Object.isFrozen(error), "Cannot normalize a frozen error object");
+
         // We can simply annotate the error and return it
         annotateErrorObject(error, annotations);
         return error;
     }
 
-    // We can't annotate the error, so we have to wrap it
-    const newErrorFn = (errMsg: string) => new LoggingError(errMsg);
-    const errorObject = wrapError<LoggingError>(error, newErrorFn);
-    const errorTypeIfNone = !isRegularObject(error) ? typeof(error) : "wrappedFrozenError";
+    // We can't annotate the error, so we create a new one using its toString result as the message
+    const errorObject = new LoggingError(String(error));
+    const errorTypeIfNone = typeof(error);
     const fluidError = patchFluidErrorBuilder(
         errorObject as FluidErrorBuilder,
         prepareFluidErrorTemplate(errorObject, errorTypeIfNone, annotations.errorCodeIfNone),
