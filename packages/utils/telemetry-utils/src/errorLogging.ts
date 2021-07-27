@@ -120,9 +120,15 @@ type FluidErrorBuilder = {
     -readonly [P in keyof IFluidErrorBase]?: IFluidErrorBase[P];
 };
 
-/** Returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder */
+/**
+ * Prepares a template IFluidErrorBase based on the inputs provided, for use with patchFluidErrorBuilder
+ * @param originalErrorObject - Object to check for IFluidErrorBase properties to use for the template
+ * @param errorTypeIfNone - errorType to use if none is found on originalErrorObject
+ * @param errorCodeIfNone - fluidErrorCode to use if none is found on originalErrorObject
+ * @returns a template IFluidErrorBase with values based on the inputs provided, for use with patchFluidErrorBuilder
+ */
 function prepareFluidErrorTemplate(
-    originalError: unknown,
+    originalErrorObject: unknown,
     errorTypeIfNone: string,
     errorCodeIfNone: string | undefined,
 ): IFluidErrorBase {
@@ -132,7 +138,7 @@ function prepareFluidErrorTemplate(
         : `none (${errorCodeIfNone})`;
     // Pull each of IFluidErrorBase's properties off the originalError, regardless of their type
     const { errorType, fluidErrorCode, message, name, stack } =
-        originalError as { [P in keyof IFluidErrorBase]: unknown; };
+        originalErrorObject as { [P in keyof IFluidErrorBase]: unknown; };
     return {
         errorType:
             typeof errorType === "string"
