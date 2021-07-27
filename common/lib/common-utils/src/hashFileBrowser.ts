@@ -17,8 +17,7 @@ import { IsoBuffer } from "./bufferBrowser";
 export async function hashFile(file: IsoBuffer): Promise<string> {
     // Handle insecure contexts (e.g. running with local services)
     // by deferring to Node version, which uses a hash polyfill
-    const subtle = crypto.subtle;
-    if (subtle === undefined) {
+    if (crypto.subtle === undefined) {
         return import("./hashFileNode").then(async (m) => m.hashFile(file));
     }
 
