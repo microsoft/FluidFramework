@@ -42,7 +42,7 @@ import {
     IUpdateDSNControlMessageContents,
 } from "@fluidframework/server-services-core";
 import { CommonProperties, Lumber, LumberEventName, Lumberjack,
-    SchemaProperties } from "@fluidframework/server-services-telemetry";
+    BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -186,8 +186,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
         const lumberJackMetric = Lumberjack.newLumberMetric(LumberEventName.DeliHandler);
-        lumberJackMetric.setProperties(new Map([[SchemaProperties.tenantId, this.tenantId],
-            [SchemaProperties.documentId, this.documentId]]));
+        lumberJackMetric.setProperties(new Map([[BaseTelemetryProperties.tenantId, this.tenantId],
+            [BaseTelemetryProperties.documentId, this.documentId]]));
         setQueuedMessageProperties(lumberJackMetric, rawMessage);
 
         // In cases where we are reprocessing messages we have already checkpointed exit early

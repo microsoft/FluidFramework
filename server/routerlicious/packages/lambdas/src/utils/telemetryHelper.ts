@@ -4,18 +4,12 @@
  */
 
 import { IQueuedMessage } from "@fluidframework/server-services-core";
-import { Lumber } from "@fluidframework/server-services-telemetry";
-
-enum QueuedMessageProperties {
-    Topic = "Topic",
-    Partition = "Partition",
-    Offset = "Offset",
-}
+import { Lumber, QueuedMessageProperties } from "@fluidframework/server-services-telemetry";
 
 export const setQueuedMessageProperties = (lumber: Lumber, message: IQueuedMessage) => {
     const propertyMap = new Map<string, any>([
-        [QueuedMessageProperties.Topic, message.topic],
-        [QueuedMessageProperties.Partition, message.partition],
-        [QueuedMessageProperties.Offset, message.offset]]);
+        [QueuedMessageProperties.topic, message.topic],
+        [QueuedMessageProperties.partition, message.partition],
+        [QueuedMessageProperties.offset, message.offset]]);
     lumber.setProperties(propertyMap);
 };

@@ -19,17 +19,23 @@ export enum LumberType {
     Log,
 }
 
-export enum SchemaProperties {
+export enum BaseTelemetryProperties {
     tenantId = "tenantId",
     documentId = "documentId",
-    clientId = "clientId",
-    sequenceNumber = "sequenceNumber",
-    clientSequenceNumber = "clientSequenceNumber",
-    statusCode = "statusCode",
+}
+
+export enum QueuedMessageProperties {
+    topic = "topic",
+    partition = "partition",
+    offset = "offset",
 }
 
 export enum CommonProperties {
     restart = "restart",
+    sequenceNumber = "sequenceNumber",
+    clientId = "clientId",
+    clientSequenceNumber = "clientSequenceNumber",
+    statusCode = "statusCode",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

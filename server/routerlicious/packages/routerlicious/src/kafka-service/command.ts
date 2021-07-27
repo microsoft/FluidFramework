@@ -10,7 +10,7 @@ import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
 import { runService } from "@fluidframework/server-services-shared";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { LambdaSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
@@ -25,7 +25,7 @@ export function execute(
         .action((name: string, lambda: string) => {
             configureLogging(configOrPath);
             const lumberjackEngine = new WinstonLumberjackEngine();
-            Lumberjack.setup([lumberjackEngine]);
+            Lumberjack.setup([lumberjackEngine], new LambdaSchemaValidator());
             action = true;
 
             runService(
