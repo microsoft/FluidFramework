@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+{{- partial "head.html" . -}}
+
+<body>
+    <!-- EU Cookie Compliance JS -->
+    <script src="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.js"></script>
+    <div id="main">
+        {{- partial "header.html" . -}}
+        <div {{ if .IsHome}}class="home" {{ end}}>
+            {{ block "main" . }}
+
+            <div class="container body-content docs">
+                <div class="row">
+                    {{ partial "navbar.html" . }}
+                    <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
+                        <div>
+                            <h1>{{.Title}}</h1>
+                        </div>
+                        <div>
+                            {{ block "content" . }}
+                                {{ $hasContent := gt (len (default "" .Content)) 0 }}
+                                {{- if $hasContent }}
+                                {{ .Content }}
+                                {{ else }}
+                                {{ partial "placeholders/_default.html" . }}
+                                {{ end -}}
+                            {{ end }}
+                        </div>
+                    </div>
+
+                    <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
+                        {{ partial "toc.html" .}}
+                    </div>
+                </div>
+            </div>
+
+            {{ block "footer" . -}}{{ end }}
+            {{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
+            <!-- <script src="{{/* $script.Permalink | relURL */}}" -->
+            <!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
+            {{- if templates.Exists "partials/extra-foot.html" -}}
+            {{ partial "extra-foot.html" . }}
+            {{- end }}
+
+            {{ end }}
+        </div>
+    </div>
+    {{- partial "footer.html" . -}}
+</body>
+
+{{ $script := resources.Get "js/bundle.js" | resources.ExecuteAsTemplate "js/main.js" . | minify |fingerprint -}}
+<script src="{{ $script.Permalink | relURL }}" {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr }}></script>
+
+</html>

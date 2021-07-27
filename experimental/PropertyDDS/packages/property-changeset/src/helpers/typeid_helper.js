@@ -26,15 +26,15 @@ var TypeIdHelper = {};
  * @return {boolean} Is this a base type?
  */
 TypeIdHelper.isPrimitiveType = function(in_typeid) {
-  var primitiveTypes = templateSchemaJson['$defs']['primitive-typeid']['enum'];
+    var primitiveTypes = templateSchemaJson['$defs']['primitive-typeid']['enum'];
 
-  if (in_typeid === undefined || in_typeid === '') {
-    return false;
-  }
+    if (in_typeid === undefined || in_typeid === '') {
+        return false;
+    }
 
-  return in_typeid.substr(0, 5) === 'enum<' ||
-    in_typeid.substr(0, 10) === 'Reference<' ||
-    primitiveTypes.indexOf(in_typeid) >= 0;
+    return in_typeid.substr(0, 5) === 'enum<' ||
+        in_typeid.substr(0, 10) === 'Reference<' ||
+        primitiveTypes.indexOf(in_typeid) >= 0;
 };
 
 
@@ -45,7 +45,7 @@ TypeIdHelper.isPrimitiveType = function(in_typeid) {
  * @return {boolean} Is this a base template typeid?
  */
 TypeIdHelper.isTemplateTypeid = function(in_param) {
-  return typeof in_param === 'string' && (in_param.indexOf(':') !== -1);
+    return typeof in_param === 'string' && (in_param.indexOf(':') !== -1);
 };
 
 /**
@@ -55,8 +55,8 @@ TypeIdHelper.isTemplateTypeid = function(in_param) {
  * @return {boolean} Is this a reserved type?
  */
 TypeIdHelper.isReservedType = function(in_typeid) {
-  var reservedTypes = templateSchemaJson['$defs']['reserved-typeid']['enum'];
-  return reservedTypes.indexOf(in_typeid) >= 0;
+    var reservedTypes = templateSchemaJson['$defs']['reserved-typeid']['enum'];
+    return reservedTypes.indexOf(in_typeid) >= 0;
 };
 
 /**
@@ -65,15 +65,15 @@ TypeIdHelper.isReservedType = function(in_typeid) {
  * @return {Array} Array of size two
  */
 TypeIdHelper.extractVersion = function(in_typeid) {
-  if (!in_typeid) {
-    throw new Error(MSG.TYPEID_NOT_DEFINED);
-  }
-  var splitTypeId = in_typeid.split('-');
+    if (!in_typeid) {
+        throw new Error(MSG.TYPEID_NOT_DEFINED);
+    }
+    var splitTypeId = in_typeid.split('-');
 
-  return {
-    version: splitTypeId[1],
-    typeidWithoutVersion: splitTypeId[0]
-  };
+    return {
+        version: splitTypeId[1],
+        typeidWithoutVersion: splitTypeId[0]
+    };
 };
 
 /**
@@ -84,46 +84,46 @@ TypeIdHelper.extractVersion = function(in_typeid) {
  *     if we have an enum type
  */
 TypeIdHelper.extractContext = function(in_typeid) {
-  var bracketIndex = in_typeid.indexOf('<');
-  if (bracketIndex !== -1 &&
-    in_typeid[in_typeid.length - 1] === '>') {
-    var typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
-    var context = in_typeid.substr(0, bracketIndex);
+    var bracketIndex = in_typeid.indexOf('<');
+    if (bracketIndex !== -1 &&
+        in_typeid[in_typeid.length - 1] === '>') {
+        var typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
+        var context = in_typeid.substr(0, bracketIndex);
 
-    // Special case to handle collections without a typeid (e.g. "map<>", which should
-    // be able to support all property types
-    if (typeid === '') {
-      typeid = context !== 'set' ? 'BaseProperty' : 'NamedProperty';
-    }
+        // Special case to handle collections without a typeid (e.g. "map<>", which should
+        // be able to support all property types
+        if (typeid === '') {
+            typeid = context !== 'set' ? 'BaseProperty' : 'NamedProperty';
+        }
 
-    // Special case to handle enums (e.g. array<enum<myType>>)
-    var isEnum = false;
-    if (context === 'enum' || typeid.substr(0, 5) === 'enum<') {
-      isEnum = true;
-      if (context === 'enum') {
-        context = 'single';
-      } else {
-        // remove the `enum<...>` tag to get the raw typeid
-        typeid = typeid.substr(5, typeid.length - 6);
-      }
-    }
-    if (context === 'Reference') {
-      typeid = 'Reference<' + typeid + '>';
-      context = 'single';
-    }
+        // Special case to handle enums (e.g. array<enum<myType>>)
+        var isEnum = false;
+        if (context === 'enum' || typeid.substr(0, 5) === 'enum<') {
+            isEnum = true;
+            if (context === 'enum') {
+                context = 'single';
+            } else {
+                // remove the `enum<...>` tag to get the raw typeid
+                typeid = typeid.substr(5, typeid.length - 6);
+            }
+        }
+        if (context === 'Reference') {
+            typeid = 'Reference<' + typeid + '>';
+            context = 'single';
+        }
 
-    return {
-      typeid: typeid,
-      context: context,
-      isEnum: isEnum
-    };
-  } else {
-    return {
-      typeid: in_typeid,
-      context: 'single',
-      isEnum: false
-    };
-  }
+        return {
+            typeid: typeid,
+            context: context,
+            isEnum: isEnum
+        };
+    } else {
+        return {
+            typeid: in_typeid,
+            context: 'single',
+            isEnum: false
+        };
+    }
 };
 
 /**
@@ -137,21 +137,21 @@ TypeIdHelper.extractContext = function(in_typeid) {
  * @return {string} The combined typeid string
  */
 TypeIdHelper.createSerializationTypeId = function(in_typeid, in_context, in_enum) { // in_enum
-  if (in_typeid === 'BaseProperty') {
-    // Special case for BaseProperties. These get represented as a collection
-    // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>
-    return in_context + '<>';
-  } else {
-    if (in_enum) {
-      if (in_context === '' || in_context === 'single') {
-        return 'enum<' + in_typeid + '>';
-      } else {
-        return in_context + '<enum<' + in_typeid + '>>';
-      }
+    if (in_typeid === 'BaseProperty') {
+        // Special case for BaseProperties. These get represented as a collection
+        // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>
+        return in_context + '<>';
     } else {
-      return in_context + '<' + in_typeid + '>';
+        if (in_enum) {
+            if (in_context === '' || in_context === 'single') {
+                return 'enum<' + in_typeid + '>';
+            } else {
+                return in_context + '<enum<' + in_typeid + '>>';
+            }
+        } else {
+            return in_context + '<' + in_typeid + '>';
+        }
     }
-  }
 };
 
 /**
@@ -161,8 +161,8 @@ TypeIdHelper.createSerializationTypeId = function(in_typeid, in_context, in_enum
  * @return {boolean} Is this a reference property typeid?
  */
 TypeIdHelper.isReferenceTypeId = function(in_typeid) { // in_enum
-  return in_typeid === 'Reference' ||
-    (in_typeid.substr(0, 10) === 'Reference<' && in_typeid.substr(-1) === '>');
+    return in_typeid === 'Reference' ||
+        (in_typeid.substr(0, 10) === 'Reference<' && in_typeid.substr(-1) === '>');
 };
 
 /**
@@ -172,13 +172,13 @@ TypeIdHelper.isReferenceTypeId = function(in_typeid) { // in_enum
  * @return {string} The type of the referenced property
  */
 TypeIdHelper.extractReferenceTargetTypeIdFromReference = function(in_typeid) { // in_enum
-  if (in_typeid.substr(0, 10) === 'Reference<') {
-    // Extract the type from the TypeID
-    return in_typeid.substr(10, in_typeid.length - 11);
-  } else {
-    // This is a typeless reference, we allow all types
-    return 'BaseProperty';
-  }
+    if (in_typeid.substr(0, 10) === 'Reference<') {
+        // Extract the type from the TypeID
+        return in_typeid.substr(10, in_typeid.length - 11);
+    } else {
+        // This is a typeless reference, we allow all types
+        return 'BaseProperty';
+    }
 };
 
 /**
@@ -188,7 +188,7 @@ TypeIdHelper.extractReferenceTargetTypeIdFromReference = function(in_typeid) { /
  * @return {boolean} Is this a base template typeid?
  */
 TypeIdHelper.isSchemaTypeid = function(in_param) {
-  return typeof in_param === 'string' && (in_param.indexOf(':') !== -1);
+    return typeof in_param === 'string' && (in_param.indexOf(':') !== -1);
 };
 
 /**
@@ -200,12 +200,12 @@ TypeIdHelper.isSchemaTypeid = function(in_param) {
  * @return {String} referenced typeid or in_param if it is not a reference
  */
 TypeIdHelper.extractTypeId = function(in_param) {
-  var matches = in_param.match(/\<(.*?)\>/);      // eslint-disable-line
-  if (matches !== null && matches.length > 0) {
-    return matches[0].replace(/[\<\>]/gi, '');    // eslint-disable-line
-  } else {
-    return in_param;
-  }
+    var matches = in_param.match(/\<(.*?)\>/); // eslint-disable-line
+    if (matches !== null && matches.length > 0) {
+        return matches[0].replace(/[\<\>]/gi, ''); // eslint-disable-line
+    } else {
+        return in_param;
+    }
 };
 
 
@@ -221,43 +221,43 @@ TypeIdHelper.extractTypeId = function(in_param) {
  * @return {boolean} True if in_baseTypeid is a parent of in_typeid
  */
 TypeIdHelper.nativeInheritsFrom = function(in_typeid, in_baseTypeid) {
-  if (!in_typeid || !in_baseTypeid) {
-    throw new Error(MSG.TYPEID_NOT_DEFINED);
-  }
-
-  if (in_typeid.substr(0, 10) === 'Reference<') {
-    in_typeid = 'Reference';
-  }
-
-  if (in_baseTypeid.substr(0, 10) === 'Reference<') {
-    in_baseTypeid = 'Reference';
-  }
-
-  if (!nativeTypes[in_typeid]) {
-    throw new Error(MSG.TYPEID_NOT_NATIVE + in_typeid);
-  }
-
-  if (!nativeTypes[in_baseTypeid]) {
-    throw new Error(MSG.TYPEID_NOT_NATIVE + in_baseTypeid);
-  }
-
-  if (in_baseTypeid === 'BaseProperty' || in_typeid === in_baseTypeid) {
-    return true;
-  }
-
-  if (in_typeid === 'BaseProperty') {
-    return false;
-  }
-
-  let parents = nativeTypes[in_typeid]['inherits'];
-
-  // recursively call the function for the parent of the typeid
-  for (let i = 0; i < parents.length; i++) {
-    if (this.nativeInheritsFrom(parents[i], in_baseTypeid)) {
-      return true;
+    if (!in_typeid || !in_baseTypeid) {
+        throw new Error(MSG.TYPEID_NOT_DEFINED);
     }
-  }
-  return false;
+
+    if (in_typeid.substr(0, 10) === 'Reference<') {
+        in_typeid = 'Reference';
+    }
+
+    if (in_baseTypeid.substr(0, 10) === 'Reference<') {
+        in_baseTypeid = 'Reference';
+    }
+
+    if (!nativeTypes[in_typeid]) {
+        throw new Error(MSG.TYPEID_NOT_NATIVE + in_typeid);
+    }
+
+    if (!nativeTypes[in_baseTypeid]) {
+        throw new Error(MSG.TYPEID_NOT_NATIVE + in_baseTypeid);
+    }
+
+    if (in_baseTypeid === 'BaseProperty' || in_typeid === in_baseTypeid) {
+        return true;
+    }
+
+    if (in_typeid === 'BaseProperty') {
+        return false;
+    }
+
+    let parents = nativeTypes[in_typeid]['inherits'];
+
+    // recursively call the function for the parent of the typeid
+    for (let i = 0; i < parents.length; i++) {
+        if (this.nativeInheritsFrom(parents[i], in_baseTypeid)) {
+            return true;
+        }
+    }
+    return false;
 };
 
 /**
@@ -267,7 +267,7 @@ TypeIdHelper.nativeInheritsFrom = function(in_typeid, in_baseTypeid) {
  * @return {Array<string>} return a list of primitiveTypeIds
  */
 TypeIdHelper.getPrimitiveTypeIds = function() {
-  return templateSchemaJson['$defs']['primitive-typeid']['enum'];
+    return templateSchemaJson['$defs']['primitive-typeid']['enum'];
 };
 
 /**
@@ -277,7 +277,7 @@ TypeIdHelper.getPrimitiveTypeIds = function() {
  * @return {Array<string>} return a list of reservedTypeIds
  */
 TypeIdHelper.getReservedTypeIds = function() {
-  return templateSchemaJson['$defs']['reserved-typeid']['enum'];
+    return templateSchemaJson['$defs']['reserved-typeid']['enum'];
 };
 
 module.exports = TypeIdHelper;

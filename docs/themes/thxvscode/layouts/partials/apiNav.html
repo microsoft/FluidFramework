@@ -30,41 +30,41 @@
         </li>
 
         {{- range .Site.Menus.section }}
-        {{ $menuArea := .Identifier}}
-        {{ $isCurrentArea := (eq $menuArea $area) }}
+            {{ $menuArea := .Identifier}}
+            {{ $isCurrentArea := (eq $menuArea $area) }}
 
-        <!-- {{ printf "%#v" $menuArea }}
-        {{ printf "%#v" $area }} -->
+            <!-- {{ printf "%#v" $menuArea }}
+            {{ printf "%#v" $area }} -->
 
-        {{- if ne .URL "" -}}
-        {{ $isCurrentPage := eq .URL $current.RelPermalink }}
+            {{- if ne .URL "" -}}
+            {{ $isCurrentPage := eq .URL $current.RelPermalink }}
 
-        <li class="panel {{if $isCurrentPage }}active{{end}}">
-            <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ .Name }}" href="{{.URL}}"
-                data-parent="#main-nav">{{ .Name }}</a>
-        </li>
-        {{- else -}}
-        <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
-            <a class="area" aria-label="{{ .Name }} drop down" href="#{{ $menuArea }}-articles" data-parent="#main-nav"
-                data-toggle="collapse">{{ .Name }}</a>
+            <li class="panel {{if $isCurrentPage }}active{{end}}">
+                <a class="area{{if $isCurrentPage }} active expanded{{ end }}" aria-label="{{ default .Name .Title }}" href="{{.URL}}"
+                    data-parent="#main-nav">{{ .Name }}</a>
+            </li>
+            {{- else -}}
+            <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
+                <a class="area" aria-label="{{ .Name }} drop down" href="#{{ $menuArea }}-articles" data-parent="#main-nav"
+                    data-toggle="collapse">{{ .Name }}</a>
 
-            <ul id="{{ $menuArea }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
-                <!-- list all pages in area -->
-                {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
-                {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
+                <ul id="{{ $menuArea }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
+                    <!-- list all pages in area -->
+                    {{- range ((where $current.Site.RegularPages "Params.area" "==" $menuArea).ByParam "menuPosition") }}
+                    {{ $isCurrentPage := eq .RelPermalink $current.RelPermalink }}
 
-                <!-- {{ printf "%#v" .URL }}
-                {{ printf "%#v" $current.RelPermalink }} -->
+                    <!-- {{ printf "%#v" .URL }}
+                    {{ printf "%#v" $current.RelPermalink }} -->
 
-                <li {{ if $isCurrentPage }}class="active" {{ end }}>
-                    <a href="{{ .RelPermalink }}"
-                        {{ if $isCurrentPage }}aria-label="Current Page: {{ .Title | safeHTML }} " {{ end }}>
-                        {{ .Title }} </a>
-                </li>
-                {{- end }}
-            </ul>
-        </li>
-        {{- end -}}
+                    <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                        <a href="{{ .RelPermalink }}"
+                            {{ if $isCurrentPage }}aria-label="Current Page: {{ (default .Name .Title) | safeHTML }} " {{ end }}>
+                            {{ .Title }} </a>
+                    </li>
+                    {{- end }}
+                </ul>
+            </li>
+            {{- end -}}
         {{- end }}
 
         <hr/>

@@ -1,6 +1,9 @@
 ---
 title: Handles
-menuPosition: 2
+menuPosition: 5
+status: outdated
+aliases:
+  - "/docs/advanced/handles/"
 ---
 
 A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject][] or a distributed
@@ -129,7 +132,7 @@ protected async hasInitialized() {
 // ...
 ```
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->

@@ -1,7 +1,9 @@
 ---
 title: Feature detection via IFluidObject
-menuPosition: 3
 draft: true
+status: outdated
+aliases:
+  - "/docs/advanced/feature-detection-iprovide/"
 ---
 
 In an earlier section we introduced the DataObject, a convenient way to combine distributed data structures and our own
@@ -90,7 +92,7 @@ implemented -- it simply asks for `fluidObject.IFluidLoadable` or `fluidObject.I
 object of the correct type or `undefined`.
 
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->
