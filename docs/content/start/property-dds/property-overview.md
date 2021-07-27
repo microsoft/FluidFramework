@@ -82,7 +82,7 @@ myPropertyDDS.commit()
 
 ## Read Data From The PropertySet
 
-Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must initialize the Property DDS with the Fluid `documentId`from the Property DDS that we wrote or data into. Once the *Property DDS* is fully initialized by the FluidFramework you can retrieve that data.
+Naturally, after writing data to a Fluid Property DDS we need the ability to retrieve this data. For this, we must initialize the Property DDS with the Fluid `documentId`from the Property DDS that we wrote our data into. Once the Property DDS is fully initialized by the Fluid Framework you can retrieve that data.
 
 ```javascript
 // Get the root property

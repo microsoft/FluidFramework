@@ -56,7 +56,7 @@ Also, the example shows that you can define nested complex types inline, as we d
 }
 ```
 
-Or you can refer to an external schema, as we did for fillcolor.
+Or you can refer to an external schema, as we did for fill color.
 
 ```json
 { "id": "color", "typeid": "Sample:Color-1.0.0" }
@@ -143,7 +143,7 @@ This is an optional keyword that can be used when context is ‘array’ to spec
 
 
 
-## nnotation
+## Annotation
 
 This is an optional object containing extra information about the property, such as a description or links to the documentation. The content of an annotation is constrained to the schema and is never present in the Property Set or Change Set.
 
@@ -228,10 +228,10 @@ A schema can define read-only properties through Constants. They are declared in
 
     Each constant should have an id, value and a valid typeid. The id must be unique per declared constants and properties, that is a constant and a property cannot have the same id.
 
-    A constant can be of primitive, enum, string, array, set, map, or custom type.
+A constant can be of primitive, enum, string, array, set, map, or custom type.
 
-    They are read only properties; values and instances can be retrieved like any other properties.
-    Constants can be overridden in inherited schemas. To do that, the inherited constant should keep the same 'id', 'typeid' and 'context' as the base one it overrides.
+They are read-only properties; values and instances can be retrieved like any other properties.
+Constants can be overridden in inherited schemas. To do that, the inherited constant should keep the same 'id', 'typeid' and 'context' as the base one it overrides.
 
 
 Constants of arrays, sets, and maps also support polymorphic typed entries. In other words an array of 'typeid' shape, can have items of 'typeid' square and/or circle where square and circle inherit from shape. To define polymorphic values, the attribute 'typedValue' containing a 'typeid' and 'value' is used.
