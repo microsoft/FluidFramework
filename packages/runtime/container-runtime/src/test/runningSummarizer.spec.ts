@@ -521,7 +521,7 @@ describe("Runtime", () => {
 
                 it("Should create an on-demand summary", async () => {
                     await emitNextOp(2); // set ref seq to 2
-                    const result = summarizer.summarizeOnDemand("test", {});
+                    const result = summarizer.summarizeOnDemand({ reason: "test" });
                     assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
 
                     const submitResult = await result.summarySubmitted;
@@ -566,7 +566,7 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(1, 0, 0);
 
-                    const result = summarizer.summarizeOnDemand("test", {});
+                    const result = summarizer.summarizeOnDemand({ reason: "test" });
                     assert(result.alreadyRunning !== undefined, "summary should already be running");
 
                     let resolved = false;
@@ -583,7 +583,7 @@ describe("Runtime", () => {
 
                 it("On-demand summary should fail on nack", async () => {
                     await emitNextOp(2); // set ref seq to 2
-                    const result = summarizer.summarizeOnDemand("test", {});
+                    const result = summarizer.summarizeOnDemand({ reason: "test" });
                     assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
 
                     const submitResult = await result.summarySubmitted;
@@ -623,11 +623,84 @@ describe("Runtime", () => {
                         "summary nack error should be test-nack");
                 });
 
-                it("Should create an on-demand summary after specified sequence number", async () => {
+                it("Should fail an on-demand summary if stopping", async () => {
+                    summarizer.waitStop().catch(() => {});
+                    const [refreshLatestAck, fullTree] = [true, true];
+                    const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
+                    const result2 = summarizer.summarizeOnDemand({ reason: "test2", refreshLatestAck });
+                    const result3 = summarizer.summarizeOnDemand({ reason: "test3", fullTree });
+                    const result4 = summarizer.summarizeOnDemand({ reason: "test4", refreshLatestAck, fullTree });
+                    assert(!result1.alreadyRunning
+                        && !result2.alreadyRunning
+                        && !result3.alreadyRunning
+                        && !result4.alreadyRunning,
+                        "should not be already running",
+                    );
+
+                    const allResults = (await Promise.all([
+                        result1.summarySubmitted,
+                        result1.summaryOpBroadcasted,
+                        result1.receivedSummaryAckOrNack,
+                        result2.summarySubmitted,
+                        result2.summaryOpBroadcasted,
+                        result2.receivedSummaryAckOrNack,
+                    ])).concat(await Promise.all([
+                        result3.summarySubmitted,
+                        result3.summaryOpBroadcasted,
+                        result3.receivedSummaryAckOrNack,
+                        result4.summarySubmitted,
+                        result4.summaryOpBroadcasted,
+                        result4.receivedSummaryAckOrNack,
+                    ]));
+                    for (const result of allResults) {
+                        assert(!result.success, "all results should fail");
+                    }
+                });
+
+                it("Should fail an on-demand summary if disposed", async () => {
+                    summarizer.dispose();
+                    const [refreshLatestAck, fullTree] = [true, true];
+                    const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
+                    const result2 = summarizer.summarizeOnDemand({ reason: "test2", refreshLatestAck });
+                    const result3 = summarizer.summarizeOnDemand({ reason: "test3", fullTree });
+                    const result4 = summarizer.summarizeOnDemand({ reason: "test4", refreshLatestAck, fullTree });
+                    assert(!result1.alreadyRunning
+                        && !result2.alreadyRunning
+                        && !result3.alreadyRunning
+                        && !result4.alreadyRunning,
+                        "should not be already running",
+                    );
+
+                    const allResults = (await Promise.all([
+                        result1.summarySubmitted,
+                        result1.summaryOpBroadcasted,
+                        result1.receivedSummaryAckOrNack,
+                        result2.summarySubmitted,
+                        result2.summaryOpBroadcasted,
+                        result2.receivedSummaryAckOrNack,
+                    ])).concat(await Promise.all([
+                        result3.summarySubmitted,
+                        result3.summaryOpBroadcasted,
+                        result3.receivedSummaryAckOrNack,
+                        result4.summarySubmitted,
+                        result4.summaryOpBroadcasted,
+                        result4.receivedSummaryAckOrNack,
+                    ]));
+                    for (const result of allResults) {
+                        assert(!result.success, "all results should fail");
+                    }
+                });
+            });
+
+            describe("Enqueue Summaries", () => {
+                beforeEach(async () => {
+                    await startRunningSummarizer();
+                });
+
+                it("Should summarize after specified sequence number", async () => {
                     await emitNextOp(2); // set ref seq to 2
                     const afterSequenceNumber = 9;
-                    const result = summarizer.summarizeOnDemand("test", { afterSequenceNumber });
-                    assert.strictEqual(result.alreadyRunning, undefined, "summary should not already be running");
+                    const result = summarizer.enqueueSummarize({ reason: "test", afterSequenceNumber });
 
                     await emitNextOp(6);
                     assertRunCounts(0, 0, 0, "on-demand should not run yet, still 1 op short");
@@ -670,15 +743,14 @@ describe("Runtime", () => {
                         "summary ack handle should be test-ack-handle");
                 });
 
-                it("Should create an on-demand summary after specified sequence number after heuristics", async () => {
+                it("Should summarize after specified sequence number after heuristics attempt finishes", async () => {
                     const afterSequenceNumber = summaryConfig.maxOps * 2 + 10;
 
                     // Should start running by heuristics
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(1, 0, 0);
 
-                    const result = summarizer.summarizeOnDemand("test", { afterSequenceNumber });
-                    assert(result.alreadyRunning === undefined, "summary should not return alreadyRunning");
+                    const result = summarizer.enqueueSummarize({ reason: "test", afterSequenceNumber });
                     let submitRan = false;
                     result.summarySubmitted.then(() => { submitRan = true; }, () => {});
 
@@ -727,11 +799,10 @@ describe("Runtime", () => {
                         "summary ack handle should be test-ack-handle");
                 });
 
-                it("Should fail an on-demand summary if stopping", async () => {
+                it("Should fail an enqueue summarize attempt if stopping", async () => {
                     summarizer.waitStop().catch(() => {});
-                    const result1 = summarizer.summarizeOnDemand("test1", {});
-                    const result2 = summarizer.summarizeOnDemand("test2", { afterSequenceNumber: 0 });
-                    assert(!result1.alreadyRunning && !result2.alreadyRunning, "should not be already running");
+                    const result1 = summarizer.enqueueSummarize({ reason: "test1" });
+                    const result2 = summarizer.enqueueSummarize({ reason: "test2", afterSequenceNumber: 123 });
 
                     const allResults = await Promise.all([
                         result1.summarySubmitted,
@@ -746,11 +817,10 @@ describe("Runtime", () => {
                     }
                 });
 
-                it("Should fail an on-demand summary if disposed", async () => {
+                it("Should fail an enqueue summarize attempt if disposed", async () => {
                     summarizer.dispose();
-                    const result1 = summarizer.summarizeOnDemand("test1", {});
-                    const result2 = summarizer.summarizeOnDemand("test2", { afterSequenceNumber: 0 });
-                    assert(!result1.alreadyRunning && !result2.alreadyRunning, "should not be already running");
+                    const result1 = summarizer.enqueueSummarize({ reason: "test1" });
+                    const result2 = summarizer.enqueueSummarize({ reason: "test2", afterSequenceNumber: 123 });
 
                     const allResults = await Promise.all([
                         result1.summarySubmitted,

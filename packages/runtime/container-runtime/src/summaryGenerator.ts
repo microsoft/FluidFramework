@@ -9,7 +9,7 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IAckNackSummaryResult,
-    IBaseSummarizeOptions,
+    ISummarizeOptions,
     IBroadcastSummaryResult,
     ISummarizeResults,
     ISummarizeHeuristicData,
@@ -68,7 +68,9 @@ export type SummarizeReason =
     /** Previous summary attempt failed, and we are retrying. */
     | `retry${number}`
     /** On-demand summary requested with specified reason. */
-    | `onDemand;${string}`;
+    | `onDemand;${string}`
+    /** Enqueue summarize attempt with specified reason. */
+    | `enqueue;${string}`;
 
 const summarizeErrors = {
     /**
@@ -147,7 +149,7 @@ export class SummaryGenerator {
      */
     public summarize(
         reason: SummarizeReason,
-        options: IBaseSummarizeOptions,
+        options: ISummarizeOptions,
         resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
         ++this.summarizeCount;
@@ -177,7 +179,7 @@ export class SummaryGenerator {
 
     private async summarizeCore(
         reason: SummarizeReason,
-        options: IBaseSummarizeOptions,
+        options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;

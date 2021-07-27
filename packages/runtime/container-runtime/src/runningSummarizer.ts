@@ -15,14 +15,16 @@ import {
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
-    IBaseSummarizeOptions,
-    IOnDemandSummarizeOptions,
+    IEnqueueSummarizeOptions,
+    ISummarizeOptions,
     ISummarizer,
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     OnDemandSummarizeResult,
+    ISummarizeResults,
+    IOnDemandSummarizeOptions,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -86,7 +88,7 @@ export class RunningSummarizer implements IDisposable {
     private enqueuedSummary: {
         reason: SummarizeReason;
         afterSequenceNumber: number;
-        options: IBaseSummarizeOptions;
+        options: ISummarizeOptions;
         readonly resultsBuilder: SummarizeResultBuilder;
     } | undefined;
 
@@ -261,6 +263,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
+    /** Heuristics summarize attempt. */
     private trySummarize(reason: SummarizeReason): void {
         if (this.summarizingLock !== undefined || this.generator.isSummarizing()) {
             // Indicate that heuristics tried to summarize, and check immediately
@@ -327,37 +330,40 @@ export class RunningSummarizer implements IDisposable {
         });
     }
 
-    public summarizeOnDemand(
-        reason: string,
-        { afterSequenceNumber, ...options }: IOnDemandSummarizeOptions,
-    ): OnDemandSummarizeResult {
+    public summarizeOnDemand({
+        reason,
+        ...options
+    }: IOnDemandSummarizeOptions): OnDemandSummarizeResult {
         if (this.stopping || this.disposed) {
             const failBuilder = new SummarizeResultBuilder();
             failBuilder.fail("RunningSummarizer stopped or disposed", undefined);
             return failBuilder.build();
         }
         const onDemandReason = `onDemand;${reason}` as const;
-        if (afterSequenceNumber === undefined) {
-            // Check for concurrent summary attempts. If one is found,
-            // return a promise that caller can await before trying again.
-            if (this.summarizingLock !== undefined) {
-                // The heuristics are blocking concurrent summarize attempts.
-                return { alreadyRunning: this.summarizingLock };
-            }
-            if (this.generator.isSummarizing()) {
-                // Another summary is currently being generated.
-                return { alreadyRunning: this.generator.waitSummarizing() };
-            }
-            const result = this.generator.summarize(onDemandReason, options);
-            result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
-            return result;
+        // Check for concurrent summary attempts. If one is found,
+        // return a promise that caller can await before trying again.
+        if (this.summarizingLock !== undefined) {
+            // The heuristics are blocking concurrent summarize attempts.
+            return { alreadyRunning: this.summarizingLock };
         }
+        if (this.generator.isSummarizing()) {
+            // Another summary is currently being generated.
+            return { alreadyRunning: this.generator.waitSummarizing() };
+        }
+        const result = this.generator.summarize(onDemandReason, options);
+        result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
+        return result;
+    }
+
+    public enqueueSummarize({
+        reason,
+        afterSequenceNumber = 0,
+        ...options
+    }: IEnqueueSummarizeOptions): ISummarizeResults {
+        const onDemandReason = `enqueue;${reason}` as const;
         // If afterSequenceNumber is provided, the on-demand summary is "enqueued" to run
         // once an eligible op comes in with sequenceNumber >= afterSequenceNumber.
         if (this.enqueuedSummary !== undefined) {
-            // Note that it could be already generating a summary at this point in time.
-            // In that case, the result of this is misleading for earlier sequence numbers.
-            // We could instead fail the previously enqueued summary, but would require a cancel.
             this.enqueuedSummary.reason = onDemandReason;
             this.enqueuedSummary.afterSequenceNumber = afterSequenceNumber;
             this.enqueuedSummary.options = options;
@@ -369,8 +375,9 @@ export class RunningSummarizer implements IDisposable {
                 resultsBuilder: new SummarizeResultBuilder(),
             };
         }
+        const results = this.enqueuedSummary.resultsBuilder.build();
         this.tryRunEnqueuedSummary();
-        return this.enqueuedSummary.resultsBuilder.build();
+        return results;
     }
 
     /**
@@ -402,12 +409,11 @@ export class RunningSummarizer implements IDisposable {
             // If no enqueued summary is ready or a summary is already in progress, take no action.
             return false;
         }
-        this.generator.summarize(
-            this.enqueuedSummary.reason,
-            this.enqueuedSummary.options,
-            this.enqueuedSummary.resultsBuilder,
-        ).receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
+        const { reason, resultsBuilder, options } = this.enqueuedSummary;
+        // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
+        this.generator.summarize(reason, options, resultsBuilder).receivedSummaryAckOrNack.finally(
+            () => this.checkSummarizeAgain());
         return true;
     }
 

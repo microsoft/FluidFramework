@@ -2177,6 +2177,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ? this.summarizer.summarizeOnDemand(...args)
             : this.summaryManager.summarizeOnDemand(...args);
     };
+
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        return this.clientDetails.type === summarizerClientType
+            ? this.summarizer.enqueueSummarize(...args)
+            : this.summaryManager.enqueueSummarize(...args);
+    };
 }
 
 /**

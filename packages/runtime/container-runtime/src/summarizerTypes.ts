@@ -72,19 +72,27 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
-export interface IBaseSummarizeOptions {
+/** Options affecting summarize behavior. */
+export interface ISummarizeOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
     readonly fullTree?: boolean,
     /** True to ask the server what the latest summary is first; defaults to false */
     readonly refreshLatestAck?: boolean,
 }
 
-export interface ISubmitSummaryOptions extends IBaseSummarizeOptions {
+export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger,
 }
 
-export interface IOnDemandSummarizeOptions extends IBaseSummarizeOptions {
+export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
+    /** Reason for generating summary. */
+    readonly reason: string;
+}
+
+/** Options to use when enqueueing a summarize attempt. */
+export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
+    /** If specified, The summarize attempt will not occur until after this sequence number. */
     readonly afterSequenceNumber?: number;
 }
 
@@ -227,8 +235,10 @@ export interface ISummarizer
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     updateOnBehalfOf(onBehalfOf: string): void;
 
-    /** Attempts to generate a summary on demand. */
-    summarizeOnDemand(reason: string, options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    /** Attempts to generate a summary on demand. If already running, takes no action. */
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    /** Enqueue an attempt to summarize after the specified sequence number. */
+    enqueueSummarize(options: IEnqueueSummarizeOptions): ISummarizeResults;
 }
 
 /** Data about an attempt to summarize used for heuristics. */
