@@ -36,6 +36,7 @@ export enum CommonProperties {
     clientId = "clientId",
     clientSequenceNumber = "clientSequenceNumber",
     statusCode = "statusCode",
+    telemetryGroupName = "telemetryGroupName",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber
