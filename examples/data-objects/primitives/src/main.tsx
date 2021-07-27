@@ -10,7 +10,7 @@ import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import React from "react";
 import ReactDOM from "react-dom";
 import { SharedMap, IDirectory } from "@fluidframework/map";
-import { DdsCollectionComponent } from "./ddsCollection";
+import { DdsCollectionView } from "./view";
 
 export const PrimitivesName = "PrimitivesCollection";
 
@@ -45,7 +45,7 @@ export class PrimitivesCollection extends DataObject implements IFluidHTMLView {
         const rerender = () => {
             ReactDOM.render(
                 <div>
-                    <DdsCollectionComponent mapDir={this.mapDir} mapCreate={mapCreate} />
+                    <DdsCollectionView mapDir={this.mapDir} mapCreate={mapCreate} />
                 </div>,
                 div,
             );

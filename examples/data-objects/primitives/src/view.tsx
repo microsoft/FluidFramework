@@ -17,7 +17,7 @@ interface IDdsCollectionState {
     maps: IMapProps[];
 }
 
-export class DdsCollectionComponent extends React.Component<IDdsCollectionProps, IDdsCollectionState> {
+export class DdsCollectionView extends React.Component<IDdsCollectionProps, IDdsCollectionState> {
     protected readonly newMapTextInput = React.createRef<HTMLInputElement>();
 
     constructor(props: IDdsCollectionProps) {
