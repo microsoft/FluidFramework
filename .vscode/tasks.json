@@ -13,11 +13,14 @@
                 "${workspaceRoot}",
                 "--vscode"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "problemMatcher": [
                 {
                     "base": "$tsc",
-                    "fileLocation": "absolute",
+                    "fileLocation": "absolute"
                 },
                 "$tslint5"
             ]
@@ -41,7 +44,7 @@
             "problemMatcher": [
                 {
                     "base": "$tsc",
-                    "fileLocation": "absolute",
+                    "fileLocation": "absolute"
                 },
                 "$tslint5"
             ]

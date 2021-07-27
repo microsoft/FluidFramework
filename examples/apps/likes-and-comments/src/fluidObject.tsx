@@ -12,7 +12,7 @@ import {
     setSyncedCounterConfig,
     setSyncedArrayConfig,
     setSyncedStringConfig,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
 import * as React from "react";

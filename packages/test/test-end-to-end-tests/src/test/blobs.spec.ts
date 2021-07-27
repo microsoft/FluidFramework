@@ -5,14 +5,17 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { v4 as uuid } from "uuid";
 import { ReferenceType } from "@fluidframework/merge-tree";
+import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider, ITestContainerConfig } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -25,11 +28,33 @@ const testContainerConfig: ITestContainerConfig = {
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
+class MockDetachedBlobStorage implements IDetachedBlobStorage {
+    private readonly blobs = new Map<number, ArrayBufferLike>();
+    private blobCount = 0;
+
+    public get size() { return this.blobCount; }
+
+    public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        this.blobs.set(++this.blobCount, content);
+        return {
+            id: this.blobCount.toString(),
+            url: "",
+        };
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(parseInt(blobId, 10));
+        assert(blob);
+        return blob;
+    }
+}
+
 describeFullCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(async () => {
         provider = getTestObjectProvider();
     });
+
     it("attach sends an op", async function() {
         const container = await provider.makeTestContainer(testContainerConfig);
 
@@ -69,16 +94,20 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     it("loads from snapshot", async function() {
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container1, "default");
-        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
 
-        // attach blob, wait for blob attach op, then take BlobManager snapshot
-        dataStore._root.set("my blob", blob);
-        await new Promise<void>((res, rej) => container1.on("op", (op) => {
+        const attachOpP = new Promise<void>((res, rej) => container1.on("op", (op) => {
             if (op.contents?.type === ContainerMessageType.BlobAttach) {
                 // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                 op.metadata?.blobId ? res() : rej(new Error("no op metadata"));
             }
         }));
+
+        const blob = await dataStore._runtime.uploadBlob(stringToBuffer("some random text", "utf-8"));
+
+        // this will send the blob attach op on < 0.41 runtime (otherwise it's sent at time of upload)
+        dataStore._root.set("my blob", blob);
+        await attachOpP;
+
         const snapshot1 = (container1 as any).context.runtime.blobManager.snapshot();
 
         // wait for summarize, then summary ack so the next container will load from snapshot
@@ -145,5 +174,61 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
             assert.strictEqual(bufferToString(await props.blob.get(), "utf-8"), testString);
         }
+    });
+
+    it("correctly handles simultaneous identical blob upload", async () => {
+        const container = await provider.makeTestContainer(testContainerConfig);
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blob = stringToBuffer("some different yet still random text", "utf-8");
+
+        // upload the blob twice and make sure nothing bad happens.
+        await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
+    });
+});
+
+// this functionality was added in 0.42 and can be added to the compat-enabled
+// tests above when runtime version is bumped to 0.44
+describeNoCompat("blobs", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(async () => {
+        provider = getTestObjectProvider();
+    });
+
+    it("uploadBlob() rejects when runtime is disposed", async () => {
+        const container = await provider.makeTestContainer(testContainerConfig);
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        (container.deltaManager as any)._inbound.pause();
+
+        const blobOpP = new Promise<void>((res) => container.deltaManager.on("submitOp", (op) => {
+            if (op.contents.includes("blobAttach")) {
+                res();
+            }
+        }));
+        const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));
+        await blobOpP;
+        container.close();
+        await assert.rejects(blobP, "promise returned by uploadBlob() did not reject when runtime was disposed");
+    });
+
+    it("works in detached container", async function() {
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+
+        dataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+
+        // make sure we are still detached
+        assert.strictEqual(container.attachState, AttachState.Detached);
+
+        await assert.rejects(
+            container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
+            /(0x206)|(0x202)/,
+        );
     });
 });

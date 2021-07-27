@@ -109,7 +109,6 @@ describe("No Delta Stream", () => {
 
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
-        assert.strictEqual(container.existing, true, "container.existing");
         assert.strictEqual(container.readonly, true, "container.readonly");
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
@@ -166,7 +165,6 @@ describe("No Delta Stream", () => {
 
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
-        assert.strictEqual(container.existing, true, "container.existing");
         assert.strictEqual(container.readonly, true, "container.readonly");
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");

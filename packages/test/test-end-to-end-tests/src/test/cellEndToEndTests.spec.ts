@@ -142,6 +142,10 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         sharedCell1.set("value1");
         sharedCell2.set("value2");
         sharedCell3.set("value0");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedCell3.set("value3");
 
         verifyCellValues("value1", "value2", "value3");
@@ -155,6 +159,10 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         // set after delete
         sharedCell1.set("value1.1");
         sharedCell2.delete();
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedCell3.set("value1.3");
 
         verifyCellValues("value1.1", undefined, "value1.3");
@@ -185,6 +193,10 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         // delete after set
         sharedCell1.set("value3.1");
         sharedCell2.set("value3.2");
+
+        // drain the outgoing so that the next set will come after
+        await provider.opProcessingController.processOutgoing();
+
         sharedCell3.delete();
 
         verifyCellValues("value3.1", "value3.2", undefined);

@@ -111,7 +111,7 @@ export interface IContainerContext extends IDisposable {
     readonly configuration: IFluidConfiguration;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
-    readonly storage: IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
@@ -121,7 +121,15 @@ export interface IContainerContext extends IDisposable {
     readonly quorum: IQuorum;
     readonly audience: IAudience | undefined;
     readonly loader: ILoader;
+    /** @deprecated - Use `taggedLogger` if present. Otherwise, be sure to handle tagged data
+     * before sending events to this logger. In time we will assume the presence of `taggedLogger`,
+     * but in the meantime, current and older loader versions buttress loggers that do not support tags.
+     * IContainerContext will retain both options, but hosts must now support tags as the loader
+     * will soon plumb taggedLogger's events (potentially tagged) to the host's logger.
+     */
     readonly logger: ITelemetryBaseLogger;
+    // The logger implementation, which would support tagged events, should be provided by the loader.
+    readonly taggedLogger?: ITelemetryBaseLogger;
     readonly serviceConfiguration: IClientConfiguration | undefined;
     pendingLocalState?: unknown;
 
@@ -166,6 +174,9 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     /**
      * Instantiates a new IRuntime for the given IContainerContext to proxy to
      * This is the main entry point to the Container's business logic
+     *
+     * @param context - container context to be supplied to the runtime
+     * @param existing - whether to instantiate for the first time or from an existing context
      */
-    instantiateRuntime(context: IContainerContext): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
 }

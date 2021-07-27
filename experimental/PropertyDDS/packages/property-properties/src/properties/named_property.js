@@ -23,8 +23,8 @@ const BaseProperty = require('./base_property');
  * @alias property-properties.NamedProperty
  * @category Properties
  */
-var NamedProperty = function(in_params) {
-  ContainerProperty.call(this, in_params);
+var NamedProperty = function (in_params) {
+    ContainerProperty.call(this, in_params);
 };
 
 NamedProperty.prototype = Object.create(ContainerProperty.prototype);
@@ -38,12 +38,12 @@ NamedProperty.prototype._typeid = 'NamedProperty';
  *
  * @return {string} String identifying the property
  */
-NamedProperty.prototype.getId = function() {
-  if (this._id !== null) {
-    return this._id;
-  } else {
-    return this.getGuid();
-  }
+NamedProperty.prototype.getId = function () {
+    if (this._id !== null) {
+        return this._id;
+    } else {
+        return this.getGuid();
+    }
 };
 
 /**
@@ -53,9 +53,9 @@ NamedProperty.prototype.getId = function() {
  * Guid is used to traverse the commit graph.
  * @return {string} The GUID
  */
-NamedProperty.prototype.getGuid = function() {
-  var guid = this.get('guid', {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
-  return guid ? guid.getValue() : '';
+NamedProperty.prototype.getGuid = function () {
+    var guid = this.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+    return guid ? guid.getValue() : '';
 };
 
 

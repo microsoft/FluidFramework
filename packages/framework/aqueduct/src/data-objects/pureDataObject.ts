@@ -37,10 +37,9 @@ export interface IDataObjectProps<O = object, S = undefined> {
  * You probably don't want to inherit from this data store directly unless
  * you are creating another base data store class
  *
- * Generics:
- * O - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced data store may take during creation
- * E - represents events that will be available in the EventForwarder
+ * @typeParam O - represents a type that will define optional providers that will be injected
+ * @typeParam S - the initial state type that the produced data object may take during creation
+ * @typeParam E - represents events that will be available in the EventForwarder
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export abstract class PureDataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>

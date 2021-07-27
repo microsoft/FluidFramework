@@ -208,6 +208,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:api-documenter:win32` | --- |
 | `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `build:uber-package` | `node ../rollup-api-json.js ../_api-extractor-temp/doc-models` |
 | `clean` | Remove all generated files. |
 | `copyfiles` | `copyfiles _replacements/ content/` |
 | `ditaa` | Run the local copy of ditaa. |
@@ -227,6 +228,8 @@ The site theme/template lives in `themes/thxvscode`.
 | `install:hugo:default` | --- |
 | `install:hugo:force` | Install the version of Hugo used by the documentation. |
 | `install:hugo:win32` | --- |
+| `lint` | `markdownlint-cli2` |
+| `lint:fix` | `markdownlint-cli2-fix` |
 | `postinstall` | --- |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 | `start:default` | --- |

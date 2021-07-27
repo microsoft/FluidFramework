@@ -2487,4 +2487,93 @@ describe('DataBinding.registerOnValues() should work for', function() {
     mapRemoveSpy.mockClear();
   });
 
+  it('Array of primitives', function() {
+    var arrayInsertSpy = jest.fn();
+    var arrayModifySpy = jest.fn();
+    var arrayRemoveSpy = jest.fn();
+
+    // Add the container pset
+    var arrayPropertyParent = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single');
+
+    // Expect the insertion of map values to trigger onInsert messages
+    workspace.root.insert('ArrayContainerTemplate', arrayPropertyParent);
+
+    ParentDataBinding.registerOnValues('arrayPrimitive', ['collectionInsert'], arrayInsertSpy);
+    ParentDataBinding.registerOnValues('arrayPrimitive', ['collectionModify'], arrayModifySpy);
+    ParentDataBinding.registerOnValues('arrayPrimitive', ['collectionRemove'], arrayRemoveSpy);
+
+    // Register the base (Child) typeid
+    dataBinder.register('BINDING', ArrayContainerTemplate.typeid, ParentDataBinding);
+    dataBinder.attachTo(workspace);
+
+    const arrayProperty = workspace.root.get(['ArrayContainerTemplate', 'arrayPrimitive']);
+    workspace.pushNotificationDelayScope();
+    arrayProperty.push('one');
+    arrayProperty.push('two');
+    workspace.popNotificationDelayScope();
+
+    expect(arrayInsertSpy).toHaveBeenCalledTimes(2);
+    // Test first parameter (index or key)
+    expect(arrayInsertSpy.mock.calls[0][0]).toEqual(0);
+    expect(arrayInsertSpy.mock.calls[1][0]).toEqual(1);
+
+    // Test second parameter
+    expect(arrayInsertSpy.mock.calls[0][1]).toEqual('one');
+    expect(arrayInsertSpy.mock.calls[1][1]).toEqual('two');
+
+    arrayInsertSpy.mockClear();
+
+    // modify array
+    workspace.pushNotificationDelayScope();
+    arrayProperty.setValues(['10', '20']);
+    workspace.popNotificationDelayScope();
+    expect(arrayModifySpy).toHaveBeenCalledTimes(2);
+    expect(arrayModifySpy.mock.calls[0][0]).toEqual(0);
+    expect(arrayModifySpy.mock.calls[1][0]).toEqual(1);
+
+    expect(arrayModifySpy.mock.calls[0][1]).toEqual('10');
+    expect(arrayModifySpy.mock.calls[1][1]).toEqual('20');
+    arrayModifySpy.mockClear();
+
+    // remove from array
+    workspace.pushNotificationDelayScope();
+    arrayProperty.removeRange(0, 2);
+    workspace.popNotificationDelayScope();
+    expect(arrayRemoveSpy).toHaveBeenCalledTimes(2);
+    // TODO: Not sure if these are the correct remove keys (Expectation is to have the values 0 and 1, since its a batched opertation)
+    expect(arrayRemoveSpy.mock.calls[0][0]).toEqual(0);
+    expect(arrayRemoveSpy.mock.calls[1][0]).toEqual(0);
+    arrayRemoveSpy.mockClear();
+  });
+
+  it('Register on the whole primitives array changes', function() {
+    var wholeArraySpy = jest.fn();
+
+    // Add the container pset
+    var arrayPropertyParent = PropertyFactory.create(ArrayContainerTemplate.typeid, 'single', {arrayPrimitive: ['initial']});
+
+    // Expect the insertion of map values to trigger onInsert messages
+    workspace.root.insert('ArrayContainerTemplate', arrayPropertyParent);
+
+    ParentDataBinding.registerOnValues('arrayPrimitive', ['insert', 'modify'], wholeArraySpy);
+
+    // Register the base (Child) typeid
+    dataBinder.register('BINDING', ArrayContainerTemplate.typeid, ParentDataBinding);
+    dataBinder.attachTo(workspace);
+
+    expect(wholeArraySpy).toHaveBeenCalledTimes(1);
+
+    const arrayProperty = workspace.root.get(['ArrayContainerTemplate', 'arrayPrimitive']);
+
+    // Test first parameter (collection values)
+    expect(wholeArraySpy.mock.calls[0][0]).toEqual(['initial']);
+
+    arrayProperty.push('one');
+
+    // Test modify event
+    expect(wholeArraySpy).toHaveBeenCalledTimes(2);
+    expect(wholeArraySpy.mock.calls[1][0]).toEqual(['initial', 'one']);
+
+    wholeArraySpy.mockClear();
+  });
 });

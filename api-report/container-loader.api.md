@@ -32,12 +32,14 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
+import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
+import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProvideFluidCodeDetailsComparer } from '@fluidframework/core-interfaces';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -116,7 +118,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    get existing(): boolean | undefined;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -158,15 +159,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
-    get storage(): IDocumentStorageService | undefined;
+    readonly storage: IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
     static version: string;
 }
-
-// @public
-export function convertProtocolAndAppSummaryToSnapshotTree(protocolSummaryTree: ISummaryTree, appSummaryTree: ISummaryTree): ISnapshotTree;
 
 // @public
 export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, IEventProvider<IDeltaManagerInternalEvents> {
@@ -184,8 +182,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
-    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delayMs: number, error: unknown): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
@@ -239,8 +236,10 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     get version(): string;
 }
 
-// @public (undocumented)
-export const getSnapshotTreeFromSerializedContainer: (detachedContainerSnapshot: ISummaryTree) => ISnapshotTree;
+// @public
+export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
 
 // @public (undocumented)
 export interface IConnectionArgs {
@@ -265,10 +264,12 @@ export interface IContainerConfig {
 export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
+    // @deprecated
+    createOnLoad?: boolean;
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
-    version?: string | null | undefined;
+    version: string | undefined;
 }
 
 // @public
@@ -280,8 +281,26 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 // @public
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+};
+
+// @public
+export interface IFluidModuleWithDetails {
+    details: IFluidCodeDetails;
+    module: IFluidModule;
+}
+
+// @public (undocumented)
+export interface ILoaderOptions extends ILoaderOptions_2 {
+    // (undocumented)
+    summarizeProtocolTree?: true;
+}
+
+// @public
 export interface ILoaderProps {
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
@@ -292,7 +311,8 @@ export interface ILoaderProps {
 
 // @public
 export interface ILoaderServices {
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly proxyLoaderFactories: Map<string, IProxyLoaderFactory>;
@@ -301,22 +321,14 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public (undocumented)
-export interface IParsedUrl {
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    path: string;
-    // (undocumented)
-    query: string;
-    version: string | null | undefined;
-}
+// @public @deprecated
+export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // @deprecated (undocumented)
-    static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
+    static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeDetailsLoader | ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
     // (undocumented)
     createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
@@ -330,9 +342,6 @@ export class Loader implements IHostLoader {
     // (undocumented)
     readonly services: ILoaderServices;
 }
-
-// @public (undocumented)
-export function parseUrl(url: string): IParsedUrl | undefined;
 
 // @public (undocumented)
 export enum ReconnectMode {

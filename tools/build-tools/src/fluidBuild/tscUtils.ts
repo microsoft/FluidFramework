@@ -12,13 +12,26 @@ export const findConfigFile = defaultTscUtil.findConfigFile;
 export const readConfigFile = defaultTscUtil.readConfigFile;
 
 export function convertToOptionsWithAbsolutePath(options: ts.CompilerOptions, cwd: string) {
+    // Shallow clone 'CompilerOptions' before modifying.
     const result = { ...options };
-    for (const key of ["configFilePath", "declarationDir", "outDir", "rootDir", "project"]) {
+
+    // Expand 'string' properties that potentially contain relative paths.
+    for (const key of ["baseUrl", "configFilePath", "declarationDir", "outDir", "rootDir", "project"]) {
         const value = result[key] as string;
         if (value !== undefined) {
             result[key] = path.resolve(cwd, value);
         }
     }
+
+    // Expand 'string[]' properties that potentially contain relative paths.
+    for (const key of ["typeRoots"]) {
+        const value = result[key] as string[];
+        if (value !== undefined) {
+            // Note that this also shallow clones the array.
+            result[key] = value.map((relative) => path.resolve(cwd, relative));
+        }
+    }
+
     return result;
 }
 

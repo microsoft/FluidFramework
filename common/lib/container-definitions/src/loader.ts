@@ -27,6 +27,8 @@ import { AttachState } from "./runtime";
 
 /**
  * Code loading interface
+ *
+ * @deprecated in favor of {@link @fluidframework/container-loader#ICodeDetailsLoader}
  */
 export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     /**
@@ -84,7 +86,7 @@ export interface IContainerEvents extends IEvent {
     (event: "connected", listener: (clientId: string) => void);
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void);
-    (event: "disconnected" | "attaching" | "attached", listener: () => void);
+    (event: "disconnected" | "attached", listener: () => void);
     (event: "closed", listener: (error?: ICriticalContainerError) => void);
     (event: "warning", listener: (error: ContainerWarning) => void);
     (event: "op", listener: (message: ISequencedDocumentMessage) => void);
@@ -332,7 +334,7 @@ export interface ILoaderHeader {
     [LoaderHeader.loadMode]: IContainerLoadMode;
     [LoaderHeader.sequenceNumber]: number;
     [LoaderHeader.reconnect]: boolean;
-    [LoaderHeader.version]: string | undefined | null;
+    [LoaderHeader.version]: string | undefined;
 }
 
 interface IProvideLoader {

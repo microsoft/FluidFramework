@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-properties",
-  "version": "0.41.0",
+  "version": "0.45.0",
   "description": "definitions of properties",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -17,8 +17,8 @@
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.41.0",
-    "@fluid-experimental/property-common": "^0.41.0",
+    "@fluid-experimental/property-changeset": "^0.45.0",
+    "@fluid-experimental/property-common": "^0.45.0",
     "ajv": "7.1.1",
     "async": "^3.2.0",
     "lodash": "^4.17.21",
@@ -26,7 +26,7 @@
     "traverse": "0.6.6"
   },
   "devDependencies": {
-    "@fluidframework/mocha-test-setup": "^0.41.0",
+    "@fluidframework/mocha-test-setup": "^0.45.0",
     "chai": "^4.2.0",
     "cross-env": "^7.0.2",
     "mocha": "^8.4.0",

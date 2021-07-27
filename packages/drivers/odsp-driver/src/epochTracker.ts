@@ -6,7 +6,7 @@
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { ThrottlingError } from "@fluidframework/driver-utils";
+import { ThrottlingError, RateLimiter } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import {
     snapshotKey,
@@ -16,14 +16,13 @@ import {
     IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, annotateError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
     INonPersistentCache,
     IPersistedFileCache,
  } from "./odspCache";
-import { RateLimiter } from "./rateLimiter";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
@@ -253,8 +252,7 @@ export class EpochTracker implements IPersistedFileCache {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
-                assert(epochError instanceof LoggingError, 0x1d4 /* "type guard" */);
-                epochError.addTelemetryProperties({
+                annotateError(epochError, {
                     fromCache,
                     clientEpoch: this.fluidEpoch,
                     fetchType,
@@ -262,6 +260,7 @@ export class EpochTracker implements IPersistedFileCache {
                 this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.removeEntries();
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw epochError;
             }
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch

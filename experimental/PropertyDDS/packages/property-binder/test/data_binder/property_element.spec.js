@@ -270,7 +270,8 @@ describe('Property element', function() {
 
     mymap.insert('"my.child.path"', 42);
     const propElem = new PropertyElement(mymap);
-    propElem.becomeChild('"my.child.path"');
+    // Now becomeChild expect a quoted/escaped paths instead of ids.
+    propElem.becomeChild('""my.child.path""');
     expect(propElem.isValid()).toEqual(true);
 
     expect(propElem.getValue()).toEqual(42);
@@ -646,6 +647,15 @@ describe('Property element', function() {
 
     expect(propElem.getChild('myReference2', RESOLVE_NO_LEAFS).getProperty()).toEqual(myReference2);
     expect(propElem.getChild(['myReference2', 'aNumber'], RESOLVE_NO_LEAFS).getValue()).toEqual(42);
+  });
+
+  it('getChild with special characters in tokenized path', function() {
+    const myData = PropertyFactory.create(PrimitiveChildrenTemplate.typeid);
+    workspace.root.insert('"/"', myData);
+
+    const propElem = new PropertyElement(workspace.root);
+    expect(propElem.getChild(['"/"', 'aString']).isValid()).toEqual(true);
+    expect(propElem.getChild(['"/"', 'aString', '/']).isValid()).toEqual(false);
   });
 
 });

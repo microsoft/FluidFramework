@@ -21,6 +21,7 @@ import {
     TokenFetcher,
     IPersistedCache,
     HostStoragePolicy,
+    IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     LocalPersistentCache,
@@ -47,7 +48,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     private readonly nonPersistentCache = new NonPersistentCache();
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
@@ -70,10 +71,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const odspLogger = createOdspLogger(logger);
 
+        const fileEntry: IFileEntry = { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId };
         const cacheAndTracker = createOdspCacheAndTracker(
             this.persistedCache,
             this.nonPersistentCache,
-            { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
+            fileEntry,
             odspLogger);
 
         return PerformanceEvent.timedExecAsync(
@@ -94,6 +96,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,
+                    fileEntry,
+                    this.hostPolicy.cacheCreateNewSummary ?? true,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger, cacheAndTracker);
                 event.end({

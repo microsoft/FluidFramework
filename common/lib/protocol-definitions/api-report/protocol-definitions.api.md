@@ -149,8 +149,6 @@ export interface IConnected {
 export interface ICreateBlobResponse {
     // (undocumented)
     id: string;
-    // (undocumented)
-    url: string;
 }
 
 // @public (undocumented)
@@ -259,27 +257,42 @@ export interface IQueueMessage {
 }
 
 // @public
-export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
-    // (undocumented)
-    get(key: string): any;
-    // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
+export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
+}
+
+// @public
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
+}
+
+// @public
+export interface IQuorumClientsEvents extends IErrorEvent {
+    // (undocumented)
+    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    (event: "removeMember", listener: (clientId: string) => void): any;
+}
+
+// @public
+export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
+
+// @public
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+    // (undocumented)
+    get(key: string): any;
+    // (undocumented)
+    getApprovalData(key: string): ICommittedProposal | undefined;
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
     propose(key: string, value: any): Promise<void>;
 }
 
-// @public (undocumented)
-export interface IQuorumEvents extends IErrorEvent {
-    // (undocumented)
-    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
-    // (undocumented)
-    (event: "removeMember", listener: (clientId: string) => void): any;
+// @public
+export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: IPendingProposal) => void): any;
     // (undocumented)
@@ -475,7 +488,12 @@ export interface ISummaryHandle {
 }
 
 // @public
-export interface ISummaryNack extends IServerError {
+export interface ISummaryNack {
+    code?: number;
+    // @deprecated
+    errorMessage: string;
+    message?: string;
+    retryAfter?: number;
     summaryProposal: ISummaryProposal;
 }
 

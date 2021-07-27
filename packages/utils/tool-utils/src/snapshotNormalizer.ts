@@ -27,7 +27,7 @@ function getDeepSortedArray(array: any[]): any[] {
     const sortedArray: any[] = [];
     // Sort arrays and objects, if any, in the array.
     for (const element of array) {
-        if (element instanceof Array) {
+        if (Array.isArray(element)) {
             sortedArray.push(getDeepSortedArray(element));
         } else if (element instanceof Object) {
             sortedArray.push(getDeepSortedObject(element));
@@ -57,7 +57,7 @@ function getDeepSortedObject(obj: any): any {
     const keys = Object.keys(obj).sort();
     for (const key of keys) {
         const value = obj[key];
-        if (value instanceof Array) {
+        if (Array.isArray(value)) {
             sortedObj[key] = getDeepSortedArray(value);
         } else if (value instanceof Object) {
             sortedObj[key] = getDeepSortedObject(value);
@@ -78,7 +78,7 @@ function getSortedBlobContent(content: string): string {
     // Deep sort the content if it's parseable.
     try {
         let contentObj = JSON.parse(content);
-        if (contentObj instanceof Array) {
+        if (Array.isArray(contentObj)) {
             contentObj = getDeepSortedArray(contentObj);
         } else if (contentObj instanceof Object) {
             contentObj = getDeepSortedObject(contentObj);

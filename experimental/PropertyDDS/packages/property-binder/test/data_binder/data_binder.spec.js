@@ -133,6 +133,44 @@ describe('DataBinder', function() {
       handle.destroy();
     });
 
+    it('Should be possible to listen to paths with special characters that need to be escaped/quoted.', function() {
+      const dataBinder = new DataBinder(workspace);
+      const handle = dataBinder.register('BINDING', ParentTemplate.typeid, ParentDataBinding);
+
+      let property = PropertyFactory.create(ParentTemplate.typeid, 'single');
+      workspace.root.insert('/', property);
+      let dataBinding = dataBinder.resolve(property, 'BINDING');
+      expect(dataBinding.onPostCreate).toHaveBeenCalledTimes(1);
+
+      // Test a child modification on that path with special characters
+      expect(property.getValue('text')).toEqual('');
+      property.get('text').setValue('test');
+      expect(property.getValue('text')).toEqual('test');
+      expect(dataBinding.onModify).toHaveBeenCalledTimes(1);
+
+      property = PropertyFactory.create(ParentTemplate.typeid, 'single');
+      workspace.root.insert('//', property);
+      dataBinding = dataBinder.resolve(property, 'BINDING');
+      expect(dataBinding.onPostCreate).toHaveBeenCalledTimes(1);
+
+      property = PropertyFactory.create(ParentTemplate.typeid, 'single');
+      workspace.root.insert('./', property);
+      dataBinding = dataBinder.resolve(property, 'BINDING');
+      expect(dataBinding.onPostCreate).toHaveBeenCalledTimes(1);
+
+      property = PropertyFactory.create(ParentTemplate.typeid, 'single');
+      workspace.root.insert('.//', property);
+      dataBinding = dataBinder.resolve(property, 'BINDING');
+      expect(dataBinding.onPostCreate).toHaveBeenCalledTimes(1);
+
+      property = PropertyFactory.create(ParentTemplate.typeid, 'single');
+      workspace.root.insert('./filename.extension', property);
+      dataBinding = dataBinder.resolve(property, 'BINDING');
+      expect(dataBinding.onPostCreate).toHaveBeenCalledTimes(1);
+
+      handle.destroy();
+    });
+
     it('it should not be possible to register multiple DataBindings for a single typeid and bindingType', function() {
       var dataBinder = new DataBinder();
       var bindingType = 'BINDING';
@@ -3775,6 +3813,64 @@ describe('DataBinder', function() {
       expect(childDataBinding).toBeInstanceOf(ChildDataBinding);
       expect(childDataBinding.getProperty()).toEqual(childPset2);
       expect(childDataBinding.onPostCreate).toHaveBeenCalledTimes(1);
+    });
+    it('excludePrefix with absolute paths using brackets', function() {
+      dataBinder.attachTo(workspace);
+
+      //   Register the base (Child) typeid
+      dataBinder.defineDataBinding('BINDING',
+        ChildTemplate.typeid,
+        ChildDataBinding);
+      const namedPropertyMap = PropertyFactory.create(ChildTemplate.typeid, 'map');
+      workspace.root.insert('map', namedPropertyMap);
+      const namedProperty = PropertyFactory.create(ChildTemplate.typeid);
+      namedPropertyMap.insert(namedProperty.getId(), namedProperty);
+      dataBinder.activateDataBinding('BINDING', ChildTemplate.typeid, {
+        excludePrefix: namedProperty.getAbsolutePath()
+      });
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(0);
+    });
+
+    it('exactPath with absolute paths using brackets', function() {
+      dataBinder.attachTo(workspace);
+
+      //   Register the base (Child) typeid
+      dataBinder.defineDataBinding('BINDING',
+        ChildTemplate.typeid,
+        ChildDataBinding);
+
+      const namedPropertyMap = PropertyFactory.create(ChildTemplate.typeid, 'map');
+      workspace.root.insert('map', namedPropertyMap);
+      const namedProperty1 = PropertyFactory.create(ChildTemplate.typeid);
+      const namedProperty2 = PropertyFactory.create(ChildTemplate.typeid);
+      namedPropertyMap.insert(namedProperty1.getId(), namedProperty1);
+      namedPropertyMap.insert(namedProperty2.getId(), namedProperty2);
+
+      dataBinder.activateDataBinding('BINDING', ChildTemplate.typeid, {
+        exactPath: namedProperty1.getAbsolutePath()
+      });
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
+    });
+
+    it('includePrefix with absolute paths using brackets', function() {
+      dataBinder.attachTo(workspace);
+
+      //   Register the base (Child) typeid
+      dataBinder.defineDataBinding('BINDING',
+        ChildTemplate.typeid,
+        ChildDataBinding);
+
+      const namedPropertyMap = PropertyFactory.create(ChildTemplate.typeid, 'map');
+      workspace.root.insert('map', namedPropertyMap);
+      const namedProperty1 = PropertyFactory.create(ChildTemplate.typeid);
+      const namedProperty2 = PropertyFactory.create(ChildTemplate.typeid);
+      namedPropertyMap.insert(namedProperty1.getId(), namedProperty1);
+      namedPropertyMap.insert(namedProperty2.getId(), namedProperty2);
+
+      dataBinder.activateDataBinding('BINDING', ChildTemplate.typeid, {
+        includePrefix: namedProperty1.getAbsolutePath()
+      });
+      expect(dataBinder._dataBindingCreatedCounter).toEqual(1);
     });
 
     it('should only create an DataBinding when allowed by includePrefix', function() {

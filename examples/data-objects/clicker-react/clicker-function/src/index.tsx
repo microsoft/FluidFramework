@@ -11,7 +11,7 @@ import {
     setSyncedObjectConfig,
     useSyncedObject,
     SyncedDataObject,
-} from "@fluidframework/react";
+} from "@fluid-experimental/react";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

@@ -23,99 +23,6 @@ export interface IValueChanged {
 }
 
 /**
- * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
- * @alpha
- */
-export interface IValueOpEmitter {
-    /**
-     * Called by the value type to emit a value type operation through the container type holding it.
-     * @param opName - Name of the emitted operation
-     * @param previousValue - JSONable previous value as defined by the value type
-     * @param params - JSONable params for the operation as defined by the value type
-     * @alpha
-     */
-    emit(opName: string, previousValue: any, params: any): void;
-}
-
-/**
- * A value factory is used to serialize/deserialize value types to a map
- * @alpha
- */
-export interface IValueFactory<T> {
-    /**
-     * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
-     * from remote.
-     * @param emitter - Emitter object that the created value type will use to emit operations
-     * @param raw - Initialization parameters as defined by the value type
-     * @returns The new value type
-     * @alpha
-     */
-    load(emitter: IValueOpEmitter, raw: any): T;
-
-    /**
-     * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
-     * loadable using the load method of its factory.
-     * @param value - The value type to serialize
-     * @returns The JSONable form of the value type
-     * @alpha
-     */
-    store(value: T): any;
-}
-
-/**
- * Defines an operation that a value type is able to handle.
- * @alpha
- */
-export interface IValueOperation<T> {
-    /**
-     * Performs the actual processing on the incoming operation.
-     * @param value - The current value stored at the given key, which should be the value type
-     * @param params - The params on the incoming operation
-     * @param local - Whether the operation originated from this client
-     * @param message - The operation itself
-     * @alpha
-     */
-    process(value: T, params: any, local: boolean, message: ISequencedDocumentMessage | undefined);
-}
-
-/**
- * Defines a value type that can be registered on a container type.
- */
-export interface IValueType<T> {
-    /**
-     * Name of the value type.
-     * @alpha
-     */
-    name: string;
-
-    /**
-     * Factory method used to convert to/from a JSON form of the type.
-     * @alpha
-     */
-    factory: IValueFactory<T>;
-
-    /**
-     * Operations that can be applied to the value type.
-     * @alpha
-     */
-    ops: Map<string, IValueOperation<T>>;
-}
-
-/**
- * Container types that are able to create value types as contained values.
- */
-export interface IValueTypeCreator {
-    /**
-     * Create a new value type at the given key.
-     * @param key - Key to create the value type at
-     * @param type - Type of the value type to create
-     * @param params - Initialization params for the value type
-     * @alpha
-     */
-    createValueType(key: string, type: string, params: any): this;
-}
-
-/**
  * Interface describing actions on a directory.
  *
  * @remarks
@@ -238,7 +145,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (
-        changed: IDirectoryValueChanged,
+        changed: IValueChanged,
         local: boolean,
         op: ISequencedDocumentMessage | null,
         target: IEventThisPlaceHolder) => void);
@@ -274,7 +181,6 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
      * @returns The ISharedMap itself
      */
     set<T = any>(key: string, value: T): this;
-
 }
 
 /**
@@ -314,25 +220,4 @@ export interface ISerializedValue {
      * String representation of the value.
      */
     value: string | undefined;
-}
-
-/**
- * ValueTypes handle ops slightly differently from SharedObjects or plain JS objects.  Since the Map/Directory doesn't
- * know how to handle the ValueType's ops, those ops are instead passed along to the ValueType for processing.
- * IValueTypeOperationValue is that passed-along op.  The opName on it is the ValueType-specific operation and the
- * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
- * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
- * it just describes an operation to be applied to an already-in-memory value.
- * @alpha
- */
-export interface IValueTypeOperationValue {
-    /**
-     * The name of the operation.
-     */
-    opName: string;
-
-    /**
-     * The payload that is submitted along with the operation.
-     */
-    value: any;
 }

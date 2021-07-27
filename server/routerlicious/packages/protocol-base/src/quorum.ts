@@ -387,6 +387,9 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
                 .forEach((pendingCommit) => {
                     pendingCommit.commitSequenceNumber = message.sequenceNumber;
 
+                    // clear the values cache
+                    this.snapshotCache.values = undefined;
+
                     this.emit(
                         "commitProposal",
                         pendingCommit.sequenceNumber,
