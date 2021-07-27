@@ -74,7 +74,7 @@ Data is added to the Property DDS via "commits"
 A Commit is the “unit of change” in Property DDS. It stores an atomic transaction recording every insert, modify and
 delete operations that happened since the previous commit.
 
-Much like in Git, a chain of commits is known as a “Branch”. The state of the is constructed by walking along the history and applying the commits on top of the previous one at any point in time. It is important to note that — since history cannot be modified — a must be referring the most recent state in order to persist any changes in Property DDS.
+Much like in Git, a chain of commits is known as a “Branch”. The state of the DDS is constructed by walking along the history and applying the commits on top of the previous one at any point in time. It is important to note that — since history cannot be modified — a commit must be referring the most recent state in order to persist any changes in Property DDS.
 
 ```javascript
 myPropertyDDS.commit()
