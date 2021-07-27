@@ -69,10 +69,8 @@ export class Audience extends EventEmitter implements IAudience {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string, details: IClient | undefined) => void): this;
-    removeMember(clientId: string): void;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    removeMember(clientId: string): boolean;
 }
 
 // @public (undocumented)

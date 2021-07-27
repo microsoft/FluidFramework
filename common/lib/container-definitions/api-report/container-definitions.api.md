@@ -77,9 +77,7 @@ export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string, details: IClient | undefined) => void): this;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 }
 
 // @public

@@ -12,8 +12,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
 export class Audience extends EventEmitter implements IAudience {
     private readonly members = new Map<string, IClient>();
 
-    public on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    public on(event: "removeMember", listener: (clientId: string, details: IClient | undefined) => void): this;
+    public on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
     public on(event: string, listener: (...args: any[]) => void): this {
         return super.on(event, listener);
     }
@@ -27,12 +26,18 @@ export class Audience extends EventEmitter implements IAudience {
     }
 
     /**
-     * Removes a client from the audience
+     * Removes a client from the audience. Only emits an event if a client is actually removed
+     * @returns if a client was removed from the audience
      */
-    public removeMember(clientId: string) {
-        const removed = this.members.get(clientId);
-        this.members.delete(clientId);
-        this.emit("removeMember", clientId, removed);
+    public removeMember(clientId: string): boolean {
+        const removedClient = this.members.get(clientId);
+        if (removedClient !== undefined) {
+            this.members.delete(clientId);
+            this.emit("removeMember", clientId, removedClient);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
