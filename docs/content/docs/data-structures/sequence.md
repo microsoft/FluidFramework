@@ -262,4 +262,4 @@ within the sequence you should find its segment via `segment = s.getContainingSe
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-[SharedMap]: {{< relref "data-structures/map.md" }}
+[SharedMap]: {{< relref "data-structures/map.md" >}}
