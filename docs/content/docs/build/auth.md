@@ -83,7 +83,7 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 [1]: (https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
 
-{{% callout title="More information" %}}
+{{% callout note "More information" %}}
 
 * [Introduction to JWTs](https://jwt.io/introduction)
 * [Payload claims in Azure Fluid Relay](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims)
