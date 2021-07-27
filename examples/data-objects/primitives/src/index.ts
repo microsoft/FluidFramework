@@ -7,7 +7,7 @@ import {
     ContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/aqueduct";
 
-import { PrimitivesName } from "./main";
+import { DdsCollectionName } from "./main";
 import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory";
 
 /**
@@ -24,6 +24,6 @@ import { PrimitivesInstantiationFactory } from "./primitivesInstantiationFactory
 export const fluidExport = new ContainerRuntimeFactoryWithDefaultDataStore(
     PrimitivesInstantiationFactory,
     new Map([
-        [PrimitivesName, Promise.resolve(PrimitivesInstantiationFactory)],
+        [DdsCollectionName, Promise.resolve(PrimitivesInstantiationFactory)],
     ]),
 );

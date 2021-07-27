@@ -6,7 +6,7 @@
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { PrimitivesCollection, PrimitivesName } from "./main";
+import { DdsCollection, PrimitivesName } from "./main";
 
 /**
  * The DataObjectFactory declares the component and defines any additional distributed data structures.
@@ -14,9 +14,9 @@ import { PrimitivesCollection, PrimitivesName } from "./main";
  */
 export const PrimitivesInstantiationFactory =
     // eslint-disable-next-line @typescript-eslint/ban-types
-    new DataObjectFactory<PrimitivesCollection, undefined, undefined, IEvent>(
+    new DataObjectFactory<DdsCollection, undefined, undefined, IEvent>(
         PrimitivesName,
-        PrimitivesCollection,
+        DdsCollection,
         [
             SharedMap.getFactory(),
         ],

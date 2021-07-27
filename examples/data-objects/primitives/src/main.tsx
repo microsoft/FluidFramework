@@ -12,12 +12,12 @@ import ReactDOM from "react-dom";
 import { SharedMap, IDirectory } from "@fluidframework/map";
 import { DdsCollectionView } from "./view";
 
-export const PrimitivesName = "PrimitivesCollection";
+export const DdsCollectionName = "DdsCollection";
 
 /**
  * Basic DDS examples using view interfaces and stock component classes.
  */
-export class PrimitivesCollection extends DataObject implements IFluidHTMLView {
+export class DdsCollection extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private internalMapDir: IDirectory | undefined;
