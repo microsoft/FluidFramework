@@ -79,7 +79,7 @@ export async function createNewFluidFile(
     fileEntry.resolvedUrl = odspResolvedUrl;
 
     if (createNewSummary !== undefined && createNewCaching) {
-        assert(summaryHandle !== undefined, "Summary handle is undefined");
+        assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
         // converting summary and getting sequence number
         const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, summaryHandle);
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;

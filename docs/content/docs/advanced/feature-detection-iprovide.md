@@ -90,7 +90,7 @@ implemented -- it simply asks for `fluidObject.IFluidLoadable` or `fluidObject.I
 object of the correct type or `undefined`.
 
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->

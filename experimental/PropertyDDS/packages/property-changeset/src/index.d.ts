@@ -244,7 +244,7 @@ declare module "@fluid-experimental/property-changeset" {
     /**
      * Token Types
      */
-    type TOKEN_TYPES_TYPE = number;
+    type TOKEN_TYPES_TYPE = TOKEN_TYPES_ENUM;
 
     interface TOKEN_TYPES_ENUM {
         PATH_SEGMENT_TOKEN: number; // A normal path segment, separated via .

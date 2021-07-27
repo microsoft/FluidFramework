@@ -1,8 +1,7 @@
 ## 0.21 Breaking changes
 
-- [ITelemetryBaseLogger.supportsTags deprecated](#ITelemetryBaseLogger.supportstags-deprecated)
+- [ITelemetryBaseLogger.supportsTags deleted](#ITelemetryBaseLogger.supportstags-deleted)
 
-### ITelemetryBaseLogger.supportsTags deprecated
-We are deprecating use of supportsTags and instead going to handle tags directly at the loader/runtime boundary
-via `IContainerContext`. Other than this boundary, all loggers can assume full support for tags on all telemetry events.
-This will involve a change in `container-definitions`, which is packaged as part of the `build-common` release.
+### ITelemetryBaseLogger.supportsTags deleted
+Proper support for tagged events will be assumed going forward.  Only at the loader-runtime boundary do we retain
+a concession for backwards compatibility, but that's done outside of this interface.
