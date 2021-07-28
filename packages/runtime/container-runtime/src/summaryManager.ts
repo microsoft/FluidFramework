@@ -311,6 +311,14 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         return this.runningSummarizer.summarizeOnDemand(...args);
     };
 
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        if (this.runningSummarizer === undefined) {
+            throw Error("No running summarizer client");
+            // TODO: could spawn a summarizer client temporarily.
+        }
+        return this.runningSummarizer.enqueueSummarize(...args);
+    };
+
     public dispose() {
         this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
         this.connectedState.off("connected", this.handleConnected);
