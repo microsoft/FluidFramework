@@ -116,7 +116,8 @@ module.exports = {
                 "Microsoft",
                 "npm",
                 "Routerlicious",
-                "Tinylicious"
+                "Tinylicious",
+                "tinylicious.md", // hack
             ]
         }
     },

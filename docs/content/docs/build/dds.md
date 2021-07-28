@@ -37,14 +37,15 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is *last writer wins* (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[API documentation]({{< relref "/docs/apis" >}}) for each DDS for more details about the merge strategy it uses.
+[DDS documentation]({{< relref "data-structures/overview.md" >}}) for each DDS for more details about the merge
+strategy it uses.
 
 ## Performance characteristics
 
 Fluid DDSes exhibit different performance characteristics based on how they interact with the Fluid service. The DDSes
 generally fall into two broad categories: *optimistic* and *consensus-based*.
 
-{{% callout tip "See also" %}}
+{{% callout note "See also" %}}
 
 * [Fluid Framework architecture]({{< relref "architecture" >}})
 * [Fluid service]({{< relref "service" >}})
@@ -70,6 +71,8 @@ These behavioral guarantees cannot be implemented in an optimistic way. The cost
 part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
 for behavioral guarantees.
 
+Examples of consensus-based DDSes in Fluid Framework include [ConsensusRegisterCollection][] and [ConsensusQueue][].
+
 #### Why consensus-based DDSes are useful
 
 {{% callout note "Not required reading" %}}
@@ -94,38 +97,20 @@ sequence number to the operation before applying it locally. With this approach,
 local changes until they get back a sequenced op from the server. Once they do, they apply the ops in order, which
 results in consistent behavior across all remote clients.
 
-## Creating and storing distributed data structures
-
-A distributed data structure object is created using its type's static `create` method.
-
-```typescript
-const myMap = SharedMap.create(this.runtime);
-```
-
-You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
-the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
-
 ### Storing a DDS within another DDS
 
 Distributed data structures can store primitive values like numbers and strings, and *JSON serializable* objects. For
 objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called *handles*, which *are*
 serializable.
 
-When storing a DDS within another DDS, you must store its handle, not the DDS itself. For example, consider this code:
+When storing a DDS within another DDS, you must store its handle, not the DDS itself.
 
-```ts
-// Create a new map for our Fluid data
-const myMap = SharedMap.create(this.runtime);
-
-// Create a new counter
-const myCounter = SharedCounter.create(this.runtime);
-
-// Store the handle in the map
-myMap.set("counter", myCounter.handle);
-```
+For examples of how to do this, see [Using handles to store and retrieve Fluid objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
-see [Fluid handles](../advanced/handles.md) in the Advanced section.
+see [Fluid handles]({{< relref "handles.md" >}}).
+
+[handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}
 
 ## Events
 

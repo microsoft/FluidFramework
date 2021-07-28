@@ -19,15 +19,15 @@ Fluid clients require a centralized service that all connected clients use to se
 
 Each service specific package adhere to a common API structure and has the primary goal of creating and retrieving container objects.
 
-The [Tinylicious service]({{< relref "Tinylicious" >}}) is a local testing service and is used in Fluid examples throughout this documentation. Other services include the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) which enables high-scale production scenarios.
+The [Tinylicious service]({{< relref "tinylicious.md" >}}) is a local testing service and is used in Fluid examples throughout this documentation. Other services include the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) which enables high-scale production scenarios.
 
-See [Supported service-specific client packages](#service-specific-client-packages) for more details.
+See [Service-specific client packages](#service-specific-client-packages) for more details.
 
 ### Container
 
 The container is the primary unit of encapsulation in Fluid. It consists of a collection of shared objects and supporting APIs to manage the lifecycle of the container and the objects within it.
 
-New containers require a client-driven action and container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
+Creating new containers is a client-driven action and container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
 
 For more about containers see [Containers](./containers.md).
 
@@ -52,5 +52,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 The Tinylicious service is a local Fluid service. This documentation uses `@fluid-experimental/tinylicious-client` (or simply `client`). For specifics about each service-specific client implementation see their corresponding documentation.
 
-- `@fluid-experimental/tinylicious-client` -- the client for the [Tinylicious]({{< relref "Tinylicious" >}}) service.
-- `@fluid-experimental/frs-client` -- the client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
+- `@fluid-experimental/tinylicious-client` -- a client dedicated to the [Tinylicious]({{< relref "Tinylicious" >}})
+  service.
+- `@fluid-experimental/frs-client` -- a client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}). This
+  client can also use Tinylicious for local testing.
