@@ -62,7 +62,7 @@ async function createDataObject<TObj extends PureDataObject<O, S, E>, O, S, E ex
     // request mixin in
     runtimeClass = mixinRequestHandler(
         async (request: IRequest, runtimeArg: FluidDataStoreRuntime) =>
-            (await PureDataObject.getDataObject(runtimeArg, existing)).request(request),
+            (await PureDataObject.getDataObject(runtimeArg)).request(request),
             runtimeClass);
 
     // Create a new runtime for our data store

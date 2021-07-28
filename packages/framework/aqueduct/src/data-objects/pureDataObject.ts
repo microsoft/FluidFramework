@@ -84,10 +84,10 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
      */
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public static async getDataObject(runtime: IFluidDataStoreRuntime, existing: boolean) {
+    public static async getDataObject(runtime: IFluidDataStoreRuntime) {
         const obj = (runtime as any)._dataObject as PureDataObject;
         assert(obj !== undefined, 0x0bc /* "Runtime has no DataObject!" */);
-        await obj.finishInitialization(existing);
+        await obj.finishInitialization(true);
         return obj;
     }
 

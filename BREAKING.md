@@ -12,7 +12,7 @@
 - The `existing` property from the `Document` class in `@fluid-internal/client-api` has been removed. It can be assumed that the property would have always been `true`.
 
 ### Changes to PureDataObject
-- The `initializeInternal` function, the `finishInitialization` and the `getDataObject` static function have a mandatory `existing` parameter to differentiate creating vs loading.
+- The `initializeInternal` and the `finishInitialization` functions have a mandatory `existing` parameter to differentiate creating vs loading.
 
 ### Changes to DataObject
 - The `initializeInternal` function has a mandatory `existing` parameter to differentiate creating vs loading.
