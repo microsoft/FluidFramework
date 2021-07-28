@@ -171,58 +171,66 @@ export const arrayProxyHandler = {
      * property at that index in the {@link external:ArrayProperty ArrayProperty}.
      * If the key is 'length' it sets a new length for the {@link external:ArrayProperty ArrayProperty}.
      * Otherwise, it just sets it on the associated {@link ComponentArray}.
-     * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
-     * @param {String} key The name of the property/function that is to be accessed.
-     * @param {Object} value The value to be set.
-     * @return {Boolean} Returns a boolean.
+     * @param target The {@link ComponentArray} the Proxy handles.
+     * @param key The name of the property/function that is to be accessed.
+     * @param value The value to be set.
+     * @return Returns a boolean.
      */
-    set(target: ComponentArray, key: string, value: Record<string, unknown>) {
-        const asteriskFound = Utilities.containsAsterisk(String(key));
-        if (asteriskFound && forceType<string>(key)) {
-            key = key.slice(0, -1);
+    set(target: ComponentArray, key: string | number, value: any): boolean {
+        // process key for cases like "*1" 1 "string_key", "*string_key"
+        let processed_key = key;
+        const asteriskFound = Utilities.containsAsterisk(processed_key);
+        if (asteriskFound) {
+            // if we found an * we can safely treat key_internal as string
+            processed_key = (processed_key as string).slice(0, -1);
         }
-
-        // TODO(marcus): the force type is here because we pass potentially a
-        // string into isNan which can be a number like "0"
-        if (!isNaN(Number(key)) && Number(key) >= 0) {
-            const property = target.getProperty();
-            const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");
-
-            let insert = false;
-            if (Number(key) >= property.getLength()) {
-                setLength(target, parseInt(String(key), 10) + 1);
-                // Trying to set something that was currently not in the array, means a new reference path is inserted
-                insert = true;
+        // convert strings of numbers to numbers
+        processed_key = isNaN(Number(processed_key)) ? processed_key : Number(processed_key);
+        // handle special cases for strigns and numbers
+        if (typeof processed_key === "string") {
+            if (processed_key === "length") {
+                return setLength(target, Number(value));
             }
+        } else {
+            if (!isNaN(processed_key) && processed_key >= 0) {
+                const property = target.getProperty();
+                const isReferenceArray = PropertyFactory.instanceOf(property, "Reference", "array");
 
-            const specialCases = setTrapSpecialCases.includes(target.lastCalledMethod);
-
-            if (isReferenceArray && forceType<ReferenceArrayProperty>(property)
-                && !specialCases && !asteriskFound && !insert) {
-                Utilities.setValueOfReferencedProperty(property, key, value);
-            } else {
-                if (asteriskFound && !isReferenceArray) {
-                    throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
+                let insert = false;
+                if (processed_key >= property.getLength()) {
+                    setLength(target, processed_key + 1);
+                    // Trying to set something that was currently not in the array,
+                    // means a new reference path is inserted
+                    insert = true;
                 }
-                if (property.isPrimitiveType() || property.get(key)!.getContext() === "single") {
-                    Utilities.throwOnIterableForSingleProperty(value);
-                    property.set(Number(key),
-                        Utilities.prepareElementForInsertion(property, value, target.lastCalledMethod));
+                const specialCases = setTrapSpecialCases.includes(target.lastCalledMethod);
+
+                if (isReferenceArray && forceType<ReferenceArrayProperty>(property)
+                    && !specialCases && !asteriskFound && !insert) {
+                    Utilities.setValueOfReferencedProperty(property, processed_key, value);
                 } else {
-                    const child = property.get(key);
-                    if (child) {
-                        Utilities.assign(child, value);
+                    if (asteriskFound && !isReferenceArray) {
+                        throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
+                    }
+                    if (property.isPrimitiveType() || property.get(processed_key)!.getContext() === "single") {
+                        Utilities.throwOnIterableForSingleProperty(value);
+                        property.set(processed_key,
+                            Utilities.prepareElementForInsertion(property, value, target.lastCalledMethod));
                     } else {
-                        throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+                        const child = property.get(processed_key);
+                        if (child) {
+                            Utilities.assign(child, value);
+                        } else {
+                            throw new Error(PropertyProxyErrors.INVALID_PROPERTY);
+                        }
                     }
                 }
+                return true;
             }
-            return true;
-        } else if (key === "length") {
-            return setLength(target, Number(value));
-        } else {
-            target[key] = value;
-            return true;
         }
+        // if we land here there was no special case
+        // simply assign simply assign
+        target[processed_key] = value;
+        return true;
     },
 };
