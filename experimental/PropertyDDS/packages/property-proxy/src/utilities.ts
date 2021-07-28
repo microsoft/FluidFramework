@@ -34,14 +34,13 @@ export function forceType<T>(value: any | T): value is T {
  * Utility class for the PropertyProxy proxy that consolidates commonly used functionality.
  * @hidden
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class Utilities {
+export namespace Utilities {
     /**
     * Wraps a function with push/pophNotificationDelayScope.
     * @param property The property that is operated on.
     * @param updateFunction The function containing the code that modifies properties in the workspace.
     */
-    static wrapWithPushPopNotificationDelayScope(property: BaseProperty, updateFunction: () => void) {
+    export function wrapWithPushPopNotificationDelayScope(property: BaseProperty, updateFunction: () => void) {
         if (property.getWorkspace()) {
             property.getWorkspace().pushNotificationDelayScope();
             updateFunction();
@@ -68,7 +67,8 @@ export class Utilities {
      * Triggers special behavior for the methods copyWithin(), fill(), reverse(), sort().
      * @return The prepared element that is ready for insertion.
      */
-    static prepareElementForInsertion(property: BaseProperty, element: BaseProperty | any, caller?: string): any {
+    export function prepareElementForInsertion(property: BaseProperty, element: BaseProperty | any, caller?: string):
+        any {
         // Check if element exists and is a proxied property
         if (element && typeof element.getProperty === "function" &&
             PropertyFactory.instanceOf(element.getProperty(), "BaseProperty")) {
@@ -124,7 +124,7 @@ export class Utilities {
      * @param property The target of the assignation.
      * @param value The value that is to be assigned.
      */
-    static assign(property: BaseProperty, value: BaseProperty | any) {
+    export function assign(property: BaseProperty, value: BaseProperty | any) {
         const context = property.getContext();
         // De-proxify
         if (value && value.getProperty) {
@@ -140,7 +140,7 @@ export class Utilities {
                     property.deserialize(value.serialize());
                 }
             } else {
-                Utilities.throwOnIterableForSingleProperty(value);
+                throwOnIterableForSingleProperty(value);
                 if (property.isPrimitiveType() && forceType<ValueProperty>(property)) {
                     property.setValue(value);
                 } else {
@@ -155,7 +155,7 @@ export class Utilities {
                 valueContext = value.getContext();
             }
 
-            Utilities.wrapWithPushPopNotificationDelayScope(property, () => {
+            wrapWithPushPopNotificationDelayScope(property, () => {
                 if (context === "array" && forceType<ArrayProperty>(property)) {
                     const proxiedArray = PropertyProxy.proxify(property);
                     property.clear();
@@ -209,7 +209,7 @@ export class Utilities {
      * as its context to check if the passed value is an iterable. In that case an Error will be thrown.
      * @param value The value to be checked.
      */
-    static throwOnIterableForSingleProperty(value: any) {
+    export function throwOnIterableForSingleProperty(value: any) {
         if (value && typeof value !== "string" &&
             value[Symbol.iterator] && typeof value[Symbol.iterator] === "function") {
             throw new Error(PropertyProxyErrors.ASSIGN_ITERABLE_TO_SINGLE);
@@ -222,13 +222,13 @@ export class Utilities {
      * @param key The key of the referenced property in the ReferenceArray/Map.
      * @param value The value to be set.
      */
-    static setValueOfReferencedProperty(
+    export function setValueOfReferencedProperty(
         property: ReferenceProperty | ReferenceArrayProperty | ReferenceMapProperty,
         key: string | number | undefined, value: BaseProperty | any) {
         const keys = (key === undefined ? [] : [key]);
 
         // TODO(marcus): this cast is a workaround for resolving the type check
-        // issue that TS cannot statically derive the correct types for isReferenceValid
+        // issue that TS cannot export functionally derive the correct types for isReferenceValid
         if (!(property.isReferenceValid as any)(...keys)) {
             throw new Error(PropertyProxyErrors.INVALID_REFERENCE);
         }
@@ -249,18 +249,14 @@ export class Utilities {
      * @param key The key to check.
      * @return True if `key` contains an asterisk.
      */
-    static containsAsterisk(key: any): boolean {
-        return (String(key) === key && key[key.length - 1] === "*");
-    }
+    export const containsAsterisk = (key: any): boolean => (String(key) === key && key[key.length - 1] === "*");
 
     /**
      * Check if a passed in string `key`contains a caret.
      * @param key The key to check.
      * @return True if `key` contains a caret.
      */
-    static containsCaret(key: string): boolean {
-        return (String(key) === key && key[key.length - 1] === "^");
-    }
+    export const containsCaret = (key: string): boolean => (String(key) === key && key[key.length - 1] === "^");
 
     /**
      * This method handles the proxification of child properties and also takes care of the special cases,
@@ -273,12 +269,12 @@ export class Utilities {
      * ReferenceArray- or ReferenceMapProperty.
      *  @return {Object|Proxy} The newly created proxy if `property` is of a non-primitive type otherwise the value.
      */
-    static proxifyInternal(property: ContainerProperty | ReferenceType
+    export function proxifyInternal(property: ContainerProperty | ReferenceType
         , key: string | number,
         caretFound: boolean, isReferenceCollection: boolean = false) {
         const context = property.getContext();
         // TODO(marcus): this cast is a workaround for resolving the type check
-        // issue that TS cannot statically derive the correct types for get
+        // issue that TS cannot export functionally derive the correct types for get
         const propertyAtKey = (property.get as any)(key)!;
         if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
             if (caretFound && propertyAtKey.isPrimitiveType()) {
@@ -306,7 +302,7 @@ export class Utilities {
 
                 if (contextIsSingle && forceType<string>(key)) {
                     // TODO(marcus): this cast is a workaround for resolving the type check
-                    // issue that TS cannot statically derive the correct types for get
+                    // issue that TS cannot export functionally derive the correct types for get
                     const data = PropertyProxy.getParentOfReferencedProperty((property.get as any)(key,
                         { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
                     other_property = data.referencedPropertyParent;
