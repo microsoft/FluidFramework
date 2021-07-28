@@ -8,7 +8,7 @@ import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISequencedDeltaOpMessage } from "./contracts";
 import { ISnapshotContents } from "./odspUtils";
-import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
+import { ReadBuffer } from "./ReadBufferUtils";
 import { addNumberProperty, addStringProperty, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
 /**

@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Data representation which is followed(zipIt Protocol) here is described in this document:
+ * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
+*/
+
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
-import { WriteBuffer } from "./zipItDataRepresentationWriteUtils";
+import { ReadBuffer } from "./ReadBufferUtils";
+import { WriteBuffer } from "./WriteBufferUtils";
 
 /**
  * Control codes used by tree serialization / decentralization code. Same as on server.
@@ -112,7 +117,7 @@ function calcLength(numArg: number) {
     return res;
 }
 
-export function getAndValidateNodeProps<T>(node: NodeCore, props: string[]) {
+export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
     const propSet = new Set(props);
     const res: Record<string, NodeTypes> = {};
     for (const [key, value] of node.iteratePairs()) {
@@ -123,7 +128,7 @@ export function getAndValidateNodeProps<T>(node: NodeCore, props: string[]) {
         res[keyStr] = value;
     }
     assert(propSet.size === 0, "All properties should exist");
-    return res as unknown as T;
+    return res;
 }
 
 export function iteratePairs<T>(it: IterableIterator<T>) {

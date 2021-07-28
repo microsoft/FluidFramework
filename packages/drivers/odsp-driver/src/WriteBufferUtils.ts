@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
+import { ReadBuffer } from "./ReadBufferUtils";
 
 /**
  * Buffer class, used to sequentially writ data.

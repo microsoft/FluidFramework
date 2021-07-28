@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISequencedDeltaOpMessage } from "./contracts";
 import { ISnapshotContents } from "./odspUtils";
-import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
+import { ReadBuffer } from "./ReadBufferUtils";
 import { BlobCore, getAndValidateNodeProps, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
@@ -15,7 +15,7 @@ export const snapshotMinReadVersion = "1.0";
 /**
  *  Header of the downloaded snapshot.
  */
-export interface ISnapshotHeader {
+interface ISnapshotHeader {
     // This is the minimum version of the reader required to read the wire format of a given snapshot.
     MinReadVersion: string,
     // Represents the version with which snapshot is created.
@@ -31,10 +31,16 @@ export interface ISnapshotHeader {
  * @param node - tree node to read header section from
  */
 function readAndValidateHeaderSection(node: NodeCore): ISnapshotHeader {
-    const header =
-        getAndValidateNodeProps<ISnapshotHeader>(node,
+    const records =
+        getAndValidateNodeProps(node,
             ["MinReadVersion", "CreateVersion", "SnapshotSequenceNumber", "SnapshotId"]);
 
+    const header: ISnapshotHeader = {
+        MinReadVersion: records.MinReadVersion.toString(),
+        CreateVersion: records.CreateVersion.toString(),
+        SnapshotSequenceNumber: records.SnapshotSequenceNumber.valueOf() as number,
+        SnapshotId: records.SnapshotId.toString(),
+    };
     assert(snapshotMinReadVersion >= header.MinReadVersion,
         "Driver min read version should >= to server minReadVersion");
     assert(header.CreateVersion >= snapshotMinReadVersion,
