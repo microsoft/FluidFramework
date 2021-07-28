@@ -66,7 +66,7 @@ export interface FluidErrorAnnotations {
     errorCodeIfNone?: string;
 }
 
-//* tsdoc
+/** For backwards compatibility with pre-fluidErrorCode valid errors */
 function patchWithErrorCode(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
     errorCode: string = "<error predates fluidErrorCode>",
