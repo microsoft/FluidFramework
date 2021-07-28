@@ -388,7 +388,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private loaded = false;
     private _attachState = AttachState.Detached;
 
-    public readonly storage: IDocumentStorageService;
+    private readonly _storage: ContainerStorageAdapter;
+    public get storage(): IDocumentStorageService {
+        return this._storage;
+    }
+
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
@@ -630,7 +634,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         this._deltaManager = this.createDeltaManager();
-        this.storage = new ContainerStorageAdapter(
+        this._storage = new ContainerStorageAdapter(
             () => {
                 if (this.attachState !== AttachState.Attached) {
                     if (this.loader.services.detachedBlobStorage !== undefined) {
@@ -1310,15 +1314,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-        (this.storage as ContainerStorageAdapter).loadSnapshotForRehydratingContainer(snapshotTree);
-        const attributes = await this.getDocumentAttributes(this.storage, snapshotTree);
+        this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
+        const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
         this.attachDeltaManagerOpHandler(attributes);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler =
-            await this.loadAndInitializeProtocolState(attributes, this.storage, snapshotTree);
+            await this.loadAndInitializeProtocolState(attributes, this._storage, snapshotTree);
 
         await this.instantiateContextDetached(
             true, // existing
