@@ -30,22 +30,21 @@ export const proxySymbol = Symbol("property-proxy");
  * @public
  */
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class PropertyProxy {
+export namespace PropertyProxy {
     /**
      * This utility function returns the parent property of a referenced property.
      * @param property - The ReferenceProperty/ReferenceArrayProperty/ReferenceMapProperty.
      * @param key - The key of the referenced property in the Reference(Array/Map)Property.
      * @public
      */
-    static getParentOfReferencedProperty(property: ReferenceType, key?: string | number):
+    export function getParentOfReferencedProperty(property: ReferenceType, key?: string | number):
         IParentAndPathOfReferencedProperty {
         const keys = (key === undefined ? [] : [key]);
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for getValue
         const path = (<any>property.getValue)(...keys);
 
-        // TODO(marcus): this should be the neum type but that is currently difficult to do correctly without
+        // TODO(marcus): this should be the enum type but that is currently difficult to do correctly without
         // changes to path helper
         const types: number[] = [];
         const tokens = PathHelper.tokenizePathString(path, types);
@@ -89,7 +88,7 @@ export class PropertyProxy {
             PropertyFactory.instanceOf(referencedPropertyParent, "Reference", "array") ||
             PropertyFactory.instanceOf(referencedPropertyParent, "Reference", "map")) {
             ({ referencedPropertyParent, relativePathFromParent } =
-                PropertyProxy.getParentOfReferencedProperty(referencedPropertyParent, relativePathFromParent));
+                getParentOfReferencedProperty(referencedPropertyParent, relativePathFromParent));
         }
         return { referencedPropertyParent, relativePathFromParent };
     }
@@ -131,7 +130,7 @@ export class PropertyProxy {
      * returns the newly created proxy if `property` is of a non-primitive type otherwise the value.
      * @public
      */
-    static proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
+    export function proxify<T extends PropertyTypes>(property: T): ProxyType<T> {
         if (PropertyFactory.instanceOf(property, "BaseProperty")) {
             const context = property.getContext();
             let proxy;

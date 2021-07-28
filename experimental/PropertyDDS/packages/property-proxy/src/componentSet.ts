@@ -165,8 +165,8 @@ class ComponentSet extends Set {
      * @param {external:NamedProperty} value The entry in the set for which a guid is queried.
      * @return {String} The guid of the passed {@link external:NamedProperty NamedProperty}.
      */
-    // TODO(marcus): any is a workaround since it is not quite clear what
-    // should have a field guid, I assume its the proxyfied property but I cant be sure yet
+    // TODO(marcus): inline interface is a workaround it represents a proxy of NamedProperty that
+    // should have a field guid
     _getGuid(value: NamedProperty | { guid?: string }) {
         // The set property uses the guid field of NamedProperty for equalit
         let guid: string | undefined;

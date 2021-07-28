@@ -21,8 +21,8 @@ import { ComponentArray } from "./componentArray";
  * @return False if the passed length is less than 0, true otherwise.
  * @hidden
  */
-function setLength(target: ComponentArray, length: number | string | any): boolean {
-    const newLength = Number(length) === length ? parseInt(length as unknown as string, 10) : 0;
+function setLength(target: ComponentArray, length: number): boolean {
+    const newLength = isNaN(length) ? 0 : length;
     if (newLength < 0) {
         throw new RangeError("Invalid array length");
     }
@@ -219,7 +219,7 @@ export const arrayProxyHandler = {
             }
             return true;
         } else if (key === "length") {
-            return setLength(target, value);
+            return setLength(target, Number(value));
         } else {
             target[key] = value;
             return true;

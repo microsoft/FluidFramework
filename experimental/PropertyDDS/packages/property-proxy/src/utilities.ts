@@ -22,18 +22,12 @@ import { PropertyProxy } from "./propertyProxy";
 import { PropertyProxyErrors } from "./errors";
 import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
 
-export type ElementType = any | BaseProperty | PropertyProxy;
 // TODO(marcus): this function should be removed in the future and a safer
 // way to determine the corrent types is useed
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function forceType<T>(value: any | T): value is T {
     return true;
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function excludeType<T>(value: any | T): value is T {
-    return false;
 }
 
 /**
@@ -74,7 +68,7 @@ export class Utilities {
      * Triggers special behavior for the methods copyWithin(), fill(), reverse(), sort().
      * @return The prepared element that is ready for insertion.
      */
-    static prepareElementForInsertion(property: BaseProperty, element: ElementType, caller?: string): any {
+    static prepareElementForInsertion(property: BaseProperty, element: BaseProperty | any, caller?: string): any {
         // Check if element exists and is a proxied property
         if (element && typeof element.getProperty === "function" &&
             PropertyFactory.instanceOf(element.getProperty(), "BaseProperty")) {

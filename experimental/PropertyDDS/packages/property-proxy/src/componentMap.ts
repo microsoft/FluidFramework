@@ -140,9 +140,6 @@ class ComponentMap extends Map {
         const keys = this.property.getIds();
         for (const key of keys) {
             const value = this.property.get(key)!;
-            // TODO(marcus): should this ever not be the case? in case its a value property
-            // the proxify method would return the appropriate type like number, string etc.
-            // so the else branch is unnecessary ?
             if (PropertyFactory.instanceOf(value, "BaseProperty")) {
                 func(PropertyProxy.proxify(value), key, this);
             } else {
@@ -223,7 +220,6 @@ class ComponentMap extends Map {
      * @inheritdoc
      */
     toJSON() {
-        // TODO(marcus): should this be implemented?
         return {};
     }
 }

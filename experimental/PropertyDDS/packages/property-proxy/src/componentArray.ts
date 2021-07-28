@@ -5,7 +5,6 @@
 /* eslint-disable no-param-reassign */
 
 import { ArrayProperty, BaseProperty, PropertyFactory, ValueProperty } from "@fluid-experimental/property-properties";
-import { BaseProxifiedProperty } from "./interfaces";
 
 import { PropertyProxy } from "./propertyProxy";
 import { forceType, Utilities } from "./utilities";
@@ -69,8 +68,8 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    includes(searchElement: BaseProxifiedProperty | BaseProperty | any, fromIndex) {
-        // TODO(marcus): any is a workaround here for now
+    // TODO(marcus): any is a workaround here for now
+    includes(searchElement: any, fromIndex) {
         let startSearchIdx = 0;
         if (fromIndex) {
             if (fromIndex >= this.property.getLength()) {
@@ -135,37 +134,28 @@ class ComponentArray extends Array {
      * @inheritdoc
      */
     lastIndexOf(searchElement: any, fromIndex?: number) {
-        // Only handle non-primitive cases,
-        // primitive cases can be handled implicitly (see componentArrayProxyHandler.js)
-
-        // TODO(marcus) this branch should never work appart from the value "false" which gets negated to true
-        // all searchElement values would be coerced to "false" therefore this branch would not taken
-        if (PropertyFactory.instanceOf(!searchElement as any, "BaseProperty")) {
-            return -1;
-        } else {
-            // check if a proxied value was passed
-            if (searchElement.getProperty) {
-                searchElement = searchElement.getProperty();
-            }
-
-            const startSearchIdx = fromIndex ?
-                (fromIndex < 0 ?
-                    this.property.getLength() + fromIndex :
-                    Math.min(fromIndex, this.property.getLength() - 1)) :
-                this.property.getLength() - 1;
-
-            for (let i = startSearchIdx; i >= 0; i--) {
-                let prop = this.property.get(i)!;
-                if (PropertyFactory.instanceOf(prop, "BaseProperty") && prop.isPrimitiveType()
-                    && forceType<ValueProperty>(prop)) {
-                    prop = prop.getValue();
-                }
-                if (prop === searchElement) {
-                    return i;
-                }
-            }
-            return -1;
+        // check if a proxied value was passed
+        if (searchElement.getProperty) {
+            searchElement = searchElement.getProperty();
         }
+
+        const startSearchIdx = fromIndex ?
+            (fromIndex < 0 ?
+                this.property.getLength() + fromIndex :
+                Math.min(fromIndex, this.property.getLength() - 1)) :
+            this.property.getLength() - 1;
+
+        for (let i = startSearchIdx; i >= 0; i--) {
+            let prop = this.property.get(i)!;
+            if (PropertyFactory.instanceOf(prop, "BaseProperty") && prop.isPrimitiveType()
+                && forceType<ValueProperty>(prop)) {
+                prop = prop.getValue();
+            }
+            if (prop === searchElement) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -263,7 +253,7 @@ class ComponentArray extends Array {
         const deleteUntil = Number(deleteCount) === deleteCount &&
             startValue + deleteCount < arrayLength ? deleteCount : arrayLength - startValue;
 
-        // TODO(marcus): workaround
+        // TODO(marcus): any is a workaround
         const removed: any[] = [];
         if (deleteUntil > 0 && startValue < arrayLength) {
             for (let i = startValue; i < startValue + deleteUntil; ++i) {
