@@ -21,9 +21,6 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
-export function annotateError(error: unknown, props: ITelemetryProperties): ILoggingError;
-
-// @public
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
@@ -47,16 +44,36 @@ export const disconnectedEventName = "disconnected";
 
 // @public
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
+    constructor(errorHandler?: (eventName: EventEmitterEventType, error: any) => void);
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
-}
+    }
 
 // @public
-export function extractLogSafeErrorProperties(error: any): {
+export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
     message: string;
     errorType?: string | undefined;
     stack?: string | undefined;
 };
+
+// @public (undocumented)
+export function generateStack(): string | undefined;
+
+// @public
+export interface IFluidErrorAnnotations {
+    errorCodeIfNone?: string;
+    props?: ITelemetryProperties;
+}
+
+// @public
+export interface IFluidErrorBase extends Readonly<Partial<Error>>, IWriteableLoggingError {
+    // (undocumented)
+    readonly errorType: string;
+    // (undocumented)
+    readonly fluidErrorCode: string;
+    // (undocumented)
+    readonly message: string;
+}
 
 // @public
 export interface IPerformanceEventMarkers {
@@ -69,10 +86,16 @@ export interface IPerformanceEventMarkers {
 }
 
 // @public
+export function isFluidError(e: any): e is IFluidErrorBase;
+
+// @public
 export const isILoggingError: (x: any) => x is ILoggingError;
 
 // @public
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
+
+// @public
+export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode">;
 
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
@@ -89,11 +112,19 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 // @public
-export class LoggingError extends Error implements ILoggingError {
-    constructor(message: string, props?: ITelemetryProperties);
-    addTelemetryProperties(props: ITelemetryProperties): void;
+export interface IWriteableLoggingError {
+    // (undocumented)
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    // (undocumented)
     getTelemetryProperties(): ITelemetryProperties;
 }
+
+// @public
+export class LoggingError extends Error implements ILoggingError {
+    constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
+    addTelemetryProperties(props: ITelemetryProperties): void;
+    getTelemetryProperties(): ITelemetryProperties;
+    }
 
 // @public
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
@@ -106,6 +137,9 @@ export class MultiSinkLogger extends TelemetryLogger {
     protected loggers: ITelemetryBaseLogger[];
     send(event: ITelemetryBaseEvent): void;
 }
+
+// @public
+export function normalizeError(error: unknown, annotations?: IFluidErrorAnnotations): IFluidErrorBase;
 
 // @public
 export class PerformanceEvent {
@@ -147,8 +181,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     // (undocumented)
     static formatTick(tick: number): number;
     // (undocumented)
-    protected static getStack(): string | undefined;
-    // (undocumented)
     protected readonly namespace?: string | undefined;
     static numberFromString(str: string | null | undefined): string | number | undefined;
     static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
@@ -183,6 +215,13 @@ export class TelemetryUTLogger implements ITelemetryLogger {
     // (undocumented)
     shipAssert(condition: boolean, event?: ITelemetryErrorEvent): void;
 }
+
+// @public
+export class ThresholdCounter {
+    constructor(threshold: number, logger: ITelemetryLogger, thresholdMultiple?: number);
+    send(eventName: string, value: number): void;
+    sendIfMultiple(eventName: string, value: number): void;
+    }
 
 
 // (No @packageDocumentation comment for this package)

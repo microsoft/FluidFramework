@@ -161,6 +161,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly documentId: string;
+    // @deprecated (undocumented)
     readonly existing: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
@@ -205,7 +206,7 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @public
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
-    instantiateDataStore(context: IFluidDataStoreContext): Promise<IFluidDataStoreChannel>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
 

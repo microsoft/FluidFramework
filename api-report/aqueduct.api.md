@@ -83,7 +83,7 @@ export type ContainerServiceRegistryEntries = Iterable<[string, (runtime: IConta
 export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent> extends PureDataObject<O, S, E> {
     // (undocumented)
     protected getUninitializedErrorString(item: string): string;
-    initializeInternal(): Promise<void>;
+    initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     protected get root(): ISharedDirectory;
@@ -140,7 +140,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    finishInitialization(): Promise<void>;
+    finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<object, undefined, IEvent>>;
     getFluidObjectFromDirectory<T extends IFluidObject & IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => string | IFluidHandle | undefined): Promise<T | undefined>;
@@ -155,7 +155,7 @@ export abstract class PureDataObject<O extends IFluidObject = object, S = undefi
     get IFluidLoadable(): this;
     // (undocumented)
     get IFluidRouter(): this;
-    initializeInternal(): Promise<void>;
+    initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     protected initializeP: Promise<void> | undefined;
     protected initializingFirstTime(props?: S): Promise<void>;
@@ -185,7 +185,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
     get IFluidDataStoreFactory(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
-    instantiateDataStore(context: IFluidDataStoreContext): Promise<FluidDataStoreRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<FluidDataStoreRuntime>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     // (undocumented)
     readonly type: string;

@@ -87,6 +87,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 
 // @public (undocumented)
 export interface IRouterliciousDriverPolicies {
+    aggregateBlobsSmallerThanBytes: number | undefined;
     enablePrefetch: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;

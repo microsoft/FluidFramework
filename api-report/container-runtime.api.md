@@ -103,6 +103,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
+    readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    // (undocumented)
     flush(): void;
     // (undocumented)
     get flushMode(): FlushMode;
@@ -217,6 +219,17 @@ export class DeltaScheduler {
     }
 
 // @public (undocumented)
+export type EnqueueSummarizeResult = (ISummarizeResults & {
+    readonly alreadyEnqueued?: undefined;
+}) | (ISummarizeResults & {
+    readonly alreadyEnqueued: true;
+    readonly overridden: true;
+}) | {
+    readonly alreadyEnqueued: true;
+    readonly overridden?: undefined;
+};
+
+// @public (undocumented)
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries);
     // (undocumented)
@@ -297,6 +310,12 @@ export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
 }
 
+// @public
+export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
+    readonly afterSequenceNumber?: number;
+    readonly override?: boolean;
+}
+
 // @public (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
@@ -338,6 +357,11 @@ export interface INotStartedResult {
     message: "DisconnectedBeforeRun" | "NeverConnectedBeforeRun";
     // (undocumented)
     started: false;
+}
+
+// @public (undocumented)
+export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
+    readonly reason: string;
 }
 
 // @public
@@ -407,10 +431,8 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 }
 
 // @public (undocumented)
-export interface ISubmitSummaryOptions {
-    fullTree?: boolean;
-    refreshLatestAck?: boolean;
-    summaryLogger: ITelemetryLogger;
+export interface ISubmitSummaryOptions extends ISummarizeOptions {
+    readonly summaryLogger: ITelemetryLogger;
 }
 
 // @public
@@ -437,16 +459,23 @@ export interface ISummarizeHeuristicRunner {
     runOnClose(): boolean;
 }
 
+// @public
+export interface ISummarizeOptions {
+    readonly fullTree?: boolean;
+    readonly refreshLatestAck?: boolean;
+}
+
 // @public (undocumented)
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
 export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     // (undocumented)
     stop(reason?: SummarizerStopReason): void;
-    summarizeOnDemand(reason: string, options: Omit<ISubmitSummaryOptions, "summaryLogger">): OnDemandSummarizeResult;
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
     // (undocumented)
     updateOnBehalfOf(onBehalfOf: string): void;
 }
@@ -625,6 +654,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string, runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration, internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection);
     dispose(): void;
     // (undocumented)
+    readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
+    // (undocumented)
     get handle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
@@ -641,7 +672,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     stop(reason?: SummarizerStopReason): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     // (undocumented)
-    summarizeOnDemand(reason: string, options: Omit<ISubmitSummaryOptions, "summaryLogger">): OnDemandSummarizeResult;
+    readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)
     readonly summaryCollection: SummaryCollection;
     // (undocumented)

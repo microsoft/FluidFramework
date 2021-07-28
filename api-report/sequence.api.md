@@ -58,7 +58,7 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
 export class Interval implements ISerializableInterval {
     constructor(start: number, end: number, props?: MergeTree.PropertySet);
     // (undocumented)
-    addProperties(newProps: MergeTree.PropertySet, op?: MergeTree.ICombiningOp): void;
+    addProperties(newProps: MergeTree.PropertySet, collaborating?: boolean, seq?: number, op?: MergeTree.ICombiningOp): void;
     // (undocumented)
     addPropertySet(props: MergeTree.PropertySet): void;
     // (undocumented)
@@ -80,9 +80,13 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     getProperties(): MergeTree.PropertySet;
     // (undocumented)
+    modify(label: string, start: number, end: number): Interval;
+    // (undocumented)
     overlaps(b: Interval): boolean;
     // (undocumented)
     properties: MergeTree.PropertySet;
+    // (undocumented)
+    propertyManager: MergeTree.PropertiesManager;
     // (undocumented)
     serialize(client: MergeTree.Client): ISerializedInterval;
     // (undocumented)
@@ -108,6 +112,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     get attached(): boolean;
     // (undocumented)
     attachGraph(client: MergeTree.Client, label: string): void;
+    // (undocumented)
+    change(id: string, start?: number, end?: number): TInterval | undefined;
+    // (undocumented)
+    changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
+    // (undocumented)
+    changeProperties(id: string, props: MergeTree.PropertySet): void;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
     // (undocumented)
@@ -167,11 +177,13 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 // @public (undocumented)
 export interface ISerializableInterval extends MergeTree.IInterval {
     // (undocumented)
-    addProperties(props: MergeTree.PropertySet): any;
+    addProperties(props: MergeTree.PropertySet, collaborating?: boolean, seq?: number): any;
     // (undocumented)
     getIntervalId(): string | undefined;
     // (undocumented)
     properties: MergeTree.PropertySet;
+    // (undocumented)
+    propertyManager: MergeTree.PropertiesManager;
     // (undocumented)
     serialize(client: MergeTree.Client): any;
 }
@@ -336,7 +348,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(start: MergeTree.LocalReference, end: MergeTree.LocalReference, intervalType: MergeTree.IntervalType, props?: MergeTree.PropertySet);
     // (undocumented)
-    addProperties(newProps: MergeTree.PropertySet, op?: MergeTree.ICombiningOp): void;
+    addProperties(newProps: MergeTree.PropertySet, collab?: boolean, seq?: number, op?: MergeTree.ICombiningOp): void;
     // (undocumented)
     clone(): SequenceInterval;
     // (undocumented)
@@ -352,11 +364,15 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: MergeTree.IntervalType;
     // (undocumented)
+    modify(label: string, start: number, end: number): SequenceInterval;
+    // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
     // (undocumented)
     properties: MergeTree.PropertySet;
+    // (undocumented)
+    propertyManager: MergeTree.PropertiesManager;
     // (undocumented)
     serialize(client: MergeTree.Client): ISerializedInterval;
     // (undocumented)

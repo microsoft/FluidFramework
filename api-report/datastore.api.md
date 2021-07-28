@@ -41,7 +41,7 @@ export enum DataStoreMessageType {
 
 // @public
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry);
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -73,8 +73,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     readonly documentId: string;
     // (undocumented)
-    existing: boolean;
-    // (undocumented)
     getAttachSummary(): IChannelSummarizeResult;
     // (undocumented)
     getAudience(): IAudience;
@@ -93,7 +91,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get IFluidSerializer(): FluidSerializer;
     // (undocumented)
     get isAttached(): boolean;
-    static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry): FluidDataStoreRuntime;
+    static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)

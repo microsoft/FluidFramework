@@ -10,6 +10,7 @@ import { Deferred } from '@fluidframework/common-utils';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
@@ -78,13 +79,18 @@ export interface IDocumentServiceFactoryProxy {
 export const IDocumentServiceFactoryProxyKey = "IDocumentServiceFactoryProxy";
 
 // @public
-export class InnerDocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+export class InnerDocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     get claims(): ITokenClaims;
     get clientId(): string;
+    // (undocumented)
     close(): void;
     static create(connection: IConnected, outerProxy: IOuterDocumentDeltaConnectionProxy): Promise<IDocumentDeltaConnection>;
     // (undocumented)
     details: IConnected;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
     get existing(): boolean;
     get initialClients(): ISignalClient[];
     get initialMessages(): ISequencedDocumentMessage[];

@@ -10,6 +10,7 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
@@ -158,7 +159,7 @@ export class Replayer {
 }
 
 // @public (undocumented)
-export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     constructor(details: IConnected, documentDeltaStorageService: FileDeltaStorageService);
     // (undocumented)
     get claims(): ITokenClaims;
@@ -169,6 +170,10 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     static create(documentDeltaStorageService: FileDeltaStorageService): Promise<ReplayFileDeltaConnection>;
     // (undocumented)
     details: IConnected;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
     // (undocumented)
     get existing(): boolean;
     // (undocumented)

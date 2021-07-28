@@ -235,7 +235,7 @@ export class TestFluidObject implements ITestFluidObject {
     // (undocumented)
     get ITestFluidObject(): this;
     // (undocumented)
-    static load(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntries: Map<string, IChannelFactory>): Promise<TestFluidObject>;
+    static load(runtime: IFluidDataStoreRuntime, channel: IFluidDataStoreChannel, context: IFluidDataStoreContext, factoryEntries: Map<string, IChannelFactory>, existing: boolean): Promise<TestFluidObject>;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -250,7 +250,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext): Promise<FluidDataStoreRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<FluidDataStoreRuntime>;
     // (undocumented)
     readonly type: string;
 }
