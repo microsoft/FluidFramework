@@ -84,8 +84,8 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
         it("Validate host runtime signals", async () => {
             let user1SignalReceivedCount = 0;
             let user2SignalReceivedCount = 0;
-            const user1ContainerRuntime = dataObject1.context.containerRuntime;
-            const user2ContainerRuntime = dataObject2.context.containerRuntime;
+            const user1ContainerRuntime = dataObject1.context;
+            const user2ContainerRuntime = dataObject2.context;
 
             user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
