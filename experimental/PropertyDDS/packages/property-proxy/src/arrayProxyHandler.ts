@@ -22,8 +22,8 @@ import { ComponentArray } from "./componentArray";
  * @hidden
  */
 function setLength(target: ComponentArray, length: number): boolean {
-    const newLength = isNaN(length) ? 0 : length;
-    if (newLength < 0) {
+    const newLength = Math.floor(length);
+    if (newLength < 0 || isNaN(newLength)) {
         throw new RangeError("Invalid array length");
     }
 
