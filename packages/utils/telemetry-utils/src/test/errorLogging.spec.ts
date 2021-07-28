@@ -342,6 +342,7 @@ describe.skip("Error Propagation", () => {
             expectedOutput: {
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
+                message: "",
                 stack: "<<generated stack>>",
             },
         }),

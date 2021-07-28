@@ -6,13 +6,14 @@
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
-import { ChildLogger, LoggingError, wrapError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IRequest,
     IResponse,
     IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { wrapError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,

@@ -10,16 +10,53 @@ import {
 } from "@fluidframework/common-definitions";
 import {
     IFluidErrorBase,
-    isILoggingError,
     isFluidError,
     isValidLegacyError,
 } from "./staging";
 import {
-    extractLogSafeErrorProperties,
-    isRegularObject,
     mixinTelemetryProps,
     copyProps,
 } from "./errorLoggingInternalHelpers";
+
+/** @returns true if value is an object but neither null nor an array */
+export const isRegularObject = (value: any): boolean => {
+    return value !== null && !Array.isArray(value) && typeof value === "object";
+};
+
+/** Inspect the given error for common "safe" props and return them */
+export function extractLogSafeErrorProperties(error: any) {
+    const removeMessageFromStack = (stack: string, errorName?: string) => {
+        const stackFrames = stack.split("\n");
+        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+        if (errorName !== undefined) {
+            stackFrames.unshift(errorName); // Add "[ErrorName]"
+        }
+        return stackFrames.join("\n");
+    };
+
+    const message = (typeof error?.message === "string")
+        ? error.message as string
+        : String(error);
+
+    const safeProps: { message: string; errorType?: string; stack?: string } = {
+        message,
+    };
+
+    if (isRegularObject(error)) {
+        const { errorType, stack, name } = error;
+
+        if (typeof errorType === "string") {
+            safeProps.errorType = errorType;
+        }
+
+        if (typeof stack === "string") {
+            const errorName = (typeof name === "string") ? name : undefined;
+            safeProps.stack = removeMessageFromStack(stack, errorName);
+        }
+    }
+
+    return safeProps;
+}
 
 /** Metadata to annotate an error object when annotating or normalizing it */
 export interface FluidErrorAnnotations {
@@ -27,33 +64,6 @@ export interface FluidErrorAnnotations {
     props?: ITelemetryProperties;
     /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
     errorCodeIfNone?: string;
-}
-
-/**
- * Take an unknown error object and extract certain known properties to be included in a new error object.
- * The stack is preserved, along with any safe-to-log telemetry props.
- * @param error - An error that was presumably caught, thrown from unknown origins
- * @param newErrorFn - callback that will create a new error given the original error's message
- * @returns A new error object "wrapping" the given error
- */
-export function wrapError<T>(
-    error: any,
-    newErrorFn: (m: string) => T,
-): T {
-    const {
-        message,
-        stack,
-    } = extractLogSafeErrorProperties(error);
-    const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
-
-    const newError = newErrorFn(message);
-    mixinTelemetryProps(newError, props);
-
-    if (stack !== undefined) {
-        Object.assign(newError, { stack });
-    }
-
-    return newError;
 }
 
 //* tsdoc

@@ -11,8 +11,9 @@ import {
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
 import {
-    wrapError,
+    isILoggingError,
     annotateError,
+    extractLogSafeErrorProperties,
     LoggingError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
@@ -142,4 +143,31 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
         annotateError(error, props);
     }
     return error;
+}
+
+/**
+ * Take an unknown error object and extract certain known properties to be included in a new error object.
+ * The stack is preserved, along with any safe-to-log telemetry props.
+ * @param error - An error that was presumably caught, thrown from unknown origins
+ * @param newErrorFn - callback that will create a new error given the original error's message
+ * @returns A new error object "wrapping" the given error
+ */
+export function wrapError<T>(
+    error: any,
+    newErrorFn: (m: string) => T,
+): T {
+    const {
+        message,
+        stack,
+    } = extractLogSafeErrorProperties(error);
+    const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
+
+    const newError = newErrorFn(message);
+    annotateError(newError, props);
+
+    if (stack !== undefined) {
+        Object.assign(newError, { stack });
+    }
+
+    return newError;
 }
