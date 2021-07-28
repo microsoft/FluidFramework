@@ -110,7 +110,7 @@ describe("Snapshot Format Conversion Tests", () => {
             blobs,
             ops,
             sequenceNumber: 0,
-        }
+        };
         const compactSnapshot = convertToCompactSnapshot(snapshotContents);
         const result = parseCompactSnapshotResponse(compactSnapshot);
         assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
