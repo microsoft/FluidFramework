@@ -821,10 +821,11 @@ export class DeltaManager
 
             // It is possible that due to asynchrony (including await above), required ops were already
             // received through delta stream. Validate that before moving forward.
-            if (this.lastProcessedSequenceNumber >= lastExpectedOp) {
+            if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                 this.logger.sendPerformanceEvent({
                     reason: this.fetchReason,
-                    eventName: "ExtraStorageCallEarly",
+                    eventName: "ExtraStorageCall",
+                    early: true,
                     from,
                     to,
                     ...this.connectionStateProps,
@@ -843,7 +844,8 @@ export class DeltaManager
                 // detected gap, this gap can't be filled in later on through websocket).
                 // And in practice that does look like the case. The place where this code gets hit is if we lost
                 // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
-                if (op.sequenceNumber >= lastExpectedOp) {
+                assert(op.sequenceNumber === this.lastQueuedSequenceNumber, "seq#'s");
+                if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                     this.logger.sendPerformanceEvent({
                         reason: this.fetchReason,
                         eventName: "ExtraStorageCall",
