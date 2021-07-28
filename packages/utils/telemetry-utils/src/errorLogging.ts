@@ -105,10 +105,10 @@ function copyProps(target: unknown, source: ITelemetryProperties) {
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryProperties {
+function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
-        if (key in keysToOmit) {
+        if (keysToOmit.has(key)) {
             continue;
         }
         const val = obj[key];
@@ -135,25 +135,18 @@ function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryPrope
 
 /**
  * Helper class for error tracking that can be used to log an error in telemetry.
- * The props passed in (and any class members present during construction) will be
- * logged in accordance with the given tag, if present.
+ * The props passed in via getTelemetryProperties - and any props added directly to the object -
+ * will be logged in accordance with the given tag, if present.
  *
  * PLEASE take care to properly tag logging properties set on this object
  */
 export class LoggingError extends Error implements ILoggingError {
-    private readonly fluidTelemetryProps: ITelemetryProperties = {};
-
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        omitPropsFromLogging: string[] = [],
+        private readonly omitPropsFromLogging: Set<string> = new Set(["omitPropsFromLogging"]),
     ) {
         super(message);
-        omitPropsFromLogging.push("fluidTelemetryProps");
-
-        // Any enumerable properties specified already at construction time should be logged by default
-        const taggableInitialProps = getValidTelemetryProps(this, omitPropsFromLogging);
-        this.addTelemetryProperties(taggableInitialProps);
 
         if (props) {
             this.addTelemetryProperties(props);
@@ -164,30 +157,21 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
-        Object.assign(this.fluidTelemetryProps, props);
-
-        // Back compat of sorts - just in case some core logic depends on props added via this function
-        // being added to this object itself.
-        // But stay away from overwriting any existing props.
-        for (const key of Object.keys(props)) {
-            if (this[key] === undefined) {
-                this[key] = props[key];
-            }
-        }
+        copyProps(this, props);
     }
 
     /**
      * Get all properties fit to be logged to telemetry for this error
      */
     public getTelemetryProperties(): ITelemetryProperties {
-        // Include props inherited from Error
-        // But if any were overwritten (e.g. with a tagged property), then use the value in fluidTelemetryProps.
-        // Run through getValidTelemetryProps as a defensive measure in case someone circumvented the type system here.
-        return getValidTelemetryProps({
+        const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
+        // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
+        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
+        return  {
             stack: this.stack,
-            message: this.message,
             name: this.name,
-            ...this.fluidTelemetryProps,
-        }, []);
+            message: this.message,
+            ...taggableProps,
+        };
     }
 }
