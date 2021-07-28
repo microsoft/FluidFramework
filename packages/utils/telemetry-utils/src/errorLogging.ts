@@ -101,7 +101,7 @@ export function normalizeError(
     // We have to construct a new fluid error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error);
     const fluidError: IFluidErrorBase = {
-        errorType: "nohne",
+        errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
         stack: stack ?? generateStack(),
