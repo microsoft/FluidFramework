@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import { isILoggingError } from "./staging";
-import { extractLogSafeErrorProperties } from "./errorLogging";
+import { extractLogSafeErrorProperties, generateStack } from "./errorLogging";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -120,21 +120,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
         // Collect stack if we were not able to extract it from error
         if (event.stack === undefined && fetchStack) {
-            event.stack = TelemetryLogger.getStack();
+            event.stack = generateStack();
         }
-    }
-
-    protected static getStack(): string | undefined {
-        // Some browsers will populate stack right away, others require throwing Error
-        let stack = new Error().stack;
-        if (!stack) {
-            try {
-                throw new Error();
-            } catch (e) {
-                stack = e.stack;
-            }
-        }
-        return stack;
     }
 
     public constructor(

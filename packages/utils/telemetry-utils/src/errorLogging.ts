@@ -101,10 +101,10 @@ export function normalizeError(
     // We have to construct a new fluid error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error);
     const fluidError: IFluidErrorBase = {
-        errorType: "",
+        errorType: "nohne",
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
-        stack: stack ?? new Error("<<generated stack>>").stack,
+        stack: stack ?? generateStack(),
     };
 
     mixinTelemetryPropsWithFluidError(fluidError, {
@@ -131,7 +131,7 @@ function mixinTelemetryPropsWithFluidError(
  * Annotate the given error object with the given logging props
  * @returns The same error object passed in if possible, with telemetry props functionality mixed in
  */
- export function annotateError(
+export function annotateError(
     error: unknown,
     props: ITelemetryProperties,
 ): ILoggingError {
@@ -142,6 +142,19 @@ function mixinTelemetryPropsWithFluidError(
 
     const message = String(error);
     return new LoggingError(message, props);
+}
+
+export function generateStack(): string | undefined {
+    // Some browsers will populate stack right away, others require throwing Error
+    let stack = new Error("<<generated stack>>").stack;
+    if (!stack) {
+        try {
+            throw new Error("<<generated stack>>");
+        } catch (e) {
+            stack = e.stack;
+        }
+    }
+    return stack;
 }
 
 /**
