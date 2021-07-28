@@ -8,24 +8,23 @@
  * Tests reserved types: NamedProperty and NodeProperty
  */
 (function() {
-  /**
-   * @namespace property-changeset.Test
-   * @alias good_reserved_types.js
-   * Namespace containing all schema-related data for property set validation
-   */
-  var templateSchema = {
-    'typeid': 'TeamLeoValidation2:Example-1.0.0',
-    'inherits': 'NamedProperty',
-    'properties': [
-      {
-        'id': 'exampleProperty1',
-        'typeid': 'String'
-      },
-      {
-        'id': 'exampleProperty2',
-        'typeid': 'NodeProperty'
-      }
-    ]
-  };
-  module.exports = templateSchema;
+    /**
+     * @namespace property-changeset.Test
+     * @alias good_reserved_types.js
+     * Namespace containing all schema-related data for property set validation
+     */
+    var templateSchema = {
+        'typeid': 'TeamLeoValidation2:Example-1.0.0',
+        'inherits': 'NamedProperty',
+        'properties': [{
+                'id': 'exampleProperty1',
+                'typeid': 'String'
+            },
+            {
+                'id': 'exampleProperty2',
+                'typeid': 'NodeProperty'
+            }
+        ]
+    };
+    module.exports = templateSchema;
 })();

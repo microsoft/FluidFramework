@@ -769,97 +769,103 @@ declare module "@fluid-experimental/property-properties" {
         }
 
         class ArrayProperty extends ContainerProperty {
-            /**
-             * Default constructor for ArrayProperty
-             * @param in_params the parameters
-             * @param in_constructor the constructor for the array data
-             * @param in_primitiveType Is this an array of primitive types?
-             * @param in_scope The scope in which the property typeid is defined
-             */
-            constructor(in_params: ArrayProperty_ArrayProperty_in_params_TYPE, in_constructor: object, in_primitiveType: Boolean, in_scope: string | undefined);
-            /**
-             * Gets the array element at a given index
-             * @param in_position the target index
-             *   if an array is passed, elements in the array will be treated as part of a path.
-             *   The first item in an array should be a position in the array.
-             *   For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
-             *   If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
-             * @param in_options parameter object
-             */
-            get<T = BaseProperty>(in_position: number | string | Array<string | number>, in_options?: ArrayProperty_get_in_options_TYPE): T | undefined;
-            /**
-             * Insert into the array at a given position.
-             * It will not overwrite the existing values, it will push them to the right.
-             */
-            insert(in_position: number, in_value: any): void;
-            /**
-             * Add one or more values at the end of the array
-             */
-            push(in_values: Array<any> | any): number;
-            /**
-             * Add a value at the front of the array or letters to the beginning of a string (for StringProperty)
-             * It can also add multiple values to an array if you pass in an array of values.
-             */
-            unshift(in_values: Array<any> | any): number;
-            /**
-             * Removes an element of the array (or a letter in a StringProperty) and shifts remaining elements to the left
-             * E.g. [1, 2, 3]   .remove(1) => [1, 3]
-             * E.g. (StringProperty) 'ABCDE'  .remove(1) => 'ACDE'
-             */
-            remove(in_position: number): BaseProperty | any;
-            /**
-             * Removes the last element of the array or the last letter of a string (for StringProperty)
-             */
-            pop(): BaseProperty | any;
-            /**
-             * Change an existing element of the array. This will overwrite an existing element.
-             * E.g. [1, 2, 3]  .set(1, 8) => [1, 8, 3]
-             */
-            set(in_position: number, in_value: any): void;
-            /**
-             * Deletes all values from an array
-             */
-            clear(): void;
-            /**
-             * Inserts the content of a given array into the array property
-             * It will not overwrite the existing values but push them to the right instead.
-             * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-             * @param in_offset target index
-             * @param in_array the array to be inserted
-             * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
-             * @throws if trying to insert a property that already has a parent.
-             * @throws if tyring to modify a referenced property.
-             */
-            insertRange<T = any>(in_offset: number, in_array: T[]): void;
-            /**
-             * Removes a given number of elements from the array property (or given number of letters from a StringProperty)
-             *  and shifts remaining values to the left.
-             * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
-             */
-            removeRange(): Array<any> | Array<BaseProperty>;
-            /**
-             * Sets the array properties elements to the content of the given array
-             * All changed elements must already exist. This will overwrite existing elements.
-             * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
-             */
-            setRange(in_offset: number, in_array: Array<any>): void;
-            /**
-             * Returns an object with all the nested values contained in this property
-             */
-            getValues<T = BaseProperty[]>(): T;
-            getLength(): number;
-            /**
-             * Checks whether a property or data exists at the given position.
-             * @param in_position index of the property
-             */
-            has(in_position: string): boolean;
-            /**
-             * Returns the full property type identifier for the ChangeSet including the array type id, if not
-             * omitted by parameters
-             * @param in_hideCollection - if true the collection type (if applicable) will be omitted. Default to false
-             * @return The typeid
-             */
-            public getFullTypeid(in_hideCollection?: boolean): string
+          /**
+           * Default constructor for ArrayProperty
+           * @param in_params the parameters
+           * @param in_constructor the constructor for the array data
+           * @param in_primitiveType Is this an array of primitive types?
+           * @param in_scope The scope in which the property typeid is defined
+           */
+          constructor(in_params: ArrayProperty_ArrayProperty_in_params_TYPE, in_constructor: object, in_primitiveType: Boolean, in_scope: string | undefined);
+
+          public get length()
+          /**
+           * Gets the array element at a given index
+           * @param in_position the target index
+           *   if an array is passed, elements in the array will be treated as part of a path.
+           *   The first item in an array should be a position in the array.
+           *   For example, .get([0,'position','x']) is the equivalent of .get(0).get('position').get('x')
+           *   If it encounters a ReferenceProperty, .get will, by default, resolve the property it refers to.
+           * @param in_options parameter object
+           */
+          get<T=BaseProperty>(in_position: number | string | Array<string|number>, in_options?: ArrayProperty_get_in_options_TYPE): T | undefined;
+          /**
+           * Insert into the array at a given position.
+           * It will not overwrite the existing values, it will push them to the right.
+           */
+          insert(in_position: number, in_value: any): void;
+          /**
+           * Add one or more values at the end of the array
+           */
+          push(in_values: Array<any> | any): number;
+          /**
+           * Add a value at the front of the array or letters to the beginning of a string (for StringProperty)
+           * It can also add multiple values to an array if you pass in an array of values.
+           */
+          unshift(in_values: Array<any> | any): number;
+          /**
+           * Removes an element of the array (or a letter in a StringProperty) and shifts remaining elements to the left
+           * E.g. [1, 2, 3]   .remove(1) => [1, 3]
+           * E.g. (StringProperty) 'ABCDE'  .remove(1) => 'ACDE'
+           */
+          remove(in_position: number): BaseProperty | any;
+          /**
+           * Removes the last element of the array or the last letter of a string (for StringProperty)
+           */
+          pop(): BaseProperty | any;
+           /**
+           * Removes an element from the front of the array or a letter from the beginning of a string (for StringProperty)
+           */
+          shift(): BaseProperty;
+          /**
+           * Change an existing element of the array. This will overwrite an existing element.
+           * E.g. [1, 2, 3]  .set(1, 8) => [1, 8, 3]
+           */
+          set(in_position: number, in_value: any): void;
+          /**
+           * Deletes all values from an array
+           */
+          clear(): void;
+          /**
+           * Inserts the content of a given array into the array property
+           * It will not overwrite the existing values but push them to the right instead.
+           * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
+           * @param in_offset target index
+           * @param in_array the array to be inserted
+           * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
+           * @throws if trying to insert a property that already has a parent.
+           * @throws if tyring to modify a referenced property.
+           */
+          insertRange<T=any>(in_offset: number, in_array: T[]): void;
+          /**
+           * Removes a given number of elements from the array property (or given number of letters from a StringProperty)
+           *  and shifts remaining values to the left.
+           * E.g. [1, 2, 3, 4, 5]  .removeRange(1, 3) => [1, 5]
+           */
+          removeRange(in_offset: number, in_deleteCount: number): Array<any> | Array<BaseProperty>;
+          /**
+           * Sets the array properties elements to the content of the given array
+           * All changed elements must already exist. This will overwrite existing elements.
+           * E.g. [1, 2, 3, 4, 5]  .setRange(1, [7, 8]) => [1, 7, 8, 4, 5]
+           */
+          setRange(in_offset: number, in_array: Array<any>): void;
+          /**
+           * Returns an object with all the nested values contained in this property
+           */
+          getValues<T = BaseProperty[]>(): T;
+          getLength(): number;
+          /**
+           * Checks whether a property or data exists at the given position.
+           * @param in_position index of the property
+           */
+          has(in_position: string): boolean;
+          /**
+           * Returns the full property type identifier for the ChangeSet including the array type id, if not
+           * omitted by parameters
+           * @param in_hideCollection - if true the collection type (if applicable) will be omitted. Default to false
+           * @return The typeid
+           */
+          public getFullTypeid(in_hideCollection?: boolean): string
         }
 
         class EnumArrayProperty extends ArrayProperty {
@@ -2114,66 +2120,66 @@ declare module "@fluid-experimental/property-properties" {
         }
 
         class SetProperty extends IndexedCollectionBaseProperty {
-            /**
-             * A SetProperty is a collection class that can contain an unordered set of properties. These properties
-             * must derive from NamedProperty and their URN is used to identify them within the set.
-             */
-            constructor();
-            /**
-             * Returns the path segment for a child
-             * @param in_childNode - The child for which the path is returned
-             * @return The path segment to resolve the child property under this property
-             */
-            protected _getPathSegmentForChildNode(in_childNode: NamedProperty): string;
-            /**
-             * Inserts a property into the set
-             */
-            insert(): void;
-            /**
-             * Adds a property to the set
-             * - If the property's key exists, the entry is replaced with new one.
-             * - If the property's key does not exist, the property is appended.*
-             */
-            set(): void;
-            /**
-             * Removes the given property from the set
-             */
-            remove(): NamedProperty;
-            /**
-             * Returns the name of all the sub-properties of this property.
-             */
-            getIds(): Array<string>;
-            /**
-             * Given an object that mirrors a PSet Template, assigns the properties to the values
-             * found in that object.
-             * eg.
-             * <pre>
-             * Templates = {
-             *   properties: [
-             *     { id: 'foo', typeid: 'String' },
-             *     { id: 'bar', properties: [{id: 'baz', typeid: 'Uint32'}] }
-             *   ]
-             * }
-             * </pre>
-             */
-            setValues(): void;
-            /**
-             * Returns all entries of the set as an array.
-             *
-             * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
-             */
-            getAsArray(): Array<NamedProperty>;
-            /**
-             * Delete all values from Set
-             */
-            clear(): void;
-            /**
-             * Returns the full property type identifier for the ChangeSet including the set type id
-             * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
-             *                since that is not aplicable here, this param is ignored. Default to false
-             * @return The typeid
-             */
-            getFullTypeid(in_hideCollection: boolean): string;
+          /**
+           * A SetProperty is a collection class that can contain an unordered set of properties. These properties
+           * must derive from NamedProperty and their URN is used to identify them within the set.
+           */
+          constructor();
+          /**
+           * Returns the path segment for a child
+           * @param in_childNode - The child for which the path is returned
+           * @return The path segment to resolve the child property under this property
+           */
+          protected _getPathSegmentForChildNode(in_childNode: NamedProperty): string;
+          /**
+           * Inserts a property into the set
+           */
+          insert(in_property: NamedProperty): void;
+          /**
+           * Adds a property to the set
+           * - If the property's key exists, the entry is replaced with new one.
+           * - If the property's key does not exist, the property is appended.*
+           */
+          set(): void;
+          /**
+           * Removes the given property from the set
+           */
+          remove(in_entry: NamedProperty | string): NamedProperty;
+          /**
+           * Returns the name of all the sub-properties of this property.
+           */
+          getIds(): Array<string>;
+          /**
+           * Given an object that mirrors a PSet Template, assigns the properties to the values
+           * found in that object.
+           * eg.
+           * <pre>
+           * Templates = {
+           *   properties: [
+           *     { id: 'foo', typeid: 'String' },
+           *     { id: 'bar', properties: [{id: 'baz', typeid: 'Uint32'}] }
+           *   ]
+           * }
+           * </pre>
+           */
+          setValues(): void;
+          /**
+           * Returns all entries of the set as an array.
+           *
+           * NOTE: This function creates a copy and thus is less efficient as getEntriesReadOnly.
+           */
+          getAsArray(): Array<NamedProperty>;
+          /**
+           * Delete all values from Set
+           */
+          clear(): void;
+          /**
+           * Returns the full property type identifier for the ChangeSet including the set type id
+           * @param  in_hideCollection - if true the collection type (if applicable) will be omitted
+           *                since that is not aplicable here, this param is ignored. Default to false
+           * @return The typeid
+           */
+          getFullTypeid(in_hideCollection: boolean): string;
         }
 
         class PropertyTemplate {

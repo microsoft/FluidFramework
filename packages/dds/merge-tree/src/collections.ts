@@ -1156,6 +1156,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
+    modify(label: string, start: number, end: number);
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }

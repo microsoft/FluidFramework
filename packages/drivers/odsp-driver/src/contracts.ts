@@ -202,7 +202,8 @@ export interface ICreateFileResponse {
 export interface IVersionedValueWithEpoch {
     value: any;
     fluidEpoch: string,
-    version: 2,
+    // This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
+    version: 3,
 }
 
-export const persistedCacheValueVersion = 2;
+export const persistedCacheValueVersion = 3;

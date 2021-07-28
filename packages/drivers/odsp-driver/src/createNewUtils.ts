@@ -4,71 +4,57 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
-import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
-import { IOdspSnapshotBlob, IOdspSnapshot, IOdspSnapshotTreeEntry } from "./contracts";
+import { stringToBuffer, unreachableCase } from "@fluidframework/common-utils";
+import { ISnapshotContents } from "./odspUtils";
 
 /**
- * Converts a summary(ISummaryTree) taken in detached container to IOdspSnapshot tree
+ * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
  */
-export function convertCreateNewSummaryTreeToIOdspSnapshot(summary: ISummaryTree, treeId: string): IOdspSnapshot {
+export function convertCreateNewSummaryTreeToTreeAndBlobs(summary: ISummaryTree, treeId: string): ISnapshotContents {
     const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
     const sequenceNumber = documentAttributes.sequenceNumber;
-    const blobs: IOdspSnapshotBlob[] = [];
-    const snapshotTree: IOdspSnapshot = {
-        trees: [
-            {
-                entries: [],
-                id: treeId,
-                sequenceNumber,
-            },
-        ],
+    const blobs = new Map<string, ArrayBuffer>();
+    const snapshotTree = convertCreateNewSummaryTreeToTreeAndBlobsCore(summary, blobs);
+    snapshotTree.id = treeId;
+    const snapshotTreeValue: ISnapshotContents = {
+        snapshotTree,
         blobs,
-        id: treeId,
+        ops: [],
+        sequenceNumber,
     };
 
-    convertSummaryTreeToIOdspSnapshotCore(summary, snapshotTree.trees[0].entries, blobs);
-    return snapshotTree;
+    return snapshotTreeValue;
 }
 
-function convertSummaryTreeToIOdspSnapshotCore(
+function convertCreateNewSummaryTreeToTreeAndBlobsCore(
     summary: ISummaryTree,
-    trees: IOdspSnapshotTreeEntry[],
-    blobs: IOdspSnapshotBlob[],
-    path: string = "",
+    blobs: Map<string, ArrayBuffer>,
 ) {
+    const treeNode: ISnapshotTree = {
+        blobs: {},
+        trees: {},
+        commits: {},
+        unreferenced: summary.unreferenced,
+    };
     const keys = Object.keys(summary.tree);
     for (const key of keys) {
         const summaryObject = summary.tree[key];
-        const currentPath = path !== "" ? `${path}/${key}` : `${key}`;
 
         switch (summaryObject.type) {
             case SummaryType.Tree: {
-                trees.push({
-                    type: "tree",
-                    path: currentPath,
-                    unreferenced: summaryObject.unreferenced,
-                });
-                convertSummaryTreeToIOdspSnapshotCore(summaryObject, trees, blobs, currentPath);
+                treeNode.trees[key] =
+                    convertCreateNewSummaryTreeToTreeAndBlobsCore(summaryObject, blobs);
                 break;
             }
             case SummaryType.Blob: {
-                const content = typeof summaryObject.content === "string" ?
-                    summaryObject.content : Uint8ArrayToString(summaryObject.content, "base64");
-                const blob: IOdspSnapshotBlob = {
-                    id: uuid(),
-                    encoding: typeof summaryObject.content === "string" ? undefined : "base64",
-                    content,
-                    size: content.length,
-                };
-                blobs.push(blob);
-                trees.push({
-                    id: blob.id,
-                    path: currentPath,
-                    type: "blob",
-                });
+                const contentBuffer = typeof summaryObject.content === "string" ?
+                    stringToBuffer(summaryObject.content, "utf8") : summaryObject.content;
+                const blobId = uuid();
+                treeNode.blobs[key] = blobId;
+                blobs.set(blobId, contentBuffer);
                 break;
             }
             case SummaryType.Handle:
@@ -80,4 +66,5 @@ function convertSummaryTreeToIOdspSnapshotCore(
             }
         }
     }
+    return treeNode;
 }

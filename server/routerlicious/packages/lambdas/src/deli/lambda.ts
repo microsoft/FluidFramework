@@ -143,7 +143,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         client.lastUpdate,
                         client.canEvict,
                         client.scopes,
-                        client.nack);
+                        client.nack,
+                        client.serverMetadata);
                 }
             }
         }
@@ -370,7 +371,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     this.minimumSequenceNumber,
                     message.timestamp,
                     true,
-                    clientJoinMessage.detail.scopes);
+                    clientJoinMessage.detail.scopes,
+                    message.operation.serverMetadata);
                 // Return if the client has already been added due to a prior join message.
                 if (!isNewClient) {
                     return;
@@ -689,7 +691,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (message.type !== MessageType.ClientLeave) {
             const idleClient = this.getIdleClient(message.timestamp);
             if (idleClient?.clientId) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+                const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
                 void this.sendToAlfred(leaveMessage);
             }
         }
@@ -698,7 +700,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
-    private createLeaveMessage(clientId: string): IRawOperationMessage {
+    private createLeaveMessage(clientId: string, serverMetadata?: any): IRawOperationMessage {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
@@ -706,6 +708,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
+            serverMetadata,
         };
         const leaveMessage: IRawOperationMessage = {
             clientId: null,

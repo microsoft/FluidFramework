@@ -13,7 +13,7 @@ const _ = require('lodash');
 describe('Reversible ChangeSets', function() {
     it('Inverting a string map insert', () => {
         let originalCS = {
-            "map<String>":{
+            "map<String>": {
                 "selections": {
                     "insert": {
                         "target": "c6e96078-d1eb-8d41-219f-6f935794c453"
@@ -30,7 +30,7 @@ describe('Reversible ChangeSets', function() {
 
     it('Inverting a string map remove', () => {
         let originalCS = {
-            "map<String>":{
+            "map<String>": {
                 "selections": {
                     "remove": {
                         "target": "c6e96078-d1eb-8d41-219f-6f935794c453"
