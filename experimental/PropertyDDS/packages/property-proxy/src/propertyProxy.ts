@@ -42,7 +42,7 @@ export namespace PropertyProxy {
         const keys = (key === undefined ? [] : [key]);
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for getValue
-        const path = (<any>property.getValue)(...keys);
+        const path = (property.getValue as any)(...keys);
 
         // TODO(marcus): this should be the enum type but that is currently difficult to do correctly without
         // changes to path helper
@@ -53,7 +53,7 @@ export namespace PropertyProxy {
         let relativePathFromParent;
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for get
-        if (!PropertyFactory.instanceOf((<any>property.get)(...keys), "BaseProperty")) {
+        if (!PropertyFactory.instanceOf((property.get as any)(...keys), "BaseProperty")) {
             if (types.includes(PathHelper.TOKEN_TYPES.ARRAY_TOKEN)) {
                 // This happens when accessing a primitive array/map entry
                 // Split key into array id and index
@@ -78,7 +78,7 @@ export namespace PropertyProxy {
         } else {
             // TODO(marcus): this cast is a workaround for resolving the type check
             // issue that TS cannot statically derive the correct types for get
-            const prop = (<any>property.get)(...keys)! as BaseProperty;
+            const prop = (property.get as any)(...keys)! as BaseProperty;
             referencedPropertyParent = prop.getParent();
             relativePathFromParent = prop.getRelativePath(referencedPropertyParent);
             relativePathFromParent = PathHelper.tokenizePathString(relativePathFromParent)[0];

@@ -229,7 +229,7 @@ export class Utilities {
 
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for isReferenceValid
-        if (!(<any>property.isReferenceValid)(...keys)) {
+        if (!(property.isReferenceValid as any)(...keys)) {
             throw new Error(PropertyProxyErrors.INVALID_REFERENCE);
         }
 
@@ -279,7 +279,7 @@ export class Utilities {
         const context = property.getContext();
         // TODO(marcus): this cast is a workaround for resolving the type check
         // issue that TS cannot statically derive the correct types for get
-        const propertyAtKey = (<any>property.get)(key)!;
+        const propertyAtKey = (property.get as any)(key)!;
         if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
             if (caretFound && propertyAtKey.isPrimitiveType()) {
                 if (PropertyFactory.instanceOf(propertyAtKey, "Enum") && forceType<EnumProperty>(propertyAtKey)) {
@@ -307,7 +307,7 @@ export class Utilities {
                 if (contextIsSingle && forceType<string>(key)) {
                     // TODO(marcus): this cast is a workaround for resolving the type check
                     // issue that TS cannot statically derive the correct types for get
-                    const data = PropertyProxy.getParentOfReferencedProperty((<any>property.get)(key,
+                    const data = PropertyProxy.getParentOfReferencedProperty((property.get as any)(key,
                         { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
                     other_property = data.referencedPropertyParent;
                     key = data.relativePathFromParent;

@@ -14,7 +14,6 @@ module.exports = {
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unsafe-return": "off",
         "@typescript-eslint/strict-boolean-expressions": "off",
-        "@typescript-eslint/consistent-type-assertions": "off",
         "@typescript-eslint/restrict-plus-operands": "off",
         "prefer-rest-params": "off",
 
