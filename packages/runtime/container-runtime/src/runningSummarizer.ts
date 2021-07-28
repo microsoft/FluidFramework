@@ -330,6 +330,7 @@ export class RunningSummarizer implements IDisposable {
         });
     }
 
+    /** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
     public summarizeOnDemand({
         reason,
         ...options
@@ -355,6 +356,7 @@ export class RunningSummarizer implements IDisposable {
         return result;
     }
 
+    /** {@inheritdoc (ISummarizer:interface).enqueueSummarize} */
     public enqueueSummarize({
         reason,
         afterSequenceNumber = 0,
@@ -362,7 +364,7 @@ export class RunningSummarizer implements IDisposable {
         ...options
     }: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
         const onDemandReason = `enqueue;${reason}` as const;
-        let overridden: true | undefined;
+        let overridden = false;
         if (this.enqueuedSummary !== undefined) {
             if (!override) {
                 return { alreadyEnqueued: true };
