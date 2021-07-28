@@ -31,7 +31,7 @@ interface IToolbarProps {
     clearInk: () => void;
 }
 
-const Toolbar: React.FC<IToolbarProps> = (props) => {
+const Toolbar: React.FC<IToolbarProps> = (props: IToolbarProps) => {
     const { toggleColorPicker, replayInk, clearInk } = props;
     return (
         <div className="ink-toolbar">
@@ -59,7 +59,7 @@ interface IColorOptionProps {
     choose: () => void;
 }
 
-const ColorOption: React.FC<IColorOptionProps> = (props) => {
+const ColorOption: React.FC<IColorOptionProps> = (props: IColorOptionProps) => {
     const { color, choose } = props;
     return (
         <button
@@ -75,7 +75,7 @@ interface IColorPickerProps {
     choose: (color: IColor) => void;
 }
 
-const ColorPicker: React.FC<IColorPickerProps> = (props) => {
+const ColorPicker: React.FC<IColorPickerProps> = (props: IColorPickerProps) => {
     const { show, choose } = props;
     return (
         <div className={`ink-color-picker${show ? " show" : ""}`}>
@@ -95,7 +95,7 @@ interface ICanvasViewProps {
     canvas: Canvas;
 }
 
-export const CanvasView: React.FC<ICanvasViewProps> = (props) => {
+export const CanvasView: React.FC<ICanvasViewProps> = (props: ICanvasViewProps) => {
     const { canvas } = props;
     const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>(undefined);
     const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
@@ -113,12 +113,12 @@ export const CanvasView: React.FC<ICanvasViewProps> = (props) => {
         if (inkCanvas !== undefined) {
             const resizeHandler = () => {
                 inkCanvas.sizeCanvasBackingStore();
-            }
+            };
             window.addEventListener("resize", resizeHandler);
             inkCanvas.sizeCanvasBackingStore();
             return () => {
                 window.removeEventListener("resize", resizeHandler);
-            }
+            };
         }
     }, [inkCanvas]);
 
