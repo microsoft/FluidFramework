@@ -24,7 +24,7 @@ const colorPickerColors: IColor[] = [
     { r: 0, g: 0, b: 0, a: 1 },
 ];
 
-class CanvasView implements IFluidHTMLView {
+export class CanvasView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
     private readonly canvasElement: HTMLCanvasElement;
