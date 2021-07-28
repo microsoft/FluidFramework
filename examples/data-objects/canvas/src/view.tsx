@@ -6,7 +6,7 @@
 import { IColor, InkCanvas } from "@fluidframework/ink";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { Canvas } from "./canvas";
 // eslint-disable-next-line import/no-unassigned-import
@@ -126,10 +126,97 @@ export class CanvasView implements IFluidHTMLView {
     }
 }
 
+interface IToolbarProps {
+    toggleColorPicker: () => void;
+    replayInk: () => void;
+    clearInk: () => void;
+}
+
+const Toolbar: React.FC<IToolbarProps> = (props) => {
+    const { toggleColorPicker, replayInk, clearInk } = props;
+    return (
+        <div className="ink-toolbar">
+            <button
+                className="ink-toolbar-button fluid-icon-pencil"
+                title="Change Color"
+                onClick={toggleColorPicker}
+            ></button>
+            <button
+                className="ink-toolbar-button fluid-icon-replay"
+                title="Replay"
+                onClick={replayInk}
+            ></button>
+            <button
+                className="ink-toolbar-button fluid-icon-cross"
+                title="Clear"
+                onClick={clearInk}
+            ></button>
+        </div>
+    );
+};
+
+interface IColorOptionProps {
+    color: IColor;
+    choose: () => void;
+}
+
+const ColorOption: React.FC<IColorOptionProps> = (props) => {
+    const { color, choose } = props;
+    return (
+        <button
+            className="ink-color-option"
+            onClick={ choose }
+            style={{ backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})` }}
+        ></button>
+    );
+};
+
+interface IColorPickerProps {
+    show: boolean;
+    choose: (color: IColor) => void;
+}
+
+const ColorPicker: React.FC<IColorPickerProps> = (props) => {
+    const { show, choose } = props;
+    return (
+        <div className={`ink-color-picker${show ? " show" : ""}`}>
+            {
+                colorPickerColors.map((color, index) => {
+                    const pickColor = () => {
+                        choose(color);
+                    }
+                    return <ColorOption key={index} color={color} choose={pickColor} />
+                })
+            }
+        </div>
+    );
+};
+
 interface ICanvasReactViewProps {
     canvas: Canvas;
 }
 
-export const CanvasReactView: React.FC<ICanvasReactViewProps> = (props: ICanvasReactViewProps) => {
-    return <div />;
+export const CanvasReactView: React.FC<ICanvasReactViewProps> = (props) => {
+    const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
+    const toggleColorPicker = () => {
+        setShowColorPicker(!showColorPicker);
+    };
+    const replayInk = () => {};
+    const clearInk = () => {};
+    const chooseColor = (color: IColor) => {
+        // TODO
+    };
+    return (
+        <div className="ink-component-root">
+            <div className="ink-surface">
+                <canvas className="ink-canvas"></canvas>
+                <Toolbar
+                    toggleColorPicker={ toggleColorPicker }
+                    replayInk={ replayInk }
+                    clearInk={ clearInk }
+                />
+            </div>
+            <ColorPicker show={ showColorPicker } choose={ chooseColor } />
+        </div>
+    );
 };
