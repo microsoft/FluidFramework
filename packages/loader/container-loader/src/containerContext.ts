@@ -203,7 +203,7 @@ export class ContainerContext implements IContainerContext {
     }
 
     public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
-        return (this.runtime as any).createSummary(blobRedirectTable) as ISummaryTree;
+        return this.runtime.createSummary(blobRedirectTable);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

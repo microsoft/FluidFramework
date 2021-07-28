@@ -227,7 +227,12 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         dataStore._root.set("my blob", blobHandle);
         assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
 
-        await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP, /0x202/ /* "create empty file not supported" */);
+        }
+        await attachP;
 
         // make sure we're getting the blob from actual storage
         detachedBlobStorage.blobs.clear();
