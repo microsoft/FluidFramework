@@ -669,16 +669,20 @@ export class RedBlackTree<TKey, TData> implements Base.SortedDictionary<TKey, TD
                 return;
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.root!.color = RBColor.RED;
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.root = this.nodeRemove(this.root!, key);
+            this.removeExisting(key);
         }
         // TODO: error on undefined key
+    }
+
+    removeExisting(key: TKey) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if ((!this.isRed(this.root!.left)) && (!this.isRed(this.root!.right))) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.root!.color = RBColor.RED;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.root = this.nodeRemove(this.root!, key);
     }
 
     nodeRemove(node: RBNode<TKey, TData>, key: TKey) {
@@ -1152,6 +1156,7 @@ export interface IInterval {
     compare(b: IInterval): number;
     compareStart(b: IInterval): number;
     compareEnd(b: IInterval): number;
+    modify(label: string, start: number, end: number);
     overlaps(b: IInterval): boolean;
     union(b: IInterval): IInterval;
 }
@@ -1174,6 +1179,10 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
 
     remove(x: T) {
         this.intervals.remove(x);
+    }
+
+    removeExisting(x: T) {
+        this.intervals.removeExisting(x);
     }
 
     put(x: T, conflict?: IntervalConflictResolver<T>) {
@@ -1201,6 +1210,16 @@ export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, Aug
             infix: (node) => {
                 fn(node.key);
                 return true;
+            },
+            showStructure: true,
+        };
+        this.intervals.walk(actions);
+    }
+
+    mapUntil(fn: (X: T) => boolean) {
+        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
+            infix: (node) => {
+                return fn(node.key);
             },
             showStructure: true,
         };

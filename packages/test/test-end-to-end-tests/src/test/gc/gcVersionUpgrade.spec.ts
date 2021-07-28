@@ -133,7 +133,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
         summaryCollection: SummaryCollection,
         dataStoresAsHandles: string[],
     ) {
-        const summarySequenceNumber = await generateSummary(containerRuntime);
+        const summarySequenceNumber = await submitSummary(containerRuntime);
         latestSummaryAck = await summaryCollection.waitSummaryAck(summarySequenceNumber);
         await refreshSummaryAck(containerRuntime, latestSummaryAck);
 
@@ -175,14 +175,14 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
     }
 
     /**
-     * Generates a summary on the given container runtime.
+     * Generates, uploads, and submits a summary on the given container runtime.
      * @param containerRuntime - The container runtime to use to generate the summary.
      * @returns The last sequence number contained in the summary that is generated.
      */
-    async function generateSummary(containerRuntime: ContainerRuntime): Promise<number> {
+    async function submitSummary(containerRuntime: ContainerRuntime): Promise<number> {
         await provider.ensureSynchronized();
         const summarySequenceNumber = containerRuntime.deltaManager.lastSequenceNumber;
-        await containerRuntime.generateSummary({
+        await containerRuntime.submitSummary({
             fullTree: false,
             refreshLatestAck: false,
             summaryLogger: logger,

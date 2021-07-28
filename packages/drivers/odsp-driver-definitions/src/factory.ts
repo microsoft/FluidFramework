@@ -85,4 +85,13 @@ export interface HostStoragePolicy {
      * Policy controlling how collaboration session is established
      */
     sessionOptions?: ICollabSessionOptions;
+
+    // True to have the sharing link redeem fallback in case the Trees Latest/Redeem 1RT call fails with redeem error.
+    // During fallback it will first redeem the sharing link and then make the Trees latest call.
+    enableRedeemFallback?: boolean;
+
+    /**
+     * Policy controlling if we will cache initial summary when we create a document
+     */
+     cacheCreateNewSummary?: boolean;
 }

@@ -1,9 +1,8 @@
-{{ $title := .Get 0 }}
-{{ if .Get 1 }}
-{{ $title = .Get 1 }}
-{{ end }}
+{{ $class := lower (default "important" (default (.Get "class") (.Get 0))) }}
+{{ $title := default (title $class) (default (.Get "title") (.Get 1)) }}
+{{ $emoji := default "" (default (.Get "emoji") (.Get 2)) }}
 
-<div class="{{ lower (.Get 0) }} callout">
-    <p class="callout-title">{{ title $title }} </p>
+<div class="{{ $class }} callout">
+    <p class="callout-title">{{ with $emoji }}{{ . }} {{ end }}{{ $title }}</p>
     <p>{{ .Inner | markdownify }}</p>
 </div>

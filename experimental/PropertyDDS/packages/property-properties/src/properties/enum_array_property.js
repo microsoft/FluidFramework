@@ -23,12 +23,12 @@ const DataArrays = require('@fluid-experimental/property-common').Datastructures
  * @alias property-properties.EnumArrayProperty
  * @category Arrays
  */
-var EnumArrayProperty = function( in_params ) {
-  ValueArrayProperty.call(this, in_params);
-  // whenever an EnumProperty is created by the PropertyFactory, we get a
-  // dictonary [value->enum] and [enum->value] to efficiently lookup
-  // values/enums for the property.
-  this._enumDictionary = in_params._enumDictionary;
+var EnumArrayProperty = function (in_params) {
+    ValueArrayProperty.call(this, in_params);
+    // whenever an EnumProperty is created by the PropertyFactory, we get a
+    // dictonary [value->enum] and [enum->value] to efficiently lookup
+    // values/enums for the property.
+    this._enumDictionary = in_params._enumDictionary;
 };
 
 EnumArrayProperty.prototype = Object.create(ValueArrayProperty.prototype);
@@ -42,21 +42,21 @@ EnumArrayProperty.prototype._typeid = 'Enum';
  * @param {number|string} in_value value to be checked/converted
  * @return {number} internal value for this enum type
  */
-EnumArrayProperty.prototype._convertEnumToInternalValue = function( in_value ) {
-  // check if we've got a string
-  if (_.isString(in_value)) {
-    var internalEnum = this._enumDictionary.enumEntriesById[in_value];
-    if (!internalEnum) {
-      throw new Error(MSG.UNKNOWN_ENUM + in_value);
-    }
-    return internalEnum.value;
-  } else {
-    if (!this._enumDictionary.enumEntriesByValue[in_value]) {
-      throw new Error(MSG.UNKNOWN_ENUM + in_value);
+EnumArrayProperty.prototype._convertEnumToInternalValue = function (in_value) {
+    // check if we've got a string
+    if (_.isString(in_value)) {
+        var internalEnum = this._enumDictionary.enumEntriesById[in_value];
+        if (!internalEnum) {
+            throw new Error(MSG.UNKNOWN_ENUM + in_value);
+        }
+        return internalEnum.value;
     } else {
-      return in_value;
+        if (!this._enumDictionary.enumEntriesByValue[in_value]) {
+            throw new Error(MSG.UNKNOWN_ENUM + in_value);
+        } else {
+            return in_value;
+        }
     }
-  }
 };
 
 /**
@@ -68,20 +68,20 @@ EnumArrayProperty.prototype._convertEnumToInternalValue = function( in_value ) {
  * @throws if a value to be inserted is an instance of BaseProperty
  * @throws if tyring to modify a referenced property.
  */
-EnumArrayProperty.prototype.insertRange = function(in_offset, in_array) {
-  if (!_.isNumber(in_offset)) {
-    throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.insertRange or .insert');
-  }
-  if (!_.isArray(in_array)) {
-    throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.insertRange');
-  }
+EnumArrayProperty.prototype.insertRange = function (in_offset, in_array) {
+    if (!_.isNumber(in_offset)) {
+        throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.insertRange or .insert');
+    }
+    if (!_.isArray(in_array)) {
+        throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.insertRange');
+    }
 
-  var internalValueArray = [];
-  var that = this;
-  _.each(in_array, function(element) {
-    internalValueArray.push(that._convertEnumToInternalValue(element));
-  });
-  ValueArrayProperty.prototype.insertRange.call(this, in_offset, internalValueArray);
+    var internalValueArray = [];
+    var that = this;
+    _.each(in_array, function (element) {
+        internalValueArray.push(that._convertEnumToInternalValue(element));
+    });
+    ValueArrayProperty.prototype.insertRange.call(this, in_offset, internalValueArray);
 };
 
 /**
@@ -91,11 +91,11 @@ EnumArrayProperty.prototype.insertRange = function(in_offset, in_array) {
  * @throws if in_value is not a string or number
  * @throws if in_index is either smaller than zero, larger than the length of the array or not a number.
  */
-EnumArrayProperty.prototype.set = function(in_index, in_value) {
-  if (!_.isNumber(in_value) && !_.isString(in_value)) {
-    throw new Error(MSG.VALUE_STRING_OR_NUMBER + in_value);
-  }
-  this.setRange(in_index, [in_value]);
+EnumArrayProperty.prototype.set = function (in_index, in_value) {
+    if (!_.isNumber(in_value) && !_.isString(in_value)) {
+        throw new Error(MSG.VALUE_STRING_OR_NUMBER + in_value);
+    }
+    this.setRange(in_index, [in_value]);
 };
 
 /**
@@ -105,8 +105,8 @@ EnumArrayProperty.prototype.set = function(in_index, in_value) {
  * @throws if in_value is not a string or number
  * @throws if in_index is either smaller than zero, larger than the length of the array or not a number.
  */
-EnumArrayProperty.prototype.setEnumByString = function(in_index, in_value) {
-  this.set(in_index, in_value);
+EnumArrayProperty.prototype.setEnumByString = function (in_index, in_value) {
+    this.set(in_index, in_value);
 };
 
 /**
@@ -118,20 +118,20 @@ EnumArrayProperty.prototype.setEnumByString = function(in_index, in_value) {
  * @throws if in_array is not an array
  *
  */
-EnumArrayProperty.prototype.setRange = function(in_offset, in_array) {
-  if (!_.isNumber(in_offset)) {
-    throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.setRange or .set');
-  }
-  if (!_.isArray(in_array)) {
-    throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.setRange');
-  }
+EnumArrayProperty.prototype.setRange = function (in_offset, in_array) {
+    if (!_.isNumber(in_offset)) {
+        throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.setRange or .set');
+    }
+    if (!_.isArray(in_array)) {
+        throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'EnumArrayProperty.setRange');
+    }
 
-  var internalValueArray = [];
-  var that = this;
-  _.each(in_array, function(element) {
-    internalValueArray.push(that._convertEnumToInternalValue(element));
-  });
-  ValueArrayProperty.prototype.setRange.call(this, in_offset, internalValueArray);
+    var internalValueArray = [];
+    var that = this;
+    _.each(in_array, function (element) {
+        internalValueArray.push(that._convertEnumToInternalValue(element));
+    });
+    ValueArrayProperty.prototype.setRange.call(this, in_offset, internalValueArray);
 };
 
 /**
@@ -140,14 +140,14 @@ EnumArrayProperty.prototype.setRange = function(in_offset, in_array) {
  * @throws if no entry exists at in_position
  * @return {string} the enum string at that index
  */
-EnumArrayProperty.prototype.getEnumString = function(in_position) {
-  var internalValue = this._dataArrayRef.getValue(in_position);
-  var resultEntry = this._enumDictionary.enumEntriesByValue[internalValue];
-  if (!resultEntry) {
-    throw new Error(MSG.UNKNOWN_ENUM + internalValue);
-  } else {
-    return resultEntry.id;
-  }
+EnumArrayProperty.prototype.getEnumString = function (in_position) {
+    var internalValue = this._dataArrayRef.getValue(in_position);
+    var resultEntry = this._enumDictionary.enumEntriesByValue[internalValue];
+    if (!resultEntry) {
+        throw new Error(MSG.UNKNOWN_ENUM + internalValue);
+    } else {
+        return resultEntry.id;
+    }
 };
 
 /**
@@ -158,19 +158,19 @@ EnumArrayProperty.prototype.getEnumString = function(in_position) {
  * @throws if no entry exists at one of the positions
  * @return {Array<string>} the enum strings we asked for
  */
-EnumArrayProperty.prototype.getEnumStrings = function(in_offset, in_length) {
-  if (!_.isNumber(in_offset)) {
-    throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.getEnumStrings');
-  }
-  if (!_.isNumber(in_length)) {
-    throw new Error(MSG.NOT_NUMBER + 'in_length, method: EnumArray.getEnumStrings');
-  }
+EnumArrayProperty.prototype.getEnumStrings = function (in_offset, in_length) {
+    if (!_.isNumber(in_offset)) {
+        throw new Error(MSG.NOT_NUMBER + 'in_offset, method: EnumArray.getEnumStrings');
+    }
+    if (!_.isNumber(in_length)) {
+        throw new Error(MSG.NOT_NUMBER + 'in_length, method: EnumArray.getEnumStrings');
+    }
 
-  var result = [];
-  for (var i = 0; i < in_length; i++) {
-    result.push(this.getEnumString(i + in_offset));
-  }
-  return result;
+    var result = [];
+    for (var i = 0; i < in_length; i++) {
+        result.push(this.getEnumString(i + in_offset));
+    }
+    return result;
 };
 
 /**
@@ -178,40 +178,40 @@ EnumArrayProperty.prototype.getEnumStrings = function(in_offset, in_length) {
  * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
  * @return {string} The typeid
  */
-EnumArrayProperty.prototype.getFullTypeid = function(in_hideCollection) {
-  if (in_hideCollection) {
-    return TypeIdHelper.createSerializationTypeId(this._typeid, '', true);
-  } else {
-    return TypeIdHelper.createSerializationTypeId(this._typeid, 'array', true);
-  }
+EnumArrayProperty.prototype.getFullTypeid = function (in_hideCollection) {
+    if (in_hideCollection) {
+        return TypeIdHelper.createSerializationTypeId(this._typeid, '', true);
+    } else {
+        return TypeIdHelper.createSerializationTypeId(this._typeid, 'array', true);
+    }
 };
 
 /**
  * @inheritdoc
  */
-EnumArrayProperty.prototype.getValues = function() {
-  var result = [];
-  for (var i = 0; i < this._dataArrayRef.length; i++) {
-    var child = this._dataArrayRef.getValue(i);
-    result.push(child);
-  }
-  return result;
+EnumArrayProperty.prototype.getValues = function () {
+    var result = [];
+    for (var i = 0; i < this._dataArrayRef.length; i++) {
+        var child = this._dataArrayRef.getValue(i);
+        result.push(child);
+    }
+    return result;
 };
 
 /**
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
  */
-EnumArrayProperty.prototype._dataArrayCreate = function(in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Int32Array, in_length);
+EnumArrayProperty.prototype._dataArrayCreate = function (in_length) {
+    this._dataArrayRef = new DataArrays.BaseDataArray(Int32Array, in_length);
 };
 
 /**
  * let the user to query all valid entries of an enum array property
  * @return {{}} all valid (string) entries and their (int) values
  */
-EnumArrayProperty.prototype.getValidEnumList = function() {
-  return this._enumDictionary.enumEntriesById;
+EnumArrayProperty.prototype.getValidEnumList = function () {
+    return this._enumDictionary.enumEntriesById;
 };
 
 module.exports = EnumArrayProperty;

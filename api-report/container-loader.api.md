@@ -69,10 +69,8 @@ export class Audience extends EventEmitter implements IAudience {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string) => void): this;
-    removeMember(clientId: string): void;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    removeMember(clientId: string): boolean;
 }
 
 // @public (undocumented)
@@ -182,8 +180,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
-    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delayMs: number, error: unknown): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
@@ -282,7 +279,9 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 // @public
-export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+};
 
 // @public
 export interface IFluidModuleWithDetails {

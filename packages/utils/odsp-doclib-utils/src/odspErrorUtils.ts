@@ -5,7 +5,7 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { LoggingError, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { annotateError, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     AuthorizationError,
     createGenericNetworkError,
@@ -94,8 +94,8 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): OdspError & LoggingError & IFacetCodes {
-    let error: OdspError & LoggingError & IFacetCodes;
+): Error & OdspError & IFacetCodes {
+    let error: Error & OdspError & IFacetCodes;
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
@@ -156,7 +156,16 @@ export function createOdspNetworkError(
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
             error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
     }
+    enrichOdspError(error, response, responseText, props);
+    return error;
+}
 
+export function enrichOdspError(
+    error: OdspError & IFacetCodes,
+    response?: Response,
+    responseText?: string,
+    props: ITelemetryProperties = {},
+) {
     error.online = OnlineStatus[isOnline()];
 
     const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
@@ -174,7 +183,7 @@ export function createOdspNetworkError(
             props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
-    error.addTelemetryProperties(props);
+    annotateError(error, props);
     return error;
 }
 
@@ -194,7 +203,6 @@ export function throwOdspNetworkError(
         response,
         responseText);
 
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
 }
 
