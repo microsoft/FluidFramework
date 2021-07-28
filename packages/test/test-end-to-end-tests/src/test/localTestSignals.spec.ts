@@ -116,8 +116,8 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
         let user2HostSignalReceivedCount = 0;
         let user1CompSignalReceivedCount = 0;
         let user2CompSignalReceivedCount = 0;
-        const user1ContainerRuntime = dataObject1.context.containerRuntime;
-        const user2ContainerRuntime = dataObject2.context.containerRuntime;
+        const user1ContainerRuntime = dataObject1.context;
+        const user2ContainerRuntime = dataObject2.context;
         const user1DtaStoreRuntime = dataObject1.runtime;
         const user2DataStoreRuntime = dataObject2.runtime;
 
@@ -133,20 +133,20 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
             }
         });
 
-        user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user1ContainerRuntime.containerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user1HostSignalReceivedCount += 1;
             }
         });
 
-        user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        user2ContainerRuntime.containerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === "TestSignal") {
                 user2HostSignalReceivedCount += 1;
             }
         });
 
         user1ContainerRuntime.submitSignal("TestSignal", true);
-        await waitForSignal(user1ContainerRuntime, user2ContainerRuntime);
+        await waitForSignal(user1ContainerRuntime.containerRuntime, user2ContainerRuntime.containerRuntime);
         assert.equal(user1HostSignalReceivedCount, 1, "client 1 did not receive signal on host runtime");
         assert.equal(user2HostSignalReceivedCount, 1, "client 2 did not receive signal on host runtime");
         assert.equal(user1CompSignalReceivedCount, 0, "client 1 should not receive signal on data store runtime");
