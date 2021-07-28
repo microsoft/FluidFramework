@@ -55,8 +55,8 @@ export async function prefetchLatestSnapshot(
         true /* throwOnNullToken */,
     );
 
-    const snapshotDownloader = async <T>(url: string, fetchOptions: {[index: string]: any}) => {
-        return fetchAndParseAsJSONHelper<T>(
+    const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
+        return fetchAndParseAsJSONHelper(
             url,
             fetchOptions,
         );

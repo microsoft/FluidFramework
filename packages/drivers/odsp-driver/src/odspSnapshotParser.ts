@@ -67,8 +67,8 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
     const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops ?? [],
-        sequenceNumber: odspSnapshot.trees && (odspSnapshot.trees[0] as any).sequenceNumber,
-        snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
+        sequenceNumber: odspSnapshot.commits && (odspSnapshot.commits[0] as any).sequenceNumber,
+        snapshotTree: buildHierarchy(odspSnapshot.commits[0]),
     };
     return val;
 }

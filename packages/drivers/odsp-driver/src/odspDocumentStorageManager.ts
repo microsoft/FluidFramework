@@ -533,8 +533,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotOptions.timeout = undefined;
         }
 
-        const snapshotDownloader = async <T>(url: string, fetchOptions: {[index: string]: any}) => {
-            return this.epochTracker.fetchAndParseAsJSON<T>(
+        const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
+            return this.epochTracker.fetchAndParseAsJSON(
                 url,
                 fetchOptions,
                 "treesLatest",
@@ -641,8 +641,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         if (!tree) {
             tree = await getWithRetryForTokenRefresh(async (options) => {
                 const storageToken = await this.getStorageToken(options, "ReadCommit");
-                const snapshotDownloader = async <T>(url: string, fetchOptions: {[index: string]: any}) => {
-                    return this.epochTracker.fetchAndParseAsJSON<T>(
+                const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
+                    return this.epochTracker.fetchAndParseAsJSON(
                         url,
                         fetchOptions,
                         "snapshotTree",

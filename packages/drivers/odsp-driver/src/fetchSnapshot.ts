@@ -42,7 +42,7 @@ export async function fetchSnapshot(
     versionId: string,
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
-    snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
+    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
@@ -63,8 +63,8 @@ export async function fetchSnapshot(
             eventName: "fetchSnapshot",
             headers: Object.keys(headers).length !== 0 ? true : undefined,
         },
-        async () => snapshotDownloader<IOdspSnapshot>(url, { headers }),
-    );
+        async () => snapshotDownloader(url, { headers }),
+    ) as IOdspResponse<IOdspSnapshot>;
     return convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
 }
 
@@ -73,7 +73,7 @@ export async function fetchSnapshotWithRedeem(
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
+    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
@@ -145,7 +145,7 @@ async function fetchLatestSnapshotCore(
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
+    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 ): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -207,7 +207,7 @@ async function fetchLatestSnapshotCore(
             },
             async (event) => {
                 const startTime = performance.now();
-                const response = await snapshotDownloader<IOdspSnapshot>(
+                const response = await snapshotDownloader(
                     url,
                     {
                         body: postBody,
@@ -215,7 +215,7 @@ async function fetchLatestSnapshotCore(
                         signal: controller?.signal,
                         method: "POST",
                     },
-                );
+                ) as IOdspResponse<IOdspSnapshot>;
                 const endTime = performance.now();
                 const overallTime = endTime - startTime;
                 const snapshot = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
@@ -326,7 +326,7 @@ async function fetchLatestSnapshotCore(
 }
 
 function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
-    assert(Array.isArray(snapshot.trees) && snapshot.trees.length > 0,
+    assert(Array.isArray(snapshot.commits) && snapshot.commits.length > 0,
         0x200 /* "Returned odsp snapshot is malformed. No trees!" */);
     assert(Array.isArray(snapshot.blobs) && snapshot.blobs.length > 0,
         0x201 /* "Returned odsp snapshot is malformed. No blobs!" */);
@@ -334,7 +334,7 @@ function validateAndEvalBlobsAndTrees(snapshot: IOdspSnapshot) {
     let numBlobs = 0;
     let encodedBlobsSize = 0;
     let decodedBlobsSize = 0;
-    for (const tree of snapshot.trees) {
+    for (const tree of snapshot.commits) {
         for (const treeEntry of tree.entries) {
             if (treeEntry.type === "blob") {
                 numBlobs++;
