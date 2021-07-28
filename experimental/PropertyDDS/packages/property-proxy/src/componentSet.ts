@@ -10,9 +10,9 @@ import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external::SetProperty}.
- * @param {ComponentSet} target The {@link ComponentSet} that holds a reference
+ * @param target The {@link ComponentSet} that holds a reference
  * to the {@link external:SetProperty SetProperty}.
- * @return {Iterator} An iterator.
+ * @return An iterator.
  * @hidden
  */
 const createSetIterator = (target: ComponentSet) => function*() {
@@ -53,7 +53,7 @@ class ComponentSet extends Set {
      * the size (number of entries).
      * @return The size of the {@link external:SetProperty SetProperty}.
      */
-    get size(): number {
+    get size() {
         return this.property.getIds().length;
     }
 
@@ -61,7 +61,7 @@ class ComponentSet extends Set {
      * Returns the wrapped {@link external:SetProperty SetProperty} property.
      * @return The wrapped {@link external:SetProperty SetProperty}.
      */
-    getProperty(): SetProperty {
+    getProperty() {
         return this.property;
     }
 
