@@ -11,9 +11,8 @@ import {
 import {
     IFluidErrorBase,
     isILoggingError,
-    isErrorLike,
     isFluidError,
-    isOldValidError,
+    isValidLegacyError,
 } from "./staging";
 import {
     extractLogSafeErrorProperties,
@@ -26,8 +25,8 @@ import {
 export interface FluidErrorAnnotations {
     /** Telemetry props to log with the error */
     props?: ITelemetryProperties;
-    //* Get a better name
-    normalizeHint?: string;
+    /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
+    errorCodeIfNone?: string;
 }
 
 /**
@@ -57,12 +56,14 @@ export function wrapError<T>(
     return newError;
 }
 
-function patchOldValidError(
-    oldValidError: Omit<IFluidErrorBase, "fluidErrorCode">,
-): asserts oldValidError is IFluidErrorBase {
-    const patchMe: { fluidErrorCode?: string } = oldValidError as any;
+//* tsdoc
+function patchWithErrorCode(
+    legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
+    errorCode: string = "<error predates fluidErrorCode>",
+): asserts legacyError is IFluidErrorBase {
+    const patchMe: { fluidErrorCode?: string } = legacyError as any;
     if (patchMe.fluidErrorCode === undefined) {
-        patchMe.fluidErrorCode = "";
+        patchMe.fluidErrorCode = errorCode;
     }
 }
 
@@ -76,71 +77,43 @@ export function normalizeError(
     error: unknown,
     annotations: FluidErrorAnnotations = {},
 ): IFluidErrorBase {
-    if (isOldValidError(error)) {
-        patchOldValidError(error);
+    // Back-compat, while IFluidErrorBase is rolled out
+    if (isValidLegacyError(error)) {
+        patchWithErrorCode(error, annotations.errorCodeIfNone);
     }
 
-    if (isFluidError(error) && !Object.isFrozen(error)) {
+    if (isFluidError(error)) {
         // We can simply annotate the error and return it
-        mixinTelemetryPropsWithFluidError(error, annotations);
+        mixinTelemetryPropsWithFluidError(error, annotations.props);
         return error;
     }
 
-    // We'll construct a new fluid error copying certain properties over if present
-    const originalErrorObject = isRegularObject(error)
-        ? error
-        : { message: String(error) };
-    const fluidError = createFluidErrorFromUnknownErrorObject(originalErrorObject);
+    // We have to construct a new fluid error, copying safe properties over
+    const { message, stack } = extractLogSafeErrorProperties(error);
+    const fluidError: IFluidErrorBase = {
+        errorType: "",
+        fluidErrorCode: annotations.errorCodeIfNone ?? "none",
+        message,
+        stack: stack ?? new Error("<<generated stack>>").stack,
+    };
 
-    mixinTelemetryPropsWithFluidError(fluidError, annotations);
+    mixinTelemetryPropsWithFluidError(fluidError, {
+        ...annotations.props,
+        untrustedOrigin: true, // This will let us filter to errors not originated by our own code
+        typeofError: typeof(error) === "object" ? undefined : typeof(error), // Only interesting for non-objects
+    });
     return fluidError;
 }
 
-//* Write tsdoc comments
-function createFluidErrorFromUnknownErrorObject(
-    originalErrorObject: unknown,
-): IFluidErrorBase {
-    const defaultErrorType = isErrorLike(originalErrorObject)
-        ? `none (${originalErrorObject.name})`
-        : `none (${typeof(originalErrorObject)})`;
-
-    // Pull each of IFluidErrorBase's properties off the originalError, regardless of their type
-    const { errorType, fluidErrorCode, message, name, stack } =
-        originalErrorObject as { [P in keyof IFluidErrorBase]: unknown; };
-    return {
-        errorType:
-            typeof errorType === "string"
-                ? errorType  //* BUT: we won't be copying over other props or functions that errorType may imply
-                : defaultErrorType,
-        fluidErrorCode:
-            typeof fluidErrorCode === "string"
-                ? fluidErrorCode
-                : "none",
-        message:
-            typeof message === "string" || message === undefined
-                ? message
-                : String(message),
-        name:
-            typeof name === "string" || name === undefined
-                ? name
-                : String(name),
-        stack:
-            typeof stack === "string"
-                ? stack
-                : new Error("<<generated stack>>").stack,
-    };
-}
-
-/** Mixin the telemetry props, along with errorType, fluidErrorCode and normalizeHint */
+/** Mixin the telemetry props, along with errorType and fluidErrorCode */
 function mixinTelemetryPropsWithFluidError(
     error: IFluidErrorBase,
-    annotations: FluidErrorAnnotations,
+    props?: ITelemetryProperties,
 ) {
     const { errorType, fluidErrorCode } = error;
-    const normalizeHint = annotations.normalizeHint;
 
     // This is a back-compat move, so old loggers will include errorType and fluidErrorCode via prepareErrorObject
-    mixinTelemetryProps(error, { ...annotations.props, errorType, fluidErrorCode, normalizeHint });
+    mixinTelemetryProps(error, { ...props, errorType, fluidErrorCode });
 }
 
 /**
@@ -152,7 +125,7 @@ function mixinTelemetryPropsWithFluidError(
     error: unknown,
     props: ITelemetryProperties,
 ): ILoggingError {
-    if (isRegularObject(error) && !Object.isFrozen(error)) {
+    if (isRegularObject(error)) {
         mixinTelemetryProps(error, props);
         return error;
     }

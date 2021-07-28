@@ -407,9 +407,9 @@ describe.skip("Error Propagation", () => {
     }, {});
     const annotationCases: Record<string, FluidErrorAnnotations> = {
         noAnnotations: {},
-        justErrorCodeIfNone: { normalizeHint: "foo" },
+        justErrorCodeIfNone: { errorCodeIfNone: "foo" },
         justProps: { props: { foo: "bar", one: 1, u: undefined, t: true } },
-        allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, normalizeHint: "foo" },
+        allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
     };
 
     let mixinStub: sinon.SinonStub;
@@ -420,9 +420,9 @@ describe.skip("Error Propagation", () => {
     ) {
         const expectedErrorCode =
             expected.fluidErrorCode === "<none>"
-            ? annotations.normalizeHint === undefined
+            ? annotations.errorCodeIfNone === undefined
                 ? "none"
-                : `none (${annotations.normalizeHint})`
+                : `none (${annotations.errorCodeIfNone})`
             : expected.fluidErrorCode;
         assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
         assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
