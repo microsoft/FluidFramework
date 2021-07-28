@@ -569,7 +569,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         private readonly loader: Loader,
         config: IContainerConfig,
     ) {
-        super();
+        super((name, error) => {
+            this.logger.sendErrorEvent(
+                {
+                    eventName: "ContainerEventHandlerException",
+                    name: typeof name === "string" ? name : undefined,
+                },
+                error);
+            });
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
@@ -715,34 +722,35 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
         this._closed = true;
 
-        this.collabWindowTracker.stopSequenceNumberUpdate();
-        this._deltaManager.close(error);
+        // Ensure that we raise all key events even if one of these throws
+        try {
+            this.collabWindowTracker.stopSequenceNumberUpdate();
+            this._deltaManager.close(error);
 
-        this._protocolHandler?.close();
+            this._protocolHandler?.close();
 
-        this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+            this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-        assert(this.connectionState === ConnectionState.Disconnected, 0x0cf /* "disconnect event was not raised!" */);
+            assert(this.connectionState === ConnectionState.Disconnected,
+                0x0cf /* "disconnect event was not raised!" */);
 
-        this._storageService?.dispose();
+            this._storageService?.dispose();
 
-        // Notify storage about critical errors. They may be due to disconnect between client & server knowledge about
-        // file, like file being overwritten in storage, but client having stale local cache.
-        // Driver need to ensure all caches are cleared on critical errors
-        this.service?.dispose(error);
-
-        if (error !== undefined) {
-            this.logger.sendErrorEvent(
-                {
-                    eventName: "ContainerClose",
-                    lastSequenceNumber: this._deltaManager.lastSequenceNumber,
-                },
-                error,
-            );
-        } else {
-            assert(this.loaded, 0x0d0 /* "Container in non-loaded state before close!" */);
-            this.logger.sendTelemetryEvent({ eventName: "ContainerClose" });
+            // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
+            // about file, like file being overwritten in storage, but client having stale local cache.
+            // Driver need to ensure all caches are cleared on critical errors
+            this.service?.dispose(error);
+        } catch (exception) {
+            this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
         }
+
+        this.logger.sendTelemetryEvent(
+            {
+                eventName: "ContainerClose",
+                loaded: this.loaded,
+            },
+            error,
+        );
 
         this.emit("closed", error);
 
@@ -1257,7 +1265,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        // Safety net: static version of Container.load() should have got this message through "closed" handler.
+        // Safety net: static version of Container.load() should have learned about it through "closed" handler.
         // But if that did not happen for some reason, fail load for sure.
         // Otherwise we can get into situations where container is closed and does not try to connect to ordering
         // service, but caller does not know that (callers do expect container to be not closed on successful path
