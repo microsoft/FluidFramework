@@ -87,25 +87,25 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
             const user1ContainerRuntime = dataObject1.context;
             const user2ContainerRuntime = dataObject2.context;
 
-            user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            user1ContainerRuntime.containerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user1SignalReceivedCount += 1;
                 }
             });
 
-            user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+            user2ContainerRuntime.containerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
                 if (message.type === "TestSignal") {
                     user2SignalReceivedCount += 1;
                 }
             });
 
             user1ContainerRuntime.submitSignal("TestSignal", true);
-            await waitForSignal(user1ContainerRuntime, user2ContainerRuntime);
+            await waitForSignal(user1ContainerRuntime.containerRuntime, user2ContainerRuntime.containerRuntime);
             assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 
             user2ContainerRuntime.submitSignal("TestSignal", true);
-            await waitForSignal(user1ContainerRuntime, user2ContainerRuntime);
+            await waitForSignal(user1ContainerRuntime.containerRuntime, user2ContainerRuntime.containerRuntime);
             assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
             assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
         });
