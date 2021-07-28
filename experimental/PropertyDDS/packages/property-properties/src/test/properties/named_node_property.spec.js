@@ -15,7 +15,7 @@ describe('NamedNodeProperty', function () {
   before(function () {
     // Get all the objects we need in this test here.
     PropertyFactory = require('../..').PropertyFactory;
-    NamedNodeProperty = require('../../src/properties/named_node_property');
+    NamedNodeProperty = require('../../properties/named_node_property');
     isGUID = require('@fluid-experimental/property-common').GuidUtils.isGUID;
 
     // Register a templates

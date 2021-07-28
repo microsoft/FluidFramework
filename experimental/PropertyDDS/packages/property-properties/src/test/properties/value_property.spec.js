@@ -15,7 +15,7 @@ describe('ValueProperty', function () {
    * Get all the objects we need in this test here.
    */
   before(function () {
-    ValueProperty = require('../../src/properties/value_property');
+    ValueProperty = require('../../properties/value_property');
     PropertyFactory = require('../..').PropertyFactory;
     Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
     Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;

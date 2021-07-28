@@ -8,7 +8,7 @@
 const PropertyFactory = require('..').PropertyFactory;
 const MSG = require('@fluid-experimental/property-common').constants.MSG
 const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
-const StringProperty = require('../src/properties/string_property');
+const StringProperty = require('../properties/string_property');
 
 describe('PropertyFactory', function () {
     beforeEach(() => {

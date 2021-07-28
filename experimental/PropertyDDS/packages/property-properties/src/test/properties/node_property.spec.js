@@ -19,8 +19,8 @@ describe('NodeProperty', function () {
     // Get all the objects we need in this test here.
     PropertyFactory = require('../..').PropertyFactory;
     BaseProperty = require('../..').BaseProperty;
-    NodeProperty = require('../../src/properties/node_property');
-    MapProperty = require('../../src/properties/map_property');
+    NodeProperty = require('../../properties/node_property');
+    MapProperty = require('../../properties/map_property');
     ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
     _ = require('lodash');
     generateGuid = require('@fluid-experimental/property-common').GuidUtils.generateGUID;

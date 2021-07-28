@@ -18,9 +18,9 @@ describe('Reference Properties', function () {
     before(function () {
         // Get all the objects we need in this test here.
         PropertyFactory = require('../..').PropertyFactory;
-        ReferenceProperty = require('../../src/properties/reference_property');
-        ReferenceMapProperty = require('../../src/properties/reference_map_property');
-        ReferenceArrayProperty = require('../../src/properties/reference_array_property');
+        ReferenceProperty = require('../../properties/reference_property');
+        ReferenceMapProperty = require('../../properties/reference_map_property');
+        ReferenceArrayProperty = require('../../properties/reference_array_property');
         ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
         BaseProperty = require('../..').BaseProperty;
         MSG = require('@fluid-experimental/property-common').constants.MSG;

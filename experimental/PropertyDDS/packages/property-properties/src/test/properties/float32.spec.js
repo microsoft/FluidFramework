@@ -13,7 +13,7 @@ describe('Float32', function () {
    * Get all the objects we need in this test here.
    */
   before(function () {
-    Float32Property = require('../../src/properties/float_properties').Float32Property;
+    Float32Property = require('../../properties/float_properties').Float32Property;
   });
 
   describe('Checking the value stored in ValueProperty', function () {
