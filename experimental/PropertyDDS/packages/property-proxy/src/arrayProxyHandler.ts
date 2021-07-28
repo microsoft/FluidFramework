@@ -176,7 +176,7 @@ export const arrayProxyHandler = {
      * @param {Object} value The value to be set.
      * @return {Boolean} Returns a boolean.
      */
-    set(target: ComponentArray, key: string, value: object) {
+    set(target: ComponentArray, key: string, value: Record<string, unknown>) {
         const asteriskFound = Utilities.containsAsterisk(String(key));
         if (asteriskFound && forceType<string>(key)) {
             key = key.slice(0, -1);

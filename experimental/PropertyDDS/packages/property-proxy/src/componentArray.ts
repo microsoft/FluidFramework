@@ -34,7 +34,7 @@ const createArrayIterator = (target: ComponentArray) => function*() {
  * @hidden
  */
 const prepareElementsForInsertion =
-    (property: ArrayProperty, elements: (BaseProperty | object)[]) =>
+    (property: ArrayProperty, elements: (BaseProperty | Record<string, unknown>)[]) =>
         elements.map((element) => Utilities.prepareElementForInsertion(property, element));
 
 /**
