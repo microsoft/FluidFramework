@@ -7,19 +7,19 @@ import { v4 as uuid } from "uuid";
 import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { stringToBuffer, unreachableCase } from "@fluidframework/common-utils";
-import { ISnapshotValue } from "./odspUtils";
+import { ISnapshotContents } from "./odspUtils";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
  */
-export function convertCreateNewSummaryTreeToTreeAndBlobs(summary: ISummaryTree, treeId: string): ISnapshotValue {
+export function convertCreateNewSummaryTreeToTreeAndBlobs(summary: ISummaryTree, treeId: string): ISnapshotContents {
     const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
     const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
     const sequenceNumber = documentAttributes.sequenceNumber;
     const blobs = new Map<string, ArrayBuffer>();
     const snapshotTree = convertCreateNewSummaryTreeToTreeAndBlobsCore(summary, blobs);
     snapshotTree.id = treeId;
-    const snapshotTreeValue: ISnapshotValue = {
+    const snapshotTreeValue: ISnapshotContents = {
         snapshotTree,
         blobs,
         ops: [],

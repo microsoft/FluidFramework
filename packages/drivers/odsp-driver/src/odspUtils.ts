@@ -38,7 +38,7 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
-export interface ISnapshotValue {
+export interface ISnapshotContents {
     snapshotTree: ISnapshotTree,
     blobs: Map<string, ArrayBuffer>,
     ops: ISequencedDeltaOpMessage[],

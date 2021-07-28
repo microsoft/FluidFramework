@@ -11,7 +11,7 @@ import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";
 import { getHashedDocumentId } from "../odspPublicUtils";
-import { INewFileInfo, createCacheSnapshotKey, ISnapshotValue } from "../odspUtils";
+import { INewFileInfo, createCacheSnapshotKey, ISnapshotContents } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
@@ -52,7 +52,7 @@ describe("Create New Utils Tests", () => {
         return summary;
     };
 
-    const test = (snapshot: ISnapshotValue) => {
+    const test = (snapshot: ISnapshotContents) => {
         const snapshotTree = snapshot.snapshotTree;
         assert.strictEqual(Object.entries(snapshotTree.trees).length, 2, "app and protocol should be there");
         assert.strictEqual(snapshot.blobs.size, 2, "2 blobs should be there");

@@ -202,6 +202,7 @@ export interface ICreateFileResponse {
 export interface IVersionedValueWithEpoch {
     value: any;
     fluidEpoch: string,
+    // This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
     version: 3,
 }
 

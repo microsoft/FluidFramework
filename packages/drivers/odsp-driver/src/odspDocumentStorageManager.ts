@@ -38,7 +38,7 @@ import { IOdspCache } from "./odspCache";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
-    ISnapshotValue,
+    ISnapshotContents,
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -327,8 +327,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const blob = await this.readBlobCore(blobId);
-        return blob;
+        return this.readBlobCore(blobId);
     }
 
     public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
@@ -409,12 +408,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         // Do it only once - we might get more here due to summarizer - it needs only container tree, not full snapshot.
         if (this.firstVersionCall && count === 1 && (blobid === null || blobid === this.documentId)) {
             const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
-            const odspSnapshotCacheValue: ISnapshotValue = await PerformanceEvent.timedExecAsync(
+            const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
                 this.logger,
                 { eventName: "ObtainSnapshot" },
                 async (event: PerformanceEvent) => {
-                    let cachedSnapshot: ISnapshotValue | undefined;
-                    const cachedSnapshotP: Promise<ISnapshotValue | undefined> =
+                    let cachedSnapshot: ISnapshotContents | undefined;
+                    const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
                         this.epochTracker.get(createCacheSnapshotKey(this.odspResolvedUrl));
 
                     let method: string;

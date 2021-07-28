@@ -23,7 +23,7 @@ import {
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
-    ISnapshotValue,
+    ISnapshotContents,
 } from "./odspUtils";
 import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
 
@@ -43,7 +43,7 @@ export async function fetchSnapshot(
     fetchFullSnapshot: boolean,
     logger: ITelemetryLogger,
     snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
-): Promise<ISnapshotValue> {
+): Promise<ISnapshotContents> {
     const path = `/trees/${versionId}`;
     let queryParams: ISnapshotOptions = {};
 
@@ -77,7 +77,7 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
-): Promise<ISnapshotValue> {
+): Promise<ISnapshotContents> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
         storageTokenFetcher,
@@ -147,7 +147,7 @@ async function fetchLatestSnapshotCore(
     logger: ITelemetryLogger,
     snapshotDownloader: <T>(url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<T>>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-): Promise<ISnapshotValue> {
+): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         if (tokenFetchOptions.refresh) {
             // This is the most critical code path for boot.

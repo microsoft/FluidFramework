@@ -6,7 +6,7 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts";
-import { ISnapshotValue } from "./odspUtils";
+import { ISnapshotContents } from "./odspUtils";
 
 /**
  * Build a tree hierarchy base on a flat tree
@@ -55,7 +55,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  */
 export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
     odspSnapshot: IOdspSnapshot,
-): ISnapshotValue {
+): ISnapshotContents {
     const blobsWithBufferContent = new Map<string, ArrayBuffer>();
     if (odspSnapshot.blobs) {
         odspSnapshot.blobs.forEach((blob) => {
@@ -64,7 +64,7 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
             blobsWithBufferContent.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
         });
     }
-    const val: ISnapshotValue = {
+    const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops ?? [],
         sequenceNumber: odspSnapshot.trees && (odspSnapshot.trees[0] as any).sequenceNumber,

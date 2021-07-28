@@ -28,7 +28,7 @@ import {
     getWithRetryForTokenRefresh,
     INewFileInfo,
     getOrigin,
-    ISnapshotValue,
+    ISnapshotContents,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -80,7 +80,7 @@ export async function createNewFluidFile(
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
         // converting summary and getting sequence number
-        const snapshot: ISnapshotValue = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
+        const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
         // caching the converted summary
         await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
