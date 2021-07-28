@@ -5,17 +5,20 @@ author: skylerjokiel
 editor: tylerbutler
 ---
 
-Fluid offers flexible ways to model your collaborative data. Shared objects can be declaratively defined in the `initialObjects` or dynamically created at runtime.
+Fluid offers flexible ways to model your collaborative data. You can declaratively define a static set of Fluid objects
+using `initialObjects`, or, for more sophisticated scenarios, dynamically create Fluid objects at runtime.
 
 ## Defining `initialObjects`
 
-The most straightforward way to use Fluid is by defining initial shared objects that are created when the `FluidContainer` is created, and exist for the lifetime of the underlying container.
+The most straightforward way to use Fluid is by defining initial Fluid objects that are created when the
+`FluidContainer` is created, and exist for the lifetime of the underlying container. `initialObjects` serve as a base
+foundation for a Fluid *schema* -- a definition of the shape of your data.
 
-`initialObjects` are always *connected* -- that is, they are connected to the Fluid service and are fully collaborative. You can access initial objects via the `initialObjects` property on the `FluidContainer`. The `initialObjects` property has the same signature as defined in the schema.
+`initialObjects` are always *connected* -- that is, they are connected to the Fluid service and are fully distributed.
+You can access initial objects via the `initialObjects` property on the `FluidContainer`. The `initialObjects` property
+at runtime has the same signature as the one you define in your declaration of `initialObjects.`
 
-### When to use `initialObjects`
-
-`initialObjects` are the most straightforward way to use Fluid and serve as a base foundation for a Fluid schema. Your schema must include one initial object and in many cases `initialObjects` is sufficient to build a Fluid application.
+You must define at least one `initialObject`. In many cases `initialObjects` is sufficient to build a Fluid application.
 
 ### Example usage
 
@@ -39,15 +42,21 @@ const cell = container.initialObjects["custom-cell"];
 
 ## Dynamic objects
 
-A shared object can be created dynamically by the container at runtime. Dynamic objects are both created and loaded dynamically and are always stored as references within another shared object. In other words, a container can create an object dynamically, and you must store references to those objects within another shared object.
+A Fluid object can be created dynamically by the container at runtime. Dynamic objects are both created and loaded
+dynamically and are always stored as references within another Fluid object. In other words, a container can create an
+object dynamically, and you must store references to those objects within another Fluid object so that you can later
+retrieve them.
 
 ### Creating a dynamic object
 
-A `FluidContainer` object has a `create` function that takes a shared object type and will return a new shared object. The `FluidContainer` can only create types defined in the `dynamicObjectTypes` section of the container schema.
+A `FluidContainer` object has a `create` function that takes a Fluid object type (that is, a distributed data structure
+or `DataObject`) and will return a new Fluid object. The `FluidContainer` can only create types defined in the
+`dynamicObjectTypes` section of the container schema.
 
-Dynamically created objects are local only (in-memory) and need to be stored on a connected shared object before being collaborative.
+Dynamically created objects are local only (in-memory) and need to be stored on a connected Fluid object before they are
+shared with other clients.
 
-```typescript
+```js
 const schema = {
     /*...*/,
     dynamicObjectTypes: [ SharedCell, SharedMap ],
@@ -59,15 +68,32 @@ const newCell = await container.create(SharedCell); // Create a new SharedCell
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
+{{% callout tip %}}
+Another way to think about `initialObjects` and dynamic objects is as follows:
+
+With `initialObjects`, you're telling Fluid both the type of the object *and* the key you'll use to later retrieve the
+object. This is statically defined, so Fluid can create the object for you and ensure it's always available via the key
+you defined.
+
+On the other hand, with dynamic objects, you're telling Fluid what object types it can create as well as *how* to create
+objects of those types, but that's all. Once you create a dynamic object using `container.create`, that objects is
+in-memory only. If you want to load that Fluid object again later, you must store it within another Fluid object. In a
+sense, you're defining the "key" to access that data again later, just as you did with `initialObjects`, but you define
+it dynamically at runtime.
+
+{{% /callout %}}
+
 ### Using handles to store and retrieve Fluid objects
 
-All shared objects have a `handle` property that can be used to store and retrieve them from other shared objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
+All Fluid objects have a `handle` property that can be used to store and retrieve them from other Fluid objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
 
-Dynamically created objects need to be stored on an already connected shared object, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense shared objects are arbitrarily nestable.
+Dynamically created objects need to be stored on an already connected Fluid object, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense Fluid objects are arbitrarily nestable.
 
 When retrieving dynamically created objects you need to first get the object's handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
-This example shows creating a new `SharedCell` and storing it in the `SharedMap` initial object using the handle. It also demonstrates retrieving the `SharedCell` object from the `SharedMap` and listening for the new `SharedCell` being added to the Map.
+The following example demonstrates dynamically creating a `SharedCell` and storing it in the `SharedMap` initial object
+using the handle. It also demonstrates retrieving the `SharedCell` object from the `SharedMap` and listening for the new
+`SharedCell` being added to the Map.
 
 ```typescript
 const schema = {
@@ -109,7 +135,7 @@ map.on("valueChanged", (changed) => {
 
 Dynamic objects are more difficult to work with than `initialObjects`, but are especially important for large data sets where portions of the data are virtualized. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded. Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
-An example where this is useful is building a collaborative storyboarding application. In this scenario you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board you can load them on demand as the user accesses them, instead of having to load them all in memory at once.
+An example where this is useful is building a collaborative storyboarding application. In this scenario you can have a large number of individual boards that make up the storyboard. By using a dynamic Fluid object for each board you can load them on demand as the user accesses them, instead of having to load them all in memory at once.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->

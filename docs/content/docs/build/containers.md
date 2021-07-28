@@ -7,7 +7,7 @@ editor: tylerbutler
 
 ## Overview
 
-The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of shared objects and APIs to manage the lifecyle of those objects.
+The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of Fluid objects and APIs to manage the lifecycle of those objects.
 
 This documentation will explain how to create and load containers, the APIs to interact with them, and the overall container lifecycle.
 
@@ -21,7 +21,7 @@ In the below scenarios, `client` represents the service-specific client. See the
 
 You must define a schema that represents the structure of the data within your container. A schema can include `initialObjects` that are always available and types that can be dynamically created by the container at runtime. The same schema definition must be provided for creation and subsequent loading of the container. For more information on `initialObjects` and dynamic object creation see [Data modeling](./data-modeling.md).
 
-This example schema defines two initial objects, and declares `SharedCell` and `SharedString` as shared object types that can be dynamically created at runtime.
+This example schema defines two initial objects, `layout` and `text`, and declares the DDSes `SharedCell` and `SharedString` as Fluid object types that can be dynamically created at runtime.
 
 ```typescript
 const schema = {
@@ -108,7 +108,8 @@ container.on("disposed", () => {
 
 ### initialObjects
 
-`initialObjects` are shared objects that you define in a container's schema and exist for the lifetime of the container. These shared objects are exposed via the `initialObjects` property on the container.
+`initialObjects` are Fluid objects that you define in a container's schema and exist for the lifetime of the container.
+These Fluid objects are exposed via the `initialObjects` property on the container.
 
 ```typescript
 const schema = {
@@ -129,7 +130,7 @@ For more information about `initialObjects` see [Data modeling](data-modeling.md
 
 ### create
 
-The container also exposes a create function that allows dynamic creation of shared objects. This enables containers to create Fluid objects dynamically at runtime.
+The container also exposes a create function that allows dynamic creation of Fluid objects. This enables containers to create Fluid objects dynamically at runtime.
 
 For more information about dynamic object creation see [Data modeling](data-modeling.md).
 

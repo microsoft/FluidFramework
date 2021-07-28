@@ -11,7 +11,7 @@ There are three primary concepts to understand when building an application with
 
 - Service
 - Container
-- Shared objects
+- Fluid objects
 
 ### Service
 
@@ -25,15 +25,17 @@ See [Supported service-specific client packages](#service-specific-client-packag
 
 ### Container
 
-The container is the primary unit of encapsulation in Fluid. It consists of a collection of shared objects and supporting APIs to manage the lifecycle of the container and the objects within it.
+The container is the primary unit of encapsulation in Fluid. It consists of a collection of Fluid objects and supporting APIs to manage the lifecycle of the container and the objects within it.
 
 New containers require a client-driven action and container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
 
 For more about containers see [Containers](./containers.md).
 
-### Shared objects
+### Fluid objects
 
-A shared object is an object type that powers collaborative data by exposing a specific API. Many shared objects can exist within the context of a container and they can be created either statically or dynamically. Distributed Data Structures(DDSes) and DataObjects are both types of shared objects.
+
+A *Fluid object* is any object type that supports collaboration (simultaneous editing). Fluid Framework contains two
+types of Fluid objects: distributed data structures (DDSes) and `DataObject`s.
 
 For more information see [Data modeling](./data-modeling.md).
 
@@ -44,7 +46,7 @@ and a service-specific client package like `tinylicious-client`.
 
 ### The `fluid-framework` package
 
-The `fluid-framework` package is a collection of core Fluid APIs that make it easy to build and use applications. This package contains all the common type definitions as well as all the primitive shared objects.
+The `fluid-framework` package is a collection of core Fluid APIs that make it easy to build and use applications. This package contains all the common type definitions as well as all the primitive Fluid objects.
 
 ### Service-specific client packages
 

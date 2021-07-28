@@ -7,12 +7,23 @@ author: tylerbutler
 editor: sambroner
 ---
 
-The Fluid Framework provides developers with *distributed data structures* (DDSes) that automatically ensure that each
-client has access to the same state. We call them *distributed data structures* because they are similar to data
-structures used commonly when programming, like strings, maps/dictionaries, and sequences/lists. The APIs provided by
-DDSes are designed to be familiar to programmers who've used these types of data structures before. For example, the
-[SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary data structure, and provides `get`
-and `set` methods to store and retrieve data in the map.
+The Fluid Framework provides developers with two types of Fluid objects: *distributed data structures* (DDSes) and
+`DataObjects`. DDSes are low-level data structures, while `DataObject`s are composed of DDSes and other Fluid objects.
+In other words, you can't have `DataObject`s without DDSes, because `DataObject`s are composed of DDSes. DataObjects are
+used to organize distributed data structures into semantically meaningful groupings for your scenario, as well as
+providing an API surface to your data. However, many Fluid applications will use only DDSes.
+
+{{% callout note "See also" %}}
+
+[Encapsulating data with DataObject]({{< relref "dataobject-aqueduct.md" >}})
+
+{{% /callout %}}
+
+DDSes automatically ensure that each client has access to the same state. They're called *distributed data structures*
+because they are similar to data structures used commonly when programming, like strings, maps/dictionaries, and
+sequences/lists. The APIs provided by DDSes are designed to be familiar to programmers who've used these types of data
+structures before. For example, the [SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary
+data structure, and provides `get` and `set` methods to store and retrieve data in the map.
 
 When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
 However, a DDS is not *just* a local object. A DDS can also be changed by other users that are editing.
