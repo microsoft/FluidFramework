@@ -346,7 +346,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             id = version.id;
         }
 
-        const snapshotTree = await this.readCommit(id);
+        const snapshotTree = await this.readTree(id);
         if (!snapshotTree) {
             return null;
         }
@@ -457,7 +457,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             if (snapshotTree) {
                 id = snapshotTree.id;
                 assert(id !== undefined, "Root tree should contain the id");
-                this.initCommitCache(new Map([[id, snapshotTree]]));
+                this.setRootTree(id, snapshotTree);
             }
             if (blobs) {
                 this.initBlobsCache(blobs);
@@ -607,10 +607,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not implemented yet");
     }
 
-    private initCommitCache(trees: Map<string, api.ISnapshotTree>) {
-        trees.forEach((tree, id) => {
-            this.commitCache.set(id, tree);
-        });
+    private setRootTree(id: string, tree: api.ISnapshotTree) {
+        this.commitCache.set(id, tree);
     }
 
     private initBlobsCache(blobs: Map<string, ArrayBuffer>) {
@@ -635,7 +633,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
     }
 
-    private async readCommit(id: string): Promise<api.ISnapshotTree | null> {
+    private async readTree(id: string): Promise<api.ISnapshotTree | null> {
         if (!this.snapshotUrl) {
             return null;
         }
@@ -655,7 +653,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 if (snapshot.snapshotTree) {
                     assert(snapshot.snapshotTree.id !== undefined, "Root tree should contain the id!!");
                     treeId = snapshot.snapshotTree.id;
-                    this.initCommitCache(new Map([[treeId, snapshot.snapshotTree]]));
+                    this.setRootTree(treeId, snapshot.snapshotTree);
                 }
                 if (snapshot.blobs) {
                     this.initBlobsCache(snapshot.blobs);
@@ -683,12 +681,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         let hierarchicalProtocolTree: api.ISnapshotTree | null;
         if (typeof (protocolTreeOrId) === "string") {
             // Backwards compat for older summaries
-            hierarchicalProtocolTree = await this.readCommit(protocolTreeOrId);
+            hierarchicalProtocolTree = await this.readTree(protocolTreeOrId);
         } else {
             hierarchicalProtocolTree = protocolTreeOrId;
         }
 
-        const hierarchicalAppTree = await this.readCommit(appTreeId);
+        const hierarchicalAppTree = await this.readTree(appTreeId);
         if (!hierarchicalProtocolTree) {
             throw new Error("Invalid protocol tree");
         }
