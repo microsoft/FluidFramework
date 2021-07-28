@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ILoggingError } from "@fluidframework/common-definitions";
-
-// ///////////////////////////////////////////////////////////////////////// //
-//        THIS CODE TO BE MOVED TO COMMON-DEFINITIONS AND COMMON-UTILS       //
-// ///////////////////////////////////////////////////////////////////////// //
-
 /**
  * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
  * It includes Error's properties but as optional, plus errorType and fluidErrorCode strings.
@@ -31,6 +25,3 @@ export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErr
     return typeof e?.errorType === "string" &&
         typeof e?.message === "string";
 }
-
-/** type guard for ILoggingError interface */
-export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";

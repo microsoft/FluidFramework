@@ -12,7 +12,7 @@ import {
     IFluidErrorBase,
     isFluidError,
     isValidLegacyError,
-} from "./staging";
+} from "./fluidErrorBase";
 import {
     mixinTelemetryProps,
     copyProps,
@@ -156,6 +156,9 @@ export function generateStack(): string | undefined {
     }
     return stack;
 }
+
+/** type guard for ILoggingError interface */
+export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property

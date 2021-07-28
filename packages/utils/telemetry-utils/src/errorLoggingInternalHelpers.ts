@@ -5,8 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ILoggingError, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { isILoggingError } from "./staging";
-import { LoggingError, isRegularObject } from "./errorLogging";
+import { LoggingError, isILoggingError, isRegularObject } from "./errorLogging";
 
 // ///////////////////////////////////////////////////////////////////////// //
 //               This code is not exported outside this package              //

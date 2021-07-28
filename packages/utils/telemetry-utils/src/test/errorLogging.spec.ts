@@ -10,7 +10,7 @@ import sinon from "sinon";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
 import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateError, FluidErrorAnnotations } from "../errorLogging";
-import { IFluidErrorBase } from "../staging";
+import { IFluidErrorBase } from "../fluidErrorBase";
 import * as helpers from "../errorLoggingInternalHelpers";
 
 describe("Error Logging", () => {

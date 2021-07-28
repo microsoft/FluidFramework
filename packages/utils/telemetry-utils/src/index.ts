@@ -7,6 +7,6 @@ export * from "./errorLogging";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./events";
 export * from "./logger";
-export * from "./staging";
+export * from "./fluidErrorBase";
 export * from "./utils";
 // Do not export ./errorLoggingInternalHelpers
