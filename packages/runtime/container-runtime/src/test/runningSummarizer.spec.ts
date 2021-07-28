@@ -701,17 +701,18 @@ describe("Runtime", () => {
                     await emitNextOp(2); // set ref seq to 2
                     const afterSequenceNumber = 9;
                     const result = summarizer.enqueueSummarize({ reason: "test", afterSequenceNumber });
+                    assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
 
                     await emitNextOp(6);
-                    assertRunCounts(0, 0, 0, "on-demand should not run yet, still 1 op short");
+                    assertRunCounts(0, 0, 0, "enqueued should not run yet, still 1 op short");
 
                     await emitNextOp(1);
-                    assertRunCounts(1, 0, 0, "on-demand should run");
+                    assertRunCounts(1, 0, 0, "enqueued should run");
 
                     const submitResult = await result.summarySubmitted;
-                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.success, "enqueued summary should submit");
                     assert(submitResult.data.stage === "submit",
-                        "on-demand summary submitted data stage should be submit");
+                        "enqueued summary submitted data stage should be submit");
 
                     assert.strictEqual(submitResult.data.referenceSequenceNumber, 9, "ref seq num");
                     assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
@@ -736,7 +737,7 @@ describe("Runtime", () => {
 
                     await emitAck();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
-                    assert(ackNackResult.success, "on-demand summary should succeed");
+                    assert(ackNackResult.success, "enqueued summary should succeed");
                     assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
                         "should be ack");
                     assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
@@ -751,27 +752,28 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0);
 
                     const result = summarizer.enqueueSummarize({ reason: "test", afterSequenceNumber });
+                    assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
                     let submitRan = false;
                     result.summarySubmitted.then(() => { submitRan = true; }, () => {});
 
-                    // Even after finishing first heuristic summary, on-demand shouldn't run yet.
+                    // Even after finishing first heuristic summary, enqueued shouldn't run yet.
                     await emitAck();
 
                     // Should start running by heuristics again.
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(2, 0, 0);
-                    await emitNextOp(20); // make sure on-demand is ready
-                    assert(submitRan === false, "on-demand summary should not run until 2nd heuristic ack");
+                    await emitNextOp(20); // make sure enqueued is ready
+                    assert(submitRan === false, "enqueued summary should not run until 2nd heuristic ack");
 
-                    // After this ack, it should start running on-demand summary.
+                    // After this ack, it should start running enqueued summary.
                     await emitAck();
-                    assert((submitRan as boolean) === true, "on-demand summary should run");
+                    assert((submitRan as boolean) === true, "enqueued summary should run");
                     assertRunCounts(3, 0, 0);
 
                     const submitResult = await result.summarySubmitted;
-                    assert(submitResult.success, "on-demand summary should submit");
+                    assert(submitResult.success, "enqueued summary should submit");
                     assert(submitResult.data.stage === "submit",
-                        "on-demand summary submitted data stage should be submit");
+                        "enqueued summary submitted data stage should be submit");
 
                     const expectedRefSeqNum = summaryConfig.maxOps * 2 + 22;
                     assert.strictEqual(submitResult.data.referenceSequenceNumber, expectedRefSeqNum, "ref seq num");
@@ -792,17 +794,54 @@ describe("Runtime", () => {
 
                     await emitAck();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
-                    assert(ackNackResult.success, "on-demand summary should succeed");
+                    assert(ackNackResult.success, "enqueued summary should succeed");
                     assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
                         "should be ack");
                     assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
                         "summary ack handle should be test-ack-handle");
                 });
 
+                it("Should reject subsequent enqueued summarize attempt unless overridden", async () => {
+                    await emitNextOp(2); // set ref seq to 2
+                    const afterSequenceNumber = 9;
+                    const result = summarizer.enqueueSummarize({ reason: "test", afterSequenceNumber });
+                    assert(result.alreadyEnqueued === undefined, "should not be already enqueued");
+
+                    // While first attempt is still enqueued, it should reject subsequent ones
+                    const result2 = summarizer.enqueueSummarize({ reason: "test-fail" });
+                    assert(result2.alreadyEnqueued === true, "should be already enqueued");
+                    assert(result2.overridden === undefined, "should not be overridden");
+
+                    const result3 = summarizer.enqueueSummarize({ reason: "test-override", override: true });
+                    assert(result3.alreadyEnqueued === true, "should be already enqueued");
+                    assert(result3.overridden === true, "should be overridden");
+
+                    const firstResults = await Promise.all([
+                        result.summarySubmitted,
+                        result.summaryOpBroadcasted,
+                        result.receivedSummaryAckOrNack,
+                    ]);
+                    for (const firstResult of firstResults) {
+                        assert(firstResult.success === false, "should fail because of override");
+                    }
+
+                    await emitAck();
+                    const newResults = await Promise.all([
+                        result3.summarySubmitted,
+                        result3.summaryOpBroadcasted,
+                        result3.receivedSummaryAckOrNack,
+                    ]);
+                    for (const newResult of newResults) {
+                        assert(newResult.success === true, "should succeed");
+                    }
+                });
+
                 it("Should fail an enqueue summarize attempt if stopping", async () => {
                     summarizer.waitStop().catch(() => {});
                     const result1 = summarizer.enqueueSummarize({ reason: "test1" });
+                    assert(result1.alreadyEnqueued === undefined, "should not be already enqueued");
                     const result2 = summarizer.enqueueSummarize({ reason: "test2", afterSequenceNumber: 123 });
+                    assert(result2.alreadyEnqueued === undefined, "should not be already enqueued");
 
                     const allResults = await Promise.all([
                         result1.summarySubmitted,
@@ -820,7 +859,9 @@ describe("Runtime", () => {
                 it("Should fail an enqueue summarize attempt if disposed", async () => {
                     summarizer.dispose();
                     const result1 = summarizer.enqueueSummarize({ reason: "test1" });
+                    assert(result1.alreadyEnqueued === undefined, "should not be already enqueued");
                     const result2 = summarizer.enqueueSummarize({ reason: "test2", afterSequenceNumber: 123 });
+                    assert(result2.alreadyEnqueued === undefined, "should not be already enqueued");
 
                     const allResults = await Promise.all([
                         result1.summarySubmitted,

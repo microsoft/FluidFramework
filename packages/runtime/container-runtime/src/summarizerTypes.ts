@@ -94,6 +94,13 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     /** If specified, The summarize attempt will not occur until after this sequence number. */
     readonly afterSequenceNumber?: number;
+    /**
+     * True to override the existing enqueued summarize attempt if there is one.
+     * This will guarantee that this attempt gets enqueued. If override is false,
+     * than an existing enqueued summarize attempt will block a new one from being
+     * enqueued. There can only be one enqueued at a time. Defaults to false.
+     */
+    readonly override?: boolean;
 }
 
 /**
@@ -199,6 +206,30 @@ export type OnDemandSummarizeResult = (ISummarizeResults & {
     readonly alreadyRunning: Promise<void>;
 };
 
+export type EnqueueSummarizeResult = (ISummarizeResults & {
+    /**
+     * Indicates that another summarize attempt is not already enqueued,
+     * and this attempt has been enqueued.
+     */
+    readonly alreadyEnqueued?: undefined;
+}) | (ISummarizeResults & {
+    /** Indicates that another summarize attempt was already enqueued. */
+    readonly alreadyEnqueued: true;
+    /**
+     * Indicates that the other enqueued summarize attempt was abandoned,
+     * and this attempt has been enqueued enqueued.
+     */
+    readonly overridden: true;
+}) | {
+    /** Indicates that another summarize attempt was already enqueued. */
+    readonly alreadyEnqueued: true;
+    /**
+     * Indicates that the other enqueued summarize attempt remains enqueued,
+     * and this attempt has not been enqueued.
+     */
+    readonly overridden?: undefined;
+};
+
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
     | "failToSummarize"
@@ -237,8 +268,12 @@ export interface ISummarizer
 
     /** Attempts to generate a summary on demand. If already running, takes no action. */
     summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
-    /** Enqueue an attempt to summarize after the specified sequence number. */
-    enqueueSummarize(options: IEnqueueSummarizeOptions): ISummarizeResults;
+    /**
+     * Enqueue an attempt to summarize after the specified sequence number.
+     * If afterSequenceNumber is provided, the summarize attempt is "enqueued"
+     * to run once an eligible op comes in with sequenceNumber \>= afterSequenceNumber.
+     */
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
 }
 
 /** Data about an attempt to summarize used for heuristics. */

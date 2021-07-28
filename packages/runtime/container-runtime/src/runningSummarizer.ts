@@ -23,8 +23,8 @@ import {
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     OnDemandSummarizeResult,
-    ISummarizeResults,
     IOnDemandSummarizeOptions,
+    EnqueueSummarizeResult,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -358,26 +358,36 @@ export class RunningSummarizer implements IDisposable {
     public enqueueSummarize({
         reason,
         afterSequenceNumber = 0,
+        override = false,
         ...options
-    }: IEnqueueSummarizeOptions): ISummarizeResults {
+    }: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
         const onDemandReason = `enqueue;${reason}` as const;
-        // If afterSequenceNumber is provided, the on-demand summary is "enqueued" to run
-        // once an eligible op comes in with sequenceNumber >= afterSequenceNumber.
+        let overridden: true | undefined;
         if (this.enqueuedSummary !== undefined) {
-            this.enqueuedSummary.reason = onDemandReason;
-            this.enqueuedSummary.afterSequenceNumber = afterSequenceNumber;
-            this.enqueuedSummary.options = options;
-        } else {
-            this.enqueuedSummary = {
-                reason: onDemandReason,
-                afterSequenceNumber,
-                options,
-                resultsBuilder: new SummarizeResultBuilder(),
-            };
+            if (!override) {
+                return { alreadyEnqueued: true };
+            }
+            // Override existing enqueued summarize attempt.
+            this.enqueuedSummary.resultsBuilder.fail(
+                "Aborted; overridden by another enqueue summarize attempt",
+                undefined,
+            );
+            this.enqueuedSummary = undefined;
+            overridden = true;
         }
+        this.enqueuedSummary = {
+            reason: onDemandReason,
+            afterSequenceNumber,
+            options,
+            resultsBuilder: new SummarizeResultBuilder(),
+        };
         const results = this.enqueuedSummary.resultsBuilder.build();
         this.tryRunEnqueuedSummary();
-        return results;
+        return overridden ? {
+            ...results,
+            alreadyEnqueued: true,
+            overridden: true,
+        } : results;
     }
 
     /**
