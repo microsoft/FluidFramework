@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISequencedDeltaOpMessage } from "./contracts";
+import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
 import { BlobCore, getAndValidateNodeProps, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
@@ -21,20 +22,24 @@ export interface ISnapshotHeader {
     CreateVersion: string,
     // Seq number at which the snapshot is created.
     SnapshotSequenceNumber: number,
+    // Id of the snapshot.
+    SnapshotId: string,
 }
 
 /**
  * Recreates header section and then validate that.
  * @param node - tree node to read header section from
  */
-function readAndValidateHeaderSection(node: NodeCore) {
+function readAndValidateHeaderSection(node: NodeCore): ISnapshotHeader {
     const header =
-        getAndValidateNodeProps<ISnapshotHeader>(node, ["MinReadVersion", "CreateVersion", "SnapshotSequenceNumber"]);
+        getAndValidateNodeProps<ISnapshotHeader>(node,
+            ["MinReadVersion", "CreateVersion", "SnapshotSequenceNumber", "SnapshotId"]);
 
     assert(snapshotMinReadVersion >= header.MinReadVersion,
         "Driver min read version should >= to server minReadVersion");
     assert(header.CreateVersion >= snapshotMinReadVersion,
         "Snapshot should be created with minReadVersion or above");
+    return header;
 }
 
 /**
@@ -115,7 +120,7 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
  * @returns - tree, blobs and ops from the snapshot.
  */
-export function parseCompactSnapshotResponse(buffer: ReadBuffer) {
+export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents {
     const builder = TreeBuilder.load(buffer);
     let ops: ISequencedDeltaOpMessage[] | undefined;
 
@@ -123,17 +128,22 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer) {
     const root = builder.getNode(0);
     assert(root.length >= 4 && root.length <= 5, "4 or 5 sections should be there");
 
-    readAndValidateHeaderSection(root.getNode(0));
+    const header = readAndValidateHeaderSection(root.getNode(0));
 
     const dictionary = readDictionarySection(root.getNode(2));
 
-    const tree = readTreeSection(root.getNode(1), dictionary);
-
+    const snapshotTree = readTreeSection(root.getNode(1), dictionary);
+    snapshotTree.trees[0].id = header.SnapshotId;
     const blobs = readBlobSection(root.getNode(3), dictionary);
 
     if (root.length === 5) {
         ops = readOpsSection(root.getNode(4));
     }
 
-    return { tree, blobs, ops };
+    return {
+        snapshotTree,
+        blobs,
+        ops: ops ?? [],
+        sequenceNumber: header.SnapshotSequenceNumber,
+    };
 }
