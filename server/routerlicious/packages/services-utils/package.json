@@ -47,7 +47,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-0",
     "@fluidframework/server-services-client": "^0.1028.0",
     "@fluidframework/server-services-core": "^0.1028.0",
     "@fluidframework/server-services-telemetry": "^0.1028.0",

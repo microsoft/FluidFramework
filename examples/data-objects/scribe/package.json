@@ -43,7 +43,7 @@
     "@fluidframework/datastore-definitions": "^0.45.0",
     "@fluidframework/map": "^0.45.0",
     "@fluidframework/merge-tree": "^0.45.0",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-0",
     "@fluidframework/request-handler": "^0.45.0",
     "@fluidframework/runtime-definitions": "^0.45.0",
     "@fluidframework/runtime-utils": "^0.45.0",

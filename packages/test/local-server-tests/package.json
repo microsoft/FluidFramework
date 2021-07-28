@@ -76,7 +76,7 @@
     "@fluidframework/mocha-test-setup": "^0.45.0",
     "@fluidframework/odsp-doclib-utils": "^0.45.0",
     "@fluidframework/ordered-collection": "^0.45.0",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-0",
     "@fluidframework/register-collection": "^0.45.0",
     "@fluidframework/request-handler": "^0.45.0",
     "@fluidframework/routerlicious-driver": "^0.45.0",
