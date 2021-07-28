@@ -4,7 +4,6 @@
  */
 
 import { IColor, InkCanvas } from "@fluidframework/ink";
-import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 
 import React, { useEffect, useRef, useState } from "react";
 
@@ -25,106 +24,6 @@ const colorPickerColors: IColor[] = [
     { r: 8, g: 170, b: 51, a: 1 },
     { r: 0, g: 0, b: 0, a: 1 },
 ];
-
-export class CanvasView implements IFluidHTMLView {
-    public get IFluidHTMLView() { return this; }
-
-    private readonly canvasElement: HTMLCanvasElement;
-    private inkColorPicker: HTMLDivElement;
-    private readonly inkCanvas: InkCanvas;
-
-    public constructor(canvas: Canvas) {
-        this.canvasElement = document.createElement("canvas");
-        this.inkCanvas = new InkCanvas(this.canvasElement, canvas.ink);
-    }
-
-    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
-        elm.appendChild(this.createCanvasDom());
-        this.sizeCanvas();
-
-        window.addEventListener("resize", this.sizeCanvas.bind(this));
-    }
-
-    private createCanvasDom() {
-        const inkComponentRoot = document.createElement("div");
-        inkComponentRoot.classList.add("ink-component-root");
-
-        const inkSurface = document.createElement("div");
-        inkSurface.classList.add("ink-surface");
-
-        this.canvasElement.classList.add("ink-canvas");
-
-        const inkToolbar = this.createToolbar();
-
-        inkComponentRoot.appendChild(inkSurface);
-        inkSurface.appendChild(this.canvasElement);
-        inkSurface.appendChild(inkToolbar);
-
-        this.inkColorPicker = this.createColorPicker();
-
-        inkComponentRoot.appendChild(this.inkColorPicker);
-
-        return inkComponentRoot;
-    }
-
-    private createToolbar() {
-        const inkToolbar = document.createElement("div");
-        inkToolbar.classList.add("ink-toolbar");
-
-        const colorButton = document.createElement("button");
-        colorButton.classList.add("ink-toolbar-button", "fluid-icon-pencil");
-        colorButton.setAttribute("title", "Change Color");
-        colorButton.addEventListener("click", this.toggleColorPicker.bind(this));
-
-        const replayButton = document.createElement("button");
-        replayButton.classList.add("ink-toolbar-button", "fluid-icon-replay");
-        replayButton.setAttribute("title", "Replay");
-        replayButton.addEventListener("click", this.inkCanvas.replay.bind(this.inkCanvas));
-
-        const clearButton = document.createElement("button");
-        clearButton.classList.add("ink-toolbar-button", "fluid-icon-cross");
-        clearButton.setAttribute("title", "Clear");
-        clearButton.addEventListener("click", this.inkCanvas.clear.bind(this.inkCanvas));
-
-        inkToolbar.appendChild(colorButton);
-        inkToolbar.appendChild(replayButton);
-        inkToolbar.appendChild(clearButton);
-
-        return inkToolbar;
-    }
-
-    private createColorPicker() {
-        const inkColorPicker = document.createElement("div");
-        inkColorPicker.classList.add("ink-color-picker");
-
-        for (const color of colorPickerColors) {
-            inkColorPicker.appendChild(this.createColorOption(color));
-        }
-
-        return inkColorPicker;
-    }
-
-    private createColorOption(color: IColor) {
-        const inkColorOption = document.createElement("button");
-        inkColorOption.classList.add("ink-color-option");
-        inkColorOption.style.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`;
-
-        inkColorOption.addEventListener("click", () => {
-            this.inkCanvas.setPenColor(color);
-            this.toggleColorPicker();
-        });
-
-        return inkColorOption;
-    }
-
-    private toggleColorPicker() {
-        this.inkColorPicker.classList.toggle("show");
-    }
-
-    private sizeCanvas() {
-        this.inkCanvas.sizeCanvasBackingStore();
-    }
-}
 
 interface IToolbarProps {
     toggleColorPicker: () => void;
@@ -184,35 +83,50 @@ const ColorPicker: React.FC<IColorPickerProps> = (props) => {
                 colorPickerColors.map((color, index) => {
                     const pickColor = () => {
                         choose(color);
-                    }
-                    return <ColorOption key={index} color={color} choose={pickColor} />
+                    };
+                    return <ColorOption key={index} color={color} choose={pickColor} />;
                 })
             }
         </div>
     );
 };
 
-interface ICanvasReactViewProps {
+interface ICanvasViewProps {
     canvas: Canvas;
 }
 
-export const CanvasReactView: React.FC<ICanvasReactViewProps> = (props) => {
+export const CanvasView: React.FC<ICanvasViewProps> = (props) => {
     const { canvas } = props;
     const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>(undefined);
     const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
+    // eslint-disable-next-line no-null/no-null
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
+        // eslint-disable-next-line no-null/no-null
         if (canvasRef.current !== null && inkCanvas === undefined) {
             setInkCanvas(new InkCanvas(canvasRef.current, canvas.ink));
         }
     }, [canvas, canvasRef.current]);
 
+    useEffect(() => {
+        if (inkCanvas !== undefined) {
+            const resizeHandler = () => {
+                inkCanvas.sizeCanvasBackingStore();
+            }
+            window.addEventListener("resize", resizeHandler);
+            inkCanvas.sizeCanvasBackingStore();
+            return () => {
+                window.removeEventListener("resize", resizeHandler);
+            }
+        }
+    }, [inkCanvas]);
+
     const toggleColorPicker = () => {
         setShowColorPicker(!showColorPicker);
     };
-    const replayInk = inkCanvas?.replay.bind(inkCanvas);
-    const clearInk = inkCanvas?.clear.bind(inkCanvas);
+    const replayInk = inkCanvas?.replay.bind(inkCanvas) ?? (() => {});
+    const clearInk = inkCanvas?.clear.bind(inkCanvas) ?? (() => {});
     const chooseColor = (color: IColor) => {
         inkCanvas?.setPenColor(color);
         setShowColorPicker(false);

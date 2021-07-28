@@ -8,9 +8,12 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IInk, Ink } from "@fluidframework/ink";
 
 export class Canvas extends DataObject {
-    private _ink: IInk;
+    private _ink: IInk | undefined;
 
     public get ink() {
+        if (this._ink === undefined) {
+            throw new Error("Ink should be defined before access");
+        }
         return this._ink;
     }
 
