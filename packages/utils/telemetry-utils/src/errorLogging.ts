@@ -105,10 +105,10 @@ function copyProps(target: unknown, source: ITelemetryProperties) {
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
+function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
-        if (keysToOmit.has(key)) {
+        if (key in keysToOmit) {
             continue;
         }
         const val = obj[key];
@@ -144,7 +144,7 @@ export class LoggingError extends Error implements ILoggingError {
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        private readonly omitPropsFromLogging: Set<string> = new Set(["omitPropsFromLogging"]),
+        private readonly omitPropsFromLogging: string[] = ["omitPropsFromLogging"],
     ) {
         super(message);
 
