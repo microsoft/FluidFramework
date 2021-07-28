@@ -16,12 +16,14 @@ import { ILoggingError } from "@fluidframework/common-definitions";
 export interface IFluidErrorBase extends Readonly<Partial<Error>> {
     readonly errorType: string;
     readonly fluidErrorCode: string;
+    readonly message: string;
 }
 
 /** type guard for IFluidErrorBase interface */
 export function isFluidError(e: any): e is IFluidErrorBase {
     return typeof e?.errorType === "string" &&
-        typeof e?.fluidErrorCode === "string";
+        typeof e?.fluidErrorCode === "string" &&
+        typeof e?.message === "string";
 }
 
 /** type guard for old standard of valid/known errors */
