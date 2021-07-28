@@ -18,8 +18,8 @@ const _castFunctors = require('./primitive_type_casts');
  * @alias property-properties.Uint8Property
  * @category Value Properties
  */
-var Uint8Property = function( in_params ) {
-  ValueProperty.call( this, in_params );
+var Uint8Property = function (in_params) {
+  ValueProperty.call(this, in_params);
   // default for this property type is '0'
   this._data = 0;
 };
@@ -38,8 +38,8 @@ Uint8Property.prototype._castFunctor = _castFunctors.Uint8;
  * @alias property-properties.Uint16Property
  * @category Value Properties
  */
-var Uint16Property = function( in_params ) {
-  ValueProperty.call( this, in_params );
+var Uint16Property = function (in_params) {
+  ValueProperty.call(this, in_params);
   // default for this property type is '0'
   this._data = 0;
 };
@@ -58,8 +58,8 @@ Uint16Property.prototype._castFunctor = _castFunctors.Uint16;
  * @alias property-properties.Uint32Property
  * @category Value Properties
  */
-var Uint32Property = function( in_params ) {
-  ValueProperty.call( this, in_params );
+var Uint32Property = function (in_params) {
+  ValueProperty.call(this, in_params);
   // default for this property type is '0'
   this._data = 0;
 };

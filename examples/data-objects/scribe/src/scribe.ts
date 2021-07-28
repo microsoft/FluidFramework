@@ -16,11 +16,7 @@ import {
     IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
-import {
-    IContainerContext,
-    IRuntime,
-    IRuntimeFactory,
-} from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IDocumentFactory } from "@fluid-example/host-service-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
@@ -37,6 +33,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import Axios from "axios";
 
 import * as scribe from "./tools-core";
@@ -450,32 +447,36 @@ export class Scribe
     }
 }
 
-class ScribeFactory implements IFluidDataStoreFactory, IRuntimeFactory {
+const defaultComponentId = "default";
+
+class ScribeFactory extends RuntimeFactoryHelper implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/scribe";
+    private readonly registry = new Map<string, Promise<IFluidDataStoreFactory>>([
+        [ScribeFactory.type, Promise.resolve(this)],
+    ]);
     public readonly type = ScribeFactory.type;
 
     public get IFluidDataStoreFactory() { return this; }
-    public get IRuntimeFactory() { return this; }
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
-            [ScribeFactory.type, Promise.resolve(this)],
-        ]);
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
+    }
 
-        const defaultComponentId = "default";
-
-        const runtime = await ContainerRuntime.load(
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
-            registry,
+            this.registry,
             buildRuntimeRequestHandler(
                 defaultRouteRequestHandler(defaultComponentId),
                 innerRequestHandler,
-            ));
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(ScribeFactory.type, defaultComponentId);
-        }
+            ),
+            undefined, // runtimeOptions
+            undefined, // containerScope
+            existing,
+        );
 
         return runtime;
     }

@@ -1,3 +1,17 @@
+## 0.44 Breaking changes
+- [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
+- [attach() should only be called once](#attach-should-only-be-called-once)
+- [Loader access in data stores is removed](#loader-access-in-data-stores-is-removed)
+
+### Property removed from the ContainerRuntime class
+- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
+
+### attach() should only be called once
+`Container.attach()` will now throw if called more than once. Once called, it is responsible for retrying on retriable errors or closing the container on non-retriable errors.
+
+### Loader access in data stores is removed
+Following the deprecation warning [Loader in data stores deprecated](#loader-in-data-stores-deprecated), the associated APIs have now been removed.  In addition to the original deprecation notes, users will automatically have an `ILoader` available on the container scope object as the `ILoader` property if the container was created through a `Loader`.
+
 ## 0.43 Breaking changes
 
 - [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)
@@ -94,6 +108,13 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
 
+_\[edit\]_
+
+This actually was a breaking change in 0.40, in that the type of the `event` parameter of `ITelemetryBaseLogger.send` changed to
+a more inclusive type which needs to be accounted for in implementations.  However, in releases 0.40 through 0.44,
+_no tagged events are sent to any ITelemetryBaseLogger by the Fluid Framework_.  We are preparing to do so
+soon, and will include an entry in BREAKING.md when we do.
+
 ### IContainerRuntimeDirtyable removed
 The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
 
@@ -108,7 +129,6 @@ The `RouterliciousDocumentServiceFactory` constructor no longer accepts the foll
 - [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [fileOverwrittenInStorage](#fileOverwrittenInStorage)
 - [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
-- [ITelemetryBaseLogger now has a supportsTags property (not breaking)](#itelemetrybaselogger-now-has-a-supportstags-property-not-breaking)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.

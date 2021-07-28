@@ -16,6 +16,7 @@ import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
     getQuorumValuesFromProtocolSummary,
+    RateLimiter,
 } from "@fluidframework/driver-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentService } from "./documentService";
@@ -25,6 +26,8 @@ import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
+    maxConcurrentStorageRequests: 100,
+    maxConcurrentOrdererRequests: 100,
 };
 
 /**
@@ -46,11 +49,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     }
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
+        assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         const parsedUrl = parse(resolvedUrl.url);
         if (!parsedUrl.pathname) {
@@ -66,11 +70,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
         const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
             id,
             this.tokenProvider,
             logger2,
+            rateLimiter,
             resolvedUrl.endpoints.ordererUrl,
         );
         await ordererRestWrapper.post(

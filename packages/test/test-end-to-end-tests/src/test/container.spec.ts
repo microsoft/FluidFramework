@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import { IFluidCodeDetails, IRequest } from "@fluidframework/core-interfaces";
 import {
     IGenericError,
+    IPendingLocalState,
     ContainerErrorType,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -19,6 +20,7 @@ import {
 } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
+    IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
 import {
@@ -251,8 +253,25 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         });
 
         container.forceReadonly(true);
-        assert.strictEqual(container.readonly, true);
+        assert.strictEqual(container.readOnlyInfo.readonly, true);
 
         assert.strictEqual(runCount, 1);
+    });
+
+    it("closeAndGetPendingLocalState() called on container", async () => {
+        const runtimeFactory = (_?: unknown) => new TestContainerRuntimeFactory(
+            TestDataObjectType,
+            getDataStoreFactory());
+
+        const localTestObjectProvider = new TestObjectProvider(
+            Loader,
+            provider.driver,
+            runtimeFactory);
+
+        const container = await localTestObjectProvider.makeTestContainer() as Container;
+
+        const pendingLocalState: IPendingLocalState = JSON.parse(container.closeAndGetPendingLocalState());
+        assert.strictEqual(container.closed, true);
+        assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IFluidResolvedUrl).url);
     });
 });

@@ -368,6 +368,7 @@ export class ScribeLambda implements IPartitionLambda {
                             tenantId: this.tenantId,
                         },
                     });
+                throw new Error(`Protocol error ${error} for ${this.documentId} ${this.tenantId}`);
             }
         }
     }

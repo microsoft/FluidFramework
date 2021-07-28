@@ -32,6 +32,8 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     private readonly blobs = new Map<number, ArrayBufferLike>();
     private blobCount = 0;
 
+    public get size() { return this.blobCount; }
+
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         this.blobs.set(++this.blobCount, content);
         return {
@@ -226,7 +228,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
         await assert.rejects(
             container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
-            "Error: 0x1fa",
+            /(0x206)|(0x202)/,
         );
     });
 });

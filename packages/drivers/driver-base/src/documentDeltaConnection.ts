@@ -20,6 +20,7 @@ import {
     ISignalClient,
     ISignalMessage,
     ITokenClaims,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { debug } from "./debug";
@@ -335,6 +336,32 @@ export class DocumentDeltaConnection
                     return;
                 }
 
+                const requestedMode = connectMessage.mode;
+                const actualMode = response.mode;
+                const writingPermitted = response.claims.scopes.includes(ScopeType.DocWrite);
+
+                if (writingPermitted) {
+                    // The only time we expect a mismatch in requested/actual is if we lack write permissions
+                    // In this case we will get "read", even if we requested "write"
+                    if (actualMode !== requestedMode) {
+                        fail(false, this.createErrorObject(
+                            "connect_document_success",
+                            "Connected in a different mode than was requested",
+                            false,
+                        ));
+                        return;
+                    }
+                } else {
+                    if (actualMode === "write") {
+                        fail(false, this.createErrorObject(
+                            "connect_document_success",
+                            "Connected in write mode without write permissions",
+                            false,
+                        ));
+                        return;
+                    }
+                }
+
                 this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
                 this.removeConnectionListeners();
@@ -437,11 +464,13 @@ export class DocumentDeltaConnection
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
         //   over it.
+        let message = `socket.io: ${handler}`;
+        if (typeof error === "string") {
+            message = `${message}: ${error}`;
+        }
         const errorObj = createGenericNetworkError(
-            `socket.io:${handler}`,
+            message,
             canRetry,
-            undefined /* retryAfterMs */,
-            typeof error === "string" ? { socketError: error } : undefined /* props */,
         );
 
         return errorObj;
