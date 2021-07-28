@@ -133,7 +133,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const dictionary = readDictionarySection(root.getNode(2));
 
     const snapshotTree = readTreeSection(root.getNode(1), dictionary);
-    snapshotTree.trees[0].id = header.SnapshotId;
+    snapshotTree.id = header.SnapshotId;
     const blobs = readBlobSection(root.getNode(3), dictionary);
 
     if (root.length === 5) {

@@ -11,8 +11,10 @@ import { stringToBuffer } from "@fluidframework/common-utils";
 import { ISequencedDeltaOpMessage } from "../contracts";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
+import { ISnapshotContents } from "../odspUtils";
 
 const snapshotTree: ISnapshotTree = {
+    id: "SnapshotId",
     blobs: {},
     commits: {},
     trees: {
@@ -103,14 +105,20 @@ const ops: ISequencedDeltaOpMessage[] = [
 
 describe("Snapshot Format Conversion Tests", () => {
     it("Conversion test", async () => {
-        const compactSnapshot = convertToCompactSnapshot(snapshotTree, blobs, 0, ops);
+        const snapshotContents: ISnapshotContents = {
+            snapshotTree,
+            blobs,
+            ops,
+            sequenceNumber: 0,
+        }
+        const compactSnapshot = convertToCompactSnapshot(snapshotContents);
         const result = parseCompactSnapshotResponse(compactSnapshot);
-        assert.deepStrictEqual(result.tree, snapshotTree, "Tree structure should match");
+        assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
         console.log(result.blobs.get("bARBkx1nses1pHL1vKnmFUfIC") instanceof ArrayBuffer);
         assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
         assert.deepStrictEqual(result.ops, ops, "Ops should match");
         // Convert to compact snapshot again and then match to previous one.
-        const compactSnapshot2 = convertToCompactSnapshot(result.tree, result.blobs, 0, result.ops);
+        const compactSnapshot2 = convertToCompactSnapshot(result);
         assert.deepStrictEqual(compactSnapshot2.buffer, compactSnapshot.buffer,
             "Compact representation should remain same");
     });

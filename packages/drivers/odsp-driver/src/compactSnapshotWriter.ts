@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer } from "@fluidframework/common-utils";
+import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISequencedDeltaOpMessage } from "./contracts";
+import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./zipItDataRepresentationReadUtils";
 import { addNumberProperty, addStringProperty, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
 
@@ -15,10 +16,11 @@ import { addNumberProperty, addStringProperty, NodeCore, TreeBuilder } from "./z
  * @param node - tree node to serialize to
  * @param snapshotSeqNumber - seq number at which snapshot is created.
 */
-function writeHeaderSection(node: NodeCore, snapshotSeqNumber: number) {
+function writeHeaderSection(node: NodeCore, snapshotSeqNumber: number, snapshotId: string) {
     addStringProperty(node, "MinReadVersion", snapshotMinReadVersion);
     addStringProperty(node, "CreateVersion", snapshotMinReadVersion);
     addNumberProperty(node, "SnapshotSequenceNumber", snapshotSeqNumber);
+    addStringProperty(node, "SnapshotId", snapshotId);
 }
 
 /**
@@ -89,28 +91,23 @@ function writeOpsSection(node: NodeCore, ops: ISequencedDeltaOpMessage[]) {
 
 /**
  * Converts trees/blobs/ops to binary compact representation.
- * @param snapshotTree - snapshot tree to serialize
- * @param blobs - blobs to serialize
- * @param snapshotSeqNumber - seq number at which snapshot is created.
- * @param ops - ops to serialize
+ * @param snapshotContents - snapshot tree contents to serialize
  * @returns - ReadBuffer - binary representation of the data.
  */
-export function convertToCompactSnapshot(
-    snapshotTree: ISnapshotTree,
-    blobs: Map<string, IBlob | ArrayBuffer>,
-    snapshotSeqNumber: number,
-    ops?: ISequencedDeltaOpMessage[]): ReadBuffer
-{
+export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): ReadBuffer {
     const builder = new TreeBuilder();
     // Create the root node.
     const rootNode = builder.addNode();
     // Header node containing versions and snapshot seq number.
     const headerNode = rootNode.addNode();
-    writeHeaderSection(headerNode, snapshotSeqNumber);
+    const snapshotId = snapshotContents.snapshotTree.id;
+    assert(snapshotId !== undefined, "Snapshot id should be provided");
+    assert(snapshotContents.sequenceNumber !== undefined, "Seq number should be provided");
+    writeHeaderSection(headerNode, snapshotContents.sequenceNumber, snapshotId);
 
     const dict: Set<string> = new Set();
-    buildDictionary(snapshotTree, dict);
-    for (const id of blobs.keys()) {
+    buildDictionary(snapshotContents.snapshotTree, dict);
+    for (const id of snapshotContents.blobs.keys()) {
         dict.add(id);
     }
     // Next is tree node containing tree structure.
@@ -125,14 +122,13 @@ export function convertToCompactSnapshot(
         i++;
     }
 
-    writeTree(treeSectionNode, snapshotTree, mapping);
+    writeTree(treeSectionNode, snapshotContents.snapshotTree, mapping);
     // Next is blobs node.
     const blobsNode = rootNode.addNode();
-    writeBlobsSection(blobsNode, blobs, mapping);
+    writeBlobsSection(blobsNode, snapshotContents.blobs, mapping);
     // Then write the ops node.
-    if (ops) {
-        const opsNode = rootNode.addNode();
-        writeOpsSection(opsNode, ops);
-    }
+    const opsNode = rootNode.addNode();
+    writeOpsSection(opsNode, snapshotContents.ops);
+
     return builder.serialize();
 }
