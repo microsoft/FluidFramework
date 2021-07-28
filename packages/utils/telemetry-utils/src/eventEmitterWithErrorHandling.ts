@@ -11,11 +11,11 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  * Any exception thrown by "error" listeners will propagate to the caller.
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
-    constructor(private readonly errorListener?: (eventName: EventEmitterEventType, error: any) => void) {
+    private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void;
+
+    constructor(errorHandler?: (eventName: EventEmitterEventType, error: any) => void) {
         super();
-        if (this.errorListener === undefined) {
-            this.errorListener = this.defaultErrorHandler.bind(this);
-        }
+        this.errorHandler = errorHandler ?? this.defaultErrorHandler.bind(this);
     }
 
     private defaultErrorHandler(event, error) {
@@ -33,7 +33,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
         try {
             return super.emit(event, ...args);
         } catch (error) {
-            this.errorListener!(event, error);
+            this.errorHandler(event, error);
             return true;
         }
     }

@@ -572,7 +572,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         super((name, error) => {
             this.logger.sendErrorEvent(
                 {
-                    eventName: "ContainerError",
+                    eventName: "ContainerEventHandlerException",
                     name: typeof name === "string" ? name : undefined,
                 },
                 error);
@@ -744,10 +744,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
         }
 
-        this.logger.sendErrorEvent(
+        this.logger.sendTelemetryEvent(
             {
                 eventName: "ContainerClose",
-                lastSequenceNumber: this._deltaManager.lastSequenceNumber,
+                loaded: this.loaded,
             },
             error,
         );
