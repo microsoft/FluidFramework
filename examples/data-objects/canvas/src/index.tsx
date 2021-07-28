@@ -9,8 +9,9 @@ import {
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { Ink } from "@fluidframework/ink";
+import React from "react";
 import { Canvas } from "./canvas";
-import { CanvasView } from "./view";
+import { CanvasReactView } from "./view";
 
 export const CanvasInstantiationFactory =
     new DataObjectFactory<Canvas, undefined, undefined, IEvent>(
@@ -22,6 +23,7 @@ export const CanvasInstantiationFactory =
         {},
     );
 
-const canvasViewCallback = (canvas: Canvas) => new CanvasView(canvas);
+// const canvasViewCallback = (canvas: Canvas) => new CanvasView(canvas);
+const canvasViewCallback = (canvas: Canvas) => <CanvasReactView canvas={canvas} />
 
 export const fluidExport = new ContainerViewRuntimeFactory<Canvas>(CanvasInstantiationFactory, canvasViewCallback);

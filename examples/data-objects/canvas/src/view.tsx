@@ -6,7 +6,7 @@
 import { IColor, InkCanvas } from "@fluidframework/ink";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Canvas } from "./canvas";
 // eslint-disable-next-line import/no-unassigned-import
@@ -197,19 +197,30 @@ interface ICanvasReactViewProps {
 }
 
 export const CanvasReactView: React.FC<ICanvasReactViewProps> = (props) => {
+    const { canvas } = props;
+    const [inkCanvas, setInkCanvas] = useState<InkCanvas | undefined>(undefined);
     const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (canvasRef.current !== null && inkCanvas === undefined) {
+            setInkCanvas(new InkCanvas(canvasRef.current, canvas.ink));
+        }
+    }, [canvas, canvasRef.current]);
+
     const toggleColorPicker = () => {
         setShowColorPicker(!showColorPicker);
     };
-    const replayInk = () => {};
-    const clearInk = () => {};
+    const replayInk = inkCanvas?.replay.bind(inkCanvas);
+    const clearInk = inkCanvas?.clear.bind(inkCanvas);
     const chooseColor = (color: IColor) => {
-        // TODO
+        inkCanvas?.setPenColor(color);
+        setShowColorPicker(false);
     };
     return (
         <div className="ink-component-root">
             <div className="ink-surface">
-                <canvas className="ink-canvas"></canvas>
+                <canvas className="ink-canvas" ref={ canvasRef }></canvas>
                 <Toolbar
                     toggleColorPicker={ toggleColorPicker }
                     replayInk={ replayInk }
