@@ -116,6 +116,8 @@ describe("Snapshot Format Conversion Tests", () => {
         assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
         assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
         assert.deepStrictEqual(result.ops, ops, "Ops should match");
+        assert(result.sequenceNumber === 0, "Seq number should match");
+        assert(result.snapshotTree.id = snapshotContents.snapshotTree.id, "Snapshot id should match");
         // Convert to compact snapshot again and then match to previous one.
         const compactSnapshot2 = convertToCompactSnapshot(result);
         assert.deepStrictEqual(compactSnapshot2.buffer, compactSnapshot.buffer,
