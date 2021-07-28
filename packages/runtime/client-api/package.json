@@ -50,7 +50,7 @@
     "@fluidframework/aqueduct": "^0.45.0",
     "@fluidframework/cell": "^0.45.0",
     "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/container-definitions": "^0.39.7",
+    "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/container-loader": "^0.45.0",
     "@fluidframework/container-runtime": "^0.45.0",
     "@fluidframework/core-interfaces": "^0.39.7",

@@ -1,5 +1,6 @@
-{{ $issue := .Get 0 }}
+{{ $issue := $.Page.Params.discussion }}
 
+{{ if $issue }}
 <div class="important callout">
     <p class="callout-title">👋 Hi!</p>
     <p>This article isn't written yet, but you can discuss and vote on it in our
@@ -13,3 +14,6 @@
         </li>
     </p>
 </div>
+{{ else }}
+{{ partial "placeholders/unwritten.html" . }}
+{{ end }}
