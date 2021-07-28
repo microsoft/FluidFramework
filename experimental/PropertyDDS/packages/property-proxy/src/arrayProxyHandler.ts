@@ -182,7 +182,7 @@ export const arrayProxyHandler = {
         let processed_key = key;
         const asteriskFound = Utilities.containsAsterisk(processed_key);
         if (asteriskFound) {
-            // if we found an * we can safely treat key_internal as string
+            // if we found an * we can safely treat it as string
             processed_key = (processed_key as string).slice(0, -1);
         }
         // convert strings of numbers to numbers
