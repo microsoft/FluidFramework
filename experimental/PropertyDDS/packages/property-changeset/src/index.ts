@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import TemplateValidator from "./templateValidator";
-import TypeIdHelper from "./helpers/typeidHelper";
-import TemplateSchema from "./templateSchema";
-import ChangeSet from "./changeset";
-import Utils from "./utils";
-import PathHelper from "./pathHelper";
-import ArrayChangeSetIterator from "./changeset_operations/arrayChangesetIterator";
-import rebaseToRemoteChanges  from "./rebase";
+import { ChangeSet, SerializedChangeSet } from "./changeset";
+import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
+import { TypeIdHelper } from "./helpers/typeidHelper";
+import { PathHelper } from "./pathHelper";
+import { rebaseToRemoteChanges } from "./rebase";
+import { TemplateSchema } from "./templateSchema";
+import { TemplateValidator } from "./templateValidator";
+import { Utils } from "./utils";
 
-module.exports = {
+export {
     TemplateSchema,
     TemplateValidator,
     TypeIdHelper,
@@ -20,4 +20,5 @@ module.exports = {
     PathHelper,
     ArrayChangeSetIterator,
     rebaseToRemoteChanges,
+    SerializedChangeSet
 };

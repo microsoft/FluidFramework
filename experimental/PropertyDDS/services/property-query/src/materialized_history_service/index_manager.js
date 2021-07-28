@@ -406,19 +406,19 @@ class IndexManager {
         const iterator = new ArrayChangeSetIterator(otChangeSet);
         let offset;
         while (!iterator.atEnd()) {
-          switch (iterator.type) {
+          switch (iterator.opDescription.type) {
             case ArrayChangeSetIterator.types.INSERT:
-              offset = iterator._currentOffset + iterator._lastOperationIndex;
-              value = value.substring(0, offset) + iterator.operation[1] + value.substring(offset);
+              offset = iterator.currentOffset + iterator.lastOperationIndex;
+              value = value.substring(0, offset) + iterator.opDescription.operation[1] + value.substring(offset);
               break;
             case ArrayChangeSetIterator.types.MODIFY:
-              offset = iterator._currentOffset + iterator.operation[0];
-              value = value.substring(0, offset) + iterator.operation[1] +
-                value.substring(offset + iterator.operation[1].length);
+              offset = iterator.currentOffset + iterator.opDescription.operation[0];
+              value = value.substring(0, offset) + iterator.opDescription.operation[1] +
+                value.substring(offset + iterator.opDescription.operation[1].length);
               break;
             case ArrayChangeSetIterator.types.REMOVE:
-              offset = iterator._currentOffset + iterator._lastOperationIndex;
-              value = value.substring(0, offset) + value.substring(offset + iterator._lastOperationOffset * -1);
+              offset = iterator.currentOffset + iterator.lastOperationIndex;
+              value = value.substring(0, offset) + value.substring(offset + iterator.lastOperationOffset * -1);
               break;
             default:
               break;

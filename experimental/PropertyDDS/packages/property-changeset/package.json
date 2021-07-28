@@ -7,11 +7,12 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/index.js",
-  "types": "src/index.d.ts",
+  "module": "lib/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist/**/*",
     "lib/**/*",
-    "src/index.d.ts"
+    "dist/index.d.ts"
   ],
   "scripts": {
     "build": "npm run build:compile",

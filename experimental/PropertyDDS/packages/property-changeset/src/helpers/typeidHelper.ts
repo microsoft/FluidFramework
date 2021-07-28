@@ -6,268 +6,284 @@
  * @fileoverview Helper functions to work with typeid strings
  */
 
-import {constants } from "@fluid-experimental/property-common";
-import { nativeTypes, templateSchema as templateSchemaJson } from "../templateSchema";
+import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema";
+// @ts-ignore
+import { constants } from "@fluid-experimental/property-common";
 
-const MSG = constants.MSG;
+const { MSG }  = constants;
+
+export declare interface ExtractedVersion {
+    version: string;
+    typeidWithoutVersion: string;
+}
+
+export declare interface ExtractedContext {
+    typeid: string;
+    context: string;
+    isEnum: boolean;
+}
 
 /**
  * Helper for Type IDs
  * @public
- * @class
- * @alias property-changeset.TypeIdHelper
  * @description Helper functions to work with typeid strings
  */
-const TypeIdHelper = {};
+export namespace TypeIdHelper {
+    /**
+     * Checks whether the given type is a primitive type.
+     *
+     * @param n_typeid - The typeid we want to check
+     * @return Is this a base type?
+     */
+    export function isPrimitiveType(in_typeid: string): boolean {
+        var primitiveTypes = templateSchemaJson['$defs']['primitive-typeid']['enum'];
 
-/**
- * Checks whether the given type is a primitive type.
- *
- * @param {string} in_typeid - The typeid we want to check
- * @return {boolean} Is this a base type?
- */
-TypeIdHelper.isPrimitiveType = function(in_typeid) {
-    const primitiveTypes = templateSchemaJson.$defs["primitive-typeid"].enum;
+        if (in_typeid === undefined || in_typeid === '') {
+            return false;
+        }
 
-    if (in_typeid === undefined || in_typeid === "") {
-        return false;
+        return in_typeid.substr(0, 5) === 'enum<' ||
+            in_typeid.substr(0, 10) === 'Reference<' ||
+            primitiveTypes.indexOf(in_typeid) >= 0;
     }
 
-    return in_typeid.substr(0, 5) === "enum<" ||
-        in_typeid.substr(0, 10) === "Reference<" ||
-        primitiveTypes.indexOf(in_typeid) >= 0;
-};
-
-/**
- * Checks whether the given type is a template typeid.
- *
- * @param {string} in_param - The typeid we want to check
- * @return {boolean} Is this a base template typeid?
- */
-TypeIdHelper.isTemplateTypeid = (in_param) => typeof in_param === "string" && (in_param.indexOf(":") !== -1);
-
-/**
- * Checks whether the given type is a reserved type.
- *
- * @param {string} in_typeid - The typeid we want to check
- * @return {boolean} Is this a reserved type?
- */
-TypeIdHelper.isReservedType = function(in_typeid) {
-    const reservedTypes = templateSchemaJson.$defs["reserved-typeid"].enum;
-    return reservedTypes.indexOf(in_typeid) >= 0;
-};
-
-/**
- * Extract the version number from the given typeid
- * @param {string} in_typeid The typeid to check against
- * @return {Array} Array of size two
- */
-TypeIdHelper.extractVersion = function(in_typeid) {
-    if (!in_typeid) {
-        throw new Error(MSG.TYPEID_NOT_DEFINED);
+    /**
+    * Checks whether the given type is a template typeid.
+    *
+    * @param in_typeid - The typeid we want to check
+    * @return Is this a base template typeid?
+    */
+    export function isTemplateTypeid(in_typeid): boolean {
+        return typeof in_typeid === 'string' && (in_typeid.indexOf(':') !== -1);
     }
-    const splitTypeId = in_typeid.split("-");
 
-    return {
-        version: splitTypeId[1],
-        typeidWithoutVersion: splitTypeId[0],
-    };
-};
+    /**
+     * Checks whether the given type is a reserved type.
+     *
+     * @param in_typeid - The typeid we want to check
+     * @return  Is this a reserved type?
+     */
+    export function isReservedType(in_typeid: string): boolean {
+        var reservedTypes = templateSchemaJson['$defs']['reserved-typeid']['enum'];
+        return reservedTypes.indexOf(in_typeid) >= 0;
+    }
 
-/**
+    /**
+     * Extract the version number from the given typeid
+     * @param in_typeid The typeid to check against
+     * @return Extracted version
+     */
+    export function extractVersion(in_typeid): ExtractedVersion {
+        if (!in_typeid) {
+            throw new Error(MSG.TYPEID_NOT_DEFINED);
+        }
+        var splitTypeId = in_typeid.split('-');
+
+        return {
+            version: splitTypeId[1],
+            typeidWithoutVersion: splitTypeId[0]
+        };
+    }
+
+    /**
  * Extracts the context from a typeid
  *
- * @param {string} in_typeid - The typeid to process
- * @return {{typeid: string, context:string, isEnum:boolean}} Returns the typeid without context, the context and
- *     if we have an enum type
+ * @param in_typeid - The typeid to process
+ * @return  Returns the typeid without context, the context and if we have an enum type
  */
-TypeIdHelper.extractContext = function(in_typeid) {
-    const bracketIndex = in_typeid.indexOf("<");
-    if (bracketIndex !== -1 &&
-        in_typeid[in_typeid.length - 1] === ">") {
-        let typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
-        let context = in_typeid.substr(0, bracketIndex);
+    export function extractContext(in_typeid: string): ExtractedContext {
+        var bracketIndex = in_typeid.indexOf('<');
+        if (bracketIndex !== -1 &&
+            in_typeid[in_typeid.length - 1] === '>') {
+            var typeid = in_typeid.substr(bracketIndex + 1, in_typeid.length - bracketIndex - 2);
+            var context = in_typeid.substr(0, bracketIndex);
 
-        // Special case to handle collections without a typeid (e.g. "map<>", which should
-        // be able to support all property types
-        if (typeid === "") {
-            typeid = context !== "set" ? "BaseProperty" : "NamedProperty";
-        }
-
-        // Special case to handle enums (e.g. array<enum<myType>>)
-        let isEnum = false;
-        if (context === "enum" || typeid.substr(0, 5) === "enum<") {
-            isEnum = true;
-            if (context === "enum") {
-                context = "single";
-            } else {
-                // remove the `enum<...>` tag to get the raw typeid
-                typeid = typeid.substr(5, typeid.length - 6);
+            // Special case to handle collections without a typeid (e.g. "map<>", which should
+            // be able to support all property types
+            if (typeid === '') {
+                typeid = context !== 'set' ? 'BaseProperty' : 'NamedProperty';
             }
-        }
-        if (context === "Reference") {
-            typeid = `Reference<${typeid}>`;
-            context = "single";
-        }
 
-        return {
-            typeid,
-            context,
-            isEnum,
-        };
-    } else {
-        return {
-            typeid: in_typeid,
-            context: "single",
-            isEnum: false,
-        };
-    }
-};
-
-/**
- * Creates a collection typeid string from the
- * typeid and the context.
- *
- * @param {string} in_typeid  - the typeid in the collection
- * @param {string} in_context - the context
- * @param {bool}  in_enum    - set to true, if the type should get an enum tag
- *
- * @return {string} The combined typeid string
- */
-TypeIdHelper.createSerializationTypeId = function(in_typeid, in_context, in_enum) { // in_enum
-    if (in_typeid === "BaseProperty") {
-        // Special case for BaseProperties. These get represented as a collection
-        // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>
-        return `${in_context}<>`;
-    } else {
-        if (in_enum) {
-            if (in_context === "" || in_context === "single") {
-                return `enum<${in_typeid}>`;
-            } else {
-                return `${in_context}<enum<${in_typeid}>>`;
+            // Special case to handle enums (e.g. array<enum<myType>>)
+            var isEnum = false;
+            if (context === 'enum' || typeid.substr(0, 5) === 'enum<') {
+                isEnum = true;
+                if (context === 'enum') {
+                    context = 'single';
+                } else {
+                    // remove the `enum<...>` tag to get the raw typeid
+                    typeid = typeid.substr(5, typeid.length - 6);
+                }
             }
+            if (context === 'Reference') {
+                typeid = 'Reference<' + typeid + '>';
+                context = 'single';
+            }
+
+            return {
+                typeid: typeid,
+                context: context,
+                isEnum: isEnum
+            };
         } else {
-            return `${in_context}<${in_typeid}>`;
+            return {
+                typeid: in_typeid,
+                context: 'single',
+                isEnum: false
+            };
         }
     }
-};
 
-/**
- * Checks, whether the supplied typeid is a reference property type id
- *
- * @param {string} in_typeid - The typeid to check
- * @return {boolean} Is this a reference property typeid?
- */
-TypeIdHelper.isReferenceTypeId = (in_typeid) => // in_enum
-    in_typeid === "Reference" ||
-        (in_typeid.substr(0, 10) === "Reference<" && in_typeid.substr(-1) === ">");
-
-/**
- * Returns the type of the properties a reference points to
- *
- * @param {string} in_typeid - The typeid to process
- * @return {string} The type of the referenced property
- */
-TypeIdHelper.extractReferenceTargetTypeIdFromReference = function(in_typeid) { // in_enum
-    if (in_typeid.substr(0, 10) === "Reference<") {
-        // Extract the type from the TypeID
-        return in_typeid.substr(10, in_typeid.length - 11);
-    } else {
-        // This is a typeless reference, we allow all types
-        return "BaseProperty";
-    }
-};
-
-/**
- * Checks whether the given type is a template typeid.
- *
- * @param {string} in_param - The typeid we want to check
- * @return {boolean} Is this a base template typeid?
- */
-TypeIdHelper.isSchemaTypeid = (in_param) => typeof in_param === "string" && (in_param.indexOf(":") !== -1);
-
-/**
- * Extracts referenced typeid from input typeid
- *
- * @public
- * @param {String} in_param typeid
- *
- * @return {String} referenced typeid or in_param if it is not a reference
- */
-TypeIdHelper.extractTypeId = function(in_param) {
-    var matches = in_param.match(/\<(.*?)\>/); // eslint-disable-line
-    if (matches !== null && matches.length > 0) {
-        return matches[0].replace(/[\<\>]/gi, ''); // eslint-disable-line
-    } else {
-        return in_param;
-    }
-};
-
-/**
- * Check wether the in_typeid inherits from the in_baseTypeid
- *
- *  Note: By default, this also returns true if in_typeid === in_baseTypeid.
- *
- * @public
- * @param {String} in_typeid     - Typeid for which we want to check, whethwe in_baseTypeid is a parent
- * @param {String} in_baseTypeid - The base typeId to check for
- * @throws if in_typeid or in_baseTypeid are not native typeid
- * @return {boolean} True if in_baseTypeid is a parent of in_typeid
- */
-TypeIdHelper.nativeInheritsFrom = function(in_typeid, in_baseTypeid) {
-    if (!in_typeid || !in_baseTypeid) {
-        throw new Error(MSG.TYPEID_NOT_DEFINED);
+    /**
+     * Creates a collection typeid string from the
+     * typeid and the context.
+     *
+     * @param in_typeid  - the typeid in the collection
+     * @param in_context - the context
+     * @param in_enum    - set to true, if the type should get an enum tag
+     *
+     * @return The combined typeid string
+     */
+    export function createSerializationTypeId(in_typeid: string, in_context: string, in_enum: boolean): string { // in_enum
+        if (in_typeid === 'BaseProperty') {
+            // Special case for BaseProperties. These get represented as a collection
+            // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>
+            return in_context + '<>';
+        } else {
+            if (in_enum) {
+                if (in_context === '' || in_context === 'single') {
+                    return 'enum<' + in_typeid + '>';
+                } else {
+                    return in_context + '<enum<' + in_typeid + '>>';
+                }
+            } else {
+                return in_context + '<' + in_typeid + '>';
+            }
+        }
     }
 
-    if (in_typeid.substr(0, 10) === "Reference<") {
-        in_typeid = "Reference";
+    /**
+     * Checks, whether the supplied typeid is a reference property type id
+     *
+     * @param in_typeid - The typeid to check
+     * @return Is this a reference property typeid?
+     */
+    export function isReferenceTypeId(in_typeid: string): boolean { // in_enum
+        return in_typeid === 'Reference' ||
+            (in_typeid.substr(0, 10) === 'Reference<' && in_typeid.substr(-1) === '>');
     }
 
-    if (in_baseTypeid.substr(0, 10) === "Reference<") {
-        in_baseTypeid = "Reference";
+    /**
+     * Returns the type of the properties a reference points to
+     *
+     * @param in_typeid - The typeid to process
+     * @return The type of the referenced property
+     */
+    export function extractReferenceTargetTypeIdFromReference(in_typeid: string): string { // in_enum
+        if (in_typeid.substr(0, 10) === 'Reference<') {
+            // Extract the type from the TypeID
+            return in_typeid.substr(10, in_typeid.length - 11);
+        } else {
+            // This is a typeless reference, we allow all types
+            return 'BaseProperty';
+        }
     }
 
-    if (!nativeTypes[in_typeid]) {
-        throw new Error(MSG.TYPEID_NOT_NATIVE + in_typeid);
+    /**
+     * Checks whether the given type is a template typeid.
+     *
+     * @param  in_typeid - The typeid we want to check
+     * @return Is this a base template typeid?
+     */
+    export function isSchemaTypeid(in_typeid: string): boolean {
+        return typeof in_typeid === 'string' && (in_typeid.indexOf(':') !== -1);
     }
 
-    if (!nativeTypes[in_baseTypeid]) {
-        throw new Error(MSG.TYPEID_NOT_NATIVE + in_baseTypeid);
+    /**
+     * Extracts referenced typeid from input typeid
+     *
+     * @public
+     * @param in_typeid typeid
+     *
+     * @return referenced typeid or in_param if it is not a reference
+     */
+    export function extractTypeId(in_typeid): string {
+        var matches = in_typeid.match(/\<(.*?)\>/); // eslint-disable-line
+        if (matches !== null && matches.length > 0) {
+            return matches[0].replace(/[\<\>]/gi, ''); // eslint-disable-line
+        } else {
+            return in_typeid;
+        }
     }
 
-    if (in_baseTypeid === "BaseProperty" || in_typeid === in_baseTypeid) {
-        return true;
-    }
 
-    if (in_typeid === "BaseProperty") {
+    /**
+     * Check wether the in_typeid inherits from the in_baseTypeid
+     *
+     *  Note: By default, this also returns true if in_typeid === in_baseTypeid.
+     *
+     * @param in_typeid     - Typeid for which we want to check, whethwe in_baseTypeid is a parent
+     * @param in_baseTypeid - The base typeId to check for
+     * @throws if in_typeid or in_baseTypeid are not native typeid
+     * @return True if in_baseTypeid is a parent of in_typeid
+     */
+    export function nativeInheritsFrom(in_typeid: string, in_baseTypeid: string): boolean {
+        if (!in_typeid || !in_baseTypeid) {
+            throw new Error(MSG.TYPEID_NOT_DEFINED);
+        }
+
+        if (in_typeid.substr(0, 10) === 'Reference<') {
+            in_typeid = 'Reference';
+        }
+
+        if (in_baseTypeid.substr(0, 10) === 'Reference<') {
+            in_baseTypeid = 'Reference';
+        }
+
+        if (!NativeTypes[in_typeid]) {
+            throw new Error(MSG.TYPEID_NOT_NATIVE + in_typeid);
+        }
+
+        if (!NativeTypes[in_baseTypeid]) {
+            throw new Error(MSG.TYPEID_NOT_NATIVE + in_baseTypeid);
+        }
+
+        if (in_baseTypeid === 'BaseProperty' || in_typeid === in_baseTypeid) {
+            return true;
+        }
+
+        if (in_typeid === 'BaseProperty') {
+            return false;
+        }
+
+        let parents = NativeTypes[in_typeid]['inherits'];
+
+        // recursively call the function for the parent of the typeid
+        for (let i = 0; i < parents.length; i++) {
+            if (this.nativeInheritsFrom(parents[i], in_baseTypeid)) {
+                return true;
+            }
+        }
         return false;
     }
 
-    const parents = nativeTypes[in_typeid].inherits;
-
-    // recursively call the function for the parent of the typeid
-    for (let i = 0; i < parents.length; i++) {
-        if (this.nativeInheritsFrom(parents[i], in_baseTypeid)) {
-            return true;
-        }
+    /**
+     * return all primitive typeIds
+     *
+     * @public
+     * @return return a list of primitiveTypeIds
+     */
+    export function getPrimitiveTypeIds(): string[] {
+        return templateSchemaJson['$defs']['primitive-typeid']['enum'];
     }
-    return false;
+
+    /**
+     * return all reserved typeIds
+     *
+     * @public
+     * @return return a list of reservedTypeIds
+     */
+    export function getReservedTypeIds(): string[] {
+        return templateSchemaJson['$defs']['reserved-typeid']['enum'];
+    }
 };
-
-/**
- * return all primitive typeIds
- *
- * @public
- * @return {Array<string>} return a list of primitiveTypeIds
- */
-TypeIdHelper.getPrimitiveTypeIds = () => templateSchemaJson.$defs["primitive-typeid"].enum;
-
-/**
- * return all reserved typeIds
- *
- * @public
- * @return {Array<string>} return a list of reservedTypeIds
- */
-TypeIdHelper.getReservedTypeIds = () => templateSchemaJson.$defs["reserved-typeid"].enum;
-
-module.exports = TypeIdHelper;
