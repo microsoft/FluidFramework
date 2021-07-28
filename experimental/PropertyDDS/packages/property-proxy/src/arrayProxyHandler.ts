@@ -21,7 +21,7 @@ import { ComponentArray } from "./componentArray";
  * @return False if the passed length is less than 0, true otherwise.
  * @hidden
  */
-function setLength(target: ComponentArray, length: number): boolean {
+function setLength(target: ComponentArray, length: number) {
     const newLength = Math.floor(length);
     if (newLength < 0 || isNaN(newLength)) {
         throw new RangeError("Invalid array length");
@@ -71,10 +71,10 @@ const setTrapSpecialCases = getTrapSpecialCases.concat(["fill", "sort"]);
 export const arrayProxyHandler = {
     /**
      * The get trap that handles access to properties and functions.
-     * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
-     * @param {String} key The name of the property/function that is to be accessed.
-     * @param {Proxy} receiver The proxy
-     * @return {Object | external:BaseProperty | Function} The accessed primitive, Property or function.
+     * @param target The {@link ComponentArray} the Proxy handles.
+     * @param  key The name of the property/function that is to be accessed.
+     * @param  receiver The proxy
+     * @return The accessed primitive, Property or function.
      */
     get(target: ComponentArray, key: string, receiver) {
         if (typeof target[key] === "function") {
@@ -129,11 +129,11 @@ export const arrayProxyHandler = {
     /**
      * Trap for Object.getOwnPropertyDescriptor().
      * Returns writeable and enumerable descriptor except for length. Required for the ownKeys trap.
-     * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
-     * @param {String} key The name of the property/function that is to be accessed.
-     * @return {Object} The Descriptor
+     * @param target The {@link ComponentArray} the Proxy handles.
+     * @param key The name of the property/function that is to be accessed.
+     * @return The Descriptor
      */
-    getOwnPropertyDescriptor(target, key) {
+    getOwnPropertyDescriptor(target: ComponentArray, key: string | typeof proxySymbol) {
         if (key !== "length") {
             if (key === proxySymbol) {
                 return { configurable: true, enumerable: true, value: key, writable: false };
@@ -151,20 +151,21 @@ export const arrayProxyHandler = {
     /**
      * The trap for the in operator.
      * Forwards the query to the has() method of the {@link external:ArrayProperty ArrayProperty}.
-     * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
-     * @param {String} key The name of the property/function that is to be accessed.
-     * @return {Boolean} True if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
+     * @param target The {@link ComponentArray} the Proxy handles.
+     * @param key The name of the property/function that is to be accessed.
+     * @return if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
      */
-    has: (target, key) => key === "swap" || key in [] || key === proxySymbol ||
+    has: (target: ComponentArray, key: string | number | typeof proxySymbol) =>
+        key === "swap" || key in [] || key === proxySymbol ||
         (key >= 0 && key < target.getProperty().getLength()),
 
     /**
      * Trap for the Object.keys().
      * Returns the Ids of the {@link external:ArrayProperty ArrayProperty} as an array.
-     * @param {ComponentArray} target The {@link ComponentArray} the Proxy handles.
+     * @param target The {@link ComponentArray} the Proxy handles.
      * @return The array containing the IDs of the {@link external:ArrayProperty ArrayProperty}.
      */
-    ownKeys: (target) => Reflect.ownKeys(Array.from(target.getProperty().getEntriesReadOnly())),
+    ownKeys: (target: ComponentArray) => Reflect.ownKeys(Array.from(target.getProperty().getIds())),
 
     /**
      * The set trap handles setting of properties. If key is a number >= 0 it sets the
@@ -176,7 +177,7 @@ export const arrayProxyHandler = {
      * @param value The value to be set.
      * @return Returns a boolean.
      */
-    set(target: ComponentArray, key: string | number, value: any): boolean {
+    set(target: ComponentArray, key: string | number, value: any) {
         // process key for cases like "*1" 1 "string_key", "*string_key"
         let processed_key = key;
         const asteriskFound = Utilities.containsAsterisk(processed_key);

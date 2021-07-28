@@ -61,7 +61,7 @@ class ComponentArray extends Array {
      * Returns the ArrayProperty property.
      * @return The ArrayProperty.
      */
-    getProperty(): ArrayProperty {
+    getProperty() {
         return this.property;
     }
 
@@ -101,7 +101,7 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    indexOf(searchElement: any, fromIndex?: number): number {
+    indexOf(searchElement: any, fromIndex?: number) {
         let startSearchIdx = 0;
         if (fromIndex) {
             if (fromIndex >= this.property.getLength()) {

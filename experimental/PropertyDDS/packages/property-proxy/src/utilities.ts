@@ -249,14 +249,14 @@ export namespace Utilities {
      * @param key The key to check.
      * @return True if `key` contains an asterisk.
      */
-    export const containsAsterisk = (key: any): boolean => (String(key) === key && key[key.length - 1] === "*");
+    export const containsAsterisk = (key: any) => (String(key) === key && key[key.length - 1] === "*");
 
     /**
      * Check if a passed in string `key`contains a caret.
      * @param key The key to check.
      * @return True if `key` contains a caret.
      */
-    export const containsCaret = (key: string): boolean => (String(key) === key && key[key.length - 1] === "^");
+    export const containsCaret = (key: string) => (String(key) === key && key[key.length - 1] === "^");
 
     /**
      * This method handles the proxification of child properties and also takes care of the special cases,

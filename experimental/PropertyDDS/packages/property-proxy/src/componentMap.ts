@@ -14,17 +14,17 @@ import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.
- * @param {ComponentMap} target The {@link ComponentMap} that holds a reference
+ * @param target The {@link ComponentMap} that holds a reference
  * to the {@link external:MapProperty MapProperty}.
- * @return {Iterator} An iterator.
+ * @return An iterator.
  * @hidden
  */
-const createMapIterator = (target) => function*(): Generator<[any, any]> {
+const createMapIterator = (target: ComponentMap) => function*(): Generator<[any, any]> {
     const property = target.getProperty();
     const keys = property.getIds();
     for (const key of keys) {
         const propertyAtKey = property.get(key);
-        if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
+        if (propertyAtKey && PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
             yield [key, PropertyProxy.proxify(propertyAtKey)];
         } else {
             yield [key, propertyAtKey];
@@ -57,7 +57,7 @@ class ComponentMap extends Map {
      * the size (number of entries).
      * @return The size of the {@link external:MapProperty MapProperty}.
      */
-    get size(): number {
+    get size() {
         return this.property.getIds().length;
     }
 
@@ -65,14 +65,14 @@ class ComponentMap extends Map {
      * Returns the wrapped {@link external:MapProperty MapProperty} property.
      * @return The wrapped {@link external:MapProperty MapProperty}.
      */
-    getProperty(): MapProperty {
+    getProperty() {
         return this.property;
     }
 
     /**
      * @inheritdoc
      */
-    clear(): void {
+    clear() {
         const keys = this.property.getIds();
         keys.forEach((id) => {
             this.property.remove(id);
@@ -82,7 +82,7 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    delete(key: string): boolean {
+    delete(key: string) {
         if (this.property.has(key)) {
             this.property.remove(key);
             return true;
