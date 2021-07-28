@@ -1,5 +1,17 @@
 # Change Log
 
+## 3.6.0
+
+* refactor: improve type safety to comply with ts 4.4 dev builds
+  * Associated pull request: [32763](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32763)
+  * Commit: [b88c813687d04d990925c9a63c341a695c7d1595](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b88c813687d04d990925c9a63c341a695c7d1595)
+* merge: releases/2021.07.3 into master
+  * Associated pull request: [32606](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32606)
+  * Commit: [fb11a737a7016f8067f39598b8afedda7fd4c735](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fb11a737a7016f8067f39598b8afedda7fd4c735)
+* perf: Optimize getStartingPoint
+  * Associated pull request: [32084](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32084)
+  * Commit: [3091bf8f11620ee81bd965b8c74a4bf030848748](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3091bf8f11620ee81bd965b8c74a4bf030848748)
+
 ## 3.1.0
 
 * build: update dependencies
