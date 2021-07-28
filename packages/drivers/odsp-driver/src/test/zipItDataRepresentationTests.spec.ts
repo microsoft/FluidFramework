@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { TreeBuilderSerializer } from "../WriteBufferUtils";
 import {
     TreeBuilder,
     BlobCore,
@@ -37,10 +38,10 @@ function createLongBuffer(length: number) {
 }
 
 describe("Tree Representation tests", () => {
-    let builder: TreeBuilder;
+    let builder: TreeBuilderSerializer;
 
     beforeEach(() => {
-        builder = new TreeBuilder();
+        builder = new TreeBuilderSerializer();
     });
 
     function validate(length = -1) {

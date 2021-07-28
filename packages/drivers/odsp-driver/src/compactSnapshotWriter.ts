@@ -9,7 +9,8 @@ import { snapshotMinReadVersion } from "./compactSnapshotParser";
 import { ISequencedDeltaOpMessage } from "./contracts";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { addNumberProperty, addStringProperty, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
+import { TreeBuilderSerializer } from "./WriteBufferUtils";
+import { addNumberProperty, addStringProperty, NodeCore } from "./zipItDataRepresentationUtils";
 
 /**
  * Writes header section of the snapshot.
@@ -95,7 +96,7 @@ function writeOpsSection(node: NodeCore, ops: ISequencedDeltaOpMessage[]) {
  * @returns - ReadBuffer - binary representation of the data.
  */
 export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): ReadBuffer {
-    const builder = new TreeBuilder();
+    const builder = new TreeBuilderSerializer();
     // Create the root node.
     const rootNode = builder.addNode();
     // Header node containing versions and snapshot seq number.

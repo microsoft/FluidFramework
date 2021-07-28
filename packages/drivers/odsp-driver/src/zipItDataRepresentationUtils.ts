@@ -10,12 +10,11 @@
 
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { WriteBuffer } from "./WriteBufferUtils";
 
 /**
  * Control codes used by tree serialization / decentralization code. Same as on server.
  */
-enum MarkerCodes {
+export enum MarkerCodes {
     ListStart = 49,
     ListEnd = 50,
 
@@ -66,56 +65,13 @@ const codeToBytesMap = {
 /**
  * This contains mapping of number of bytes to Marker Codes representing the corresponding Integer.
 */
-const integerBytesToCodeMap = {
+export const integerBytesToCodeMap = {
     0: 1,
     1: 3,
     2: 5,
     4: 7,
     8: 9,
 };
-
-/**
- * This contains mapping of number of bytes representing the corresponding string length to Marker Codes.
-*/
-const utf8StringBytesToCodeMap = {
-    0: 13,
-    1: 14,
-    2: 15,
-    4: 16,
-};
-
-/**
- * This contains mapping of number of bytes representing the corresponding length in which actual data(base64 string)
- * will be stored to Marker Codes.
-*/
-const binaryBytesToCodeMap = {
-    0: 32,
-    1: 33,
-    2: 34,
-    4: 35,
-    8: 16,
-};
-
-/**
- * Calculate how many bytes are required to encode an integer. This is always multiple of 2.
- * So if 6 bytes are required to store an integer than it will return 8.
- * @param num - number to encode.
- */
-function calcLength(numArg: number) {
-    let num = numArg;
-    let lengthLen = 0;
-    while (num > 0) {
-        num = Math.floor(num / 256);
-        lengthLen++;
-    }
-    let res = 0;
-    let index = 0;
-    while (res < lengthLen) {
-        res = Math.pow(2, index);
-        index++;
-    }
-    return res;
-}
 
 export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
     const propSet = new Set(props);
@@ -171,24 +127,10 @@ export abstract class BlobCore {
      * Represents a blob.
      * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
      */
-    constructor(private readonly useUtf8Code: boolean = false) {}
+    constructor(public readonly useUtf8Code: boolean = false) {}
 
     public toString() {
         return Uint8ArrayToString(this.buffer, "utf-8");
-    }
-
-    public write(buffer: WriteBuffer) {
-        const data = this.buffer;
-        const lengthLen = calcLength(data.length);
-        // Write Marker code.
-        buffer.write(this.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : binaryBytesToCodeMap[lengthLen]);
-        // Write actual data if length greater than 0, otherwise Marker Code is enough.
-        if (lengthLen > 0) {
-            buffer.write(data.length, lengthLen);
-            for (const element of data) {
-                buffer.write(element);
-            }
-        }
     }
 }
 
@@ -263,7 +205,10 @@ export type NodeTypes = NodeCore | BlobCore | number;
  * Node - node in the tree (non-leaf element of the tree)
  */
 export class NodeCore {
-    protected children: NodeTypes[] = [];
+    private readonly children: NodeTypes[] = [];
+    public get nodes() {
+        return this.children;
+    }
 
     public [Symbol.iterator]() {
         return this.children[Symbol.iterator]();
@@ -325,32 +270,6 @@ export class NodeCore {
         assert(Number.isInteger(payload), "Number should be an integer");
         assert(payload !== undefined && payload >= 0, "Payload should not be negative");
         this.children.push(payload);
-    }
-
-    /**
-     * Implementation of serialization of buffer with Marker Codes etc.
-     * @param buffer - Buffer to serialize.
-     */
-    public serialize(buffer: WriteBuffer) {
-        for (const child of this.children) {
-            if (child instanceof NodeCore) {
-                // For a tree node start and end with ListStart and end marker codes.
-                buffer.write(MarkerCodes.ListStart);
-                child.serialize(buffer);
-                buffer.write(MarkerCodes.ListEnd);
-            } else if (child instanceof BlobCore) {
-                child.write(buffer);
-            } else {
-                // Calculate length in which integer will be stored
-                const len = calcLength(child);
-                // Write corresponding Marker code for length of integer.
-                buffer.write(integerBytesToCodeMap[len]);
-                // Write actual number if greater than 0, otherwise Marker Code is enough.
-                if (len > 0) {
-                    buffer.write(child, len);
-                }
-            }
-        }
     }
 
     /**
@@ -416,11 +335,5 @@ export class TreeBuilder extends NodeCore {
         builder.load(buffer);
         assert(buffer.eof, "Unexpected data at the end of buffer");
         return builder;
-    }
-
-    public serialize(): ReadBuffer {
-        const buffer = new WriteBuffer();
-        super.serialize(buffer);
-        return buffer.done();
     }
 }
