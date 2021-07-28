@@ -762,7 +762,7 @@ PropertyFactory.prototype.validate = function (in_template) {
  * @return {property-properties.PropertyTemplate|object|property-properties.BaseProperty|undefined}
  *     Template/Property identified by the typeid.
  */
-PropertyFactory.prototype._get = function (in_typeid, in_context, in_scope) {
+PropertyFactory.prototype._get = function (in_typeid, in_context, in_scope = undefined) {
     if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
         var typeidItem = this._localPrimitivePropertiesAndTemplates.item(in_typeid);
 

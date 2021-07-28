@@ -72,7 +72,7 @@ NodeProperty.prototype.isDynamic = function () { return true; };
  * @throws if in_property does not have an id
  * @throws if in_property has a parent
  */
-NodeProperty.prototype.insert = function (in_id, in_property) {
+NodeProperty.prototype.insert = function (in_id, in_property = undefined) {
     if (in_property === undefined) {
         // If no id is passed, the property is passed as first parameter
         in_property = in_id;
