@@ -1,9 +1,10 @@
 ---
 title: Examples
 menuPosition: 4
+status: outdated
 aliases:
   - "/docs/get-started/examples/"
-  - "/docs/start/examples/"
+  - "/start/examples/"
 ---
 
 We've included several example apps in a [GitHub repository](https://github.com/microsoft/FluidExamples) to demonstrate

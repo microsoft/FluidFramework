@@ -1,7 +1,9 @@
 ---
 title: How to write a visual Fluid object
-menuPosition: 3
+status: outdated
 draft: true
+aliases:
+  - "/docs/advanced/visual-dataobject/"
 ---
 
 ## Introducing IFluidHtmlView

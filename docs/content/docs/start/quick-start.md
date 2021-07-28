@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-menuPosition: 2
+menuPosition: 1
 codeCopyButton: true
 aliases:
   - "/docs/get-started/quick-start/"

@@ -1,6 +1,9 @@
 ---
 title: Version compatibility
-menuPosition: 20
+draft: true
+status: outdated
+aliases:
+  - "/docs/concepts/compatibility/"
 ---
 
 Because the Fluid Framework is a platform, maintaining predictable backwards/forwards compatibility is an important part

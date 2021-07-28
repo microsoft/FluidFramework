@@ -69,10 +69,8 @@ export class Audience extends EventEmitter implements IAudience {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string) => void): this;
-    removeMember(clientId: string): void;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    removeMember(clientId: string): boolean;
 }
 
 // @public (undocumented)
@@ -159,7 +157,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    get storage(): IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
