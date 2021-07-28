@@ -177,7 +177,7 @@ export interface IOdspSnapshotBlob {
 
 export interface IOdspSnapshot {
     id: string;
-    commits: IOdspSnapshotCommit[];
+    trees: IOdspSnapshotCommit[];
     blobs?: IOdspSnapshotBlob[];
     ops?: ISequencedDeltaOpMessage[];
 }
