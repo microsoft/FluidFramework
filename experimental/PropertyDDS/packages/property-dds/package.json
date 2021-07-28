@@ -52,7 +52,7 @@
     "@fluidframework/mocha-test-setup": "^0.45.0",
     "@fluidframework/runtime-utils": "^0.45.0",
     "@fluidframework/sequence": "^0.45.0",
-    "@fluidframework/server-local-server": "^0.1027.0",
+    "@fluidframework/server-local-server": "^0.1028.0-0",
     "@fluidframework/test-runtime-utils": "^0.45.0",
     "@fluidframework/test-utils": "^0.45.0",
     "@microsoft/api-extractor": "^7.16.1",
