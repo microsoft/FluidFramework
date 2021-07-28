@@ -24,28 +24,23 @@ const colorPickerColors: IColor[] = [
     { r: 0, g: 0, b: 0, a: 1 },
 ];
 
-export class Canvas extends DataObject implements IFluidHTMLView {
+class CanvasView implements IFluidHTMLView {
     public get IFluidHTMLView() { return this; }
 
-    private ink: IInk;
-    private inkCanvas: InkCanvas;
+    private readonly canvasElement: HTMLCanvasElement;
     private inkColorPicker: HTMLDivElement;
+    private readonly inkCanvas: InkCanvas;
+
+    public constructor(canvas: Canvas) {
+        this.canvasElement = document.createElement("canvas");
+        this.inkCanvas = new InkCanvas(this.canvasElement, canvas.ink);
+    }
 
     public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
         elm.appendChild(this.createCanvasDom());
         this.sizeCanvas();
 
         window.addEventListener("resize", this.sizeCanvas.bind(this));
-    }
-
-    protected async initializingFirstTime() {
-        this.root.set("pageInk", Ink.create(this.runtime).handle);
-    }
-
-    protected async hasInitialized() {
-        // Wait here for the ink
-        const handle = await this.root.wait<IFluidHandle<IInk>>("pageInk");
-        this.ink = await handle.get();
     }
 
     private createCanvasDom() {
@@ -55,15 +50,12 @@ export class Canvas extends DataObject implements IFluidHTMLView {
         const inkSurface = document.createElement("div");
         inkSurface.classList.add("ink-surface");
 
-        const canvasElement = document.createElement("canvas");
-        canvasElement.classList.add("ink-canvas");
-
-        this.inkCanvas = new InkCanvas(canvasElement, this.ink);
+        this.canvasElement.classList.add("ink-canvas");
 
         const inkToolbar = this.createToolbar();
 
         inkComponentRoot.appendChild(inkSurface);
-        inkSurface.appendChild(canvasElement);
+        inkSurface.appendChild(this.canvasElement);
         inkSurface.appendChild(inkToolbar);
 
         this.inkColorPicker = this.createColorPicker();
@@ -129,5 +121,30 @@ export class Canvas extends DataObject implements IFluidHTMLView {
 
     private sizeCanvas() {
         this.inkCanvas.sizeCanvasBackingStore();
+    }
+}
+
+export class Canvas extends DataObject implements IFluidHTMLView {
+    public get IFluidHTMLView() { return this; }
+
+    private _ink: IInk;
+
+    public get ink() {
+        return this._ink;
+    }
+
+    public render(elm: HTMLElement, options?: IFluidHTMLOptions): void {
+        const view = new CanvasView(this);
+        view.render(elm);
+    }
+
+    protected async initializingFirstTime() {
+        this.root.set("ink", Ink.create(this.runtime).handle);
+    }
+
+    protected async hasInitialized() {
+        // Wait here for the ink
+        const handle = await this.root.wait<IFluidHandle<IInk>>("ink");
+        this._ink = await handle.get();
     }
 }
