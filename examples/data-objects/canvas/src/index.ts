@@ -9,7 +9,8 @@ import {
 } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 import { Ink } from "@fluidframework/ink";
-import { Canvas, CanvasView } from "./canvas";
+import { Canvas } from "./canvas";
+import { CanvasView } from "./view";
 
 export const CanvasInstantiationFactory =
     new DataObjectFactory<Canvas, undefined, undefined, IEvent>(
