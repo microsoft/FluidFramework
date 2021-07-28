@@ -43,6 +43,8 @@ export function generateRuntimeOptions(seed: number) {
         initialSummarizerDelayMs: numberCases,
         summaryConfigOverrides: [undefined],
         maxOpsSinceLastSummary: numberCases,
+        summarizerClientElection: booleanCases,
+        summarizerOptions: [undefined],
     };
 
     const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {

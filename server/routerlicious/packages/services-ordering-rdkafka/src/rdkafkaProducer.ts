@@ -14,9 +14,6 @@ import {
 } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { tryImportNodeRdkafka } from "./tryImport";
-
-const kafka = tryImportNodeRdkafka();
 
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
@@ -82,7 +79,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		};
 
 		const producer: kafkaTypes.Producer = this.producer =
-			new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
+			new this.kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
 		producer.on("ready", () => {
 			this.connected = true;

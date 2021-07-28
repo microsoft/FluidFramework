@@ -10,52 +10,19 @@ import {
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
-import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
+import {
+    isILoggingError,
+    annotateError,
+    extractLogSafeErrorProperties,
+    LoggingError,
+} from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-/** type guard to ensure it's a LoggingError and also implements IErrorBase */
-const isValidLoggingError = (error: any): error is LoggingError & IErrorBase => {
-    return (typeof error?.errorType === "string") && LoggingError.is(error);
+/** type guard to ensure it has an errorType e.g. via IErrorBase */
+const hasErrorType = (error: any): error is IErrorBase => {
+    return (typeof error?.errorType === "string");
 };
-
-function extractLogSafeErrorProperties(error: any) {
-    const isRegularObject = (value: any): boolean => {
-        return value !== null && !Array.isArray(value) && typeof value === "object";
-    };
-
-    const removeMessageFromStack = (stack: string, errorName?: string) => {
-        const stackFrames = stack.split("\n");
-        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
-        }
-        return stackFrames.join("\n");
-    };
-
-    const message = (typeof error?.message === "string")
-        ? error.message as string
-        : String(error);
-
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
-        message,
-    };
-
-    if (isRegularObject(error)) {
-        const { errorType, stack, name } = error;
-
-        if (typeof errorType === "string") {
-            safeProps.errorType = errorType;
-        }
-
-        if (typeof stack === "string") {
-            const errorName = (typeof name === "string") ? name : undefined;
-            safeProps.stack = removeMessageFromStack(stack, errorName);
-        }
-    }
-
-    return safeProps;
-}
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
@@ -132,18 +99,16 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         originalError: any,
         message: ISequencedDocumentMessage | undefined,
     ): ICriticalContainerError {
-        const messagePropsToLog = message !== undefined
-            ? extractSafePropertiesFromMessage(message)
-            : undefined;
         const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
 
-        // Don't coerce if it's already a recognized LoggingError
-        const error = isValidLoggingError(originalError)
+        // Don't coerce if already has an errorType, to distinguish unknown errors from
+        // errors that we raised which we already can interpret apart from this classification
+        const error = hasErrorType(originalError)
             ? originalError
             : wrapError(originalError, newErrorFn);
 
-        if (messagePropsToLog !== undefined) {
-            error.addTelemetryProperties(messagePropsToLog);
+        if (message !== undefined) {
+            annotateError(error, extractSafePropertiesFromMessage(message));
         }
         return error;
     }
@@ -169,27 +134,14 @@ export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
  * @param props - Properties to include on the error for logging - They will override props on originalError
  */
 export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError {
-    const newErrorFn =
-        (errMsg: string) => {
-            // Don't pass in props here, we want to add them last (see below)
-            const newError = new GenericError(errMsg, originalError);
+    const newErrorFn = (errMsg: string) => new GenericError(errMsg, originalError);
 
-            const { errorType } = extractLogSafeErrorProperties(originalError);
-            if (errorType !== undefined) {
-                // Clobber errorType (which is declared readonly) with the value off the original error
-                Object.assign(newError, { errorType });
-            }
-
-            // By clobbering newError.errorType, we can no longer properly call it a GenericError.
-            // It's still a LoggingError, and does have errorType so it's also IErrorBase
-            return newError as LoggingError & IErrorBase;
-        };
-
-    const error = isValidLoggingError(originalError)
+    const error = hasErrorType(originalError)
         ? originalError
         : wrapError(originalError, newErrorFn);
+
     if (props !== undefined) {
-        error.addTelemetryProperties(props);
+        annotateError(error, props);
     }
     return error;
 }
@@ -201,7 +153,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
-export function wrapError<T extends LoggingError>(
+export function wrapError<T>(
     error: any,
     newErrorFn: (m: string) => T,
 ): T {
@@ -212,8 +164,8 @@ export function wrapError<T extends LoggingError>(
     const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
 
     const newError = newErrorFn(message);
+    annotateError(newError, props);
 
-    newError.addTelemetryProperties(props);
     if (stack !== undefined) {
         Object.assign(newError, { stack });
     }

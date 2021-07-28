@@ -160,7 +160,7 @@ export interface IContainerContext extends IDisposable {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
@@ -180,6 +180,8 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
+    readonly taggedLogger?: ITelemetryBaseLogger;
+    // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }
 
@@ -194,7 +196,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
-    (event: "disconnected" | "attaching" | "attached", listener: () => void): any;
+    (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     // (undocumented)

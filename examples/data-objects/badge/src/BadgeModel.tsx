@@ -2,19 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+
 import { DataObject } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { SharedObjectSequence } from "@fluidframework/sequence";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { IBadgeModel, IBadgeHistory, IBadgeType } from "./Badge.types";
 import { defaultItems } from "./helpers";
-import { BadgeClient } from "./BadgeClient";
 
-export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
+export class Badge extends DataObject implements IBadgeModel {
     private _currentCell: SharedCell<IBadgeType> | undefined;
     private _optionsMap: SharedMap | undefined;
     private _historySequence: SharedObjectSequence<IBadgeHistory> | undefined;
@@ -31,8 +28,6 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
         if (!this._historySequence) { throw new Error("Not initialized"); }
         return this._historySequence;
     }
-
-    public get IFluidHTMLView() { return this; }
 
     private readonly currentId: string = "value";
     private readonly historyId: string = "history";
@@ -76,9 +71,5 @@ export class Badge extends DataObject implements IBadgeModel, IFluidHTMLView {
             this.root.get<IFluidHandle<SharedMap>>(this.optionsId)?.get(),
             this.root.get<IFluidHandle<SharedObjectSequence<IBadgeHistory>>>(this.historyId)?.get(),
         ]);
-    }
-
-    public render(div: HTMLElement) {
-        ReactDOM.render(<BadgeClient model={this} />, div);
     }
 }

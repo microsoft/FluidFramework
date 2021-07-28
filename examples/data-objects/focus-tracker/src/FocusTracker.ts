@@ -3,26 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { IEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    DataObject,
-    DataObjectFactory,
+    FluidContainer,
     IMember,
     IServiceAudience,
+    SignalManager,
 } from "@fluid-experimental/fluid-framework";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 
 export interface IFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;
 }
 
 /**
- * Data object example of using the audience with signals to track focus
- * state of connected clients without writing changes to a DDS
+ * Example of using the audience with signals to track focus state of connected clients
+ * without writing changes to a DDS.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents> implements EventEmitter {
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
 
     /**
@@ -31,11 +29,9 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
      */
     private readonly focusMap = new Map<string, Map<string, boolean>>();
 
-    private readonly onFocusSignalFn = (message: IInboundSignalMessage) => {
-        const userId: string = message.content.userId;
-        const hasFocus: boolean = message.content.focus;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const clientId: string = message.clientId!;
+    private readonly onFocusSignalFn = (clientId: string, payload: any) => {
+        const userId: string = payload.userId;
+        const hasFocus: boolean = payload.focus;
 
         let clientIdMap = this.focusMap.get(userId);
         if (clientIdMap === undefined) {
@@ -46,82 +42,57 @@ export class FocusTracker extends DataObject<{}, undefined, IFocusTrackerEvents>
         this.emit("focusChanged");
     };
 
-    private _audience: IServiceAudience<IMember> | undefined;
-    public get audience(): IServiceAudience<IMember> {
-        if (this._audience === undefined) {
-            throw new Error("no audience");
-        }
-        return this._audience;
-    }
-    public set audience(newAudience: IServiceAudience<IMember>) {
-        if (this._audience !== undefined) {
-            throw new Error("set audience only once");
-        }
-        this._audience = newAudience;
-        this._audience.on("membersChanged", () => {
-            this.pruneFocusMap();
+    public constructor(
+        container: FluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signalManager: SignalManager,
+    ) {
+        super();
+
+        this.audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");
-            // TODO: Currently the current connecting client does not always broadcast its
-            // status on connection because it can't identify itself in the audience yet
-            // (e.g. if the Container hasn't connected).  Once audience events are cleaned
-            // up we can check for ourself here and broadcast.
         });
-    }
+        this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
+            const clientIdMap = this.focusMap.get(member.userId);
+            if (clientIdMap !== undefined) {
+                clientIdMap.delete(clientId);
+                if (clientIdMap.size === 0) {
+                    this.focusMap.delete(member.userId);
+                }
+            }
+            this.emit("focusChanged");
+        });
 
-    public static get Name() { return "@fluid-example/focus-tracker"; }
-
-    public static readonly factory = new DataObjectFactory<FocusTracker, undefined, undefined, IFocusTrackerEvents>
-    (
-        FocusTracker.Name,
-        FocusTracker,
-        [],
-        {},
-    );
-
-    protected async hasInitialized() {
+        this.signalManager.on("error", (error) => {
+            this.emit("error", error);
+        });
+        this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+            this.onFocusSignalFn(clientId, payload);
+        });
+        this.signalManager.onBroadcastRequested(FocusTracker.focusSignalType, () => {
+            this.sendFocusSignal(document.hasFocus());
+        });
         window.addEventListener("focus", () => {
             this.sendFocusSignal(true);
         });
         window.addEventListener("blur", () => {
             this.sendFocusSignal(false);
         });
-        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-            if (message.type === FocusTracker.focusSignalType &&
-                this.runtime.connected &&
-                // eslint-disable-next-line no-null/no-null
-                message.clientId !== null) {
-                this.onFocusSignalFn(message);
-            }
+
+        container.on("connected", () => {
+            this.signalManager.requestBroadcast(FocusTracker.focusSignalType);
         });
-        this.runtime.on("connected", () => {
-            this.sendFocusSignal(document.hasFocus());
-        });
+        this.signalManager.requestBroadcast(FocusTracker.focusSignalType);
     }
 
     /**
      * Alert all connected clients that there has been a change to a client's focus
      */
     private sendFocusSignal(hasFocus: boolean) {
-        if (this._audience !== undefined && this.runtime.connected) {
-            this.runtime.submitSignal(
-                FocusTracker.focusSignalType,
-                { userId: this.audience.getMyself()?.userId, focus: hasFocus },
-            );
-        }
-    }
-
-    /**
-     * Go through the current audience to remove entries in our focus map on clients
-     * that are no longer present
-     */
-    private pruneFocusMap() {
-        this.focusMap.forEach((clientIdMap, userId) => {
-            clientIdMap.forEach((hasFocus, clientId) => {
-                if (this.audience.getMemberByClientId(clientId) === undefined) {
-                    clientIdMap.delete(clientId);
-                }
-            });
-        });
+        this.signalManager.submitSignal(
+            FocusTracker.focusSignalType,
+            { userId: this.audience.getMyself()?.userId, focus: hasFocus },
+        );
     }
 
     /**

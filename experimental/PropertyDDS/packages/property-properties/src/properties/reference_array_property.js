@@ -28,10 +28,10 @@ const ReferenceProperty = require('./reference_property');
  * @alias property-properties.ReferenceArrayProperty
  * @category Arrays
  */
-var ReferenceArrayProperty = function( in_params) {
-  ValueArrayProperty.call( this, in_params );
+var ReferenceArrayProperty = function (in_params) {
+  ValueArrayProperty.call(this, in_params);
 };
-ReferenceArrayProperty.prototype = Object.create( ValueArrayProperty.prototype );
+ReferenceArrayProperty.prototype = Object.create(ValueArrayProperty.prototype);
 
 ReferenceArrayProperty.prototype._typeid = 'Reference';
 
@@ -43,7 +43,7 @@ ReferenceArrayProperty.prototype._typeid = 'Reference';
  *
  * @return {string} The typeid of the nodes this reference may point to
  */
-ReferenceArrayProperty.prototype.getReferenceTargetTypeId = function() {
+ReferenceArrayProperty.prototype.getReferenceTargetTypeId = function () {
   return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
 };
 
@@ -62,11 +62,11 @@ ReferenceArrayProperty.prototype.getReferenceTargetTypeId = function() {
  * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
  *    could not be resolved
  */
-ReferenceArrayProperty.prototype.get = function(in_ids, in_options) {
+ReferenceArrayProperty.prototype.get = function (in_ids, in_options) {
   in_options = in_options || {};
   in_options.referenceResolutionMode =
-      in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-                                                         in_options.referenceResolutionMode;
+    in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
+      in_options.referenceResolutionMode;
 
   if (_.isArray(in_ids)) {
     // Forward handling of arrays to the ContainerProperty function
@@ -74,7 +74,7 @@ ReferenceArrayProperty.prototype.get = function(in_ids, in_options) {
   } else {
     var value = this._dataArrayRef.getValue(in_ids);
     if (value === undefined ||
-        value === '') {
+      value === '') {
       return undefined;
     }
 
@@ -89,9 +89,9 @@ ReferenceArrayProperty.prototype.get = function(in_ids, in_options) {
  * @param {number} in_position the target index
  * @return {boolean} True if the reference is valid, otherwise false.
  */
-ReferenceArrayProperty.prototype.isReferenceValid = function(in_position) {
+ReferenceArrayProperty.prototype.isReferenceValid = function (in_position) {
   return ValueArrayProperty.prototype.get.call(this, in_position) === '' ||
-         this.get(in_position) !== undefined;
+    this.get(in_position) !== undefined;
 };
 
 /**
@@ -105,7 +105,7 @@ ReferenceArrayProperty.prototype.isReferenceValid = function(in_position) {
  * @throws if in_array is not an array
  * @throws if one of the items in in_array is defined, but is not a property or a string.
  */
-ReferenceArrayProperty.prototype.setRange = function(in_offset, in_array) {
+ReferenceArrayProperty.prototype.setRange = function (in_offset, in_array) {
   var arr = ReferenceArrayProperty._convertInputToPaths(in_array, 'setRange');
   ValueArrayProperty.prototype.setRange.call(this, in_offset, arr);
 };
@@ -121,7 +121,7 @@ ReferenceArrayProperty.prototype.setRange = function(in_offset, in_array) {
  * @throws if in_array is not an array
  * @throws if one of the items in in_array is defined, but is not a property or a string.
  */
-ReferenceArrayProperty.prototype.insertRange = function(in_offset, in_array) {
+ReferenceArrayProperty.prototype.insertRange = function (in_offset, in_array) {
   var arr = ReferenceArrayProperty._convertInputToPaths(in_array, 'insertRange');
   ValueArrayProperty.prototype.insertRange.call(this, in_offset, arr);
 };
@@ -131,7 +131,7 @@ ReferenceArrayProperty.prototype.insertRange = function(in_offset, in_array) {
  * @param {number} in_id the index of the property
  * @return {string} the path string
  */
-ReferenceArrayProperty.prototype.getValue = function(in_id)  {
+ReferenceArrayProperty.prototype.getValue = function (in_id) {
   return this._dataArrayRef.getValue(in_id);
 };
 
@@ -140,7 +140,7 @@ ReferenceArrayProperty.prototype.getValue = function(in_id)  {
  * @return {array<String>} an array of strings representing the paths listed in this array
  * for example: ['/path1', '/path2']
  */
-ReferenceArrayProperty.prototype.getValues = function() {
+ReferenceArrayProperty.prototype.getValues = function () {
   var result = [];
   var ids = this.getIds();
   for (var i = 0; i < ids.length; i++) {
@@ -154,7 +154,7 @@ ReferenceArrayProperty.prototype.getValues = function() {
  * @throws if trying to modify a referenced property
  * @return {String} deleted element (string path)
  */
-ReferenceArrayProperty.prototype.pop = function() {
+ReferenceArrayProperty.prototype.pop = function () {
   if (this._dataArrayRef.length > 0) {
     var item = this.getValue(this._dataArrayRef.length - 1);
     this.remove(this._dataArrayRef.length - 1);
@@ -172,7 +172,7 @@ ReferenceArrayProperty.prototype.pop = function() {
  * @throws if trying to remove something that does not exist
  * @return {String} the value that was removed (string path).
  */
-ReferenceArrayProperty.prototype.remove = function(in_position) {
+ReferenceArrayProperty.prototype.remove = function (in_position) {
   var value = this.getValue(in_position);
   this.removeRange(in_position, 1);
   return value;
@@ -188,11 +188,11 @@ ReferenceArrayProperty.prototype.remove = function(in_position) {
  * @throws if in_offset is smaller than zero or if in_offset + in_delete count is larger than the length of the array
  * @return {Array<String>} an array containing the values removed (string paths)
  */
-ReferenceArrayProperty.prototype.removeRange = function(in_offset, in_deleteCount) {
+ReferenceArrayProperty.prototype.removeRange = function (in_offset, in_deleteCount) {
   ConsoleUtils.assert(_.isNumber(in_offset),
-   MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.removeRange or .remove');
+    MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.removeRange or .remove');
   ConsoleUtils.assert(_.isNumber(in_deleteCount),
-   MSG.NOT_NUMBER + 'in_deleteCount, method: ArrayProperty.removeRange or .remove');
+    MSG.NOT_NUMBER + 'in_deleteCount, method: ArrayProperty.removeRange or .remove');
   ConsoleUtils.assert(in_offset + in_deleteCount < this.length + 1 && in_offset >= 0 && in_deleteCount > 0,
     MSG.REMOVE_OUT_OF_BOUNDS + 'Cannot remove ' + in_deleteCount + ' items starting at index ' + in_offset);
   var result = [];
@@ -208,11 +208,11 @@ ReferenceArrayProperty.prototype.removeRange = function(in_offset, in_deleteCoun
 /**
  * @inheritdoc
  */
-ReferenceArrayProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType) {
+ReferenceArrayProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
 
   // Array tokens are automatically resolved
   if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-    return this.get(in_segment, {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
+    return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
   } else {
     // Everything else is handled by the implementation in the base property
     return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
@@ -223,7 +223,7 @@ ReferenceArrayProperty.prototype._resolvePathSegment = function(in_segment, in_s
  * Creates and initializes the data array
  * @param {Number} in_length      the initial length of the array
  */
-ReferenceArrayProperty.prototype._dataArrayCreate = function(in_length) {
+ReferenceArrayProperty.prototype._dataArrayCreate = function (in_length) {
   this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, '');
@@ -242,7 +242,7 @@ ReferenceArrayProperty.prototype._dataArrayCreate = function(in_length) {
  * @throws if in_array is not an array
  * @throws if one of the items in in_array is defined, but is not a property or a string.
  */
-ReferenceArrayProperty._convertInputToPaths = function(in_array, in_callerName) {
+ReferenceArrayProperty._convertInputToPaths = function (in_array, in_callerName) {
   if (!_.isArray(in_array)) {
     throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ReferenceArrayProperty.' + in_callerName);
   }
