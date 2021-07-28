@@ -5,6 +5,9 @@
 
 import { IColor, InkCanvas } from "@fluidframework/ink";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
+
+import React from "react";
+
 import { Canvas } from "./canvas";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
@@ -122,3 +125,11 @@ export class CanvasView implements IFluidHTMLView {
         this.inkCanvas.sizeCanvasBackingStore();
     }
 }
+
+interface ICanvasReactViewProps {
+    canvas: Canvas;
+}
+
+export const CanvasReactView: React.FC<ICanvasReactViewProps> = (props: ICanvasReactViewProps) => {
+    return <div />;
+};
