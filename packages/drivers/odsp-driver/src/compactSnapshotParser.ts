@@ -74,9 +74,7 @@ function readBlobSection(node: NodeCore, dictionary: string[]) {
         assert(blob instanceof BlobCore, "Blob content should be of type blob");
         const blobId = dictionary[idIndex];
         assert(blobId !== undefined, "blob id should be present");
-        const unit8Array = blob.buffer;
-        blobs.set(blobId,
-            unit8Array.buffer.slice(unit8Array.byteOffset, unit8Array.byteOffset + unit8Array.byteLength));
+        blobs.set(blobId, blob.arrayBuffer);
     }
     return blobs;
 }

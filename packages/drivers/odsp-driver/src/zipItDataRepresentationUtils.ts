@@ -162,6 +162,11 @@ export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) 
  */
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
+    public get arrayBuffer(): ArrayBufferLike {
+        const uint8Array = this.buffer;
+        return uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+    }
+
     /**
      * Represents a blob.
      * @param useUtf8Code - Represents if the utf8 string marker code should be used when representing.
