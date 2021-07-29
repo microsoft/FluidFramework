@@ -1,3 +1,9 @@
+## 0.45 Breaking changes
+- [Changes to local testing in insecure environments](#changes-to-local-testing-in-insecure-environments)
+
+### Changes to local testing in insecure environments
+Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.
+
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)
