@@ -86,7 +86,9 @@ export class ContainerContext implements IContainerContext {
         return context;
     }
 
+    /** @deprecated See IContainerContext for more details. */
     public readonly logger: ITelemetryLogger;
+    public readonly taggedLogger: ITelemetryLogger;
 
     public get id(): string {
         return this.container.id;
@@ -173,6 +175,7 @@ export class ContainerContext implements IContainerContext {
 
     ) {
         this.logger = container.subLogger;
+        this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
@@ -301,7 +304,7 @@ export class ContainerContext implements IContainerContext {
 
     private async loadCodeModule(codeDetails: IFluidCodeDetails) {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
         );

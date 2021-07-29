@@ -105,7 +105,7 @@ function copyProps(target: unknown, source: ITelemetryProperties) {
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any): ITelemetryProperties {
+export function getValidTelemetryProps(obj: any): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
         const val = obj[key];

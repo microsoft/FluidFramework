@@ -41,6 +41,7 @@ import {
     ChildLogger,
     raiseConnectedEvent,
     PerformanceEvent,
+    TaggedLoggerAdapter,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -533,7 +534,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
-        const logger = ChildLogger.create(context.logger, undefined, {
+        // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
+        const passLogger = context.taggedLogger ? context.taggedLogger : new TaggedLoggerAdapter(context.logger);
+        const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
             },
