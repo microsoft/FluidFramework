@@ -266,14 +266,14 @@ export function convertSnapshotTreeToSummaryTree(
 
     const builder = new SummaryTreeBuilder();
     for (const [path, id] of Object.entries(snapshot.blobs)) {
-        // 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
-        // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
         let decoded: string | Uint8Array | undefined;
         if ((snapshot as any).blobsContents !== undefined) {
             const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
             if (content !== undefined) {
                 decoded = new Uint8Array(content);
             }
+        // 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
+        // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
         } else if (snapshot.blobs[id] !== undefined) {
             decoded = fromBase64ToUtf8(snapshot.blobs[id]);
         }
