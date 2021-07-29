@@ -252,7 +252,7 @@ describe("Logger", () => {
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.message, "myMessage");
                 assert.strictEqual(typeof props.stack, "string");
-                assert.strictEqual(props.name, "Error");
+                assert.strictEqual(props.name, undefined); // Error.name is not logged
                 assert.strictEqual(props.p1, 1);
                 assert.strictEqual(props.p2, "two");
                 assert.strictEqual(props.p3, true);
@@ -307,7 +307,7 @@ describe("Logger", () => {
             });
             it("addTelemetryProperties - overwrites base class Error fields (untagged)", () => {
                 const loggingError = new LoggingError("myMessage");
-                const overwritingProps = { message: "surprise1", stack: "surprise2", name: "surprise3" };
+                const overwritingProps = { message: "surprise1", stack: "surprise2" };
                 loggingError.addTelemetryProperties(overwritingProps);
                 const props = loggingError.getTelemetryProperties();
                 assert.deepStrictEqual(props, overwritingProps);
@@ -317,7 +317,6 @@ describe("Logger", () => {
                 const expectedProps = {
                     message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
                     stack: { value: "surprise2", tag: "PackageData" },
-                    name: { value: "surprise3", tag: "PackageData" },
                 };
                 overwritingProps.addTelemetryProperties(expectedProps);
                 const props = overwritingProps.getTelemetryProperties();

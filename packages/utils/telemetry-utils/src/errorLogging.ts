@@ -176,9 +176,9 @@ export class LoggingError extends Error implements ILoggingError {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
         // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
         // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
+        // Not including the 'name' property because if not overridden it's always "Error"
         return  {
             stack: this.stack,
-            name: this.name,
             message: this.message,
             ...taggableProps,
         };
