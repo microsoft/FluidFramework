@@ -93,6 +93,10 @@ export class Lumberjack {
         return new Lumber<T>(eventName, LumberType.Metric, this._engineList, this._schemaValidator, properties);
     }
 
+    public static isSetupCompleted() {
+        return this.instance._isSetupCompleted;
+    }
+
     public log(
         message: string,
         level: LogLevel,

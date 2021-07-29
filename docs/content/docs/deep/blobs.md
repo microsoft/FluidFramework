@@ -1,7 +1,7 @@
 ---
 title: "Blobs in the Fluid Framework"
 menuPosition: 7
-status: placeholder
+status: unwritten
 draft: true
 ---
 

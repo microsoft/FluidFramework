@@ -7,6 +7,7 @@ import { ITelemetryProperties, ITelemetryBaseLogger, ITelemetryLogger } from "@f
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
@@ -30,16 +31,18 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion } from "./packageVersion";
-import { IOdspSnapshot } from "./contracts";
+import { IOdspSnapshot, ISequencedDeltaOpMessage } from "./contracts";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
-export interface ISnapshotCacheValue {
-    snapshot: IOdspSnapshot;
-    sequenceNumber: number | undefined;
+export interface ISnapshotContents {
+    snapshotTree: ISnapshotTree,
+    blobs: Map<string, ArrayBuffer>,
+    ops: ISequencedDeltaOpMessage[],
+    sequenceNumber: number | undefined,
 }
 
 export interface IOdspResponse<T> {
