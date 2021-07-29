@@ -128,7 +128,7 @@ const frsClientConfig = {
 1. Replace `TODO 2` with the following code. Note that `isNew` was returned by the `getContainerId` helper method and it is true if the application has no Fluid container yet.
 
     ```js
-    const { container } = isNew
+    const { fluidContainer } = isNew
         ? await frsClient.createContainer({id: containerId}, containerSchema)
         : await frsClient.getContainer({id: containerId}, containerSchema);
     ```
@@ -136,7 +136,7 @@ const frsClientConfig = {
 1. Replace `TODO 3` with the following code.
 
     ```js
-    return container.initialObjects;
+    return fluidContainer.initialObjects;
     ```
 
 ### Get the Fluid data on application startup
