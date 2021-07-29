@@ -102,7 +102,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
+import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -930,6 +930,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summarizerClientElection,
                 this, // IConnectedState
                 this.logger,
+                formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );

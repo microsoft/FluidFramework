@@ -7,7 +7,7 @@ import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidfra
 import { delay, IPromiseTimerResult, PromiseTimer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainerContext, IDeltaManager, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { createSummarizingWarning } from "./summarizer";
@@ -90,6 +90,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         private readonly clientElection: SummarizerClientElection,
         private readonly connectedState: IConnectedState,
         parentLogger: ITelemetryLogger,
+        private readonly requestSummarizerFn: () => Promise<ISummarizer>,
         initialDelayMs: number = defaultInitialDelayMs,
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
@@ -270,37 +271,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             ]);
         }
 
-        const loader = this.context.loader;
-
-        // TODO eventually we may wish to spawn an execution context from which to run this
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: summarizerClientType,
-                },
-                [DriverHeader.summarizingClient]: true,
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-            },
-            url: "/_summarizer",
-        };
-
-        const response = await loader.request(request);
-
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            return Promise.reject(new Error("Invalid summarizer route"));
-        }
-
-        const rawFluidObject = response.value as IFluidObject;
-        const summarizer = rawFluidObject.ISummarizer;
-
-        if (!summarizer) {
-            return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
-        }
-
-        return summarizer;
+        return this.requestSummarizerFn();
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
@@ -327,3 +298,38 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this._disposed = true;
     }
 }
+
+export const formRequestSummarizerFn = (
+    loader: Pick<ILoader, "request">,
+    deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
+) => async () => {
+    // TODO eventually we may wish to spawn an execution context from which to run this
+    const request: IRequest = {
+        headers: {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.clientDetails]: {
+                capabilities: { interactive: false },
+                type: summarizerClientType,
+            },
+            [DriverHeader.summarizingClient]: true,
+            [LoaderHeader.reconnect]: false,
+            [LoaderHeader.sequenceNumber]: deltaManager.lastSequenceNumber,
+        },
+        url: "/_summarizer",
+    };
+
+    const response = await loader.request(request);
+
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        return Promise.reject(new Error("Invalid summarizer route"));
+    }
+
+    const rawFluidObject = response.value as IFluidObject;
+    const summarizer = rawFluidObject.ISummarizer;
+
+    if (!summarizer) {
+        return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
+    }
+
+    return summarizer;
+};
