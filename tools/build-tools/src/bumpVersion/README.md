@@ -2,7 +2,7 @@
 
 A tool to help automate release version bumps, and dependencies version bumps.
 
-Currently, it only support doing a minor or a patch release on the client repo.  The other dependent monorepo/packages will be release if there are dependencies to the latest repo version. Only packages in common, packages, server/routerlicious, tools/generator-fluid will be updated and released.
+Currently, it only support doing a minor or a patch release on the client repo.  The other dependent monorepo/packages will be release if there are dependencies to the latest repo version. Only packages in common, packages, server/routerlicious will be updated and released.
 
 ## Usage
 
@@ -70,8 +70,6 @@ Release Versions:
             @fluidframework/common-utils:     0.16.0 (old)
                                   Server:   0.1004.1 (old)
                                   Client:     0.16.1 (new)
-         @fluidframework/generator-fluid:     0.16.1 (new)
-                   @yo-fluid/dice-roller:     0.16.1 (new)
 
 Creating release 0.16.1
   Creating temporary release branch merge/0.16.1
@@ -86,11 +84,8 @@ Creating release 0.16.1
     Waiting for package to publish @fluidframework/odsp-utils@0.16.1...
     Fix pre-release dependencies
     No dependencies need to be updated
-    Tagging release generator-fluid_v0.16.1
->>> Push tag generator-fluid_v0.16.1 to remote? [y/n] y
 Creating bump patch version for development in branch merge/0.16.1
   Bumping client version
-  Bumping generator version
   Committing version bump to 0.16.2 into merge/0.16.1
 ======================================================================================================
 Please merge merge/0.16.1 to release/0.16.x
@@ -103,6 +98,4 @@ Repo Versions in branch merge/0.16.1:
             @fluidframework/common-utils:     0.16.1 (unchanged)
                                   Server:   0.1004.2 (unchanged)
                                   Client:     0.16.1 -> 0.16.2
-         @fluidframework/generator-fluid:     0.16.1 -> 0.16.2
-                   @yo-fluid/dice-roller:     0.16.1 -> 0.16.2
 ```

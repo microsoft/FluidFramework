@@ -225,8 +225,7 @@
             "Tools": {
                 "dot": false,
                 "dirs": [
-                    "packages/tools/",
-                    "tools/generator-fluid"
+                    "packages/tools/"
                 ],
                 "deps": [
                     "Framework",

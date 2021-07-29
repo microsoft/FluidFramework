@@ -1,8 +1,12 @@
 ## 0.45 Breaking changes
-- [webpack-fluid-loader package name changed](webpack-fluid-loader-package-name-changed)
+- [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [yo fluid removed](#yo-fluid-removed)
 
 ### webpack-fluid-loader package name changed
 The webpack-fluid-loader utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is intended as an example utility not for use in production, it is now available under the example scope `@fluid-example/webpack-fluid-loader`.  This package does not publish to NPM, but can be used locally within the FluidFramework repository.
+
+### yo fluid removed
+The yo fluid generator has been removed.  To get started with Fluid, check out the [getting started documentation](https://fluidframework.com/docs/start/quick-start/).
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

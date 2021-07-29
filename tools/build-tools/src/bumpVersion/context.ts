@@ -23,11 +23,8 @@ export type VersionChangeType = VersionBumpType | semver.SemVer;
 export class Context {
     public readonly repo: FluidRepo;
     public readonly fullPackageMap: Map<string, Package>;
-    public readonly templatePackage: Package;
 
     private readonly timer: Timer;
-    private readonly generatorPackage: Package;
-    private readonly packageManifest: IPackageManifest;
     private readonly newBranches: string[] = [];
     private readonly newTags: string[] = [];
 
@@ -43,19 +40,10 @@ export class Context {
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();
-        this.packageManifest = getPackageManifest(this.repo.resolvedRoot);
-
-        // TODO: Is there a way to generate this automatically?
-        if (!this.packageManifest.generatorName) { fatal(`Unable to find generator package name in package.json`) }
-        const generatorPackage = this.fullPackageMap.get(this.packageManifest.generatorName);
-        if (!generatorPackage) { fatal(`Unable to find ${this.packageManifest.generatorName} package`) };
-        this.generatorPackage = generatorPackage;
-        this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"), "tools");
     }
 
     private reloadPackageJson() {
         this.repo.reload();
-        this.templatePackage.reload();
     }
 
     /**
@@ -74,7 +62,6 @@ export class Context {
             versions.add(pkg, pkg.version);
         });
 
-        versions.add(this.templatePackage, this.templatePackage.version);
         return versions;
     }
 
@@ -109,9 +96,6 @@ export class Context {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
                 break;
-            }
-            if (pkg === this.generatorPackage) {
-                pendingDepCheck.push(this.templatePackage);
             }
             for (const { name: dep, version, dev } of pkg.combinedDependencies) {
                 // Find the package in the repo
@@ -158,7 +142,7 @@ export class Context {
     }
 
     /**
-     * Start with client and generator package marka as to be bumped, determine whether their dependent monorepo or packages
+     * Start with client package marka as to be bumped, determine whether their dependent monorepo or packages
      * has the same version to the current version in the repo and needs to be bumped as well
      */
     public async collectBumpInfo(releaseName: string) {

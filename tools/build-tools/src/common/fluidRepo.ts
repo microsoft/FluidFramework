@@ -13,7 +13,6 @@ export interface IPackageManifest {
     repoPackages: {
         [name: string]: IFluidRepoPackageEntry;
     },
-    generatorName?: string
 }
 
 export interface IFluidRepoPackage {

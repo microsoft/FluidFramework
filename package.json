@@ -139,7 +139,6 @@
       },
       "tools": [
         "tools/benchmark",
-        "tools/generator-fluid",
         "server/tinylicious"
       ],
       "services": {
@@ -148,7 +147,6 @@
           "routerlicious"
         ]
       }
-    },
-    "generatorName": "generator-fluid"
+    }
   }
 }

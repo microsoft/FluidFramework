@@ -4,5 +4,4 @@
     "docs/themes/thxvscode/layouts/",
     "docs/themes/thxvscode/static/assets/",
     "docs/tutorials/.*\\.tsx?",
-    "tools/generator-fluid/app/templates/"
 ]
