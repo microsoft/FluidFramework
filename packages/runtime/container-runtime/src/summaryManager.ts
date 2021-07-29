@@ -302,7 +302,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
 /**
  * Forms a function that will request a Summarizer.
- * @param loaderRouter - the loader acting as a fluid router
+ * @param loaderRouter - the loader acting as an IFluidRouter
  * @param deltaManager - delta manager to get last sequence number
  */
 export const formRequestSummarizerFn = (
