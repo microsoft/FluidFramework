@@ -125,7 +125,7 @@ describe("Throttler", () => {
             }
         });
 
-        it.skip("State should be corrected if delay is bypassed", () => {
+        it("State should be corrected if delay is bypassed", () => {
             // First 2 attempts are allowed to be instant.
             assert.strictEqual(getDelayAndTick(), 0);
             assert.strictEqual(throttler.getDelay(), 20);

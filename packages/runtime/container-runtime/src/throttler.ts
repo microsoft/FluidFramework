@@ -71,6 +71,16 @@ export class Throttler implements IThrottler {
     public getDelay() {
         const now = Date.now();
 
+        const latestAttemptTime = this.latestAttemptTime;
+        if (latestAttemptTime !== undefined) {
+            // If getDelay was called sooner than the most recent delay,
+            // subtract the remaining time, since we previously added it.
+            const earlyMs = latestAttemptTime - now;
+            if (earlyMs > 0) {
+                this.startTimes = this.startTimes.map((t) => t - earlyMs);
+            }
+        }
+
         // Remove all attempts that have already fallen out of the window.
         this.startTimes = this.startTimes.filter((t) => (now - t) < this.delayWindowMs);
 
