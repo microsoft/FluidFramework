@@ -1872,6 +1872,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // Please avoid calling it directly.
     // raiseContainerWarning() is the right flow for most cases
     private logContainerError(warning: ContainerWarning) {
-        this.logger.sendErrorEvent({ eventName: "ContainerWarning" }, warning);
+        this.logger.sendErrorEvent({ eventName: "ContainerWarning", runtimeVersion: pkgVersion }, warning);
     }
 }
