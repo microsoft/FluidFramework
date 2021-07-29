@@ -9,6 +9,23 @@ export interface IThrottler {
      * which will be used for calculating future attempt delays.
      */
     getDelay(): number;
+
+    /**
+     * Number of attempts that occurred within the sliding window as of
+     * the most recent delay computation.
+     */
+    readonly numAttempts: number;
+
+    /** Width of sliding delay window in milliseconds. */
+    readonly delayWindowMs: number;
+    /** Maximum delay allowed in milliseconds. */
+    readonly maxDelayMs: number;
+    /**
+     * Delay function used to calculate what the delay should be.
+     * The input is the number of attempts that occurred within the sliding window.
+     * The result is the calculated delay in milliseconds.
+     */
+    readonly delayFn: (numAttempts: number) => number;
 }
 
 /**
@@ -18,20 +35,16 @@ export interface IThrottler {
 export class Throttler implements IThrottler {
     private startTimes: number[] = [];
 
+    public get numAttempts() {
+        return this.startTimes.length;
+    }
+
     /**
      * Gets all attempt start times after compensating for the delay times
      * by adding the delay times to the actual times.
      */
     public getAttempts(): readonly number[] {
         return [ ...this.startTimes ];
-    }
-
-    /**
-     * Number of attempts that occurred within the sliding window as of
-     * the most recent delay computation.
-     */
-    public get numAttempts() {
-        return this.startTimes.length;
     }
 
     /**
@@ -44,15 +57,15 @@ export class Throttler implements IThrottler {
 
     constructor(
         /** Width of sliding delay window in milliseconds. */
-        private readonly delayWindowMs: number,
+        public readonly delayWindowMs: number,
         /** Maximum delay allowed in milliseconds. */
-        private readonly maxDelayMs: number,
+        public readonly maxDelayMs: number,
         /**
          * Delay function used to calculate what the delay should be.
          * The input is the number of attempts that occurred within the sliding window.
          * The result is the calculated delay in milliseconds.
          */
-        private readonly delayFn: (numAttempts: number) => number,
+        public readonly delayFn: (numAttempts: number) => number,
     ) { }
 
     public getDelay() {

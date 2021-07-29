@@ -102,7 +102,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
+import { defaultStartThrottleConfig, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -131,6 +131,7 @@ import {
     ISummarizerOptions,
     ISummarizerRuntime,
 } from "./summarizerTypes";
+import { Throttler } from "./throttler";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -930,6 +931,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summarizerClientElection,
                 this, // IConnectedState
                 this.logger,
+                new Throttler(
+                    defaultStartThrottleConfig.delayWindowMs,
+                    defaultStartThrottleConfig.maxDelayMs,
+                    defaultStartThrottleConfig.delayFn,
+                ),
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );
