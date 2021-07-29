@@ -616,6 +616,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Prefix all events in this file with container-loader
         this.logger = ChildLogger.create(this.subLogger, "Container");
 
+        this.logger.sendTelemetryEvent({ eventName: `Creating Container ${clientType}`, stack: new Error().stack });
+
         this.connectionStateHandler = new ConnectionStateHandler(
             {
                 protocolHandler: () => this._protocolHandler,
@@ -710,6 +712,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
+        this.logger.sendTelemetryEvent({eventName: "Container Closed", stack: new Error().stack}, error);
         if (this._closed) {
             return;
         }

@@ -340,6 +340,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                 if(dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
                     if (dataModel.counter.value % opsPerCycle === 0) {
+                        console.log(`runId=${config.runId} Waiting for partner`);
                         dataModel.abandonTask();
                         // give our partner a half cycle to get the task
                         await delay(cycleMs / 2);
