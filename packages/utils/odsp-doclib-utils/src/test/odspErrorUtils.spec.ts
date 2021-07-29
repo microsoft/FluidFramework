@@ -151,9 +151,7 @@ describe("OdspErrorUtils", () => {
             const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
             enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "responseText");
 
-            assert.equal((error as any).response, "responseText");
             assert(isILoggingError(error));
-            assert.equal(error.getTelemetryProperties().response, "responseText"); // bug GH #6139
             assert.equal(error.getTelemetryProperties().responseType, "fooType");
             assert.equal(error.getTelemetryProperties().sprequestguid, "mock header sprequestguid");
             assert.equal(error.getTelemetryProperties().requestId, "mock header request-id");
