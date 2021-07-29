@@ -11,7 +11,6 @@ import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/commo
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
 import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, FluidErrorAnnotations, SimpleFluidError } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
-import * as helpers from "../errorLoggingInternalHelpers";
 
 describe("Error Logging", () => {
     describe("TelemetryLogger.prepareErrorObject", () => {
@@ -435,9 +434,6 @@ describe.skip("Error Propagation", () => {
             "mixinTelemetryProps should have been called as expected");
     }
     describe("normalizeError", () => {
-        before(() => { mixinStub = sinon.stub(helpers, "mixinTelemetryProps"); });
-        afterEach(() => { mixinStub.reset(); });
-        after(() => { mixinStub.restore(); });
         function runTests(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
             for (const testCase of Object.keys(testCases)) {
                 for (const annotationCase of Object.keys(annotationCases)) {
@@ -467,7 +463,7 @@ describe.skip("Error Propagation", () => {
             });
         }
     });
-    describe("mixinTelemetryProps", () => {
+    describe("addTelemetryProps", () => {
         const props = annotationCases.justProps.props!;
         for (const testCase of Object.keys(patchableTestCases)) {
             it(`${testCase} (patchable)`, () => {
@@ -475,7 +471,8 @@ describe.skip("Error Propagation", () => {
                 const { input } = patchableTestCases[testCase]();
 
                 // Act
-                helpers.mixinTelemetryProps(input, props);
+                //* Revisit this
+                normalizeError(input).addTelemetryProperties(props);
 
                 // Assert
                 Object.keys(props).forEach((key) => {
@@ -490,37 +487,5 @@ describe.skip("Error Propagation", () => {
                 assert(input.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
             });
         }
-        for (const testCase of Object.keys(nonObjectTestCases)) {
-            it(`${testCase} (non-objects)`, () => {
-                // Arrange
-                const { input } = nonObjectTestCases[testCase]();
-
-                // Act / Assert
-                assert.throws(() => { helpers.mixinTelemetryProps(input, props); }, /Cannot mixin Telemetry Props/);
-            });
-        }
-        for (const testCase of Object.keys(frozenTestCases)) {
-            it(`${testCase} (frozen)`, () => {
-                // Arrange
-                const { input } = frozenTestCases[testCase]();
-
-                // Act / Assert
-                assert.throws(() => { helpers.mixinTelemetryProps(input, props); }, /Cannot mixin Telemetry Props/);
-            });
-        }
-        it("Custom Read/Write Logging Error is annotated", () => {
-            // Arrange
-            const loggingError = {
-                getTelemetryProperties: () => {},
-                addTelemetryProperties: () => {},
-            };
-            const atpSpy = sinon.spy(loggingError, "addTelemetryProperties");
-
-            // Act
-            helpers.mixinTelemetryProps(loggingError, { p1: 1 });
-
-            // Assert
-            assert(atpSpy.called);
-        });
     });
 });

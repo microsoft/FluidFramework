@@ -13,10 +13,6 @@ import {
     isFluidError,
     isValidLegacyError,
 } from "./fluidErrorBase";
-import {
-    mixinTelemetryProps,
-    copyProps,
-} from "./errorLoggingInternalHelpers";
 
 /** @returns true if value is an object but neither null nor an array */
 export const isRegularObject = (value: any): boolean => {
@@ -56,6 +52,11 @@ export function extractLogSafeErrorProperties(error: any) {
     }
 
     return safeProps;
+}
+
+/** Copy props from source onto target, overwriting any keys that are already set on target */
+function copyProps(target: unknown, source: ITelemetryProperties) {
+    Object.assign(target, source);
 }
 
 /** Metadata to annotate an error object when annotating or normalizing it */
