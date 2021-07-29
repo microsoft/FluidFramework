@@ -10,6 +10,11 @@ export interface IWriteableLoggingError {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
 }
 
+/** type guard for IWriteableLoggingError interface */
+const isIWriteableLoggingError = (x: any): x is IWriteableLoggingError =>
+    typeof x?.getTelemetryProperties === "function" &&
+    typeof x?.addTelemetryProperties === "function";
+
 /**
  * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
  * It includes Error's properties but as optional, plus errorType and fluidErrorCode strings.
@@ -30,5 +35,6 @@ export function isFluidError(e: any): e is IFluidErrorBase {
 /** type guard for old standard of valid/known errors */
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErrorCode"> {
     return typeof e?.errorType === "string" &&
-        typeof e?.message === "string";
+        typeof e?.message === "string" &&
+        isIWriteableLoggingError(e);
 }

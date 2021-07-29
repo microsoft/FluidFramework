@@ -149,24 +149,6 @@ export function normalizeError(
     return fluidError;
 }
 
-/**
- * @deprecated - Use normalizeError instead
- * Annotate the given error object with the given logging props
- * @returns The same error object passed in if possible, with telemetry props functionality mixed in
- */
-export function annotateError(
-    error: unknown,
-    props: ITelemetryProperties,
-): ILoggingError {
-    if (isRegularObject(error)) {
-        mixinTelemetryProps(error, props);
-        return error;
-    }
-
-    const message = String(error);
-    return new LoggingError(message, props);
-}
-
 export function generateStack(): string | undefined {
     // Some browsers will populate stack right away, others require throwing Error
     let stack = new Error("<<generated stack>>").stack;

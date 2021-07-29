@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateError, FluidErrorAnnotations, SimpleFluidError } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, FluidErrorAnnotations, SimpleFluidError } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
 import * as helpers from "../errorLoggingInternalHelpers";
 
@@ -464,39 +464,6 @@ describe.skip("Error Propagation", () => {
             it(`${testCase} (frozen)`, () => {
                 const { input } = frozenTestCases[testCase]();
                 assert.throws(() => { normalizeError(input); }, /Cannot normalize a frozen error object/);
-            });
-        }
-    });
-    describe("annotateErrorObject", () => {
-        before(() => { mixinStub = sinon.stub(helpers, "mixinTelemetryProps"); });
-        afterEach(() => { mixinStub.reset(); });
-        after(() => { mixinStub.restore(); });
-
-        for (const testCase of Object.keys(patchableTestCases)) {
-            for (const annotationCase of Object.keys(annotationCases)) {
-                it(`${testCase} (${annotationCase})`, () => {
-                    // Arrange
-                    const { input, expectedOutput } = patchableTestCases[testCase]();
-                    const annotations = annotationCases[annotationCase];
-
-                    // Act
-                    annotateError(input, {});  //* NOPE
-
-                    // Assert
-                    assertMatching(input, expectedOutput, annotations);
-                });
-            }
-        }
-        for (const testCase of Object.keys(nonObjectTestCases)) {
-            it(`${testCase} (non-objects)`, () => {
-                const { input } = nonObjectTestCases[testCase]();
-                assert.throws(() => { annotateError(input, {}); }, /Cannot annotate a non-object or frozen error/);
-            });
-        }
-        for (const testCase of Object.keys(frozenTestCases)) {
-            it(`${testCase} (frozen)`, () => {
-                const { input } = frozenTestCases[testCase]();
-                assert.throws(() => { annotateError(input, {}); }, /Cannot annotate a non-object or frozen error/);
             });
         }
     });
