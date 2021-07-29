@@ -14,7 +14,6 @@ import {
     SyncedDataObject,
 } from "@fluid-experimental/react";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ---- Fluid Object w/ Functional React View using the useSyncedObject hook ----
 
@@ -55,21 +54,6 @@ export class ClickerFunction extends SyncedDataObject {
     constructor(props) {
         super(props);
         setSyncedObjectConfig<number>(this, "counter-function", 0);
-    }
-    /**
-     * Will return a new ClickerFunction view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterReactFunction
-                    syncedStateId={"counter-function"}
-                    syncedDataObject={this}
-                />
-            </div>,
-            div,
-        );
-        return div;
     }
 }
 

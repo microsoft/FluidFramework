@@ -16,7 +16,6 @@ import {
 } from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 /**
  * Basic Clicker example using FluidReactView
@@ -45,19 +44,6 @@ export class Clicker extends SyncedDataObject {
                 defaultViewState: {},
             },
         );
-    }
-    /**
-     * Will return a new Clicker view
-     */
-    public render(element: HTMLElement) {
-        ReactDOM.render(
-            <CounterReactView
-                syncedStateId={"clicker"}
-                syncedDataObject={this}
-            />,
-            element,
-        );
-        return element;
     }
 }
 

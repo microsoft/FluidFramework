@@ -9,7 +9,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IEvent } from "@fluidframework/common-definitions";
 import { SharedMap, ISharedMap } from "@fluidframework/map";
-import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import {
@@ -40,15 +39,11 @@ export abstract class SyncedDataObject<
     P extends IFluidObject = object,
     S = undefined,
     E extends IEvent = IEvent
-    > extends DataObject<P, S, E> implements IFluidHTMLView {
+    > extends DataObject<P, S, E> {
     private readonly syncedStateConfig: SyncedStateConfig = new Map();
     private readonly fluidObjectMap: FluidObjectMap = new Map();
     private readonly syncedStateDirectoryId = "syncedState";
     private internalSyncedState: ISharedMap | undefined;
-
-    public get IFluidHTMLView() {
-        return this;
-    }
 
     /**
      * Runs the first time the SyncedDataObject is generated and sets up all necessary data structures for the view
@@ -137,15 +132,6 @@ export abstract class SyncedDataObject<
      */
     public getConfig(key: string) {
         return this.syncedStateConfig.get(key);
-    }
-
-    /**
-     * Returns a view. This function need to be implemented for any consumer of SyncedDataObject
-     * to render values that have been initialized using the syncedStateConfig
-     * @param element - The document that the rendered value will be displayed in
-     */
-    public render(element: HTMLElement) {
-        throw Error("Render function was not implemented");
     }
 
     private async initializeStateFirstTime() {

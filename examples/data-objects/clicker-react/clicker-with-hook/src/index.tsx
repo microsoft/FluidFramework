@@ -15,7 +15,6 @@ import {
 } from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ---- Fluid Object w/ Functional React View using the useSyncedCounter hook ----
 
@@ -51,19 +50,6 @@ export class ClickerWithHook extends SyncedDataObject {
     constructor(props) {
         super(props);
         setSyncedCounterConfig(this, "counter-with-hook");
-    }
-
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterWithHook
-                    syncedDataObject={this}
-                    syncedStateId={"counter-with-hook"}
-                />
-            </div>,
-            div,
-        );
-        return div;
     }
 }
 

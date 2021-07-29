@@ -17,7 +17,6 @@ import {
     SyncedDataObject,
 } from "@fluid-experimental/react";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ----- REACT STUFF -----
 interface ICounterState {
@@ -95,23 +94,6 @@ export class ClickerContext extends SyncedDataObject {
             },
         );
     }
-    /**
-     * Will return a new ClickerContext view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterReactFunctionalContext
-                    syncedStateId={"counter-context"}
-                    syncedDataObject={this}
-                />
-            </div>,
-            div,
-        );
-        return div;
-    }
-
-    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
