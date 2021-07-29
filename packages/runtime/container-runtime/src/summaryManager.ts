@@ -201,7 +201,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }, (error) => {
             this.logger.sendErrorEvent({
                 eventName: "CreateSummarizerError",
-                attempt: this.startThrottler.attempts,
+                attempt: this.startThrottler.numAttempts,
             }, error);
             this.tryRestart();
         });
@@ -216,7 +216,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         PerformanceEvent.timedExecAsync(
             this.logger,
-            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },
+            { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
             async () => summarizer.run(clientId, this.summarizerOptions),
         ).finally(() => {
             this.runningSummarizer = undefined;
