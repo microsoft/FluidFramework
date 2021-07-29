@@ -10,7 +10,7 @@
 (function() {
     /**
      * @namespace property-changeset.Test
-     * @alias good_reserved_types.js
+     * @alias goodReservedTypes.js
      * Namespace containing all schema-related data for property set validation
      */
     var templateSchema = {

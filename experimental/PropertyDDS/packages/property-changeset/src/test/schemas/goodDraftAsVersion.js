@@ -9,7 +9,7 @@
 (function() {
     /**
      * @namespace property-changeset.Test
-     * @alias good_draft_as_version.js
+     * @alias goodDraftAsVersion.js
      * Namespace containing all schema-related data for property set validation
      */
     var templateSchema = {

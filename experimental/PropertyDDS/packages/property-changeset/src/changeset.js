@@ -8,7 +8,7 @@
 
 import { cloneDeep as deepCopy, isString, isObject, isArray, isEmpty, extend, keys, each } from "lodash";
 
-import { ConsoleUtils , Chronometerm, ConsoleUtilsm, Strings, constants } from "@fluid-experimental/property-common";
+import { ConsoleUtils , Chronometer, ConsoleUtil, Strings, constants } from "@fluid-experimental/property-common";
 
 import { extractContext, isPrimitiveType as _isPrimitiveType } from "./helpers/typeidHelper";
 import { Utils as _Utils } from "./templateValidator";
@@ -17,7 +17,7 @@ import { traverseChangeSetRecursively } from "./utils";
 import ArrayChangeSetIterator, { types } from "./changeset_operations/arrayChangesetIterator";
 import ConflictType from "./changeset_operations/changesetConflictTypes";
 import isEmptyChangeSet from "./changeset_operations/isEmptyChangeset";
-import isReservedKeyword from "./isResevedKeyword";
+import isReservedKeyword from "./isReservedKeyword";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 const { joinPaths } = Strings;
@@ -1242,7 +1242,7 @@ ChangeSet.prototype._rebaseArrayChangeSetForProperty = ChangeSetArrayFunctions._
 ChangeSet.prototype._rebaseChangeSetForString = ChangeSetArrayFunctions._rebaseChangeSetForString;
 
 // Add the indexed collection functions into the prototype of the ChangeSet
-import { _performApplyAfterOnPropertyIndexedCollection, _cleanIndexedCollectionChangeSet, _rebaseIndexedCollectionChangeSetForProperty } from "./changeset_operations/indexed_collection";
+import { _performApplyAfterOnPropertyIndexedCollection, _cleanIndexedCollectionChangeSet, _rebaseIndexedCollectionChangeSetForProperty } from "./changeset_operations/indexedCollection";
 ChangeSet.prototype._performApplyAfterOnPropertyIndexedCollection =
     _performApplyAfterOnPropertyIndexedCollection;
 ChangeSet.prototype._cleanIndexedCollectionChangeSet =
@@ -1250,4 +1250,4 @@ ChangeSet.prototype._cleanIndexedCollectionChangeSet =
 ChangeSet.prototype._rebaseIndexedCollectionChangeSetForProperty =
     _rebaseIndexedCollectionChangeSetForProperty;
 
-export default ChangeSet;
+module.exports = ChangeSet;

@@ -16,4 +16,5 @@ import { isObject, isEmpty, size, has } from "lodash";
 const isEmptyChangeSet = (in_changeSet) => in_changeSet === undefined ||
         (isObject(in_changeSet) &&
             (isEmpty(in_changeSet) || (size(in_changeSet) === 1 && has(in_changeSet, "typeid"))));
-export default isEmptyChangeSet;
+
+module.exports = isEmptyChangeSet;

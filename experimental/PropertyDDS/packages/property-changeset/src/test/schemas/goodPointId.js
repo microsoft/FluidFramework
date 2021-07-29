@@ -9,7 +9,7 @@
 (function() {
     /**
      * @namespace property-changeset.Test
-     * @alias bad_nested_properties.js
+     * @alias badNestedProperties.js
      * Namespace containing all schema-related data for property set validation
      */
     var templateSchema = {

@@ -14,8 +14,8 @@
     var _ = require('underscore');
     var MSG = require('@fluid-experimental/property-common').constants.MSG;
     var semver = require('semver');
-    var SchemaValidator = require('../schema_validator');
-    var TemplateValidator = require('../..').TemplateValidator;
+    var SchemaValidator = require('../schemaValidator');
+    var { TemplateValidator } = require('../../templateValidator');
 
     var performValidation = function(async, template, templatePrevious, skipSemver, asyncErrorMessage) {
         var schemaValidator = new SchemaValidator();
@@ -66,7 +66,7 @@
         // --- TYPEID ---
         describe('typeid validation', function() {
             it('pass: valid typeid', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                var template = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
 
                 var expectations = function(result) {
                     expect(result).property('isValid', true);
@@ -80,7 +80,7 @@
             });
 
             it('fail: missing semver', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/bad_missing_semver_in_typeid')));
+                var template = JSON.parse(JSON.stringify(require('../schemas/badMissingSemverInTypeid')));
                 var expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.typeid).to.equal(template.typeid);
@@ -93,7 +93,7 @@
             });
 
             it('fail: invalid semver 1', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/bad_invalid_semver_in_typeid')));
+                var template = JSON.parse(JSON.stringify(require('../schemas/badInvalidSemverInTypeid')));
 
                 var expectations = function(result) {
                     expect(result).property('isValid', false);
@@ -107,7 +107,7 @@
             });
 
             it('fail: invalid semver 2', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/bad_invalid_semver_in_typeid')));
+                var template = JSON.parse(JSON.stringify(require('../schemas/badInvalidSemverInTypeid')));
                 template.typeid = 'TeamLeoValidation2:PointID-1.0.01';
                 var expectations = function(result) {
                     expect(result).property('isValid', false);
@@ -120,7 +120,7 @@
             });
 
             it('fail: previous template: invalid semver', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
                 var badTypeId = 'TeamLeoValidation2:PointID-1.0.0.1';
                 templatePrevious.typeid = badTypeId;
@@ -138,7 +138,7 @@
         // --- Template versioning ---
         describe('template versioning', function() {
             it('fail: version regression: 1.0.0 -> 0.9.9', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
                 template.typeid = 'TeamLeoValidation2:PointID-0.9.9';
                 var expectations = function(result) {
@@ -152,7 +152,7 @@
 
             describe('same version', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     var expectations = function(result) {
                         expect(result).property('isValid', true);
@@ -164,7 +164,7 @@
                 });
 
                 it("fail: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.annotation.description = 'Changed!';
@@ -179,7 +179,7 @@
                 });
 
                 it("fail: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     delete template.annotation;
@@ -194,7 +194,7 @@
                 });
 
                 it("fail: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.annotation = { description: 'Test' };
 
@@ -208,7 +208,7 @@
                 });
 
                 it("fail: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_ui_border')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties[0].value = 123456;
 
@@ -222,7 +222,7 @@
                 });
 
                 it("fail: changed 'id'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties[0].id = 'xx';
 
@@ -237,7 +237,7 @@
 
                 it("fail: changed 'inherits'", function() {
                     var templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/good_reserved_types')
+                        require('../schemas/goodReservedTypes')
                     ));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
@@ -252,7 +252,7 @@
                 });
 
                 it('fail: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties.push({ 'id': 'newPropId', 'typeid': 'Float32' });
@@ -267,7 +267,7 @@
                 });
 
                 it('fail: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties.pop();
@@ -284,7 +284,7 @@
 
             describe('incremented patch level', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
 
@@ -298,7 +298,7 @@
                 });
 
                 it('pass: unstable with major content change: 0.0.1 -> 0.0.2', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.typeid = 'TeamLeoValidation2:PointID-0.0.1';
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-0.0.2';
@@ -314,7 +314,7 @@
                 });
 
                 it("pass: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
@@ -330,7 +330,7 @@
                 });
 
                 it("pass: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
@@ -346,7 +346,7 @@
                 });
 
                 it("pass: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.annotation = { description: 'Test' };
@@ -361,7 +361,7 @@
                 });
 
                 it("warn: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_ui_border')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties[0].value = 123456;
@@ -377,7 +377,7 @@
                 });
 
                 it("warn: changed 'id' (delete, add)", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties[0].id = 'xx';
@@ -394,7 +394,7 @@
 
                 it("warn: changed 'inherits'", function() {
                     var templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/good_reserved_types')
+                        require('../schemas/goodReservedTypes')
                     ));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'patch');
@@ -411,7 +411,7 @@
                 });
 
                 it('warn: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
@@ -428,7 +428,7 @@
                 });
 
                 it('warn: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
@@ -447,7 +447,7 @@
 
             describe('incremented minor level', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
 
@@ -461,7 +461,7 @@
                 });
 
                 it("pass: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
@@ -477,7 +477,7 @@
                 });
 
                 it("pass: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
@@ -493,7 +493,7 @@
                 });
 
                 it("pass: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.annotation = { description: 'Test' };
@@ -508,7 +508,7 @@
                 });
 
                 it("pass: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_ui_border')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties[0].value = 123456;
@@ -523,7 +523,7 @@
                 });
 
                 it("warn: changed 'id' (delete, add)", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties[0].id = 'xx';
@@ -540,7 +540,7 @@
 
                 it("warn: changed 'inherits'", function() {
                     var templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/good_reserved_types')
+                        require('../schemas/goodReservedTypes')
                     ));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'minor');
@@ -557,7 +557,7 @@
                 });
 
                 it('pass: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
@@ -573,7 +573,7 @@
                 });
 
                 it('warn: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
@@ -592,7 +592,7 @@
 
             describe('incremented major level', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
 
@@ -606,7 +606,7 @@
                 });
 
                 it("pass: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
@@ -622,7 +622,7 @@
                 });
 
                 it("pass: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
@@ -638,7 +638,7 @@
                 });
 
                 it("pass: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.annotation = { description: 'Test' };
@@ -653,7 +653,7 @@
                 });
 
                 it("pass: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_ui_border')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties[0].value = 123456;
@@ -668,7 +668,7 @@
                 });
 
                 it("pass: changed 'id' (delete, add)", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties[0].id = 'xx';
@@ -684,7 +684,7 @@
 
                 it("pass: changed 'inherits'", function() {
                     var templatePrevious = JSON.parse(JSON.stringify(
-                        require('../schemas/good_reserved_types')
+                        require('../schemas/goodReservedTypes')
                     ));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'major');
@@ -700,7 +700,7 @@
                 });
 
                 it('pass: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
@@ -716,7 +716,7 @@
                 });
 
                 it('pass: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
@@ -735,7 +735,7 @@
 
         describe('skip semver validation', function() {
             it('pass: deep equal on scrambled arrays', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
                 var tmp = template.properties[0].properties[0];
                 template.properties[0].properties[0] = template.properties[0].properties[2];
@@ -755,7 +755,7 @@
             });
 
             it('pass: deep equal with version regression', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
 
                 var expectations = function(result) {
@@ -768,7 +768,7 @@
             });
 
             it('pass: preserves input templates', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_point_id')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
 
                 var copies = [
@@ -788,7 +788,7 @@
             });
 
             it('fail: changed value', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/good_ui_border')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
                 template.properties[0].properties[0].value = 123456;
 
@@ -806,7 +806,7 @@
 
         describe('syntax validation', function() {
             it('pass: validate a simple file', function() {
-                var template = require('../schemas/good_point_id');
+                var template = require('../schemas/goodPointId');
 
                 var expectations = function(result) {
                     expect(result.isValid).to.equal(true);
@@ -816,7 +816,7 @@
             });
 
             it('fail: invalid file', function() {
-                var template = require('../schemas/bad_primitive_typeid');
+                var template = require('../schemas/badPrimitiveTypeid');
 
                 var expectations = function(result) {
                     expect(result.isValid).to.equal(false);

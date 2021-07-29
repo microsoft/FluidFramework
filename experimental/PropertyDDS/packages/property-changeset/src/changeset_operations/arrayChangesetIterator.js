@@ -216,4 +216,4 @@ ArrayChangeSetIterator.types = {
     NOP: 4, // no op (e.g. when a remove neutralized an insert in a merge
 };
 
-export default ArrayChangeSetIterator;
+module.exports = ArrayChangeSetIterator;

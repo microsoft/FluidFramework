@@ -12,7 +12,7 @@ describe('PathHelper', function() {
     var PathHelper;
 
     before(function() {
-        PathHelper = require('..').PathHelper;
+        PathHelper = require('../pathHelper');
     });
 
     describe('tokenizePathString', function() {

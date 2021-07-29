@@ -2260,4 +2260,4 @@ Utils.extractPathsFromChangeSet = function(in_changeSet, in_options) {
     return paths;
 };
 
-export default Utils;
+module.exports = Utils;

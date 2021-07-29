@@ -516,4 +516,4 @@ PathHelper.getPathCoverage = function(in_basePath, in_paths) {
     };
 };
 
-export default PathHelper;
+module.exports = PathHelper;

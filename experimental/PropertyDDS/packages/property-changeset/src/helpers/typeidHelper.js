@@ -9,6 +9,8 @@
 import {constants } from "@fluid-experimental/property-common";
 import { nativeTypes, templateSchema as templateSchemaJson } from "../templateSchema";
 
+const MSG = constants.MSG;
+
 /**
  * Helper for Type IDs
  * @public
@@ -268,4 +270,4 @@ TypeIdHelper.getPrimitiveTypeIds = () => templateSchemaJson.$defs["primitive-typ
  */
 TypeIdHelper.getReservedTypeIds = () => templateSchemaJson.$defs["reserved-typeid"].enum;
 
-export default TypeIdHelper;
+module.exports = TypeIdHelper;

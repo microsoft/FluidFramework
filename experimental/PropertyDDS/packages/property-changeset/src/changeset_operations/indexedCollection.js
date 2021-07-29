@@ -817,4 +817,4 @@ const ChangeSetIndexedCollectionFunctions = {
     },
 };
 
-export default ChangeSetIndexedCollectionFunctions;
+module.exports = ChangeSetIndexedCollectionFunctions;

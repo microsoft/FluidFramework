@@ -1640,4 +1640,4 @@ const ChangeSetArrayFunctions = {
     },
 };
 
-export default ChangeSetArrayFunctions;
+module.exports = ChangeSetArrayFunctions;

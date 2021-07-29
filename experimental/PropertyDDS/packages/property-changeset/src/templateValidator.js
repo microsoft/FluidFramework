@@ -23,6 +23,7 @@ import { templateSchema as TemplateSchema } from "./templateSchema";
 import { isPrimitiveType, isTemplateTypeid, extractVersion } from "./helpers/typeidHelper";
 import ValidationResultBuilder from "./validationResultBuilder";
 
+const MSG = constants.MSG;
 
 const ajvFactory = new Ajv({
     allErrors: true,
@@ -1120,4 +1121,4 @@ TemplateValidator.prototype._validateAsyncWithPreviousSchema = async function(in
     });
 };
 
-export default TemplateValidator;
+module.exports = { TemplateValidator };

@@ -12,7 +12,7 @@
 
 (function() {
     describe('Typeid helper', function() {
-        var TypeIdHelper = require('../..').TypeIdHelper;
+        var TypeIdHelper = require('../../helpers/typeidHelper');
         var MSG = require('@fluid-experimental/property-common').constants.MSG;
 
         it('getPrimitiveTypeId() should return all primitive typeids', () => {
