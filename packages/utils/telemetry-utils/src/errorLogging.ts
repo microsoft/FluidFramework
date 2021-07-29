@@ -66,6 +66,40 @@ export interface FluidErrorAnnotations {
     errorCodeIfNone?: string;
 }
 
+/** Simplest possible implementation of IFluidErrorBase */
+export class SimpleFluidError implements IFluidErrorBase {
+    private readonly telemetryProps: ITelemetryProperties = {};
+
+    readonly errorType: string;
+    readonly fluidErrorCode: string;
+    readonly message: string;
+    readonly stack?: string;
+    readonly name?: string;
+
+    constructor(errorProps: Omit<Omit<IFluidErrorBase, "getTelemetryProperties">, "addTelemetryProperties">) {
+        this.errorType = errorProps.errorType;
+        this.fluidErrorCode = errorProps.fluidErrorCode;
+        this.message = errorProps.message;
+        this.stack = errorProps.stack;
+        this.name = errorProps.name;
+    }
+
+    getTelemetryProperties(): ITelemetryProperties {
+        return {
+            ...this.telemetryProps,
+            errorType: this.errorType,
+            fluidErrorCode: this.fluidErrorCode,
+            message: this.message,
+            stack: this.stack,
+            name: this.name,
+        };
+    }
+
+    addTelemetryProperties(props: ITelemetryProperties) {
+        copyProps(this.telemetryProps, props);
+    }
+}
+
 /** For backwards compatibility with pre-fluidErrorCode valid errors */
 function patchWithErrorCode(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
@@ -93,37 +127,26 @@ export function normalizeError(
     }
 
     if (isFluidError(error)) {
-        // We can simply annotate the error and return it
-        mixinTelemetryPropsWithFluidError(error, annotations.props);
+        // We can simply add the telemetry props to the error and return it
+        error.addTelemetryProperties(annotations.props ?? {});
         return error;
     }
 
     // We have to construct a new fluid error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error);
-    const fluidError: IFluidErrorBase = {
+    const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
         stack: stack ?? generateStack(),
-    };
+    });
 
-    mixinTelemetryPropsWithFluidError(fluidError, {
+    fluidError.addTelemetryProperties({
         ...annotations.props,
         untrustedOrigin: true, // This will let us filter to errors not originated by our own code
         typeofError: typeof(error) === "object" ? undefined : typeof(error), // Only interesting for non-objects
     });
     return fluidError;
-}
-
-/** Mixin the telemetry props, along with errorType and fluidErrorCode */
-function mixinTelemetryPropsWithFluidError(
-    error: IFluidErrorBase,
-    props?: ITelemetryProperties,
-) {
-    const { errorType, fluidErrorCode } = error;
-
-    // This is a back-compat move, so old loggers will include errorType and fluidErrorCode via prepareErrorObject
-    mixinTelemetryProps(error, { ...props, errorType, fluidErrorCode });
 }
 
 /**

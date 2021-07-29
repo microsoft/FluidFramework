@@ -3,11 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+
+export interface IWriteableLoggingError {
+    getTelemetryProperties(): ITelemetryProperties;
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
+}
+
 /**
  * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
  * It includes Error's properties but as optional, plus errorType and fluidErrorCode strings.
  */
-export interface IFluidErrorBase extends Readonly<Partial<Error>> {
+export interface IFluidErrorBase extends Readonly<Partial<Error>>, IWriteableLoggingError {
     readonly errorType: string;
     readonly fluidErrorCode: string;
     readonly message: string;

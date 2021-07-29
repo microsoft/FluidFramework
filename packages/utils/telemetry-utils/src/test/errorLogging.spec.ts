@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateError, FluidErrorAnnotations } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, annotateError, FluidErrorAnnotations, SimpleFluidError } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
 import * as helpers from "../errorLoggingInternalHelpers";
 
@@ -279,91 +279,91 @@ describe("Error Logging", () => {
 describe.skip("Error Propagation", () => {
     class NamedError extends Error { name = "CoolErrorName"; }
     // These are cases where the input object can be patched to adhere to IFluidErrorBase
-    const patchableTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase & { stack: "<<from input>>" | "<<generated stack>>"} }} = {
+    const patchableTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase }} = {
         "Valid Fluid Error": () => ({
             input: {
                 errorType: "sometype",
                 fluidErrorCode: "somecode",
                 message: "Hello",
             },
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "sometype",
                 fluidErrorCode: "somecode",
                 message: "Hello",
                 stack: "<<generated stack>>",
-            },
+            }),
         }),
         "Fluid Error minus errorType": () => ({
             input: {
                 fluidErrorCode: "somecode",
                 message: "Hello",
             },
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "somecode",
                 message: "Hello",
                 stack: "<<generated stack>>",
-            },
+            }),
         }),
         "Fluid Error minus fluidErrorCode": () => ({
             input: {
                 errorType: "sometype",
                 message: "Hello",
             },
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "sometype",
                 fluidErrorCode: "<none>",
                 message: "Hello",
                 stack: "<<generated stack>>",
-            },
+            }),
         }),
         "Error object": () => ({
             input: new NamedError("boom"),
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "none (CoolErrorName)",
                 fluidErrorCode: "<none>",
                 message: "boom",
                 name: "CoolErrorName",
                 stack: "<<from input>>",
-            },
+            }),
         }),
         "LoggingError": () => ({
             input: new LoggingError("boom"),
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "none (Error)",
                 fluidErrorCode: "<none>",
                 message: "boom",
                 name: "Error",
                 stack: "<<from input>>",
-            },
+            }),
         }),
         "Empty object": () => ({
             input: {},
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
                 message: "",
                 stack: "<<generated stack>>",
-            },
+            }),
         }),
         "object with stack": () => ({
             input: { message: "whatever", stack: "fake stack goes here" },
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
                 message: "whatever",
                 stack: "<<from input>>",
-            },
+            }),
         }),
         "object with non-string message and name": () => ({
             input: { message: 4, name: true },
-            expectedOutput: {
+            expectedOutput: new SimpleFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
                 message: "4",
                 name: "true",
                 stack: "<<generated stack>>",
-            },
+            }),
         }),
     };
     const frozenTestCases = {
