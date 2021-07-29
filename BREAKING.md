@@ -22,7 +22,7 @@ Previously the `@fluidframework/common-utils` package exposed a `setInsecureCont
 - The `initializeInternal` function has a mandatory `existing` parameter to differentiate creating vs loading.
 
 ### Changes to PureDataObjectFactory
-- The `instantiateDataStore` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
+- The `createDataObject` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
