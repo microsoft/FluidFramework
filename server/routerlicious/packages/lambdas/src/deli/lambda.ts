@@ -40,7 +40,6 @@ import {
     IQueuedMessage,
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
-    DefaultServiceConfiguration,
 } from "@fluidframework/server-services-core";
 import { CommonProperties, Lumber, LumberEventName, Lumberjack,
     BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
@@ -186,7 +185,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
-        const lumberJackMetric = DefaultServiceConfiguration.enableLumberTelemetryFramework ?
+        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
             Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
 
         if (lumberJackMetric)
