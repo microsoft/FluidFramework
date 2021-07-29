@@ -24,9 +24,10 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:generate": "node --experimental-worker dist/generateSnapshotFiles.js",
+    "test:new": "node --experimental-worker dist/generateNewSnapshotFiles.js",
     "test:mocha": "mocha --experimental-worker --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "test:update": "node --experimental-worker dist/updateSnapshotFiles.js",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
