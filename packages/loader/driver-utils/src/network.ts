@@ -72,7 +72,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         props?: ITelemetryProperties,
     ) {
         // don't log claims or tenantId
-        super(errorMessage, props, ["claims", "tenantId"]);
+        super(errorMessage, props, new Set(["claims", "tenantId"]));
     }
 }
 

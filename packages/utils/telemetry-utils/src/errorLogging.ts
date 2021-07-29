@@ -105,10 +105,10 @@ function copyProps(target: unknown, source: ITelemetryProperties) {
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryProperties {
+function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
-        if (key in keysToOmit) {
+        if (keysToOmit.has(key)) {
             continue;
         }
         const val = obj[key];
@@ -134,19 +134,28 @@ function getValidTelemetryProps(obj: any, keysToOmit: string[]): ITelemetryPrope
 }
 
 /**
- * Helper class for error tracking that can be used to log an error in telemetry.
- * The props passed in via getTelemetryProperties - and any props added directly to the object -
- * will be logged in accordance with the given tag, if present.
+ * Base class for "trusted" errors we create, whose properties can generally be logged to telemetry safely.
+ * All properties set on the object, or passed in (via the constructor or getTelemetryProperties),
+ * will be logged in accordance with their tag, if present.
  *
- * PLEASE take care to properly tag logging properties set on this object
+ * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
 export class LoggingError extends Error implements ILoggingError {
+    /**
+     * Create a new LoggingError
+     * @param message - Error message to use for Error base class
+     * @param props - telemetry props to include on the error for when it's logged
+     * @param omitPropsFromLogging - properties by name to omit from telemetry props
+     */
     constructor(
         message: string,
         props?: ITelemetryProperties,
-        private readonly omitPropsFromLogging: string[] = ["omitPropsFromLogging"],
+        private readonly omitPropsFromLogging: Set<string> = new Set(),
     ) {
         super(message);
+
+        // Don't log this list itself either
+        omitPropsFromLogging.add("omitPropsFromLogging");
 
         if (props) {
             this.addTelemetryProperties(props);

@@ -42,7 +42,7 @@ export class GenericError extends LoggingError implements IGenericError {
         props?: ITelemetryProperties,
     ) {
         // Don't try to log the inner error
-        super(errorMessage, props, ["error"]);
+        super(errorMessage, props, new Set(["error"]));
     }
 }
 

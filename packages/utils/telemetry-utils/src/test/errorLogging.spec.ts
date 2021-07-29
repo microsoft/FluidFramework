@@ -252,10 +252,19 @@ describe("Logger", () => {
                 const props = loggingError.getTelemetryProperties();
                 assert.strictEqual(props.message, "myMessage");
                 assert.strictEqual(typeof props.stack, "string");
-                assert.strictEqual(props.name, undefined); // Error.name is not logged
+                assert.strictEqual(props.name, "Error");
                 assert.strictEqual(props.p1, 1);
                 assert.strictEqual(props.p2, "two");
                 assert.strictEqual(props.p3, true);
+            });
+            it("getTelemetryProperties respects omitPropsFromLogging", () => {
+                const loggingError = new LoggingError("myMessage", {}, new Set(["foo"]));
+                (loggingError as any).foo = "secrets!";
+                (loggingError as any).bar = "normal";
+                const props = loggingError.getTelemetryProperties();
+                assert.strictEqual(props.omitPropsFromLogging, undefined, "omitPropsFromLogging itself should be omitted");
+                assert.strictEqual(props.foo, undefined, "foo should have been omitted");
+                assert.strictEqual(props.bar, "normal", "bar should not be omitted");
             });
             it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
                 const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
@@ -298,7 +307,7 @@ describe("Logger", () => {
             });
             it("addTelemetryProperties - overwrites base class Error fields (untagged)", () => {
                 const loggingError = new LoggingError("myMessage");
-                const overwritingProps = { message: "surprise1", stack: "surprise2", __isFluidLoggingError__: 2 };
+                const overwritingProps = { message: "surprise1", stack: "surprise2", name: "surprise3" };
                 loggingError.addTelemetryProperties(overwritingProps);
                 const props = loggingError.getTelemetryProperties();
                 assert.deepStrictEqual(props, overwritingProps);
@@ -308,7 +317,7 @@ describe("Logger", () => {
                 const expectedProps = {
                     message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
                     stack: { value: "surprise2", tag: "PackageData" },
-                    __isFluidLoggingError__: 2,
+                    name: { value: "surprise3", tag: "PackageData" },
                 };
                 overwritingProps.addTelemetryProperties(expectedProps);
                 const props = overwritingProps.getTelemetryProperties();
