@@ -11,15 +11,15 @@ import { IDeltaManager, LoaderHeader } from "@fluidframework/container-definitio
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
-import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import { ISummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { IThrottler } from "./throttler";
 import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 
 const defaultInitialDelayMs = 5000;
-const opsToBypassInitialDelay = 4000;
+const defaultOpsToBypassInitialDelay = 4000;
 
-enum SummaryManagerState {
+export enum SummaryManagerState {
     Off = 0,
     Starting = 1,
     Running = 2,
@@ -62,9 +62,15 @@ export interface ISummaryManagerEvents extends IEvent {
     (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
 }
 
+export interface ISummaryManagerConfig {
+    initialDelayMs: number;
+    opsToBypassInitialDelay: number;
+}
+
 export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
     private readonly logger: ITelemetryLogger;
     private readonly initialDelay = new Deferred<void>();
+    private readonly opsToBypassInitialDelay: number;
     private latestClientId: string | undefined;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
@@ -74,14 +80,19 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         return this._disposed;
     }
 
+    public get currentState() { return this.state; }
+
     constructor(
-        private readonly clientElection: SummarizerClientElection,
+        private readonly clientElection: ISummarizerClientElection,
         private readonly connectedState: IConnectedState,
         private readonly summaryCollection: Pick<SummaryCollection, "opsSinceLastAck">,
         parentLogger: ITelemetryLogger,
         private readonly requestSummarizerFn: () => Promise<ISummarizer>,
         private readonly startThrottler: IThrottler,
-        initialDelayMs: number = defaultInitialDelayMs,
+        {
+            initialDelayMs = defaultInitialDelayMs,
+            opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
+        }: Readonly<Partial<ISummaryManagerConfig>> = {},
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
         super();
@@ -95,7 +106,12 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.connectedState.on("disconnected", this.handleDisconnected);
         this.latestClientId = this.connectedState.clientId;
 
-        delay(initialDelayMs).finally(() => this.initialDelay.resolve());
+        this.opsToBypassInitialDelay = opsToBypassInitialDelay;
+        if (opsToBypassInitialDelay > 0 && initialDelayMs > 0) {
+            delay(initialDelayMs).finally(() => this.initialDelay.resolve());
+        } else {
+            this.initialDelay.resolve();
+        }
     }
 
     /**
@@ -142,9 +158,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 return;
             }
             case SummaryManagerState.Starting: {
-                if (shouldSummarizeState.shouldSummarize) {
-                    this.checkBypassInitialDelay();
-                }
+                this.checkBypassInitialDelay();
                 // Cannot take any action until summarizer is created
                 // state transition will occur after creation
                 return;
@@ -171,7 +185,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         const delayMs = this.startThrottler.getDelay();
-        if (delayMs >= this.startThrottler.maxDelayMs) {
+        if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
             this.emit(
                 "summarizerWarning",
@@ -238,7 +252,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private checkBypassInitialDelay() {
-        if (!this.initialDelay.isCompleted && this.summaryCollection.opsSinceLastAck >= opsToBypassInitialDelay) {
+        if (!this.initialDelay.isCompleted && this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
             this.initialDelay.resolve();
         }
     }
