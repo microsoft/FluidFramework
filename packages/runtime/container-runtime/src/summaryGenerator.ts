@@ -9,8 +9,8 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IAckNackSummaryResult,
+    ISummarizeOptions,
     IBroadcastSummaryResult,
-    ISubmitSummaryOptions,
     ISummarizeResults,
     ISummarizeHeuristicData,
     ISummarizerInternalsProvider,
@@ -19,12 +19,14 @@ import {
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
-export const checkNotTimeout = <T>(something: T | IPromiseTimerResult | undefined): something is T => {
-    if (something === undefined) {
-        return false;
-    }
-    return (something as IPromiseTimerResult).timerResult === undefined;
-};
+/** Helper function to wait for a promise or PromiseTimer to elapse. */
+export const raceTimer = async <T>(
+    promise: Promise<T>,
+    timer: Promise<IPromiseTimerResult>,
+): Promise<{ result: "done"; value: T } | { result: IPromiseTimerResult["timerResult"] }> => Promise.race([
+    promise.then((value) => ({ result: "done", value } as const)),
+    timer.then(({ timerResult: result }) => ({ result } as const)),
+]);
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -68,7 +70,9 @@ export type SummarizeReason =
     /** Previous summary attempt failed, and we are retrying. */
     | `retry${number}`
     /** On-demand summary requested with specified reason. */
-    | `onDemand;${string}`;
+    | `onDemand;${string}`
+    /** Enqueue summarize attempt with specified reason. */
+    | `enqueue;${string}`;
 
 const summarizeErrors = {
     /**
@@ -95,7 +99,7 @@ const summarizeErrors = {
     summaryNack: "Server rejected summary via summaryNack op",
 } as const;
 
-class SummarizeResultBuilder {
+export class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
     public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
@@ -147,10 +151,10 @@ export class SummaryGenerator {
      */
     public summarize(
         reason: SummarizeReason,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
+        options: ISummarizeOptions,
+        resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
         ++this.summarizeCount;
-        const resultsBuilder = new SummarizeResultBuilder();
 
         if (this.summarizing !== undefined) {
             // We do not expect this case. Log the error and let it try again anyway.
@@ -177,7 +181,7 @@ export class SummaryGenerator {
 
     private async summarizeCore(
         reason: SummarizeReason,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
+        options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;
@@ -258,14 +262,15 @@ export class SummaryGenerator {
         }
 
         try {
-            const pendingTimeoutP = this.pendingAckTimer.start().catch(() => undefined);
+            const pendingTimeoutP = this.pendingAckTimer.start();
             const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
             // Wait for broadcast
-            const summarizeOp = await Promise.race([summary.waitBroadcast(), pendingTimeoutP]);
-            if (!checkNotTimeout(summarizeOp)) {
+            const waitBroadcastResult = await raceTimer(summary.waitBroadcast(), pendingTimeoutP);
+            if (waitBroadcastResult.result !== "done") {
                 return fail("summaryOpWaitTimeout");
             }
+            const summarizeOp = waitBroadcastResult.value;
 
             const broadcastDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
             resultsBuilder.summaryOpBroadcasted.resolve({
@@ -282,36 +287,37 @@ export class SummaryGenerator {
             });
 
             // Wait for ack/nack
-            const ackNack = await Promise.race([summary.waitAckNack(), pendingTimeoutP]);
-            if (!checkNotTimeout(ackNack)) {
+            const waitAckNackResult = await raceTimer(summary.waitAckNack(), pendingTimeoutP);
+            if (waitAckNackResult.result !== "done") {
                 return fail("summaryAckWaitTimeout");
             }
+            const ackNackOp = waitAckNackResult.value;
             this.pendingAckTimer.clear();
 
             // Update for success/failure
             const ackNackDuration = Date.now() - this.heuristicData.lastAttempt.summaryTime;
             const telemetryProps: Record<string, number> = {
                 timeWaiting: ackNackDuration,
-                sequenceNumber: ackNack.sequenceNumber,
-                summarySequenceNumber: ackNack.contents.summaryProposal.summarySequenceNumber,
+                sequenceNumber: ackNackOp.sequenceNumber,
+                summarySequenceNumber: ackNackOp.contents.summaryProposal.summarySequenceNumber,
             };
-            if (ackNack.type === MessageType.SummaryAck) {
+            if (ackNackOp.type === MessageType.SummaryAck) {
                 this.heuristicData.markLastAttemptAsSuccessful();
-                summarizeEvent.end({ ...telemetryProps, handle: ackNack.contents.handle, message: "summaryAck" });
+                summarizeEvent.end({ ...telemetryProps, handle: ackNackOp.contents.handle, message: "summaryAck" });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
-                    summaryAckNackOp: ackNack,
+                    summaryAckNackOp: ackNackOp,
                     ackNackDuration,
                 }});
             } else {
                 resultsBuilder.receivedSummaryAckOrNack.resolve({
                     success: false,
-                    data: { summaryAckNackOp: ackNack, ackNackDuration },
+                    data: { summaryAckNackOp: ackNackOp, ackNackDuration },
                     message: getFailMessage("summaryNack"),
                     error: undefined,
                 });
                 return fail(
                     "summaryNack",
-                    (ackNack.contents as { message?: string }).message ?? ackNack.contents.errorMessage,
+                    (ackNackOp.contents as { message?: string }).message ?? ackNackOp.contents.errorMessage,
                     telemetryProps,
                 );
             }
