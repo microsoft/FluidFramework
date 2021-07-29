@@ -4,11 +4,10 @@
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, IPromiseTimerResult, PromiseTimer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { delay, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
-import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { createSummarizingWarning } from "./summarizer";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
@@ -68,8 +67,7 @@ export interface ISummaryManagerEvents extends IEvent {
 
 export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
-    private readonly initialDelayTimer?: PromiseTimer;
+    private readonly initialDelayP: Promise<void>;
     private latestClientId: string | undefined;
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
@@ -79,7 +77,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         defaultThrottleMaxDelayMs,
         defaultThrottleDelayFunction,
     );
-    private opsUntilFirstConnect = -1;
+    public opsUntilFirstConnect = -1;
 
     public get disposed() {
         return this._disposed;
@@ -104,17 +102,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.connectedState.on("disconnected", this.handleDisconnected);
         this.latestClientId = this.connectedState.clientId;
 
-        // Track ops until first (write) connect
-        const opsUntilFirstConnectHandler = (clientId: string, details: ISequencedClient) => {
-            if (this.opsUntilFirstConnect === -1 && clientId === this.connectedState.clientId) {
-                context.quorum.off("addMember", opsUntilFirstConnectHandler);
-                this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
-            }
-        };
-        context.quorum.on("addMember", opsUntilFirstConnectHandler);
-
-        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
-        this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
+        this.initialDelayP = delay(initialDelayMs);
     }
 
     /**
@@ -323,7 +311,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
         this.connectedState.off("connected", this.handleConnected);
         this.connectedState.off("disconnected", this.handleDisconnected);
-        this.initialDelayTimer?.clear();
         this._disposed = true;
     }
 }

@@ -934,6 +934,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );
             this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+
+            // Track ops until first (write) connect. TODO: better way to do this?
+            const opsUntilFirstConnectHandler = (clientId: string) => {
+                if (this.summaryManager === undefined || this.summaryManager.opsUntilFirstConnect !== -1) {
+                    this.context.quorum.off("addMember", opsUntilFirstConnectHandler);
+                    return;
+                }
+                if (this.summaryManager.opsUntilFirstConnect === -1 && clientId === this.clientId) {
+                    context.quorum.off("addMember", opsUntilFirstConnectHandler);
+                    this.summaryManager.opsUntilFirstConnect = this.summaryCollection.opsSinceLastAck;
+                }
+            };
+            this.context.quorum.on("addMember", opsUntilFirstConnectHandler);
+
             this.summaryManager.start();
         }
 
