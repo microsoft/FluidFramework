@@ -5,7 +5,6 @@
 
 import {
     assert,
-    bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
     Uint8ArrayToString,
@@ -269,13 +268,16 @@ export function convertSnapshotTreeToSummaryTree(
     for (const [path, id] of Object.entries(snapshot.blobs)) {
         // 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
         // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
-        if (snapshot.blobs[id] !== undefined) {
-            let decoded: string;
-            if ((snapshot as any).blobsContents !== undefined) {
-                decoded = bufferToString((snapshot as any).blobsContents[id], "utf8");
-            } else {
-                decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+        let decoded: string | Uint8Array | undefined;
+        if ((snapshot as any).blobsContents !== undefined) {
+            const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
+            if (content !== undefined) {
+                decoded = new Uint8Array(content);
             }
+        } else if (snapshot.blobs[id] !== undefined) {
+            decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+        }
+        if (decoded !== undefined) {
             builder.addBlob(path, decoded);
         }
     }
