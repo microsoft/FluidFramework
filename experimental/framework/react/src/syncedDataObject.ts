@@ -30,9 +30,6 @@ import {
  * In addition to the root and task manager, the SyncedDataObject also provides a syncedStateConfig
  * and assures that the syncedState will be initialized according the config by the time the view
  * is rendered.
- *
- * As this is used for views, it also implements the IFluidHTMLView interface, and requires
- * the render function to be filled in.
  */
 export abstract class SyncedDataObject<
     // eslint-disable-next-line @typescript-eslint/ban-types
