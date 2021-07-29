@@ -6,10 +6,11 @@
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, IPromiseTimerResult, PromiseTimer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerContext, IDeltaManager, ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { IContainerContext, IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import { Throttler } from "./throttler";
@@ -299,8 +300,13 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 }
 
+/**
+ * Forms a function that will request a Summarizer.
+ * @param loaderRouter - the loader acting as a fluid router
+ * @param deltaManager - delta manager to get last sequence number
+ */
 export const formRequestSummarizerFn = (
-    loader: Pick<ILoader, "request">,
+    loaderRouter: IFluidRouter,
     deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
 ) => async () => {
     // TODO eventually we may wish to spawn an execution context from which to run this
@@ -318,14 +324,8 @@ export const formRequestSummarizerFn = (
         url: "/_summarizer",
     };
 
-    const response = await loader.request(request);
-
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        return Promise.reject(new Error("Invalid summarizer route"));
-    }
-
-    const rawFluidObject = response.value as IFluidObject;
-    const summarizer = rawFluidObject.ISummarizer;
+    const fluidObject = await requestFluidObject(loaderRouter, request);
+    const summarizer = fluidObject.ISummarizer;
 
     if (!summarizer) {
         return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
