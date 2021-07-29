@@ -25,9 +25,10 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  * It facilitates DataObject's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
  *
- * Generics:
- * O - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced data object may take during creation
+ * @typeParam TObj - DataObject (concrete type)
+ * @typeParam O - represents a type that will define optional providers that will be injected
+ * @typeParam S - the initial state type that the produced data object may take during creation
+ * @typeParam E - represents events that will be available in the EventForwarder
  */
 export class DataObjectFactory<TObj extends DataObject<O, S, E>, O, S, E extends IEvent = IEvent>
     extends PureDataObjectFactory<TObj, O, S, E>

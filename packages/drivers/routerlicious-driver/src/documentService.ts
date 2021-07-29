@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
+import { RateLimiter } from "@fluidframework/driver-utils";
 import { IClient} from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
@@ -14,7 +15,7 @@ import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousStorageRestWrapper } from "./restWrapper";
+import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 
 /**
@@ -49,11 +50,13 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests);
         const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
             this.tenantId,
             this.documentId,
             this.tokenProvider,
             this.logger,
+            rateLimiter,
             this.gitUrl,
         );
         const historian = new Historian(
@@ -84,7 +87,10 @@ export class DocumentService implements api.IDocumentService {
     public async connectToDeltaStorage(): Promise<api.IDocumentDeltaStorageService> {
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
-        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, this.tokenProvider, this.logger);
+        const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+        const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+            this.tenantId, this.documentId, this.tokenProvider, this.logger, rateLimiter);
+        const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);
     }

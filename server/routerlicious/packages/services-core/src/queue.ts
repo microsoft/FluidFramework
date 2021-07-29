@@ -4,6 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
+import { ITicketedMessage } from "./messages";
 
 export interface IQueuedMessage {
     topic: string;
@@ -74,7 +75,7 @@ export interface IPendingMessage {
     message: string;
 }
 
-export interface IProducer {
+export interface IProducer<T = ITicketedMessage> {
     /**
      * Returns true if the producer is connected
      */
@@ -83,8 +84,7 @@ export interface IProducer {
     /**
      * Sends the message to a queue
      */
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    send(messages: object[], tenantId: string, documentId: string): Promise<void>;
+    send(messages: T[], tenantId: string, documentId: string): Promise<void>;
 
     /**
      * Closes the underlying connection

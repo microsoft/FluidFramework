@@ -26,10 +26,10 @@ const ReferenceProperty = require('./reference_property');
  * @alias property-properties.ReferenceMapProperty
  * @category Maps
  */
-var ReferenceMapProperty = function( in_params) {
-  StringMapProperty.call( this, in_params );
+var ReferenceMapProperty = function (in_params) {
+    StringMapProperty.call(this, in_params);
 };
-ReferenceMapProperty.prototype = Object.create( StringMapProperty.prototype );
+ReferenceMapProperty.prototype = Object.create(StringMapProperty.prototype);
 
 ReferenceMapProperty.prototype._typeid = 'Reference';
 
@@ -41,8 +41,8 @@ ReferenceMapProperty.prototype._typeid = 'Reference';
  *
  * @return {string} The typeid of the nodes this reference may point to
  */
-ReferenceMapProperty.prototype.getReferenceTargetTypeId = function() {
-  return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
+ReferenceMapProperty.prototype.getReferenceTargetTypeId = function () {
+    return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
 };
 
 /**
@@ -60,24 +60,24 @@ ReferenceMapProperty.prototype.getReferenceTargetTypeId = function() {
  * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
  *    could not be resolved
  */
-ReferenceMapProperty.prototype.get = function(in_ids, in_options) {
-  in_options = in_options || {};
-  in_options.referenceResolutionMode =
-      in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-                                                         in_options.referenceResolutionMode;
+ReferenceMapProperty.prototype.get = function (in_ids, in_options) {
+    in_options = in_options || {};
+    in_options.referenceResolutionMode =
+        in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
+            in_options.referenceResolutionMode;
 
-  if (_.isArray(in_ids)) {
-    // Forward handling of arrays to the BaseProperty function
-    return ContainerProperty.prototype.get.call(this, in_ids, in_options);
-  } else {
+    if (_.isArray(in_ids)) {
+        // Forward handling of arrays to the BaseProperty function
+        return ContainerProperty.prototype.get.call(this, in_ids, in_options);
+    } else {
 
-    var value = this._entries[in_ids];
-    if (value === undefined ||
-        value === '') {
-      return undefined;
+        var value = this._entries[in_ids];
+        if (value === undefined ||
+            value === '') {
+            return undefined;
+        }
+        return this.getParent().resolvePath(value, in_options);
     }
-    return this.getParent().resolvePath(value, in_options);
-  }
 };
 
 /**
@@ -87,10 +87,10 @@ ReferenceMapProperty.prototype.get = function(in_ids, in_options) {
  * @throws if trying to remove an entry that does not exist
  * @return {String} the item removed (a string path)
  */
-ReferenceMapProperty.prototype.remove = function(in_key) {
-  var item = this.getValue(in_key);
-  this._removeByKey(in_key, true);
-  return item;
+ReferenceMapProperty.prototype.remove = function (in_key) {
+    var item = this.getValue(in_key);
+    this._removeByKey(in_key, true);
+    return item;
 };
 
 /**
@@ -101,13 +101,13 @@ ReferenceMapProperty.prototype.remove = function(in_key) {
       'secondPath': '/path2'
     }
  */
-ReferenceMapProperty.prototype.getValues = function() {
-  var ids = this.getIds();
-  var result = {};
-  for (var i = 0; i < ids.length; i++) {
-    result[ids[i]] = this.getValue(ids[i]);
-  }
-  return result;
+ReferenceMapProperty.prototype.getValues = function () {
+    var ids = this.getIds();
+    var result = {};
+    for (var i = 0; i < ids.length; i++) {
+        result[ids[i]] = this.getValue(ids[i]);
+    }
+    return result;
 };
 
 /**
@@ -121,12 +121,12 @@ ReferenceMapProperty.prototype.getValues = function() {
  * @throws if in_value is defined, but is not a property or a string.
  * @throws if map is read only
  */
-ReferenceMapProperty.prototype.set = function(in_key, in_value) {
-  if (!_.isString(in_key)) {
-    throw new Error(MSG.KEY_NOT_STRING + in_key);
-  }
-  var value = ReferenceProperty._convertInputToPath(in_value);
-  StringMapProperty.prototype.set.call(this, in_key, value);
+ReferenceMapProperty.prototype.set = function (in_key, in_value) {
+    if (!_.isString(in_key)) {
+        throw new Error(MSG.KEY_NOT_STRING + in_key);
+    }
+    var value = ReferenceProperty._convertInputToPath(in_value);
+    StringMapProperty.prototype.set.call(this, in_key, value);
 };
 
 let setValueDeprecatedWarning = false;
@@ -142,12 +142,12 @@ let setValueDeprecatedWarning = false;
  * @throws if in_value is defined, but is not a property or a string.
  * @deprecated
  */
-ReferenceMapProperty.prototype.setValue = function(in_key, in_value) {
-  if (!setValueDeprecatedWarning) {
-    console.warn(MSG.DEPRECATED_FUNCTION, 'setValue');
-    setValueDeprecatedWarning = true;
-  }
-  this.set(in_key, in_value);
+ReferenceMapProperty.prototype.setValue = function (in_key, in_value) {
+    if (!setValueDeprecatedWarning) {
+        console.warn(MSG.DEPRECATED_FUNCTION, 'setValue');
+        setValueDeprecatedWarning = true;
+    }
+    this.set(in_key, in_value);
 };
 
 /**
@@ -160,9 +160,9 @@ ReferenceMapProperty.prototype.setValue = function(in_key, in_value) {
  * @throws if there is already an entry under in_key
  * @throws if in_value is defined, but is not a property or a string.
  */
-ReferenceMapProperty.prototype.insert = function(in_key, in_value) {
-  var value = ReferenceProperty._convertInputToPath(in_value);
-  this._insert(in_key, value, true);
+ReferenceMapProperty.prototype.insert = function (in_key, in_value) {
+    var value = ReferenceProperty._convertInputToPath(in_value);
+    this._insert(in_key, value, true);
 };
 
 /**
@@ -172,10 +172,10 @@ ReferenceMapProperty.prototype.insert = function(in_key, in_value) {
  * @param {string} in_key - key of the entry to check
  * @return {boolean} True if the reference is valid, otherwise false.
  */
-ReferenceMapProperty.prototype.isReferenceValid = function(in_key) {
-  return this.has(in_key) &&
-         (this.getValue(in_key) === '' ||
-         this.get(in_key) !== undefined);
+ReferenceMapProperty.prototype.isReferenceValid = function (in_key) {
+    return this.has(in_key) &&
+        (this.getValue(in_key) === '' ||
+            this.get(in_key) !== undefined);
 };
 
 /**
@@ -183,22 +183,22 @@ ReferenceMapProperty.prototype.isReferenceValid = function(in_key) {
  * @param {string} in_key the key of the reference
  * @return {string} the path string
  */
-ReferenceMapProperty.prototype.getValue = function(in_key) {
-  return this._getValue(in_key);
+ReferenceMapProperty.prototype.getValue = function (in_key) {
+    return this._getValue(in_key);
 };
 
 /**
  * @inheritdoc
  */
-ReferenceMapProperty.prototype._resolvePathSegment = function(in_segment, in_segmentType) {
+ReferenceMapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
 
-  // Array tokens are automatically resolved
-  if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-    return this.get(in_segment, {referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER});
-  } else {
-    // Everything else is handled by the implementation in the base property
-    return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-  }
+    // Array tokens are automatically resolved
+    if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
+        return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+    } else {
+        // Everything else is handled by the implementation in the base property
+        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+    }
 };
 
 module.exports = ReferenceMapProperty;

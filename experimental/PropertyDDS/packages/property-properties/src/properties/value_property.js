@@ -26,9 +26,9 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  * @alias property-properties.ValueProperty
  * @category Value Properties
  */
-var ValueProperty = function( in_params ) {
-  BaseProperty.call( this, in_params );
-  this._data = undefined;
+var ValueProperty = function (in_params) {
+    BaseProperty.call(this, in_params);
+    this._data = undefined;
 };
 
 ValueProperty.prototype = Object.create(BaseProperty.prototype);
@@ -40,8 +40,8 @@ ValueProperty.prototype = Object.create(BaseProperty.prototype);
  *
  * @return {boolean} Is it a leaf with regard to flattening?
  */
-ValueProperty.prototype._isFlattenLeaf = function() {
-  return true;
+ValueProperty.prototype._isFlattenLeaf = function () {
+    return true;
 };
 
 
@@ -49,8 +49,8 @@ ValueProperty.prototype._isFlattenLeaf = function() {
  * returns the current value of ValueProperty
  * @return {*} the current value
  */
-ValueProperty.prototype.getValue = function() {
-  return this._data;
+ValueProperty.prototype.getValue = function () {
+    return this._data;
 };
 
 /**
@@ -59,17 +59,17 @@ ValueProperty.prototype.getValue = function() {
  * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
  *                                                                       will be removed
  */
-ValueProperty.prototype.cleanDirty = function(in_flags) {
-  this._cleanDirty(in_flags);
+ValueProperty.prototype.cleanDirty = function (in_flags) {
+    this._cleanDirty(in_flags);
 };
 
 /**
  * @param {*} in_value the new value
  * @throws if property is read only
  */
-ValueProperty.prototype.setValue = function(in_value) {
-  this._checkIsNotReadOnly(true);
-  this._setValue(in_value, true);
+ValueProperty.prototype.setValue = function (in_value) {
+    this._checkIsNotReadOnly(true);
+    this._setValue(in_value, true);
 };
 
 /**
@@ -81,58 +81,58 @@ ValueProperty.prototype.setValue = function(in_value) {
  *                                             can be prevented via this flag.
  * @return {boolean} true if the value was actually changed
  */
-ValueProperty.prototype._setValue = function(in_value, in_reportToView) {
-  // dirtiness check: setValue casts the input e.g. in an
-  // int property 1.2 gets cast to 1, in a boolean property
-  // false gets cast to 0,... so we first have to cast(set)
-  // and then compare the value here:
-  var oldValue = this._data;
-  var castedValue = this._castFunctor(in_value);
-  var changed = castedValue !== oldValue;
-  if (changed) {
-    this._data = castedValue;
-    this._setDirty(in_reportToView);
-  }
-  return changed;
-};
-
-/**
- * @inheritdoc
- */
-ValueProperty.prototype._deserialize = function(in_serializedObj, in_reportToView, in_filteringOptions) {
-  if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
-    console.warn(MSG.DESERIALIZE_EMPTY_CHANGESET);
-    return undefined;
-  } else {
-    var changed = this._setValue(in_serializedObj, in_reportToView);
-    return changed ? this._data : undefined;
-  }
-};
-
-/**
- * @inheritdoc
- */
-ValueProperty.prototype._applyChangeset = function(in_changeSet, in_reportToView, in_filteringOptions) {
-  if (!ChangeSet.isEmptyChangeSet(in_changeSet)) {
-    var newVal = in_changeSet;
-    if (typeof newVal === 'object') {
-      newVal = newVal.value;
+ValueProperty.prototype._setValue = function (in_value, in_reportToView) {
+    // dirtiness check: setValue casts the input e.g. in an
+    // int property 1.2 gets cast to 1, in a boolean property
+    // false gets cast to 0,... so we first have to cast(set)
+    // and then compare the value here:
+    var oldValue = this._data;
+    var castedValue = this._castFunctor(in_value);
+    var changed = castedValue !== oldValue;
+    if (changed) {
+        this._data = castedValue;
+        this._setDirty(in_reportToView);
     }
-    this._setValue(newVal, in_reportToView);
-  }
+    return changed;
 };
 
 /**
  * @inheritdoc
  */
-ValueProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_dirtyChangeSet) {
-  const flags = (ChangeSet.isEmptyChangeSet(in_pendingChangeSet) ?
-                    this.MODIFIED_STATE_FLAGS.CLEAN : this.MODIFIED_STATE_FLAGS.PENDING_CHANGE) |
-                (ChangeSet.isEmptyChangeSet(in_dirtyChangeSet) ?
-                    this.MODIFIED_STATE_FLAGS.CLEAN : this.MODIFIED_STATE_FLAGS.DIRTY);
-  if (flags) {
-    this._setDirty(false, this, flags);
-  }
+ValueProperty.prototype._deserialize = function (in_serializedObj, in_reportToView, in_filteringOptions) {
+    if (ChangeSet.isEmptyChangeSet(in_serializedObj)) {
+        console.warn(MSG.DESERIALIZE_EMPTY_CHANGESET);
+        return undefined;
+    } else {
+        var changed = this._setValue(in_serializedObj, in_reportToView);
+        return changed ? this._data : undefined;
+    }
+};
+
+/**
+ * @inheritdoc
+ */
+ValueProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions) {
+    if (!ChangeSet.isEmptyChangeSet(in_changeSet)) {
+        var newVal = in_changeSet;
+        if (typeof newVal === 'object') {
+            newVal = newVal.value;
+        }
+        this._setValue(newVal, in_reportToView);
+    }
+};
+
+/**
+ * @inheritdoc
+ */
+ValueProperty.prototype._reapplyDirtyFlags = function (in_pendingChangeSet, in_dirtyChangeSet) {
+    const flags = (ChangeSet.isEmptyChangeSet(in_pendingChangeSet) ?
+        this.MODIFIED_STATE_FLAGS.CLEAN : this.MODIFIED_STATE_FLAGS.PENDING_CHANGE) |
+        (ChangeSet.isEmptyChangeSet(in_dirtyChangeSet) ?
+            this.MODIFIED_STATE_FLAGS.CLEAN : this.MODIFIED_STATE_FLAGS.DIRTY);
+    if (flags) {
+        this._setDirty(false, this, flags);
+    }
 };
 
 
@@ -153,17 +153,17 @@ ValueProperty.prototype._reapplyDirtyFlags = function(in_pendingChangeSet, in_di
  * @return {*} The serialized representation of this property
  * @private
  */
-ValueProperty.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid,
-                                              in_dirtinessType, in_includeReferencedRepositories) {
-  if (in_dirtyOnly) {
-    if (this._isDirty(in_dirtinessType)) {
-      return  this._data;
+ValueProperty.prototype._serialize = function (in_dirtyOnly, in_includeRootTypeid,
+    in_dirtinessType, in_includeReferencedRepositories) {
+    if (in_dirtyOnly) {
+        if (this._isDirty(in_dirtinessType)) {
+            return this._data;
+        } else {
+            return {};
+        }
     } else {
-      return  {};
+        return this._data;
     }
-  } else {
-    return this._data;
-  }
 };
 
 /**
@@ -174,8 +174,8 @@ ValueProperty.prototype._serialize = function(in_dirtyOnly, in_includeRootTypeid
  *                              Used for arrays.
  * @param {function} printFct - Function to call for printing each property
  */
-ValueProperty.prototype._prettyPrint = function(indent, externalId, printFct) {
-  printFct(indent + externalId + this.getId() + ' (' + this.getTypeid() + '): ' + this.value);
+ValueProperty.prototype._prettyPrint = function (indent, externalId, printFct) {
+    printFct(indent + externalId + this.getId() + ' (' + this.getTypeid() + '): ' + this.value);
 };
 
 /**
@@ -183,27 +183,27 @@ ValueProperty.prototype._prettyPrint = function(indent, externalId, printFct) {
  * @return {object} A JSON representation of the property.
  * @private
  */
-ValueProperty.prototype._toJson = function() {
-  return {
-    id: this.getId(),
-    context: this._context,
-    typeid: this.getTypeid(),
-    isConstant: this._isConstant,
-    value: this.getValue()
-  };
+ValueProperty.prototype._toJson = function () {
+    return {
+        id: this.getId(),
+        context: this._context,
+        typeid: this.getTypeid(),
+        isConstant: this._isConstant,
+        value: this.getValue()
+    };
 };
 
 Object.defineProperty(
-  ValueProperty.prototype,
-  'value',
-  {
-    get: function() {
-      return this.getValue.apply(this, arguments);
-    },
-    set: function() {
-      this.setValue.apply(this, arguments);
+    ValueProperty.prototype,
+    'value',
+    {
+        get: function () {
+            return this.getValue.apply(this, arguments);
+        },
+        set: function () {
+            this.setValue.apply(this, arguments);
+        }
     }
-  }
 );
 
 module.exports = ValueProperty;

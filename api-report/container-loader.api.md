@@ -69,10 +69,8 @@ export class Audience extends EventEmitter implements IAudience {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string) => void): this;
-    removeMember(clientId: string): void;
+    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    removeMember(clientId: string): boolean;
 }
 
 // @public (undocumented)
@@ -118,7 +116,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    get existing(): boolean | undefined;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -160,7 +157,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    get storage(): IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
@@ -183,8 +180,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
-    emitDelayInfo(id: string, delayMs: number, error: ICriticalContainerError): void;
+    emitDelayInfo(id: string, delayMs: number, error: unknown): void;
     // (undocumented)
     flush(): void;
     forceReadonly(readonly: boolean): void;
@@ -266,6 +262,8 @@ export interface IContainerConfig {
 export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
+    // @deprecated
+    createOnLoad?: boolean;
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
@@ -281,7 +279,9 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 }
 
 // @public
-export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob">;
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+};
 
 // @public
 export interface IFluidModuleWithDetails {
@@ -318,6 +318,9 @@ export interface ILoaderServices {
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
 }
+
+// @public @deprecated
+export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 // @public
 export class Loader implements IHostLoader {

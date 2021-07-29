@@ -6,7 +6,6 @@
 import { strict } from "assert";
 import fs from "fs";
 import * as API from "@fluid-internal/client-api";
-import { assert } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
@@ -32,6 +31,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
@@ -268,10 +268,18 @@ export async function loadContainer(
         options,
         logger,
     });
-    const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing,
-        0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
-
-    return container;
+    return loader.resolve(
+        {
+            url: resolved.url,
+            headers: {
+                [LoaderHeader.clientDetails]: {
+                    // #6346
+                    // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
+                    // from `@fluidframework/container-loader`
+                    environment: `replay enable-legacy-create-on-load`,
+                    capabilities: { interactive: false },
+                },
+            },
+        });
 }

@@ -493,21 +493,15 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
     it("Attach events on container", async () => {
         const { container } =
             await createDetachedContainerAndGetRootDataStore();
-        let containerAttachState = AttachState.Detached;
-        container.on("attaching", () => {
-            assert.strictEqual(containerAttachState, AttachState.Detached, "Should be fire from Detached state");
-            assert.strictEqual(container.attachState, AttachState.Attaching,
-                "Container should be attaching at this stage");
-            containerAttachState = AttachState.Attaching;
-        });
+        let attachEvent = false;
         container.on("attached", () => {
-            assert.strictEqual(containerAttachState, AttachState.Attaching, "Should be fire from attaching state");
+            assert.strictEqual(attachEvent, false, "Should be only one attach event");
             assert.strictEqual(container.attachState, AttachState.Attached,
                 "Container should be attached at this stage");
-            containerAttachState = AttachState.Attached;
+            attachEvent = true;
         });
         await container.attach(request);
-        assert.strictEqual(containerAttachState, AttachState.Attached, "Container should end up in attached state");
+        assert.strictEqual(container.attachState, AttachState.Attached, "Container should end up in attached state");
     });
 
     it("Attach events on dataStores", async () => {

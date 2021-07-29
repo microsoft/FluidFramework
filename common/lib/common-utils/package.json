@@ -71,7 +71,7 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@types/events": "^3.0.0",
-    "base64-js": "^1.3.1",
+    "base64-js": "^1.5.1",
     "events": "^3.1.0",
     "lodash": "^4.17.21",
     "sha.js": "^2.4.11"
@@ -80,7 +80,6 @@
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/assert": "^1.5.2",
     "@types/base64-js": "^1.3.0",
     "@types/benchmark": "^2.1.0",
     "@types/jest": "22.2.3",

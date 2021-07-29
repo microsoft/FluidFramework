@@ -279,10 +279,23 @@ export class Queue<T> implements IStream<T> {
     read(): Promise<IStreamResult<T>>;
 }
 
+// @public (undocumented)
+export class RateLimiter {
+    constructor(maxRequests: number);
+    // (undocumented)
+    protected acquire(): Promise<void>;
+    // (undocumented)
+    protected readonly release: () => void;
+    // (undocumented)
+    schedule<T>(work: () => Promise<T>): Promise<T>;
+    // (undocumented)
+    get waitQueueLength(): number;
+}
+
 // @public
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function readAndParseFromBlobs<T>(blobs: {
     [index: string]: string;
 }, id: string): T;

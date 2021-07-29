@@ -107,7 +107,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
             callName,
             (id: string) => this.deltaManager.refreshDelayInfo(id),
             (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, CreateContainerError(error)),
+                this.deltaManager.emitDelayInfo(id, delayMs, error),
             this.logger,
             () => this.checkStorageDisposed(),
         );

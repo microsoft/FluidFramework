@@ -11,7 +11,6 @@ import {
     ContainerMessageType,
     isRuntimeMessage,
     unpackRuntimeMessage,
-    agentSchedulerId,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidCodeDetails, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -110,22 +109,20 @@ describe("Ops on Reconnect", () => {
             const message = unpackRuntimeMessage(containerMessage);
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
-                if (envelope.address !== agentSchedulerId) {
-                    const address = envelope.contents.content.address;
-                    const content = envelope.contents.content.contents;
-                    const batch = message.metadata?.batch;
-                    let value1: string | number;
-                    let value2: string;
-                    // Add special handling for SharedString. SharedMap and SharedDirecory content structure is same.
-                    if (address === stringId) {
-                        value1 = content.pos1;
-                        value2 = content.seg;
-                    } else {
-                        value1 = content.key;
-                        value2 = content.value.value;
-                    }
-                    receivedValues.push([value1, value2, batch]);
+                const address = envelope.contents.content.address;
+                const content = envelope.contents.content.contents;
+                const batch = message.metadata?.batch;
+                let value1: string | number;
+                let value2: string;
+                // Add special handling for SharedString. SharedMap and SharedDirecory content structure is same.
+                if (address === stringId) {
+                    value1 = content.pos1;
+                    value2 = content.seg;
+                } else {
+                    value1 = content.key;
+                    value2 = content.value.value;
                 }
+                receivedValues.push([value1, value2, batch]);
             }
         });
 

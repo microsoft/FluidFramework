@@ -10,11 +10,11 @@ const crypto = require('crypto');
  * @return {number[]} - an array with random values
  */
 function generateRandomUInt32Array(length) {
-  const buffer = Buffer.alloc(length * 4);
-  crypto.randomFillSync(buffer);
-  return Array.from({ length }, (_, i) => buffer.readUIntBE(i * 4, 4));
+    const buffer = Buffer.alloc(length * 4);
+    crypto.randomFillSync(buffer);
+    return Array.from({ length }, (_, i) => buffer.readUIntBE(i * 4, 4));
 }
 
 module.exports = {
-  generateRandomUInt32Array
+    generateRandomUInt32Array
 };
