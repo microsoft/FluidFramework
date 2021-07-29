@@ -1,9 +1,13 @@
 ## 0.45 Breaking changes
+- [Changes to local testing in insecure environments](#changes-to-local-testing-in-insecure-environments)
 - [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
 - [Changes to client-api Document](#changes-to-client-api-Document)
 - [Changes to PureDataObject](#changes-to-PureDataObject)
 - [Changes to DataObject](#changes-to-DataObject)
 - [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
+
+### Changes to local testing in insecure environments
+Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.
 
 ### Property removed from IFluidDataStoreRuntime
 - the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` function has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
@@ -19,7 +23,6 @@
 
 ### Changes to PureDataObjectFactory
 - The `instantiateDataStore` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
-
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
