@@ -129,7 +129,21 @@ export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
  * @param props - Properties to include on the error for logging - They will override props on originalError
  */
 export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError {
-    const newErrorFn = (errMsg: string) => new GenericError(errMsg, originalError);
+    const newErrorFn =
+        (errMsg: string) => {
+            // Don't pass in props here, we want to add them last (see below)
+            const newError = new GenericError(errMsg, originalError);
+
+            const { errorType } = extractLogSafeErrorProperties(originalError);
+            if (errorType !== undefined) {
+                // Clobber errorType (which is declared readonly) with the value off the original error
+                Object.assign(newError, { errorType });
+            }
+
+            // By clobbering newError.errorType, we can no longer properly call it a GenericError.
+            // It's still a LoggingError, and does have errorType so it's also IErrorBase
+            return newError as LoggingError & IErrorBase;
+        };
 
     const error = isValidLegacyError(originalError)
         ? originalError
