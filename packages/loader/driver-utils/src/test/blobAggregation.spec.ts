@@ -172,15 +172,15 @@ describe("BlobAggregationStorage", () => {
         const { storage } = await prep(true, 2048);
 
         // Number of actual blobs in storage should be 2!
-        assert(storage.blobs.size === 3,
-            `Unexpected blob storage size: ${storage.blobs.size} vs expected 3`);
+        assert(storage.blobs.size === 5,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 5`);
     });
 
     it("aggregation above 40 bytes only", async () => {
         const { storage } = await prep(true, 40);
 
         // Should skip one blob that is bigger than 40 bytes.
-        assert(storage.blobs.size === 4,
-            `Unexpected blob storage size: ${storage.blobs.size} vs expected 4`);
+        assert(storage.blobs.size === 5,
+            `Unexpected blob storage size: ${storage.blobs.size} vs expected 5`);
     });
 });

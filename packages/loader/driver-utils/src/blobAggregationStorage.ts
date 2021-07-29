@@ -102,7 +102,7 @@ export abstract class SnapshotExtractor {
     public async unpackSnapshotCore(snapshot: ISnapshotTree, level = 0): Promise<void> {
         // for now only working at data store level, i.e.
         // .app/DataStore/...
-        if (level >= 3) {
+        if (level > BlobAggregationStorage.dataStoreLevel) {
             return;
         }
 
@@ -290,6 +290,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 
+    static dataStoreLevel = 2;
     // For simplification, we assume that
     // - blob aggregation is done at data store level only for now
     // - data store either reuses previous summary, or generates full summary, i.e. there is no partial (some DDS)
@@ -312,7 +313,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             return summary;
         }
         // Only pack at data store level.
-        const startingLevel = level === 2;
+        const startingLevel = level === BlobAggregationStorage.dataStoreLevel;
 
         let aggregator = aggregatorArg;
         if (startingLevel) {
