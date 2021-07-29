@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -164,4 +165,14 @@ export const ClickerReducerInstantiationFactory =
         [SharedCounter.getFactory()],
         {},
     );
-export const fluidExport = ClickerReducerInstantiationFactory;
+
+const clickerViewCallback = (clicker: ClickerReducer) =>
+    <CounterReactFunctionalReducer
+        syncedStateId={ "counter-reducer" }
+        syncedDataObject={ clicker }
+        reducer={ ActionReducer }
+        selector={{}}
+    />;
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<ClickerReducer>(ClickerReducerInstantiationFactory, clickerViewCallback);

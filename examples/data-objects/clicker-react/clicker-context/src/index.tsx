@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -121,4 +122,12 @@ export const ClickerContextInstantiationFactory =
         [],
         {},
     );
-export const fluidExport = ClickerContextInstantiationFactory;
+
+const clickerViewCallback = (clicker: ClickerContext) =>
+    <CounterReactFunctionalContext
+        syncedStateId={ "counter-context" }
+        syncedDataObject={ clicker }
+    />;
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<ClickerContext>(ClickerContextInstantiationFactory, clickerViewCallback);
