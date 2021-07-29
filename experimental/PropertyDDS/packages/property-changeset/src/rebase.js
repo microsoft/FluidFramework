@@ -3,26 +3,21 @@
  * Licensed under the MIT License.
  */
 
-const ChangeSet = require('./changeset');
-const _ = require('lodash');
+import { cloneDeep, isEqual } from "lodash";
+import ChangeSet from "./changeset";
 
 function SyncPromise(x) {
     if (!(this instanceof SyncPromise)) { return new SyncPromise(x); }
-    if (x instanceof SyncPromise) { x = x.value };
+    if (x instanceof SyncPromise) { x = x.value; }
     this.value = x;
 }
 
 SyncPromise.prototype.then = function(fn) {
     this.value = SyncPromise(fn(this.value)).value;
     return this;
-}
+};
 
-
-function loop(promise, fn, makePromise) {
-    return promise.then(fn).then(function(result) {
-        return result === null ? result : loop(makePromise(result), fn, makePromise);
-    });
-}
+const loop = (promise, fn, makePromise) => promise.then(fn).then((result) => result === null ? result : loop(makePromise(result), fn, makePromise));
 
 function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, isAsync = false) {
     const makePromise = isAsync ? Promise.resolve.bind(Promise) : SyncPromise;
@@ -48,11 +43,11 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                 currentGuid = currentChange.referenceGuid;
                 return getUnrebasedChange(currentGuid);
             },
-            makePromise
+            makePromise,
         );
 
         // Now we extract all changes until we arrive at a change that is relative to a remote change
-        let alreadyRebasedChanges = [];
+        const alreadyRebasedChanges = [];
 
         mainPromise = mainPromise.then(() =>
             loop(makePromise(getUnrebasedChange(change.localBranchStart)),
@@ -61,7 +56,7 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                         return null;
                     }
                     return makePromise(getUnrebasedChange(currentRebasedChange.referenceGuid))
-                        .then(rebaseChange => {
+                        .then((rebaseChange) => {
                             alreadyRebasedChanges.unshift(rebaseChange);
                             if (rebaseChange === undefined) {
                                 throw new Error("Received change that references a non-existing parent change");
@@ -69,9 +64,9 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                             return rebaseChange;
                         });
                 },
-                makePromise
-            )
-        )
+                makePromise,
+            ),
+        );
 
         // Compute the base Changeset to rebase the changes on the branch that was still the local branch
         // when the incoming change was created
@@ -85,7 +80,7 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
 
                 // Then apply all changes on the local remote branch
                 const endGuid = change.remoteHeadGuid;
-                return getRebasedChanges(startGuid, endGuid)
+                return getRebasedChanges(startGuid, endGuid);
             })
             .then((relevantRemoteChanges) => {
                 let rebaseBaseChangeSetForAlreadyRebasedChanges = new ChangeSet({});
@@ -96,12 +91,12 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                         let applyAfterMetaInformation;
 
                         if (alreadyRebasedChanges[0] !== undefined && alreadyRebasedChanges[0].guid === c.guid) {
-                            const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
+                            const invertedChange = new ChangeSet(cloneDeep(alreadyRebasedChanges[0].changeSet));
                             invertedChange._toInverseChangeSet();
                             invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
                             applyAfterMetaInformation = new Map();
                             const conflicts2 = [];
-                            changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
+                            changeset = cloneDeep(alreadyRebasedChanges[0].changeSet);
                             rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
                                 applyAfterMetaInformation,
                             });
@@ -122,14 +117,14 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                     changesOnOtherLocalBranch[0].remoteHeadGuid = change.remoteHeadGuid;
                     changesOnOtherLocalBranch[0].referenceGuid = change.remoteHeadGuid;
                 }
-            })
+            });
     }
 
     return mainPromise
         .then(() => makePromise(getRebasedChanges(change.remoteHeadGuid)))
         .then((remoteChanges) => {
             const conflicts = [];
-            if (!_.isEqual(changesOnOtherLocalBranch.map((change) => change.guid),
+            if (!isEqual(changesOnOtherLocalBranch.map((change) => change.guid),
                     remoteChanges.map((change) => change.guid))) {
                 for (const remoteChange of remoteChanges) {
                     let applyAfterMetaInformation =
@@ -139,12 +134,12 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
 
                     let changeset = remoteChange.changeSet;
                     if (changesOnOtherLocalBranch[0] !== undefined && changesOnOtherLocalBranch[0].guid === remoteChange.guid) {
-                        const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
+                        const invertedChange = new ChangeSet(cloneDeep(changesOnOtherLocalBranch[0].changeSet));
                         invertedChange._toInverseChangeSet();
                         invertedChange.applyChangeSet(rebaseBaseChangeSet);
 
                         applyAfterMetaInformation = new Map();
-                        changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
+                        changeset = cloneDeep(changesOnOtherLocalBranch[0].changeSet);
                         rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
 
                         // This is disabled for performance reasons. Only used during debugging
@@ -164,13 +159,13 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
             rebaseBaseChangeSet._rebaseChangeSet(change.changeSet, conflicts, {
                 applyAfterMetaInformation: change.rebaseMetaInformation,
             });
-        })
+        });
 }
 
 function rebaseChangeArrays(baseChangeSet, changesToRebase) {
     let rebaseBaseChangeSet = baseChangeSet;
     for (const change of changesToRebase) {
-        const copiedChangeSet = new ChangeSet(_.cloneDeep(change.changeSet));
+        const copiedChangeSet = new ChangeSet(cloneDeep(change.changeSet));
         copiedChangeSet._toInverseChangeSet();
 
         const conflicts = [];
@@ -187,6 +182,6 @@ function rebaseChangeArrays(baseChangeSet, changesToRebase) {
     }
 }
 
-module.exports = {
-    rebaseToRemoteChanges
+export default {
+    rebaseToRemoteChanges,
 };

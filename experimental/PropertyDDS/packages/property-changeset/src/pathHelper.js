@@ -6,8 +6,9 @@
  * @fileoverview Helper functions to work with path strings
  */
 
-const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').constants.PROPERTY_PATH_DELIMITER;
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
+import { constants } from '@fluid-experimental/property-common';
+
+const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
 /**
  * Helper functions for string processing
@@ -18,9 +19,9 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  * @public
  * @category PropertyUtils
  */
-var PathHelper = {};
+const PathHelper = {};
 
-var RE_ALL_OPEN_SQUARE_BRACKETS = new RegExp('[[]', 'g');
+const RE_ALL_OPEN_SQUARE_BRACKETS = new RegExp("[[]", "g");
 
 /**
  * Token Types
@@ -37,7 +38,7 @@ PathHelper.TOKEN_TYPES = {
     /** A * that indicates a dereferencing operation */ // note: reversed!
     DEREFERENCE_TOKEN: 3,
     /** A ../ that indicates one step above the current path */
-    RAISE_LEVEL_TOKEN: 4
+    RAISE_LEVEL_TOKEN: 4,
 };
 
 /**
@@ -49,8 +50,8 @@ PathHelper.TOKEN_TYPES = {
  * @return {Array.<string>} the tokens from the path string
  */
 PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable-line complexity
-    var tokens = [];
-    var currentToken = '';
+    const tokens = [];
+    let currentToken = "";
 
     if (out_types) {
         // Make sure out_types is empty
@@ -58,21 +59,21 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
     }
 
     // Handle a / at the beginning of the path by adding a special token for it
-    var path_start = 0;
-    if (in_path[0] === '/') {
-        tokens.push('/');
+    let path_start = 0;
+    if (in_path[0] === "/") {
+        tokens.push("/");
         if (out_types) {
             out_types.push(PathHelper.TOKEN_TYPES.PATH_ROOT_TOKEN);
         }
         path_start = 1;
-    } else if (in_path.substr(0, 3) === '../') {
+    } else if (in_path.substr(0, 3) === "../") {
         // Handle relative paths by extracting the number steps above
         var extractLevel = function(current_path) {
-            if (current_path.substr(0, 3) === '../') {
+            if (current_path.substr(0, 3) === "../") {
                 if (out_types) {
                     out_types.push(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN);
                 }
-                tokens.push('../');
+                tokens.push("../");
                 extractLevel(current_path.substr(3));
                 path_start = path_start + 3;
             }
@@ -81,17 +82,17 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
     }
 
     // Let's see if the path is simple enough to use a fast-track algorithm.
-    var hackedPath = in_path.substr(path_start);
-    if (in_path.indexOf('\\') === -1 && in_path.indexOf('"') === -1 && in_path.indexOf('*') === -1) {
+    let hackedPath = in_path.substr(path_start);
+    if (in_path.indexOf("\\") === -1 && in_path.indexOf('"') === -1 && in_path.indexOf("*") === -1) {
         // Yes, we can do something faster than parsing each character one by one.
-        var additionalTokens,
-            additionalTypes = [],
-            token,
-            i;
+        let additionalTokens;
+            const additionalTypes = [];
+            let token;
+            var i;
         // Hack for simplicity, let's first replace all occurences of '[' by '.['
-        hackedPath = hackedPath.replace(RE_ALL_OPEN_SQUARE_BRACKETS, '.[');
+        hackedPath = hackedPath.replace(RE_ALL_OPEN_SQUARE_BRACKETS, ".[");
         // Then split on '.'
-        additionalTokens = hackedPath.split('.');
+        additionalTokens = hackedPath.split(".");
         // And validate each token.
         for (i = 0; i < additionalTokens.length; ++i) {
             token = additionalTokens[i];
@@ -99,8 +100,8 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
             if (token.length === 0) {
                 // There's an error somewhere. Let's abort the fast-track.
                 break;
-            } else if (token[0] === '[') {
-                if (token.length > 2 && token[token.length - 1] === ']') {
+            } else if (token[0] === "[") {
+                if (token.length > 2 && token[token.length - 1] === "]") {
                     additionalTypes.push(PathHelper.TOKEN_TYPES.ARRAY_TOKEN);
                     additionalTokens[i] = token.substr(1, token.length - 2);
                 } else {
@@ -108,7 +109,7 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
                     break;
                 }
             } else {
-                if (token.indexOf(']') !== -1) {
+                if (token.indexOf("]") !== -1) {
                     // There's an error somewhere. Let's abort the fast-track.
                     break;
                 } else {
@@ -128,15 +129,15 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
         }
     }
 
-    var inSquareBrackets = false;
-    var tokenStarted = false;
-    var lastTokenWasQuoted = false;
+    let inSquareBrackets = false;
+    let tokenStarted = false;
+    let lastTokenWasQuoted = false;
 
     // We are in a context where an empty token is valid
-    var atStartToken = false;
-    var allowSegmentStart = true;
+    let atStartToken = false;
+    let allowSegmentStart = true;
 
-    var storeNextToken = function(tokenType) {
+    const storeNextToken = function(tokenType) {
         // Make sure, this is not an empty token (E.g. a .. or a [] )
         if (!tokenStarted) {
             if (!atStartToken) {
@@ -148,7 +149,7 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
 
         // Store the token
         tokens.push(currentToken);
-        currentToken = '';
+        currentToken = "";
         tokenStarted = false;
         atStartToken = false;
         lastTokenWasQuoted = false;
@@ -160,13 +161,13 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
     };
 
     for (var i = path_start; i < in_path.length; i++) {
-        var character = in_path[i];
+        const character = in_path[i];
 
         if (character === '"') {
             // If we encounter a quotation mark, we start parsing the
             // quoted section
             if (!tokenStarted) {
-                var endFound = false;
+                let endFound = false;
 
                 // Read the quoted token
                 for (i++; i < in_path.length; i++) {
@@ -174,11 +175,11 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
                         // We have found the end of the quoted token
                         endFound = true;
                         break;
-                    } else if (in_path[i] === '\\') {
+                    } else if (in_path[i] === "\\") {
                         // Read an escaped symbol
                         if (in_path.length > i + 1) {
-                            if (in_path[i + 1] === '\\') {
-                                currentToken += '\\';
+                            if (in_path[i + 1] === "\\") {
+                                currentToken += "\\";
                                 i++;
                             } else if (in_path[i + 1] === '"') {
                                 currentToken += '"';
@@ -209,7 +210,7 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
                 storeNextToken(PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN);
 
                 allowSegmentStart = true;
-            } else if (character === '[') {
+            } else if (character === "[") {
                 // An opening square bracket starts a new token
                 if (tokenStarted) {
                     storeNextToken(PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN);
@@ -217,16 +218,16 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
 
                 // And sets the state to inSquareBrackets
                 inSquareBrackets = true;
-            } else if (character === ']') {
+            } else if (character === "]") {
                 throw new Error(MSG.CLOSING_BRACKET_WITHOUT_OPENING + in_path);
-            } else if (character === '*') {
+            } else if (character === "*") {
                 // Store the last token
                 if (tokenStarted) {
                     storeNextToken(PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN);
                 }
 
                 // Create a new dereference token
-                tokens.push('*');
+                tokens.push("*");
                 if (out_types) {
                     out_types.push(PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN);
                 }
@@ -253,7 +254,7 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
                 }
             }
         } else {
-            if (character === ']') {
+            if (character === "]") {
                 // A closing square bracket starts a new token
                 storeNextToken(PathHelper.TOKEN_TYPES.ARRAY_TOKEN);
 
@@ -266,11 +267,11 @@ PathHelper.tokenizePathString = function(in_path, out_types) { // eslint-disable
                         inSquareBrackets = false;
                         allowSegmentStart = true;
                         i++;
-                    } else if (in_path[i + 1] === '[') {
+                    } else if (in_path[i + 1] === "[") {
                         // We remain in square brackets
                         // so inSquareBrackets remains true;
                         i++;
-                    } else if (in_path[i + 1] === '*') {
+                    } else if (in_path[i + 1] === "*") {
                         // We leave the square brackets
                         inSquareBrackets = false;
                     } else {
@@ -323,13 +324,13 @@ PathHelper.quotePathSegment = function(in_pathSegment) {
     //          function only replaces the first occurrence
 
     // First we escape escape symbols
-    in_pathSegment = in_pathSegment.replace(/\\/g, '\\\\');
+    in_pathSegment = in_pathSegment.replace(/\\/g, "\\\\");
 
     // Then we escape quotes
     in_pathSegment = in_pathSegment.replace(/"/g, '\\"');
 
     // And finally, we put the string into quotation marks
-    return '"' + in_pathSegment + '"';
+    return `"${  in_pathSegment  }"`;
 };
 
 /**
@@ -340,17 +341,16 @@ PathHelper.quotePathSegment = function(in_pathSegment) {
  * @return {string} unquoted path string
  */
 PathHelper.unquotePathSegment = function(in_quotedPathSegment) {
-    if (typeof in_quotedPathSegment !== 'string') {
+    if (typeof in_quotedPathSegment !== "string") {
         throw new Error(`Expecting a string as a path: ${in_quotedPathSegment}`);
     }
 
     if (in_quotedPathSegment[0] === '"' && in_quotedPathSegment[in_quotedPathSegment.length - 1] === '"') {
-
         // We remove double quotes
         in_quotedPathSegment = in_quotedPathSegment.substr(1, in_quotedPathSegment.length - 2);
 
         // Then we unescape escape symbols
-        in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, '\\');
+        in_quotedPathSegment = in_quotedPathSegment.replace(/\\\\/g, "\\");
 
         // Then we unescape quotes
         in_quotedPathSegment = in_quotedPathSegment.replace(/\\"/g, '"');
@@ -358,7 +358,6 @@ PathHelper.unquotePathSegment = function(in_quotedPathSegment) {
 
     return in_quotedPathSegment;
 };
-
 
 /**
  * Adds quotation marks to a path string if they are needed
@@ -370,11 +369,11 @@ PathHelper.unquotePathSegment = function(in_quotedPathSegment) {
 PathHelper.quotePathSegmentIfNeeded = function(in_pathSegment) {
     if (in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
         in_pathSegment.indexOf('"') !== -1 ||
-        in_pathSegment.indexOf('\\') !== -1 ||
-        in_pathSegment.indexOf('/') !== -1 ||
-        in_pathSegment.indexOf('*') !== -1 ||
-        in_pathSegment.indexOf('[') !== -1 ||
-        in_pathSegment.indexOf(']') !== -1 ||
+        in_pathSegment.indexOf("\\") !== -1 ||
+        in_pathSegment.indexOf("/") !== -1 ||
+        in_pathSegment.indexOf("*") !== -1 ||
+        in_pathSegment.indexOf("[") !== -1 ||
+        in_pathSegment.indexOf("]") !== -1 ||
         in_pathSegment.length === 0) {
         return PathHelper.quotePathSegment(in_pathSegment);
     } else {
@@ -390,8 +389,8 @@ PathHelper.quotePathSegmentIfNeeded = function(in_pathSegment) {
  * @param {String} in_path - The path to check
  */
 PathHelper.checkValidRepositoryAbsolutePath = function(in_path) {
-    if (in_path !== '' && // either an empty reference
-        in_path[0] !== '/') { // or an absolute path starting with /
+    if (in_path !== "" && // either an empty reference
+        in_path[0] !== "/") { // or an absolute path starting with /
         throw new Error(MSG.INVALID_PATH_IN_REFERENCE);
     }
 };
@@ -407,17 +406,17 @@ PathHelper.checkValidRepositoryAbsolutePath = function(in_path) {
 PathHelper.convertAbsolutePathToCanonical = function(in_absolutePath) {
     const tokenTypes = [];
     const tokens = PathHelper.tokenizePathString(in_absolutePath, tokenTypes);
-    let path = '';
+    let path = "";
     for (let i = 0; i < tokenTypes.length; i++) {
-        let tokenType = tokenTypes[i];
+        const tokenType = tokenTypes[i];
         switch (tokenType) {
             case PathHelper.TOKEN_TYPES.PATH_ROOT_TOKEN:
                 // Skip the leading '/'
                 break;
             case PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN:
-                throw new Error('No level up ("../") is expected in an absolute path: ' + in_absolutePath);
+                throw new Error(`No level up ("../") is expected in an absolute path: ${  in_absolutePath}`);
             case PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN:
-                throw new Error('Dereference ("*") is not supported in canonical paths: ' + in_absolutePath);
+                throw new Error(`Dereference ("*") is not supported in canonical paths: ${  in_absolutePath}`);
             case PathHelper.TOKEN_TYPES.ARRAY_TOKEN:
             case PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN:
                 path += (PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(tokens[i]));
@@ -451,7 +450,6 @@ PathHelper.getChildAbsolutePathCanonical = function(in_parentAbsolutePathCanonic
     }
 };
 
-
 /**
  * @enum {number}
  */
@@ -464,7 +462,7 @@ PathHelper.CoverageExtent = {
     PARTLY_COVERED: 1,
     // The base path is fully covered by at least one path from a given list of paths.
     // This means a property with this path would be covered and all of its children would be covered also.
-    FULLY_COVERED: 2
+    FULLY_COVERED: 2,
 };
 
 /**
@@ -491,7 +489,7 @@ PathHelper.getPathCoverage = function(in_basePath, in_paths) {
         if (in_basePath.startsWith(in_paths[i])) {
             return {
                 coverageExtent: PathHelper.CoverageExtent.FULLY_COVERED,
-                pathList: [in_paths[i]]
+                pathList: [in_paths[i]],
             };
         }
     }
@@ -507,16 +505,15 @@ PathHelper.getPathCoverage = function(in_basePath, in_paths) {
         // We found at least one path including parts of the base path.
         return {
             coverageExtent: PathHelper.CoverageExtent.PARTLY_COVERED,
-            pathList: paths
+            pathList: paths,
         };
     }
 
     // We did not find any path covering the given base path.
     return {
         coverageExtent: PathHelper.CoverageExtent.UNCOVERED,
-        pathList: paths
+        pathList: paths,
     };
 };
 
-
-module.exports = PathHelper;
+export default PathHelper;

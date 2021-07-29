@@ -6,9 +6,10 @@
  * @fileoverview Iterator to iterate over array ChangeSets
  */
 
-const _ = require('lodash');
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
+import { isNumber, isString } from "lodash";
+import { constants } from "@fluid-experimental/property-common";
 
+const MSG = constants.MSG;
 /**
  * Iterator class which iterates over an array ChangeSet. It will successively return the operations ordered by their
  * position within the array. Additionally, it will keep track of the modifications to the array indices caused
@@ -29,7 +30,7 @@ var ArrayChangeSetIterator = function(in_changeSet) {
     this._currentIndices = {
         insert: 0,
         remove: 0,
-        modify: 0
+        modify: 0,
     };
 
     this._currentOffset = 0;
@@ -52,8 +53,8 @@ var ArrayChangeSetIterator = function(in_changeSet) {
  */
 ArrayChangeSetIterator.prototype.next = function() {
     // Find the smallest index in the operations lists
-    var type = undefined,
-        currentIndex = Infinity;
+    let type;
+        let currentIndex = Infinity;
 
     this.removeInsertOperation = undefined;
     // Process the current remove entry
@@ -61,8 +62,8 @@ ArrayChangeSetIterator.prototype.next = function() {
         this._currentIndices.remove < this._changeSet.remove.length) {
         type = ArrayChangeSetIterator.types.REMOVE;
         currentIndex = this._changeSet.remove[this._currentIndices.remove][0];
-        var currentLength = this._changeSet.remove[this._currentIndices.remove][1];
-        if (!_.isNumber(currentLength)) {
+        let currentLength = this._changeSet.remove[this._currentIndices.remove][1];
+        if (!isNumber(currentLength)) {
             currentLength = currentLength.length;
         }
 
@@ -126,7 +127,7 @@ ArrayChangeSetIterator.prototype.next = function() {
             this.offset = this._currentOffset;
 
             // Update the current offset. For a remove we have to decrement it by the number of the removed elements
-            var removedElements = _.isNumber(this.operation[1]) ? this.operation[1] : this.operation[1].length;
+            var removedElements = isNumber(this.operation[1]) ? this.operation[1] : this.operation[1].length;
             this._lastOperationOffset -= removedElements;
 
             // Shift the internal index
@@ -138,13 +139,13 @@ ArrayChangeSetIterator.prototype.next = function() {
                 this.offset = this._currentOffset;
 
                 // check, if the modify's range overlaps with coming insert changes:
-                var nextModify = this._copiedModifies[this._currentIndices.modify];
-                var modifyEnd = nextModify[0] + nextModify[1].length;
+                let nextModify = this._copiedModifies[this._currentIndices.modify];
+                const modifyEnd = nextModify[0] + nextModify[1].length;
                 if (this._changeSet.insert &&
                     this._currentIndices.insert < this._changeSet.insert.length &&
                     this._changeSet.insert[this._currentIndices.insert][0] < modifyEnd) {
                     // we have an overlap and need to cut the modify
-                    var insertPosition = this._changeSet.insert[this._currentIndices.insert][0];
+                    const insertPosition = this._changeSet.insert[this._currentIndices.insert][0];
 
                     // if we haven't copied the change set's modifies yet, we need to do that now
                     if (this._copiedModifies === this._changeSet.modify) {
@@ -156,8 +157,8 @@ ArrayChangeSetIterator.prototype.next = function() {
                     // use modify only up to insert's position
 
                     // build a partial modify and cut the remaining one:
-                    var partialModify = [nextModify[0], 0];
-                    if (_.isString(nextModify[1])) {
+                    const partialModify = [nextModify[0], 0];
+                    if (isString(nextModify[1])) {
                         partialModify[1] = nextModify[1].substr(0, insertPosition - nextModify[0]);
                         nextModify[1] = nextModify[1].substr(insertPosition - nextModify[0]);
                     } else {
@@ -168,9 +169,7 @@ ArrayChangeSetIterator.prototype.next = function() {
 
                     // use the whole modify
                     this.operation = partialModify;
-
                 } else {
-
                     // use the whole modify
                     this.operation = nextModify;
 
@@ -180,7 +179,7 @@ ArrayChangeSetIterator.prototype.next = function() {
                 break;
             }
         default:
-            throw new Error('ArrayChangeSetIterator: ' + MSG.UNKNOWN_OPERATION);
+            throw new Error(`ArrayChangeSetIterator: ${  MSG.UNKNOWN_OPERATION}`);
     }
     this._atEnd = false;
     return true;
@@ -197,13 +196,12 @@ ArrayChangeSetIterator.prototype._copyModifies = function(in_modifies) {
     if (!in_modifies || in_modifies.length === 0) {
         return undefined;
     }
-    var result = [];
-    for (var i = 0; i < in_modifies.length; i++) {
+    const result = [];
+    for (let i = 0; i < in_modifies.length; i++) {
         result.push([in_modifies[i][0], in_modifies[i][1].slice()]);
     }
     return result;
 };
-
 
 /**
  * Iterator types
@@ -215,7 +213,7 @@ ArrayChangeSetIterator.types = {
     REMOVE: 1,
     MODIFY: 2,
     MOVE: 3, // reserved, not implemented yet
-    NOP: 4 // no op (e.g. when a remove neutralized an insert in a merge
+    NOP: 4, // no op (e.g. when a remove neutralized an insert in a merge
 };
 
-module.exports = ArrayChangeSetIterator;
+export default ArrayChangeSetIterator;

@@ -6,12 +6,19 @@
   "repository": "https://github.com/microsoft/FluidFramework",
   "license": "MIT",
   "author": "Microsoft and contributors",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "module": "lib/index.js",
   "types": "src/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "lib/**/*",
+    "src/index.d.ts"
+  ],
   "scripts": {
     "test": "npm run test:mocha",
     "test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "lint": "",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -48,5 +55,25 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
+  },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
   }
 }
