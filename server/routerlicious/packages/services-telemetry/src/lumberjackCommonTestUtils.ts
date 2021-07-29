@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Lumber } from "../lumber";
-import { Lumberjack } from "../lumberjack";
-import { ILumberjackEngine, ILumberjackSchemaValidator, ILumberjackSchemaValidationResult } from "../resources";
+import { Lumber } from "./lumber";
+import { Lumberjack } from "./lumberjack";
+import { ILumberjackEngine, ILumberjackSchemaValidator, ILumberjackSchemaValidationResult } from "./resources";
 
 // TestLumberjack allows us to run unit tests on Lumberjack by
 // adding the reset() method
