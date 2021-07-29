@@ -30,7 +30,6 @@ function getFileLocations(): [string, string] {
 }
 const [fileLocation, workerLocation] = getFileLocations();
 
-const initialSnapshot = "initial_snapshot";
 const currentSnapshots = "current_snapshots";
 const srcSnapshots = "src_snapshots";
 
@@ -93,8 +92,6 @@ class ConcurrencyLimiter {
  * 3. srcSnapshots - This folder contains snapshots in older versions. There is one folder for each set of snapshots
  *    in a previous version. In Mode.Validate, a container is loaded from each of these older snapshot and validated
  *    that it loads successfully.
- * 4. initialSnapshot - This folder is present for snapshots from newer documents that use detached container flow. It
- *    contains the initial snapshot to load the container with.
  */
 export async function processOneNode(args: IWorkerArgs) {
     const replayArgs = new ReplayArgs();
@@ -110,9 +107,6 @@ export async function processOneNode(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
     replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
-
-    // The initial snapshot directory name is basically the version from which the document is to be loaded.
-    replayArgs.fromVersion = args.initialSnapshotDir;
 
     // Worker threads does not listen to unhandled promise rejections. So set a listener and
     // throw error so that worker thread could pass the message to parent thread.
@@ -167,12 +161,6 @@ export async function processContent(mode: Mode, concurrently = true) {
             mode,
             snapFreq,
         };
-
-        // For snapshots for documents created via detached container flow, the initialSnapshot directory contains
-        // the initial snapshot that was generated when the container was attached.
-        if (fs.existsSync(`${folder}/${initialSnapshot}`)) {
-            data.initialSnapshotDir = initialSnapshot;
-        }
 
         switch (mode) {
             case Mode.Validate:
