@@ -7,4 +7,5 @@ export * from "./errorLogging";
 export * from "./eventEmitterWithErrorHandling";
 export * from "./events";
 export * from "./logger";
+export * from "./thresholdCounter";
 export * from "./utils";
