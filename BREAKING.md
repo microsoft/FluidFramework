@@ -1,10 +1,3 @@
-## 0.45 Breaking changes
-
-- [annotateError removed](#annotateError-removed)
-
-### annotateError removed
-The function `annotateError` in @fluidframework/telemetry-utils has been removed
-
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)

@@ -15,7 +15,7 @@ import {
 } from "./fluidErrorBase";
 
 /** @returns true if value is an object but neither null nor an array */
-export const isRegularObject = (value: any): boolean => {
+const isRegularObject = (value: any): boolean => {
     return value !== null && !Array.isArray(value) && typeof value === "object";
 };
 
@@ -77,7 +77,7 @@ export class SimpleFluidError implements IFluidErrorBase {
     readonly stack?: string;
     readonly name?: string;
 
-    constructor(errorProps: Omit<Omit<IFluidErrorBase, "getTelemetryProperties">, "addTelemetryProperties">) {
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
