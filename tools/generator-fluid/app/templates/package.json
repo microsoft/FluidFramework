@@ -23,7 +23,7 @@
     "react-dom": "^16.8.3"
   },
   "devDependencies": {
-    "@fluidframework/webpack-fluid-loader": "^0.26.0",
+    "@fluid-example/webpack-fluid-loader": "^0.26.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

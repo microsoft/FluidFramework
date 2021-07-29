@@ -1,5 +1,5 @@
 {
-  "name": "@fluidframework/webpack-fluid-loader",
+  "name": "@fluid-example/webpack-fluid-loader",
   "version": "0.45.0",
   "description": "Fluid object loader for webpack-dev-server",
   "homepage": "https://fluidframework.com",

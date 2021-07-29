@@ -1,3 +1,9 @@
+## 0.45 Breaking changes
+- [webpack-fluid-loader package name changed](webpack-fluid-loader-package-name-changed)
+
+### webpack-fluid-loader package name changed
+The webpack-fluid-loader utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is intended as an example utility not for use in production, it is now available under the example scope `@fluid-example/webpack-fluid-loader`.  This package does not publish to NPM, but can be used locally within the FluidFramework repository.
+
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)
