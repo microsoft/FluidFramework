@@ -14,17 +14,11 @@ This document will explain how to use the audience APIs and then provide example
 
 When creating a container, you are also provided a container services object which holds the audience.  This audience is backed by that same container.
 
-```typescript
+```js
 const { container, containerServices } =
     await tinyliciousClient.createContainer(serviceConfig, containerSchema);
 const audience = containerServices.audience;
 ```
-
-{{% callout tip %}}
-
-The backing container controls the audience by adding and removing members as part of processing [signals]({{< relref signals.md >}}).  This means audience membership reflects the container's processed signals rather than live information from the service, and delays in signal receipt or processing may also produce outdated audience information.
-
-{{% /callout %}}
 
 ### The IMember
 
@@ -37,7 +31,7 @@ export interface IMember {
 }
 ```
 
-An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique indentifier.
+An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
 
 {{% callout tip %}}
 
@@ -47,7 +41,12 @@ Connections can be short-lived and are not reused. A client that disconnects fro
 
 ### Service-specific audience data
 
-The `ServiceAudience` class represents the base audience implementation, and individual services are expected to extend this class for their needs.  Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension.  For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
+The `ServiceAudience` class represents the base audience implementation, and Fluid services typically extend this class
+and `IMember` to provide service-specific user information.  These extensions are exposed through the service clients,
+and you don't need to do anything special to enable them.
+
+For example, when using `TinyliciousClient`, the audience is a `TinyliciousAudience` object, which contains
+`TinyliciousMember`s instead of `IMembers`.  `TinyliciousMember`s have an additional `userName` property.
 
 ```typescript
 export interface TinyliciousMember extends IMember {
@@ -55,21 +54,20 @@ export interface TinyliciousMember extends IMember {
 }
 ```
 
+{{% callout tip %}}
+Because audience data is service-specific, code that interacts with audience may be less portable to other services.
+{{% /callout %}}
+
 ### APIs
 
 #### getMembers
 
 The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` for that user ID.  You can further query the individual `IMember`s for its client connections.
 
-{{% callout tip %}}
+{{% callout tip "Tips" %}}
 
-Because `ServiceAudience` exists to facilitate user presence scenarios, it may exclude certain client connections it doesn't consider useful for this purpose.  By default, this includes non-interactive clients such as the summarizer client (also see [Summarization]({{< relref summarizer.md >}})).
-
-{{% /callout %}}
-
-{{% callout tip %}}
-
-The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, you should subscribe to `ServiceAudience`'s events for member changes.
+- Because `ServiceAudience` exists to facilitate user presence scenarios, it may exclude certain client connections it doesn't consider useful for this purpose.  By default, this includes non-interactive clients such as the summarizer client (also see [Summarization]({{< relref summarizer.md >}})).
+- The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, you should subscribe to `ServiceAudience`'s events for member changes.
 
 {{% /callout %}}
 

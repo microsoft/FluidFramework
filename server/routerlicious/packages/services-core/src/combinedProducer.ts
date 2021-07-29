@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { ITicketedMessage } from "./messages";
 import { IProducer } from "./queue";
 
 /**
  * Combines multiple producers to one.
+ * This produces messages to all the producers concurrently
+ * and waits for all the sends to finish
  */
-export class CombinedProducer implements IProducer {
-    constructor(private readonly producers: IProducer[]) {
+export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
+    constructor(private readonly producers: IProducer<T>[]) {
     }
 
     /**
@@ -19,8 +22,7 @@ export class CombinedProducer implements IProducer {
         return this.producers.every((producer) => producer.isConnected());
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async send(messages: object[], tenantId: string, documentId: string): Promise<any> {
+    public async send(messages: T[], tenantId: string, documentId: string): Promise<any> {
         const sendP = [];
         for (const producer of this.producers) {
             sendP.push(producer.send(messages, tenantId, documentId));
