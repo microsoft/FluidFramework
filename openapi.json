@@ -1,0 +1,184 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Echo API"
+  },
+  "paths": {
+    "/api/tenants/{id}": {
+      "get": {
+        "summary": "Gets a single tenant with given id.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          }
+        }
+      }
+    },
+    "/tenants": {
+      "get": {
+        "summary": "Gets list of all tenants, or all tenants owned by provided tenantAdminContact query param.",
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          }
+        }
+      }
+    },
+    "/tenants/{id}/key": {
+      "get": {
+        "summary": "Gets the key for a tenant. This is a privileged action.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          }
+        }
+      },
+      "put": {
+        "summary": "Refresh a tenant's key. This is a privileged action.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          },
+          "500": {
+            "description": "FRS Admin email not provided by AAD under 'preferred_username'. Retry or contact frsdev@microsoft.com for assistance."
+          }
+        }
+      }
+    },
+    "/tenants/{id}/tenantAdminContact": {
+      "put": {
+        "summary": "Updates a tenant's admin contact.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          },
+          "500": {
+            "description": "FRS Admin email not provided by AAD under 'preferred_username'. Retry or contact frsdev@microsoft.com for assistance."
+          }
+        }
+      }
+    },
+    "/tenants/{id}/externalStorage": {
+      "put": {
+        "summary": "Updates external storage information associated with the tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          },
+          "500": {
+            "description": "FRS Admin email not provided by AAD under 'preferred_username'. Retry or contact frsdev@microsoft.com for assistance."
+          }
+        }
+      }
+    },
+    "/tenants/{id}": {
+      "delete": {
+        "summary": "Deletes a tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          },
+          "500": {
+            "description": "FRS Admin email not provided by AAD under 'preferred_username'. Retry or contact frsdev@microsoft.com for assistance."
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://echo.weu-1.prod.fluidrelay.azure.com"
+    },
+    {
+      "url": "https://echo.wus2-1.prod.fluidrelay.azure.com"
+    },
+    {
+      "url": "https://echo.sa-1.prod.fluidrelay.azure.com"
+    },
+    {
+      "url": "https://echo.wus-1.canary.fluidrelay.azure.com"
+    }
+  ]
+}
