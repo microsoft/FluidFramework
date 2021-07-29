@@ -312,7 +312,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             return summary;
         }
         // Only pack at data store level.
-        const startingLevel = level === 1;
+        const startingLevel = level === 2;
 
         let aggregator = aggregatorArg;
         if (startingLevel) {
