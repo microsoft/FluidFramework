@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import PropertyFactory from './property_factory';
-import PropertyUtils from './property_utils';
-import BaseProperty from './properties/base_property';
-import ContainerProperty from './properties/container_property';
-import MapProperty from './properties/map_property';
-import NodeProperty from './properties/node_property';
-import ArrayProperty from './properties/array_property';
-import SetProperty from './properties/set_property';
-import StringProperty from './properties/string_property';
-import RefereceProperty from './properties/reference_property';
-import ReferenceArrayProperty from './properties/reference_array_property';
-import ReferenceMapProperty from './properties/reference_map_property';
-import EnumArrayProperty from './properties/enum_array_property';
-import EnumProperty from './properties/enum_property';
-import { Int64Property, Uint64Property } from './properties/int_properties';
-import ValueArrayProperty from './properties/value_array_property';
-import ValueMapProperty from './properties/value_map_property';
-import ValueProperty from './properties/value_property';
+import PropertyFactory from './propertyFactory';
+import PropertyUtils from './propertyUtils';
+import BaseProperty from './properties/baseProperty';
+import ContainerProperty from './properties/containerProperty';
+import MapProperty from './properties/mapProperty';
+import NodeProperty from './properties/nodeProperty';
+import ArrayProperty from './properties/arrayProperty';
+import SetProperty from './properties/setProperty';
+import StringProperty from './properties/stringProperty';
+import RefereceProperty from './properties/referenceProperty';
+import ReferenceArrayProperty from './properties/referenceArrayProperty';
+import ReferenceMapProperty from './properties/referenceMapProperty';
+import EnumArrayProperty from './properties/enumArrayProperty';
+import EnumProperty from './properties/enumProperty';
+import { Int64Property, Uint64Property } from './properties/intProperties';
+import ValueArrayProperty from './properties/valueArrayProperty';
+import ValueMapProperty from './properties/valueMapProperty';
+import ValueProperty from './properties/valueProperty';
 
 
 export {

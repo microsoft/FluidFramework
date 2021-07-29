@@ -19,7 +19,7 @@ describe('Utils', function () {
         // Get all the objects we need in this test here.
         PropertyFactory = require('..').PropertyFactory;
         BaseProperty = require('..').BaseProperty;
-        NodeProperty = require('../properties/node_property');
+        NodeProperty = require('../properties/nodeProperty');
         Utils = require('@fluid-experimental/property-changeset').Utils;
         _ = require('lodash');
         MSG = require('@fluid-experimental/property-common').constants.MSG
