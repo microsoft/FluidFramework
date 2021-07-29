@@ -56,11 +56,6 @@ async function bumpDependenciesCore(
         }
     }
 
-    if (await bumpPackageDependencies(context.templatePackage, bumpPackageMap, release, changedVersion)) {
-        // Template package don't need to update lock
-        changed = true;
-    }
-
     if (changed) {
         if (updateLockPackage.length !== 0) {
             if (updateLock) {
