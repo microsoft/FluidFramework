@@ -319,12 +319,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     this.queuedMessages.push(...msgs);
                 }
             };
-
-            this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
-                if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
-                    this.queuedSignals.push(msg);
-                }
-            };
         }
 
         return super.initialize(connectMessage, timeout);
