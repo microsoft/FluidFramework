@@ -159,7 +159,7 @@ class SocketReference {
 /**
  * Represents a connection to a stream of delta updates
  */
-export class OdspDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
+export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Create a OdspDocumentDeltaConnection
      * If url #1 fails to connect, will try url #2 if applicable.

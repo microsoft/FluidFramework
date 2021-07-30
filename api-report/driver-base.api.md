@@ -10,6 +10,7 @@ import { DriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -21,21 +22,25 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
-export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
     protected constructor(socket: SocketIOClient.Socket, documentId: string, logger: ITelemetryLogger);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;
-    close(): void;
     // (undocumented)
-    protected closeCore(socketProtocolError: boolean, err: DriverError): void;
-    protected closed: boolean;
+    close(): void;
     protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError;
     // (undocumented)
     get details(): IConnected;
     protected disconnect(socketProtocolError: boolean, reason: DriverError): void;
+    dispose(): void;
+    // (undocumented)
+    protected disposeCore(socketProtocolError: boolean, err: DriverError): void;
+    // (undocumented)
+    get disposed(): boolean;
+    protected _disposed: boolean;
     // (undocumented)
     documentId: string;
     // (undocumented)

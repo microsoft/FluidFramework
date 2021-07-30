@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
@@ -104,7 +104,10 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
  * Implementation of IDocumentDeltaConnection that does not support submitting
  * or receiving ops. Used in storage-only mode.
  */
-class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+class NoDeltaStream
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection, IDisposable
+{
     clientId: string = "storage-only client";
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
@@ -132,8 +135,13 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
             content: { message: "Cannot submit signal with storage-only connection", code: 403 },
         });
     }
-    close(): void {
-    }
+
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose() { this._disposed = true; }
+
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(): void { this.dispose(); }
 }
 
 /**
@@ -1038,6 +1046,21 @@ export class DeltaManager
     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
+
+        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
+        const disposable = connection as Partial<IDisposable>;
+        if (disposable.disposed === true) {
+            this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
+            // Note: not checking this.reconnectMode mode here as nobody ever observed this connection, so
+            // none of invariants is broken if reconnect happens.
+            this.triggerConnect({
+                reason: "early connection closure",
+                mode: requestedMode,
+                fetchOpsFromStorage: false,
+            });
+            return;
+        }
+
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -1180,7 +1203,15 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        connection.close();
+        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.dispose()) in some future.
+        const disposable = connection as Partial<IDisposable>;
+
+        if (disposable.dispose !== undefined) {
+            disposable.dispose();
+        } else {
+            connection.close();
+        }
+
         this.connectionStateProps = {};
 
         return true;
