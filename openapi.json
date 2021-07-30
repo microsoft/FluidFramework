@@ -184,6 +184,298 @@
           }
         }
       }
+    },
+    "/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}": {
+      "put": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Creates a new tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          },
+          "500": {
+            "description": "Resource Provider failure."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Deletes a tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          },
+          "500": {
+            "description": "Resource Provider failure."
+          }
+        }
+      }
+    },
+    "/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/getKeys": {
+      "post": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Gets the key for a tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          },
+          "500": {
+            "description": "Resource Provider failure."
+          }
+        }
+      }
+    },
+    "/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/regenerateKey": {
+      "post": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Gets the key for a tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          },
+          "500": {
+            "description": "Resource Provider failure."
+          }
+        }
+      }
+    },
+    "/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/ResourceCreationValidate": {
+      "post": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Preflight Extension API for create.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          },
+          "500": {
+            "description": "Resource Provider error."
+          }
+        }
+      }
+    },
+    "/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/ResourcePatchValidate": {
+      "post": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Preflight extension API for PATCH",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          }
+        }
+      }
+    },
+    "/api/providers/Microsoft.FluidRelay/resourceoperations/TemplateDeployment/validate": {
+      "post": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Preflight API for create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "resourceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource Provider success."
+          },
+          "400": {
+            "description": "Failed resources format validation. Please check."
+          },
+          "500": {
+            "description": "Resource Provider error."
+          }
+        }
+      }
     }
   },
   "servers": [
