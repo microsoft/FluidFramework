@@ -393,76 +393,58 @@ describe.only("Error Normalization", () => {
         stack: "cool stack trace",
         name: "someName!!!",
     });
-    const typicalOutput = (message: string, stackGenerated: boolean) => new TestFluidError({
+    const typicalOutput = (message: string, stackHint: "<<generated stack>>" | "<<stack from input>>") => new TestFluidError({
         errorType: "genericError",
         fluidErrorCode: "<none>",
         message,
-        stack: stackGenerated ? "<<generated stack>>" : "cool stack trace",
+        stack: stackHint,
     }).withExpectedTelemetryProps({ untrustedOrigin: true });
     // These are cases where the input object can be patched to adhere to IFluidErrorBase
     const objectTestCases: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
-        "Fluid Error minus errorType": () => ({
+        "Fluid Error minus errorType (with stack)": () => ({
             input: sampleFluidError().withoutProperty("errorType"),
-            expectedOutput: typicalOutput("Hello", false),
+            expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
         }),
         // "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
-        "Fluid Error minus message": () => ({
+        "Fluid Error minus message (with stack)": () => ({
             input: sampleFluidError().withoutProperty("message"),
-            expectedOutput: typicalOutput("[object Object]", false),
+            expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
+        }),
+        "Fluid Error minus errorType (no stack)": () => ({
+            input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
+            expectedOutput: typicalOutput("Hello", "<<generated stack>>"),
+        }),
+        // "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
+        "Fluid Error minus message (no stack)": () => ({
+            input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
+            expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
         }),
         "Error object": () => ({
             input: new NamedError("boom"),
-            expectedOutput: new TestFluidError({
-                errorType: "none (CoolErrorName)",
-                fluidErrorCode: "<none>",
-                message: "boom",
-                name: "CoolErrorName",
-                stack: "<<from input>>",
-            }),
+            expectedOutput: typicalOutput("boom", "<<stack from input>>"),
         }),
         "LoggingError": () => ({
             input: new LoggingError("boom"),
-            expectedOutput: new TestFluidError({
-                errorType: "none (Error)",
-                fluidErrorCode: "<none>",
-                message: "boom",
-                name: "Error",
-                stack: "<<from input>>",
-            }),
+            expectedOutput: typicalOutput("boom", "<<stack from input>>"),
         }),
         "Empty object": () => ({
             input: {},
-            expectedOutput: new TestFluidError({
-                errorType: "none (object)",
-                fluidErrorCode: "<none>",
-                message: "",
-                stack: "<<generated stack>>",
-            }),
+            expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
         }),
         "object with stack": () => ({
             input: { message: "whatever", stack: "fake stack goes here" },
-            expectedOutput: new TestFluidError({
-                errorType: "none (object)",
-                fluidErrorCode: "<none>",
-                message: "whatever",
-                stack: "<<from input>>",
-            }),
+            expectedOutput: typicalOutput("whatever", "<<stack from input>>"),
         }),
         "object with non-string message and name": () => ({
-            input: { message: 4, name: true },
-            expectedOutput: new TestFluidError({
-                errorType: "none (object)",
-                fluidErrorCode: "<none>",
-                message: "4",
-                name: "true",
-                stack: "<<generated stack>>",
-            }),
+            input: { message: 42, name: true },
+            expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
         }),
     };
     function assertMatching(
         actual: IFluidErrorBase,
         expected: TestFluidError,
         annotations: IFluidErrorAnnotations = {},
+        inputStack: string,
     ) {
         const expectedErrorCode =
             expected.fluidErrorCode === "<none>"
@@ -476,8 +458,17 @@ describe.only("Error Normalization", () => {
         assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
         assert.strictEqual(actual.message, expected.message, "message should match");
         assert.strictEqual(actual.name, expected.name, "name should match");
-        assert.strictEqual(typeof actual.stack, "string", "stack should be present as a string");
-        assert.equal(expected.stack === "<<generated stack>>", (actual.stack?.indexOf("<<generated stack>>") ?? -1) >= 0, "Should have correctly predicted whether stack was generated");
+
+        const actualStack = actual.stack;
+        assert(actualStack !== undefined, "stack should be present as a string");
+        if (actualStack.indexOf("<<generated stack>>") >= 0) {
+            assert.equal(expected.stack, "<<generated stack>>", "<<generated stack>> hint should be used if generated");
+            Object.assign(actual, { stack: "<<generated stack>>" }); // for telemetry props to match below
+        } else {
+            assert.equal(actualStack, inputStack, "If stack wasn't generated, it should match input stack");
+            assert.equal(expected.stack, "<<stack from input>>", "<<stack from input>> hint should be used if not generated");
+            Object.assign(actual, { stack: "<<stack from input>>" }); // for telemetry props to match below
+        }
 
         assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
     }
@@ -492,7 +483,7 @@ describe.only("Error Normalization", () => {
 
             // Assert
             assert.notEqual(input, normalized, "input should have yielded a new error object");
-            assertMatching(normalized, expectedOutput, {});
+            assertMatching(normalized, expectedOutput, {}, input.stack);
         });
     }
     // const nonObjectInputs = {
