@@ -188,9 +188,12 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-function getValidTelemetryProps(obj: any): ITelemetryProperties {
+function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
+        if (keysToOmit.has(key)) {
+            continue;
+        }
         const val = obj[key];
         switch (typeof val) {
             case "string":
@@ -214,18 +217,29 @@ function getValidTelemetryProps(obj: any): ITelemetryProperties {
 }
 
 /**
- * Helper class for error tracking that can be used to log an error in telemetry.
- * The props passed in (and any set directly on the object after the fact) will be
- * logged in accordance with the given tag, if present.
+ * Base class for "trusted" errors we create, whose properties can generally be logged to telemetry safely.
+ * All properties set on the object, or passed in (via the constructor or getTelemetryProperties),
+ * will be logged in accordance with their tag, if present.
  *
- * PLEASE take care to properly tag properties set on this object
+ * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
 export class LoggingError extends Error implements ILoggingError {
+    /**
+     * Create a new LoggingError
+     * @param message - Error message to use for Error base class
+     * @param props - telemetry props to include on the error for when it's logged
+     * @param omitPropsFromLogging - properties by name to omit from telemetry props
+     */
     constructor(
         message: string,
         props?: ITelemetryProperties,
+        private readonly omitPropsFromLogging: Set<string> = new Set(),
     ) {
         super(message);
+
+        // Don't log this list itself either
+        omitPropsFromLogging.add("omitPropsFromLogging");
+
         if (props) {
             this.addTelemetryProperties(props);
         }
@@ -242,10 +256,10 @@ export class LoggingError extends Error implements ILoggingError {
      * Get all properties fit to be logged to telemetry for this error
      */
     public getTelemetryProperties(): ITelemetryProperties {
-        const taggableProps = getValidTelemetryProps(this);
+        const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
         // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
         // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
-        // Not including the 'name' property because it's likely always "Error"
+        // Not including the 'name' property because if not overridden it's always "Error"
         return  {
             stack: this.stack,
             message: this.message,
