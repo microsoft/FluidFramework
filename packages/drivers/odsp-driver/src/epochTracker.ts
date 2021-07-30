@@ -262,6 +262,7 @@ export class EpochTracker implements IPersistedFileCache {
                 this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
                 // If the epoch mismatches, then clear all entries for such file entry from cache.
                 await this.removeEntries();
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw epochError;
             }
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
