@@ -404,6 +404,13 @@ export class DeltaManager
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
                 // the ContainerRuntime constructor
+
+                if (this.shouldJoinWrite()) {
+                    // If we have pending changes, then we will never send them - it smells like
+                    // host logic error.
+                    this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
+                }
+
                 reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
@@ -412,6 +419,12 @@ export class DeltaManager
                 this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
             }
         }
+    }
+
+    public triggerReconnect(reason: string) {
+            assert(this.connection !== undefined, "called only in connected state");
+            this.disconnectFromDeltaStream(reason);
+            this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
     }
 
     private set_readonlyPermissions(readonly: boolean) {
@@ -549,6 +562,10 @@ export class DeltaManager
      * @param args - The connection arguments
      */
     private triggerConnect(args: IConnectionArgs) {
+        assert(this.connection === undefined, "called only in disconnected state");
+        if (this.reconnectMode !== ReconnectMode.Enabled) {
+            return;
+        }
         this.connectCore(args).catch((err) => {
             // Errors are raised as "error" event and close container.
             // Have a catch-all case in case we missed something
