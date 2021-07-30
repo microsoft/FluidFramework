@@ -35,12 +35,12 @@ describe("Errors", () => {
             assert(testError.getTelemetryProperties().foo === "bar");
             assert(testError.getTelemetryProperties().message === "womp womp");
         });
-        it("Should preserve existing errorType, and return same object", () => {
-            const originalError = { errorType: "someErrorType" };
+        it("Should preserve existing errorType, but return new object if not a fully valid error", () => {
+            const originalError = { errorType: "someErrorType" }; // missing message and telemetry prop functions
             const testError = CreateContainerError(originalError);
 
             assert(testError.errorType === "someErrorType");
-            assert(testError === originalError);
+            assert(testError !== originalError);
         });
         it("Should ignore non-string errorType", () => {
             const originalError = { errorType: 3 };
@@ -136,13 +136,16 @@ describe("Errors", () => {
 
             assert(coercedError as any === originalError);
         });
-        it("Should skip coercion for object with errorType", () => {
+        it("Should coerce non-LoggingError object with errorType", () => {
             const originalError = {
                 errorType: "Some error type",
             };
             const coercedError = CreateProcessingError(originalError, undefined);
 
-            assert(coercedError as any === originalError);
+            assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
+            assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.message === "[object Object]");
         });
         it("Should coerce LoggingError missing errorType", () => {
             const originalError = new LoggingError(
