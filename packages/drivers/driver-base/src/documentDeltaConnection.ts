@@ -112,6 +112,11 @@ export class DocumentDeltaConnection
             if (event === "error") {
                 return;
             }
+            // Whenever listener is added, we should subscribe on same event on socket, so these two things
+            // should be in sync. This currently assumes that nobody unregisters and registers back listeners,
+            // and that there are no "internal" listeners installed (like "error" case we skip above)
+            // Better flow might be to always unconditionally register all handlers on successful connection,
+            // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
             assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), "mismatch");
             if (!this.trackedListeners.has(event)) {
                 this.addTrackedListener(
@@ -256,7 +261,7 @@ export class DocumentDeltaConnection
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public dispose() {
-        this.closeCore(
+        this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError("client closing connection", true /* canRetry */));
     }
@@ -264,7 +269,7 @@ export class DocumentDeltaConnection
     // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
     public close() { this.dispose(); }
 
-    protected closeCore(socketProtocolError: boolean, err: DriverError) {
+    protected disposeCore(socketProtocolError: boolean, err: DriverError) {
         if (this.disposed) {
             // We see cases where socket is disposed while we have two "disconnect" listeners - one from DeltaManager,
             // one - early handler that should have been removed on establishing connection. This causes asserts in
@@ -312,7 +317,7 @@ export class DocumentDeltaConnection
             const fail = (socketProtocolError: boolean, err: DriverError) => {
                 // timeout & "error" can happen after successful connection
                 if (!success) {
-                    this.closeCore(socketProtocolError, err);
+                    this.disposeCore(socketProtocolError, err);
                 }
                 reject(err);
             };
