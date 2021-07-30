@@ -72,12 +72,12 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             15000,
             () => {
                 // If this event fires too often, then we should look into one of the options:
-                // 1. If it happens because it takes client too long to catch up, then we should consider why
+                // 1. It happens because it takes client too long to catch up, then we should consider why
                 //    and how to address it. It blocks collab window moving forward. One reason might be -
                 //    we raised "connected" event to runtime right away on establishing "read" connection, allowing
                 //    it to send op and switch to "write" mode too early. We should consider waiting with delivery
                 //    of initial "connected" signal until client is mostly caught (see waitContainerToCatchUp())
-                // 2. It's possible that client does not receiving any ops at all on this connection, either due
+                // 2. It's possible that client does not receive any ops at all on this connection, either due
                 //    to client bug or server bug. We should instrument more to understand this problem better.
                 // Adding telemetry on how far client is behind (from last known seq number) at the time of
                 // connection/failure and how many ops it received on given connection would help here.

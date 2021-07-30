@@ -399,6 +399,7 @@ export class DeltaManager
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
         if (oldValue !== this.readonly) {
+            let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
@@ -410,10 +411,10 @@ export class DeltaManager
                     this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
                 }
 
-                this.disconnectFromDeltaStream("Force readonly");
+                reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
-            if (this.reconnectMode === ReconnectMode.Enabled) {
+            if (reconnect) {
                 // reconnect if we disconnected from before.
                 this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
             }
@@ -421,10 +422,9 @@ export class DeltaManager
     }
 
     public triggerReconnect(reason: string) {
+            assert(this.connection !== undefined, "called only in connected state")
             this.disconnectFromDeltaStream(reason);
-            if (this.reconnectMode === ReconnectMode.Enabled) {
-                this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
-            }
+            this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
     }
 
     private set_readonlyPermissions(readonly: boolean) {
@@ -562,6 +562,10 @@ export class DeltaManager
      * @param args - The connection arguments
      */
     private triggerConnect(args: IConnectionArgs) {
+        assert(this.connection === undefined, "called only in disconnected state")
+        if (this.reconnectMode !== ReconnectMode.Enabled) {
+            return;
+        }
         this.connectCore(args).catch((err) => {
             // Errors are raised as "error" event and close container.
             // Have a catch-all case in case we missed something
@@ -1178,6 +1182,8 @@ export class DeltaManager
 
         connection.close();
         this.connectionStateProps = {};
+
+        return true;
     }
 
     /**
