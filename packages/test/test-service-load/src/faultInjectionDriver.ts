@@ -128,7 +128,14 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
      */
     dispose(): void {
         this._disposed = true;
-        this.internal.close();
+        const disposable = this.internal as Partial<IDisposable>;
+        if (disposable.dispose !== undefined)
+        {
+            disposable.dispose();
+        } else {
+            // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+            this.internal.close();
+        }
     }
 
     // back-compat: became @deprecated in 0.45 / driver-definitions 0.40

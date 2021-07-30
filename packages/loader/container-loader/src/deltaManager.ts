@@ -1031,7 +1031,7 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
-        const disposable = connection as any as Partial<IDisposable>;
+        const disposable = connection as Partial<IDisposable>;
         if (disposable.disposed === true) {
             this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
             // Note: not checking this.reconnectMode mode here as nobody ever observed this connection, so
@@ -1187,7 +1187,7 @@ export class DeltaManager
         this.emit("disconnect", reason);
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.dispose()) in some future.
-        const disposable = connection as any as Partial<IDisposable>;
+        const disposable = connection as Partial<IDisposable>;
 
         if (disposable.dispose !== undefined) {
             disposable.dispose();

@@ -222,7 +222,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * Disconnects the given delta connection
      * @deprecated in 0.45, please use dispose()
      */
-     close(): void;
+    close(): void;
 }
 
 export enum LoaderCachingPolicy {
