@@ -405,14 +405,22 @@ describe("normalizeError", () => {
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: true });
         const untrustedInputs: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
-            "Fluid Error minus errorType (with stack)": () => ({
+            "Fluid Error minus errorType": () => ({
                 input: sampleFluidError().withoutProperty("errorType"),
                 expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
             }),
 //          "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
-            "Fluid Error minus message (with stack)": () => ({
+            "Fluid Error minus message": () => ({
                 input: sampleFluidError().withoutProperty("message"),
                 expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
+            }),
+            "Fluid Error minus getTelemetryProperties": () => ({
+                input: sampleFluidError().withoutProperty("getTelemetryProperties"),
+                expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+            }),
+            "Fluid Error minus addTelemetryProperties": () => ({
+                input: sampleFluidError().withoutProperty("addTelemetryProperties"),
+                expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
             }),
             "Fluid Error minus errorType (no stack)": () => ({
                 input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
