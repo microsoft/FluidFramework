@@ -69,10 +69,10 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         );
 
         this.joinOpTimer = new Timer(
-            15000,
+            30000,
             () => {
-                // If this event fires too often, then we should look into one of the options:
-                // 1. It happens because it takes client too long to catch up, then we should consider why
+                // If this event fires too often, then we should look into potential reasons why:
+                // 1. It may happen because it takes client too long to catch up, then we should consider why
                 //    and how to address it. It blocks collab window moving forward. One reason might be -
                 //    we raised "connected" event to runtime right away on establishing "read" connection, allowing
                 //    it to send op and switch to "write" mode too early. We should consider waiting with delivery
