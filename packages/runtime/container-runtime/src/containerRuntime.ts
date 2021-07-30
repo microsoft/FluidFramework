@@ -535,7 +535,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing?: boolean,
     ): Promise<ContainerRuntime> {
         // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-        const passLogger = context.taggedLogger ? context.taggedLogger : new TaggedLoggerAdapter(context.logger);
+        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
         const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
