@@ -6,7 +6,7 @@
  * Basic implementation of part of the PropertyFactory needed to run test on validation.
  */
 
-import { TemplateValidator } from "../templateValidator";
+import TemplateValidator from "../templateValidator";
 import { TypeIdHelper } from "../helpers/typeidHelper";
 
 const SchemaValidator = function(in_params) {

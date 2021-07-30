@@ -15,7 +15,7 @@
     var MSG = require('@fluid-experimental/property-common').constants.MSG;
     var semver = require('semver');
     var SchemaValidator = require('../schemaValidator');
-    var { TemplateValidator } = require('../../templateValidator');
+    var TemplateValidator= require('../../templateValidator');
 
     var performValidation = function(async, template, templatePrevious, skipSemver, asyncErrorMessage) {
         var schemaValidator = new SchemaValidator();

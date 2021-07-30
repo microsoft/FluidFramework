@@ -1121,4 +1121,4 @@ TemplateValidator.prototype._validateAsyncWithPreviousSchema = async function(in
     });
 };
 
-module.exports = { TemplateValidator };
+module.exports = TemplateValidator;
