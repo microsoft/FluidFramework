@@ -17,6 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
+    triggerReconnect: (reason: string) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -35,6 +36,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
+    private readonly joinOpTimer: Timer;
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -65,11 +67,31 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 this.applyForConnectedState("timeout");
             },
         );
+
+        this.joinOpTimer = new Timer(
+            15000,
+            () => {
+                // If this event fires too often, then we should look into one of the options:
+                // 1. If it happens because it takes client too long to catch up, then we should consider why
+                //    and how to add address it. It blocks collab window moving forward. One reason might be -
+                //    we raised "connected" event to runtime right away on "read" connection allowing it to send op
+                //    and switch to "write" too early, maybe we should wait with initial signal until client is
+                //    mostly caught (see waitContainerToCatchUp())
+                // 2. It's possible that client does not receiving any ops at all on this connection, either due
+                //    to client bug or server bug. We should instrument more, by adding number of ops delivered
+                //    on this connection (excluding initial ops) up until this moment.
+                // So adding telemetry on how far client is behind (from last known seq number) and how many ops it
+                // received would help here.
+                this.logger.sendErrorEvent({ eventName: "NoJoinOp" });
+                this.handler.triggerReconnect("NoJoinOp");
+            },
+        );
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
+            this.joinOpTimer.clear();
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -84,12 +106,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
         const protocolHandler = this.handler.protocolHandler();
+        assert(protocolHandler !== undefined, "In all cases it should be already installed");
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
-            && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
@@ -117,6 +140,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedDisconnectEvent(reason: string) {
+        this.joinOpTimer.clear();
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
@@ -149,6 +173,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             || connectionMode === "read"
         ) {
             this.setConnectionState(ConnectionState.Connected);
+        } else if (connectionMode === "write") {
+            this.joinOpTimer.start();
         }
     }
 
