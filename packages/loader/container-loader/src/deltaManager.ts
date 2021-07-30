@@ -422,7 +422,7 @@ export class DeltaManager
     }
 
     public triggerReconnect(reason: string) {
-            assert(this.connection !== undefined, "called only in connected state")
+            assert(this.connection !== undefined, "called only in connected state");
             this.disconnectFromDeltaStream(reason);
             this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
     }
@@ -562,7 +562,7 @@ export class DeltaManager
      * @param args - The connection arguments
      */
     private triggerConnect(args: IConnectionArgs) {
-        assert(this.connection === undefined, "called only in disconnected state")
+        assert(this.connection === undefined, "called only in disconnected state");
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }
