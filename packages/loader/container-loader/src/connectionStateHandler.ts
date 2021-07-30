@@ -73,15 +73,14 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             () => {
                 // If this event fires too often, then we should look into one of the options:
                 // 1. If it happens because it takes client too long to catch up, then we should consider why
-                //    and how to add address it. It blocks collab window moving forward. One reason might be -
-                //    we raised "connected" event to runtime right away on "read" connection allowing it to send op
-                //    and switch to "write" too early, maybe we should wait with initial signal until client is
-                //    mostly caught (see waitContainerToCatchUp())
+                //    and how to address it. It blocks collab window moving forward. One reason might be -
+                //    we raised "connected" event to runtime right away on establishing "read" connection, allowing
+                //    it to send op and switch to "write" mode too early. We should consider waiting with delivery
+                //    of initial "connected" signal until client is mostly caught (see waitContainerToCatchUp())
                 // 2. It's possible that client does not receiving any ops at all on this connection, either due
-                //    to client bug or server bug. We should instrument more, by adding number of ops delivered
-                //    on this connection (excluding initial ops) up until this moment.
-                // So adding telemetry on how far client is behind (from last known seq number) and how many ops it
-                // received would help here.
+                //    to client bug or server bug. We should instrument more to understand this problem better.
+                // Adding telemetry on how far client is behind (from last known seq number) at the time of
+                // connection/failure and how many ops it received on given connection would help here.
                 this.logger.sendErrorEvent({ eventName: "NoJoinOp" });
                 this.handler.triggerReconnect("NoJoinOp");
             },
