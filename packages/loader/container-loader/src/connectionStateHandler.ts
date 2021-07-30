@@ -69,7 +69,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         );
 
         this.joinOpTimer = new Timer(
-            30000,
+            60000,
             () => {
                 // If this event fires too often, then we should look into potential reasons why:
                 // 1. It may happen because it takes client too long to catch up, then we should consider why
@@ -81,7 +81,12 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 //    to client bug or server bug. We should instrument more to understand this problem better.
                 // Adding telemetry on how far client is behind (from last known seq number) at the time of
                 // connection/failure and how many ops it received on given connection would help here.
-                this.logger.sendErrorEvent({ eventName: "NoJoinOp" });
+                this.logger.sendErrorEvent({
+                    eventName: "NoJoinOp",
+                    clientId: this.pendingClientId,
+                });
+
+                // Data suggests we hit it too often. Disabling "fixup" for now
                 this.handler.triggerReconnect("NoJoinOp");
             },
         );
