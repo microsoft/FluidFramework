@@ -208,6 +208,15 @@ describe("Error Logging", () => {
             assert.strictEqual(props.p2, "two");
             assert.strictEqual(props.p3, true);
         });
+        it("getTelemetryProperties respects omitPropsFromLogging", () => {
+            const loggingError = new LoggingError("myMessage", {}, new Set(["foo"]));
+            (loggingError as any).foo = "secrets!";
+            (loggingError as any).bar = "normal";
+            const props = loggingError.getTelemetryProperties();
+            assert.strictEqual(props.omitPropsFromLogging, undefined, "omitPropsFromLogging itself should be omitted");
+            assert.strictEqual(props.foo, undefined, "foo should have been omitted");
+            assert.strictEqual(props.bar, "normal", "bar should not be omitted");
+        });
         it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
             (loggingError as any).p1 = "should be overwritten";
@@ -249,7 +258,7 @@ describe("Error Logging", () => {
         });
         it("addTelemetryProperties - overwrites base class Error fields (untagged)", () => {
             const loggingError = new LoggingError("myMessage");
-            const overwritingProps = { message: "surprise1", stack: "surprise2", __isFluidLoggingError__: 2 };
+            const overwritingProps = { message: "surprise1", stack: "surprise2" };
             loggingError.addTelemetryProperties(overwritingProps);
             const props = loggingError.getTelemetryProperties();
             assert.deepStrictEqual(props, overwritingProps);
@@ -259,7 +268,6 @@ describe("Error Logging", () => {
             const expectedProps = {
                 message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
                 stack: { value: "surprise2", tag: "PackageData" },
-                __isFluidLoggingError__: 2,
             };
             overwritingProps.addTelemetryProperties(expectedProps);
             const props = overwritingProps.getTelemetryProperties();
