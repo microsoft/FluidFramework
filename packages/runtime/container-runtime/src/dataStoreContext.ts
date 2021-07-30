@@ -364,8 +364,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return this.channel?.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x142 /* "local store channel is not loaded" */);
-            this.pending?.push(message);
-            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending?.length);
+            assert(this.pending !== undefined, "pending is undefined");
+            this.pending.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }
     }
 
