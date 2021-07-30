@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
-import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, FluidErrorAnnotations, SimpleFluidError } from "../errorLogging";
+import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations } from "../errorLogging";
 import { IFluidErrorBase } from "../fluidErrorBase";
 
 describe("Error Logging", () => {
@@ -274,18 +274,95 @@ describe("Error Logging", () => {
         });
     });
 });
+
+class TestFluidError implements IFluidErrorBase {
+    readonly errorType: string;
+    readonly fluidErrorCode: string;
+    readonly message: string;
+    readonly stack?: string;
+    readonly name?: string;
+
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
+        this.errorType = errorProps.errorType;
+        this.fluidErrorCode = errorProps.fluidErrorCode;
+        this.message = errorProps.message;
+        this.stack = errorProps.stack;
+        this.name = errorProps.name;
+    }
+
+    getTelemetryProperties(): ITelemetryProperties {
+        throw new Error("Not Implemented");
+    }
+
+    addTelemetryProperties(props: ITelemetryProperties) {
+        throw new Error("Not Implemented");
+    }
+}
+
+const annotationCases: Record<string, IFluidErrorAnnotations> = {
+    noAnnotations: {},
+    justErrorCodeIfNone: { errorCodeIfNone: "foo" },
+    justProps: { props: { foo: "bar", one: 1, u: undefined, t: true } },
+    allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
+};
+
+describe.only("normalizeError", () => {
+    describe.only("Valid Errors (Legacy and Current)", () => {
+        for (const annotationCase of Object.keys(annotationCases)) {
+            const annotations = annotationCases[annotationCase];
+            it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
+                // Arrange
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                const legacyError = new TestFluidError({errorType: "et1", message: "m1" } as Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">);
+                const atpStub = sinon.stub(legacyError, "addTelemetryProperties");
+                const expectedErrorCode = annotations.errorCodeIfNone === undefined
+                    ? "<error predates fluidErrorCode>"
+                    : annotations.errorCodeIfNone;
+
+                // Act
+                const normalizedError = normalizeError(legacyError, annotations);
+
+                // Assert
+                assert.equal(normalizedError, legacyError, "normalize should yield the same error as passed in");
+                assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
+                assert.equal(normalizedError.fluidErrorCode, expectedErrorCode, "errorCode should be patched properly");
+                assert.equal(normalizedError.message, "m1", "message should be unchanged");
+                if (annotations.props !== undefined) {
+                    assert(atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
+                }
+            });
+            it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
+                // Arrange
+                const legacyError = new TestFluidError({errorType: "et1", fluidErrorCode: "ec1", message: "m1" });
+                const atpStub = sinon.stub(legacyError, "addTelemetryProperties");
+                // We don't expect legacyError to be modified itself at all
+                Object.freeze(legacyError);
+
+                // Act
+                const normalizedError = normalizeError(legacyError, annotations);
+
+                // Assert
+                assert(normalizedError === legacyError);
+                if (annotations.props !== undefined) {
+                    assert(atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
+                }
+            });
+        }
+    });
+});
+
 //* FIX TESTS AND REMOVE .SKIP
-describe.skip("Error Propagation", () => {
+describe.skip("Error Normalization", () => {
     class NamedError extends Error { name = "CoolErrorName"; }
     // These are cases where the input object can be patched to adhere to IFluidErrorBase
-    const patchableTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase }} = {
+    const objectTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase }} = {
         "Valid Fluid Error": () => ({
             input: {
                 errorType: "sometype",
                 fluidErrorCode: "somecode",
                 message: "Hello",
             },
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "sometype",
                 fluidErrorCode: "somecode",
                 message: "Hello",
@@ -297,7 +374,7 @@ describe.skip("Error Propagation", () => {
                 fluidErrorCode: "somecode",
                 message: "Hello",
             },
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "somecode",
                 message: "Hello",
@@ -309,7 +386,7 @@ describe.skip("Error Propagation", () => {
                 errorType: "sometype",
                 message: "Hello",
             },
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "sometype",
                 fluidErrorCode: "<none>",
                 message: "Hello",
@@ -318,7 +395,7 @@ describe.skip("Error Propagation", () => {
         }),
         "Error object": () => ({
             input: new NamedError("boom"),
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "none (CoolErrorName)",
                 fluidErrorCode: "<none>",
                 message: "boom",
@@ -328,7 +405,7 @@ describe.skip("Error Propagation", () => {
         }),
         "LoggingError": () => ({
             input: new LoggingError("boom"),
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "none (Error)",
                 fluidErrorCode: "<none>",
                 message: "boom",
@@ -338,7 +415,7 @@ describe.skip("Error Propagation", () => {
         }),
         "Empty object": () => ({
             input: {},
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
                 message: "",
@@ -347,7 +424,7 @@ describe.skip("Error Propagation", () => {
         }),
         "object with stack": () => ({
             input: { message: "whatever", stack: "fake stack goes here" },
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
                 message: "whatever",
@@ -356,7 +433,7 @@ describe.skip("Error Propagation", () => {
         }),
         "object with non-string message and name": () => ({
             input: { message: 4, name: true },
-            expectedOutput: new SimpleFluidError({
+            expectedOutput: new TestFluidError({
                 errorType: "none (object)",
                 fluidErrorCode: "<none>",
                 message: "4",
@@ -365,110 +442,85 @@ describe.skip("Error Propagation", () => {
             }),
         }),
     };
-    const frozenTestCases = {
-        "Frozen Fluid Error": () => ({
-            input: Object.freeze({
-                errorType: "sometype",
-                fluidErrorCode: "somecode",
-                message: "Hello",
-            }),
-        }),
-        "Frozen arbitrary object": () => ({
-            input: Object.freeze({
-                foo: "foo",
-                one: 1,
-                bool: true,
-            }),
-        }),
-    };
-    const nonObjectInputs = {
-        nullValue: null,
-        undef: undefined,
-        false: false,
-        true: true,
-        number: 3.14,
-        symbol: Symbol("Unique"),
-        function: () => {},
-        emptyArray: [],
-        array: [1,2,3],
-    };
-    const nonObjectTestCases = Object.keys(nonObjectInputs).reduce((cases, key, i) => {
-        const input = nonObjectInputs[key];
-        cases[key] = () => ({
-            input,
-            expectedOutput: {
-                errorType: `none (${typeof input})`,
-                fluidErrorCode: "<none>",
-                message: String(input),
-                name: "Error",
-            },
-        });
-        return cases;
-    }, {});
-    const annotationCases: Record<string, FluidErrorAnnotations> = {
-        noAnnotations: {},
-        justErrorCodeIfNone: { errorCodeIfNone: "foo" },
-        justProps: { props: { foo: "bar", one: 1, u: undefined, t: true } },
-        allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
-    };
+    // const nonObjectInputs = {
+    //     nullValue: null,
+    //     undef: undefined,
+    //     false: false,
+    //     true: true,
+    //     number: 3.14,
+    //     symbol: Symbol("Unique"),
+    //     function: () => {},
+    //     emptyArray: [],
+    //     array: [1,2,3],
+    // };
+    // const allNonNormalTestCases = Object.keys(nonObjectInputs).reduce((cases, key, i) => {
+    //     const input = nonObjectInputs[key];
+    //     cases[key] = () => ({
+    //         input,
+    //         expectedOutput: {
+    //             errorType: "genericError",
+    //             fluidErrorCode: "<none>",
+    //             message: String(input),
+    //             name: undefined,
+    //         },
+    //     });
+    //     return cases;
+    // }, {});
 
-    let mixinStub: sinon.SinonStub;
-    function assertMatching(
-        actual: IFluidErrorBase,
-        expected: IFluidErrorBase,
-        annotations: FluidErrorAnnotations = {},
-    ) {
-        const expectedErrorCode =
-            expected.fluidErrorCode === "<none>"
-            ? annotations.errorCodeIfNone === undefined
-                ? "none"
-                : `none (${annotations.errorCodeIfNone})`
-            : expected.fluidErrorCode;
-        assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
-        assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
-        assert.strictEqual(actual.message, expected.message, "message should match");
-        assert.strictEqual(actual.name, expected.name, "name should match");
-        assert.strictEqual(typeof actual.stack, "string", "stack should be present as a string");
-        assert.equal(expected.stack === "<<generated stack>>", (actual.stack?.indexOf("<<generated stack>>") ?? -1) >= 0);
-        assert(mixinStub.calledWith(actual, { ...annotations.props, errorType: expected.errorType, fluidErrorCode: expectedErrorCode }),
-            "mixinTelemetryProps should have been called as expected");
-    }
-    describe("normalizeError", () => {
-        function runTests(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
-            for (const testCase of Object.keys(testCases)) {
-                for (const annotationCase of Object.keys(annotationCases)) {
-                    it(`${description}: ${testCase} (${annotationCase})`, () => {
-                        // Arrange
-                        const { input, expectedOutput } = testCases[testCase]();
-                        const annotations = annotationCases[annotationCase];
+    // function assertMatching(
+    //     actual: IFluidErrorBase,
+    //     expected: IFluidErrorBase,
+    //     annotations: IFluidErrorAnnotations = {},
+    // ) {
+    //     const expectedErrorCode =
+    //         expected.fluidErrorCode === "<none>"
+    //         ? annotations.errorCodeIfNone === undefined
+    //             ? "none"
+    //             : `none (${annotations.errorCodeIfNone})`
+    //         : expected.fluidErrorCode;
+    //     assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
+    //     assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
+    //     assert.strictEqual(actual.message, expected.message, "message should match");
+    //     assert.strictEqual(actual.name, expected.name, "name should match");
+    //     assert.strictEqual(typeof actual.stack, "string", "stack should be present as a string");
+    //     assert.equal(expected.stack === "<<generated stack>>", (actual.stack?.indexOf("<<generated stack>>") ?? -1) >= 0);
+    // }
+    // describe("normalizeError", () => {
+    //     function runTests(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
+    //         for (const testCase of Object.keys(testCases)) {
+    //             for (const annotationCase of Object.keys(annotationCases)) {
+    //                 it(`${description}: ${testCase} (${annotationCase})`, () => {
+    //                     // Arrange
+    //                     const { input, expectedOutput } = testCases[testCase]();
+    //                     const annotations = annotationCases[annotationCase];
 
-                        // Act
-                        const normalizedOutput = normalizeError(input, annotations);
+    //                     // Act
+    //                     const normalizedOutput = normalizeError(input, annotations);
 
-                        // Assert
-                        assertMatching(normalizedOutput, expectedOutput, annotations);
-                        assert.equal(normalizedOutput === input, expectPatching, "Didn't match expectation of whether to patch input to yield normalized output");
-                    });
-                }
-            }
-        }
+    //                     // Assert
+    //                     assertMatching(normalizedOutput, expectedOutput, annotations);
+    //                     assert.equal(normalizedOutput === input, expectPatching, "Didn't match expectation of whether to patch input to yield normalized output");
+    //                 });
+    //             }
+    //         }
+    //     }
 
-        runTests("patchable", patchableTestCases, true /* expectPatching */);
-        runTests("non-object", nonObjectTestCases, false /* expectPatching */);
+    //     runTests("patchable", objectTestCases, true /* expectPatching */);
+    //     runTests("non-object", nonObjectTestCases, false /* expectPatching */);
 
-        for (const testCase of Object.keys(frozenTestCases)) {
-            it(`${testCase} (frozen)`, () => {
-                const { input } = frozenTestCases[testCase]();
-                assert.throws(() => { normalizeError(input); }, /Cannot normalize a frozen error object/);
-            });
-        }
-    });
+    //     for (const testCase of Object.keys(frozenTestCases)) {
+    //         it(`${testCase} (frozen)`, () => {
+    //             const { input } = frozenTestCases[testCase]();
+    //             assert.throws(() => { normalizeError(input); }, /Cannot normalize a frozen error object/);
+    //         });
+    //     }
+    // });
     describe("addTelemetryProps", () => {
         const props = annotationCases.justProps.props!;
-        for (const testCase of Object.keys(patchableTestCases)) {
+        for (const testCase of Object.keys(objectTestCases)) {
             it(`${testCase} (patchable)`, () => {
                 // Arrange
-                const { input } = patchableTestCases[testCase]();
+                const { input } = objectTestCases[testCase]();
 
                 // Act
                 //* Revisit this

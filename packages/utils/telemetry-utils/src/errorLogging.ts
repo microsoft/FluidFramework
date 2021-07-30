@@ -54,13 +54,16 @@ export function extractLogSafeErrorProperties(error: any) {
     return safeProps;
 }
 
+/** type guard for ILoggingError interface */
+export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
+
 /** Copy props from source onto target, overwriting any keys that are already set on target */
 function copyProps(target: unknown, source: ITelemetryProperties) {
     Object.assign(target, source);
 }
 
 /** Metadata to annotate an error object when annotating or normalizing it */
-export interface FluidErrorAnnotations {
+export interface IFluidErrorAnnotations {
     /** Telemetry props to log with the error */
     props?: ITelemetryProperties;
     /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
@@ -68,7 +71,7 @@ export interface FluidErrorAnnotations {
 }
 
 /** Simplest possible implementation of IFluidErrorBase */
-export class SimpleFluidError implements IFluidErrorBase {
+class SimpleFluidError implements IFluidErrorBase {
     private readonly telemetryProps: ITelemetryProperties = {};
 
     readonly errorType: string;
@@ -120,7 +123,7 @@ function patchWithErrorCode(
  */
 export function normalizeError(
     error: unknown,
-    annotations: FluidErrorAnnotations = {},
+    annotations: IFluidErrorAnnotations = {},
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
@@ -162,9 +165,6 @@ export function generateStack(): string | undefined {
     }
     return stack;
 }
-
-/** type guard for ILoggingError interface */
-export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /**
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
