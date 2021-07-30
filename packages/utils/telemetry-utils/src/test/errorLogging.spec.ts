@@ -496,10 +496,10 @@ describe("normalizeError", () => {
             }),
         };
         function assertMatching(
+            original: any,
             actual: IFluidErrorBase,
             expected: TestFluidError,
             annotations: IFluidErrorAnnotations = {},
-            inputStack: string,
         ) {
             const expectedErrorCode =
                 expected.fluidErrorCode === "<none>"
@@ -509,11 +509,13 @@ describe("normalizeError", () => {
                     : expected.fluidErrorCode;
             expected.withExpectedTelemetryProps({ ...annotations.props, fluidErrorCode: expectedErrorCode });
 
+            assert.strictEqual((actual as any).originalUntrustedError, original, "original error should be stashed on the result");
             assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
             assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
             assert.strictEqual(actual.message, expected.message, "message should match");
             assert.strictEqual(actual.name, expected.name, "name should match");
 
+            const inputStack: string = original?.stack;
             const actualStack = actual.stack;
             assert(actualStack !== undefined, "stack should be present as a string");
             if (actualStack.indexOf("<<generated stack>>") >= 0) {
@@ -540,7 +542,7 @@ describe("normalizeError", () => {
 
                     // Assert
                     assert.notEqual(input, normalized, "input should have yielded a new error object");
-                    assertMatching(normalized, expectedOutput, annotations, input?.stack);
+                    assertMatching(input, normalized, expectedOutput, annotations);
 
                     // Bonus
                     normalized.addTelemetryProperties({foo: "bar"});

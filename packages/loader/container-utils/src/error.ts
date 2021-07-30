@@ -16,6 +16,7 @@ import {
     LoggingError,
     IWriteableLoggingError,
     isValidLegacyError,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -130,30 +131,8 @@ export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
  * @param props - Properties to include on the error for logging - They will override props on originalError
  */
 export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError {
-    const newErrorFn =
-        (errMsg: string) => {
-            // Don't pass in props here, we want to add them last (see below)
-            const newError = new GenericError(errMsg, originalError);
-
-            const { errorType } = extractLogSafeErrorProperties(originalError, false /* sanitizeStack */);
-            if (errorType !== undefined) {
-                // Clobber errorType (which is declared readonly) with the value off the original error
-                Object.assign(newError, { errorType });
-            }
-
-            // By clobbering newError.errorType, we can no longer properly call it a GenericError.
-            // It's still a LoggingError, and does have errorType so it's also IErrorBase
-            return newError as LoggingError & IErrorBase;
-        };
-
-    const error = isValidLegacyError(originalError)
-        ? originalError
-        : wrapError(originalError, newErrorFn);
-
-    if (props !== undefined) {
-        error.addTelemetryProperties(props);
-    }
-    return error;
+    const normalized = normalizeError(originalError, { props });
+    return normalized;
 }
 
 /**
