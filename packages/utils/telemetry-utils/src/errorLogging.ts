@@ -8,6 +8,11 @@ import {
     ITaggedTelemetryPropertyType,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import {
+    IFluidErrorBase,
+    isFluidError,
+    isValidLegacyError,
+} from "./fluidErrorBase";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
@@ -15,8 +20,11 @@ const isRegularObject = (value: any): boolean => {
 };
 
 /** Inspect the given error for common "safe" props and return them */
-export function extractLogSafeErrorProperties(error: any) {
+export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
     const removeMessageFromStack = (stack: string, errorName?: string) => {
+        if (!sanitizeStack) {
+            return stack;
+        }
         const stackFrames = stack.split("\n");
         stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
         if (errorName !== undefined) {
@@ -49,56 +57,131 @@ export function extractLogSafeErrorProperties(error: any) {
     return safeProps;
 }
 
-/** Type guard for ILoggingError */
+/** type guard for ILoggingError interface */
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
-
-/**
- * Read-Write Logging Error.  Not exported.
- * This type alias includes addTelemetryProperties, and applies to objects even if not instanceof LoggingError\
- */
-type RwLoggingError = LoggingError;
-
-/** Type guard for RwLoggingError.  Not exported. */
-const isRwLoggingError = (x: any): x is RwLoggingError =>
-    typeof x?.addTelemetryProperties === "function" && isILoggingError(x);
-
-/**
- * Annotate the given error object with the given logging props
- * @returns The same error object passed in if possible, with telemetry props functionality mixed in
- */
-export function annotateError(
-    error: unknown,
-    props: ITelemetryProperties,
-): ILoggingError {
-    if (isRwLoggingError(error)) {
-        error.addTelemetryProperties(props);
-        return error;
-    }
-
-    if (isRegularObject(error)) {
-        // Even though it's not exposed, fully implement IRwLoggingError for subsequent calls to annotateError
-        const loggingError = error as RwLoggingError;
-
-        const propsForError = {...props};
-        loggingError.getTelemetryProperties = () => propsForError;
-        loggingError.addTelemetryProperties =
-            (newProps: ITelemetryProperties) => { copyProps(propsForError, newProps); };
-        return loggingError;
-    }
-
-    const message = String(error);
-    return new LoggingError(message, props);
-}
 
 /** Copy props from source onto target, overwriting any keys that are already set on target */
 function copyProps(target: unknown, source: ITelemetryProperties) {
     Object.assign(target, source);
 }
 
+/** Metadata to annotate an error object when annotating or normalizing it */
+export interface IFluidErrorAnnotations {
+    /** Telemetry props to log with the error */
+    props?: ITelemetryProperties;
+    /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
+    errorCodeIfNone?: string;
+}
+
+/** Simplest possible implementation of IFluidErrorBase */
+class SimpleFluidError implements IFluidErrorBase {
+    private readonly telemetryProps: ITelemetryProperties = {};
+
+    readonly errorType: string;
+    readonly fluidErrorCode: string;
+    readonly message: string;
+    readonly stack?: string;
+    readonly name?: string;
+
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
+        this.errorType = errorProps.errorType;
+        this.fluidErrorCode = errorProps.fluidErrorCode;
+        this.message = errorProps.message;
+        this.stack = errorProps.stack;
+        this.name = errorProps.name;
+    }
+
+    getTelemetryProperties(): ITelemetryProperties {
+        const props: ITelemetryProperties = {
+            ...this.telemetryProps,
+            errorType: this.errorType,
+            fluidErrorCode: this.fluidErrorCode,
+            message: this.message,
+        };
+        if (this.name !== undefined) {
+            props.name = this.name;
+        }
+        if (this.stack !== undefined) {
+            props.stack = this.stack;
+        }
+        return props;
+    }
+
+    addTelemetryProperties(props: ITelemetryProperties) {
+        copyProps(this.telemetryProps, props);
+    }
+}
+
+/** For backwards compatibility with pre-fluidErrorCode valid errors */
+function patchWithErrorCode(
+    legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
+    errorCode: string = "<error predates fluidErrorCode>",
+): asserts legacyError is IFluidErrorBase {
+    const patchMe: { fluidErrorCode?: string } = legacyError as any;
+    if (patchMe.fluidErrorCode === undefined) {
+        patchMe.fluidErrorCode = errorCode;
+    }
+}
+
+/**
+ * Normalize the given error yielding a valid Fluid Error
+ * @returns A valid Fluid Error with any provided annotations applied
+ * @param error - The error to normalize
+ * @param annotations - Annotations to apply to the normalized error
+ */
+export function normalizeError(
+    error: unknown,
+    annotations: IFluidErrorAnnotations = {},
+): IFluidErrorBase {
+    // Back-compat, while IFluidErrorBase is rolled out
+    if (isValidLegacyError(error)) {
+        patchWithErrorCode(error, annotations.errorCodeIfNone);
+    }
+
+    if (isFluidError(error)) {
+        // We can simply add the telemetry props to the error and return it
+        error.addTelemetryProperties(annotations.props ?? {});
+        return error;
+    }
+
+    // We have to construct a new Fluid Error, copying safe properties over
+    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+    const fluidError: IFluidErrorBase = new SimpleFluidError({
+        errorType: "genericError", // Match Container/Driver generic error type
+        fluidErrorCode: annotations.errorCodeIfNone ?? "none",
+        message,
+        stack: stack ?? generateStack(),
+    });
+
+    fluidError.addTelemetryProperties({
+        ...annotations.props,
+        untrustedOrigin: true, // This will let us filter to errors not originated by our own code
+    });
+
+    if (typeof(error) !== "object") {
+        // This is only interesting for non-objects
+        fluidError.addTelemetryProperties({ typeofError: typeof(error) });
+    }
+    return fluidError;
+}
+
+export function generateStack(): string | undefined {
+    // Some browsers will populate stack right away, others require throwing Error
+    let stack = new Error("<<generated stack>>").stack;
+    if (!stack) {
+        try {
+            throw new Error("<<generated stack>>");
+        } catch (e) {
+            stack = e.stack;
+        }
+    }
+    return stack;
+}
+
 /**
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
- export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
+export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
     return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
 }
 

@@ -124,7 +124,7 @@ describe("OdspErrorUtils", () => {
 
     describe("enrichError", () => {
         it("enriched with online flag", () => {
-            const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
+            const error = new GenericNetworkError("Some message", false) as GenericNetworkError & OdspError;
             enrichOdspError(error);
 
             assert(typeof error.online === "string");
@@ -132,7 +132,7 @@ describe("OdspErrorUtils", () => {
             assert(typeof error.getTelemetryProperties().online === "string");
         });
         it("enriched with facetCodes", () => {
-            const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
+            const error = new GenericNetworkError("Some message", false) as GenericNetworkError & IFacetCodes;
             enrichOdspError(error, undefined /* response */, '{ "error": { "code": "foo" } }' /* responseText */);
 
             assert.deepStrictEqual(error.facetCodes, ["foo"]);
@@ -148,7 +148,7 @@ describe("OdspErrorUtils", () => {
                     return `mock header ${id}`;
                 },
             };
-            const error = new GenericNetworkError("Some message", false) as OdspError & IFacetCodes;
+            const error = new GenericNetworkError("Some message", false);
             enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "responseText");
 
             assert.equal((error as any).response, "responseText");
