@@ -9,9 +9,9 @@ import ChangeSet from "./changeset";
 import Utils from "./utils";
 import PathHelper from "./pathHelper";
 import ArrayChangeSetIterator from "./changeset_operations/arrayChangesetIterator";
-import { rebaseToRemoteChanges } from "./rebase";
+import rebaseToRemoteChanges  from "./rebase";
 
-export default {
+module.exports = {
     TemplateSchema,
     TemplateValidator,
     TypeIdHelper,

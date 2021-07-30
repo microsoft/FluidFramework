@@ -182,6 +182,4 @@ function rebaseChangeArrays(baseChangeSet, changesToRebase) {
     }
 }
 
-export default {
-    rebaseToRemoteChanges,
-};
+module.exports = rebaseToRemoteChanges;
