@@ -276,6 +276,8 @@ describe("Error Logging", () => {
 });
 
 class TestFluidError implements IFluidErrorBase {
+    readonly atpStub: sinon.SinonStub;
+
     readonly errorType: string;
     readonly fluidErrorCode: string;
     readonly message: string;
@@ -288,6 +290,8 @@ class TestFluidError implements IFluidErrorBase {
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
+
+        this.atpStub = sinon.stub(this, "addTelemetryProperties");
     }
 
     getTelemetryProperties(): ITelemetryProperties {
@@ -319,9 +323,9 @@ describe.only("normalizeError", () => {
             const annotations = annotationCases[annotationCase];
             it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
                 // Arrange
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                const legacyError = new TestFluidError({errorType: "et1", message: "m1" } as Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">);
-                const atpStub = sinon.stub(legacyError, "addTelemetryProperties");
+                const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> =
+                    {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
+                const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
                 const expectedErrorCode = annotations.errorCodeIfNone === undefined
                     ? "<error predates fluidErrorCode>"
                     : annotations.errorCodeIfNone;
@@ -335,27 +339,39 @@ describe.only("normalizeError", () => {
                 assert.equal(normalizedError.fluidErrorCode, expectedErrorCode, "errorCode should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
                 if (annotations.props !== undefined) {
-                    assert(atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
+                    assert(legacyError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
                 }
             });
             it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
                 // Arrange
-                const legacyError = new TestFluidError({errorType: "et1", fluidErrorCode: "ec1", message: "m1" });
-                const atpStub = sinon.stub(legacyError, "addTelemetryProperties");
+                const fluidError = new TestFluidError({errorType: "et1", fluidErrorCode: "ec1", message: "m1" });
                 // We don't expect legacyError to be modified itself at all
-                Object.freeze(legacyError);
+                Object.freeze(fluidError);
 
                 // Act
-                const normalizedError = normalizeError(legacyError, annotations);
+                const normalizedError = normalizeError(fluidError, annotations);
 
                 // Assert
-                assert(normalizedError === legacyError);
+                assert(normalizedError === fluidError);
                 if (annotations.props !== undefined) {
-                    assert(atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
+                    assert(fluidError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
                 }
             });
         }
-    });
+        it("Valid Fluid Error - stack not added if missing", () => {
+            // Arrange
+            const fluidError = new TestFluidError({errorType: "et1", fluidErrorCode: "ec1", message: "m1" }).withoutProperty("stack");
+            // We don't expect legacyError to be modified itself at all
+            Object.freeze(fluidError);
+
+            // Act
+            const normalizedError = normalizeError(fluidError, {});
+
+            // Assert
+            assert(normalizedError === fluidError);
+            assert(normalizedError.stack === undefined);
+        });
+});
     describe.only("Errors Needing Normalization", () => {
 
     });
