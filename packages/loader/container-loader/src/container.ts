@@ -321,8 +321,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     0x1e1 /* "pending state requires immidiate connection!" */);
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
-                const onClosed = (err?: ICriticalContainerError) => {
-                    rej(err ?? CreateContainerError("Container closed without an error"));
+                const onClosed = (err?: ICriticalContainerError, reason?: string) => {
+                    rej(err ?? CreateContainerError(reason ?? "Container closed without error & reason"));
                 };
                 container.on("closed", onClosed);
 
@@ -340,7 +340,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         // and continuously retrying (consider offline mode)
                         // Host has no container to close, so it's prudent to do it here
                         container.close(error);
-                        onClosed(err);
+                        onClosed(err, "ContainerLoadException");
                     });
             }),
             { start: true, end: true, cancel: "generic" },
@@ -717,7 +717,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this.protocolHandler.quorum;
     }
 
-    public close(error?: ICriticalContainerError) {
+    public close(error?: ICriticalContainerError, reason?: string) {
         if (this._closed) {
             return;
         }
@@ -726,7 +726,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Ensure that we raise all key events even if one of these throws
         try {
             this.collabWindowTracker.stopSequenceNumberUpdate();
-            this._deltaManager.close(error);
+            this._deltaManager.close(reason ?? "ContainerClose", error);
 
             this._protocolHandler?.close();
 
@@ -749,11 +749,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 eventName: "ContainerClose",
                 loaded: this.loaded,
+                reason,
             },
             error,
         );
 
-        this.emit("closed", error);
+        this.emit("closed", error, reason);
 
         this.removeAllListeners();
     }
@@ -1594,8 +1595,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("readonly", readonly);
         });
 
-        deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            this.close(error);
+        deltaManager.on("closed", (reason: string, error?: ICriticalContainerError) => {
+            this.close(error, reason);
         });
 
         return deltaManager;

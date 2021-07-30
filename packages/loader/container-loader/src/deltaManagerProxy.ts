@@ -152,6 +152,8 @@ export class DeltaManagerProxy
         super.dispose();
     }
 
+    // @deprecated in 0.45.
+    // IContainerRuntime.closeFn() should be used to initiate container termination.
     public close(): void {
         return this.deltaManager.close();
     }

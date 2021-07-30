@@ -82,7 +82,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get clientDetails(): IClientDetails;
     get clientId(): string | undefined;
     // (undocumented)
-    close(error?: ICriticalContainerError): void;
+    close(error?: ICriticalContainerError, reason?: string): void;
     // (undocumented)
     closeAndGetPendingLocalState(): string;
     // (undocumented)
@@ -152,7 +152,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     attachOpHandler(minSequenceNumber: number, sequenceNumber: number, term: number, handler: IDeltaHandlerStrategy): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    close(error?: ICriticalContainerError): void;
+    close(reason?: string, error?: ICriticalContainerError): void;
     // (undocumented)
     connect(args: IConnectionArgs): Promise<IConnectionDetails>;
     get connectionMode(): ConnectionMode;
@@ -257,7 +257,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     // (undocumented)
     (event: "throttled", listener: (error: IThrottlingWarning) => void): any;
     // (undocumented)
-    (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "closed", listener: (reason: string, error?: ICriticalContainerError) => void): any;
 }
 
 // @public

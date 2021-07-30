@@ -196,7 +196,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "disconnected" | "attached", listener: () => void): any;
     // (undocumented)
-    (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
+    (event: "closed", listener: (reason: string, error?: ICriticalContainerError) => void): any;
     // (undocumented)
     (event: "warning", listener: (error: ContainerWarning) => void): any;
     // (undocumented)

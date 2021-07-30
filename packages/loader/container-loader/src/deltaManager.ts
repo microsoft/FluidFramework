@@ -97,7 +97,7 @@ export enum ReconnectMode {
  */
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
     (event: "throttled", listener: (error: IThrottlingWarning) => void);
-    (event: "closed", listener: (error?: ICriticalContainerError) => void);
+    (event: "closed", listener: (reason: string, error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -462,7 +462,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, this.lastMessage));
+            this.close("SocketError", CreateProcessingError(error, this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -476,7 +476,7 @@ export class DeltaManager
             });
 
         this._outbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close("OutboundError", CreateContainerError(error));
         });
 
         // Inbound signal queue
@@ -491,7 +491,7 @@ export class DeltaManager
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close("InboundSignalError", CreateContainerError(error));
         });
 
         // Initially, all queues are created paused.
@@ -664,7 +664,7 @@ export class DeltaManager
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
                         const error = CreateContainerError(origError);
-                        this.close(error);
+                        this.close("NonRetryableConnectionError", error);
                         // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
                     }
@@ -761,7 +761,7 @@ export class DeltaManager
                 readonlyPermissions: this.readOnlyInfo.permissions,
                 storageOnly: this.readOnlyInfo.storageOnly,
             });
-            this.close(error);
+            this.close("SubmitOpReadonlyConnection", error);
             return -1;
         }
 
@@ -912,7 +912,9 @@ export class DeltaManager
     /**
      * Closes the connection and clears inbound & outbound queues.
      */
-    public close(error?: ICriticalContainerError): void {
+    // back-compat: IDeltaManage.close() has been deprecated in 0.45.
+    // @param reason should eventually become required once definitions are updated and deprecation is completed.
+    public close(reason?: string, error?: ICriticalContainerError): void {
         if (this.closed) {
             return;
         }
@@ -943,7 +945,7 @@ export class DeltaManager
         // This needs to be the last thing we do (before removing listeners), as it causes
         // Container to dispose context and break ability of data stores / runtime to "hear"
         // from delta manager, including notification (above) about readonly state.
-        this.emit("closed", error);
+        this.emit("closed", error, reason ?? "ReasonNotProvided");
 
         this.removeAllListeners();
     }
@@ -988,7 +990,7 @@ export class DeltaManager
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.close(createWriteError("WriteOnReadOnlyDocument"));
+            this.close("WriteOnReadOnlyDocument", createWriteError("WriteOnReadOnlyDocument"));
         }
 
         // check message.content for Back-compat with old service.
@@ -1241,7 +1243,11 @@ export class DeltaManager
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
             // are very misleading, as first initial reaction - some logic is broken.
-            this.close(canRetry ? undefined : error);
+            if (canRetry) {
+                this.close("ReconnectMode.Never", undefined);
+            } else {
+                this.close("NonRetryableSocketError", error);
+            }
         }
 
         // If closed then we can't reconnect
@@ -1383,7 +1389,7 @@ export class DeltaManager
                                 message2,
                             },
                         );
-                        this.close(error);
+                        this.close("FileChanged", error);
                     }
                 }
             } else if (message.sequenceNumber !== this.lastQueuedSequenceNumber + 1) {
@@ -1540,8 +1546,9 @@ export class DeltaManager
                 },
                 cacheOnly);
         } catch (error) {
-            this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
-            this.close(CreateContainerError(error));
+            const eventName = "GetDeltas_Exception";
+            this.logger.sendErrorEvent({ eventName }, error);
+            this.close(eventName, CreateContainerError(eventName, error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetchReason = undefined;
