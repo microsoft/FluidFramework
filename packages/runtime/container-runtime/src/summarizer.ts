@@ -24,14 +24,13 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
-    SubmitSummaryResult,
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
-    OnDemandSummarizeResult,
+    SubmitSummaryResult,
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
@@ -272,15 +271,19 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return result;
     }
 
-    public summarizeOnDemand(
-        reason: string,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
-    ): OnDemandSummarizeResult {
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
             throw Error("Summarizer is not running or already disposed.");
         }
-        return this.runningSummarizer.summarizeOnDemand(reason, options);
-    }
+        return this.runningSummarizer.summarizeOnDemand(...args);
+    };
+
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
+            throw Error("Summarizer is not running or already disposed.");
+        }
+        return this.runningSummarizer.enqueueSummarize(...args);
+    };
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;

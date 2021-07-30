@@ -60,7 +60,12 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    LoggingError,
+    TelemetryDataTag,
+    ThresholdCounter,
+} from "@fluidframework/telemetry-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -198,6 +203,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly subLogger: ITelemetryLogger;
+    private readonly thresholdOpsCounter: ThresholdCounter;
+    private static readonly pendingOpsCountThreshold = 300;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -236,6 +244,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getInitialGCSummaryDetails(),
         );
+
+        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
     }
 
     public dispose(): void {
@@ -354,6 +365,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } else {
             assert(!local, 0x142 /* "local store channel is not loaded" */);
             this.pending?.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending?.length);
         }
     }
 
@@ -557,13 +569,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
 
-            if (pending.length > 0) {
-                // Apply all pending ops
-                for (const op of pending) {
-                    channel.process(op, false, undefined /* localOpMetadata */);
-                }
+            // Apply all pending ops
+            for (const op of pending) {
+                channel.process(op, false, undefined /* localOpMetadata */);
             }
 
+            this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
             this.pending = undefined;
 
             // And now mark the runtime active

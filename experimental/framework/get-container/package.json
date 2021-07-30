@@ -26,14 +26,14 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.39.7",
+    "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/container-loader": "^0.45.0",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/driver-definitions": "^0.39.6",
     "@fluidframework/local-driver": "^0.45.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/routerlicious-driver": "^0.45.0",
-    "@fluidframework/server-local-server": "^0.1027.0",
+    "@fluidframework/server-local-server": "^0.1028.0-0",
     "@fluidframework/test-runtime-utils": "^0.45.0",
     "@fluidframework/tinylicious-driver": "^0.45.0",
     "jsonwebtoken": "^8.4.0"
