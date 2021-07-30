@@ -404,7 +404,7 @@ describe("normalizeError", () => {
             message,
             stack: stackHint,
         }).withExpectedTelemetryProps({ untrustedOrigin: true });
-        const nonNormalTestCases: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
+        const untrustedInputs: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
             "Fluid Error minus errorType (with stack)": () => ({
                 input: sampleFluidError().withoutProperty("errorType"),
                 expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
@@ -513,8 +513,8 @@ describe("normalizeError", () => {
         }
         for (const annotationCase of Object.keys(annotationCases)) {
             const annotations = annotationCases[annotationCase];
-            for (const caseName of Object.keys(nonNormalTestCases)) {
-                const getTestCase = nonNormalTestCases[caseName];
+            for (const caseName of Object.keys(untrustedInputs)) {
+                const getTestCase = untrustedInputs[caseName];
                 it(`Normalize untrusted error: ${caseName} (${annotationCase})`, () => {
                     // Arrange
                     const { input, expectedOutput } = getTestCase();
