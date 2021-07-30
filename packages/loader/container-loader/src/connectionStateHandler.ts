@@ -87,7 +87,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 });
 
                 // Data suggests we hit it too often. Disabling "fixup" for now
-                this.handler.triggerReconnect("NoJoinOp");
+                // this.handler.triggerReconnect("NoJoinOp");
             },
         );
     }
