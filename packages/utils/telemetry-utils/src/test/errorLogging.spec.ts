@@ -509,7 +509,6 @@ describe("normalizeError", () => {
                     : expected.fluidErrorCode;
             expected.withExpectedTelemetryProps({ ...annotations.props, fluidErrorCode: expectedErrorCode });
 
-            assert.strictEqual((actual as any).originalUntrustedError, original, "original error should be stashed on the result");
             assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
             assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
             assert.strictEqual(actual.message, expected.message, "message should match");

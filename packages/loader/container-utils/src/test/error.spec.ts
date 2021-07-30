@@ -20,7 +20,6 @@ describe("Errors", () => {
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(testError !== originalError);
             assert((testError as any).hello === undefined);
-            assert((testError as any).originalUntrustedError === originalError);
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo === "bar");
         });
@@ -30,7 +29,6 @@ describe("Errors", () => {
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(testError.message === "womp womp");
-            assert((testError as any).originalUntrustedError === originalError);
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo === "bar");
             assert(testError.getTelemetryProperties().message === "womp womp");
@@ -70,7 +68,6 @@ describe("Errors", () => {
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().foo !== "bar");
             assert(testError as any !== loggingError);
-            assert((testError as any).originalUntrustedError === loggingError);
         });
         it("Should preserve telemetry props and existing errorType, and return same object", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string };

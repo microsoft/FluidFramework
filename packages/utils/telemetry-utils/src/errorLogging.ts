@@ -73,8 +73,8 @@ export interface IFluidErrorAnnotations {
     errorCodeIfNone?: string;
 }
 
-/** Simple implementation of IFluidErrorBase for normalizing an untrusted error */
-class NormalizedUntrustedError implements IFluidErrorBase {
+/** Simplest possible implementation of IFluidErrorBase */
+class SimpleFluidError implements IFluidErrorBase {
     private readonly telemetryProps: ITelemetryProperties = {};
 
     readonly errorType: string;
@@ -84,17 +84,8 @@ class NormalizedUntrustedError implements IFluidErrorBase {
     readonly name?: string;
 
     constructor(
-        private readonly originalUntrustedError: unknown,
-        errorCodeIfNone: string | undefined,
+        errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">,
     ) {
-        const { message, stack } = extractLogSafeErrorProperties(originalUntrustedError, false /* sanitizeStack */);
-
-        const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> = {
-            errorType: "genericError", // Match Container/Driver generic error type
-            fluidErrorCode: errorCodeIfNone ?? "none",
-            message,
-            stack: stack ?? generateStack(),
-        };
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
@@ -108,17 +99,12 @@ class NormalizedUntrustedError implements IFluidErrorBase {
             errorType: this.errorType,
             fluidErrorCode: this.fluidErrorCode,
             message: this.message,
-            untrustedOrigin: true, // This will let us filter to errors not originated by our own code
         };
         if (this.name !== undefined) {
             props.name = this.name;
         }
         if (this.stack !== undefined) {
             props.stack = this.stack;
-        }
-        if (typeof(this.originalUntrustedError) !== "object") {
-            // Log the typeof the original error (only interesting for non-objects)
-            props.typeofError = typeof(this.originalUntrustedError);
         }
         return props;
     }
@@ -160,11 +146,25 @@ export function normalizeError(
         return error;
     }
 
-    // We have to construct a new Fluid Error
-    const fluidError: IFluidErrorBase = new NormalizedUntrustedError(error, annotations.errorCodeIfNone);
-    if (annotations.props !== undefined) {
-        fluidError.addTelemetryProperties(annotations.props);
+    // We have to construct a new Fluid Error, copying safe properties over
+    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+    const fluidError: IFluidErrorBase = new SimpleFluidError({
+            errorType: "genericError", // Match Container/Driver generic error type
+            fluidErrorCode: annotations.errorCodeIfNone ?? "none",
+            message,
+            stack: stack ?? generateStack(),
+        },
+    );
+
+    fluidError.addTelemetryProperties({
+        ...annotations.props,
+        untrustedOrigin: true, // This will let us filter to errors not originated by our own code
+    });
+    // Log the typeof the original error (only interesting for non-objects)
+    if (typeof(error) !== "object") {
+        fluidError.addTelemetryProperties({typeofError: typeof(error)});
     }
+
     return fluidError;
 }
 
