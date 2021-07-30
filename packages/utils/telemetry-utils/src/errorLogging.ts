@@ -20,8 +20,11 @@ const isRegularObject = (value: any): boolean => {
 };
 
 /** Inspect the given error for common "safe" props and return them */
-export function extractLogSafeErrorProperties(error: any) {
+export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
     const removeMessageFromStack = (stack: string, errorName?: string) => {
+        if (!sanitizeStack) {
+            return stack;
+        }
         const stackFrames = stack.split("\n");
         stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
         if (errorName !== undefined) {
@@ -89,14 +92,19 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 
     getTelemetryProperties(): ITelemetryProperties {
-        return {
+        const props: ITelemetryProperties = {
             ...this.telemetryProps,
             errorType: this.errorType,
             fluidErrorCode: this.fluidErrorCode,
             message: this.message,
-            stack: this.stack,
-            name: this.name,
         };
+        if (this.name !== undefined) {
+            props.name = this.name;
+        }
+        if (this.stack !== undefined) {
+            props.stack = this.stack;
+        }
+        return props;
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
@@ -137,7 +145,7 @@ export function normalizeError(
     }
 
     // We have to construct a new fluid error, copying safe properties over
-    const { message, stack } = extractLogSafeErrorProperties(error);
+    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
@@ -148,8 +156,12 @@ export function normalizeError(
     fluidError.addTelemetryProperties({
         ...annotations.props,
         untrustedOrigin: true, // This will let us filter to errors not originated by our own code
-        typeofError: typeof(error) === "object" ? undefined : typeof(error), // Only interesting for non-objects
     });
+
+    if (typeof(error) !== "object") {
+        // This is only interesting for non-objects
+        fluidError.addTelemetryProperties({ typeofError: typeof(error) });
+    }
     return fluidError;
 }
 

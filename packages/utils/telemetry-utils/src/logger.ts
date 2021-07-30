@@ -74,7 +74,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        const { message, errorType, stack} = extractLogSafeErrorProperties(error);
+        const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
         event.error = message; // Note that the error message goes on the 'error' field
