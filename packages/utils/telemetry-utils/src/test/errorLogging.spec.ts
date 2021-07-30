@@ -324,8 +324,8 @@ const annotationCases: Record<string, IFluidErrorAnnotations> = {
     allAnnotations: { props: { foo: "bar", one: 1, u: undefined }, errorCodeIfNone: "foo" },
 };
 
-describe.only("normalizeError", () => {
-    describe.skip("Valid Errors (Legacy and Current)", () => {
+describe("normalizeError", () => {
+    describe("Valid Errors (Legacy and Current)", () => {
         for (const annotationCase of Object.keys(annotationCases)) {
             const annotations = annotationCases[annotationCase];
             it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
@@ -378,192 +378,159 @@ describe.only("normalizeError", () => {
             assert(normalizedError === fluidError);
             assert(normalizedError.stack === undefined);
         });
-});
-    describe.only("Errors Needing Normalization", () => {
-
-    });
-});
-
-describe.only("Error Normalization", () => {
-    class NamedError extends Error { name = "CoolErrorName"; }
-    const sampleFluidError = () => new TestFluidError({
-        errorType: "someType",
-        fluidErrorCode: "someCode",
-        message: "Hello",
-        stack: "cool stack trace",
-        name: "someName!!!",
-    });
-    const typicalOutput = (message: string, stackHint: "<<generated stack>>" | "<<stack from input>>") => new TestFluidError({
-        errorType: "genericError",
-        fluidErrorCode: "<none>",
-        message,
-        stack: stackHint,
-    }).withExpectedTelemetryProps({ untrustedOrigin: true });
-    // These are cases where the input object can be patched to adhere to IFluidErrorBase
-    const objectTestCases: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
-        "Fluid Error minus errorType (with stack)": () => ({
-            input: sampleFluidError().withoutProperty("errorType"),
-            expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
-        }),
-        // "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
-        "Fluid Error minus message (with stack)": () => ({
-            input: sampleFluidError().withoutProperty("message"),
-            expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
-        }),
-        "Fluid Error minus errorType (no stack)": () => ({
-            input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
-            expectedOutput: typicalOutput("Hello", "<<generated stack>>"),
-        }),
-        // "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
-        "Fluid Error minus message (no stack)": () => ({
-            input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
-            expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
-        }),
-        "Error object": () => ({
-            input: new NamedError("boom"),
-            expectedOutput: typicalOutput("boom", "<<stack from input>>"),
-        }),
-        "LoggingError": () => ({
-            input: new LoggingError("boom"),
-            expectedOutput: typicalOutput("boom", "<<stack from input>>"),
-        }),
-        "Empty object": () => ({
-            input: {},
-            expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
-        }),
-        "object with stack": () => ({
-            input: { message: "whatever", stack: "fake stack goes here" },
-            expectedOutput: typicalOutput("whatever", "<<stack from input>>"),
-        }),
-        "object with non-string message and name": () => ({
-            input: { message: 42, name: true },
-            expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
-        }),
-    };
-    function assertMatching(
-        actual: IFluidErrorBase,
-        expected: TestFluidError,
-        annotations: IFluidErrorAnnotations = {},
-        inputStack: string,
-    ) {
-        const expectedErrorCode =
-            expected.fluidErrorCode === "<none>"
-                ? annotations.errorCodeIfNone === undefined
-                    ? "none"
-                    : annotations.errorCodeIfNone
-                : expected.fluidErrorCode;
-        expected.withExpectedTelemetryProps({ fluidErrorCode: expectedErrorCode });
-
-        assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
-        assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
-        assert.strictEqual(actual.message, expected.message, "message should match");
-        assert.strictEqual(actual.name, expected.name, "name should match");
-
-        const actualStack = actual.stack;
-        assert(actualStack !== undefined, "stack should be present as a string");
-        if (actualStack.indexOf("<<generated stack>>") >= 0) {
-            assert.equal(expected.stack, "<<generated stack>>", "<<generated stack>> hint should be used if generated");
-            Object.assign(actual, { stack: "<<generated stack>>" }); // for telemetry props to match below
-        } else {
-            assert.equal(actualStack, inputStack, "If stack wasn't generated, it should match input stack");
-            assert.equal(expected.stack, "<<stack from input>>", "<<stack from input>> hint should be used if not generated");
-            Object.assign(actual, { stack: "<<stack from input>>" }); // for telemetry props to match below
-        }
-
-        assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
-    }
-    for (const caseName of Object.keys(objectTestCases)) {
-        const getTestCase = objectTestCases[caseName];
-        it.only(`HELLO ${caseName}`, () => {
+        it("Frozen legacy error - Throws", () => {
             // Arrange
-            const { input, expectedOutput } = getTestCase();
+            const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> =
+                {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
+            const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
+            Object.freeze(legacyError);
 
-            // Act
-            const normalized = normalizeError(input);
-
-            // Assert
-            assert.notEqual(input, normalized, "input should have yielded a new error object");
-            assertMatching(normalized, expectedOutput, {}, input.stack);
+            // Act/Assert
+            assert.throws(() => normalizeError(legacyError, {}), /Cannot assign to read only property/);
         });
-    }
-    // const nonObjectInputs = {
-    //     nullValue: null,
-    //     undef: undefined,
-    //     false: false,
-    //     true: true,
-    //     number: 3.14,
-    //     symbol: Symbol("Unique"),
-    //     function: () => {},
-    //     emptyArray: [],
-    //     array: [1,2,3],
-    // };
-    // const allNonNormalTestCases = Object.keys(nonObjectInputs).reduce((cases, key, i) => {
-    //     const input = nonObjectInputs[key];
-    //     cases[key] = () => ({
-    //         input,
-    //         expectedOutput: {
-    //             errorType: "genericError",
-    //             fluidErrorCode: "<none>",
-    //             message: String(input),
-    //             name: undefined,
-    //         },
-    //     });
-    //     return cases;
-    // }, {});
+    });
+    describe("Errors Needing Normalization", () => {
+        class NamedError extends Error { name = "CoolErrorName"; }
+        const sampleFluidError = () => new TestFluidError({
+            errorType: "someType",
+            fluidErrorCode: "someCode",
+            message: "Hello",
+            stack: "cool stack trace",
+            name: "someName!!!",
+        });
+        const typicalOutput = (message: string, stackHint: "<<generated stack>>" | "<<stack from input>>") => new TestFluidError({
+            errorType: "genericError",
+            fluidErrorCode: "<none>",
+            message,
+            stack: stackHint,
+        }).withExpectedTelemetryProps({ untrustedOrigin: true });
+        const nonNormalTestCases: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
+            "Fluid Error minus errorType (with stack)": () => ({
+                input: sampleFluidError().withoutProperty("errorType"),
+                expectedOutput: typicalOutput("Hello", "<<stack from input>>"),
+            }),
+//          "Fluid Error minus fluidErrorCode": This is a Valid Legacy Error, tested elsewhere in this file
+            "Fluid Error minus message (with stack)": () => ({
+                input: sampleFluidError().withoutProperty("message"),
+                expectedOutput: typicalOutput("[object Object]", "<<stack from input>>"),
+            }),
+            "Fluid Error minus errorType (no stack)": () => ({
+                input: sampleFluidError().withoutProperty("errorType").withoutProperty("stack"),
+                expectedOutput: typicalOutput("Hello", "<<generated stack>>"),
+            }),
+            "Fluid Error minus message (no stack)": () => ({
+                input: sampleFluidError().withoutProperty("message").withoutProperty("stack"),
+                expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
+            }),
+            "Error object": () => ({
+                input: new NamedError("boom"),
+                expectedOutput: typicalOutput("boom", "<<stack from input>>"),
+            }),
+            "LoggingError": () => ({
+                input: new LoggingError("boom"),
+                expectedOutput: typicalOutput("boom", "<<stack from input>>"),
+            }),
+            "Empty object": () => ({
+                input: {},
+                expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
+            }),
+            "object with stack": () => ({
+                input: { message: "whatever", stack: "fake stack goes here" },
+                expectedOutput: typicalOutput("whatever", "<<stack from input>>"),
+            }),
+            "object with non-string message and name": () => ({
+                input: { message: 42, name: true },
+                expectedOutput: typicalOutput("[object Object]", "<<generated stack>>"),
+            }),
+            "nullValue": () => ({
+                input: null,
+                expectedOutput: typicalOutput("null", "<<generated stack>>"),
+            }),
+            "undef": () => ({
+                input: undefined,
+                expectedOutput: typicalOutput("undefined", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "undefined" }),
+            }),
+            "false": () => ({
+                input: false,
+                expectedOutput: typicalOutput("false", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "boolean" }),
+            }),
+            "true": () => ({
+                input: true,
+                expectedOutput: typicalOutput("true", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "boolean" }),
+            }),
+            "number": () => ({
+                input: 3.14,
+                expectedOutput: typicalOutput("3.14", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "number" }),
+            }),
+            "symbol": () => ({
+                input: Symbol("Unique"),
+                expectedOutput: typicalOutput("Symbol(Unique)", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "symbol" }),
+            }),
+            "function": () => ({
+                input: () => {},
+                expectedOutput: typicalOutput("() => { }", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "function" }),
+            }),
+            "emptyArray": () => ({
+                input: [],
+                expectedOutput: typicalOutput("", "<<generated stack>>"),
+            }),
+            "array": () => ({
+                input: [1,2,3],
+                expectedOutput: typicalOutput("1,2,3", "<<generated stack>>"),
+            }),
+        };
+        function assertMatching(
+            actual: IFluidErrorBase,
+            expected: TestFluidError,
+            annotations: IFluidErrorAnnotations = {},
+            inputStack: string,
+        ) {
+            const expectedErrorCode =
+                expected.fluidErrorCode === "<none>"
+                    ? annotations.errorCodeIfNone === undefined
+                        ? "none"
+                        : annotations.errorCodeIfNone
+                    : expected.fluidErrorCode;
+            expected.withExpectedTelemetryProps({ ...annotations.props, fluidErrorCode: expectedErrorCode });
 
-    // describe("normalizeError", () => {
-    //     function runTests(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
-    //         for (const testCase of Object.keys(testCases)) {
-    //             for (const annotationCase of Object.keys(annotationCases)) {
-    //                 it(`${description}: ${testCase} (${annotationCase})`, () => {
-    //                     // Arrange
-    //                     const { input, expectedOutput } = testCases[testCase]();
-    //                     const annotations = annotationCases[annotationCase];
+            assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
+            assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
+            assert.strictEqual(actual.message, expected.message, "message should match");
+            assert.strictEqual(actual.name, expected.name, "name should match");
 
-    //                     // Act
-    //                     const normalizedOutput = normalizeError(input, annotations);
+            const actualStack = actual.stack;
+            assert(actualStack !== undefined, "stack should be present as a string");
+            if (actualStack.indexOf("<<generated stack>>") >= 0) {
+                assert.equal(expected.stack, "<<generated stack>>", "<<generated stack>> hint should be used if generated");
+                Object.assign(actual, { stack: "<<generated stack>>" }); // for telemetry props to match below
+            } else {
+                assert.equal(actualStack, inputStack, "If stack wasn't generated, it should match input stack");
+                assert.equal(expected.stack, "<<stack from input>>", "<<stack from input>> hint should be used if not generated");
+                Object.assign(actual, { stack: "<<stack from input>>" }); // for telemetry props to match below
+            }
 
-    //                     // Assert
-    //                     assertMatching(normalizedOutput, expectedOutput, annotations);
-    //                     assert.equal(normalizedOutput === input, expectPatching, "Didn't match expectation of whether to patch input to yield normalized output");
-    //                 });
-    //             }
-    //         }
-    //     }
+            assert.deepStrictEqual(actual.getTelemetryProperties(), expected.expectedTelemetryProps, "telemetry props should match");
+        }
+        for (const annotationCase of Object.keys(annotationCases)) {
+            const annotations = annotationCases[annotationCase];
+            for (const caseName of Object.keys(nonNormalTestCases)) {
+                const getTestCase = nonNormalTestCases[caseName];
+                it(`Normalize untrusted error: ${caseName} (${annotationCase})`, () => {
+                    // Arrange
+                    const { input, expectedOutput } = getTestCase();
 
-    //     runTests("patchable", objectTestCases, true /* expectPatching */);
-    //     runTests("non-object", nonObjectTestCases, false /* expectPatching */);
+                    // Act
+                    const normalized = normalizeError(input, annotations);
 
-    //     for (const testCase of Object.keys(frozenTestCases)) {
-    //         it(`${testCase} (frozen)`, () => {
-    //             const { input } = frozenTestCases[testCase]();
-    //             assert.throws(() => { normalizeError(input); }, /Cannot normalize a frozen error object/);
-    //         });
-    //     }
-    // });
-    describe("addTelemetryProps", () => {
-        const props = annotationCases.justProps.props!;
-        for (const testCase of Object.keys(objectTestCases)) {
-            it(`${testCase} (patchable)`, () => {
-                // Arrange
-                const { input } = objectTestCases[testCase]();
+                    // Assert
+                    assert.notEqual(input, normalized, "input should have yielded a new error object");
+                    assertMatching(normalized, expectedOutput, annotations, input?.stack);
 
-                // Act
-                //* Revisit this
-                normalizeError(input).addTelemetryProperties(props);
-
-                // Assert
-                Object.keys(props).forEach((key) => {
-                    assert(input.getTelemetryProperties()[key] === props[key], "props should have been added");
+                    // Bonus
+                    normalized.addTelemetryProperties({foo: "bar"});
+                    assert.equal(normalized.getTelemetryProperties().foo, "bar", "can add telemetry props after normalization");
                 });
-
-                // Bonus: Confirm that RwLoggingError functions got mixed in (or were already present)
-                assert(typeof input.addTelemetryProperties === "function");
-                input.addTelemetryProperties({ p2: 2 });
-                assert(input.getTelemetryProperties().p2 === 2);
-                input.addTelemetryProperties({ p1: "one" });
-                assert(input.getTelemetryProperties().p1 === "one", "addTelemetryProperties should overwrite");
-            });
+            }
         }
     });
 });
