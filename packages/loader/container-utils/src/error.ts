@@ -15,8 +15,8 @@ import {
     extractLogSafeErrorProperties,
     LoggingError,
     IWriteableLoggingError,
-    isValidLegacyError,
     normalizeError,
+    IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -78,39 +78,6 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
     }
 }
 
-export class DataProcessingError extends LoggingError implements IErrorBase {
-    readonly errorType = ContainerErrorType.dataProcessingError;
-    readonly canRetry = false;
-
-    constructor(errorMessage: string, props?: ITelemetryProperties) {
-        super(errorMessage, props);
-    }
-
-    /**
-     * Conditionally coerce the throwable input into a DataProcessingError.
-     * @param originalError - Throwable input to be converted.
-     * @param message - Sequenced message (op) to include info about via telemetry props
-     * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
-     */
-    static wrapIfUnrecognized(
-        originalError: any,
-        message: ISequencedDocumentMessage | undefined,
-    ): ICriticalContainerError {
-        const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
-
-        // Don't coerce if already has an errorType, to distinguish unknown errors from
-        // errors that we raised which we already can interpret apart from this classification
-        const error = isValidLegacyError(originalError)
-            ? originalError
-            : wrapError(originalError, newErrorFn);
-
-        if (message !== undefined) {
-            error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
-        }
-        return error;
-    }
-}
-
 export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMessage) => ({
         messageClientId: message.clientId,
         messageSequenceNumber: message.sequenceNumber,
@@ -121,9 +88,30 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
     });
 
 /**
- * Conditionally coerce the throwable input into a DataProcessingError.
+ * Normalize the throwable input into a Fluid Error annotated as a DataProcessingError.
+ * @param originalError - Potentially untrusted error to be converted/annotated.
+ * @param message - Sequenced message (op) to include info about via telemetry props
+ * @returns An error annotated as dataProcessingError in a variety of ways to support telemetry analysis
  */
-export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
+export function CreateProcessingError(
+    originalError: unknown,
+    message: ISequencedDocumentMessage | undefined,
+): IFluidErrorBase {
+    const error = normalizeError(
+        originalError,
+        { errorCodeIfNone: "dataProcessingError", props: { dataProcessingError: 1 } },
+    );
+
+    // Temp back-compat for Telemetry systems expecting the errorType to be dataProcessingError
+    if (error.errorType === "genericError") {
+        Object.assign(error, { errorType: ContainerErrorType.dataProcessingError });
+    }
+
+    if (message !== undefined) {
+        error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
+    }
+    return error;
+}
 
 /**
  * Convert the error into one of the error types.

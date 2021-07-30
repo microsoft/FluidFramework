@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateContainerError, CreateProcessingError, DataProcessingError, GenericError } from "../error";
+import { CreateContainerError, CreateProcessingError, GenericError } from "../error";
 
 describe("Errors", () => {
     describe("GenericError coercion via CreateContainerError", () => {
@@ -114,7 +114,6 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any !== originalError);
-            assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.message === "[object Object]");
         });
@@ -126,10 +125,9 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any !== originalError);
-            assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property");
+            assert(coercedError.getTelemetryProperties().otherProperty !== "Considered PII-free property", "telemetry props not copied - this case is unexpected/unsupported");
         });
 
         it("Should not fail coercing malformed inputs", () => {
