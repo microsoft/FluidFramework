@@ -2,11 +2,14 @@
   "openapi": "3.0.0",
   "info": {
     "version": "1.0.0",
-    "title": "Echo API"
+    "title": "FRS API"
   },
   "paths": {
     "/api/tenants/{id}": {
       "get": {
+        "tags": [
+          "echo"
+        ],
         "summary": "Gets a single tenant with given id.",
         "parameters": [
           {
@@ -26,10 +29,40 @@
             "description": "Error."
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "echo"
+        ],
+        "summary": "Deletes a tenant.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "400": {
+            "description": "Error."
+          },
+          "500": {
+            "description": "FRS Admin email not provided by AAD under 'preferred_username'. Retry or contact frsdev@microsoft.com for assistance."
+          }
+        }
       }
     },
-    "/tenants": {
+    "/api/tenants": {
       "get": {
+        "tags": [
+          "echo"
+        ],
         "summary": "Gets list of all tenants, or all tenants owned by provided tenantAdminContact query param.",
         "responses": {
           "200": {
@@ -41,8 +74,11 @@
         }
       }
     },
-    "/tenants/{id}/key": {
+    "/api/tenants/{id}/key": {
       "get": {
+        "tags": [
+          "echo"
+        ],
         "summary": "Gets the key for a tenant. This is a privileged action.",
         "parameters": [
           {
@@ -64,6 +100,9 @@
         }
       },
       "put": {
+        "tags": [
+          "echo"
+        ],
         "summary": "Refresh a tenant's key. This is a privileged action.",
         "parameters": [
           {
@@ -88,8 +127,11 @@
         }
       }
     },
-    "/tenants/{id}/tenantAdminContact": {
+    "/api/tenants/{id}/tenantAdminContact": {
       "put": {
+        "tags": [
+          "echo"
+        ],
         "summary": "Updates a tenant's admin contact.",
         "parameters": [
           {
@@ -114,35 +156,12 @@
         }
       }
     },
-    "/tenants/{id}/externalStorage": {
+    "/api/tenants/{id}/externalStorage": {
       "put": {
-        "summary": "Updates external storage information associated with the tenant.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+        "tags": [
+          "echo"
         ],
-        "responses": {
-          "200": {
-            "description": "Success."
-          },
-          "400": {
-            "description": "Error."
-          },
-          "500": {
-            "description": "FRS Admin email not provided by AAD under 'preferred_username'. Retry or contact frsdev@microsoft.com for assistance."
-          }
-        }
-      }
-    },
-    "/tenants/{id}": {
-      "delete": {
-        "summary": "Deletes a tenant.",
+        "summary": "Updates external storage information associated with the tenant.",
         "parameters": [
           {
             "in": "path",
