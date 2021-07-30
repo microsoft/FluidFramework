@@ -297,6 +297,13 @@ class TestFluidError implements IFluidErrorBase {
     addTelemetryProperties(props: ITelemetryProperties) {
         throw new Error("Not Implemented");
     }
+
+    withoutProperty(propName: keyof IFluidErrorBase) {
+        const objectWithoutProp = {};
+        objectWithoutProp[propName] = undefined;
+        Object.assign(this, objectWithoutProp);
+        return this;
+    }
 }
 
 const annotationCases: Record<string, IFluidErrorAnnotations> = {
@@ -349,49 +356,49 @@ describe.only("normalizeError", () => {
             });
         }
     });
+    describe.only("Errors Needing Normalization", () => {
+
+    });
 });
 
 //* FIX TESTS AND REMOVE .SKIP
-describe.skip("Error Normalization", () => {
+describe.only("Error Normalization", () => {
     class NamedError extends Error { name = "CoolErrorName"; }
+    let atpStub: sinon.SinonStub;
+    const sampleFluidError = () => {
+        const error = new TestFluidError({
+            errorType: "someType",
+            fluidErrorCode: "someCode",
+            message: "Hello",
+            name: "someName",
+            stack: "cool stack trace",
+        });
+        atpStub = sinon.stub(error, "addTelemetryProperties");
+        return error;
+    };
+    const typicalOutput = (message: string, stackGenerated: boolean) => new TestFluidError({
+        errorType: "genericError",
+        fluidErrorCode: "<none>",
+        message,
+        stack: stackGenerated ? "<<generated stack>>" : "<<>>",
+    });
     // These are cases where the input object can be patched to adhere to IFluidErrorBase
     const objectTestCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase }} = {
-        "Valid Fluid Error": () => ({
-            input: {
-                errorType: "sometype",
-                fluidErrorCode: "somecode",
-                message: "Hello",
-            },
-            expectedOutput: new TestFluidError({
-                errorType: "sometype",
-                fluidErrorCode: "somecode",
-                message: "Hello",
-                stack: "<<generated stack>>",
-            }),
-        }),
         "Fluid Error minus errorType": () => ({
-            input: {
-                fluidErrorCode: "somecode",
-                message: "Hello",
-            },
-            expectedOutput: new TestFluidError({
-                errorType: "none (object)",
-                fluidErrorCode: "somecode",
-                message: "Hello",
-                stack: "<<generated stack>>",
-            }),
+            input: sampleFluidError().withoutProperty("errorType"),
+            expectedOutput: typicalOutput("Hello", false),
         }),
         "Fluid Error minus fluidErrorCode": () => ({
-            input: {
-                errorType: "sometype",
-                message: "Hello",
-            },
-            expectedOutput: new TestFluidError({
-                errorType: "sometype",
-                fluidErrorCode: "<none>",
-                message: "Hello",
-                stack: "<<generated stack>>",
-            }),
+            input: sampleFluidError().withoutProperty("fluidErrorCode"),
+            expectedOutput: typicalOutput("Hello", false),
+        }),
+        "Fluid Error minus message": () => ({
+            input: sampleFluidError().withoutProperty("message"),
+            expectedOutput: typicalOutput("[object Object]", false),
+        }),
+        "Fluid Error minus stack": () => ({
+            input: sampleFluidError().withoutProperty("stack"),
+            expectedOutput: typicalOutput("Hello", true),
         }),
         "Error object": () => ({
             input: new NamedError("boom"),
@@ -442,6 +449,39 @@ describe.skip("Error Normalization", () => {
             }),
         }),
     };
+    function assertMatching(
+        actual: IFluidErrorBase,
+        expected: IFluidErrorBase,
+        annotations: IFluidErrorAnnotations = {},
+    ) {
+        const expectedErrorCode =
+            expected.fluidErrorCode === "<none>"
+                ? annotations.errorCodeIfNone === undefined
+                    ? "none"
+                    : annotations.errorCodeIfNone
+                : expected.fluidErrorCode;
+        assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
+        assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
+        assert.strictEqual(actual.message, expected.message, "message should match");
+        assert.strictEqual(actual.name, expected.name, "name should match");
+        assert.strictEqual(typeof actual.stack, "string", "stack should be present as a string");
+        assert.equal(expected.stack === "<<generated stack>>", (actual.stack?.indexOf("<<generated stack>>") ?? -1) >= 0, "Should have correctly predicted whether stack was generated");
+        assert(atpStub.called, "addTelemetryProperties should have been called");
+    }
+    for (const caseName of Object.keys(objectTestCases)) {
+        const getTestCase = objectTestCases[caseName];
+        it.only(`HELLO ${caseName}`, () => {
+            // Arrange
+            const { input, expectedOutput } = getTestCase();
+
+            // Act
+            const normalized = normalizeError(input);
+
+            // Assert
+            assert.notEqual(input, normalized, "input should have yielded a new error object");
+            assertMatching(normalized, expectedOutput, {});
+        });
+    }
     // const nonObjectInputs = {
     //     nullValue: null,
     //     undef: undefined,
@@ -467,24 +507,6 @@ describe.skip("Error Normalization", () => {
     //     return cases;
     // }, {});
 
-    // function assertMatching(
-    //     actual: IFluidErrorBase,
-    //     expected: IFluidErrorBase,
-    //     annotations: IFluidErrorAnnotations = {},
-    // ) {
-    //     const expectedErrorCode =
-    //         expected.fluidErrorCode === "<none>"
-    //         ? annotations.errorCodeIfNone === undefined
-    //             ? "none"
-    //             : `none (${annotations.errorCodeIfNone})`
-    //         : expected.fluidErrorCode;
-    //     assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
-    //     assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
-    //     assert.strictEqual(actual.message, expected.message, "message should match");
-    //     assert.strictEqual(actual.name, expected.name, "name should match");
-    //     assert.strictEqual(typeof actual.stack, "string", "stack should be present as a string");
-    //     assert.equal(expected.stack === "<<generated stack>>", (actual.stack?.indexOf("<<generated stack>>") ?? -1) >= 0);
-    // }
     // describe("normalizeError", () => {
     //     function runTests(description: string, testCases: { [label: string]: () => { input: any, expectedOutput: IFluidErrorBase } }, expectPatching: boolean) {
     //         for (const testCase of Object.keys(testCases)) {
