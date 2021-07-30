@@ -124,8 +124,6 @@ export class ReplayFileDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayMaxMessageSize,
             mode,
-            // Back-compat, removal tracked with issue #4346
-            parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: 16 * 1024,

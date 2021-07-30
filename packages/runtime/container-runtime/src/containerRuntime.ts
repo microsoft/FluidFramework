@@ -2175,7 +2175,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return this.summaryManager.summarizeOnDemand(...args);
         } else {
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
-            // generateSummaries is turned off.
+            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // because it is a misuse of the API rather than an expected failure.
+            throw new Error(
+                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+            );
+        }
+    };
+
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        if (this.clientDetails.type === summarizerClientType) {
+            return this.summarizer.enqueueSummarize(...args);
+        } else if (this.summaryManager !== undefined) {
+            return this.summaryManager.enqueueSummarize(...args);
+        } else {
+            // If we're not the summarizer, and we don't have a summaryManager, we expect that
+            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // because it is a misuse of the API rather than an expected failure.
             throw new Error(
                 `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
             );

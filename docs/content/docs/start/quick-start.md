@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-menuPosition: 2
+menuPosition: 1
 codeCopyButton: true
 aliases:
   - "/docs/get-started/quick-start/"
@@ -68,8 +68,8 @@ To run against the Azure Fluid Relay service, you'll make a code change to ```ap
 local in-memory service called Tinylicious, which runs on port 7070 by default.
 
 To use an Azure Fluid Relay instance instead, replace the configuration values with your Azure Fluid Relay tenant ID,
-orderer, and storage URLs that were provided as part of the FRS onboarding process. Then pass that configuration object
-into the `FrsClient` constructor:
+orderer, and storage URLs that were provided as part of the onboarding process. Then pass that configuration object into
+the `FrsClient` constructor:
 
 ```typescript
 // This configures the FrsClient to use a remote Azure Fluid Service instance.
@@ -87,14 +87,14 @@ const client = new FrsClient(config);
 ### TokenProvider
 
 The Azure Fluid Relay onboarding process provides you with a secret key for your tenant. You can use
-InsecureTokenProvider to generate and sign auth tokens such that the FRS service will accept it. **To ensure that the
-secret doesn't get exposed, this should be replaced with another implementation of ITokenProvider that fetches the token
-from a secure, developer-provided backend service prior to releasing to production.**
+InsecureTokenProvider to generate and sign auth tokens such that the Azure Fluid Relay service service will accept it.
+**To ensure that the secret doesn't get exposed, this should be replaced with another implementation of ITokenProvider
+that fetches the token from a secure, developer-provided backend service prior to releasing to production.**
 
 ### Build and run the client only
 
 Now that you've updated the `FrsClient` configuration, now run just the client to test it. You no longer need to run a
-local service, because you're using the remote FRS instance!
+local service, because you're using the remote Azure Fluid Relay service instance!
 
 ```bash
 npm run start:client
