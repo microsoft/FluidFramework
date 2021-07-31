@@ -6,8 +6,9 @@
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { GenericError, DataCorruptionError, CreateContainerError } from "../error";
+import { ChildLogger, normalizeError } from "@fluidframework/telemetry-utils";
+import { GenericError, DataCorruptionError } from "../error";
+const CreateContainerError = (error, props?) => normalizeError(error, { props });
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
     // In all tests below, the `stack` prop will be left out of validation because it is difficult to properly
@@ -19,7 +20,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
 
     describe("Send and receive GenericError instances", () => {
         it("Send and receive a GenericError with no attached error.", () => {
-            const testError = new GenericError("genericError");
+            const testError = new GenericError("genericError", "errorCode");
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -44,7 +45,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
         });
         it("Send and receive a GenericError with a dangling error of object type.", () => {
             const testErrorObj = new Error("some error");
-            const testError = new GenericError("genericError", testErrorObj);
+            const testError = new GenericError("genericError", "errorCode", testErrorObj);
             mockLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "A",
@@ -65,6 +66,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
             };
             const testError = new GenericError(
                 "someGenericError",
+                "errorCode",
                 undefined /* error */,
                 props,
             );
@@ -121,7 +123,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
     describe("Send errors using a ChildLogger", () => {
         it("Send and receive a GenericError.", () => {
             const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
-            const testError = new GenericError("genericError");
+            const testError = new GenericError("genericError", "errorCode");
             childLogger.sendErrorEvent({ eventName: "A" }, testError);
             assert(mockLogger.matchEvents([{
                 eventName: "errorTypeTestNamespace:A",

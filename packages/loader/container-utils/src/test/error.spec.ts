@@ -7,9 +7,11 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateContainerError, CreateProcessingError, GenericError } from "../error";
+import { CreateProcessingError, GenericError } from "../error";
+
+const CreateContainerError = (error, props?) => normalizeError(error, { props });
 
 describe("Errors", () => {
     describe("GenericError coercion via CreateContainerError", () => {
