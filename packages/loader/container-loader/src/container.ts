@@ -36,6 +36,7 @@ import {
     CreateContainerCloseError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    GenericError,
  } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -323,7 +324,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    rej(err ?? CreateContainerCloseError("Container closed without an error"));
+                    rej(err ?? new GenericError("Container closed without an error"));
                 };
                 container.on("closed", onClosed);
 

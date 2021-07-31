@@ -33,13 +33,12 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
      * @param props - Telemetry props to include when the error is logged
      */
     constructor(
-        errorMessage: string,
         readonly fluidErrorCode: string,
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
         // Don't try to log the inner error
-        super(errorMessage, props, new Set(["error"]));
+        super(fluidErrorCode, props, new Set(["error"]));
     }
 }
 
@@ -119,7 +118,7 @@ export function CreateProcessingError(
  * @param props - Properties to include on the error for logging
  */
 export function CreateContainerCloseError(reason: string, props?: ITelemetryProperties): IFluidErrorBase {
-    const error = new GenericError(reason, reason, undefined /* error */, { ...props, reason });
+    const error = new GenericError(reason, undefined /* error */, { ...props, reason });
     return error;
 }
 

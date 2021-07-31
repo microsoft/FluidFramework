@@ -97,7 +97,6 @@ describe("Errors", () => {
     });
 
     describe("CreateContainerCloseError", () => {
-        // const error = new GenericError(reason, reason, undefined /* error */, { ...props, reason });
         const theReason = "And the reason is you";
         const props = { foo: "bar" };
         const containerError = CreateContainerCloseError(theReason, props);
