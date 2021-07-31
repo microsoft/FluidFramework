@@ -36,7 +36,6 @@ import {
     CreateContainerError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
-    NormalizeErrorForContainerClose,
  } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -91,6 +90,7 @@ import {
     TelemetryLogger,
     connectedEventName,
     disconnectedEventName,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -336,11 +336,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         res(container);
                     },
                     (error) => {
-                        const err = NormalizeErrorForContainerClose(error);
+                        const err = normalizeError(error);
                         // Depending where error happens, we can be attempting to connect to web socket
                         // and continuously retrying (consider offline mode)
                         // Host has no container to close, so it's prudent to do it here
-                        container.close(error);
+                        container.close(err);
                         onClosed(err);
                     });
             }),
@@ -1467,7 +1467,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         });
                     }
                     this.processCodeProposal().catch((error) => {
-                        this.close(NormalizeErrorForContainerClose(error));
+                        this.close(normalizeError(error));
                         throw error;
                     });
                 }
@@ -1755,7 +1755,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const error = new DataCorruptionError(
                     errorMsg,
                     extractSafePropertiesFromMessage(message));
-                this.close(NormalizeErrorForContainerClose(error));
+                this.close(normalizeError(error));
             }
         }
 

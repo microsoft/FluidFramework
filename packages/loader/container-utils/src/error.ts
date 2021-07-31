@@ -125,19 +125,6 @@ export function CreateContainerError(reason: string, props?: ITelemetryPropertie
 }
 
 /**
- * Convert the error into one of the error types.
- * @param originalError - Error to be converted.
- * @param props - Properties to include on the error for logging - They will override props on originalError
- */
- export function NormalizeErrorForContainerClose(
-     originalError: any,
-     props?: ITelemetryProperties,
-): ICriticalContainerError {
-    const normalized = normalizeError(originalError, { props });
-    return normalized;
-}
-
-/**
  * Take an unknown error object and extract certain known properties to be included in a new error object.
  * The stack is preserved, along with any safe-to-log telemetry props.
  * @param error - An error that was presumably caught, thrown from unknown origins
