@@ -42,8 +42,11 @@ import {
     IUpdateDSNControlMessageContents,
 } from "@fluidframework/server-services-core";
 import {
-    CommonProperties, Lumber, LumberEventName, Lumberjack,
-    BaseTelemetryProperties
+    CommonProperties,
+    Lumber,
+    LumberEventName,
+    Lumberjack,
+    BaseTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
