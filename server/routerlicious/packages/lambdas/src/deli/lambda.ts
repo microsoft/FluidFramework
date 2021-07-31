@@ -65,15 +65,6 @@ enum InstructionType {
     NoOp,
 }
 
-enum DeliStateProperties {
-    ConnectedClientCount = "ConnectedClientCount",
-    DSN = "DSN",
-    LogOffset = "LogOffset",
-    LastSentMSN = "LastSentMSN",
-    Term = "Term",
-    CheckpointSequenceNumber = "CheckpointSequenceNumber",
-}
-
 interface ITicketedMessageOutput {
 
     message: ITicketedMessage;
@@ -191,8 +182,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         if (lumberJackMetric)
         {
-            lumberJackMetric.setProperties(new Map([[BaseTelemetryProperties.tenantId, this.tenantId],
-                [BaseTelemetryProperties.documentId, this.documentId]]));
+            lumberJackMetric.setProperties({
+                [BaseTelemetryProperties.tenantId]: this.tenantId,
+                [BaseTelemetryProperties.documentId]: this.documentId,
+            });
             setQueuedMessageProperties(rawMessage, lumberJackMetric);
         }
 
@@ -203,7 +196,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.context.checkpoint(kafkaCheckpointMessage);
             }
 
-            lumberJackMetric?.success("Already processed checkpointed message");
+            lumberJackMetric?.success(`Already processed upto offset ${this.logOffset}.
+                Current message offset ${rawMessage.offset}`);
             return undefined;
         }
 
@@ -256,10 +250,6 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
         const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
-        if (lumberJackMetric)
-        {
-            this.setDeliStateMetrics(checkpoint, lumberJackMetric);
-        }
 
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
@@ -269,6 +259,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     checkpoint.clear = true;
                 }
                 this.checkpointContext.checkpoint(checkpoint);
+                if (lumberJackMetric)
+                {
+                    this.setDeliStateMetrics(checkpoint, lumberJackMetric);
+                }
             },
             (error) => {
                 lumberJackMetric?.setProperties(new Map([[CommonProperties.restart, true]]));
@@ -302,6 +296,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
                 if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
+                    lumberJackMetric?.setProperties({[CommonProperties.maxOpsSinceLastSummary]: true});
                     this.emitOpEvent(OpEventType.MaxOps);
                 }
             }
@@ -324,14 +319,12 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     }
 
     private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
-        const deliState = new Map([
-            [DeliStateProperties.ConnectedClientCount, checkpoint.deliState.clients?.length],
-            [DeliStateProperties.DSN, checkpoint.deliState.durableSequenceNumber],
-            [DeliStateProperties.LogOffset, checkpoint.deliState.logOffset],
-            [DeliStateProperties.CheckpointSequenceNumber, checkpoint.deliState.sequenceNumber],
-            [DeliStateProperties.Term, checkpoint.deliState.term],
-            [DeliStateProperties.LastSentMSN, checkpoint.deliState.lastSentMSN],
-        ]);
+        const deliState = {
+            [CommonProperties.clientCount]: checkpoint.deliState.clients?.length,
+            [CommonProperties.checkpointOffset]: checkpoint.deliState.logOffset,
+            [CommonProperties.sequenceNumber]: checkpoint.deliState.sequenceNumber,
+            [CommonProperties.minSequenceNumber]: checkpoint.deliState.lastSentMSN,
+        };
 
         lumberJackMetric?.setProperties(deliState);
     }
