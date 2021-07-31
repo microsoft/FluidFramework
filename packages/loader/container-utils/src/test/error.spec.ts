@@ -12,7 +12,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { CreateProcessingError, GenericError } from "../error";
 
 // NOTE about this (temporary) alias:
-// CreateContainerError is being scoped to only take strings, with other callsites updated to use normalizeError.
+// CreateContainerError has been removed, with most call sites now using normalizeError.
 // This represents some small behavior changes, highlighted by the diffs in these tests.
 // They should be removed in a follow-up PR since they're redudnant with normalizeError's tests
 const CreateContainerErrorViaNormalize = (error, props?) => normalizeError(error, { props });
