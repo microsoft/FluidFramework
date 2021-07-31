@@ -24,7 +24,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
  */
-export class GenericError extends LoggingError implements IGenericError {
+export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
     readonly errorType = ContainerErrorType.genericError;
 
     /**
@@ -35,6 +35,7 @@ export class GenericError extends LoggingError implements IGenericError {
      */
     constructor(
         errorMessage: string,
+        readonly fluidErrorCode: string,
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
@@ -118,7 +119,20 @@ export function CreateProcessingError(
  * @param originalError - Error to be converted.
  * @param props - Properties to include on the error for logging - They will override props on originalError
  */
-export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError {
+export function CreateContainerError(reason: string, props?: ITelemetryProperties): ICriticalContainerError {
+    const error = new GenericError(reason, reason, undefined /* error */, props ?? {});
+    return error;
+}
+
+/**
+ * Convert the error into one of the error types.
+ * @param originalError - Error to be converted.
+ * @param props - Properties to include on the error for logging - They will override props on originalError
+ */
+ export function NormalizeErrorForContainerClose(
+     originalError: any,
+     props?: ITelemetryProperties,
+): ICriticalContainerError {
     const normalized = normalizeError(originalError, { props });
     return normalized;
 }

@@ -59,6 +59,7 @@ import {
     CreateProcessingError,
     DataCorruptionError,
     wrapError,
+    NormalizeErrorForContainerClose,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
@@ -455,7 +456,7 @@ export class DeltaManager
             });
 
         this._outbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(NormalizeErrorForContainerClose(error));
         });
 
         // Inbound signal queue
@@ -470,7 +471,7 @@ export class DeltaManager
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(NormalizeErrorForContainerClose(error));
         });
 
         // Initially, all queues are created paused.
@@ -638,7 +639,7 @@ export class DeltaManager
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
-                        const error = CreateContainerError(origError);
+                        const error = NormalizeErrorForContainerClose(origError);
                         this.close(error);
                         // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
@@ -1493,7 +1494,7 @@ export class DeltaManager
                 cacheOnly);
         } catch (error) {
             this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
-            this.close(CreateContainerError(error));
+            this.close(NormalizeErrorForContainerClose(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetchReason = undefined;

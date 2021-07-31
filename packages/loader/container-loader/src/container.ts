@@ -36,6 +36,7 @@ import {
     CreateContainerError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    NormalizeErrorForContainerClose,
  } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -335,7 +336,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         res(container);
                     },
                     (error) => {
-                        const err = CreateContainerError(error);
+                        const err = NormalizeErrorForContainerClose(error);
                         // Depending where error happens, we can be attempting to connect to web socket
                         // and continuously retrying (consider offline mode)
                         // Host has no container to close, so it's prudent to do it here
@@ -1014,8 +1015,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(CreateContainerError(
-            new Error("ExistingContextDoesNotSatisfyIncomingProposal")));
+        this.close(CreateContainerError("ExistingContextDoesNotSatisfyIncomingProposal"));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1467,7 +1467,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         });
                     }
                     this.processCodeProposal().catch((error) => {
-                        this.close(CreateContainerError(error));
+                        this.close(NormalizeErrorForContainerClose(error));
                         throw error;
                     });
                 }
@@ -1722,7 +1722,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 break;
             }
             default:
-                this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
+                this.close(CreateContainerError("Runtime can't send arbitrary message type", { messageType: type }));
                 return -1;
         }
         return this.submitMessage(type, contents, batch, metadata);
@@ -1755,7 +1755,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const error = new DataCorruptionError(
                     errorMsg,
                     extractSafePropertiesFromMessage(message));
-                this.close(CreateContainerError(error));
+                this.close(NormalizeErrorForContainerClose(error));
             }
         }
 
