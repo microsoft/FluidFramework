@@ -14,9 +14,6 @@ import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateContainerCloseError(reason: string, props?: ITelemetryProperties): IFluidErrorBase;
-
-// @public
 export function CreateProcessingError(originalError: unknown, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
 
 // @public (undocumented)
@@ -40,7 +37,7 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 
 // @public
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
-    constructor(errorMessage: string, fluidErrorCode: string, error?: any, props?: ITelemetryProperties);
+    constructor(fluidErrorCode: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)

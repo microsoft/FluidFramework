@@ -55,7 +55,6 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
-    CreateContainerCloseError,
     CreateProcessingError,
     DataCorruptionError,
     wrapError,
@@ -730,7 +729,7 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = CreateContainerCloseError("Op is sent in read-only document state", {
+            const error = new GenericError("Op is sent in read-only document state", undefined /* error */, {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,

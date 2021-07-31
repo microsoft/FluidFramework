@@ -7,9 +7,9 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { isFluidError, isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateContainerCloseError, CreateProcessingError, GenericError } from "../error";
+import { CreateProcessingError, GenericError } from "../error";
 
 // NOTE about this (temporary) alias:
 // CreateContainerError is being scoped to only take strings, with other callsites updated to use normalizeError.
@@ -94,18 +94,6 @@ describe("Errors", () => {
             assert.deepEqual(error1, error2, "Both errors should be same!!");
             assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
         });
-    });
-
-    describe("CreateContainerCloseError", () => {
-        const theReason = "And the reason is you";
-        const props = { foo: "bar" };
-        const containerError = CreateContainerCloseError(theReason, props);
-        assert(isFluidError(containerError));
-        assert(containerError.errorType === "genericError");
-        assert(containerError.fluidErrorCode === theReason);
-        assert(containerError.message === theReason);
-        assert(containerError.getTelemetryProperties().reason === theReason);
-        assert(containerError.getTelemetryProperties().foo === "bar");
     });
 
     describe("DataProcessingError coercion via CreateProcessingError", () => {

@@ -33,7 +33,6 @@ import {
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
-    CreateContainerCloseError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
     GenericError,
@@ -1016,7 +1015,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(CreateContainerCloseError("ExistingContextDoesNotSatisfyIncomingProposal"));
+        this.close(new GenericError("ExistingContextDoesNotSatisfyIncomingProposal"));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1723,7 +1722,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 break;
             }
             default:
-                this.close(CreateContainerCloseError("Runtime can't send arbitrary message type",
+                this.close(new GenericError("Runtime can't send arbitrary message type",
+                    undefined /* error */,
                     { messageType: type }));
                 return -1;
         }

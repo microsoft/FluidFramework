@@ -113,16 +113,6 @@ export function CreateProcessingError(
 }
 
 /**
- * Create a new Fluid Error for Container Close
- * @param reason - The reason we're about to close the container. Should be a static string value for logging.
- * @param props - Properties to include on the error for logging
- */
-export function CreateContainerCloseError(reason: string, props?: ITelemetryProperties): IFluidErrorBase {
-    const error = new GenericError(reason, undefined /* error */, { ...props, reason });
-    return error;
-}
-
-/**
  * Take an unknown error object and extract certain known properties to be included in a new error object.
  * The stack is preserved, along with any safe-to-log telemetry props.
  * @param error - An error that was presumably caught, thrown from unknown origins
