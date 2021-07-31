@@ -68,6 +68,7 @@
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"env-cmd": "^10.1.0",
+		"eslint": "^7.31.0",
 		"mocha": "^8.4.0",
 		"nyc": "^15.1.0",
 		"prettier": "^2.3.2",
