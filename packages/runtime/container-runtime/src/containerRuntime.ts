@@ -41,6 +41,7 @@ import {
     ChildLogger,
     raiseConnectedEvent,
     PerformanceEvent,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -1230,7 +1231,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.paused = false;
             this.context.deltaManager.inbound.resume();
         }, (error) => {
-            this.closeFn(CreateContainerError(error));
+            this.closeFn(normalizeError(error));
         });
     };
 
