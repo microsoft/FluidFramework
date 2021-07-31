@@ -11,13 +11,17 @@ import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/t
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { CreateProcessingError, GenericError } from "../error";
 
-const CreateContainerError = (error, props?) => normalizeError(error, { props });
+// NOTE about this (temporary) alias:
+// CreateContainerError is being scoped to only take strings, with other callsites updated to use normalizeError.
+// This represents some small behavior changes, highlighted by the diffs in these tests.
+// They should be removed in a follow-up PR since they're redudnant with normalizeError's tests
+const CreateContainerErrorViaNormalize = (error, props?) => normalizeError(error, { props });
 
 describe("Errors", () => {
     describe("GenericError coercion via CreateContainerError", () => {
         it("Should add errorType and props, as a new object", () => {
             const originalError: any = { hello: "world" };
-            const testError = CreateContainerError(originalError, { foo: "bar" });
+            const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(testError !== originalError);
@@ -27,7 +31,7 @@ describe("Errors", () => {
         });
         it("Should add errorType and props to non-object input", () => {
             const originalError = "womp womp";
-            const testError = CreateContainerError(originalError, { foo: "bar" });
+            const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(testError.message === "womp womp");
@@ -37,20 +41,20 @@ describe("Errors", () => {
         });
         it("Should not preserve existing errorType if not a fully valid error", () => {
             const originalError = { errorType: "someErrorType" }; // missing message and telemetry prop functions
-            const testError = CreateContainerError(originalError);
+            const testError = CreateContainerErrorViaNormalize(originalError);
 
             assert(testError.errorType === "genericError");
             assert(testError !== originalError);
         });
         it("Should ignore non-string errorType", () => {
             const originalError = { errorType: 3 };
-            const testError = CreateContainerError(originalError);
+            const testError = CreateContainerErrorViaNormalize(originalError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
         });
         it("Should not expose original error props for telemetry besides message", () => {
             const originalError: any = { hello: "world", message: "super important" };
-            const testError = CreateContainerError(originalError, { foo: "bar" });
+            const testError = CreateContainerErrorViaNormalize(originalError, { foo: "bar" });
 
             assert(isILoggingError(testError));
             assert(testError.getTelemetryProperties().hello === undefined);
@@ -58,13 +62,13 @@ describe("Errors", () => {
         });
         it("Should preserve the stack", () => {
             const originalError = new Error();
-            const testError = CreateContainerError(originalError);
+            const testError = CreateContainerErrorViaNormalize(originalError);
 
             assert((testError as GenericError).stack === originalError.stack);
         });
         it("Should not preserve existing telemetry props if not fully valid", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" });
-            const testError = CreateContainerError(loggingError);
+            const testError = CreateContainerErrorViaNormalize(loggingError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(isILoggingError(testError));
@@ -74,7 +78,7 @@ describe("Errors", () => {
         it("Should preserve telemetry props and existing errorType, and return same object", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string };
             loggingError.errorType = "someErrorType";
-            const testError = CreateContainerError(loggingError);
+            const testError = CreateContainerErrorViaNormalize(loggingError);
 
             assert(testError.errorType === "someErrorType");
             assert(isILoggingError(testError));
@@ -85,8 +89,8 @@ describe("Errors", () => {
             const err = {
                 message: "Test Error",
             };
-            const error1 = CreateContainerError(err);
-            const error2 = CreateContainerError(error1);
+            const error1 = CreateContainerErrorViaNormalize(err);
+            const error2 = CreateContainerErrorViaNormalize(error1);
             assert.deepEqual(error1, error2, "Both errors should be same!!");
             assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
         });
