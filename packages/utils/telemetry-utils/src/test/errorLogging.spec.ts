@@ -496,10 +496,10 @@ describe("normalizeError", () => {
             }),
         };
         function assertMatching(
-            original: any,
             actual: IFluidErrorBase,
             expected: TestFluidError,
             annotations: IFluidErrorAnnotations = {},
+            inputStack: string,
         ) {
             const expectedErrorCode =
                 expected.fluidErrorCode === "<none>"
@@ -514,7 +514,6 @@ describe("normalizeError", () => {
             assert.strictEqual(actual.message, expected.message, "message should match");
             assert.strictEqual(actual.name, expected.name, "name should match");
 
-            const inputStack: string = original?.stack;
             const actualStack = actual.stack;
             assert(actualStack !== undefined, "stack should be present as a string");
             if (actualStack.indexOf("<<generated stack>>") >= 0) {
@@ -541,7 +540,7 @@ describe("normalizeError", () => {
 
                     // Assert
                     assert.notEqual(input, normalized, "input should have yielded a new error object");
-                    assertMatching(input, normalized, expectedOutput, annotations);
+                    assertMatching(normalized, expectedOutput, annotations, input?.stack);
 
                     // Bonus
                     normalized.addTelemetryProperties({foo: "bar"});

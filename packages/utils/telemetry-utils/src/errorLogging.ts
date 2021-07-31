@@ -83,9 +83,7 @@ class SimpleFluidError implements IFluidErrorBase {
     readonly stack?: string;
     readonly name?: string;
 
-    constructor(
-        errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">,
-    ) {
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
@@ -149,22 +147,21 @@ export function normalizeError(
     // We have to construct a new Fluid Error, copying safe properties over
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
-            errorType: "genericError", // Match Container/Driver generic error type
-            fluidErrorCode: annotations.errorCodeIfNone ?? "none",
-            message,
-            stack: stack ?? generateStack(),
-        },
-    );
+        errorType: "genericError", // Match Container/Driver generic error type
+        fluidErrorCode: annotations.errorCodeIfNone ?? "none",
+        message,
+        stack: stack ?? generateStack(),
+    });
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
         untrustedOrigin: true, // This will let us filter to errors not originated by our own code
     });
-    // Log the typeof the original error (only interesting for non-objects)
-    if (typeof(error) !== "object") {
-        fluidError.addTelemetryProperties({typeofError: typeof(error)});
-    }
 
+    if (typeof(error) !== "object") {
+        // This is only interesting for non-objects
+        fluidError.addTelemetryProperties({ typeofError: typeof(error) });
+    }
     return fluidError;
 }
 
