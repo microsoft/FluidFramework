@@ -6,7 +6,6 @@
 import {
     ContainerErrorType,
     IGenericError,
-    ICriticalContainerError,
     IErrorBase,
     IThrottlingWarning,
 } from "@fluidframework/container-definitions";
@@ -115,12 +114,12 @@ export function CreateProcessingError(
 }
 
 /**
- * Convert the error into one of the error types.
- * @param originalError - Error to be converted.
- * @param props - Properties to include on the error for logging - They will override props on originalError
+ * Create a new Fluid Error for Container Close
+ * @param reason - The reason we're about to close the container. Should be a static string value for logging.
+ * @param props - Properties to include on the error for logging
  */
-export function CreateContainerError(reason: string, props?: ITelemetryProperties): ICriticalContainerError {
-    const error = new GenericError(reason, reason, undefined /* error */, props ?? {});
+export function CreateContainerCloseError(reason: string, props?: ITelemetryProperties): IFluidErrorBase {
+    const error = new GenericError(reason, reason, undefined /* error */, { ...props, reason });
     return error;
 }
 

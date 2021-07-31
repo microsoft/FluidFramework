@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
@@ -15,7 +14,7 @@ import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateContainerError(reason: string, props?: ITelemetryProperties): ICriticalContainerError;
+export function CreateContainerCloseError(reason: string, props?: ITelemetryProperties): IFluidErrorBase;
 
 // @public
 export function CreateProcessingError(originalError: unknown, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerCloseError, GenericError } from "@fluidframework/container-utils";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -95,7 +95,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         if (this._disposed) {
             return {
                 retry: false,
-                error: CreateContainerError("Storage service disposed!!"),
+                error: new GenericError("Storage service disposed!!", "Storage service disposed!!"),
             };
         }
         return { retry: true, error: undefined };

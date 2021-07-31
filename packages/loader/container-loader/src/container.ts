@@ -33,7 +33,7 @@ import {
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
-    CreateContainerError,
+    CreateContainerCloseError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
  } from "@fluidframework/container-utils";
@@ -323,7 +323,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    rej(err ?? CreateContainerError("Container closed without an error"));
+                    rej(err ?? CreateContainerCloseError("Container closed without an error"));
                 };
                 container.on("closed", onClosed);
 
@@ -1015,7 +1015,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(CreateContainerError("ExistingContextDoesNotSatisfyIncomingProposal"));
+        this.close(CreateContainerCloseError("ExistingContextDoesNotSatisfyIncomingProposal"));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1722,7 +1722,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 break;
             }
             default:
-                this.close(CreateContainerError("Runtime can't send arbitrary message type", { messageType: type }));
+                this.close(CreateContainerCloseError("Runtime can't send arbitrary message type",
+                    { messageType: type }));
                 return -1;
         }
         return this.submitMessage(type, contents, batch, metadata);
