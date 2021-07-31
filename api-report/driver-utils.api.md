@@ -113,7 +113,7 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
-export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): GenericNetworkError | ThrottlingError;
+export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType.writeError>;
@@ -246,6 +246,8 @@ export class ParallelRequests<T> {
     }>, responseCallback: (payload: T[]) => void);
     // (undocumented)
     cancel(): void;
+    // (undocumented)
+    get canceled(): boolean;
     // (undocumented)
     run(concurrency: number): Promise<void>;
     }
