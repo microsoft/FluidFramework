@@ -132,7 +132,17 @@ export function normalizeError(
         // This is only interesting for non-objects
         fluidError.addTelemetryProperties({ typeofError: typeof(error) });
     }
+    if (hasErrorType(error)) {
+        // We don't think this will ever be logged - but let's be sure because we've made some assumptions about this
+        fluidError.addTelemetryProperties({ surpriseErrorType: error.errorType });
+    }
+
     return fluidError;
+}
+
+function hasErrorType(error: any): error is { errorType: string | number } {
+    return typeof(error?.errorType) === "string" ||
+        typeof(error?.errorType) === "number";
 }
 
 export function generateStack(): string | undefined {
