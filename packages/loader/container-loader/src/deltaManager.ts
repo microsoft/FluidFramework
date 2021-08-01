@@ -58,6 +58,7 @@ import {
     CreateProcessingError,
     DataCorruptionError,
     wrapError,
+    GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
