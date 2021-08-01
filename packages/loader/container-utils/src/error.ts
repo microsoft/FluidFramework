@@ -135,10 +135,9 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
             // Don't pass in props here, we want to add them last (see below)
             const newError = new GenericError(errMsg, originalError);
 
-            const { errorType } = extractLogSafeErrorProperties(originalError, false /* sanitizeStack */);
-            if (errorType !== undefined) {
+            if (typeof(originalError?.errorType) === "string") {
                 // Clobber errorType (which is declared readonly) with the value off the original error
-                Object.assign(newError, { errorType });
+                Object.assign(newError, { errorType: originalError.errorType });
             }
 
             // By clobbering newError.errorType, we can no longer properly call it a GenericError.
@@ -170,7 +169,7 @@ export function wrapError<T extends IWriteableLoggingError>(
     const {
         message,
         stack,
-    } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+    } = extractLogSafeErrorProperties(error);
     const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
 
     const newError = newErrorFn(message);

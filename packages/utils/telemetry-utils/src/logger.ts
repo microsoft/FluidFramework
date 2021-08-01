@@ -14,7 +14,7 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
-import { isILoggingError, extractLogSafeErrorProperties, generateStack } from "./errorLogging";
+import { isILoggingError, generateStack, normalizeError } from "./errorLogging";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -73,12 +73,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
+    public static prepareErrorObject(event: ITelemetryBaseEvent, error: unknown, fetchStack: boolean) {
+        const { message, errorType, fluidErrorCode, stack, name} = normalizeError(error);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
-        event.stack = stack;
+        event.stack = TelemetryLogger.removeMessageFromStack(stack, name);
         event.error = message; // Note that the error message goes on the 'error' field
         event.errorType = errorType;
+        event.fluidErrorcode = fluidErrorCode;
 
         if (isILoggingError(error)) {
             // Add any other telemetry properties from the LoggingError
@@ -121,6 +122,19 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (event.stack === undefined && fetchStack) {
             event.stack = generateStack();
         }
+    }
+
+    /** Removes the message from the stack trace, making some assumptions about the format of the stack string */
+    private static removeMessageFromStack(stack: string | undefined, errorName: string | undefined) {
+        if (stack === undefined) {
+            return undefined;
+        }
+        const stackFrames = stack.split("\n");
+        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+        if (errorName !== undefined) {
+            stackFrames.unshift(errorName); // Add "[ErrorName]"
+        }
+        return stackFrames.join("\n");
     }
 
     public constructor(

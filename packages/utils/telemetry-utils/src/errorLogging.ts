@@ -14,47 +14,17 @@ import {
     isValidLegacyError,
 } from "./fluidErrorBase";
 
-/** @returns true if value is an object but neither null nor an array */
-const isRegularObject = (value: any): boolean => {
-    return value !== null && !Array.isArray(value) && typeof value === "object";
-};
-
 /** Inspect the given error for common "safe" props and return them */
-export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
-    const removeMessageFromStack = (stack: string, errorName?: string) => {
-        if (!sanitizeStack) {
-            return stack;
-        }
-        const stackFrames = stack.split("\n");
-        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
-        }
-        return stackFrames.join("\n");
-    };
-
+export function extractLogSafeErrorProperties(error: any) {
     const message = (typeof error?.message === "string")
-        ? error.message as string
+        ? error.message
         : String(error);
 
-    const safeProps: { message: string; errorType?: string; stack?: string } = {
-        message,
-    };
+    const stack = (typeof error?.stack === "string")
+        ? error.stack
+        : undefined;
 
-    if (isRegularObject(error)) {
-        const { errorType, stack, name } = error;
-
-        if (typeof errorType === "string") {
-            safeProps.errorType = errorType;
-        }
-
-        if (typeof stack === "string") {
-            const errorName = (typeof name === "string") ? name : undefined;
-            safeProps.stack = removeMessageFromStack(stack, errorName);
-        }
-    }
-
-    return safeProps;
+    return { message, stack };
 }
 
 /** type guard for ILoggingError interface */
@@ -145,7 +115,7 @@ export function normalizeError(
     }
 
     // We have to construct a new Fluid Error, copying safe properties over
-    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+    const { message, stack } = extractLogSafeErrorProperties(error);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
