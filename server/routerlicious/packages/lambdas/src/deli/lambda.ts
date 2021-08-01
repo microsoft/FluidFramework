@@ -282,6 +282,11 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 });
             });
 
+        if (lumberJackMetric)
+        {
+            this.setDeliStateMetrics(checkpoint, lumberJackMetric);
+        }
+
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
         this.clearActivityIdleTimer();

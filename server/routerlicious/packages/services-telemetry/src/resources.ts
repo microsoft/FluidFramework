@@ -42,6 +42,7 @@ export enum CommonProperties {
     clientSummarySuccess = "clientSummarySuccess",
     serviceSummarySuccess = "serviceSummarySuccess",
     maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
+    lastSummarySequenceNumber = "protocolSequenceNumber",
 
     // Miscellaneous properties
     restart = "restart",
