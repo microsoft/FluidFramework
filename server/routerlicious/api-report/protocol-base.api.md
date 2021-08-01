@@ -4,7 +4,6 @@
 
 ```ts
 
-import { EventForwarder } from '@fluidframework/common-utils';
 import * as git from '@fluidframework/gitresources';
 import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IBlob } from '@fluidframework/protocol-definitions';
@@ -160,23 +159,6 @@ export class Quorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum 
     snapshotValues(): IQuorumSnapshot["values"];
     updateMinimumSequenceNumber(message: ISequencedDocumentMessage): boolean;
     }
-
-// @public
-export class QuorumProxy extends EventForwarder<IQuorumEvents> implements IQuorum {
-    constructor(quorum: IQuorum);
-    // (undocumented)
-    readonly get: (key: string) => any;
-    // (undocumented)
-    readonly getApprovalData: (key: string) => ICommittedProposal | undefined;
-    // (undocumented)
-    readonly getMember: (clientId: string) => ISequencedClient | undefined;
-    // (undocumented)
-    readonly getMembers: () => Map<string, ISequencedClient>;
-    // (undocumented)
-    readonly has: (key: string) => boolean;
-    // (undocumented)
-    readonly propose: (key: string, value: any) => Promise<void>;
-}
 
 // @public
 export class TreeTreeEntry {
