@@ -259,6 +259,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     checkpoint.clear = true;
                 }
                 this.checkpointContext.checkpoint(checkpoint);
+                if (lumberJackMetric)
+                {
+                    this.setDeliStateMetrics(checkpoint, lumberJackMetric);
+                }
             },
             (error) => {
                 lumberJackMetric?.setProperties(new Map([[CommonProperties.restart, true]]));

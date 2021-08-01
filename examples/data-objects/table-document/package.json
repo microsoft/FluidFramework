@@ -50,7 +50,7 @@
   "dependencies": {
     "@fluidframework/aqueduct": "^0.45.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.31.0",
+    "@fluidframework/common-utils": "^0.32.0-0",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore-definitions": "^0.45.0",
     "@fluidframework/merge-tree": "^0.45.0",

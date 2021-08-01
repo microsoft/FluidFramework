@@ -122,9 +122,9 @@ export class RemoteChannelContext implements IChannelContext {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push(message);
-            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending?.length);
+            assert(this.pending !== undefined, "pending is undefined");
+            this.pending.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }
     }
 
@@ -214,11 +214,11 @@ export class RemoteChannelContext implements IChannelContext {
             attributes);
 
         // Send all pending messages to the channel
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const message of this.pending!) {
+        assert(this.pending !== undefined, "pending undefined");
+        for (const message of this.pending) {
             this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
-        this.thresholdOpsCounter.send("ProcessPendingOps", this.pending?.length);
+        this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
 
         // Commit changes.
         this.channel = channel;
