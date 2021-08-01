@@ -380,15 +380,15 @@ export class ScribeLambda implements IPartitionLambda {
         }
 
         lumberJackMetric?.success(`Message processed successfully 
-            at offset seq no ${checkpoint.sequenceNumber}`);
+            at seq no ${checkpoint.sequenceNumber}`);
     }
 
     private setScribeStateMetrics(checkpoint: IScribe, lumberJackMetric: Lumber<LumberEventName.ScribeHandler>) {
         const scribeState = {
-            [CommonProperties.sequenceNumber]: checkpoint.protocolState.sequenceNumber,
-            [CommonProperties.minSequenceNumber]: checkpoint.protocolState.minimumSequenceNumber,
-            [CommonProperties.clientCount]: checkpoint.protocolState.members.length,
+            [CommonProperties.sequenceNumber]: checkpoint.sequenceNumber,
+            [CommonProperties.minSequenceNumber]: checkpoint.minimumSequenceNumber,
             [CommonProperties.checkpointOffset]: checkpoint.logOffset,
+            [CommonProperties.lastSummarySequenceNumber]: checkpoint.protocolState.sequenceNumber,
         };
         lumberJackMetric?.setProperties(scribeState);
     }
