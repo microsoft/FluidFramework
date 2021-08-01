@@ -466,6 +466,20 @@ describe("normalizeError", () => {
                 input: undefined,
                 expectedOutput: typicalOutput("undefined", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "undefined" }),
             }),
+            "string": () => ({
+                input: "some string",
+                expectedOutput: typicalOutput("some string", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "string" }),
+            }),
+            "shortCode": () => ({
+                input: "0x123abc",
+                expectedOutput: Object.assign(
+                    typicalOutput("0x123abc", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "string" }),
+                    { fluidErrorCode: "0x123abc" }),
+            }),
+            "shortCode and other stuff": () => ({
+                input: "0x123abc plus some message",
+                expectedOutput: typicalOutput("0x123abc plus some message", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "string" }),
+            }),
             "false": () => ({
                 input: false,
                 expectedOutput: typicalOutput("false", "<<generated stack>>").withExpectedTelemetryProps({ typeofError: "boolean" }),

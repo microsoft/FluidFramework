@@ -148,7 +148,7 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
-        fluidErrorCode: annotations.errorCodeIfNone ?? "none",
+        fluidErrorCode: computeNormalizedErrorCode(message, annotations.errorCodeIfNone),
         message,
         stack: stack ?? generateStack(),
     });
@@ -163,6 +163,13 @@ export function normalizeError(
         fluidError.addTelemetryProperties({ typeofError: typeof(error) });
     }
     return fluidError;
+}
+
+function computeNormalizedErrorCode(message: string, errorCodeIfNone: string | undefined) {
+    if (/^0x([\da-f])+$/i.exec(message) !== null) {
+        return message;
+    }
+    return errorCodeIfNone ?? "none";
 }
 
 export function generateStack(): string | undefined {
