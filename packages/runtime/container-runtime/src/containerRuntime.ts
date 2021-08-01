@@ -97,6 +97,7 @@ import {
     responseToException,
     seqFromTree,
 } from "@fluidframework/runtime-utils";
+import { GenericError } from "@fluidframework/container-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
