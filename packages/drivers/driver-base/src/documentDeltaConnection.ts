@@ -23,6 +23,7 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { debug } from "./debug";
 
 /**
@@ -71,6 +72,7 @@ export class DocumentDeltaConnection
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
     protected _disposed: boolean = false;
+    protected readonly logger: ITelemetryLogger;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -86,9 +88,11 @@ export class DocumentDeltaConnection
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
-        protected readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
     ) {
         super();
+
+        this.logger = ChildLogger.create(logger, "DeltaConnection");
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => {

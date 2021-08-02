@@ -41,8 +41,13 @@ import {
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
 } from "@fluidframework/server-services-core";
-import { CommonProperties, Lumber, LumberEventName, Lumberjack,
-    BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
+import {
+    CommonProperties,
+    Lumber,
+    LumberEventName,
+    Lumberjack,
+    BaseTelemetryProperties,
+} from "@fluidframework/server-services-telemetry";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -410,6 +415,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     message.timestamp,
                     true,
                     clientJoinMessage.detail.scopes,
+                    false,
                     message.operation.serverMetadata);
                 // Return if the client has already been added due to a prior join message.
                 if (!isNewClient) {

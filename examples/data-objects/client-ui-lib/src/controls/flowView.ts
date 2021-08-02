@@ -4723,12 +4723,10 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public async loadFinished(clockStart = 0) {
         // Work around a race condition with multiple shared strings trying to create the interval
         // collections at the same time
-        if (this.collabDocument.existing) {
-            await Promise.all([
-                this.sharedString.waitIntervalCollection("bookmarks"),
-                this.sharedString.waitIntervalCollection("comments"),
-            ]);
-        }
+        await Promise.all([
+            this.sharedString.waitIntervalCollection("bookmarks"),
+            this.sharedString.waitIntervalCollection("comments"),
+        ]);
 
         this.bookmarks = this.sharedString.getIntervalCollection("bookmarks");
 
