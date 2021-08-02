@@ -11,7 +11,7 @@ import { IEvent } from "@fluidframework/common-definitions";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
-export class ImageGalleryObject extends DataObject {
+export class ImageGalleryModel extends DataObject {
     public get imageList() {
         return [
             {
@@ -38,12 +38,18 @@ export class ImageGalleryObject extends DataObject {
     }
 
     public readonly setPosition = (index: number) => {
-        console.log("setting", index);
+        if (typeof index !== "number") {
+            throw new Error("Index is not a number");
+        }
         this.root.set("position", index);
     };
 
     public readonly getPosition = () => {
-        return this.root.get<number>("position") ?? 0;
+        const position = this.root.get<number>("position");
+        if (typeof position !== "number") {
+            throw new Error("Position is not a number");
+        }
+        return position;
     };
 
     protected async initializingFirstTime() {
@@ -59,10 +65,10 @@ export class ImageGalleryObject extends DataObject {
     }
 }
 
-export const ImageGalleryInstantiationFactory = new DataObjectFactory<ImageGalleryObject, undefined, undefined, IEvent>
+export const ImageGalleryInstantiationFactory = new DataObjectFactory<ImageGalleryModel, undefined, undefined, IEvent>
 (
     imageGalleryName,
-    ImageGalleryObject,
+    ImageGalleryModel,
     [],
     {},
 );

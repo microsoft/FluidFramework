@@ -3,73 +3,62 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import ImageGallery from "react-image-gallery";
-import { ImageGalleryObject } from "./model";
+import { ImageGalleryModel } from "./model";
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "react-image-gallery/styles/css/image-gallery.css";
 // eslint-disable-next-line import/no-unassigned-import
 import "./Styles.css";
 
 export interface IImageGalleryViewProps {
-    imageGalleryObject: ImageGalleryObject;
+    imageGalleryModel: ImageGalleryModel;
 }
 
 export const ImageGalleryView: React.FC<IImageGalleryViewProps> = (props: IImageGalleryViewProps) => {
-    const { imageGalleryObject } = props;
+    const { imageGalleryModel } = props;
 
-    // By default, we're waiting for the local user to manipulate the slides.  If they do, then we'll set
-    // the new slide index into the Fluid data object to transmit to remote clients.
-    // When we hear a remote transmission come in, we want to programmatically slide to the new value but
-    // we don't want to retrigger this logic and rebroadcast that same value back out.  To achieve this,
-    // we will temporarily disable modification of the Fluid data object in response to the slide and
-    // only resume it after a single onSlide callback (the onSlide that was triggered by our programmatic
-    // slide).
-    const handleLocalSlide = (index: number | undefined) => {
-        console.log("handlelocal", index);
-        if (index !== undefined) {
-            imageGalleryObject.setPosition(index);
+    // react-image-gallery raises the same event for a user-initiated slide as it does for a programmatic
+    // (slideToIndex) slide.  This complicates understanding whether we should update the model in response,
+    // so here we'll compare against the currentIndex to suppress echo in the op stream.
+    // Using onBeforeSlide helps the model change come at a predictable time (onSlide would update the model
+    // late, after the animation finishes and potentially missing more-recent model updates that have come in).
+    // The downside is that onBeforeSlide only fires if !isTransitioning which is cleared via timer, so it seems
+    // possible in some cases to miss some events (especially for multiple rapid changes if the tab is in the
+    // background, which I suspect is exacerbated due to throttled timers).  Preferably we would be able to
+    // detect whether the slide is user-initiated or programmatic, and also the programmatic invocation would
+    // interrupt/restart the slide rather than be dropped entirely.
+    const onBeforeSlideHandler = (index: number) => {
+        const currentIndex = imageGalleryModel.getPosition();
+        if (index !== currentIndex) {
+            imageGalleryModel.setPosition(index);
         }
-    };
-    const [onSlideCallback, setOnSlideCallback] = useState<(index: number | undefined) => void>(handleLocalSlide);
-    const resumeHandlingLocalSlide = () => {
-        console.log("setting to local");
-        setOnSlideCallback(handleLocalSlide);
     };
 
     // eslint-disable-next-line no-null/no-null
     const imageGalleryRef = useRef<ImageGallery>(null);
 
     useEffect(() => {
-        const handleSlideChanged = () => {
+        const slideToCurrentSlide = () => {
+            const index = imageGalleryModel.getPosition();
             // eslint-disable-next-line no-null/no-null
             if (imageGalleryRef.current !== null) {
-                const index = imageGalleryObject.getPosition();
-                console.log("current", imageGalleryRef.current.getCurrentIndex());
-                if (imageGalleryRef.current.getCurrentIndex() === index) {
-                    return;
-                }
-                // We're about to induce a slide from the remote change -- disable onSlide handling for a
-                // single callback and then resume.
-                console.log("setting to resume after 1");
-                setOnSlideCallback(resumeHandlingLocalSlide);
-                console.log("handling", index);
                 imageGalleryRef.current.slideToIndex(index);
             }
         };
-        // Run once to set the initial slide on load
-        handleSlideChanged();
-        imageGalleryObject.on("slideChanged", handleSlideChanged);
+        // Update at least once, on load.
+        slideToCurrentSlide();
+        imageGalleryModel.on("slideChanged", slideToCurrentSlide);
         return () => {
-            imageGalleryObject.off("slideChanged", handleSlideChanged);
+            imageGalleryModel.off("slideChanged", slideToCurrentSlide);
         };
-    }, [ imageGalleryObject ]);
+    }, [ imageGalleryModel ]);
 
     return (
         <ImageGallery
             ref={ imageGalleryRef }
-            items={ imageGalleryObject.imageList }
-            onSlide={ onSlideCallback }
+            items={ imageGalleryModel.imageList }
+            onBeforeSlide={ onBeforeSlideHandler }
             slideDuration={ 10 }
         />
     );

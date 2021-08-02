@@ -9,11 +9,11 @@ import {
 
 import React from "react";
 
-import { ImageGalleryInstantiationFactory, ImageGalleryObject } from "./model";
+import { ImageGalleryInstantiationFactory, ImageGalleryModel } from "./model";
 import { ImageGalleryView } from "./view";
 
-const imageGalleryViewCallback = (imageGalleryObject: ImageGalleryObject) =>
-    <ImageGalleryView imageGalleryObject={ imageGalleryObject } />;
+const imageGalleryViewCallback = (imageGalleryModel: ImageGalleryModel) =>
+    <ImageGalleryView imageGalleryModel={ imageGalleryModel } />;
 
 export const fluidExport =
-    new ContainerViewRuntimeFactory<ImageGalleryObject>(ImageGalleryInstantiationFactory, imageGalleryViewCallback);
+    new ContainerViewRuntimeFactory<ImageGalleryModel>(ImageGalleryInstantiationFactory, imageGalleryViewCallback);
