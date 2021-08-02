@@ -28,9 +28,9 @@ export enum ContainerErrorType {
     dataProcessingError = "dataProcessingError",
 
     /**
-     * Error indicating an invalid operation was attempted on the Container.
+     * Error indicating an API is being used improperly resulting in an invalid operation.
      */
-     invalidOperationError = "invalidOperationError",
+     usageError = "usageError",
     }
 
 /**
@@ -71,10 +71,10 @@ export interface IGenericError extends IErrorBase {
 }
 
 /**
- * Error indicating an invalid operation was attempted on the Container.
+ * Error indicating an API is being used improperly resulting in an invalid operation.
  */
  export interface IInvalidOperationError extends IErrorBase {
-    readonly errorType: ContainerErrorType.invalidOperationError;
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 /**

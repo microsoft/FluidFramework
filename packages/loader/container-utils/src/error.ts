@@ -44,9 +44,9 @@ export class GenericError extends LoggingError implements IGenericError {
 }
 
 // TODO: implement IInvalidOperationError once available
-/** Error indicating an invalid operation was attempted on the Container. */
-export class InvalidOperationError extends LoggingError implements IFluidErrorBase {
-    readonly errorType = "invalidOperationError";
+/** Error indicating an API is being used improperly resulting in an invalid operation. */
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    readonly errorType = "usageError";
 
     constructor(
         readonly fluidErrorCode: string,

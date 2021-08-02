@@ -59,10 +59,10 @@ export class GenericError extends LoggingError implements IGenericError {
 }
 
 // @public
-export class InvalidOperationError extends LoggingError implements IFluidErrorBase {
+export class UsageError extends LoggingError implements IFluidErrorBase {
     constructor(fluidErrorCode: string);
     // (undocumented)
-    readonly errorType = "invalidOperationError";
+    readonly errorType = "usageError";
     // (undocumented)
     readonly fluidErrorCode: string;
 }
