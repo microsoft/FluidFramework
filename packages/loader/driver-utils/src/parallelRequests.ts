@@ -507,7 +507,7 @@ export function requestOps(
                 requests,
             };
             if (manager.canceled) {
-                telemetryEvent.cancel({ ...props });
+                telemetryEvent.cancel(props);
             } else {
                 telemetryEvent.end(props);
             }
