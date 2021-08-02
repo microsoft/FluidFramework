@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
 import {
@@ -244,7 +244,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     private socketReference: SocketReference | undefined;
+
     private readonly requestOpsNoncePrefix: string;
+    private getOpsCounter = 0;
+    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
 
     /**
      * Error raising for socket.io issues
@@ -314,8 +317,26 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     public requestOps(from: number, to: number) {
+        this.getOpsCounter++;
+        const nonce = `${this.requestOpsNoncePrefix}${this.getOpsCounter}`;
+
+        // PUSH may disable this functionality, in such case we will keep accumulating memory for nothing.
+        // Prevent that by allowing to tracking only 10 overlapping requests.
+        // Telemetry in get_ops_response will clearly indicate when we have over 5 requests.
+        // Note that we should never have overlapping requests, as DeltaManager allows only one
+        // outstanding request to storage, and that's the only way to get here.
+        if (this.getOpsMap.size < 5) {
+            this.getOpsMap.set(
+                nonce,
+                {
+                    start: performance.now(),
+                    from,
+                    to,
+                },
+            );
+        }
         this.socket.emit("get_ops", this.clientId, {
-            nonce: `${this.requestOpsNoncePrefix}${uuid()}`,
+            nonce,
             from,
             to,
         });
@@ -333,15 +354,24 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         this.socket.on("get_ops_response", (result) => {
             const messages = result.messages as ISequencedDocumentMessage[];
-            if ((result.nonce as string).startsWith(this.requestOpsNoncePrefix) && messages.length > 0) {
-                this.logger.sendTelemetryEvent({
-                    eventName: "GetOps",
-                    first: messages[0].sequenceNumber,
-                    last: messages[messages.length - 1].sequenceNumber,
-                    code: result.code,
-                    length: messages.length,
-                });
-                this.socket.emit("op", this.documentId, messages);
+            const data = this.getOpsMap.get(result.nonce);
+            // Due to socket multiplexing, this client may not have asked for any data
+            // If so, there it most likely does not need these ops (otherwise it already asked for them)
+            if (data !== undefined) {
+                this.getOpsMap.delete(result.nonce);
+                if (messages.length > 0) {
+                    this.logger.sendPerformanceEvent({
+                        eventName: "GetOps",
+                        first: messages[0].sequenceNumber,
+                        last: messages[messages.length - 1].sequenceNumber,
+                        code: result.code,
+                        from: data.from,
+                        to: data.to,
+                        duration: performance.now() - data.start,
+                        length: messages.length,
+                    });
+                    this.socket.emit("op", this.documentId, messages);
+                }
             }
         });
 
