@@ -11,6 +11,8 @@ import { IEvent } from "@fluidframework/common-definitions";
 
 const imageGalleryName = "@fluid-example/image-gallery";
 
+const indexKey = "index";
+
 export class ImageGalleryModel extends DataObject {
     public get imageList() {
         return [
@@ -37,29 +39,29 @@ export class ImageGalleryModel extends DataObject {
         ];
     }
 
-    public readonly setPosition = (index: number) => {
+    public readonly setIndex = (index: number) => {
         if (typeof index !== "number") {
             throw new Error("Index is not a number");
         }
-        this.root.set("position", index);
+        this.root.set(indexKey, index);
     };
 
-    public readonly getPosition = () => {
-        const position = this.root.get<number>("position");
-        if (typeof position !== "number") {
-            throw new Error("Position is not a number");
+    public readonly getIndex = () => {
+        const index = this.root.get<number>(indexKey);
+        if (typeof index !== "number") {
+            throw new Error("Index is not a number");
         }
-        return position;
+        return index;
     };
 
     protected async initializingFirstTime() {
-        this.root.set("position", 0);
+        this.root.set(indexKey, 0);
     }
 
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed, local) => {
-            if (changed.key === "position") {
-                this.emit("slideChanged", local);
+            if (changed.key === indexKey) {
+                this.emit("slideChanged");
             }
         });
     }

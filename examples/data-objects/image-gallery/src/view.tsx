@@ -29,9 +29,9 @@ export const ImageGalleryView: React.FC<IImageGalleryViewProps> = (props: IImage
     // detect whether the slide is user-initiated or programmatic, and also the programmatic invocation would
     // interrupt/restart the slide rather than be dropped entirely.
     const onBeforeSlideHandler = (index: number) => {
-        const currentIndex = imageGalleryModel.getPosition();
+        const currentIndex = imageGalleryModel.getIndex();
         if (index !== currentIndex) {
-            imageGalleryModel.setPosition(index);
+            imageGalleryModel.setIndex(index);
         }
     };
 
@@ -40,7 +40,7 @@ export const ImageGalleryView: React.FC<IImageGalleryViewProps> = (props: IImage
 
     useEffect(() => {
         const slideToCurrentSlide = () => {
-            const index = imageGalleryModel.getPosition();
+            const index = imageGalleryModel.getIndex();
             // eslint-disable-next-line no-null/no-null
             if (imageGalleryRef.current !== null) {
                 imageGalleryRef.current.slideToIndex(index);
