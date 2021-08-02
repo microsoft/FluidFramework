@@ -22,7 +22,26 @@ variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 
-stages:
+stages
+  # end-to-end tests local server
+  - stage:
+    displayName: e2e - local server
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Lite
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testSteps:
+        - task: Npm@1
+          displayName: '[end-to-end tests] npm run test:realsvc:report'
+          continueOnError: true
+          env:
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            customCommand: 'run test:realsvc:report':
   # end-to-end tests routerlicious
   - stage:
     displayName: e2e - routerlicious
