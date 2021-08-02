@@ -247,6 +247,8 @@ export class ParallelRequests<T> {
     // (undocumented)
     cancel(): void;
     // (undocumented)
+    get canceled(): boolean;
+    // (undocumented)
     run(concurrency: number): Promise<void>;
     }
 
