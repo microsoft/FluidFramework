@@ -99,6 +99,7 @@ export class OdspSummaryUploadManager {
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";
+            headers["If-Match"] = `fluid:containerid=${parentHandle}`;
 
             const postBody = JSON.stringify(snapshot);
 
