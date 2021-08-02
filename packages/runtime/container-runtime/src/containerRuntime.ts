@@ -896,13 +896,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
+        const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
         const orderedClientCollection = new OrderedClientCollection(
-            this.logger,
+            orderedClientLogger,
             this.context.deltaManager,
             this.context.quorum,
         );
         const orderedClientElectionForSummarizer = new OrderedClientElection(
-            this.logger,
+            orderedClientLogger,
             orderedClientCollection,
             electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
             SummarizerClientElection.isClientEligible,
@@ -910,7 +911,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
             this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
         this.summarizerClientElection = new SummarizerClientElection(
-            this.logger,
+            orderedClientLogger,
             this.summaryCollection,
             orderedClientElectionForSummarizer,
             maxOpsSinceLastSummary,
@@ -918,7 +919,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
-            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+            this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
         if (
             this.runtimeOptions.summaryOptions.generateSummaries !== false
