@@ -19,7 +19,6 @@ import {
     IFluidLoadable,
     IRequest,
     IResponse,
-    IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import {
@@ -35,20 +34,16 @@ import {
     SharedObjectSequence,
     SharedString,
 } from "@fluidframework/sequence";
-import { requestFluidObject, RequestParser, create404Response } from "@fluidframework/runtime-utils";
+import {
+    isContextExisting,
+    RequestParser,
+    create404Response,
+} from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
-
-/**
- * Helper function to retrieve the handle for the default component route
- */
-async function getHandle(runtimeP: Promise<IFluidRouter>): Promise<IFluidHandle> {
-    const component = await requestFluidObject(await runtimeP, "");
-    return component.IFluidLoadable.handle;
-}
 
 export class SharedTextRunner
     extends EventEmitter
@@ -56,9 +51,10 @@ export class SharedTextRunner
     public static async load(
         runtime: FluidDataStoreRuntime,
         context: IFluidDataStoreContext,
+        existing: boolean,
     ): Promise<SharedTextRunner> {
         const runner = new SharedTextRunner(runtime, context);
-        await runner.initialize();
+        await runner.initialize(existing);
 
         return runner;
     }
@@ -111,11 +107,11 @@ export class SharedTextRunner
         }
     }
 
-    private async initialize(): Promise<void> {
-        this.collabDoc = await Document.load(this.runtime);
+    private async initialize(existing: boolean): Promise<void> {
+        this.collabDoc = await Document.load(this.runtime, existing);
         this.rootView = this.collabDoc.getRoot();
 
-        if (!this.runtime.existing) {
+        if (!existing) {
             const insightsMapId = "insights";
 
             const insights = this.collabDoc.createMap(insightsMapId);
@@ -144,11 +140,6 @@ export class SharedTextRunner
                 }
             }
             this.rootView.set("text", newString.handle);
-
-            const containerRuntime = this.context.containerRuntime;
-            const math = await getHandle(containerRuntime.createDataStore("@fluid-example/math"));
-
-            this.rootView.set("math", math);
 
             insights.set(newString.id, this.collabDoc.createMap().handle);
 
@@ -182,7 +173,8 @@ export class SharedTextRunner
             this.collabDoc,
             this.sharedString.id,
             options.translationFromLanguage as string,
-            options.translationToLanguage as string)
+            options.translationToLanguage as string,
+            existing)
             .catch((error) => {
                 console.error("Problem adding translation", error);
             });
@@ -203,7 +195,6 @@ export class SharedTextRunner
         require("bootstrap/dist/css/bootstrap-theme.min.css");
         require("../stylesheets/map.css");
         require("../stylesheets/style.css");
-        require("katex/dist/katex.min.css");
         /* eslint-enable @typescript-eslint/no-require-imports,
         import/no-internal-modules, import/no-unassigned-import */
 
@@ -226,7 +217,8 @@ export class SharedTextRunner
                 this.runtime,
                 this.context,
                 this.rootView,
-                () => { throw new Error("Can't close document"); }),
+                () => { throw new Error("Can't close document"); },
+            ),
             this.sharedString,
             image,
             {});
@@ -285,21 +277,26 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext) {
+export function instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
     const runtimeClass = mixinRequestHandler(
         async (request: IRequest) => {
             const router = await routerP;
             return router.request(request);
         });
 
-    const runtime = new runtimeClass(context, new Map([
-        SharedMap.getFactory(),
-        SharedString.getFactory(),
-        SharedCell.getFactory(),
-        SharedObjectSequence.getFactory(),
-        SharedNumberSequence.getFactory(),
-    ].map((factory) => [factory.type, factory])));
-    const routerP = SharedTextRunner.load(runtime, context);
+    const backCompatExisting = isContextExisting(context, existing);
+    const runtime = new runtimeClass(
+        context,
+        new Map([
+            SharedMap.getFactory(),
+            SharedString.getFactory(),
+            SharedCell.getFactory(),
+            SharedObjectSequence.getFactory(),
+            SharedNumberSequence.getFactory(),
+        ].map((factory) => [factory.type, factory])),
+        backCompatExisting,
+    );
+    const routerP = SharedTextRunner.load(runtime, context, backCompatExisting);
 
     return runtime;
 }

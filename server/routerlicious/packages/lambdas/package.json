@@ -47,12 +47,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.31.0",
+    "@fluidframework/common-utils": "^0.32.0-0",
     "@fluidframework/gitresources": "^0.1028.0",
     "@fluidframework/protocol-base": "^0.1028.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/server-services-client": "^0.1028.0",
     "@fluidframework/server-services-core": "^0.1028.0",
+    "@fluidframework/server-services-telemetry": "^0.1028.0",
     "@types/semver": "^6.0.1",
     "async": "^3.2.0",
     "axios": "^0.21.1",

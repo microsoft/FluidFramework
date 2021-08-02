@@ -9,10 +9,10 @@ const DataArrays = require('./data_array');
 
 
 module.exports = {
-  Collection,
-  SortedCollection,
-  Integer64,
-  Int64,
-  Uint64,
-  DataArrays
+    Collection,
+    SortedCollection,
+    Integer64,
+    Int64,
+    Uint64,
+    DataArrays
 };

@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     BindState,
     AttachState,
     ILoaderOptions,
@@ -26,7 +25,7 @@ import {
     TypedEventEmitter,
 } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { BlobTreeEntry } from "@fluidframework/protocol-base";
 import {
     IClientDetails,
@@ -61,7 +60,12 @@ import {
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    LoggingError,
+    TelemetryDataTag,
+    ThresholdCounter,
+} from "@fluidframework/telemetry-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import {
@@ -71,6 +75,7 @@ import {
     ReadFluidDataStoreAttributes,
     WriteFluidDataStoreAttributes,
     getAttributesFormatVersion,
+    getFluidDataStoreAttributes,
 } from "./summaryFormat";
 
 function createAttributes(
@@ -152,10 +157,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.connected;
     }
 
-    public get loader(): ILoader {
-        return this._containerRuntime.loader;
-    }
-
     public get IFluidHandleContext() {
         return this._containerRuntime.IFluidHandleContext;
     }
@@ -202,6 +203,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     private _baseSnapshot: ISnapshotTree | undefined;
     protected _attachState: AttachState;
     protected readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly subLogger: ITelemetryLogger;
+    private readonly thresholdOpsCounter: ThresholdCounter;
+    private static readonly pendingOpsCountThreshold = 300;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
@@ -221,7 +225,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Thus having slashes in types almost guarantees trouble down the road!
         assert(id.indexOf("/") === -1, 0x13a /* `Data store ID contains slash: ${id}` */);
 
-        this._attachState = this.containerRuntime.attachState !== AttachState.Detached && existing ?
+        this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
@@ -240,6 +244,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => this.getInitialGCSummaryDetails(),
         );
+
+        this.subLogger = ChildLogger.create(this.logger, "FluidDataStoreContext");
+        this.thresholdOpsCounter = new ThresholdCounter(FluidDataStoreContext.pendingOpsCountThreshold, this.subLogger);
     }
 
     public dispose(): void {
@@ -268,7 +275,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
-            this.realizeCore().catch((error) => {
+            this.realizeCore(this.existing).catch((error) => {
                 this.channelDeferred?.reject(CreateProcessingError(error, undefined /* message */));
             });
         }
@@ -303,7 +310,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return { factory, registry };
     }
 
-    private async realizeCore(): Promise<void> {
+    private async realizeCore(existing: boolean): Promise<void> {
         const details = await this.getInitialSnapshotDetails();
         // Base snapshot is the baseline where pending ops are applied to.
         // It is important that this be in sync with the pending ops, and also
@@ -316,7 +323,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         assert(this.registry === undefined, 0x13f /* "datastore context registry is already set" */);
         this.registry = registry;
 
-        const channel = await factory.instantiateDataStore(this);
+        const channel = await factory.instantiateDataStore(this, existing);
         assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
         this.bindRuntime(channel);
     }
@@ -357,7 +364,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return this.channel?.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x142 /* "local store channel is not loaded" */);
-            this.pending?.push(message);
+            assert(this.pending !== undefined, "pending is undefined");
+            this.pending.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }
     }
 
@@ -410,7 +419,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
+            gcData: this.summarizerNode.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
@@ -561,13 +570,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const pending = this.pending!;
 
-            if (pending.length > 0) {
-                // Apply all pending ops
-                for (const op of pending) {
-                    channel.process(op, false, undefined /* localOpMetadata */);
-                }
+            // Apply all pending ops
+            for (const op of pending) {
+                channel.process(op, false, undefined /* localOpMetadata */);
             }
 
+            this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
             this.pending = undefined;
 
             // And now mark the runtime active
@@ -696,7 +704,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
-            // Need to rip through snapshot and use that to populate extraBlobs
+            // Need to get through snapshot and use that to populate extraBlobs
             const attributes =
                 await localReadAndParse<ReadFluidDataStoreAttributes>(tree.blobs[dataStoreAttributesBlobName]);
 
@@ -769,14 +777,14 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     constructor(
         id: string,
-        pkg: Readonly<string[]>,
+        pkg: Readonly<string[]> | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         private readonly snapshotTree: ISnapshotTree | undefined,
-        protected readonly isRootDataStore: boolean,
+        protected isRootDataStore: boolean | undefined,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -831,7 +839,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         // Add GC details to the summary.
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: summarizeResult.gcData,
+            gcData: this.summarizerNode.gcData,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
@@ -848,25 +856,28 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     }
 
     protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
-        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
-        assert(this.isRootDataStore !== undefined,
-            0x153 /* "isRootDataStore should be available in local data store" */);
-
         let snapshot = this.snapshotTree;
+        let attributes: ReadFluidDataStoreAttributes;
         if (snapshot !== undefined) {
+            // Get the dataStore attributes.
             // Note: storage can be undefined in special case while detached.
-            const attributes = this.storage !== undefined
-                ? await readAndParse<ReadFluidDataStoreAttributes>(
-                    this.storage, snapshot.blobs[dataStoreAttributesBlobName])
-                : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-                    snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
-
+            attributes = await getFluidDataStoreAttributes(this.storage, snapshot);
             if (hasIsolatedChannels(attributes)) {
                 snapshot = snapshot.trees[channelsTreeName];
                 assert(snapshot !== undefined,
                     0x1ff /* "isolated channels subtree should exist in local datastore snapshot" */);
             }
+            if (this.pkg === undefined) {
+                this.pkg = JSON.parse(attributes.pkg) as string[];
+                // If there is no isRootDataStore in the attributes blob, set it to true. This ensures that data
+                // stores in older documents are not garbage collected incorrectly. This may lead to additional
+                // roots in the document but they won't break.
+                this.isRootDataStore = attributes.isRootDataStore ?? true;
+            }
         }
+        assert(this.pkg !== undefined, 0x152 /* "pkg should be available in local data store" */);
+        assert(this.isRootDataStore !== undefined,
+            0x153 /* "isRootDataStore should be available in local data store" */);
 
         return {
             pkg: this.pkg,
@@ -890,14 +901,14 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
     constructor(
         id: string,
-        pkg: string[],
+        pkg: string[] | undefined,
         runtime: ContainerRuntime,
         storage: IDocumentStorageService,
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
         snapshotTree: ISnapshotTree | undefined,
-        isRootDataStore: boolean,
+        isRootDataStore: boolean | undefined,
         /**
          * @deprecated 0.16 Issue #1635, #3631
          */
@@ -935,7 +946,6 @@ export class LocalDetachedFluidDataStoreContext
         scope: IFluidObject & IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,
         bindChannel: (channel: IFluidDataStoreChannel) => void,
-        snapshotTree: ISnapshotTree | undefined,
         isRootDataStore: boolean,
     ) {
         super(
@@ -946,7 +956,7 @@ export class LocalDetachedFluidDataStoreContext
             scope,
             createSummarizerNode,
             bindChannel,
-            snapshotTree,
+            undefined,
             isRootDataStore,
         );
         this.detachedRuntimeCreation = true;

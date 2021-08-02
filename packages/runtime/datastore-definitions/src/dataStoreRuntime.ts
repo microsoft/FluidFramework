@@ -14,7 +14,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -64,15 +63,7 @@ export interface IFluidDataStoreRuntime extends
 
     readonly documentId: string;
 
-    readonly existing: boolean;
-
     readonly connected: boolean;
-
-    /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    readonly loader: ILoader;
 
     readonly logger: ITelemetryLogger;
 

@@ -16,7 +16,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -253,7 +252,7 @@ export interface IFluidDataStoreContext extends
      */
     readonly packagePath: readonly string[];
     /**
-     * TODO: should remove after detachedNew is in place
+     * @deprecated #6346
      */
     readonly existing: boolean;
     readonly options: ILoaderOptions;
@@ -264,11 +263,6 @@ export interface IFluidDataStoreContext extends
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
-    /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.
      */
