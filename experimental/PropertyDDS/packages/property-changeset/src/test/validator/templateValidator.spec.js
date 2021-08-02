@@ -208,7 +208,7 @@
                 });
 
                 it("fail: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties[0].value = 123456;
 
@@ -361,7 +361,7 @@
                 });
 
                 it("warn: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties[0].value = 123456;
@@ -508,7 +508,7 @@
                 });
 
                 it("pass: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties[0].value = 123456;
@@ -653,7 +653,7 @@
                 });
 
                 it("pass: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
+                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
                     var template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties[0].value = 123456;
@@ -788,7 +788,7 @@
             });
 
             it('fail: changed value', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUiBorder')));
+                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
                 var template = JSON.parse(JSON.stringify(templatePrevious));
                 template.properties[0].properties[0].value = 123456;
 
