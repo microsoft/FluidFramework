@@ -6,7 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions";
 import {
     IClient,
     IConnect,
@@ -182,7 +182,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         url: string,
         telemetryLogger: ITelemetryLogger,
         timeoutMs: number,
-        epochTracker: EpochTracker): Promise<IDocumentDeltaConnection>
+        epochTracker: EpochTracker): Promise<OdspDocumentDeltaConnection>
     {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
@@ -244,6 +244,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     private socketReference: SocketReference | undefined;
+    private readonly requestOpsNoncePrefix: string;
 
     /**
      * Error raising for socket.io issues
@@ -309,6 +310,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
+        this.requestOpsNoncePrefix = `${this.documentId}-`;
+    }
+
+    public requestOps(from: number, to: number) {
+        this.socket.emit("get_ops", this.clientId, {
+            nonce: `${this.requestOpsNoncePrefix}${uuid()}`,
+            from,
+            to,
+        });
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -320,6 +330,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 }
             };
         }
+
+        this.socket.on("get_ops_response", (result) => {
+            const messages = result.messages as ISequencedDocumentMessage[];
+            if ((result.nonce as string).startsWith(this.requestOpsNoncePrefix) && messages.length > 0) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "GetOps",
+                    first: messages[0].sequenceNumber,
+                    last: messages[messages.length - 1].sequenceNumber,
+                    code: result.code,
+                    length: messages.length,
+                });
+                this.socket.emit("op", this.documentId, messages);
+            }
+        });
 
         return super.initialize(connectMessage, timeout);
     }
