@@ -35,9 +35,13 @@ import {
     IPartitionLambda,
     INackMessagesControlMessageContents,
 } from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties, CommonProperties,
+import {
+    BaseTelemetryProperties,
+    CommonProperties,
     Lumber,
-    LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+    LumberEventName,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { setQueuedMessageProperties } from "../utils";
