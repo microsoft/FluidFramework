@@ -14,7 +14,8 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
-import { isILoggingError, generateStack, normalizeError } from "./errorLogging";
+import { normalizeError } from "./errorLogging";
+import { IFluidErrorBase } from "./fluidErrorBase";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -67,72 +68,63 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
     /**
      * Take an unknown error object and add the appropriate info from it to the event
-     * NOTE - message and stack will be copied over from the error object,
-     * along with other telemetry properties if it's an ILoggingError
      * @param event - Event being logged
      * @param error - Error to extract info from
-     * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: unknown, fetchStack: boolean) {
-        const { message, errorType, fluidErrorCode, stack, name} = normalizeError(error);
-        // First, copy over error message, stack, and errorType directly (overwrite if present on event)
-        event.stack = TelemetryLogger.removeMessageFromStack(stack, name);
-        event.error = message; // Note that the error message goes on the 'error' field
-        event.errorType = errorType;
-        event.fluidErrorcode = fluidErrorCode;
+    public static prepareErrorObject(event: ITelemetryBaseEvent, error: unknown) {
+        const normalizedError = normalizeError(error);
 
-        if (isILoggingError(error)) {
-            // Add any other telemetry properties from the LoggingError
-            const taggableProps = error.getTelemetryProperties();
-            for (const key of Object.keys(taggableProps)) {
-                if (event[key] !== undefined) {
-                    // Don't overwrite existing properties on the event
-                    continue;
-                }
-                const taggableProp = taggableProps[key];
-                const { value, tag } = (typeof taggableProp === "object")
-                    ? taggableProp
-                    : { value: taggableProp, tag: undefined };
-                switch (tag) {
-                    case undefined:
-                        // No tag means we can log plainly
-                        event[key] = value;
-                        break;
-                    case TelemetryDataTag.PackageData:
-                        // For Microsoft applications, PackageData is safe for now
-                        // (we don't load 3P code in 1P apps)
-                        // But this determination really belongs in the host layer
-                        event[key] = value;
-                        break;
-                    case TelemetryDataTag.UserData:
-                        // Strip out anything tagged explicitly as PII.
-                        // Alternate strategy would be to hash these props
-                        event[key] = "REDACTED (UserData)";
-                        break;
-                    default:
-                        // If we encounter a tag we don't recognize
-                        // then we must assume we should scrub.
-                        event[key] = "REDACTED (unknown tag)";
-                        break;
-                }
+        // These key error props should override info of the same name that may have been set on the event
+        event.error = normalizedError.message; // Note the new key 'error' (not 'message')
+        event.stack = TelemetryLogger.getSafeStack(normalizedError);
+        event.errorType = normalizedError.errorType;
+        event.fluidErrorcode = normalizedError.fluidErrorCode;
+
+        // Add any other telemetry properties from the LoggingError
+        const taggableProps = normalizedError.getTelemetryProperties();
+        for (const key of Object.keys(taggableProps)) {
+            if (event[key] !== undefined) {
+                // Don't overwrite existing properties on the event
+                continue;
             }
-        }
-
-        // Collect stack if we were not able to extract it from error
-        if (event.stack === undefined && fetchStack) {
-            event.stack = generateStack();
+            const taggableProp = taggableProps[key];
+            const { value, tag } = (typeof taggableProp === "object")
+                ? taggableProp
+                : { value: taggableProp, tag: undefined };
+            switch (tag) {
+                case undefined:
+                    // No tag means we can log plainly
+                    event[key] = value;
+                    break;
+                case TelemetryDataTag.PackageData:
+                    // For Microsoft applications, PackageData is safe for now
+                    // (we don't load 3P code in 1P apps)
+                    // But this determination really belongs in the host layer
+                    event[key] = value;
+                    break;
+                case TelemetryDataTag.UserData:
+                    // Strip out anything tagged explicitly as PII.
+                    // Alternate strategy would be to hash these props
+                    event[key] = "REDACTED (UserData)";
+                    break;
+                default:
+                    // If we encounter a tag we don't recognize
+                    // then we must assume we should scrub.
+                    event[key] = "REDACTED (unknown tag)";
+                    break;
+            }
         }
     }
 
     /** Removes the message from the stack trace, making some assumptions about the format of the stack string */
-    private static removeMessageFromStack(stack: string | undefined, errorName: string | undefined) {
-        if (stack === undefined) {
-            return undefined;
+    private static getSafeStack(error: IFluidErrorBase) {
+        if (error.stack === undefined || !error.stack.includes(error.message)) {
+            return error.stack;
         }
-        const stackFrames = stack.split("\n");
+        const stackFrames = error.stack.split("\n");
         stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
+        if (error.name !== undefined) {
+            stackFrames.unshift(error.name); // Add "[ErrorName]"
         }
         return stackFrames.join("\n");
     }
@@ -161,7 +153,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             category: event.category ?? (error === undefined ?  "generic" : "error"),
         };
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, false);
+            TelemetryLogger.prepareErrorObject(newEvent, error);
         }
         this.send(newEvent);
     }
@@ -188,7 +180,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             category: event.category ? event.category : "performance",
         };
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(perfEvent, error, false);
+            TelemetryLogger.prepareErrorObject(perfEvent, error);
         }
 
         if (event.duration) {

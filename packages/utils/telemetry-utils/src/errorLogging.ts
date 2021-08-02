@@ -43,9 +43,13 @@ export interface IFluidErrorAnnotations {
     errorCodeIfNone?: string;
 }
 
-/** Simplest possible implementation of IFluidErrorBase */
+/**
+ * Simplest possible implementation of IFluidErrorBase.
+ * Doesn't extend Error and telemetry props are held separate from own properties,
+ * in contrast to LoggingError.
+ */
 class SimpleFluidError implements IFluidErrorBase {
-    private readonly telemetryProps: ITelemetryProperties = {};
+    private readonly addedTelemetryProps: ITelemetryProperties = {};
 
     readonly errorType: string;
     readonly fluidErrorCode: string;
@@ -62,8 +66,9 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 
     getTelemetryProperties(): ITelemetryProperties {
+        // IFluidErrorBase members get added after addedTelemetryProps to ensure precedence for logging
         const props: ITelemetryProperties = {
-            ...this.telemetryProps,
+            ...this.addedTelemetryProps,
             errorType: this.errorType,
             fluidErrorCode: this.fluidErrorCode,
             message: this.message,
@@ -78,7 +83,7 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(this.telemetryProps, props);
+        copyProps(this.addedTelemetryProps, props);
     }
 }
 
