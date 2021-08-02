@@ -7,7 +7,7 @@ import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidf
 import { MultiDocumentServiceFactory } from "@fluidframework/driver-utils";
 import { LocalDocumentServiceFactory, LocalSessionStorageDbFactory } from "@fluidframework/local-driver";
 import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { IPersistedCache } from "@fluidframework/odsp-driver-definitions";
+import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
@@ -20,6 +20,7 @@ export function getDocumentServiceFactory(
     documentId: string,
     options: RouteOptions,
     odspPersistantCache: IPersistedCache,
+    odspHostStoragePolicy?: HostStoragePolicy,
 ) {
     const deltaConn = deltaConns.get(documentId) ??
         LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory(documentId));
@@ -50,6 +51,7 @@ export function getDocumentServiceFactory(
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.odspAccessToken : undefined,
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
             odspPersistantCache,
+            odspHostStoragePolicy,
         ),
         new RouterliciousDocumentServiceFactory(routerliciousTokenProvider),
     ]);

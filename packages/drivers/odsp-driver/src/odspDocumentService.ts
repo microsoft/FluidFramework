@@ -176,9 +176,12 @@ export class OdspDocumentService implements IDocumentService {
         // batch size, please see issue #5211 for data around batch sizing
         const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
-
+        const messages: ISequencedDocumentMessage[] = [];
+        for (const op of snapshotOps) {
+            messages.push((op as any).op ?? op);
+        }
         return new OdspDeltaStorageWithCache(
-            snapshotOps.map((op) => op.op),
+            messages,
             this.logger,
             batchSize,
             concurrency,

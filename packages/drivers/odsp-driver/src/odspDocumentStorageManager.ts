@@ -54,6 +54,22 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
     });
 }
 
+// Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
+function gatesBinaryFormatSnapshot() {
+    try {
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.binaryFormatSnapshot === "1") {
+                return true;
+            }
+            if  (localStorage.binaryFormatSnapshot === "0") {
+                return false;
+            }
+        }
+    } catch (e) {}
+
+    return true;
+}
+
 class BlobCache {
     // Save the timeout so we can cancel and reschedule it as needed
     private blobCacheTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -175,7 +191,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
-    private _ops: ISequencedDeltaOpMessage[] | undefined;
+    private _ops: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[] | undefined;
 
     private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
@@ -198,12 +214,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly blobCache = new BlobCache();
 
-    public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
+    public set ops(ops: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
         this._ops = ops;
     }
 
-    public get ops(): ISequencedDeltaOpMessage[] | undefined {
+    public get ops(): ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[] | undefined {
         return this._ops;
     }
 
@@ -225,6 +241,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
         this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
+        this.hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
     }
 
     public get repositoryUrl(): string {
@@ -534,12 +551,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         }
 
         const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-            return this.epochTracker.fetchAndParseAsJSON(
-                url,
-                fetchOptions,
-                "treesLatest",
-                true,
-            );
+            if (this.hostPolicy.fetchBinarySnapshotFormat) {
+                return this.epochTracker.fetchArray(
+                    url,
+                    fetchOptions,
+                    "treesLatest",
+                );
+            } else {
+                return this.epochTracker.fetchAndParseAsJSON(
+                    url,
+                    fetchOptions,
+                    "treesLatest",
+                    true,
+                );
+            }
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
             return this.cache.persistedCache.put(
@@ -558,7 +583,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 snapshotDownloader,
                 putInCache,
                 removeEntries,
-                this.hostPolicy.enableRedeemFallback);
+                this.hostPolicy.enableRedeemFallback,
+                this.hostPolicy.fetchBinarySnapshotFormat);
             return odspSnapshot;
         } catch (error) {
             const errorType = error.errorType;
@@ -581,7 +607,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     snapshotDownloader,
                     putInCache,
                     removeEntries,
-                    this.hostPolicy.enableRedeemFallback);
+                    this.hostPolicy.enableRedeemFallback,
+                    this.hostPolicy.fetchBinarySnapshotFormat);
                 return odspSnapshot;
             }
             throw error;

@@ -17,6 +17,7 @@ import {
     createCacheSnapshotKey,
     createOdspLogger,
     fetchAndParseAsJSONHelper,
+    fetchArray,
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
@@ -44,6 +45,7 @@ export async function prefetchLatestSnapshot(
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
     enableRedeemFallback?: boolean,
+    fetchBinarySnapshotFormat?: boolean,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -56,10 +58,17 @@ export async function prefetchLatestSnapshot(
     );
 
     const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-        return fetchAndParseAsJSONHelper(
-            url,
-            fetchOptions,
-        );
+        if (fetchBinarySnapshotFormat) {
+            return fetchArray(
+                url,
+                fetchOptions,
+            );
+        } else {
+            return fetchAndParseAsJSONHelper(
+                url,
+                fetchOptions,
+            );
+        }
     };
     const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
@@ -84,6 +93,7 @@ export async function prefetchLatestSnapshot(
                     putInCache,
                     removeEntries,
                     enableRedeemFallback,
+                    fetchBinarySnapshotFormat,
                 );
             assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;

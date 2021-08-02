@@ -7,7 +7,7 @@ import { ITelemetryProperties, ITelemetryBaseLogger, ITelemetryLogger } from "@f
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import { isOnline, OnlineStatus } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
@@ -41,7 +41,7 @@ export const getOrigin = (url: string) => new URL(url).origin;
 export interface ISnapshotContents {
     snapshotTree: ISnapshotTree,
     blobs: Map<string, ArrayBuffer>,
-    ops: ISequencedDeltaOpMessage[],
+    ops: ISequencedDeltaOpMessage[] | ISequencedDocumentMessage[],
     sequenceNumber: number | undefined,
 }
 
