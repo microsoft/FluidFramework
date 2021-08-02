@@ -6,6 +6,7 @@
 
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -55,6 +56,15 @@ export class GenericError extends LoggingError implements IGenericError {
     readonly error?: any;
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
+}
+
+// @public
+export class InvalidOperationError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string);
+    // (undocumented)
+    readonly errorType = "invalidOperationError";
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public

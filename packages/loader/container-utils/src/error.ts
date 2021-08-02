@@ -16,6 +16,7 @@ import {
     LoggingError,
     IWriteableLoggingError,
     isValidLegacyError,
+    IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -39,6 +40,18 @@ export class GenericError extends LoggingError implements IGenericError {
     ) {
         // Don't try to log the inner error
         super(errorMessage, props, new Set(["error"]));
+    }
+}
+
+// TODO: implement IInvalidOperationError once available
+/** Error indicating an invalid operation was attempted on the Container. */
+export class InvalidOperationError extends LoggingError implements IFluidErrorBase {
+    readonly errorType = "invalidOperationError";
+
+    constructor(
+        readonly fluidErrorCode: string,
+    ) {
+        super(fluidErrorCode, { usageError: true });
     }
 }
 

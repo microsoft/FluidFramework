@@ -26,7 +26,12 @@ export enum ContainerErrorType {
      * Error encountered when processing an operation. May correlate with data corruption.
      */
     dataProcessingError = "dataProcessingError",
-}
+
+    /**
+     * Error indicating an invalid operation was attempted on the Container.
+     */
+     invalidOperationError = "invalidOperationError",
+    }
 
 /**
  * Base interface for all errors and warnings at container level
@@ -63,6 +68,13 @@ export type ICriticalContainerError = IErrorBase;
 export interface IGenericError extends IErrorBase {
     readonly errorType: ContainerErrorType.genericError;
     error?: any;
+}
+
+/**
+ * Error indicating an invalid operation was attempted on the Container.
+ */
+ export interface IInvalidOperationError extends IErrorBase {
+    readonly errorType: ContainerErrorType.invalidOperationError;
 }
 
 /**
