@@ -205,7 +205,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
-    private static readonly pendingOpsCountThreshold = 300;
+    private static readonly pendingOpsCountThreshold = 1000;
 
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
