@@ -41,7 +41,7 @@ stages
           inputs:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-            customCommand: 'run test:realsvc:report':
+            customCommand: 'run test:realsvc:report'
   # end-to-end tests routerlicious
   - stage:
     displayName: e2e - routerlicious
