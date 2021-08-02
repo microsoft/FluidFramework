@@ -82,13 +82,13 @@
     "debug": "^4.1.1"
   },
   "devDependencies": {
+    "@fluid-tools/webpack-fluid-loader": "^0.45.0",
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.45.0",
     "@fluidframework/runtime-utils": "^0.45.0",
     "@fluidframework/test-utils": "^0.45.0",
     "@fluidframework/test-version-utils": "^0.45.0",
-    "@fluidframework/webpack-fluid-loader": "^0.45.0",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
