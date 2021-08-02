@@ -26,7 +26,7 @@ Previously the `@fluidframework/common-utils` package exposed a `setInsecureCont
 - The `createDataObject` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
 
 ### `webpack-fluid-loader` package name changed
-The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is intended as an example tool not for use in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
+The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
