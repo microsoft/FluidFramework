@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
@@ -205,25 +204,26 @@ class ContainerUrlResolver implements IUrlResolver {
     }
 }
 
-export async function loadContainer(
+export const resolveUrl = (documentName: string): IFluidResolvedUrl => ({
+    endpoints: {
+        deltaStorageUrl: "example.com",
+        ordererUrl: "example.com",
+        storageUrl: "example.com",
+    },
+    id: documentName,
+    tokens: {},
+    type: "fluid",
+    url: `fluid-file://localhost:6000/fluid/${documentName}`,
+});
+
+function getLoader(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
     logger?: TelemetryLogger,
-): Promise<Container> {
-    const resolved: IFluidResolvedUrl = {
-        endpoints: {
-            deltaStorageUrl: "example.com",
-            ordererUrl: "example.com",
-            storageUrl: "example.com",
-        },
-        id: documentName,
-        tokens: {},
-        type: "fluid",
-        url: `fluid-file://localhost:6000/fluid/${documentName}`,
-    };
-
+): Loader {
+    const resolvedUrl = resolveUrl(documentName);
     const urlResolver = new ContainerUrlResolver(
-        new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
+        new Map<string, IResolvedUrl>([[resolvedUrl.url, resolvedUrl]]));
     const chaincode = new API.Chaincode(
         () => { throw new Error("Can't close Document"); },
         mixinDataStoreWithAnyChannel());
@@ -260,26 +260,40 @@ export async function loadContainer(
 
     const options = {};
 
-    // Load the Fluid document
-    const loader = new Loader({
+    return new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
         options,
         logger,
     });
-
-    return loader.resolve(
-        {
-            url: resolved.url,
-            headers: {
-                [LoaderHeader.clientDetails]: {
-                    // #6346
-                    // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
-                    // from `@fluidframework/container-loader`
-                    environment: `replay enable-legacy-create-on-load`,
-                    capabilities: { interactive: false },
-                },
-            },
-        });
 }
+
+export async function createContainer(
+    documentServiceFactory: IDocumentServiceFactory,
+    documentName: string,
+    logger?: TelemetryLogger,
+): Promise<Container> {
+    const loader = getLoader(
+        documentServiceFactory,
+        documentName,
+        logger,
+    );
+
+    const container = await loader.createDetachedContainer({
+        package: "no-dynamic-package",
+        config: {},
+    });
+    await container.attach({ url: resolveUrl(documentName).url });
+    return container;
+}
+
+export const loadContainer = async (
+    documentServiceFactory: IDocumentServiceFactory,
+    documentName: string,
+    logger?: TelemetryLogger,
+): Promise<Container> => getLoader(
+        documentServiceFactory,
+        documentName,
+        logger,
+    ).resolve({ url: resolveUrl(documentName).url });

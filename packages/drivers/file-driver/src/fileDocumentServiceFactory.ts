@@ -8,10 +8,13 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
+    IFluidResolvedUrl,
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { assert } from "@fluidframework/common-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
 import { FileDocumentService } from "./fileDocumentService";
 
@@ -24,7 +27,9 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(
         private readonly storage: IDocumentStorageService,
         private readonly deltaStorage: FileDeltaStorageService,
-        private readonly deltaConnection: IDocumentDeltaConnection) {
+        private readonly deltaConnection: IDocumentDeltaConnection,
+        private readonly resolvedUrl: IFluidResolvedUrl,
+    ) {
     }
 
     /**
@@ -37,15 +42,16 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
         fileURL: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection);
+        return new FileDocumentService(this.storage, this.deltaStorage, this.deltaConnection, this.resolvedUrl);
     }
 
-    // TODO: Issue-2109 Implement detach container api or put appropriate comment.
     public async createContainer(
         createNewSummary: ISummaryTree,
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        throw new Error("Not implemented");
+        ensureFluidResolvedUrl(resolvedUrl);
+        assert(!!createNewSummary, "create empty file not supported");
+        return this.createDocumentService(resolvedUrl, logger);
     }
 }

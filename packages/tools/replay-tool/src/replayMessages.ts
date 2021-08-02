@@ -9,6 +9,7 @@ import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { Container } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
     FileDeltaStorageService,
@@ -30,7 +31,13 @@ import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
-import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "./helpers";
+import {
+    compareWithReferenceSnapshot,
+    createContainer,
+    getNormalizedFileSnapshot,
+    loadContainer,
+    resolveUrl,
+} from "./helpers";
 import { ReplayArgs } from "./replayArgs";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
@@ -178,20 +185,43 @@ class Document {
         this.snapshotFileName = `${this.snapshotFileName}${suffix}`;
     }
 
+    public async create(
+        deltaStorageService: FileDeltaStorageService,
+        errorHandler: (event: ITelemetryBaseEvent) => boolean,
+    ) {
+        return this.setupContainer(deltaStorageService, errorHandler, createContainer);
+    }
+
     public async load(
         deltaStorageService: FileDeltaStorageService,
-        errorHandler: (event: ITelemetryBaseEvent) => boolean) {
+        errorHandler: (event: ITelemetryBaseEvent) => boolean,
+    ) {
+        return this.setupContainer(deltaStorageService, errorHandler, loadContainer);
+    }
+
+    private async setupContainer(
+        deltaStorageService: FileDeltaStorageService,
+        errorHandler: (event: ITelemetryBaseEvent) => boolean,
+        containerProvider: (
+            documentServiceFactory: IDocumentServiceFactory,
+            documentName: string,
+            logger?: TelemetryLogger,
+        ) => Promise<Container>,
+    ) {
         const deltaConnection = await ReplayFileDeltaConnection.create(deltaStorageService);
         const documentServiceFactory = new FileDocumentServiceFactory(
             this.storage,
             deltaStorageService,
-            deltaConnection);
+            deltaConnection,
+            resolveUrl(FileStorageDocumentName),
+        );
 
         this.docLogger = ChildLogger.create(new Logger(this.containerDescription, errorHandler));
-        this.container = await loadContainer(
+        this.container = await containerProvider(
             documentServiceFactory,
             FileStorageDocumentName,
-            this.docLogger);
+            this.docLogger,
+        );
 
         this.from = this.container.deltaManager.lastSequenceNumber;
         this.replayer = deltaConnection.getReplayer();
@@ -352,6 +382,13 @@ export class ReplayTool {
             (event) => this.errorHandler(event));
     }
 
+    // eslint-disable-next-line @typescript-eslint/promise-function-async
+    private createDoc(doc: Document) {
+        return doc.create(
+            this.deltaStorageService,
+            (event) => this.errorHandler(event));
+    }
+
     private async setup() {
         if (this.args.inDirName === undefined) {
             return Promise.reject(new Error("Please provide --indir argument"));
@@ -379,7 +416,7 @@ export class ReplayTool {
                                 JSON.parse(fs.readFileSync(`${dir}/${file}`).toString("utf-8")).sequenceNumber <= 1) {
                                 this.args.fromVersion = name;
                             }
-                        } catch (err) {}
+                        } catch (err) { }
                     }
                     if (this.args.fromVersion === undefined) {
                         // eslint-disable-next-line max-len
@@ -392,7 +429,7 @@ export class ReplayTool {
         this.storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
         let description = this.args.fromVersion ? this.args.fromVersion : "main container";
         this.mainDocument = new Document(this.args, this.storage, description);
-        await this.loadDoc(this.mainDocument);
+        await this.createDoc(this.mainDocument);
         this.documents.push(this.mainDocument);
         if (this.args.from < this.mainDocument.fromOp) {
             this.args.from = this.mainDocument.fromOp;
@@ -433,7 +470,7 @@ export class ReplayTool {
 
                 const doc = new Document(this.args, storage, node.name);
                 try {
-                    await this.loadDoc(doc);
+                    await this.createDoc(doc);
                     doc.appendToFileName(`_storage_${node.name}`);
 
                     if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
@@ -456,7 +493,7 @@ export class ReplayTool {
             const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, this.args.fromVersion);
             description = this.args.fromVersion ? this.args.fromVersion : "secondary container";
             this.documentNeverSnapshot = new Document(this.args, storage, description);
-            await this.loadDoc(
+            await this.createDoc(
                 this.documentNeverSnapshot);
             this.documentNeverSnapshot.appendToFileName("_noSnapshots");
             this.documents.push(this.documentNeverSnapshot);
@@ -482,7 +519,7 @@ export class ReplayTool {
                 const storage = new FluidFetchReaderFileSnapshotWriter(this.args.inDirName, node.name);
                 const doc = new Document(this.args, storage, node.name);
                 try {
-                    await this.loadDoc(doc);
+                    await this.createDoc(doc);
                     doc.appendToFileName(`_storage_${node.name}`);
 
                     if (doc.fromOp < this.args.from || this.args.to < doc.fromOp) {
