@@ -379,7 +379,7 @@ export class ScribeLambda implements IPartitionLambda {
 
         if (lumberJackMetric) {
             this.setScribeStateMetrics(checkpoint, lumberJackMetric);
-            lumberJackMetric?.success(`Message processed successfully 
+            lumberJackMetric.success(`Message processed successfully 
                 at seq no ${checkpoint.sequenceNumber}`);
         }
     }
