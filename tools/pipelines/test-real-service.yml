@@ -22,7 +22,7 @@ variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 
-stages
+stages:
   # end-to-end tests local server
   - stage:
     displayName: e2e - local server
