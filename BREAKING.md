@@ -5,6 +5,7 @@
 - [Changes to PureDataObject](#changes-to-PureDataObject)
 - [Changes to DataObject](#changes-to-DataObject)
 - [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
+- [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
 
 ### Changes to local testing in insecure environments
 Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.
@@ -23,6 +24,9 @@ Previously the `@fluidframework/common-utils` package exposed a `setInsecureCont
 
 ### Changes to PureDataObjectFactory
 - The `createDataObject` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### `webpack-fluid-loader` package name changed
+The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is intended as an example tool not for use in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

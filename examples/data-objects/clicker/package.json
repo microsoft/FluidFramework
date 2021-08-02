@@ -50,7 +50,7 @@
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/webpack-fluid-loader": "^0.45.0",
+    "@fluid-tools/webpack-fluid-loader": "^0.45.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/jest": "22.2.3",
     "@types/jest-environment-puppeteer": "2.2.0",

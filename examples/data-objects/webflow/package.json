@@ -88,7 +88,7 @@
     "@fluidframework/runtime-utils": "^0.45.0",
     "@fluidframework/test-utils": "^0.45.0",
     "@fluidframework/test-version-utils": "^0.45.0",
-    "@fluidframework/webpack-fluid-loader": "^0.45.0",
+    "@fluid-tools/webpack-fluid-loader": "^0.45.0",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
