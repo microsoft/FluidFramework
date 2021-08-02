@@ -10,21 +10,8 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { SharedTreeSummaryWriteFormat } from '../generic';
+import { SharedTreeFactoryOptions } from '../generic';
 import { SharedTree } from './SharedTree';
-
-/**
- * Options for configuring a SharedTreeFactory.
- * @public
- */
-export interface SharedTreeFactoryOptions {
-	/** If false, does not include history in summaries. */
-	readonly summarizeHistory?: boolean;
-	/** Determines the summary format version to write, 0.0.2 by default. */
-	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
-	/** If true, edit chunks are uploaded as blobs when they become full. */
-	readonly uploadEditChunks?: boolean;
-}
 
 /**
  * Factory for SharedTree.

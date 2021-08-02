@@ -292,8 +292,8 @@ async function setUpLocalServerTestSharedTreeGeneric<
 >(
 	factoryGetter: (
 		summarizeHistory?: boolean,
-		uploadEditChunks?: boolean,
-		writeSummaryFormat?: SharedTreeSummaryWriteFormat
+		writeSummaryFormat?: SharedTreeSummaryWriteFormat,
+		uploadEditChunks?: boolean
 	) => TSharedTreeFactory,
 	options: LocalServerSharedTreeTestingOptions
 ): Promise<LocalServerSharedTreeTestingComponents<TSharedTree>> {
@@ -306,8 +306,8 @@ async function setUpLocalServerTestSharedTreeGeneric<
 			treeId,
 			factoryGetter(
 				summarizeHistory,
-				uploadEditChunks === undefined ? true : uploadEditChunks,
-				writeSummaryFormat
+				writeSummaryFormat,
+				uploadEditChunks === undefined ? true : uploadEditChunks
 			),
 		],
 	];

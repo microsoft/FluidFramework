@@ -10,18 +10,8 @@ import {
 	IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { SharedTreeFactoryOptions } from '../generic';
 import { SharedTreeWithAnchors } from './SharedTreeWithAnchors';
-
-/**
- * Options for configuring a SharedTreeWithAnchorsFactory.
- * @public
- */
-export interface SharedTreeWithAnchorsFactoryOptions {
-	/** If false, does not include history in summaries. */
-	readonly summarizeHistory?: boolean;
-	/** If true, edit chunks are uploaded as blobs when they become full. */
-	readonly uploadEditChunks?: boolean;
-}
 
 /**
  * Factory for SharedTreeWithAnchors.
@@ -46,7 +36,7 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 	/**
 	 * @param options - Options for configuring the SharedTreeWithAnchorsFactory
 	 */
-	constructor(private readonly options: SharedTreeWithAnchorsFactoryOptions = {}) {}
+	constructor(private readonly options: SharedTreeFactoryOptions = {}) {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
@@ -87,6 +77,7 @@ export class SharedTreeWithAnchorsFactory implements IChannelFactory {
 			id,
 			expensiveValidation,
 			this.options.summarizeHistory,
+			this.options.writeSummaryFormat,
 			this.options.uploadEditChunks
 		);
 		sharedTree.initializeLocal();

@@ -12,6 +12,7 @@ export {
 	GenericSharedTree,
 	SharedTreeEvent,
 	SharedTreeDiagnosticEvent,
+	SharedTreeFactoryOptions,
 	SharedTreeSummaryWriteFormat,
 } from './GenericSharedTree';
 export {
@@ -40,3 +41,8 @@ export {
 	formatVersion,
 	serialize,
 } from './Summary';
+
+/**
+ * TODO:#61413: Publish test utilities from a separate test package
+ */
+export { saveUploadedEditChunkContents, UploadedEditChunkContents } from './SummaryTestUtilities';

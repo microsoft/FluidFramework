@@ -34,7 +34,10 @@
 							{
 								"destination": {
 									"side": 0,
-									"referenceSibling": "a083857d-a8e1-447a-ba7c-92fd0be9db2b"
+									"referenceTrait": {
+										"parent": "24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6",
+										"label": "a083857d-a8e1-447a-ba7c-92fd0be9db2b"
+									}
 								},
 								"source": 0,
 								"type": 0
@@ -42,86 +45,30 @@
 						]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 1, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 2, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 3, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 4, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 5, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 6, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 7, "type": 3 }]
 					},
 					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
+						"changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 8, "type": 3 }]
 					},
-					{
-						"changes": [
-							{
-								"nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f",
-								"payload": { "base64": "dGVzdA==" },
-								"type": 3
-							}
-						]
-					}
+					{ "changes": [{ "nodeToModify": "ae6b24eb-6fa8-42cc-abd2-48f250b7798f", "payload": 9, "type": 3 }] }
 				]
 			}
 		],

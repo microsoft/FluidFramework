@@ -41,6 +41,7 @@ function createEditLogWithHandles(
 
 	const handles: EditHandle[] = editChunks.map((chunk) => {
 		return {
+			absolutePath: 'test blob',
 			get: async () => {
 				return IsoBuffer.from(JSON.stringify({ edits: chunk }));
 			},

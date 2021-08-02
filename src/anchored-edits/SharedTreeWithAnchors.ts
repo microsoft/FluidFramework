@@ -6,9 +6,16 @@
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { EditId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
-import { Edit, BuildNode, fullHistorySummarizer, GenericSharedTree, NodeData, SharedTreeSummaryBase } from '../generic';
+import {
+	Edit,
+	BuildNode,
+	GenericSharedTree,
+	NodeData,
+	SharedTreeSummaryBase,
+	SharedTreeSummaryWriteFormat,
+} from '../generic';
 import { OrderedEditSet } from '../EditLog';
-import { noHistorySummarizer, revert } from '../default-edits';
+import { getSummaryByVersion, revert } from '../default-edits';
 import {
 	AnchoredChange,
 	AnchoredDelete,
@@ -145,11 +152,17 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 
 	/**
 	 * Get a factory for SharedTreeWithAnchors to register with the data store.
-	 * @param historySummarizing - determines how history is summarized by the returned `SharedTreeWithAnchors`.
+	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 * @returns A factory that creates `SharedTreeWithAnchors`s and loads them from storage.
 	 */
-	public static getFactory(summarizeHistory = true, uploadEditChunks = false): SharedTreeWithAnchorsFactory {
-		return new SharedTreeWithAnchorsFactory({ summarizeHistory, uploadEditChunks });
+	public static getFactory(
+		summarizeHistory = true,
+		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		uploadEditChunks = false
+	): SharedTreeWithAnchorsFactory {
+		return new SharedTreeWithAnchorsFactory({ summarizeHistory, writeSummaryFormat, uploadEditChunks });
 	}
 
 	/**
@@ -158,6 +171,7 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 	 * @param id - Unique ID for the SharedTreeWithAnchors
 	 * @param expensiveValidation - enable expensive asserts
 	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
 	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
@@ -165,6 +179,7 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 		id: string,
 		expensiveValidation = false,
 		summarizeHistory = true,
+		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
 		uploadEditChunks = false
 	) {
 		super(
@@ -174,7 +189,7 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 			SharedTreeWithAnchorsFactory.Attributes,
 			expensiveValidation,
 			summarizeHistory,
-			undefined,
+			writeSummaryFormat,
 			uploadEditChunks
 		);
 	}
@@ -196,10 +211,14 @@ export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
 	 * {@inheritDoc GenericSharedTree.generateSummary}
 	 */
 	protected generateSummary(editLog: OrderedEditSet<AnchoredChange>): SharedTreeSummaryBase {
-		if (this.summarizeHistory) {
-			return fullHistorySummarizer(editLog, this.currentView);
+		try {
+			return getSummaryByVersion(editLog, this.currentView, this.summarizeHistory, this.writeSummaryFormat);
+		} catch (error) {
+			this.logger?.sendErrorEvent({
+				eventName: 'UnsupportedSummaryWriteFormat',
+				formatVersion: this.writeSummaryFormat,
+			});
+			throw error;
 		}
-
-		return noHistorySummarizer(editLog, this.currentView);
 	}
 }

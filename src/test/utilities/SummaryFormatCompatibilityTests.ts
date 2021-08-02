@@ -12,15 +12,15 @@ import { EditId } from '../../Identifiers';
 import {
 	ChangeNode,
 	Edit,
-	fullHistorySummarizer,
-	fullHistorySummarizer_0_1_0,
-	SharedTreeSummarizer,
+	EditWithoutId,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
+	SharedTreeSummaryWriteFormat,
+	UploadedEditChunkContents,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
-import { EditLog } from '../../EditLog';
+import { EditLog, separateEditAndId } from '../../EditLog';
 import { assertNotUndefined } from '../../Common';
 import {
 	LocalServerSharedTreeTestingComponents,
@@ -35,12 +35,12 @@ import { TestFluidSerializer } from './TestSerializer';
 const pathBase = resolve(__dirname, '../../../src/test/documents/');
 
 /**
- * A version/summarizer pair must be specified for a write test to be generated.
+ * A version must be specified for a write test to be generated.
  * Versions that can no longer be written should be removed from this list.
  */
-const supportedSummarizers: { version: string; summarizer: SharedTreeSummarizer<unknown> }[] = [
-	{ version: '0.0.2', summarizer: fullHistorySummarizer },
-	{ version: '0.1.0', summarizer: fullHistorySummarizer_0_1_0 },
+const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
+	SharedTreeSummaryWriteFormat.Format_0_0_2,
+	SharedTreeSummaryWriteFormat.Format_0_1_0,
 ];
 
 /**
@@ -132,6 +132,9 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			// cache the contents of the relevant files here to avoid loading more than once
 			// map containing summary file contents, keys are summary versions, values have file contents
 			const summaryByVersion = new Map<string, string>();
+
+			// Files of uploaded edit blob contents for summaries that support blobs.
+			const blobsByVersion = new Map<string, string>();
 			let historyOrUndefined: Edit<Change>[] | undefined;
 			let changeNodeOrUndefined: ChangeNode | undefined;
 
@@ -139,9 +142,15 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			for (const documentFile of documentFiles) {
 				const summaryFileRegex = /summary-(?<version>\d+\.\d\.\d).json/;
 				const match = summaryFileRegex.exec(documentFile);
+
+				const blobFileRegex = /blobs-(?<version>\d+\.\d\.\d).json/;
+				const blobsMatch = blobFileRegex.exec(documentFile);
+
 				const filePath = join(pathBase, document, documentFile);
 				if (match && match.groups) {
 					summaryByVersion.set(match.groups.version, fs.readFileSync(filePath, 'utf8'));
+				} else if (blobsMatch && blobsMatch.groups) {
+					blobsByVersion.set(blobsMatch.groups.version, fs.readFileSync(filePath, 'utf8'));
 				} else if (documentFile === 'history.json') {
 					historyOrUndefined = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 				} else if (documentFile === 'change-node.json') {
@@ -154,23 +163,29 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			const sortedVersions = Array.from(summaryByVersion.keys()).sort(versionComparator);
 
 			describe(`document ${document}`, () => {
-				for (const { summarizer, version } of supportedSummarizers) {
+				for (const version of supportedSummaryWriteFormats) {
 					it(`version ${version} can be written`, async () => {
+						// Use a tree with the correct summary write format
+						const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+							setupEditId,
+							writeSummaryFormat: version,
+						});
+
 						history.forEach((edit) => {
-							expectedTree.processLocalEdit(edit);
+							tree.processLocalEdit(edit);
 						});
 
 						// Wait for the ops to to be submitted and processed across the containers.
 						await testObjectProvider.ensureSynchronized();
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
-						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView);
+						const newSummary = tree.saveSummary();
 						const { tree: tree2 } = setUpTestSharedTree();
 						tree2.loadSummary(newSummary);
 
 						// The expected tree, tree loaded with the existing summary, and the tree loaded
 						// with the new summary should all be equal.
-						expect(tree2.equals(expectedTree)).to.be.true;
+						expect(tree2.equals(tree)).to.be.true;
 					});
 				}
 
@@ -256,22 +271,34 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				for (const [index, readVersion] of sortedVersions.entries()) {
 					// A client that has loaded an older version of a summary should be able to write newer versions
 					for (const writeVersion of sortedVersions.slice(index)) {
-						const summarizerEntry = supportedSummarizers.find((entry) => entry.version === writeVersion);
-						if (summarizerEntry !== undefined) {
-							const summarizer = summarizerEntry.summarizer;
+						const supportedWriteVersion = supportedSummaryWriteFormats.find(
+							(entry) => entry === writeVersion
+						);
+						if (supportedWriteVersion !== undefined) {
 							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion}`, async () => {
+								// Use a tree with the correct summary write format
+								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+									setupEditId,
+									writeSummaryFormat: supportedWriteVersion,
+								});
+
 								// Load the first summary file (the one with the oldest version)
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(readVersion));
 								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								expectedTree.loadSummary(summary);
+								tree.loadSummary(summary);
 
 								await testObjectProvider.ensureSynchronized();
 
 								// Write a new summary with the specified version
-								const newSummary = JSON.parse(expectedTree.saveSerializedSummary(summarizer));
+								const newSummary = JSON.parse(tree.saveSerializedSummary());
+
+								const blobs = blobsByVersion.get(writeVersion);
+								if (blobs !== undefined) {
+									expectBlobsByVersion(newSummary, blobs, history);
+								}
 
 								// Check the newly written summary is equivalent to its corresponding test summary file.
 								// This assumes the input file is normalized (that summarizing it produces an identical output).
@@ -290,22 +317,27 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				for (const { summarizerVersion, loadVersions } of forwardCompatibilityTests) {
 					for (const { loadVersion, condition, conditionalWriteVersion } of loadVersions) {
 						it(`version ${loadVersion} can be loaded by a client with summarizer format ${summarizerVersion} and written in the correct summary version`, async () => {
-							const summarizerEntry = supportedSummarizers.find(
-								(entry) => entry.version === summarizerVersion
+							const supportedWriteVersion = supportedSummaryWriteFormats.find(
+								(entry) => entry === summarizerVersion
 							);
-							if (summarizerEntry !== undefined) {
+							if (supportedWriteVersion !== undefined) {
+								// Use a tree with the correct summary write format
+								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+									setupEditId,
+									writeSummaryFormat: supportedWriteVersion,
+								});
+
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
 								const summary = deserialize(serializedSummary, testSerializer);
 
 								// Wait for the ops to to be submitted and processed across the containers.
 								await testObjectProvider.ensureSynchronized();
-								expectedTree.loadSummary(summary);
+								tree.loadSummary(summary);
 
 								await testObjectProvider.ensureSynchronized();
 
 								// Write a new summary with the summarizer of version `summarizerVersion`.
-								const summarizer = summarizerEntry.summarizer;
-								const newSummary = JSON.parse(expectedTree.saveSerializedSummary(summarizer));
+								const newSummary = JSON.parse(tree.saveSerializedSummary());
 
 								// Check the new summary is equivalent to the conditional version summary if the condition is true.
 								// Otherwise, check it's equivalent to the summarizer version summary.
@@ -358,3 +390,42 @@ const versionComparator = (versionA: string, versionB: string): number => {
 
 	return 0;
 };
+
+/**
+ * Checks that a given summary contains the correct blob contents.
+ */
+function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, history: Edit<Change>[]): void {
+	const { version } = summary;
+	const storedBlobs: UploadedEditChunkContents<Change>[] = JSON.parse(blobs);
+
+	switch (version) {
+		case SharedTreeSummaryWriteFormat.Format_0_1_0: {
+			let loadedEdits: EditWithoutId<Change>[] = [];
+
+			// Obtain all edits from the summary, replacing handles with edits loaded from the stored blob file.
+			assertNotUndefined((summary as SharedTreeSummary<Change>).editHistory).editChunks.forEach(({ chunk }) => {
+				// A "chunk" in the edit history is a handle if it is not an array.
+				if (!Array.isArray(chunk)) {
+					const { absolutePath, chunkContents } = storedBlobs.splice(0)[0];
+
+					// TestSerializer doesn't replace serialized handles with actual handles so the absolutePath is found under 'url'.
+					expect(absolutePath).to.equal((chunk as any).url);
+					loadedEdits = loadedEdits.concat(chunkContents);
+				} else {
+					loadedEdits = loadedEdits.concat(chunk);
+				}
+			});
+
+			expect(loadedEdits.length).to.equal(history.length);
+
+			// Check that each edit from the summary matches the edits from the history.
+			loadedEdits.forEach((editWithoutId, index) => {
+				const { editWithoutId: historyEditWithoutId } = separateEditAndId(history[index]);
+				expect(editWithoutId).to.deep.equals(historyEditWithoutId);
+			});
+			break;
+		}
+		default:
+			throw new Error('version does not support blobs');
+	}
+}

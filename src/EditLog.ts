@@ -94,6 +94,7 @@ export interface EditLogSummary<TChange> {
  */
 export interface EditHandle {
 	readonly get: () => Promise<ArrayBufferLike>;
+	readonly absolutePath: string;
 }
 
 /**

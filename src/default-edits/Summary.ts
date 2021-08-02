@@ -9,7 +9,15 @@ import { OrderedEditSet } from '../EditLog';
 import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
 import { SharedTreeSummary_0_0_2 } from '../SummaryBackCompatibility';
-import { formatVersion, newEdit, SharedTreeSummary } from '../generic';
+import {
+	formatVersion,
+	fullHistorySummarizer,
+	fullHistorySummarizer_0_1_0,
+	newEdit,
+	SharedTreeSummary,
+	SharedTreeSummaryBase,
+	SharedTreeSummaryWriteFormat,
+} from '../generic';
 import { Change } from './PersistedTypes';
 import { setTrait } from './EditUtilities';
 
@@ -75,4 +83,34 @@ export function noHistorySummarizer_0_1_0(
 		},
 		version: '0.1.0',
 	};
+}
+
+/**
+ * Generates a summary based on provided options.
+ */
+export function getSummaryByVersion(
+	editLog: OrderedEditSet<Change>,
+	currentView: RevisionView,
+	summarizeHistory = true,
+	writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
+): SharedTreeSummaryBase {
+	if (summarizeHistory) {
+		switch (writeSummaryFormat) {
+			case SharedTreeSummaryWriteFormat.Format_0_0_2:
+				return fullHistorySummarizer(editLog, currentView);
+			case SharedTreeSummaryWriteFormat.Format_0_1_0:
+				return fullHistorySummarizer_0_1_0(editLog, currentView);
+			default:
+				throw new Error(`Summary format ${writeSummaryFormat} not supported.`);
+		}
+	}
+
+	switch (writeSummaryFormat) {
+		case SharedTreeSummaryWriteFormat.Format_0_0_2:
+			return noHistorySummarizer(editLog, currentView);
+		case SharedTreeSummaryWriteFormat.Format_0_1_0:
+			return noHistorySummarizer_0_1_0(editLog, currentView);
+		default:
+			throw new Error(`Summary format ${writeSummaryFormat} not supported.`);
+	}
 }

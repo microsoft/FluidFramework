@@ -195,6 +195,8 @@ export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArgumen
 // @internal
 export interface EditHandle {
     // (undocumented)
+    readonly absolutePath: string;
+    // (undocumented)
     readonly get: () => Promise<ArrayBufferLike>;
 }
 
@@ -455,6 +457,9 @@ export class RevisionView extends TreeView {
 }
 
 // @public
+export function saveUploadedEditChunkContents<TChange>(editLog: OrderedEditSet<TChange>): Promise<UploadedEditChunkContents<TChange>[]>;
+
+// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[];
 
 // @public
@@ -472,7 +477,7 @@ export class SharedTree extends GenericSharedTree<Change> {
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     get editor(): SharedTreeEditor;
     protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase;
-    static getFactory(summarizeHistory?: boolean, uploadEditChunks?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat): SharedTreeFactory;
+    static getFactory(summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean): SharedTreeFactory;
 }
 
 // @public
@@ -738,6 +743,12 @@ export interface TreeViewRange {
     readonly end: TreeViewPlace;
     // (undocumented)
     readonly start: TreeViewPlace;
+}
+
+// @public
+export interface UploadedEditChunkContents<TChange> {
+    absolutePath: string;
+    chunkContents: EditWithoutId<TChange>[];
 }
 
 // @public

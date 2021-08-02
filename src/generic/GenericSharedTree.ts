@@ -149,6 +149,19 @@ export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArgumen
 const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
 
 /**
+ * Options for configuring a SharedTreeFactory.
+ * @public
+ */
+export interface SharedTreeFactoryOptions {
+	/** If false, does not include history in summaries. */
+	readonly summarizeHistory?: boolean;
+	/** Determines the summary format version to write, 0.0.2 by default. */
+	readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
+	/** If true, edit chunks are uploaded as blobs when they become full. */
+	readonly uploadEditChunks?: boolean;
+}
+
+/**
  * A distributed tree.
  * @public
  */

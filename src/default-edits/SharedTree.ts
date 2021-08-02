@@ -9,11 +9,9 @@ import { RevisionView } from '../TreeView';
 import {
 	Edit,
 	BuildNode,
-	fullHistorySummarizer,
 	GenericSharedTree,
 	NodeData,
 	SharedTreeSummaryBase,
-	fullHistorySummarizer_0_1_0,
 	SharedTreeSummaryWriteFormat,
 } from '../generic';
 import { OrderedEditSet } from '../EditLog';
@@ -21,7 +19,7 @@ import { Change, Delete, Insert, Move, StableRange, StablePlace } from './Persis
 import { SharedTreeFactory } from './Factory';
 import * as HistoryEditFactory from './HistoryEditFactory';
 import { Transaction } from './Transaction';
-import { noHistorySummarizer, noHistorySummarizer_0_1_0 } from './Summary';
+import { getSummaryByVersion } from './Summary';
 
 /**
  * Wrapper around a `SharedTree` which provides ergonomic imperative editing functionality. All methods apply changes in their own edit.
@@ -135,19 +133,20 @@ export class SharedTree extends GenericSharedTree<Change> {
 
 	/**
 	 * Get a factory for SharedTree to register with the data store.
-	 * @param summarizeHistory - Determines how history is summarized by the returned `SharedTree`.
+	 * @param summarizeHistory - Determines if the history is included in summaries.
 	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
+	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
 	public static getFactory(
 		summarizeHistory = true,
-		uploadEditChunks = false,
-		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2
+		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		uploadEditChunks = false
 	): SharedTreeFactory {
 		return new SharedTreeFactory({
 			summarizeHistory,
-			uploadEditChunks,
 			writeSummaryFormat,
+			uploadEditChunks,
 		});
 	}
 
@@ -157,6 +156,7 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * @param id - Unique ID for the SharedTree
 	 * @param expensiveValidation - enable expensive asserts
 	 * @param summarizeHistory - Determines if the history is included in summaries.
+	 * @param writeSummaryFormat - Determines the format version the SharedTree will write summaries in.
 	 * @param uploadEditChunks - Determines if edit chunks are uploaded when they are full.
 	 */
 	public constructor(
@@ -196,33 +196,14 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * {@inheritDoc GenericSharedTree.generateSummary}
 	 */
 	protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase {
-		const logUnsupportedVersion = () => {
+		try {
+			return getSummaryByVersion(editLog, this.currentView, this.summarizeHistory, this.writeSummaryFormat);
+		} catch (error) {
 			this.logger?.sendErrorEvent({
 				eventName: 'UnsupportedSummaryWriteFormat',
 				formatVersion: this.writeSummaryFormat,
 			});
-		};
-
-		if (this.summarizeHistory) {
-			switch (this.writeSummaryFormat) {
-				case SharedTreeSummaryWriteFormat.Format_0_0_2:
-					return fullHistorySummarizer(editLog, this.currentView);
-				case SharedTreeSummaryWriteFormat.Format_0_1_0:
-					return fullHistorySummarizer_0_1_0(editLog, this.currentView);
-				default:
-					logUnsupportedVersion();
-					throw new Error(`Summary format ${this.writeSummaryFormat} not supported.`);
-			}
-		}
-
-		switch (this.writeSummaryFormat) {
-			case SharedTreeSummaryWriteFormat.Format_0_0_2:
-				return noHistorySummarizer(editLog, this.currentView);
-			case SharedTreeSummaryWriteFormat.Format_0_1_0:
-				return noHistorySummarizer_0_1_0(editLog, this.currentView);
-			default:
-				logUnsupportedVersion();
-				throw new Error(`Summary format ${this.writeSummaryFormat} not supported.`);
+			throw error;
 		}
 	}
 }
