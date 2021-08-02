@@ -123,9 +123,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         }
         const stackFrames = error.stack.split("\n");
         stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (error.name !== undefined) {
-            stackFrames.unshift(error.name); // Add "[ErrorName]"
-        }
+        stackFrames.unshift(`${error.name}: <error message>`); // Add [ErrorName] and <error message> placeholder
         return stackFrames.join("\n");
     }
 

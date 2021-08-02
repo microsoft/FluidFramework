@@ -125,6 +125,7 @@ export function normalizeError(
         errorType: "genericError", // Match Container/Driver generic error type
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
+        name: hasErrorName(error) ? error.name : undefined,
         stack: stack ?? generateStack(),
     });
 
@@ -148,6 +149,10 @@ export function normalizeError(
 function hasErrorType(error: any): error is { errorType: string | number } {
     return typeof(error?.errorType) === "string" ||
         typeof(error?.errorType) === "number";
+}
+
+function hasErrorName(error: any): error is { name: string } {
+    return typeof(error?.name) === "string";
 }
 
 export function generateStack(): string | undefined {

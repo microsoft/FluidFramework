@@ -23,28 +23,28 @@ describe("Error Logging", () => {
 
         it("non-object error added to event", () => {
             let event = freshEvent();
-            TelemetryLogger.prepareErrorObject(event, "hello", false);
+            TelemetryLogger.prepareErrorObject(event, "hello");
             assert.strictEqual(event.error, "hello", "string should work");
             event = freshEvent();
-            TelemetryLogger.prepareErrorObject(event, 42, false);
+            TelemetryLogger.prepareErrorObject(event, 42);
             assert.strictEqual(event.error, "42", "number should work");
             event = freshEvent();
-            TelemetryLogger.prepareErrorObject(event, true, false);
+            TelemetryLogger.prepareErrorObject(event, true);
             assert.strictEqual(event.error, "true", "boolean should work");
             event = freshEvent();
-            TelemetryLogger.prepareErrorObject(event, undefined, false);
+            TelemetryLogger.prepareErrorObject(event, undefined);
             assert.strictEqual(event.error, "undefined", "undefined should work");
 
             // Technically this violates TelemetryEventPropertyType's type constraint but it's actually supported
             event = freshEvent();
-            TelemetryLogger.prepareErrorObject(event, null, false);
+            TelemetryLogger.prepareErrorObject(event, null);
             assert.strictEqual(event.error, "null", "null should work");
         });
         it("stack and message added to event (stack should exclude message)", () => {
             const event = freshEvent();
             const error = new Error("boom");
             error.name = "MyErrorName";
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert(event.error === "boom");
             assert((event.stack as string).includes("MyErrorName"));
             assert(!(event.stack as string).includes("boom"));
@@ -55,33 +55,33 @@ describe("Error Logging", () => {
             const error = new Error("boom");
             error.name = "MyErrorName";
             (error as any).containsPII = true;
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert(event.error === "boom");
             assert((event.stack as string).includes("MyErrorName"));
         });
         it("getTelemetryProperties absent - no further props added", () => {
             const event = freshEvent();
             const error = { ...new Error("boom"), foo: "foo", bar: 2 };
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert(event.foo === undefined && event.bar === undefined);
         });
         it("getTelemetryProperties overlaps event - do not overwrite", () => {
             const event = { ...freshEvent(), foo: "event_foo", bar: 42 };
             const error = createILoggingError({foo: "error_foo", bar: -1});
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert(event.foo === "event_foo" && event.bar === 42);
         });
         it("getTelemetryProperties present - add additional props", () => {
             const event = freshEvent();
             const error = createILoggingError({foo: "foo", bar: 2});
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert(event.foo === "foo" && event.bar === 2);
         });
         it("getTelemetryProperties - tagged UserData is removed", () => {
             const event = freshEvent();
             const error = createILoggingError(
                 { somePii: { value: "very personal", tag: "UserData" }});
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert.strictEqual(event.somePii, "REDACTED (UserData)", "somePii should be redacted");
         });
         it("getTelemetryProperties - tagged PackageData are preserved", () => {
@@ -89,14 +89,14 @@ describe("Error Logging", () => {
             const error = createILoggingError({
                 packageName: { value: "myPkg", tag: "PackageData" },
             });
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert.strictEqual(event.packageName, "myPkg");
         });
         it("getTelemetryProperties - tagged [unrecognized tag] are removed", () => {
             const event = freshEvent();
             const error = createILoggingError(
                 { somePii: { value: "very personal", tag: "FutureTag"}});
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert.strictEqual(event.somePii, "REDACTED (unknown tag)", "somePii should be redacted");
         });
         it("getTelemetryProperties - tags on overwritten Error base props", () => {
@@ -105,28 +105,23 @@ describe("Error Logging", () => {
                 message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
                 stack: { value: "tagged", tag: "PackageData" },
             });
-            TelemetryLogger.prepareErrorObject(event, error, false);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert.strictEqual(event.message, "REDACTED (UserData)");
             assert.deepStrictEqual(event.error, "[object Object]"); // weird but ok
             assert.deepStrictEqual(event.stack, "tagged"); // weird but ok
         });
-        it("fetchStack false - Don't add a stack if missing", () => {
+        it("getSafeStack", () => {
             const event = freshEvent();
-            const error = { message: "I have no stack" };
-            TelemetryLogger.prepareErrorObject(event, error, false);
-            assert.strictEqual(event.stack, undefined);
+            const error = new Error("hello");
+            TelemetryLogger.prepareErrorObject(event, error);
+            assert(typeof(event.stack) === "string");
+            assert(!event.stack?.includes("hello"), "message should have been removed from stack");
+            assert(event.stack.startsWith("Error"), "name should still be in the stack");
         });
-        it("fetchStack true - Don't add a stack if present", () => {
-            const event = freshEvent();
-            const error = new Error("boom");
-            error.name = "MyName";
-            TelemetryLogger.prepareErrorObject(event, error, false);
-            assert((event.stack as string).includes("MyName"));
-        });
-        it("fetchStack true - Add a stack if missing", () => {
+        it("Add a stack if missing", () => {
             const event = freshEvent();
             const error = { message: "I have no stack - boom", name: "MyName" };
-            TelemetryLogger.prepareErrorObject(event, error, true);
+            TelemetryLogger.prepareErrorObject(event, error);
             assert.strictEqual(typeof (event.stack), "string");
             assert(!(event.stack as string).includes("MyName"));
         });
@@ -553,16 +548,6 @@ describe("normalizeError", () => {
 
 describe("extractLogSafeErrorProperties", () => {
     describe("prepareErrorObject", () => {
-        function createSampleError(): Error {
-            try {
-                const error = new Error("asdf");
-                error.name = "FooError";
-                throw error;
-            } catch (e) {
-                return e as Error;
-            }
-        }
-
         it("non-object error yields correct message", () => {
             assert.strictEqual(extractLogSafeErrorProperties("hello").message, "hello");
             assert.strictEqual(extractLogSafeErrorProperties(42).message, "42");
@@ -577,15 +562,8 @@ describe("extractLogSafeErrorProperties", () => {
             assert.strictEqual(extractLogSafeErrorProperties(null).message, "null");
         });
         it("extract stack", () => {
-            const e1 = createSampleError();
-            const stack1 = extractLogSafeErrorProperties(e1).stack;
-            assert(typeof(stack1) === "string");
-            assert(!stack1?.includes("asdf"), "message should have been removed from stack");
-            assert(stack1?.includes("FooError"), "name should still be in the stack");
-        });
-        it("extract stack non-standard values", () => {
-            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello"}).stack, "");
-            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello", name: "name" }).stack, "name");
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello"}).stack, "hello");
+            assert.strictEqual(extractLogSafeErrorProperties({ stack: "hello", name: "name" }).stack, "hello");
             assert.strictEqual(extractLogSafeErrorProperties({ foo: "hello"}).stack, undefined);
             assert.strictEqual(extractLogSafeErrorProperties({ stack: 42}).stack, undefined);
             assert.strictEqual(extractLogSafeErrorProperties(42).stack, undefined);
