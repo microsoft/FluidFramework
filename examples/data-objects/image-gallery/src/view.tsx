@@ -40,10 +40,10 @@ export const ImageGalleryView: React.FC<IImageGalleryViewProps> = (props: IImage
 
     useEffect(() => {
         const slideToCurrentSlide = () => {
-            const index = imageGalleryModel.getIndex();
             // eslint-disable-next-line no-null/no-null
             if (imageGalleryRef.current !== null) {
-                imageGalleryRef.current.slideToIndex(index);
+                const currentIndex = imageGalleryModel.getIndex();
+                imageGalleryRef.current.slideToIndex(currentIndex);
             }
         };
         // Update at least once, on load.
