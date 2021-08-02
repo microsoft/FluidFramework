@@ -462,7 +462,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close("SocketError", CreateProcessingError(error, this.lastMessage));
+            this.close("InboundSocketError", CreateProcessingError(error, this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -476,7 +476,7 @@ export class DeltaManager
             });
 
         this._outbound.on("error", (error) => {
-            this.close("OutboundError", CreateContainerError(error));
+            this.close("OutboundSocketError", CreateContainerError(error));
         });
 
         // Inbound signal queue
@@ -945,7 +945,7 @@ export class DeltaManager
         // This needs to be the last thing we do (before removing listeners), as it causes
         // Container to dispose context and break ability of data stores / runtime to "hear"
         // from delta manager, including notification (above) about readonly state.
-        this.emit("closed", error, reason ?? "ReasonNotProvided");
+        this.emit("closed", error, reason);
 
         this.removeAllListeners();
     }
@@ -1548,7 +1548,7 @@ export class DeltaManager
         } catch (error) {
             const eventName = "GetDeltas_Exception";
             this.logger.sendErrorEvent({ eventName }, error);
-            this.close(eventName, CreateContainerError(eventName, error));
+            this.close(eventName, CreateContainerError(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetchReason = undefined;
