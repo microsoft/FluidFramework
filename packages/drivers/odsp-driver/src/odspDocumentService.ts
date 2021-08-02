@@ -88,7 +88,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private _opsCache?: OpsCache;
 
-    private currentConnection?: OdspDocumentDeltaConnection = undefined;
+    private currentConnection?: OdspDocumentDeltaConnection;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
