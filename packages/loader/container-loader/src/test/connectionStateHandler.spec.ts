@@ -75,6 +75,7 @@ describe("ConnectionStateHandler Tests", () => {
                 maxClientLeaveWaitTime: expectedTimeout,
                 protocolHandler: () => protocolHandler,
                 shouldClientJoinWrite: () => shouldClientJoinWrite,
+                triggerReconnect: (reason: string) => { throw new Error("triggerReconnect"); },
             },
             new TelemetryNullLogger(),
         );
