@@ -185,8 +185,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
             Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
 
-        if (lumberJackMetric)
-        {
+        if (lumberJackMetric) {
             lumberJackMetric.setProperties({
                 [BaseTelemetryProperties.tenantId]: this.tenantId,
                 [BaseTelemetryProperties.documentId]: this.documentId,
@@ -283,8 +282,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 });
             });
 
-        if (lumberJackMetric)
-        {
+        if (lumberJackMetric) {
             this.setDeliStateMetrics(checkpoint, lumberJackMetric);
         }
 

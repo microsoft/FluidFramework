@@ -99,8 +99,7 @@ export class ScribeLambda implements IPartitionLambda {
         const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
             Lumberjack.newLumberMetric(LumberEventName.ScribeHandler) : undefined;
 
-        if (lumberJackMetric)
-        {
+        if (lumberJackMetric) {
             lumberJackMetric.setProperties({
                 [BaseTelemetryProperties.tenantId]: this.tenantId,
                 [BaseTelemetryProperties.documentId]: this.documentId,
@@ -378,13 +377,11 @@ export class ScribeLambda implements IPartitionLambda {
             this.clearCache);
         this.lastOffset = message.offset;
 
-        if (lumberJackMetric)
-        {
+        if (lumberJackMetric) {
             this.setScribeStateMetrics(checkpoint, lumberJackMetric);
+            lumberJackMetric?.success(`Message processed successfully 
+                at seq no ${checkpoint.sequenceNumber}`);
         }
-
-        lumberJackMetric?.success(`Message processed successfully 
-            at seq no ${checkpoint.sequenceNumber}`);
     }
 
     private setScribeStateMetrics(checkpoint: IScribe, lumberJackMetric: Lumber<LumberEventName.ScribeHandler>) {
