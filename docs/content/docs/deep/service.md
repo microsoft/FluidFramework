@@ -34,7 +34,7 @@ to the client so that the client does not need to replay all ops locally to get 
 
 One of the connected clients is chosen to generate the summary. Once the summary is created it is sent to the service
 like any other operation. To learn more about summaries and how they are created, see the [advanced Summarizer
-topic](../advanced/summarizer.md).
+topic](./summarizer).
 
 
 ## Drivers
