@@ -54,7 +54,6 @@ import {
 import {
     isSystemMessage,
     ProtocolOpHandler,
-    QuorumProxy,
 } from "@fluidframework/protocol-base";
 import {
     FileMode,
@@ -103,6 +102,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
+import { QuorumProxy } from "./quorum";
 
 const detachedContainerRefSeqNumber = 0;
 

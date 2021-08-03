@@ -4,9 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection, DriverError } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions";
 import {
     IClient,
     IConnect,
@@ -182,7 +182,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         url: string,
         telemetryLogger: ITelemetryLogger,
         timeoutMs: number,
-        epochTracker: EpochTracker): Promise<IDocumentDeltaConnection>
+        epochTracker: EpochTracker): Promise<OdspDocumentDeltaConnection>
     {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
@@ -244,6 +244,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     private socketReference: SocketReference | undefined;
+
+    private readonly requestOpsNoncePrefix: string;
+    private getOpsCounter = 0;
+    private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
 
     /**
      * Error raising for socket.io issues
@@ -309,6 +313,33 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
+        this.requestOpsNoncePrefix = `${this.documentId}-`;
+    }
+
+    public requestOps(from: number, to: number) {
+        this.getOpsCounter++;
+        const nonce = `${this.requestOpsNoncePrefix}${this.getOpsCounter}`;
+
+        // PUSH may disable this functionality, in such case we will keep accumulating memory for nothing.
+        // Prevent that by allowing to track only 10 overlapping requests.
+        // Telemetry in get_ops_response will clearly indicate when we have over 5 requests.
+        // Note that we should never have overlapping requests, as DeltaManager allows only one
+        // outstanding request to storage, and that's the only way to get here.
+        if (this.getOpsMap.size < 5) {
+            this.getOpsMap.set(
+                nonce,
+                {
+                    start: performance.now(),
+                    from,
+                    to,
+                },
+            );
+        }
+        this.socket.emit("get_ops", this.clientId, {
+            nonce,
+            from,
+            to,
+        });
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -320,6 +351,29 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 }
             };
         }
+
+        this.socket.on("get_ops_response", (result) => {
+            const messages = result.messages as ISequencedDocumentMessage[] | undefined;
+            const data = this.getOpsMap.get(result.nonce);
+            // Due to socket multiplexing, this client may not have asked for any data
+            // If so, there it most likely does not need these ops (otherwise it already asked for them)
+            if (data !== undefined) {
+                this.getOpsMap.delete(result.nonce);
+                if (messages !== undefined && messages.length > 0) {
+                    this.logger.sendPerformanceEvent({
+                        eventName: "GetOps",
+                        first: messages[0].sequenceNumber,
+                        last: messages[messages.length - 1].sequenceNumber,
+                        code: result.code,
+                        from: data.from,
+                        to: data.to,
+                        duration: performance.now() - data.start,
+                        length: messages.length,
+                    });
+                    this.socket.emit("op", this.documentId, messages);
+                }
+            }
+        });
 
         return super.initialize(connectMessage, timeout);
     }

@@ -871,13 +871,6 @@ export class DeltaManager
                 // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
                 assert(op.sequenceNumber === this.lastQueuedSequenceNumber, "seq#'s");
                 if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
-                    this.logger.sendPerformanceEvent({
-                        reason: this.fetchReason,
-                        eventName: "ExtraStorageCall",
-                        from,
-                        to,
-                        ...this.connectionStateProps,
-                    });
                     controller.abort();
                     this._inbound.off("push", listener);
                 }
