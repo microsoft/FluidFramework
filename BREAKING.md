@@ -44,7 +44,7 @@ The `webpack-fluid-loader` utility was previously available from a package named
 Following the deprecation warning [Loader in data stores deprecated](#loader-in-data-stores-deprecated), the associated APIs have now been removed.  In addition to the original deprecation notes, users will automatically have an `ILoader` available on the container scope object as the `ILoader` property if the container was created through a `Loader`.
 
 ### Logger without tag support marked deprecated in ContainerContext
-The `logger` property of `ContainerContext` has been marked deprecated, and future versions of the loader will enforce the use of `taggedLogger` - that is, loggers passed to ContainerContext will need to support tagged events.
+The `logger` property of `ContainerContext` has been marked deprecated, and future versions of the loader will use `taggedLogger` - that is, loggers passed to ContainerContext will need to support tagged events.
 
 ## 0.43 Breaking changes
 
