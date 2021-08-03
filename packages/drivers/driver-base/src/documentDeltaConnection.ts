@@ -275,17 +275,6 @@ export class DocumentDeltaConnection
 
     protected disposeCore(socketProtocolError: boolean, err: DriverError) {
         if (this.disposed) {
-            // We see cases where socket is disposed while we have two "disconnect" listeners - one from DeltaManager,
-            // one - early handler that should have been removed on establishing connection. This causes asserts in
-            // OdspDocumentDeltaConnection.disconnect() due to not expectting two calls.
-            this.logger.sendErrorEvent(
-                {
-                    eventName: "DoubleClose",
-                    connectionEvents: this.connectionListeners.size,
-                    trackedEvents: this.trackedListeners.size,
-                    socketProtocolError,
-                },
-                err);
             return;
         }
 
@@ -314,14 +303,9 @@ export class DocumentDeltaConnection
         this.socket.on("op", this.earlyOpHandler);
         this.earlyOpHandlerAttached = true;
 
-        let success = false;
-
         this._details = await new Promise<IConnected>((resolve, reject) => {
             const fail = (socketProtocolError: boolean, err: DriverError) => {
-                // timeout & "error" can happen after successful connection
-                if (!success) {
-                    this.disposeCore(socketProtocolError, err);
-                }
+                this.disposeCore(socketProtocolError, err);
                 reject(err);
             };
 
@@ -373,7 +357,6 @@ export class DocumentDeltaConnection
 
                 this.removeConnectionListeners();
                 resolve(response);
-                success = true;
             });
 
             // Socket can be disconnected while waiting for Fluid protocol messages
