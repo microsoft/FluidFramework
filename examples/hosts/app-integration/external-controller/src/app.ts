@@ -14,6 +14,16 @@ import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
+interface ICustomUserDetails {
+    gender: string;
+    email: string;
+}
+
+const userDetails: ICustomUserDetails = {
+    gender: "",
+    email: "",
+};
+
 // Define the server we will be using and initialize Fluid
 const useFrs = process.env.FLUID_CLIENT === "frs";
 
@@ -22,6 +32,7 @@ const user = generateUser() as any;
 const frsAzUser = {
     userId: user.id,
     userName: user.name,
+    additionalDetails: userDetails,
 };
 
 const connectionConfig: FrsConnectionConfig = useFrs ? {
