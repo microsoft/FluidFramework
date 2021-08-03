@@ -14,7 +14,12 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
-import { extractLogSafeErrorProperties, getValidTelemetryProps, isILoggingError } from "./errorLogging";
+import {
+    isILoggingError,
+    extractLogSafeErrorProperties,
+    generateStack,
+    getValidTelemetryProps,
+} from "./errorLogging";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -73,7 +78,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        const { message, errorType, stack} = extractLogSafeErrorProperties(error);
+        const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
         event.error = message; // Note that the error message goes on the 'error' field
@@ -93,21 +98,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
         // Collect stack if we were not able to extract it from error
         if (event.stack === undefined && fetchStack) {
-            event.stack = TelemetryLogger.getStack();
+            event.stack = generateStack();
         }
-    }
-
-    protected static getStack(): string | undefined {
-        // Some browsers will populate stack right away, others require throwing Error
-        let stack = new Error().stack;
-        if (!stack) {
-            try {
-                throw new Error();
-            } catch (e) {
-                stack = e.stack;
-            }
-        }
-        return stack;
     }
 
     public constructor(

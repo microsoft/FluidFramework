@@ -103,7 +103,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
+import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -132,6 +132,7 @@ import {
     ISummarizerOptions,
     ISummarizerRuntime,
 } from "./summarizerTypes";
+import { formExponentialFn, Throttler } from "./throttler";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -899,13 +900,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
+        const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
         const orderedClientCollection = new OrderedClientCollection(
-            this.logger,
+            orderedClientLogger,
             this.context.deltaManager,
             this.context.quorum,
         );
         const orderedClientElectionForSummarizer = new OrderedClientElection(
-            this.logger,
+            orderedClientLogger,
             orderedClientCollection,
             electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
             SummarizerClientElection.isClientEligible,
@@ -913,7 +915,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
             this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
         this.summarizerClientElection = new SummarizerClientElection(
-            this.logger,
+            orderedClientLogger,
             this.summaryCollection,
             orderedClientElectionForSummarizer,
             maxOpsSinceLastSummary,
@@ -921,7 +923,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
-            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+            this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
         if (
             this.runtimeOptions.summaryOptions.generateSummaries !== false
@@ -929,10 +931,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ) {
             // Create the SummaryManager and mark the initial state
             this.summaryManager = new SummaryManager(
-                context,
                 this.summarizerClientElection,
                 this, // IConnectedState
+                this.summaryCollection,
                 this.logger,
+                formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
+                new Throttler(
+                    60 * 1000, // 60 sec delay window
+                    30 * 1000, // 30 sec max delay
+                    // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+                    formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+                ),
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );

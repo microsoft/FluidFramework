@@ -71,7 +71,8 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         readonly tenantId: string | undefined,
         props?: ITelemetryProperties,
     ) {
-        super(errorMessage, props);
+        // don't log claims or tenantId
+        super(errorMessage, props, new Set(["claims", "tenantId"]));
     }
 }
 

@@ -241,7 +241,7 @@
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
                     "@fluidframework/test-runtime-utils",
-                    "@fluidframework/webpack-fluid-loader"
+                    "@fluid-tools/webpack-fluid-loader"
                 ],
                 "dirs": [
                     "packages/test/"
