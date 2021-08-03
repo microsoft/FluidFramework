@@ -33,7 +33,7 @@ Running the `test:tinylicious` script will start Tinylicious, wait until port 70
 
 ## Automation against Azure Fluid Relay
 
-With a test tenant for Azure Fluid Relay, your automation can connect to it in the same way as your production tenant and needs only provide the appropriate connection configuration.  See [Connect to an Azure Fluid Relay service]({{< relref azure-frs.md >}}) for more details.
+Your automation can connect to a test tenant for Azure Fluid Relay in the same way as your production tenant and only needs the appropriate connection configuration. See [Connect to an Azure Fluid Relay service]({{< relref azure-frs.md >}}) for more details.
 
 ### Azure Fluid Relay as an abstraction for Tinylicious
 
