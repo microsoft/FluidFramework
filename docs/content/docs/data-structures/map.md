@@ -303,15 +303,17 @@ map.set(task.assignedToKey, pickedUser)
 
 This will work as expected **because the entire object is being stored each time** instead of specific fields.
 
-One way to think about this is that each value stored into the `SharedMap` is a unit of collaboration. Any time you want users to be able to collaborate on invidual pieces of an object, it should be appropriately stored in separate keys.
+One way to think about this is that each value stored into the `SharedMap` is the smallest simultaneously editable piece of data. Any time you want users to be able to simultaneously edit individual pieces of an object, you should store those properties in separate keys.
 
 ### Storing shared objects
 
-One of the powerful features of DDSes is that they are infintely nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
+One of the powerful features of DDSes is that they are nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
-This is done using the concept of [handles]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}). Handles provide a way for you to serialize your data object into a form that it can be stored into another DDS and loaded back from it.
+When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object’s handle then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
-To do this with `SharedMap`, all you need to do is specify an initial map as part of the `initialObjects` in the `ContainerSchema` and add the `SharedMap` type to `dynamicObjectTypes`.
+That’s all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles]({{< relref "handles.md" >}}).
+
+The following example demonstrates nesting DDSes using `SharedMap`. You specify an initial SharedMap as part of the `initialObjects` in the `ContainerSchema` and add the `SharedMap` type to `dynamicObjectTypes`.
 
 ```javascript
 const schema = {
@@ -326,33 +328,30 @@ const schema = {
 Now, you can dynamically create additional `SharedMap` instances and store their handles into the initial map that is always provided in the container.
 
 ```javascript
-const schema = {
-    name: "example-container",
-    initialObjects: {
-        initalMap: SharedMap,
-    },
-    dynamicObjectTypes: [SharedMap]
-}
-
 const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
 
 const initialMap = fluidContainer.initialObjects.initialMap;
 
+// Create a SharedMap dynamically at runtime
 const newSharedMap = fluidContainer.create(SharedMap);
 
+// BAD: This call won't work; you must store the handle, not the SharedMap itself.
+// initialMap.set("newSharedMapKey", newSharedMap);
+
+// GOOD: This call correctly stores the DDS via its handle.
 initialMap.set("newSharedMapKey", newSharedMap.handle);
 ```
 
-Now, anytime you are looking to load the `newSharedMap` back at a later time, all you have to do is load it back from the stored handle.
+To load the `newSharedMap` at a later time, you first retrieve the handle and then retrieve the object from the handle.
 
 ```javascript
 const newSharedMapHandle = initialMap.get("newSharedMapKey");
 const newSharedMap = await newSharedMapHandle.get();
 ```
 
-{{< callout note >}}
+{{< callout tip >}}
 
-Loading any DDS from its handle is an asynchronous operation. Whereas objects defined in `initialObjects` will be available synchronously once the container is provided, you will need to use an `await` or chain Promises on the `handle.get()` call.
+Loading any DDS from its handle is an asynchronous operation. You will need to use an `await` or chain Promises on the `handle.get()` call to retrieve nested DDSes.
 
 {{< /callout >}}
 
