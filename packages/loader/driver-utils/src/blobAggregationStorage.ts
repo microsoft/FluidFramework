@@ -321,6 +321,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
             assert(level === this.packingLevel, "we are not packing at the right level");
             aggregator = new BlobAggregator();
             shouldCompress = true;
+        } else {
+            assert(level !== this.packingLevel, "we are not packing at the right level");
         }
 
         const newSummary: ISummaryTree = {...summary};
