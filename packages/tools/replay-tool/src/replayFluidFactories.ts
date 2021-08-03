@@ -76,18 +76,22 @@ export class ReplayDataStoreFactory implements IFluidDataStoreFactory, Partial<I
     ) {}
 
     public async instantiateDataStore(context: IFluidDataStoreContext) {
-        return new this.runtimeClassArg(context, new Map([
-            SharedMap.getFactory(),
-            SharedString.getFactory(),
-            Ink.getFactory(),
-            SharedCell.getFactory(),
-            SharedObjectSequence.getFactory(),
-            SharedNumberSequence.getFactory(),
-            ConsensusQueue.getFactory(),
-            ConsensusRegisterCollection.getFactory(),
-            SparseMatrix.getFactory(),
-            SharedDirectory.getFactory(),
-            SharedIntervalCollection.getFactory(),
-        ].map((factory) => [factory.type, factory])));
+        return new this.runtimeClassArg(
+            context,
+            new Map([
+                SharedMap.getFactory(),
+                SharedString.getFactory(),
+                Ink.getFactory(),
+                SharedCell.getFactory(),
+                SharedObjectSequence.getFactory(),
+                SharedNumberSequence.getFactory(),
+                ConsensusQueue.getFactory(),
+                ConsensusRegisterCollection.getFactory(),
+                SparseMatrix.getFactory(),
+                SharedDirectory.getFactory(),
+                SharedIntervalCollection.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            true /* existing */,
+        );
     }
 }
