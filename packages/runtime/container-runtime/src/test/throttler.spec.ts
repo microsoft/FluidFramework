@@ -145,26 +145,6 @@ describe("Throttler", () => {
             2540, 5100, 10220, 20460,
         ],
     });
-    runTests({
-        message: "Exponential Delay",
-        // 60 second delay window. We ignore attempts that are more
-        // than 60 seconds ago. We are always subtracting the actual
-        // delay time for this window.
-        delayWindowMs: 60 * 1000,
-        // 30 second maximum delay. After delays reach this length,
-        // subsequent attempts will also use the max delay, unless
-        // enough extra time passes between attempts for some of the
-        // previous start times to drop off out of the window.
-        maxDelayMs: 30 * 1000,
-        // Exponential delay: [prev x 2 + 20] (0ms, 20ms, 60ms, 140ms, etc)
-        // Equivalent reduction with G = 1, F = 0:
-        /** f(n) = C x (B^n - G) + F = C x B^n + (F - C x G) = C x B^n - C */
-        delayFn: formExponentialFn({ coefficient: 20, offset: -20 }),
-        expectedDelays: [
-            0, 20, 60, 140, 300, 620, 1260,
-            2540, 5100, 10220, 20460,
-        ],
-    });
 
     runTests({
         message: "Exponential Delay with attempt offset",
