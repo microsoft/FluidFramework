@@ -46,7 +46,7 @@ class UnknownChannel implements IChannel {
         return {
             gcData: { gcNodes: { "/": [] } },
             stats: {
-                treeNodeCount: 0,
+                treeNodeCount: 1,
                 blobNodeCount: 0,
                 handleNodeCount: 0,
                 totalBlobSize: 0,
