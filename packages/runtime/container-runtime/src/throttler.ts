@@ -102,3 +102,59 @@ export class Throttler implements IThrottler {
         return delayMs;
     }
 }
+
+/**
+ * Helper function to generate simple exponential throttle functions.
+ * f(n) = [coefficient] x ([multiplier]^n) + [flatOffset]
+ * where n = number of attempts, and f(n) = delay time in milliseconds.
+ * If not provided, coefficient will default to 1, multiplier to 2,
+ * minimum delay to 0, and the offset to 0, yielding:
+ * 0 ms, 2 ms, 4 ms, 8 ms, ..., 2^n ms
+ * where M = multiplier; an exponential back-off.
+ * Use initialDelay to decide what should happen when numAttempts is 0,
+ * leave it undefined to not special case.
+ */
+ export const formExponentialFn = ({
+    multiplier = 2,
+    coefficient = 1,
+    offset = 0,
+    initialDelay = undefined as number | undefined,
+} = {}): IThrottler["delayFn"] => (numAttempts) => Math.max(0,
+    numAttempts <= 0 && initialDelay !== undefined
+    ? initialDelay
+    : coefficient * (Math.pow(multiplier, numAttempts)) + offset);
+
+/** f(n) = C x (B^(n+A)) + F = (C x B^A) x B^n + F */
+export const formExponentialFnWithAttemptOffset = (attemptOffset: number, {
+    multiplier = 2,
+    coefficient = 1,
+    offset = 0,
+    initialDelay = undefined as number | undefined,
+} = {}) => formExponentialFn({
+    multiplier,
+    coefficient: coefficient * Math.pow(multiplier, attemptOffset),
+    offset,
+    initialDelay,
+});
+
+/**
+ * Helper function to generate simple linear throttle functions.
+ * f(n) = [coefficient] x n + [flatOffset]
+ * where n = number of attempts, and f(n) = delay time in milliseconds.
+ * If not provided, coefficient will default to 1, and offset to 0, yielding:
+ * 0 ms, 1 ms, 2 ms, 3 ms, ..., n ms delays; a linear back-off.
+ */
+export const formLinearFn = ({
+    coefficient = 1,
+    offset = 0,
+} = {}): IThrottler["delayFn"] => (numAttempts) => Math.max(0,
+    coefficient * numAttempts + offset);
+
+/** f(n) = C x (n+A) + F = C x n + (C x A + F) */
+export const formLinearFnWithAttemptOffset = (attemptOffset: number, {
+    coefficient = 1,
+    offset = 0,
+} = {}) => formLinearFn({
+    coefficient,
+    offset: coefficient * attemptOffset + offset,
+});

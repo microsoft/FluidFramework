@@ -18,13 +18,6 @@ import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopRea
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
 
-export const defaultStartThrottleConfig = {
-    delayWindowMs: 60 * 1000, // 60 sec window
-    maxDelayMs: 30 * 1000, // 30 sec max delay
-    // throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
-    delayFn: (numAttempts: number) => 20 * (Math.pow(2, numAttempts) - 1),
-} as const;
-
 enum SummaryManagerState {
     Off = 0,
     Starting = 1,
