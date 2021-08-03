@@ -73,10 +73,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             },
         );
 
-        const timerGranularity = 10000;
-
         this.joinOpTimer = new Timer(
-            timerGranularity,
+            10000,
             () => {
                 this.joinOpTimerRetry++;
 
@@ -93,6 +91,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     private startJoinOpTimer() {
+        assert(!this.joinOpTimer.hasTimer, "has joinOpTimer");
+        assert(this.joinOpEvent === undefined, "has joinOpEvent");
         this.joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
         this.joinOpEvent = PerformanceEvent.start(
             this.logger,
@@ -203,7 +203,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         ) {
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
-            this.joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
             this.startJoinOpTimer();
         }
     }
