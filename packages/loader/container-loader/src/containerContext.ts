@@ -86,13 +86,17 @@ export class ContainerContext implements IContainerContext {
         return context;
     }
 
+    public readonly taggedLogger: ITelemetryLogger;
+
     /**
      * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
      * details.
     */
-    public readonly taggedLogger: ITelemetryLogger;
     public get logger(): ITelemetryLogger {
         return this.taggedLogger;
+    }
+    public set logger(telemetryLogger: ITelemetryLogger) {
+        this.logger = telemetryLogger;
     }
 
     public get id(): string {

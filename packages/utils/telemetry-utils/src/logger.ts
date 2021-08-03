@@ -210,7 +210,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             category: eventWithTagsMaybe.category,
             eventName: eventWithTagsMaybe.eventName,
         };
-        for (const key of Object.keys(getValidTelemetryProps(eventWithTagsMaybe))) {
+        for (const key of Object.keys(getValidTelemetryProps(eventWithTagsMaybe, new Set()))) {
             if (newEvent[key] !== undefined) {
                 // Don't overwrite existing properties on the event
                 continue;
