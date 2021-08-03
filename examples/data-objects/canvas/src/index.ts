@@ -23,7 +23,6 @@ export const CanvasInstantiationFactory =
         {},
     );
 
-// const canvasViewCallback = (canvas: Canvas) => new CanvasView(canvas);
-const canvasViewCallback = (canvas: Canvas) => <CanvasView canvas={canvas} />;
+const canvasViewCallback = (canvas: Canvas) => React.createElement(CanvasView, { canvas });
 
 export const fluidExport = new ContainerViewRuntimeFactory<Canvas>(CanvasInstantiationFactory, canvasViewCallback);
