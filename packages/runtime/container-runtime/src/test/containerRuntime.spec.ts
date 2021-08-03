@@ -11,12 +11,37 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { ScheduleManager } from "../containerRuntime";
+import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
+        describe("ContainerRuntime", () => {
+            describe("orderSequentially", () => {
+                let containerRuntime: ContainerRuntime;
+                const mockContext: Partial<IContainerContext> = {};
+
+                beforeEach(async () => {
+                    containerRuntime = await ContainerRuntime.load(
+                        mockContext as IContainerContext,
+                        [],
+                    );
+                });
+
+                it("Can't call flush() inside orderSequentially's callback", () => {
+                    assert.throws(
+                        () => containerRuntime.orderSequentially(() => {
+                            containerRuntime.flush();
+                        }),
+                        new Error("x"));
+                });
+
+                it("Can't call flush() inside orderSequentially's callback when nested", () => {
+
+                });
+            });
+        });
         describe("ScheduleManager", () => {
             describe("Batch processing events", () => {
                 let batchBegin: number = 0;
