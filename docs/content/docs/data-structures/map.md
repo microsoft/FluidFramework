@@ -204,7 +204,7 @@ If your application requires different fields in an object to be edited simultan
 
 {{< /callout >}}
 
-To see this distinction, lets take a scenario where you are building a task management tool where you'd like to assign various task to different people.
+To understand this distinction, consider a scenario where you are building a task management tool where you'd like to assign various task to different people.
 
 Here, each person may have multiple fields such as 
 ```json
@@ -227,7 +227,7 @@ And each task may also have multiple fields, including the person that it is ass
 }
 ```
 
-Now, the next question to ask is which of these fields you'd like to be individually collaborative. For the sake of this example, let's assume that the `title` and `description` are user-entered values that you'd like people to be able to edit together whereas the `assignedTo` person data is something that you receive from a backend service call that you'd like to store with your object. You can change which person the task gets assigned to but the actual metadata of each person is based off of the returned value from the service.
+Now, the next question to ask is which of these fields you'd like to be individually collaborative. For the sake of this example, assume that the `title` and `description` are user-entered values that you'd like people to be able to edit together whereas the `assignedTo` person data is something that you receive from a backend service call that you'd like to store with your object. You can change which person the task gets assigned to but the actual metadata of each person is based off of the returned value from the backend service.
 
 The most direct -- *but ultimately flawed* -- approach here would be to just to store the entire object into the `SharedMap` under a singular key.
 
@@ -245,11 +245,11 @@ This would look something like this:
     }
 }
 ```
-Now lets consider the scenario where two users begin to edit the task at the same time. Let's have User A begin editing the `title` whereas User B is editing the `description`.
+Now consider the scenario where two users begin to edit the task at the same time. For example, User A begins editing the `title` while User B is editing the `description`.
 
 Each time that User A makes an edit, `map.set("task1", editedTask)` will get called where `editedTask` will hold the new `title` values. Similarly, whenever User B makes an edit, `map.set("task1", editedTask)` will also be called but `description` will now hold the updated values. However, since `SharedMap` uses the LWW merge strategy, whichever user sent their `editedTask` last will overwrite the others edit. If User A's `set` occurs last, `task1` will now hold the updates to the `title` but will have overwritten User B's updates to `description`. Similarly, if User B's `set` occurs last, `description` will be updated but not `title`.
 
-There are two strategies to avoid this clash:
+There are two strategies to avoid this behavior:
 1. We can store each of these values in their own key and only hold the key at which they are stored in the `task1` object itself. This would mean your `SharedMap` could have an object like:
 
 ```json
@@ -283,14 +283,14 @@ const task = map.get("task1");
 map.set(task.descriptionKey, editedDescription)
 ```
 
-Now, each user would be updating the fields independently and one would not be overwriting the other, as the parent `task1` object isn't the one that is being set each time but rather just holding the pointers to each of the separate fields being edited.
+Now each user is updating the fields independently and would not overwrite each other, because the parent `task1` object isn't the one that is being set each time but rather just holding the references to each of the separate fields being edited.
 
 2. One of the caveats of the above approach is that both the tasks as well as their values are now all stored at the same level within the map. I.e. if you call `map.values()`, it will provide both the tasks themselves as well as each of their individual fields. Instead, you can have each task be stored in its own `SharedMap` and have a parent `SharedMap` that keeps track of all of the different tasks under it. We will take a look at this in the **Nested shared objects example** section below.
 
-Now, you may be asking if you would need to do the same for `assignedTo` object. The answer is "yes" if the fields in this object were also something you would be expecting users modularly edit. However, if this object will always be set together then you can keep it under the same key. Since this user metadata is coming as a singular blob from a service, you can use the latter in this scenario.
+You can follow this same pattern for the `assignedTo` object. However, since the data in `assignedTo` is coming as a singular blob from a service, there's no need to edit individual properties independently, so you can take the simpler approach of storing the whole object in the SharedMap in this case.
 
 ```javascript
-// Pseudocode for a function that makes a backend call to fetch a roster of all users in an array
+// This function (implementation not shown) fetches an array of users from an external service.
 const users = await getAvailableUsers();
 
 // Let's say that the user the task is assigned to is at index pickedUserIndex
