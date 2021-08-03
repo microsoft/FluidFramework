@@ -13,7 +13,7 @@ import { ImageGalleryInstantiationFactory, ImageGalleryModel } from "./model";
 import { ImageGalleryView } from "./view";
 
 const imageGalleryViewCallback = (imageGalleryModel: ImageGalleryModel) =>
-    <ImageGalleryView imageGalleryModel={ imageGalleryModel } />;
+    React.createElement(ImageGalleryView, { imageGalleryModel });
 
 export const fluidExport =
     new ContainerViewRuntimeFactory<ImageGalleryModel>(ImageGalleryInstantiationFactory, imageGalleryViewCallback);
