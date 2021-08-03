@@ -60,9 +60,13 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 /** type guard for ILoggingError interface */
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
-/** Copy props from source onto target, overwriting any keys that are already set on target */
-function copyProps(target: unknown, source: ITelemetryProperties) {
-    Object.assign(target, source);
+/** Copy props from source onto target, but do not overwrite an existing prop that matches */
+function copyProps(source: ITelemetryProperties, target: ITelemetryProperties | LoggingError) {
+    for (const key of Object.keys(source)) {
+        if (target[key] === undefined) {
+            target[key] = source[key];
+        }
+    }
 }
 
 /** Metadata to annotate an error object when annotating or normalizing it */
@@ -108,7 +112,7 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(this.telemetryProps, props);
+        copyProps(props, this.telemetryProps);
     }
 }
 
@@ -249,7 +253,7 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(this, props);
+        copyProps(props, this);
     }
 
     /**
