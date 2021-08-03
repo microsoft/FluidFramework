@@ -59,8 +59,6 @@ function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): s
     return bufferToString(blob, encoding);
 }
 
-const dataStoreLevel = 2;
-
  /**
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
   */
