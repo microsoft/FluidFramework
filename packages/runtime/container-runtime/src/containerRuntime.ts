@@ -928,9 +928,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ) {
             // Create the SummaryManager and mark the initial state
             this.summaryManager = new SummaryManager(
-                context,
                 this.summarizerClientElection,
                 this, // IConnectedState
+                this.summaryCollection,
                 this.logger,
                 formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
                 new Throttler(
