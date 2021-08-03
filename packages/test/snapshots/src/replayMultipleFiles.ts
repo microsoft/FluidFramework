@@ -91,8 +91,6 @@ class ConcurrencyLimiter {
  * 3. srcSnapshots - This folder contains snapshots in older versions. There is one folder for each set of snapshots
  *    in a previous version. In Mode.Validate, a container is loaded from each of these older snapshot and validated
  *    that it loads successfully.
- * 4. initialSnapshot - This folder is present for snapshots from newer documents that use detached container flow. It
- *    contains the initial snapshot to load the container with.
  */
 export async function processOneNode(args: IWorkerArgs) {
     const replayArgs = new ReplayArgs();
