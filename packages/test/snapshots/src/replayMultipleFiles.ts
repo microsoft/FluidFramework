@@ -342,7 +342,8 @@ async function processNode(
                 const extra = `If you are adding new test snapshots, you can run 'npm run test:new' to generate`
                 + ` reference snapshot files.\n`
                 + `If you changed snapshot representation and validated new format is backward`
-                + ` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n`;
+                + ` compatible, you can run 'npm run test:update' to update baseline snapshot files.\n`
+                + `Check README.md for more details.`;
                 reject(new Error(`${message}\n\n${extra}`));
             } else {
                 reject(new Error(message));
