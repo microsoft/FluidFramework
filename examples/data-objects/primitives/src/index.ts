@@ -11,7 +11,7 @@ import { DdsCollection, DdsCollectionFactory } from "./model";
 import { DdsCollectionView } from "./view";
 
 const ddsCollectionViewCallback =
-    (ddsCollection: DdsCollection) => <DdsCollectionView ddsCollection={ddsCollection} />;
+    (ddsCollection: DdsCollection) => React.createElement(DdsCollectionView, { ddsCollection });
 
 export const fluidExport =
     new ContainerViewRuntimeFactory<DdsCollection>(DdsCollectionFactory, ddsCollectionViewCallback);
