@@ -538,7 +538,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 runtimeVersion: pkgVersion,
             },
         });
-
+        const packingLevel = runtimeOptions?.summaryOptions?.disableIsolatedChannels ? 1 : 2;
         let storage = context.storage;
         if (context.baseSnapshot) {
             // This will patch snapshot in place!
@@ -550,7 +550,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
                 assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
-                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
+                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger, packingLevel);
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
             } else {
@@ -626,7 +626,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // So once we release 0.40 container-defn package we can remove this check.
         if (!this._storage && this.context.storage) {
             // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
+            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger,
+                this.disableIsolatedChannels ? 1 : 2);
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._storage!;

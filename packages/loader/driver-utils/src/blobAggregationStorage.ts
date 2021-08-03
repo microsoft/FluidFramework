@@ -59,6 +59,8 @@ function bufferToString2(blob: ArrayBufferLike, encoding: "utf-8" | "base64"): s
     return bufferToString(blob, encoding);
 }
 
+const dataStoreLevel = 2;
+
  /**
   * Class responsible for aggregating smaller blobs into one and unpacking it later on.
   */
@@ -102,7 +104,7 @@ export abstract class SnapshotExtractor {
     public async unpackSnapshotCore(snapshot: ISnapshotTree, level = 0): Promise<void> {
         // for now only working at data store level, i.e.
         // .app/DataStore/...
-        if (level > BlobAggregationStorage.dataStoreLevel) {
+        if (level > dataStoreLevel) {
             return;
         }
 
@@ -188,7 +190,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
 
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking = gatesAllowPacking()) {
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, packingLevel: number,
+        allowPacking = gatesAllowPacking()) {
         if (storage instanceof BlobAggregationStorage) {
             return storage;
         }
@@ -196,7 +199,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         // This is mostly to avoid cases where future changes in policy would result in inability to
         // load old files that were created with aggregation on.
         const minBlobSize = storage.policies?.minBlobSize;
-        return new BlobAggregationStorage(storage, logger, allowPacking, minBlobSize);
+        return new BlobAggregationStorage(storage, logger, allowPacking, packingLevel, minBlobSize);
     }
 
     static async unpackSnapshot(snapshot: ISnapshotTree) {
@@ -224,6 +227,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         private readonly storage: IDocumentStorageService,
         private readonly logger: ITelemetryLogger,
         private readonly allowPacking: boolean,
+        private readonly packingLevel: number,
         private readonly blobCutOffSize?: number)
     {
         super();
@@ -290,7 +294,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 
-    static dataStoreLevel = 2;
     // For simplification, we assume that
     // - blob aggregation is done at data store level only for now
     // - data store either reuses previous summary, or generates full summary, i.e. there is no partial (some DDS)
@@ -312,13 +315,15 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         if (this.blobCutOffSize === undefined || this.blobCutOffSize < 0) {
             return summary;
         }
-        // Only pack at data store level.
-        const startingLevel = level === BlobAggregationStorage.dataStoreLevel;
+
+        let shouldCompress: boolean = false;
 
         let aggregator = aggregatorArg;
-        if (startingLevel) {
+        if (Object.keys(summary.tree).includes(".component")) {
             assert(aggregator === undefined, 0x0fb /* "logic err with aggregator" */);
+            assert(level === this.packingLevel, "we are not packing at the right level");
             aggregator = new BlobAggregator();
+            shouldCompress = true;
         }
 
         const newSummary: ISummaryTree = {...summary};
@@ -326,7 +331,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         for (const key of Object.keys(summary.tree)) {
             const obj = summary.tree[key];
             // Get path relative to root of data store (where we do aggregation)
-            const newPath = startingLevel ? key : `${path}/${key}`;
+            const newPath = shouldCompress ? key : `${path}/${key}`;
             switch (obj.type) {
                 case SummaryType.Tree:
                     // If client created empty tree, keep it as is
@@ -371,7 +376,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         }
 
         assert(newSummary.tree[this.aggregatedBlobName] === undefined, 0x0ff /* "duplicate aggregate blob" */);
-        if (startingLevel) {
+        if (shouldCompress) {
             // Note: It would be great to add code here to unpack aggregate blob back to normal blobs
             // If only one blob made it into aggregate. Currently that does not happen as we always have
             // at least one .component blob and at least one DDS that has .attributes blob, so it's not an issue.
