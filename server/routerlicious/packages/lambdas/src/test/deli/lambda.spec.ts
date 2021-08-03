@@ -200,6 +200,26 @@ describe("Routerlicious", () => {
                     assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 22);
                 });
 
+                it("Should ticket new clients connecting above msn with server metadata set", async () => {
+                    const secondMessageFactory = new MessageFactory(testId, "test2");
+
+                    // Have test client create some existing messages
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(undefined, { myMetadata: "123" }), testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(MessageType.Operation, 10, 2000), testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(MessageType.Operation, 20, 2100), testId));
+                    await quiesceWithClientsConnected();
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 20);
+
+                    // And then have a new client go under the latest working set msn but above the published msn
+                    await lambda.handler(
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.createJoin(2200, { myMetadata: "456" }), testId));
+                    await lambda.handler(
+                        kafkaMessageFactory.sequenceMessage(secondMessageFactory.create(MessageType.Operation, 25, 2200), testId));
+                    await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.create(MessageType.Operation, 22, 2400), testId));
+                    await quiesceWithClientsConnected();
+                    assert.equal(testKafka.getLastMessage().operation.minimumSequenceNumber, 22);
+                });
+
                 it("Should timeout idle clients", async () => {
                     const secondMessageFactory = new MessageFactory(testId, "test2");
                     await lambda.handler(kafkaMessageFactory.sequenceMessage(messageFactory.createJoin(0), testId));

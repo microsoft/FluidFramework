@@ -11,17 +11,19 @@ import { IContainerContext, LoaderHeader } from "@fluidframework/container-defin
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { createSummarizingWarning } from "./summarizer";
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
-import { Throttler } from "./throttler";
+import { IThrottler } from "./throttler";
 import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 
 const defaultInitialDelayMs = 5000;
 const opsToBypassInitialDelay = 4000;
 
-const defaultThrottleDelayWindowMs = 60 * 1000;
-const defaultThrottleMaxDelayMs = 30 * 1000;
-// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
-const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
+export const defaultStartThrottleConfig = {
+    delayWindowMs: 60 * 1000, // 60 sec window
+    maxDelayMs: 30 * 1000, // 30 sec max delay
+    // throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
+    delayFn: (numAttempts: number) => 20 * (Math.pow(2, numAttempts) - 1),
+} as const;
 
 enum SummaryManagerState {
     Off = 0,
@@ -73,11 +75,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private state = SummaryManagerState.Off;
     private runningSummarizer?: ISummarizer;
     private _disposed = false;
-    private readonly startThrottler = new Throttler(
-        defaultThrottleDelayWindowMs,
-        defaultThrottleMaxDelayMs,
-        defaultThrottleDelayFunction,
-    );
 
     public get disposed() {
         return this._disposed;
@@ -89,6 +86,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         private readonly connectedState: IConnectedState,
         private readonly summaryCollection: Pick<SummaryCollection, "opsSinceLastAck">,
         parentLogger: ITelemetryLogger,
+        private readonly startThrottler: IThrottler,
         initialDelayMs: number = defaultInitialDelayMs,
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
@@ -179,7 +177,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         const delayMs = this.startThrottler.getDelay();
-        if (delayMs >= defaultThrottleMaxDelayMs) {
+        if (delayMs >= this.startThrottler.maxDelayMs) {
             // we can't create a summarizer for some reason; raise error on container
             this.emit(
                 "summarizerWarning",
@@ -194,7 +192,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }, (error) => {
             this.logger.sendErrorEvent({
                 eventName: "CreateSummarizerError",
-                attempt: this.startThrottler.attempts,
+                attempt: this.startThrottler.numAttempts,
             }, error);
             this.tryRestart();
         });
@@ -209,7 +207,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         PerformanceEvent.timedExecAsync(
             this.logger,
-            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },
+            { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
             async () => summarizer.run(clientId, this.summarizerOptions),
         ).finally(() => {
             this.runningSummarizer = undefined;

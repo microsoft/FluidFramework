@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -26,6 +27,7 @@ import {
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ChildLogger, ThresholdCounter } from "@fluidframework/telemetry-utils";
 import {
     attributesBlobKey,
     createServiceEndpoints,
@@ -47,6 +49,9 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly subLogger: ITelemetryLogger;
+    private readonly thresholdOpsCounter: ThresholdCounter;
+    private static readonly pendingOpsCountThreshold = 1000;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -78,6 +83,12 @@ export class RemoteChannelContext implements IChannelContext {
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => gcDetailsInInitialSummary(),
+        );
+
+        this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
+        this.thresholdOpsCounter = new ThresholdCounter(
+            RemoteChannelContext.pendingOpsCountThreshold,
+            this.subLogger,
         );
     }
 
@@ -111,8 +122,9 @@ export class RemoteChannelContext implements IChannelContext {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push(message);
+            assert(this.pending !== undefined, "pending is undefined");
+            this.pending.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }
     }
 
@@ -202,10 +214,11 @@ export class RemoteChannelContext implements IChannelContext {
             attributes);
 
         // Send all pending messages to the channel
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const message of this.pending!) {
+        assert(this.pending !== undefined, "pending undefined");
+        for (const message of this.pending) {
             this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
+        this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
 
         // Commit changes.
         this.channel = channel;
