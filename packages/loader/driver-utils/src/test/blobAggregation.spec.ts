@@ -140,8 +140,8 @@ async function prep(allowPacking: boolean, blobSizeLimit: number | undefined) {
     const aggregator = BlobAggregationStorage.wrap(
         storage as any as IDocumentStorageService,
         new TelemetryNullLogger(),
-        2,
-        allowPacking);
+        allowPacking,
+        2);
 
     await aggregator.uploadSummaryWithContext(summaryTree, {
         proposalHandle: undefined,

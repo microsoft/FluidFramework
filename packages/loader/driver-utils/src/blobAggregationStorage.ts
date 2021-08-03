@@ -190,8 +190,8 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
 
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, packingLevel: number,
-        allowPacking = gatesAllowPacking()) {
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking = gatesAllowPacking(),
+        packingLevel = 2) {
         if (storage instanceof BlobAggregationStorage) {
             return storage;
         }

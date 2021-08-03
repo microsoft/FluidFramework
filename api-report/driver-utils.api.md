@@ -86,7 +86,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     // (undocumented)
     protected virtualBlobs: Map<string, ArrayBufferLike>;
     // (undocumented)
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, packingLevel: number, allowPacking?: boolean): BlobAggregationStorage;
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
     // (undocumented)
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
