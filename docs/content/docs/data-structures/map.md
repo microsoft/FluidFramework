@@ -119,9 +119,9 @@ this.map.forEach((value, key) => console.log(`${key}-${value}`));
 
 ## Events
 
-The `SharedMap` object will emit events any time a value on it changes, whether that be from an update applied to it by your local client or from a remote one. Specifically, there are two events to track here, 
-- `valueChanged` - Fired anytime the map is modified due to a key being added, updated, or removed
-- `clear` - Fired when `clear()` is called to alert clients that all data from the map has been removed
+The `SharedMap` object will emit events on changes from local and remote clients. There are two events emitted: 
+- `valueChanged` - Sent anytime the map is modified due to a key being added, updated, or removed
+- `clear` - Sent when `clear()` is called to alert clients that all data from the map has been removed
 
 If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event.
 
