@@ -18,13 +18,7 @@ For additional background on DDSes and a general overview of their design, pleas
 
 ## Creation
 
-There are two paths to create an instance of the `SharedMap`:
-1.  Using the [FluidContainer]({{< relref "containers.md" >}}) for when you'd like to directly interface with the `SharedMap` in your application
-2. Using the DDS API directly for when you'd like to use it within your own custom data object
-
-### Using FluidContainer
-
-The `FluidContainer` provides us with a container schema for defining which DDSes you would like to load from it. It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones. For general guidance on using the `ContainerSchema`, please see [here]({{< relref "data-modeling.md" >}}) and for guidance on how to create/load a container using a service-specific client, please see [here]({{< relref "containers.md#creating--loading" >}}).
+The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it. It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones. For general guidance on using the `ContainerSchema`, please see [here]({{< relref "data-modeling.md" >}}) and for guidance on how to create/load a container using a service-specific client, please see [here]({{< relref "containers.md#creating--loading" >}}).
 
 Let's take a look at how you would specifically use the `ContainerSchema` for `SharedMap`.
 
@@ -73,50 +67,36 @@ const { fluidContainer, containerServices } = await client.getContainer(/*servic
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
-Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the **Storing shared objects** section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
-
-### Using the DDS API
-
-A `SharedMap` instance can also be created from within your own custom data object. Each extension of the `DataObject` class has access to its own `runtime` that manages the object's own data store. `SharedMap` provides a static `create` function on its API that accepts this runtime and will provide you with a new instance of the DDS.
-
-```javascript
-const newMap = SharedMap.create(this.runtime, id);
-```
-
-`DataObject` classes also provide by default a `root` [SharedDirectory]({{< relref "directory.md" >}}) object that is always available and provides a location to store the map. The `SharedMap` itself also provides a [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}) property that can be thought of as a serializable form of the map. Now that you have a way to serialize the map and a place where to put it, you can do the following to store the map in the `root`:
-```javascript
-const newMapKey = "uniqueMapId";
-this.root.set(newMapKey, newMap.handle);
-```
-And then, you can load it back in the following manner:
-```javascript
-const newMapHandle = this.root.get(newMapKey);
-const newMapLoaded = await newMapHandle.get();
-```
-`newMapLoaded` now points to the same DDS as your initial `newMap`
+Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
 
 ## API Functionality
 
 The `SharedMap` object provides a number of functions to allow you to edit the key/value pairs stored on the object. As stated earlier, these are intended to match the `Map` API. However, the keys used in `SharedMap` must be strings. Each edit will also trigger a `valueChanged` event which will be discussed in the **Events** section below.
 
-- `set(key, value)` - Used for updating the value stored at `key` with the new provided value
-- `get(key)` - Returns the latest value stored on the key or `undefined` if it does not exist
-- `has(key)` - Checks to see if the key is available in the SharedMap.
-- `keys()` - Returns all the keys that have been set for this map
-- `entries()` - Returns an iterator for all values stored on the map.
+- `set(key: string, value: any): this` - Used for updating the value stored at `key` with the new provided value
+- `get<T = any>(key: string): T | undefined)` - Returns the latest value stored on the key or `undefined` if it does not exist
+- `has(key: string): boolean` - Checks to see if the key is available in the SharedMap.
+- `keys(): IterableIterator<string>` - Returns an iterator for all the keys that have been set for this map
+- `entries(): IterableIterator<[string, any]>` - Returns an iterator for all values stored on the map.
 - `delete(key)` - Removes the key/value from the map
-- `forEach(callbackFn)` - Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
+- `forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void` - Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
 ```javascript
 this.map.forEach((value, key) => console.log(`${key}-${value}`));
 ```
-
-- `clear()` - Removes all data from the map, deleting all of the keys and values stored within it
+- `clear(): void` - Removes all data from the map, deleting all of the keys and values stored within it
 
 ## Events
 
 The `SharedMap` object will emit events on changes from local and remote clients. There are two events emitted: 
-- `valueChanged` - Sent anytime the map is modified due to a key being added, updated, or removed
-- `clear` - Sent when `clear()` is called to alert clients that all data from the map has been removed
+1. `valueChanged`
+- Signature: `(event: "valueChanged", listener: (
+        changed: IValueChanged,
+        local: boolean) => void)`
+- Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object of type `IValueChanged` which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
+2. `clear`
+- Signature: `(event: "clear", listener: (
+        local: boolean) => void)`
+- Description: Sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
 
 If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event. You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
 
@@ -148,11 +128,7 @@ updateLabel();
 
 In the code above, whenever a user clicks the button, it sets a new random value on your map's `dataKey`. This causes a `valueChanged` event to be sent on all of the clients who have this container open. Since `updateLabel` is a callback set up to update the view anytime this event gets fired, the view will always refresh with the new value for all users whenever any of the users clicks on the button.
 
-The `valueChanged` event listener can also take in as parameters:
-- a `changed` object of type `IValueChanged` which provides the `key` that was updated and what the `previousValue` was
-- a `local` boolean that indicates if the current client was the one that initiated the change
-
-Your event listener can be more sophisticated by using the additional information provided in the event arguments.
+Your event listener can be more sophisticated by using the additional information provided in the arguments listed above in the `valueChanged` event's `listener` signature.
 
 ```javascript {linenos=inline,hl_lines=["14-15"]}
 const map = fluidContainer.initialObjects.customMap;
