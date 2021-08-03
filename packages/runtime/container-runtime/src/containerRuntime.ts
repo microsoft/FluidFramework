@@ -102,7 +102,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
-import { SummaryManager } from "./summaryManager";
+import { defaultStartThrottleConfig, formRequestSummarizerFn, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -131,6 +131,7 @@ import {
     ISummarizerOptions,
     ISummarizerRuntime,
 } from "./summarizerTypes";
+import { Throttler } from "./throttler";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -896,13 +897,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.IFluidHandleContext,
             this.summaryCollection);
 
+        const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
         const orderedClientCollection = new OrderedClientCollection(
-            this.logger,
+            orderedClientLogger,
             this.context.deltaManager,
             this.context.quorum,
         );
         const orderedClientElectionForSummarizer = new OrderedClientElection(
-            this.logger,
+            orderedClientLogger,
             orderedClientCollection,
             electedSummarizerData ?? this.context.deltaManager.lastSequenceNumber,
             SummarizerClientElection.isClientEligible,
@@ -910,7 +912,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const summarizerClientElectionEnabled = getLocalStorageFeatureGate("summarizerClientElection") ??
             this.runtimeOptions.summaryOptions?.summarizerClientElection === true;
         this.summarizerClientElection = new SummarizerClientElection(
-            this.logger,
+            orderedClientLogger,
             this.summaryCollection,
             orderedClientElectionForSummarizer,
             maxOpsSinceLastSummary,
@@ -918,7 +920,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
-            this.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
+            this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         }
         if (
             this.runtimeOptions.summaryOptions.generateSummaries !== false
@@ -930,6 +932,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.summarizerClientElection,
                 this, // IConnectedState
                 this.logger,
+                formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
+                new Throttler(
+                    defaultStartThrottleConfig.delayWindowMs,
+                    defaultStartThrottleConfig.maxDelayMs,
+                    defaultStartThrottleConfig.delayFn,
+                ),
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );
@@ -2180,7 +2188,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return this.summaryManager.summarizeOnDemand(...args);
         } else {
             // If we're not the summarizer, and we don't have a summaryManager, we expect that
-            // generateSummaries is turned off.
+            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // because it is a misuse of the API rather than an expected failure.
+            throw new Error(
+                `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
+            );
+        }
+    };
+
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        if (this.clientDetails.type === summarizerClientType) {
+            return this.summarizer.enqueueSummarize(...args);
+        } else if (this.summaryManager !== undefined) {
+            return this.summaryManager.enqueueSummarize(...args);
+        } else {
+            // If we're not the summarizer, and we don't have a summaryManager, we expect that
+            // generateSummaries is turned off. We are throwing instead of returning a failure here,
+            // because it is a misuse of the API rather than an expected failure.
             throw new Error(
                 `Can't summarize, generateSummaries: ${this.runtimeOptions.summaryOptions.generateSummaries}`,
             );

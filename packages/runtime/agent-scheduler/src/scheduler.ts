@@ -18,6 +18,7 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
+import { isContextExisting } from "@fluidframework/runtime-utils";
 import debug from "debug";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
@@ -26,10 +27,10 @@ import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 const UnattachedClientId = `${uuid()}_unattached`;
 
 class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
-        if (!runtime.existing) {
+        if (!existing) {
             root = SharedMap.create(runtime, "root");
             root.bindToContext();
             consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
@@ -365,9 +366,13 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
 
 class AgentSchedulerRuntime extends FluidDataStoreRuntime {
     private readonly agentSchedulerP: Promise<AgentScheduler>;
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry) {
-        super(dataStoreContext, sharedObjectRegistry);
-        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext);
+    constructor(
+        dataStoreContext: IFluidDataStoreContext,
+        sharedObjectRegistry: ISharedObjectRegistry,
+        existing: boolean,
+    ) {
+        super(dataStoreContext, sharedObjectRegistry, existing);
+        this.agentSchedulerP = AgentScheduler.load(this, dataStoreContext, existing);
     }
     public async request(request: IRequest) {
         const response = await super.request(request);
@@ -391,13 +396,13 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         return [this.type, Promise.resolve(new AgentSchedulerFactory())];
     }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        return new AgentSchedulerRuntime(context, dataTypes);
+        return new AgentSchedulerRuntime(context, dataTypes, isContextExisting(context, existing));
     }
 }
