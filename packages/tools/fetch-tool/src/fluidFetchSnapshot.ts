@@ -305,7 +305,7 @@ export async function fluidFetchSnapshot(
 
     let storage = await documentService.connectToStorage();
     if (paramUnpackAggregatedBlobs) {
-        storage = BlobAggregationStorage.wrap(storage, new TelemetryNullLogger(), false /* allowPacking */);
+        storage = BlobAggregationStorage.wrap(storage, new TelemetryNullLogger(), 2, false /* allowPacking */);
     }
 
     let version: IVersion | undefined;
