@@ -321,7 +321,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         const nonce = `${this.requestOpsNoncePrefix}${this.getOpsCounter}`;
 
         // PUSH may disable this functionality, in such case we will keep accumulating memory for nothing.
-        // Prevent that by allowing to tracking only 10 overlapping requests.
+        // Prevent that by allowing to track only 10 overlapping requests.
         // Telemetry in get_ops_response will clearly indicate when we have over 5 requests.
         // Note that we should never have overlapping requests, as DeltaManager allows only one
         // outstanding request to storage, and that's the only way to get here.
@@ -353,13 +353,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         }
 
         this.socket.on("get_ops_response", (result) => {
-            const messages = result.messages as ISequencedDocumentMessage[];
+            const messages = result.messages as ISequencedDocumentMessage[] | undefined;
             const data = this.getOpsMap.get(result.nonce);
             // Due to socket multiplexing, this client may not have asked for any data
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
             if (data !== undefined) {
                 this.getOpsMap.delete(result.nonce);
-                if (messages.length > 0) {
+                if (messages !== undefined && messages.length > 0) {
                     this.logger.sendPerformanceEvent({
                         eventName: "GetOps",
                         first: messages[0].sequenceNumber,
