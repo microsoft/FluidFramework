@@ -103,8 +103,8 @@ The `SharedMap` object provides a number of functions to allow you to edit the k
 - `get(key)` - Returns the latest value stored on the key or `undefined` if it does not exist
 - `has(key)` - Checks to see if the key is available in the SharedMap.
 - `keys()` - Returns all the keys that have been set for this map
-- `entries()` - Returns an iterator for all values stored on the map. This can be easily converted into an array by doing `Array.from(map.entries())`
-- `delete(key)` - Removes the key from the map
+- `entries()` - Returns an iterator for all values stored on the map.
+- `delete(key)` - Removes the key/value from the map
 {{< callout note >}}
 
 When removing a key from the `SharedMap`, please use the `delete` function instead of using `set` with `value` as `undefined`. The latter will not remove the key from the object and it will still be returned when developers call `keys` or `entries`
