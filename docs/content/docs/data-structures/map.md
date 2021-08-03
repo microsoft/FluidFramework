@@ -73,26 +73,26 @@ Once the async call to `create` returns, you can treat it the same as you were u
 
 The `SharedMap` object provides a number of functions to allow you to edit the key/value pairs stored on the object. As stated earlier, these are intended to match the `Map` API. However, the keys used in `SharedMap` must be strings. Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
 
-- `set(key: string, value: any): this` - Used for updating the value stored at `key` with the new provided value
-- `get<T = any>(key: string): T | undefined)` - Returns the latest value stored on the key or `undefined` if it does not exist
-- `has(key: string): boolean` - Checks to see if the key is available in the SharedMap.
-- `keys(): IterableIterator<string>` - Returns an iterator for all the keys that have been set for this map
-- `entries(): IterableIterator<[string, any]>` - Returns an iterator for all values stored on the map
+- `set(key, value)` - Used for updating the value stored at `key` with the new provided value
+- `get(key)` - Returns the latest value stored on the key or `undefined` if it does not exist
+- `has(key)` - Checks to see if the key is available in the SharedMap and returns a boolean
+- `keys()` - Returns an iterator for all the keys that have been set for this map
+- `entries()` - Returns an iterator for all key/value pairs stored on the map
 - `delete(key)` - Removes the key/value from the map
-- `forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void` - Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
+- `forEach(callbackFn: (value, key, map) => void)` - Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
 ```javascript
 this.map.forEach((value, key) => console.log(`${key}-${value}`));
 ```
-- `clear(): void` - Removes all data from the map, deleting all of the keys and values stored within it
+- `clear()` - Removes all data from the map, deleting all of the keys and values stored within it
 
 ## Events
 
 The `SharedMap` object will emit events on changes from local and remote clients. There are two events emitted: 
 1. `valueChanged`
-- Signature: `(event: "valueChanged", listener: (changed: IValueChanged, local: boolean) => void)`
-- Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object of type `IValueChanged` which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
+- Signature: `(event: "valueChanged", listener: (changed, local) => void)`
+- Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
 2. `clear`
-- Signature: `(event: "clear", listener: (local: boolean) => void)`
+- Signature: `(event: "clear", listener: (local) => void)`
 - Description: This event is sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
 
 If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event. You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
