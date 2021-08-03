@@ -154,7 +154,7 @@ The `valueChanged` event listener can also take in as parameters:
 
 Your event listener can be more sophisticated by using the additional information provided in the event arguments.
 
-```javascript
+```javascript {linenos=inline,hl_lines=["14-15"]}
 const map = fluidContainer.initialObjects.customMap;
 const dataKey = "data";
 const button = document.createElement('button');
@@ -175,7 +175,7 @@ updateLabel(undefined, false);
     // Use the changed event to trigger the rerender whenever the value changes.
 map.on('valueChanged', updateLabel);
 ```
-Now, with the changes in `updateLabel`, the view will appropriately re-render to say if the value was last updated by the current user or by someone else. It will also compare the current value to the last one, and if the value has increased, it will set the text color to green. Otherwise, it will be red.
+Now, with the changes in `updateLabel`, the label will update to say if the value was last updated by the current user or by someone else. It will also compare the current value to the last one, and if the value has increased, it will set the text color to green. Otherwise, it will be red.
 
 ## Usage guides
 
@@ -188,16 +188,15 @@ Let's walk through each of these different types and look at best practices on h
 
 ### Storing primitives
 
-As you saw in the examples above, storing and fetching primitve values from a `SharedMap` are as simple as calling the `set`/`get` functions on the same key. The common paradigm to follow is:
-1. Create a listener callback for updating the app state using `get` to fetch the latest data. This gets triggered on a `valueChanged` event
-2. Adding some app functionality, whether that is through user action or otherwise, to call `set` with new data
-3. Observe the `set` call trigger the `valueChanged` event for local and remote clients and see all of their local app states get updated
+As demonstrated in the examples above, you can store and fetch primitive values from a `SharedMap` using the `set`/`get` functions on the same key. The typical pattern is as follows:
+1. Create an event listener that updates app state using `get` to fetch the latest data. Connect this listener to the SharedMap's `valueChanged` event.
+2. Add some app functionality to call `set` with new data. This could be from a user action as in the example above or some other mechanism.
 
-Whichever client was the last to fire a `set` call will have its value be the current value on the key.
+Because the local `set` call causes the `valueChanged` event to be sent, and you're handling those changes by updating your application state, then all local and remote clients see all of their local app states getting updated.
 
 ### Storing objects
 
-When storing objects in a `SharedMap`, the concepts for applying and fetching updates remain the same as when storing primitives. However, one thing to note is that all updates in `SharedMap` are merged using a last writer wins (LWW) strategy. This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others. While this is fine for primitives, please be careful when using this to store objects if you are looking for different fields within the object to be modularly modified.
+Storing objects in a `SharedMap` is very similar to storing primitives. However, one thing to note is that all values in `SharedMap` are merged using a last writer wins (LWW) strategy. This means that if multiple clients are writing values to the same key, whoever made the last update will "win" and overwrite the others. While this is fine for primitives, you should be mindful when storing objects in `SharedMaps` if you are looking for individual fields within the object to be independently modified. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
 
 {{< callout warning >}}
 
