@@ -190,12 +190,18 @@ export class DocumentDeltaConnection
         return this.details.serviceConfiguration;
     }
 
+    private checkNotClosed() {
+        assert(!this.disposed, "not disposed");
+    }
+
     /**
      * Get messages sent during the connection
      *
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
+        this.checkNotClosed();
+
         // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
         // latest ops.  This could possibly indicate that initialMessages was called twice.
         assert(this.earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
@@ -220,6 +226,7 @@ export class DocumentDeltaConnection
      * @returns initial signals returned by ordering service
      */
     public get initialSignals(): ISignalMessage[] {
+        this.checkNotClosed();
         return this.details.initialSignals;
     }
 
@@ -229,6 +236,7 @@ export class DocumentDeltaConnection
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
+        this.checkNotClosed();
         return this.details.initialClients;
     }
 
@@ -238,6 +246,7 @@ export class DocumentDeltaConnection
      * @param message - delta operation to submit
      */
     public submit(messages: IDocumentMessage[]): void {
+        this.checkNotClosed();
         this.submitManager.add("submitOp", messages);
     }
 
@@ -247,6 +256,7 @@ export class DocumentDeltaConnection
      * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
+        this.checkNotClosed();
         this.submitManager.add("submitSignal", [message]);
     }
 

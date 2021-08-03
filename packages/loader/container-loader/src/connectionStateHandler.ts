@@ -17,7 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
-    triggerReconnect: (reason: string) => void,
+    triggerConnectionRecovery: (reason: string, retryCount: number, duration: number) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -37,6 +37,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
+
+    static readonly joinOpTimerRetryInitialValue = 0;
+    private joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -68,33 +71,42 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             },
         );
 
+        const timerGranularity = 10000;
+
         this.joinOpTimer = new Timer(
-            60000,
+            timerGranularity,
             () => {
-                // If this event fires too often, then we should look into potential reasons why:
-                // 1. It may happen because it takes client too long to catch up, then we should consider why
-                //    and how to address it. It blocks collab window moving forward. One reason might be -
-                //    we raised "connected" event to runtime right away on establishing "read" connection, allowing
-                //    it to send op and switch to "write" mode too early. We should consider waiting with delivery
-                //    of initial "connected" signal until client is mostly caught (see waitContainerToCatchUp())
-                // 2. It's possible that client does not receive any ops at all on this connection, either due
-                //    to client bug or server bug. We should instrument more to understand this problem better.
-                // Adding telemetry on how far client is behind (from last known seq number) at the time of
-                // connection/failure and how many ops it received on given connection would help here.
+                this.joinOpTimerRetry++;
+                const duration = timerGranularity * this.joinOpTimerRetry; // approximation
+
                 this.logger.sendErrorEvent({
                     eventName: "NoJoinOp",
                     clientId: this.pendingClientId,
+                    retry: this.joinOpTimerRetry,
+                    duration,
                 });
 
-                // Data suggests we hit it too often. Disabling "fixup" for now
-                // this.handler.triggerReconnect("NoJoinOp");
-            },
+                this.handler.triggerConnectionRecovery(
+                    "NoJoinOp",
+                    this.joinOpTimerRetry,
+                    duration);
+
+                this.joinOpTimer.start();
+                },
         );
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
+            if (this.joinOpTimer.hasTimer &&
+                    this.joinOpTimerRetry >= ConnectionStateHandler.joinOpTimerRetryInitialValue + 1) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "NoJoinOpRecovered",
+                    clientId: this.pendingClientId,
+                    retry: this.joinOpTimerRetry,
+                });
+            }
             this.joinOpTimer.clear();
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
@@ -178,6 +190,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         ) {
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
+            this.joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
             this.joinOpTimer.start();
         }
     }
