@@ -32,6 +32,7 @@ const [fileLocation, workerLocation] = getFileLocations();
 
 const currentSnapshots = "current_snapshots";
 const srcSnapshots = "src_snapshots";
+const baseSnapshot = "base_snapshot";
 
 const numberOfThreads = 4;
 
@@ -168,8 +169,8 @@ export async function processContent(mode: Mode, concurrently = true) {
 
         // For snapshots for documents created via detached container flow, the baseSnapshot directory contains
         // the base snapshot from which the container is to be loaded.
-        if (fs.existsSync(`${folder}/base_snapshot`)) {
-            data.baseSnapshotDir = "base_snapshot";
+        if (fs.existsSync(`${folder}/${baseSnapshot}`)) {
+            data.baseSnapshotDir = baseSnapshot;
         }
 
         switch (mode) {
