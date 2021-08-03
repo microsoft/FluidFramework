@@ -51,7 +51,7 @@ export class RemoteChannelContext implements IChannelContext {
     private readonly summarizerNode: ISummarizerNodeWithGC;
     private readonly subLogger: ITelemetryLogger;
     private readonly thresholdOpsCounter: ThresholdCounter;
-    private static readonly pendingOpsCountThreshold = 300;
+    private static readonly pendingOpsCountThreshold = 1000;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
