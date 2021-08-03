@@ -17,8 +17,14 @@ import { IsoBuffer } from "./bufferBrowser";
 export async function hashFile(file: IsoBuffer): Promise<string> {
     // Handle insecure contexts (e.g. running with local services)
     // by deferring to Node version, which uses a hash polyfill
+    // When packed, this chunk will show as "FluidFramework-HashFallback" separately
+    // from the main chunk and will be of non-trivial size.  It will not be served
+    // under normal circumstances.
     if (crypto.subtle === undefined) {
-        return import("./hashFileNode").then(async (m) => m.hashFile(file));
+        return import(
+            /* webpackChunkName: "FluidFramework-HashFallback" */
+            "./hashFileNode"
+        ).then(async (m) => m.hashFile(file));
     }
 
     const hash = await crypto.subtle.digest("SHA-1", file);
