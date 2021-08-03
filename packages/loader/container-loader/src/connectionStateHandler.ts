@@ -17,7 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
-    triggerConnectionRecovery: (reason: string, retryCount: number, duration: number) => void,
+    triggerConnectionRecovery: (reason: string, retryCount: number) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -40,6 +40,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     static readonly joinOpTimerRetryInitialValue = 0;
     private joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
+    private joinOpEvent?: PerformanceEvent;
+
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -77,37 +79,46 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             timerGranularity,
             () => {
                 this.joinOpTimerRetry++;
-                const duration = timerGranularity * this.joinOpTimerRetry; // approximation
 
-                this.logger.sendErrorEvent({
-                    eventName: "NoJoinOp",
-                    clientId: this.pendingClientId,
-                    retry: this.joinOpTimerRetry,
-                    duration,
-                });
+                assert(this.joinOpEvent !== undefined, "no joinOpEvent");
+                this.joinOpEvent.reportProgress({ category: "error", retry: this.joinOpTimerRetry });
 
                 this.handler.triggerConnectionRecovery(
                     "NoJoinOp",
-                    this.joinOpTimerRetry,
-                    duration);
+                    this.joinOpTimerRetry);
 
                 this.joinOpTimer.start();
                 },
         );
     }
 
+    private startJoinOpTimer() {
+        this.joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
+        this.joinOpEvent = PerformanceEvent.start(
+            this.logger,
+            {
+                eventName: "NoJoinOp",
+                clientId: this.pendingClientId,
+            },
+        );
+        this.joinOpTimer.start();
+    }
+
+    private stopJoinOpTimer(reason: string) {
+        assert(this.joinOpTimer.hasTimer, "no joinOpTimer");
+        assert(this.joinOpEvent !== undefined, "no joinOpEvent");
+        // report cancellation if we ever reported progress.
+        if (this.joinOpTimerRetry > ConnectionStateHandler.joinOpTimerRetryInitialValue) {
+            this.joinOpEvent.cancel({ reason, retry: this.joinOpTimerRetry, category: "error" });
+        }
+        this.joinOpTimer.clear();
+        this.joinOpEvent = undefined;
+    }
+
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
-            if (this.joinOpTimer.hasTimer &&
-                    this.joinOpTimerRetry >= ConnectionStateHandler.joinOpTimerRetryInitialValue + 1) {
-                this.logger.sendTelemetryEvent({
-                    eventName: "NoJoinOpRecovered",
-                    clientId: this.pendingClientId,
-                    retry: this.joinOpTimerRetry,
-                });
-            }
-            this.joinOpTimer.clear();
+            this.stopJoinOpTimer("joinOp");
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -156,7 +167,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedDisconnectEvent(reason: string) {
-        this.joinOpTimer.clear();
+        if (this.joinOpTimer.hasTimer) {
+            this.stopJoinOpTimer(`disconnect: ${reason}`);
+        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
@@ -191,7 +204,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
             this.joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
-            this.joinOpTimer.start();
+            this.startJoinOpTimer();
         }
     }
 

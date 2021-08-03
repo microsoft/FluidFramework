@@ -191,7 +191,7 @@ export class DocumentDeltaConnection
     }
 
     private checkNotClosed() {
-        assert(!this.disposed, "not disposed");
+        assert(!this.disposed, "connection disposed");
     }
 
     /**
