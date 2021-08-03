@@ -20,7 +20,7 @@
     "build:full:compile": "npm run build:compile",
     "bump-version": "lerna version minor --no-push --no-git-tag-version",
     "ci:build": "npm run build:compile",
-    "ci:build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "ci:test": "echo No test for this package",
     "ci:test:coverage": "echo No test for this package",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
