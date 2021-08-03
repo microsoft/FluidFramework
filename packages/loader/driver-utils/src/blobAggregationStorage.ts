@@ -182,8 +182,12 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     protected virtualBlobs = new Map<string, ArrayBufferLike>();
 
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking = gatesAllowPacking(),
-        packingLevel = 2) {
+    static wrap(
+        storage: IDocumentStorageService,
+        logger: ITelemetryLogger,
+        allowPacking = gatesAllowPacking(),
+        packingLevel = 2,
+    ) {
         if (storage instanceof BlobAggregationStorage) {
             return storage;
         }
@@ -311,7 +315,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         let shouldCompress: boolean = false;
 
         let aggregator = aggregatorArg;
-        // checking if this is a dataStore tree
+        // checking if this is a dataStore tree, since we only pack at data store level
         if (Object.keys(summary.tree).includes(".component")) {
             assert(aggregator === undefined, 0x0fb /* "logic err with aggregator" */);
             assert(level === this.packingLevel, "we are not packing at the right level");

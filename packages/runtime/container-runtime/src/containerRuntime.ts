@@ -545,8 +545,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             gcOptions: {},
         };
         const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
-        // if isolated channels are disabled, then there are no .channel layers, we pack at level 1,
-        // otherwise we pack at level 2
+        // We pack at data store level only. If isolated channels are disabled,
+        // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
         const packingLevel = combinedRuntimeOptions.summaryOptions.disableIsolatedChannels ? 1 : 2;
 
         let storage = context.storage;
@@ -560,8 +560,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
                 assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
-                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger,
-                    undefined /* allowPacking */, packingLevel);
+                const aggrStorage = BlobAggregationStorage.wrap(
+                    context.storage,
+                    logger,
+                    undefined /* allowPacking */,
+                    packingLevel,
+                );
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
             } else {
@@ -632,8 +636,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
             // If isolated channels are disabled, then there are no .channel layers, we pack at level 1,
             // otherwise we pack at level 2
-            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger,
-                undefined /* allowPacking */, this.disableIsolatedChannels ? 1 : 2);
+            this._storage = BlobAggregationStorage.wrap(
+                this.context.storage,
+                this.logger,
+                undefined /* allowPacking */,
+                this.disableIsolatedChannels ? 1 : 2,
+            );
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._storage!;
