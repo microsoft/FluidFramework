@@ -1413,28 +1413,31 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
+        // If flush mode is already manual we are either
+        // nested in another orderSequentially, or
+        // the app is flushing manually, in which
+        // case this invocation doesn't own
+        // flushing.
+        if (this.flushMode === FlushMode.Manual) {
+            this.trackOrderedCalls(callback);
+            return;
+        }
+
+        const savedFlushMode = this.flushMode;
+        this.setFlushMode(FlushMode.Manual);
+
+        try {
+            this.trackOrderedCalls(callback);
+        } finally {
+            this.flush();
+            this.setFlushMode(savedFlushMode);
+        }
+    }
+
+    private trackOrderedCalls(callback: () => void): void {
         try {
             this._orderSequentiallyCalls++;
-
-            // If flush mode is already manual we are either
-            // nested in another orderSequentially, or
-            // the app is flushing manually, in which
-            // case this invocation doesn't own
-            // flushing.
-            if (this.flushMode === FlushMode.Manual) {
-                callback();
-            } else {
-                const savedFlushMode = this.flushMode;
-
-                this.setFlushMode(FlushMode.Manual);
-
-                try {
-                    callback();
-                } finally {
-                    this.flush();
-                    this.setFlushMode(savedFlushMode);
-                }
-            }
+            callback();
         } finally {
             this._orderSequentiallyCalls--;
         }
