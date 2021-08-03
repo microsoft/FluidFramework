@@ -7,7 +7,7 @@ import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidfra
 import { Deferred, delay, TypedEventEmitter } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerContext, IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
+import { IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
@@ -82,7 +82,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     constructor(
-        private readonly context: IContainerContext,
         private readonly clientElection: SummarizerClientElection,
         private readonly connectedState: IConnectedState,
         private readonly summaryCollection: Pick<SummaryCollection, "opsSinceLastAck">,
