@@ -1,5 +1,16 @@
 # Change Log
 
+## 3.9.1
+
+* build: Update Dependencies & Refresh package-lock Files
+  * Associated pull request: [32934](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32934)
+  * Commit: [6ce1baa85d77d17cf45e2c3ead0966b7c72adb98](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6ce1baa85d77d17cf45e2c3ead0966b7c72adb98)
+* test: Support Blobs in SharedTree Summary Tests
+  * Associated pull request: [32494](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32494)
+  * Commit: [1c56e84d4a169e554630c2cac0656672d91e0a98](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1c56e84d4a169e554630c2cac0656672d91e0a98)
+* ci: add shared-tree tsconfig to ESLint
+  * Commit: [da322abd66606a61ce054e9425ca92b9a3b68385](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/da322abd66606a61ce054e9425ca92b9a3b68385)
+
 ## 3.6.0
 
 * refactor: improve type safety to comply with ts 4.4 dev builds
