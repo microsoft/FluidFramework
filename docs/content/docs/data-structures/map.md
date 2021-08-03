@@ -357,7 +357,7 @@ Loading any DDS from its handle is an asynchronous operation. You will need to u
 
 #### Nested shared objects example
 
-Let's take another look at the example from the **Storing objects** section above to see how it can be updated to use nested `SharedMaps`. This will introduce some data hierarchy and avoid having a flat map that has both the tasks and their fields themselves on the same level. To do so, let's start from the earlier model but with two tasks now.
+You can further extend the example from the [Storing objects]({{< relref "#storing-objects" >}}) section above to see how it can be updated to use nested `SharedMaps`. This will introduce a hierarchy to the data to make it easier to work with. To do so, consider the earlier data model but with two tasks.
 
 ```json
 {
@@ -402,7 +402,9 @@ And the `task1` map would have:
     }
 }
 ```
-And the `task2` map would have:
+
+And the `task2` map would look like:
+
 ```json
 {
     "title": "Even More Awesome Task",
@@ -414,9 +416,9 @@ And the `task2` map would have:
     }
 }
 ```
-With this nested map structure, you are able to both ensure that each field that will be collaboratively edited is stored separately and that you have a hierarchy in how you store the data in your `SharedMap` that reflects the app's data model.
+With this nested map structure, you can both ensure that each field that will be simultaneously edited is stored separately and that you have a hierarchy in how you store the data in your `SharedMap` that reflects the app's data model.
 
-Whenever a new task is created, you can call `container.create` to get a new `SharedMap` instance and store its handle into the `initialMap` that is provided as an `initialObject`. Since each additional task map would need its own unique key, you can use a random string generator, such as [uuid](https://www.npmjs.com/package/uuid), to create a new one each time and avoid any clashes.
+Whenever a new task is created, you can call `container.create` to create a new `SharedMap` instance and store its handle in the `initialMap` that is provided as an `initialObject`. Since each additional task map will need its own unique key, you can use a random string generator, such as [uuid](https://www.npmjs.com/package/uuid), to create a new one each time and avoid ID conflicts.
 
 ```javascript
 const schema = {
@@ -437,9 +439,9 @@ const newTaskId = uuid();
 initialMap.set(newTaskId, newTask.handle);
 ```
 
-At this point, you can use `intialMap.keys()` to see all of the various task IDs that are available or `initialMap.values()` to return all of the task handles.
+At this point, you can use `intialMap.keys()` to retrieve the IDs of all the tasks or `initialMap.values()` to return the handles to the `SharedMaps` for each task..
 
-Say you wanted to fetch back a specific task, with ID `task123` and allow the user to edit its description.
+For example, if you wanted to fetch task with ID `task123` and allow the user to edit its description, you would use code like this:
 
 ```javascript
 const taskHandle = initialMap.get("task123");
@@ -447,4 +449,4 @@ const task = await taskHandle.get();
 task.set("description", editedDescription)
 ```
 
-Since each task is being in a separate map and all of the fields within the task object are being stored in their own unique keys, you can now have both a hiearchical structure in your data and avoid any clashes in edits between multiple users.
+Since each task is stored in a separate `SharedMap` and all of the fields within the task object are being stored in their own unique keys, your data now has a hierarchical structure that reflects the app's data model while individual tasks' properties can be edited independently.
