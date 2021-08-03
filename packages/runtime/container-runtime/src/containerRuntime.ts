@@ -102,7 +102,7 @@ import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
-import { defaultStartThrottleConfig, formRequestSummarizerFn, SummaryManager } from "./summaryManager";
+import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -131,7 +131,7 @@ import {
     ISummarizerOptions,
     ISummarizerRuntime,
 } from "./summarizerTypes";
-import { Throttler } from "./throttler";
+import { formExponentialFn, Throttler } from "./throttler";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -934,9 +934,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.logger,
                 formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
                 new Throttler(
-                    defaultStartThrottleConfig.delayWindowMs,
-                    defaultStartThrottleConfig.maxDelayMs,
-                    defaultStartThrottleConfig.delayFn,
+                    60 * 1000, // 60 sec delay window
+                    30 * 1000, // 30 sec max delay
+                    // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+                    formExponentialFn({ coefficient: 20, initialDelay: 0 }),
                 ),
                 this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
                 this.runtimeOptions.summaryOptions.summarizerOptions,
