@@ -10,7 +10,7 @@ import {
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 export enum OnlineStatus {
     Offline,
@@ -32,8 +32,9 @@ export function isOnline(): OnlineStatus {
 /**
  * Generic network error class.
  */
-export class GenericNetworkError extends LoggingError implements IDriverErrorBase {
+export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     readonly errorType = DriverErrorType.genericNetworkError;
+    readonly fluidErrorCode = "TBD";
 
     constructor(
         errorMessage: string,

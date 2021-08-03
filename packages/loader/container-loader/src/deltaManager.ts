@@ -52,6 +52,7 @@ import {
     waitForConnectedState,
     NonRetryableError,
     DeltaStreamConnectionForbiddenError,
+    GenericNetworkError,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
@@ -76,7 +77,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
 const createReconnectError = (prefix: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => createGenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+        (errorMessage: string) => new GenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
     );
 
 export interface IConnectionArgs {

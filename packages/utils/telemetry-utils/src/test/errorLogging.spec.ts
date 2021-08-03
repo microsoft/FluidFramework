@@ -7,6 +7,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
+import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger } from "../logger";
 import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations } from "../errorLogging";
@@ -292,13 +293,15 @@ class TestFluidError implements IFluidErrorBase {
     readonly message: string;
     readonly stack?: string;
     readonly name?: string;
+    readonly errorInstanceId: string;
 
-    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId">) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
+        this.errorInstanceId = uuid();
 
         this.atpStub = sinon.stub(this, "addTelemetryProperties");
         this.expectedTelemetryProps = { ...errorProps };
@@ -338,7 +341,7 @@ describe("normalizeError", () => {
             const annotations = annotationCases[annotationCase];
             it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
                 // Arrange
-                const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> =
+                const errorProps =
                     {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
                 const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
                 const expectedErrorCode = annotations.errorCodeIfNone === undefined
@@ -388,7 +391,7 @@ describe("normalizeError", () => {
         });
         it("Frozen legacy error - Throws", () => {
             // Arrange
-            const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> =
+            const errorProps =
                 {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
             const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
             Object.freeze(legacyError);

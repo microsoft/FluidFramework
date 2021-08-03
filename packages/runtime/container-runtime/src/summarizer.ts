@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Deferred } from "@fluidframework/common-utils";
-import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IRequest,
     IResponse,
@@ -37,8 +37,9 @@ import { SummarizeHeuristicData } from "./summarizerHeuristics";
 
 const summarizingError = "summarizingError";
 
-export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
+export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
     readonly errorType = summarizingError;
+    readonly fluidErrorCode = "TBD";
     readonly canRetry = true;
 
     constructor(errorMessage: string, readonly logged: boolean = false) {
