@@ -175,7 +175,7 @@ describe("BlobAggregationStorage", () => {
     it("no aggregation", async () => {
         const { storage } = await prep(false, 2048);
 
-        // NUmber of actual blobs in storage should be 4 - no aggregation!
+        // Number of actual blobs in storage should be 7 - no aggregation!
         assert(storage.blobs.size === 7,
             `Unexpected blob storage size: ${storage.blobs.size} vs expected 7`);
     });
@@ -183,7 +183,7 @@ describe("BlobAggregationStorage", () => {
     it("Noop aggregation (driver does not know about aggregation", async () => {
         const { storage } = await prep(true, undefined);
 
-        // NUmber of actual blobs in storage should be 4 - no aggregation!
+        // Number of actual blobs in storage should be 7 - no aggregation!
         assert(storage.blobs.size === 7,
             `Unexpected blob storage size: ${storage.blobs.size} vs expected 7`);
     });

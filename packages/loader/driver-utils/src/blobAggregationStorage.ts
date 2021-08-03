@@ -102,12 +102,6 @@ export abstract class SnapshotExtractor {
     abstract setBlob(id: string, tree: ISnapshotTree, content: string);
 
     public async unpackSnapshotCore(snapshot: ISnapshotTree, level = 0): Promise<void> {
-        // for now only working at data store level, i.e.
-        // .app/DataStore/...
-        if (level > dataStoreLevel) {
-            return;
-        }
-
         for (const key of Object.keys(snapshot.trees)) {
             const obj = snapshot.trees[key];
             await this.unpackSnapshotCore(obj, level + 1);
@@ -319,6 +313,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         let shouldCompress: boolean = false;
 
         let aggregator = aggregatorArg;
+        // checking if this is a dataStore tree
         if (Object.keys(summary.tree).includes(".component")) {
             assert(aggregator === undefined, 0x0fb /* "logic err with aggregator" */);
             assert(level === this.packingLevel, "we are not packing at the right level");
