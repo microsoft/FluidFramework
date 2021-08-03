@@ -30,7 +30,6 @@ function getFileLocations(): [string, string] {
 }
 const [fileLocation, workerLocation] = getFileLocations();
 
-const initialSnapshot = "initial_snapshot";
 const currentSnapshots = "current_snapshots";
 const srcSnapshots = "src_snapshots";
 
@@ -50,7 +49,6 @@ export interface IWorkerArgs {
     mode: Mode;
     snapFreq: number;
     initializeFromSnapshotsDir?: string;
-    initialSnapshotDir?: string;
 }
 
 class ConcurrencyLimiter {
@@ -111,9 +109,6 @@ export async function processOneNode(args: IWorkerArgs) {
     replayArgs.expandFiles = args.mode === Mode.Stress;
     replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
 
-    // The initial snapshot directory name is basically the version from which the document is to be loaded.
-    replayArgs.fromVersion = args.initialSnapshotDir;
-
     // Worker threads does not listen to unhandled promise rejections. So set a listener and
     // throw error so that worker thread could pass the message to parent thread.
     const listener = (error) => {
@@ -167,12 +162,6 @@ export async function processContent(mode: Mode, concurrently = true) {
             mode,
             snapFreq,
         };
-
-        // For snapshots for documents created via detached container flow, the initialSnapshot directory contains
-        // the initial snapshot that was generated when the container was attached.
-        if (fs.existsSync(`${folder}/${initialSnapshot}`)) {
-            data.initialSnapshotDir = initialSnapshot;
-        }
 
         switch (mode) {
             case Mode.Validate:
@@ -272,7 +261,8 @@ async function processNodeForNewSnapshots(
     limiter: ConcurrencyLimiter,
 ) {
     const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
-    // If current snapshots dir already exists, there is nothing to do.
+    // If current snapshots dir already exists, these are existing snapshtos. We should skip because we don't want to
+    // update them.
     if (fs.existsSync(currentSnapshotsDir)) {
         return;
     }
