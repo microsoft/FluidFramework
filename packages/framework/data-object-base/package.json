@@ -18,7 +18,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "concurrently npm:tsc npm:build:es5 npm:build:esnext",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:es5": "tsc --project ./tsconfig.es5.json",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
