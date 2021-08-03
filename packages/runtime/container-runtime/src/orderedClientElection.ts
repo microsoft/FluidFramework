@@ -281,14 +281,18 @@ export class OrderedClientElection
                 // Cannot find initially elected client, so elect undefined.
                 logger.sendErrorEvent({
                     eventName: "InitialElectedClientNotFound",
-                    clientId: initialState.electedClientId,
+                    electionSequenceNumber: initialState.electionSequenceNumber,
+                    expectedClientId: initialState.electedClientId,
+                    electedClientId: initialClient?.clientId,
+                    clientCount: orderedClientCollection.count,
                 });
             } else if (initialClient !== undefined && !isEligibleFn(initialClient)) {
                 // Initially elected client is ineligible, so elect next eligible client.
                 initialClient = this.findFirstEligibleClient(initialClient);
                 logger.sendErrorEvent({
                     eventName: "InitialElectedClientIneligible",
-                    clientId: initialState.electedClientId,
+                    electionSequenceNumber: initialState.electionSequenceNumber,
+                    expectedClientId: initialState.electedClientId,
                     electedClientId: initialClient?.clientId,
                 });
             }

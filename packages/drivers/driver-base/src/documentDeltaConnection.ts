@@ -22,20 +22,16 @@ import {
     ITokenClaims,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { debug } from "./debug";
-
-interface IEventListener {
-    event: string;
-    listener(...args: any[]): void;
-}
 
 /**
  * Represents a connection to a stream of delta updates
  */
 export class DocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+    implements IDocumentDeltaConnection, IDisposable {
     static readonly eventsToForward = ["nack", "disconnect", "op", "signal", "pong", "error"];
 
     /**
@@ -49,7 +45,6 @@ export class DocumentDeltaConnection
 
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
-    protected readonly queuedSignals: ISignalMessage[] = [];
     /**
      * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
      * to later be retrieved via initialMessages.
@@ -63,19 +58,21 @@ export class DocumentDeltaConnection
     private _details: IConnected | undefined;
 
     // Listeners only needed while the connection is in progress
-    private connectionListeners: IEventListener[] = [];
+    private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
     // Listeners used throughout the lifetime of the DocumentDeltaConnection
-    private trackedListeners: IEventListener[] = [];
+    private readonly trackedListeners: Map<string, (...args: any[]) => void> = new Map();
 
     protected get hasDetails(): boolean {
         return !!this._details;
     }
 
+    public get disposed() { return this._disposed; }
     /**
      * Flag to indicate whether the DocumentDeltaConnection is expected to still be capable of sending messages.
      * After disconnection, we flip this to prevent any stale messages from being emitted.
      */
-    protected closed: boolean = false;
+    protected _disposed: boolean = false;
+    protected readonly logger: ITelemetryLogger;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -91,16 +88,18 @@ export class DocumentDeltaConnection
     protected constructor(
         protected readonly socket: SocketIOClient.Socket,
         public documentId: string,
-        protected readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
     ) {
         super();
+
+        this.logger = ChildLogger.create(logger, "DeltaConnection");
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
             (submitType, work) => {
                 // Although the implementation here disconnects the socket and does not reuse it, other subclasses
                 // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
                 // on the still-live socket.
-                if (!this.closed) {
+                if (!this.disposed) {
                     this.socket.emit(submitType, this.clientId, work);
                 }
             });
@@ -109,9 +108,20 @@ export class DocumentDeltaConnection
             if (!DocumentDeltaConnection.eventsToForward.includes(event)) {
                 throw new Error(`DocumentDeltaConnection: Registering for unknown event: ${event}`);
             }
+            assert(!this.disposed, "register for event on disposed object");
+
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
-            if (!this.closed && event !== "error" && this.listeners(event).length === 0) {
+            if (event === "error") {
+                return;
+            }
+            // Whenever listener is added, we should subscribe on same event on socket, so these two things
+            // should be in sync. This currently assumes that nobody unregisters and registers back listeners,
+            // and that there are no "internal" listeners installed (like "error" case we skip above)
+            // Better flow might be to always unconditionally register all handlers on successful connection,
+            // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
+            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), "mismatch");
+            if (!this.trackedListeners.has(event)) {
                 this.addTrackedListener(
                     event,
                     (...args: any[]) => {
@@ -205,21 +215,11 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Get signals sent during the connection
+     * Get initial signals
      *
-     * @returns signals sent during the connection
+     * @returns initial signals returned by ordering service
      */
     public get initialSignals(): ISignalMessage[] {
-        assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
-
-        this.removeEarlySignalHandler();
-
-        if (this.queuedSignals.length > 0) {
-            // Some signals were queued.
-            // add them to the list of initialSignals to be processed
-            this.details.initialSignals.push(...this.queuedSignals);
-            this.queuedSignals.length = 0;
-        }
         return this.details.initialSignals;
     }
 
@@ -253,34 +253,37 @@ export class DocumentDeltaConnection
     /**
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
-    public close() {
-        this.closeCore(
+    public dispose() {
+        this.disposeCore(
             false, // socketProtocolError
             createGenericNetworkError("client closing connection", true /* canRetry */));
     }
 
-    protected closeCore(socketProtocolError: boolean, err: DriverError) {
-        if (this.closed) {
-            // We see cases where socket is closed while we have two "disconnect" listeners - one from DeltaManager,
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close() { this.dispose(); }
+
+    protected disposeCore(socketProtocolError: boolean, err: DriverError) {
+        if (this.disposed) {
+            // We see cases where socket is disposed while we have two "disconnect" listeners - one from DeltaManager,
             // one - early handler that should have been removed on establishing connection. This causes asserts in
             // OdspDocumentDeltaConnection.disconnect() due to not expectting two calls.
             this.logger.sendErrorEvent(
                 {
                     eventName: "DoubleClose",
-                    connectionEvents: this.connectionListeners.length,
-                    trackedEvents: this.trackedListeners.length,
+                    connectionEvents: this.connectionListeners.size,
+                    trackedEvents: this.trackedListeners.size,
                     socketProtocolError,
                 },
                 err);
             return;
         }
 
-        // We set the closed flag as a part of the contract for overriding the disconnect method. This is used by
+        // We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
         // DocumentDeltaConnection to determine if emitting messages (ops) on the socket is allowed, which is
         // important since OdspDocumentDeltaConnection reuses the socket rather than truly disconnecting it. Note that
         // OdspDocumentDeltaConnection may still send disconnect_document which is allowed; this is only intended
         // to prevent normal messages from being emitted.
-        this.closed = true;
+        this._disposed = true;
 
         this.removeTrackedListeners();
         this.disconnect(socketProtocolError, err);
@@ -298,7 +301,6 @@ export class DocumentDeltaConnection
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
         this.socket.on("op", this.earlyOpHandler);
-        this.socket.on("signal", this.earlySignalHandler);
         this.earlyOpHandlerAttached = true;
 
         let success = false;
@@ -307,7 +309,7 @@ export class DocumentDeltaConnection
             const fail = (socketProtocolError: boolean, err: DriverError) => {
                 // timeout & "error" can happen after successful connection
                 if (!success) {
-                    this.closeCore(socketProtocolError, err);
+                    this.disposeCore(socketProtocolError, err);
                 }
                 reject(err);
             };
@@ -408,41 +410,33 @@ export class DocumentDeltaConnection
         this.queuedMessages.push(...msgs);
     };
 
-    protected earlySignalHandler = (msg: ISignalMessage) => {
-        debug("Queued early signals");
-        this.queuedSignals.push(msg);
-    };
-
     private removeEarlyOpHandler() {
         this.socket.removeListener("op", this.earlyOpHandler);
         this.earlyOpHandlerAttached = false;
     }
 
-    private removeEarlySignalHandler() {
-        this.socket.removeListener("signal", this.earlySignalHandler);
-    }
-
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.connectionListeners.push({ event, listener });
+        assert(!this.connectionListeners.has(event), "double connection listener");
+        this.connectionListeners.set(event, listener);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        this.trackedListeners.push({ event, listener });
+        assert(!this.trackedListeners.has(event), "double tracked listener");
+        this.trackedListeners.set(event, listener);
     }
 
     private removeTrackedListeners() {
-        for (const { event, listener } of this.trackedListeners) {
+        for (const [event, listener] of this.trackedListeners.entries()) {
             this.socket.off(event, listener);
         }
         // removeTrackedListeners removes all listeners, including connection listeners
         this.removeConnectionListeners();
 
         this.removeEarlyOpHandler();
-        this.removeEarlySignalHandler();
 
-        this.trackedListeners = [];
+        this.trackedListeners.clear();
     }
 
     private removeConnectionListeners() {
@@ -450,10 +444,10 @@ export class DocumentDeltaConnection
             clearTimeout(this.socketConnectionTimeout);
         }
 
-        for (const { event, listener } of this.connectionListeners) {
+        for (const [event, listener] of this.connectionListeners.entries()) {
             this.socket.off(event, listener);
         }
-        this.connectionListeners = [];
+        this.connectionListeners.clear();
     }
 
     /**

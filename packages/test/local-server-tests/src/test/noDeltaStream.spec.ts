@@ -91,7 +91,6 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.deltaManager.active, false, "active");
         assert.strictEqual(container.deltaManager.readonly, false, "readonly");
 
-        assert.strictEqual(dataObject.runtime.existing, false, "existing");
         assert.strictEqual(dataObject.runtime.connected, true, "connected");
         assert.notStrictEqual(dataObject.runtime.clientId, undefined, "clientId");
 
@@ -123,7 +122,6 @@ describe("No Delta Stream", () => {
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
         assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 
@@ -179,7 +177,6 @@ describe("No Delta Stream", () => {
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
 
         const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-        assert.strictEqual(dataObject.runtime.existing, true, "dataObject.runtime.existing");
         assert.strictEqual(dataObject.runtime.connected, true, "dataObject.runtime.connected");
         assert.strictEqual(dataObject.runtime.clientId, "storage-only client", "dataObject.runtime.clientId");
 

@@ -49,11 +49,10 @@ is used by `Loader` to pipe to container's telemetry system.
 
 ### Properties and methods
 
-The interface contains a `supportTags` property and a `send()` method as shown:
+The interface contains a `send()` method as shown:
 
 ```ts
 export interface ITelemetryBaseLogger {
-  supportsTags?: true;
   send(event: ITelemetryBaseEvent): void;
 }
 ```
@@ -122,36 +121,32 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
   category: string;
   eventName: string;
 }
-```
 
-The `ITelemetryBaseEvent` contains `category` and `eventName` properties for labeling and defining a telemetry event.
-
-- `ITelemetryProperties` extended by `ITelemetryBaseEvent`, is a type with a string index signature, the values are
-   either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPropertyType`) primitives (`string`,
-   `boolean`, `number`, `undefined`). It is imperative for you to know how to interpret and process these tagged values.
-  - Tags are strings used to classify different events. In a simple logger, all events are untagged and handled the same
-    by your logger's implementation. However, in some scenarios, where some data should be handled separately (for
-    example, private customer data), those events could be tagged with a unique string so they could be treated
-    differently downstream.
-
- ```ts
- export interface ITelemetryProperties {
+export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
-```
 
-`ITelemetryProperties` values take untagged (`TelemetryEventPropertyType`) or tagged (`ITaggedTelemetryPropertyType`)
-primitives.
-
-- `TelemetryEventPropertyType` takes only `string`, `boolean`, `number`, `undefined` primitives.
-- `ITaggedTelemetryPropertyType` is an interface that takes `TelemetryEventPropertyType` and a tag.
-
-```ts
 export interface ITaggedTelemetryPropertyType {
   value: TelemetryEventPropertyType,
   tag: string,
 }
+
+export type TelemetryEventPropertyType = string | number | boolean | undefined;
 ```
+
+The `ITelemetryBaseEvent` interface contains `category` and `eventName` properties for labeling and defining a telemetry event,
+and extends `ITelemetryProperties` which has a string index signature. The values of the index signature are
+either tagged (`ITaggedTelemetryPropertyType`) or untagged (`TelemetryEventPropertyType`) primitives (`string`,
+`boolean`, `number`, `undefined`).
+
+### Understanding Tags
+
+Tags are strings used to classify the properties on telemetry events. In the course of operation,
+the Fluid Framework may emit events with tagged properties, so implementations of `ITelemetryBaseLogger` must be
+prepared to check for and interpret any tags.  Generally speaking, when logging to the user's console, tags can
+be ignored and tagged values logged plainly, but when transmitting tagged properties to a telemetry service,
+care should be taken to only log tagged properties where the tag is explicitly understood to indicate the value
+is safe to log from a data privacy standpoint.
 
 ### Category
 

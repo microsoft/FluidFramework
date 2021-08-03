@@ -14,8 +14,8 @@ const _ = require('lodash');
  * @return {boolean} True if it is an empty changeset.
  */
 const isEmptyChangeSet = function(in_changeSet) {
-  return in_changeSet === undefined ||
-         (_.isObject(in_changeSet) &&
-         (_.isEmpty(in_changeSet) || (_.size(in_changeSet) === 1  && _.has(in_changeSet, 'typeid'))));
+    return in_changeSet === undefined ||
+        (_.isObject(in_changeSet) &&
+            (_.isEmpty(in_changeSet) || (_.size(in_changeSet) === 1 && _.has(in_changeSet, 'typeid'))));
 };
 module.exports = isEmptyChangeSet;

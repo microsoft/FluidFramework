@@ -7,7 +7,6 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
-import { EventEmitter } from 'events';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -18,18 +17,15 @@ import { IConnectionDetails } from '@fluidframework/container-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
-import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDeltaHandlerStrategy } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
 import { IDeltaQueue } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidModule } from '@fluidframework/container-definitions';
@@ -47,33 +43,15 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummaryContext } from '@fluidframework/driver-definitions';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public
-export class Audience extends EventEmitter implements IAudience {
-    addMember(clientId: string, details: IClient): void;
-    clear(): void;
-    getMember(clientId: string): IClient | undefined;
-    getMembers(): Map<string, IClient>;
-    // (undocumented)
-    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
-    // (undocumented)
-    on(event: "removeMember", listener: (clientId: string) => void): this;
-    removeMember(clientId: string): void;
-}
 
 // @public (undocumented)
 export class CollabWindowTracker {
@@ -159,7 +137,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     snapshot(tagMessage: string, fullTree?: boolean): Promise<void>;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    get storage(): IDocumentStorageService;
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
@@ -232,6 +210,8 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     submit(type: MessageType, contents: any, batch?: boolean, metadata?: any): number;
     // (undocumented)
     submitSignal(content: any): void;
+    // (undocumented)
+    triggerReconnect(reason: string): void;
     // (undocumented)
     get version(): string;
 }
@@ -362,33 +342,6 @@ export class RelativeLoader implements ILoader {
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolve(request: IRequest): Promise<IContainer>;
-}
-
-// @public (undocumented)
-export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
-    constructor(internalStorageService: IDocumentStorageService, deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">, logger: ITelemetryLogger);
-    // (undocumented)
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    // (undocumented)
-    getVersions(versionId: string, count: number): Promise<IVersion[]>;
-    // (undocumented)
-    get policies(): IDocumentStorageServicePolicies | undefined;
-    // (undocumented)
-    readBlob(id: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    get repositoryUrl(): string;
-    // (undocumented)
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    write(tree: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
 
 // @public

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
     ConnectionMode,
@@ -105,7 +106,7 @@ export class Replayer {
 
 export class ReplayFileDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+    implements IDocumentDeltaConnection, IDisposable {
     /**
      * Mimic the delta connection to replay ops on it.
      *
@@ -124,8 +125,6 @@ export class ReplayFileDeltaConnection
             initialClients: [],
             maxMessageSize: ReplayMaxMessageSize,
             mode,
-            // Back-compat, removal tracked with issue #4346
-            parentBranch: null,
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: 16 * 1024,
@@ -203,6 +202,10 @@ export class ReplayFileDeltaConnection
     public async submitSignal(message: any) {
     }
 
-    public close() {
-    }
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose() { this._disposed = true; }
+
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(): void { this.dispose(); }
 }

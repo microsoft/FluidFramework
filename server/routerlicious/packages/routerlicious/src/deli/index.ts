@@ -77,7 +77,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const localContext = new LocalContext(winston);
 
     const localProducer = new LocalKafka();
-    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer]);
+    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer], true);
 
     const broadcasterLambda = new LocalLambdaController(
         localProducer,

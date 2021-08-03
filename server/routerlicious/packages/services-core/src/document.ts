@@ -44,6 +44,7 @@ export interface IClientSequenceNumber {
     referenceSequenceNumber: number;
     clientSequenceNumber: number;
     scopes: string[];
+    serverMetadata?: any;
 }
 
 export interface IDeliState {

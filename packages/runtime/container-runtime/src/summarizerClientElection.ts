@@ -5,7 +5,7 @@
 
 import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
 import { IOrderedClientElection, ISerializedElection, ITrackedClient } from "./orderedClientElection";
 import { ISummaryCollectionOpEvents } from "./summaryCollection";
 
@@ -134,6 +134,9 @@ export interface ISummarizerClientElectionEvents extends IEvent {
             // Very old clients back-compat
             return true;
         }
-        return details.capabilities.interactive && details.type !== summarizerClientType;
+        return SummarizerClientElection.clientDetailsPermitElection(details);
     }
+
+    public static readonly clientDetailsPermitElection = (details: IClientDetails): boolean =>
+        details.capabilities.interactive && details.type !== summarizerClientType;
 }

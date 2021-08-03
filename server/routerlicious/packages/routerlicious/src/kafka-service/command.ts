@@ -5,11 +5,12 @@
 
 import { IKafkaResources, KafkaRunnerFactory } from "@fluidframework/server-lambdas-driver";
 import * as core from "@fluidframework/server-services-core";
-import { configureLogging } from "@fluidframework/server-services-utils";
+import { configureLogging, WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
 import commander from "commander";
 import nconf from "nconf";
 import * as winston from "winston";
 import { runService } from "@fluidframework/server-services-shared";
+import { LambdaSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export function execute(
     factoryFn: (name: string, lambda: string) => core.IResourcesFactory<IKafkaResources>,
@@ -23,8 +24,10 @@ export function execute(
         .arguments("<name> <lambda>")
         .action((name: string, lambda: string) => {
             configureLogging(configOrPath);
-
+            const lumberjackEngine = new WinstonLumberjackEngine();
+            Lumberjack.setup([lumberjackEngine], new LambdaSchemaValidator());
             action = true;
+
             runService(
                 factoryFn(name, lambda),
                 new KafkaRunnerFactory(),

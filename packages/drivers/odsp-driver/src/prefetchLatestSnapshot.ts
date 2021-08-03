@@ -21,7 +21,7 @@ import {
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
-import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
+import { IVersionedValueWithEpoch } from "./contracts";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -56,7 +56,7 @@ export async function prefetchLatestSnapshot(
     );
 
     const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-        return fetchAndParseAsJSONHelper<IOdspSnapshot>(
+        return fetchAndParseAsJSONHelper(
             url,
             fetchOptions,
         );

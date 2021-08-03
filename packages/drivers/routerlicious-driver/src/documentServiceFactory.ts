@@ -28,6 +28,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
     maxConcurrentStorageRequests: 100,
     maxConcurrentOrdererRequests: 100,
+    aggregateBlobsSmallerThanBytes: undefined,
 };
 
 /**
@@ -54,7 +55,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, "create empty file not supported");
+        assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         const parsedUrl = parse(resolvedUrl.url);
         if (!parsedUrl.pathname) {

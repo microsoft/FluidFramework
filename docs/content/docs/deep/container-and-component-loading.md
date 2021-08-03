@@ -1,6 +1,7 @@
 ---
 title: Container and component loading deep dive
 draft: true
+status: outdated
 ---
 
 This doc provides an in-depth outline of how Container and Component loading works. It also provides an overview of how

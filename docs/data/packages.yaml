@@ -1,4 +1,6 @@
 distributed-data-structures:
+# - "@fluid-experimental/property-dds"
+- "@fluid-experimental/task-manager"
 - "@fluidframework/cell"
 - "@fluidframework/counter"
 - "@fluidframework/ink"
