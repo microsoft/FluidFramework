@@ -118,11 +118,9 @@ The `SharedMap` object will emit events on changes from local and remote clients
 - `valueChanged` - Sent anytime the map is modified due to a key being added, updated, or removed
 - `clear` - Sent when `clear()` is called to alert clients that all data from the map has been removed
 
-If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event.
+If client A and client B are both updating the same `SharedMap` and client B triggers a `set` call to update a value, both client A and B's local `SharedMap` objects will fire the `valueChanged` event. You can use these events in order to keep your application state in sync with all changes various clients are making to the map.
 
-As such, you can use these events in order to keep your application state in sync with all changes various clients are making to the map.
-
-Let's take a look at a simple example where you have a label and a button that updates the label contents to be a random number.
+Consider the following example where you have a label and a button. When clicked, the button updates the label contents to be a random number.
 
 ```javascript
 const map = fluidContainer.initialObjects.customMap;
@@ -136,23 +134,25 @@ button.addEventListener('click', () =>
     map.set(dataKey, Math.random())
 );
 
-// Set up a callback to get the current value of the shared data whenever it changes and update the view.
+// This function will update the label from the SharedMap. It is connected to the SharedMap's valueChanged event
+// and will be called each time a value in the SharedMap is changed.
 const updateLabel = () => {
     const value = map.get(dataKey) || 0;
     label.textContent = `${value}`;
 };
-updateLabel();
-// Use the valueChanged event to trigger the rerender whenever the value changes.
 map.on('valueChanged', updateLabel);
+
+// Make sure updateLabel is called at least once.
+updateLabel();
 ```
 
-In the code above, whenever a user clicks the button, it sets a new random value on your map's `dataKey`. This will result in a `valueChanged` event being fired for all of the clients who have this container open. Since `updateLabel` is a callback set up to update the view anytime this event gets fired, the view will always refresh with the new value for all users whenever any of the users clicks on the button.
+In the code above, whenever a user clicks the button, it sets a new random value on your map's `dataKey`. This causes a `valueChanged` event to be sent on all of the clients who have this container open. Since `updateLabel` is a callback set up to update the view anytime this event gets fired, the view will always refresh with the new value for all users whenever any of the users clicks on the button.
 
 The `valueChanged` event listener can also take in as parameters:
 - a `changed` object of type `IValueChanged` which provides the `key` that was updated and what the `previousValue` was
 - a `local` boolean that indicates if the current client was the one that initiated the change
 
-Let's update the code to now use these parameters to add a bit of color to the UI!
+Your event listener can be more sophisticated by using the additional information provided in the event arguments.
 
 ```javascript
 const map = fluidContainer.initialObjects.customMap;
