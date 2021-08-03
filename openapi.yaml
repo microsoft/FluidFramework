@@ -1,0 +1,313 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: FRS API
+paths:
+  '/api/tenants/{id}':
+    get:
+      tags:
+        - echo
+      summary: Gets a single tenant with given id.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+    delete:
+      tags:
+        - echo
+      summary: Deletes a tenant.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+        '500':
+          description: >-
+            FRS Admin email not provided by AAD under 'preferred_username'.
+            Retry or contact frsdev@microsoft.com for assistance.
+  /api/tenants:
+    get:
+      tags:
+        - echo
+      summary: >-
+        Gets list of all tenants, or all tenants owned by provided
+        tenantAdminContact query param.
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+  '/api/tenants/{id}/key':
+    get:
+      tags:
+        - echo
+      summary: Gets the key for a tenant. This is a privileged action.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+    put:
+      tags:
+        - echo
+      summary: Refresh a tenant's key. This is a privileged action.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+        '500':
+          description: >-
+            FRS Admin email not provided by AAD under 'preferred_username'.
+            Retry or contact frsdev@microsoft.com for assistance.
+  '/api/tenants/{id}/tenantAdminContact':
+    put:
+      tags:
+        - echo
+      summary: Updates a tenant's admin contact.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+        '500':
+          description: >-
+            FRS Admin email not provided by AAD under 'preferred_username'.
+            Retry or contact frsdev@microsoft.com for assistance.
+  '/api/tenants/{id}/externalStorage':
+    put:
+      tags:
+        - echo
+      summary: Updates external storage information associated with the tenant.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success.
+        '400':
+          description: Error.
+        '500':
+          description: >-
+            FRS Admin email not provided by AAD under 'preferred_username'.
+            Retry or contact frsdev@microsoft.com for assistance.
+  '/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}':
+    put:
+      tags:
+        - echo
+      summary: Creates a new tenant.
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+        '500':
+          description: Resource Provider failure.
+    delete:
+      tags:
+        - echo
+      summary: Deletes a tenant.
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+        '500':
+          description: Resource Provider failure.
+  '/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/getKeys':
+    post:
+      tags:
+        - echo
+      summary: Gets the key for a tenant.
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+        '500':
+          description: Resource Provider failure.
+  '/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/regenerateKey':
+    post:
+      tags:
+        - echo
+      summary: Gets the key for a tenant.
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+        '500':
+          description: Resource Provider failure.
+  '/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/ResourceCreationValidate':
+    post:
+      tags:
+        - echo
+      summary: Preflight Extension API for create.
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+        '500':
+          description: Resource Provider error.
+  '/api/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.FluidRelay/fluidRelayServers/{name}/ResourcePatchValidate':
+    post:
+      tags:
+        - echo
+      summary: Preflight extension API for PATCH
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+  /api/providers/Microsoft.FluidRelay/resourceoperations/TemplateDeployment/validate:
+    post:
+      tags:
+        - echo
+      summary: Preflight API for create
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: resourceGroupName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource Provider success.
+        '400':
+          description: Failed resources format validation. Please check.
+        '500':
+          description: Resource Provider error.
+servers:
+  - url: 'https://echo.weu-1.prod.fluidrelay.azure.com'
+  - url: 'https://echo.wus2-1.prod.fluidrelay.azure.com'
+  - url: 'https://echo.sa-1.prod.fluidrelay.azure.com'
+  - url: 'https://echo.wus-1.canary.fluidrelay.azure.com'
