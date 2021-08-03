@@ -93,22 +93,14 @@ class SimpleFluidError implements IFluidErrorBase {
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
+
+        //* PR: Do I need to avoid adding optional ones, or is it ok to add an explicit undefined value?
+        // (like I wonder if it will show up in Kusto as "undefined" -- Oh I think not, recalling the Bohemia code)
+        this.addTelemetryProperties(errorProps);
     }
 
     getTelemetryProperties(): ITelemetryProperties {
-        const props: ITelemetryProperties = {
-            ...this.telemetryProps,
-            errorType: this.errorType,
-            fluidErrorCode: this.fluidErrorCode,
-            message: this.message,
-        };
-        if (this.name !== undefined) {
-            props.name = this.name;
-        }
-        if (this.stack !== undefined) {
-            props.stack = this.stack;
-        }
-        return props;
+        return this.telemetryProps;
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
@@ -253,6 +245,7 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
+        //* PR:  Test case to remember - ensure stack/message can't be overwritten via ATP
         copyProps(props, this);
     }
 
@@ -261,13 +254,11 @@ export class LoggingError extends Error implements ILoggingError {
      */
     public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-        // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
-        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
-        // Not including the 'name' property because if not overridden it's always "Error"
+        // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
         return  {
+            ...taggableProps,
             stack: this.stack,
             message: this.message,
-            ...taggableProps,
         };
     }
 }
