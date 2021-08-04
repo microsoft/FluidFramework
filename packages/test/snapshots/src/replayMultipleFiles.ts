@@ -50,7 +50,6 @@ export interface IWorkerArgs {
     mode: Mode;
     snapFreq: number;
     initializeFromSnapshotsDir?: string;
-    baseSnapshotDir?: string;
 }
 
 class ConcurrencyLimiter {
@@ -110,8 +109,8 @@ export async function processOneNode(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
     replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
-    // The base snapshot directory name is basically the version from which the document is to be loaded.
-    replayArgs.fromVersion = args.baseSnapshotDir;
+    // The base snapshot directory name is the version from which the document is to be loaded.
+    replayArgs.fromVersion = baseSnapshot;
 
     // Worker threads does not listen to unhandled promise rejections. So set a listener and
     // throw error so that worker thread could pass the message to parent thread.
@@ -166,12 +165,6 @@ export async function processContent(mode: Mode, concurrently = true) {
             mode,
             snapFreq,
         };
-
-        // For snapshots for documents created via detached container flow, the baseSnapshot directory contains
-        // the base snapshot from which the container is to be loaded.
-        if (fs.existsSync(`${folder}/${baseSnapshot}`)) {
-            data.baseSnapshotDir = baseSnapshot;
-        }
 
         switch (mode) {
             case Mode.Validate:

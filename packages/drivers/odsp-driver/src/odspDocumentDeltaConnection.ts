@@ -94,6 +94,7 @@ class SocketReference {
 
     public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
         this._socket = socket;
+        assert(!SocketReference.socketIoSockets.has(key), "socket key collision");
         SocketReference.socketIoSockets.set(key, this);
 
         // The server always closes the socket after sending this message
