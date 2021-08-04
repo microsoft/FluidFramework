@@ -78,7 +78,7 @@ export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
-    /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
+/** 0 to disable GC, greater than 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: number;
 }
 
@@ -129,11 +129,20 @@ export const dataStoreAttributesBlobName = ".component";
 
 /**
  * Modifies summary tree and stats to put tree under .channels tree.
- * Converts from: {
+ *
+ * Converts from:
+ *
+ * ```
+ * {
  *     type: SummaryType.Tree,
  *     tree: { a: {...}, b: {...}, c: {...} },
  * }
- * to: {
+ * ```
+ *
+ * to:
+ *
+ * ```
+ * {
  *     type: SummaryType.Tree,
  *     tree: {
  *         ".channels": {
@@ -142,6 +151,8 @@ export const dataStoreAttributesBlobName = ".component";
  *         },
  *     },
  * }
+ * ```
+ *
  * And adds +1 to treeNodeCount in stats.
  * @param summarizeResult - summary tree and stats to modify
  */
