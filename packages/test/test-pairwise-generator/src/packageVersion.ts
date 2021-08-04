@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/test-pairwise-generator";
-export const pkgVersion = "0.44.1";
+export const pkgVersion = "0.44.2";
