@@ -173,7 +173,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         );
 
         return streamObserver(stream, (result) => {
-            if (result.done) {
+            if (result.done && opsFromSnapshot + opsFromCache + opsFromStorage !== 0) {
                 this.logger.sendPerformanceEvent({
                     eventName: "CacheOpsRetrieved",
                     opsFromSnapshot,

@@ -5,7 +5,12 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { IDisposable, ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
+import {
+    IDisposable,
+    ITelemetryLogger,
+    IEventProvider,
+    ITelemetryProperties,
+} from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
@@ -429,8 +434,16 @@ export class DeltaManager
         }
     }
 
-    public triggerReconnect(reason: string) {
+    public triggerConnectionRecovery(reason: string, props: ITelemetryProperties) {
             assert(this.connection !== undefined, "called only in connected state");
+            this.logger.sendErrorEvent({
+                eventName: "ConnectionRecovery",
+                reason,
+                // This directly tells us if fetching ops is in flight, and thus likely the reason of
+                // stalled op processing
+                fetchReason: this.fetchReason,
+                ...props,
+            });
             this.disconnectFromDeltaStream(reason);
             this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
     }
