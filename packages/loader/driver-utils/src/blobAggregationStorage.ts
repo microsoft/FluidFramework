@@ -318,11 +318,11 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
         // checking if this is a dataStore tree, since we only pack at data store level
         if (Object.keys(summary.tree).includes(".component")) {
             assert(aggregator === undefined, 0x0fb /* "logic err with aggregator" */);
-            assert(level === this.packingLevel, "we are not packing at the right level");
+            assert(level === this.packingLevel, 0x20a /* "we are not packing at the right level" */);
             aggregator = new BlobAggregator();
             shouldCompress = true;
         } else {
-            assert(level !== this.packingLevel, "we are not packing at the right level");
+            assert(level !== this.packingLevel, 0x20b /* "we are not packing at the right level" */);
         }
 
         const newSummary: ISummaryTree = {...summary};
