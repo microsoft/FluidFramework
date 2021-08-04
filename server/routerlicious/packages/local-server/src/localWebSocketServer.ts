@@ -54,7 +54,7 @@ export class LocalWebSocket implements core.IWebSocket {
     public off(event: string, listener: (...args: any[]) => void) {
         this.removeListener(event, listener);
         return this;
-    };
+    }
 
     public disconnect(close?: boolean) {
         for (const roomId of this.rooms) {
