@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.9",
   "info": {
     "version": "1.0.0",
     "title": "FRS API"
@@ -10,7 +10,7 @@
         "tags": [
           "echo"
         ],
-        "summary": "Gets a single tenant with the given id.",
+        "summary": "Gets a single tenant with given id.",
         "parameters": [
           {
             "in": "path",
