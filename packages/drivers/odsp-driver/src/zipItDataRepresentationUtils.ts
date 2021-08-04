@@ -9,6 +9,7 @@
 */
 
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { uint8ArrayToArrayBuffer } from "@fluidframework/driver-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 
 /**
@@ -119,8 +120,7 @@ export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) 
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
     public get arrayBuffer(): ArrayBufferLike {
-        const uint8Array = this.buffer;
-        return uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+        return uint8ArrayToArrayBuffer(this.buffer);
     }
 
     /**
