@@ -274,7 +274,10 @@ export class DocumentDeltaConnection
     public close() { this.dispose(); }
 
     protected disposeCore(socketProtocolError: boolean, err: DriverError) {
-        if (this.disposed) {
+        // Can't check this.disposed here, as we get here on socket closure,
+        // so _disposed & socket.connected might be not in sync while processing
+        // "dispose" event.
+        if (this._disposed) {
             return;
         }
 
