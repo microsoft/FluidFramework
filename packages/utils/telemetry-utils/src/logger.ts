@@ -223,7 +223,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 case TelemetryDataTag.PackageData:
                     // For Microsoft applications, PackageData is safe for now
                     // (we don't load 3P code in 1P apps)
-                    // But this determination really belongs in the host layer
                     newEvent[key] = value;
                     break;
                 case TelemetryDataTag.UserData:
