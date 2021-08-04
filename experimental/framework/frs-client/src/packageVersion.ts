@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/frs-client";
-export const pkgVersion = "0.44.1";
+export const pkgVersion = "0.44.2";
