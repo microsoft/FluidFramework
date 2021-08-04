@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent} from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -373,6 +373,7 @@ async function getSingleOpBatch(
     while (signal?.aborted !== true) {
         retry++;
         let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
+        const startTime = performance.now();
 
         try {
             // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
@@ -392,8 +393,8 @@ async function getSingleOpBatch(
             // count since something prevented us from seeing those deltas
 
             if (lastSuccessTime === undefined) {
-                lastSuccessTime = Date.now();
-            } else if (Date.now() - lastSuccessTime > 30000) {
+                lastSuccessTime = performance.now();
+            } else if (performance.now() - lastSuccessTime > 30000) {
                 // If we are connected and receiving proper responses from server, but can't get any ops back,
                 // then give up after some time. This likely indicates the issue with ordering service not flushing
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
@@ -413,12 +414,16 @@ async function getSingleOpBatch(
 
             lastSuccessTime = undefined;
 
+            const retryAfter = getRetryDelayFromError(error);
+
             logNetworkFailure(
                 logger,
                 {
                     eventName: "GetDeltas_Error",
                     ...props,
                     retry,
+                    duration: performance.now() - startTime,
+                    retryAfter,
                 },
                 error);
 
@@ -426,7 +431,6 @@ async function getSingleOpBatch(
                 // It's game over scenario.
                 throw error;
             }
-            const retryAfter = getRetryDelayFromError(error);
 
             if (retryAfter !== undefined && retryAfter >= 0) {
                 delay = retryAfter;
