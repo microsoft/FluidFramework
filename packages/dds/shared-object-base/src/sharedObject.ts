@@ -181,8 +181,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 
         this._isBoundToContext = true;
 
-        this.setOwner();
-
         // Allow derived classes to perform custom processing prior to registering this object
         this.registerCore();
 
@@ -286,14 +284,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @returns A tree representing the snapshot of the shared object.
      */
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
-
-    /**
-     * Set the owner of the object if it is an OwnedSharedObject
-     * @returns The owner of the object if it is an OwnedSharedObject, otherwise undefined
-     */
-    protected setOwner(): string | undefined {
-        return;
-    }
 
     /**
      * Allows the distributed data type to perform custom loading
