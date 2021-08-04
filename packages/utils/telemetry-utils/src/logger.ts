@@ -18,7 +18,6 @@ import {
     isILoggingError,
     extractLogSafeErrorProperties,
     generateStack,
-    getValidTelemetryProps,
 } from "./errorLogging";
 
 /**
@@ -210,7 +209,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             category: eventWithTagsMaybe.category,
             eventName: eventWithTagsMaybe.eventName,
         };
-        for (const key of Object.keys(getValidTelemetryProps(eventWithTagsMaybe, new Set()))) {
+        for (const key of Object.keys(eventWithTagsMaybe)) {
             const taggableProp = eventWithTagsMaybe[key];
             const { value, tag } = (typeof taggableProp === "object")
                 ? taggableProp

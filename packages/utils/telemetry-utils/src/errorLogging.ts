@@ -188,7 +188,7 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
-export function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
+function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
     const props: ITelemetryProperties = {};
     for (const key of Object.keys(obj)) {
         if (keysToOmit.has(key)) {
