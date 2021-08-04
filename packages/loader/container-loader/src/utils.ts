@@ -74,7 +74,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
                 const contentBuffer = typeof summaryObject.content === "string" ?
-                    stringToBuffer(summaryObject.content, "utf8") : summaryObject.content;
+                    stringToBuffer(summaryObject.content, "utf8") : summaryObject.content.buffer;
                 treeNode.blobsContents[blobId] = contentBuffer;
                 // 0.43 back-compat old runtime will still expect content in the blobs only.
                 // So need to put in blobs for now.
