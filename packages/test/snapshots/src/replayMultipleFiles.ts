@@ -32,6 +32,7 @@ const [fileLocation, workerLocation] = getFileLocations();
 
 const currentSnapshots = "current_snapshots";
 const srcSnapshots = "src_snapshots";
+const baseSnapshot = "base_snapshot";
 
 const numberOfThreads = 4;
 
@@ -49,6 +50,7 @@ export interface IWorkerArgs {
     mode: Mode;
     snapFreq: number;
     initializeFromSnapshotsDir?: string;
+    baseSnapshotDir?: string;
 }
 
 class ConcurrencyLimiter {
@@ -91,6 +93,8 @@ class ConcurrencyLimiter {
  * 3. srcSnapshots - This folder contains snapshots in older versions. There is one folder for each set of snapshots
  *    in a previous version. In Mode.Validate, a container is loaded from each of these older snapshot and validated
  *    that it loads successfully.
+ * 4. baseSnapshot - This folder is present for snapshots from newer documents that use detached container flow. It
+ *    contains the base snapshot to load the container with.
  */
 export async function processOneNode(args: IWorkerArgs) {
     const replayArgs = new ReplayArgs();
@@ -106,6 +110,8 @@ export async function processOneNode(args: IWorkerArgs) {
     // Make it easier to see problems in stress tests
     replayArgs.expandFiles = args.mode === Mode.Stress;
     replayArgs.initializeFromSnapshotsDir = args.initializeFromSnapshotsDir;
+    // The base snapshot directory name is basically the version from which the document is to be loaded.
+    replayArgs.fromVersion = args.baseSnapshotDir;
 
     // Worker threads does not listen to unhandled promise rejections. So set a listener and
     // throw error so that worker thread could pass the message to parent thread.
@@ -160,6 +166,12 @@ export async function processContent(mode: Mode, concurrently = true) {
             mode,
             snapFreq,
         };
+
+        // For snapshots for documents created via detached container flow, the baseSnapshot directory contains
+        // the base snapshot from which the container is to be loaded.
+        if (fs.existsSync(`${folder}/${baseSnapshot}`)) {
+            data.baseSnapshotDir = baseSnapshot;
+        }
 
         switch (mode) {
             case Mode.Validate:

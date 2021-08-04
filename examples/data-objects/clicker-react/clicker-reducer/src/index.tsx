@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
@@ -19,7 +20,6 @@ import {
 } from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 
 // ---- Fluid Object w/ Functional React View using the useReducer hook ----
 
@@ -135,25 +135,6 @@ export class ClickerReducer extends SyncedDataObject {
             },
         );
     }
-    /**
-     * Will return a new ClickerReducer view
-     */
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <CounterReactFunctionalReducer
-                    syncedStateId={"counter-reducer"}
-                    syncedDataObject={this}
-                    reducer={ActionReducer}
-                    selector={{}}
-                />
-            </div>,
-            div,
-        );
-        return div;
-    }
-
-    // #endregion IFluidHTMLView
 }
 
 // ----- FACTORY SETUP -----
@@ -164,4 +145,14 @@ export const ClickerReducerInstantiationFactory =
         [SharedCounter.getFactory()],
         {},
     );
-export const fluidExport = ClickerReducerInstantiationFactory;
+
+const clickerViewCallback = (clicker: ClickerReducer) =>
+    <CounterReactFunctionalReducer
+        syncedStateId={ "counter-reducer" }
+        syncedDataObject={ clicker }
+        reducer={ ActionReducer }
+        selector={{}}
+    />;
+
+export const fluidExport =
+    new ContainerViewRuntimeFactory<ClickerReducer>(ClickerReducerInstantiationFactory, clickerViewCallback);

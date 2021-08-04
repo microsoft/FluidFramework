@@ -27,7 +27,7 @@ This is the main file that starts running the likes-and-comments app. It fetches
 This is where the likes-and-comments Fluid object registry entry is added to the container and a data store for it is generated.
 
 #### fluidObject.tsx
-This contains the actual definition for the Fluid object that the app is using. It extends the `SyncedDataObject` class and defines the DDSes that will be needed in the configuration set in the constructor. It then passes these DDSes to the view to consume the data in the `render` function. This is the `render` that is ultimately being called in `app.tsx` to view the Fluid object.
+This contains the actual definition for the Fluid object that the app is using. It extends the `SyncedDataObject` class and defines the DDSes that will be needed in the configuration set in the constructor. The view will consume this data to view the Fluid object.
 
 #### view.tsx
 The functional React view responsible for rendering the data provided by the Fluid object. It fetches the configured DDSes using the provided synced hooks.
