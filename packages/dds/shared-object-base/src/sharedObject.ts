@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
@@ -21,7 +21,7 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
-import { ChildLogger, EventEmitterWithErrorHandling, logIfFalse } from "@fluidframework/telemetry-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -395,18 +395,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // Note: rejectBecauseDispose will never be undefined here
             this.runtime.off("dispose", rejectBecauseDispose);
         });
-    }
-
-    /**
-     * @deprecated - Use logger to log errors
-     * Report ignorable errors in code logic or data integrity to the logger.
-     * Hosting app / container may want to optimize out these call sites and make them no-op.
-     * It may also show assert dialog in non-production builds of application.
-     * @param condition - If false, assert is logged
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
-        logIfFalse(condition, this.logger, event);
     }
 
     private attachDeltaHandler() {
