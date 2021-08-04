@@ -400,6 +400,8 @@ export class DocumentDeltaConnection
                 fail(false, this.createErrorObject("Timeout waiting for handshake from ordering service"));
             }, timeout + 2000);
         });
+
+        assert(!this.disposed, "checking consistency of socket & _disposed flags");
     }
 
     protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {

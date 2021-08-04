@@ -13,6 +13,11 @@ export class LocalWebSocket implements core.IWebSocket {
     private readonly rooms = new Set<string>();
     private readonly subscriber: ISubscriber;
 
+    private _connected = true;
+    public get connected() {
+        return this._connected;
+    }
+
     constructor(public readonly id: string, private readonly server: LocalWebSocketServer) {
         this.subscriber = new WebSocketSubscriber(this);
     }
@@ -43,10 +48,19 @@ export class LocalWebSocket implements core.IWebSocket {
         this.events.removeListener(event, listener);
     }
 
+    // Add `off` method the socket which is called by the base class `DocumentDeltaConnection` to remove
+    // event listeners.
+    // We may have to add more methods from SocketIOClient.Socket if they start getting used.
+    public off(event: string, listener: (...args: any[]) => void) {
+        this.removeListener(event, listener);
+        return this;
+    };
+
     public disconnect(close?: boolean) {
         for (const roomId of this.rooms) {
             this.server.pubsub.unsubscribe(roomId, this.subscriber);
         }
+        this._connected = false;
         this.emit("disconnect");
     }
 }
