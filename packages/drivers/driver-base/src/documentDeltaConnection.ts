@@ -116,7 +116,7 @@ export class DocumentDeltaConnection
 
             assert(!this.disposed, "register for event on disposed object");
 
-            // Some events like are already forwarded - see this.addTrackedListener() calls in initialize().
+            // Some events are already forwarded - see this.addTrackedListener() calls in initialize().
             if (DocumentDeltaConnection.eventsAlwaysForwarded.includes(event)) {
                 assert(this.trackedListeners.has(event), "tracked listener");
                 return;
