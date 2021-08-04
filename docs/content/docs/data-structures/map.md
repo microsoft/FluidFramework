@@ -80,9 +80,9 @@ The `SharedMap` object provides a number of functions to allow you to edit the k
 - `entries()` -- Returns an iterator for all key/value pairs stored on the map
 - `delete(key)` -- Removes the key/value from the map
 - `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
-```javascript
-this.map.forEach((value, key) => console.log(`${key}-${value}`));
-```
+    ```javascript
+    this.map.forEach((value, key) => console.log(`${key}-${value}`));
+    ```
 - `clear()` -- Removes all data from the map, deleting all of the keys and values stored within it
 
 ## Events
