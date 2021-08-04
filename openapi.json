@@ -10,7 +10,7 @@
         "tags": [
           "echo"
         ],
-        "summary": "Gets a single tenant with given id.",
+        "summary": "Gets a single tenant with the given id.",
         "parameters": [
           {
             "in": "path",
