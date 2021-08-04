@@ -632,7 +632,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                triggerReconnect: (reason: string) => this._deltaManager.triggerReconnect(reason),
+                triggerConnectionRecovery: (reason: string, retryCount: number) => {
+                    // We get here when socket does not receive any ops on "write" connection, including
+                    // its own join op. Attempt some recovery options. Need to collect more data to see
+                    // If they actually do anything good.
+                    if (retryCount <= 10) {
+                        this._deltaManager.submit(MessageType.NoOp, null);
+                    } else {
+                        this._deltaManager.triggerReconnect(reason);
+                    }
+                },
             },
             this.logger,
         );
