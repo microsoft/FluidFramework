@@ -129,17 +129,5 @@ export async function loadContainer(
         logger,
     });
 
-    return loader.resolve(
-        {
-            url: resolved.url,
-            headers: {
-                [LoaderHeader.clientDetails]: {
-                    // #6346
-                    // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
-                    // from `@fluidframework/container-loader`
-                    environment: `replay enable-legacy-create-on-load`,
-                    capabilities: { interactive: false },
-                },
-            },
-        });
+    return loader.resolve({ url: resolved.url });
 }
