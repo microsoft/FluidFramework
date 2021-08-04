@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
@@ -51,12 +52,16 @@ export class OdspDeltaStorageService {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
 
+            const abort = new AbortController();
+            setTimeout(() => abort.abort(), 30000);
+
             const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
                 baseUrl,
                 {
                     headers,
                     body: postBody,
                     method: "POST",
+                    signal: abort.signal,
                 },
                 "ops",
             );
