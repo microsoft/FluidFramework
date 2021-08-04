@@ -351,6 +351,9 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning 
     readonly retryAfterSeconds: number;
 }
 
+// @public (undocumented)
+export const uint8ArrayToArrayBuffer: (array: Uint8Array) => ArrayBuffer;
+
 // @public
 export function waitForConnectedState(minDelay: number): Promise<void>;
 
