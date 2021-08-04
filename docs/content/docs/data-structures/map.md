@@ -69,21 +69,21 @@ const newMap = await container.create(SharedMap); // Create a new SharedMap
 
 Once the async call to `create` returns, you can treat it the same as you were using the `SharedMap` instances from your initial objects above. The only caveat here is that you will need to maintain a pointer to your newly created object. To store it in another `SharedMap`, please see the [Storing shared objects]({{< relref "#storing-shared-objects" >}}) section below and for general guidance on storing DDS references as handles, please see [here]({{< relref "dds.md#creating-and-storing-distributed-data-structures" >}})
 
-## API Functionality
+## API
 
 The `SharedMap` object provides a number of functions to allow you to edit the key/value pairs stored on the object. As stated earlier, these are intended to match the `Map` API. However, the keys used in `SharedMap` must be strings. Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
 
-- `set(key, value)` - Used for updating the value stored at `key` with the new provided value
-- `get(key)` - Returns the latest value stored on the key or `undefined` if it does not exist
-- `has(key)` - Checks to see if the key is available in the SharedMap and returns a boolean
-- `keys()` - Returns an iterator for all the keys that have been set for this map
-- `entries()` - Returns an iterator for all key/value pairs stored on the map
-- `delete(key)` - Removes the key/value from the map
-- `forEach(callbackFn: (value, key, map) => void)` - Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
+- `set(key, value)` -- Used for updating the value stored at `key` with the new provided value
+- `get(key)` -- Returns the latest value stored on the key or `undefined` if it does not exist
+- `has(key)` -- Checks to see if the key is available in the SharedMap and returns a boolean
+- `keys()` -- Returns an iterator for all the keys that have been set for this map
+- `entries()` -- Returns an iterator for all key/value pairs stored on the map
+- `delete(key)` -- Removes the key/value from the map
+- `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
 ```javascript
 this.map.forEach((value, key) => console.log(`${key}-${value}`));
 ```
-- `clear()` - Removes all data from the map, deleting all of the keys and values stored within it
+- `clear()` -- Removes all data from the map, deleting all of the keys and values stored within it
 
 ## Events
 
