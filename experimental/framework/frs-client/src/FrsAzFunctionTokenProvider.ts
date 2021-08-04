@@ -10,7 +10,7 @@ import { FrsMember } from "./interfaces";
 export class FrsAzFunctionTokenProvider implements ITokenProvider {
     constructor(
         private readonly azFunctionUrl: string,
-        private readonly user?: Pick<FrsMember<any>, "userId" | "userName" | "additionalDetails">,
+        private readonly user?: Pick<FrsMember, "userId" | "userName" | "additionalDetails">,
     ) { }
 
     public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {

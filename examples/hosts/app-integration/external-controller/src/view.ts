@@ -57,9 +57,17 @@ export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
         const members = audience.getMembers();
         const self = audience.getMyself();
         const memberNames: string[] = [];
+
         members.forEach((member) => {
             if (member.userId !== self?.userId) {
                 memberNames.push(member.userName);
+            }
+
+            if(Object.keys(member.additionalDetails).length !== 0) {
+                for(const [key, value] of Object.entries(member.additionalDetails)) {
+                    const keyName = key.charAt(0).toUpperCase().concat(key.substr(1));
+                    memberNames.push(keyName.concat(": ").concat(value as string));
+                }
             }
         });
         audienceDiv.innerHTML = `
