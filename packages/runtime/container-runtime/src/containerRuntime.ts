@@ -543,6 +543,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         });
 
+        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
+        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
+            summaryOptions: { generateSummaries: true },
+            gcOptions: {},
+        };
+        const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
+        // We pack at data store level only. If isolated channels are disabled,
+        // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
+        const packingLevel = combinedRuntimeOptions.summaryOptions.disableIsolatedChannels ? 1 : 2;
+
         let storage = context.storage;
         if (context.baseSnapshot) {
             // This will patch snapshot in place!
@@ -554,20 +564,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
                 assert(context.storage !== undefined, 0x1f4 /* "Attached state should have storage" */);
-                const aggrStorage = BlobAggregationStorage.wrap(context.storage, logger);
+                const aggrStorage = BlobAggregationStorage.wrap(
+                    context.storage,
+                    logger,
+                    undefined /* allowPacking */,
+                    packingLevel,
+                );
                 await aggrStorage.unpackSnapshot(context.baseSnapshot);
                 storage = aggrStorage;
             } else {
                 await BlobAggregationStorage.unpackSnapshot(context.baseSnapshot);
             }
         }
-
-        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
-        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
-            summaryOptions: { generateSummaries: true },
-            gcOptions: {},
-        };
-        const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
 
         const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -630,7 +638,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // So once we release 0.40 container-defn package we can remove this check.
         if (!this._storage && this.context.storage) {
             // Note: BlobAggregationStorage is smart enough for double-wrapping to be no-op
-            this._storage = BlobAggregationStorage.wrap(this.context.storage, this.logger);
+            // If isolated channels are disabled, then there are no .channel layers, we pack at level 1,
+            // otherwise we pack at level 2
+            this._storage = BlobAggregationStorage.wrap(
+                this.context.storage,
+                this.logger,
+                undefined /* allowPacking */,
+                this.disableIsolatedChannels ? 1 : 2,
+            );
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return this._storage!;
@@ -942,7 +957,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
                     formExponentialFn({ coefficient: 20, initialDelay: 0 }),
                 ),
-                this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                {
+                    initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                },
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );
             this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
@@ -1137,6 +1154,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @deprecated - Use summarize to get summary of the container runtime.
      */
     public async snapshot(): Promise<ITree> {
+        if (this.shouldRunGC) {
+            await this.collectGarbage(this.logger, true /* fullGC */);
+        }
+
         const root: ITree = { entries: [] };
         const entries = await this.dataStores.snapshot();
 
