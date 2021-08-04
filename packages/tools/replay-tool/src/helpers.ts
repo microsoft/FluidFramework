@@ -15,7 +15,6 @@ import {
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
