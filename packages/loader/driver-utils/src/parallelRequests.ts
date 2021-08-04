@@ -373,11 +373,9 @@ async function getSingleOpBatch(
     while (signal?.aborted !== true) {
         retry++;
         let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
-        let canRetry = false;
 
         try {
             // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
-            canRetry = true;
             const deltasP = get({ ...props, retry } /* telemetry props */);
 
             const { messages, partialResult } = await deltasP;
@@ -411,7 +409,7 @@ async function getSingleOpBatch(
                 );
             }
         } catch (error) {
-            canRetry = canRetry && canRetryOnError(error);
+            const canRetry = canRetryOnError(error);
 
             lastSuccessTime = undefined;
 
