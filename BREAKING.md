@@ -6,6 +6,7 @@
 - [Changes to DataObject](#changes-to-DataObject)
 - [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
 - [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
 
 ### Changes to local testing in insecure environments
 Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.
@@ -28,11 +29,13 @@ Previously the `@fluidframework/common-utils` package exposed a `setInsecureCont
 ### `webpack-fluid-loader` package name changed
 The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
 
+### Loggers without tag support now deprecated in ContainerContext
+The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
+
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)
 - [Loader access in data stores is removed](#loader-access-in-data-stores-is-removed)
-- [Logger without tag support marked deprecated in ContainerContext](#logger-without-tag-support-marked-deprecated-in-containercontext)
 
 ### Property removed from the ContainerRuntime class
 - the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
@@ -42,9 +45,6 @@ The `webpack-fluid-loader` utility was previously available from a package named
 
 ### Loader access in data stores is removed
 Following the deprecation warning [Loader in data stores deprecated](#loader-in-data-stores-deprecated), the associated APIs have now been removed.  In addition to the original deprecation notes, users will automatically have an `ILoader` available on the container scope object as the `ILoader` property if the container was created through a `Loader`.
-
-### Logger without tag support marked deprecated in ContainerContext
-The `logger` property of `ContainerContext` has been marked deprecated, and future versions of the loader will enforce the use of `taggedLogger` - that is, loggers passed to ContainerContext will need to support tagged events.
 
 ## 0.43 Breaking changes
 

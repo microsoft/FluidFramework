@@ -211,10 +211,6 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             eventName: eventWithTagsMaybe.eventName,
         };
         for (const key of Object.keys(getValidTelemetryProps(eventWithTagsMaybe, new Set()))) {
-            if (newEvent[key] !== undefined) {
-                // Don't overwrite existing properties on the event
-                continue;
-            }
             const taggableProp = eventWithTagsMaybe[key];
             const { value, tag } = (typeof taggableProp === "object")
                 ? taggableProp
