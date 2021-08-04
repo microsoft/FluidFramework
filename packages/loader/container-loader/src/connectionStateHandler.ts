@@ -38,8 +38,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
 
-    private joinOpEvent?: PerformanceEvent;
-
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -71,44 +69,28 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             },
         );
 
+        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+        // timing out ops fetches. So attempt recovery infrequently.
         this.joinOpTimer = new Timer(
-            15000,
+            30000,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
-                if (this.connectionState === ConnectionState.Disconnected) {
-                    assert(this.joinOpEvent === undefined, "has joinOpEvent");
-                    return;
+                if (this.connectionState !== ConnectionState.Disconnected) {
+                    this.handler.triggerConnectionRecovery("NoJoinOp");
                 }
-
-                assert(this.joinOpEvent !== undefined, "no joinOpEvent");
-                this.joinOpEvent.cancel({ category: "error" });
-                this.joinOpEvent = undefined;
-
-                this.handler.triggerConnectionRecovery("NoJoinOp");
-                },
+            },
         );
     }
 
     private startJoinOpTimer() {
         assert(!this.joinOpTimer.hasTimer, "has joinOpTimer");
-        assert(this.joinOpEvent === undefined, "has joinOpEvent");
-        this.joinOpEvent = PerformanceEvent.start(
-            this.logger,
-            {
-                eventName: "WaitJoinOp",
-                clientId: this.pendingClientId,
-            },
-        );
         this.joinOpTimer.start();
     }
 
     private stopJoinOpTimer(reason: string) {
         assert(this.joinOpTimer.hasTimer, "no joinOpTimer");
         this.joinOpTimer.clear();
-
-        assert(this.joinOpEvent !== undefined, "no joinOpEvent");
-        this.joinOpEvent = undefined;
     }
 
     public receivedAddMemberEvent(clientId: string) {

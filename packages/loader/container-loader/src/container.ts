@@ -633,7 +633,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 triggerConnectionRecovery: (reason: string) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
-                    this._deltaManager.triggerReconnect(reason);
+                    this._deltaManager.triggerConnectionRecovery(
+                        reason,
+                        {
+                            duration: performance.now() - this.connectionTransitionTimes[this.connectionState],
+                        },
+                    );
                 },
             },
             this.logger,
