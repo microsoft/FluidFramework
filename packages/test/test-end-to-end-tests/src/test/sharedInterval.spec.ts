@@ -657,6 +657,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 if (typeof(intervals1.changeProperties) === "function" &&
                     typeof(intervals2.changeProperties) === "function") {
                     intervals1.changeProperties(id1, { prop1: "prop1" });
+                    await provider.opProcessingController.processOutgoing();
                     intervals2.changeProperties(id1, { prop2: "prop2" });
 
                     await provider.ensureSynchronized();
@@ -669,6 +670,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 4");
 
                     intervals1.changeProperties(id1, { prop1: "no" });
+                    await provider.opProcessingController.processOutgoing();
                     intervals2.changeProperties(id1, { prop1: "yes" });
 
                     await provider.ensureSynchronized();
@@ -679,6 +681,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 8");
 
                     intervals1.changeProperties(id1, { prop1: "maybe" });
+                    await provider.opProcessingController.processOutgoing();
                     // eslint-disable-next-line no-null/no-null
                     intervals2.changeProperties(id1, { prop1: null });
 
