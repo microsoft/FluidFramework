@@ -70,9 +70,10 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         );
 
         // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
-        // timing out ops fetches. So attempt recovery infrequently.
+        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+        // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            30000,
+            45000,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
