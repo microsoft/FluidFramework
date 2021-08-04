@@ -110,6 +110,14 @@ describe("Summary Manager", () => {
     let summarizer: TestSummarizer;
     let requestCalls = 0;
     let requestDeferred = new Deferred<void>();
+
+    /**
+     * Mocks the request Summarizer function by incrementing a call counter.
+     * The requestDeferred object must be resolved outside of this function
+     * by calling completeSummarizerRequest() before this function will complete.
+     * This is used to simulate delaying the request call for testing the
+     * SummaryManager state machine timings.
+     */
     const requestSummarizer = async (): Promise<ISummarizer> => {
         summarizer = new TestSummarizer();
         requestCalls++;
@@ -117,6 +125,9 @@ describe("Summary Manager", () => {
         await requestDeferred.promise;
         return summarizer;
     };
+
+    /** Completes the pending request Summarizer call. */
+    const completeSummarizerRequest = () => requestDeferred.resolve();
 
     function createSummaryManager({
         connected = false,
@@ -172,7 +183,7 @@ describe("Summary Manager", () => {
         await flushPromises();
         assertState(SummaryManagerState.Starting, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
-        requestDeferred.resolve();
+        completeSummarizerRequest();
         await flushPromises();
         assertState(SummaryManagerState.Running, "summarizer should be running");
         connectedState.disconnect();
@@ -181,6 +192,7 @@ describe("Summary Manager", () => {
         summarizer.runDeferred.resolve();
         await flushPromises();
         assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
+        assertRequests(1, "should not have requested summarizer again");
     });
 
     it("Should become summarizer if elected, then connected; stop summarizer after unelected", async () => {
@@ -193,7 +205,7 @@ describe("Summary Manager", () => {
         await flushPromises();
         assertState(SummaryManagerState.Starting, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
-        requestDeferred.resolve();
+        completeSummarizerRequest();
         await flushPromises();
         assertState(SummaryManagerState.Running, "summarizer should be running");
         clientElection.electClient("other");
@@ -202,6 +214,7 @@ describe("Summary Manager", () => {
         summarizer.runDeferred.resolve();
         await flushPromises();
         assertState(SummaryManagerState.Off, "should be off after summarizer finishes running");
+        assertRequests(1, "should not have requested summarizer again");
     });
 
     it("Should restart if summarizer closes itself", async () => {
@@ -214,7 +227,7 @@ describe("Summary Manager", () => {
         await flushPromises();
         assertState(SummaryManagerState.Starting, "should request summarizer");
         assertRequests(1, "should have requested summarizer");
-        requestDeferred.resolve();
+        completeSummarizerRequest();
         await flushPromises();
         assertState(SummaryManagerState.Running, "summarizer should be running");
         summarizer.stop(); // Simulate summarizer stopping itself
@@ -222,7 +235,7 @@ describe("Summary Manager", () => {
         await flushPromises();
         assertState(SummaryManagerState.Starting, "should restart itself");
         assertRequests(2, "should have requested a new summarizer");
-        requestDeferred.resolve();
+        completeSummarizerRequest();
         await flushPromises();
         assertState(SummaryManagerState.Running, "should be running new summarizer");
     });
@@ -244,7 +257,7 @@ describe("Summary Manager", () => {
             clock.tick(1);
             await flushPromises();
             assertRequests(1, "should request summarizer after initial delay");
-            requestDeferred.resolve();
+            completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
@@ -260,7 +273,7 @@ describe("Summary Manager", () => {
             await flushPromises();
             assertState(SummaryManagerState.Starting, "should enter starting state immediately");
             assertRequests(1, "should request summarizer immediately, bypassing initial delay");
-            requestDeferred.resolve();
+            completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
@@ -286,7 +299,7 @@ describe("Summary Manager", () => {
             clientElection.electClient(thisClientId); // force trigger refresh
             await flushPromises();
             assertRequests(1, "should request summarizer, bypassing initial delay");
-            requestDeferred.resolve();
+            completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
@@ -306,7 +319,7 @@ describe("Summary Manager", () => {
             clock.tick(1);
             await flushPromises();
             assertRequests(1, "should request summarizer after throttler delay");
-            requestDeferred.resolve();
+            completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
@@ -327,7 +340,7 @@ describe("Summary Manager", () => {
             clock.tick(1);
             await flushPromises();
             assertRequests(1, "should request summarizer after both delays");
-            requestDeferred.resolve();
+            completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
@@ -348,7 +361,7 @@ describe("Summary Manager", () => {
             clock.tick(1);
             await flushPromises();
             assertRequests(1, "should request summarizer after both delays");
-            requestDeferred.resolve();
+            completeSummarizerRequest();
             await flushPromises();
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
