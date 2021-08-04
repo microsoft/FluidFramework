@@ -35,7 +35,7 @@ describe("Test for Historian", () => {
         assert.equal(getCommit.message, commitParams.message, "Message not equal of commits!!");
     });
 
-    it("Blob Test", async () => {
+    it("Blob Test for insertion of duplicate blobs", async () => {
         const historian = new TestHistorian();
         const gitManager = new GitManager(historian);
         const blob1: ICreateBlobParams = {
@@ -48,6 +48,7 @@ describe("Test for Historian", () => {
         };
         const createBlobResponse1 = await gitManager.createBlob(blob1.content, blob1.encoding);
         const createBlobResponse2 = await gitManager.createBlob(blob2.content, blob2.encoding);
-        assert.strictEqual(createBlobResponse1.sha, createBlobResponse2.sha, "Sha for both blobs should match");
+        assert.strictEqual(createBlobResponse1.sha, createBlobResponse2.sha,
+            "Sha for both blobs should match as only 1 blob is stored as contents of both are same");
     });
 });
