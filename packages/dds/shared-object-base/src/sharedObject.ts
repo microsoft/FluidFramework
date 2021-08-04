@@ -122,11 +122,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             id,
             runtime.IFluidHandleContext);
 
-        // Runtime could be null since some package hasn't turn on strictNullChecks yet
-        // We should remove the null check once that is done
         this.logger = ChildLogger.create(
-            // eslint-disable-next-line no-null/no-null
-            runtime !== null ? runtime.logger : undefined, undefined, {all:{ sharedObjectId: uuid() }});
+            runtime.logger,
+            undefined,
+            { all: { sharedObjectId: uuid() } },
+        );
 
         this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
@@ -146,13 +146,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 this.didAttach();
             });
         }
-    }
-
-    /**
-     * Not supported - use handles instead
-     */
-    public toJSON() {
-        throw new Error("Only the handle can be converted to JSON");
     }
 
     /**
