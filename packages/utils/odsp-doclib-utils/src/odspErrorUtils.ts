@@ -147,7 +147,7 @@ export function createOdspNetworkError(
             error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
+            error = new RetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });

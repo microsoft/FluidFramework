@@ -28,7 +28,7 @@
     "test:realsvc:odsp": "cross-env fluid__test__driver=odsp FLUID_TEST_TIMEOUT=20s npm run test:realsvc:run",
     "test:realsvc:odsp:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:odsp",
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
-    "test:realsvc:routerlicious": "cross-env fluid__test__driver=routerlicious FLUID_TEST_TIMEOUT=30000  npm run test:realsvc:run",
+    "test:realsvc:routerlicious": "cross-env fluid__test__driver=routerlicious FLUID_TEST_TIMEOUT=5000  npm run test:realsvc:run",
     "test:realsvc:routerlicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:routerlicious",
     "test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
     "test:realsvc:tinylicious": "cross-env fluid__test__driver=tinylicious start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
