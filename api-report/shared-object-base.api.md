@@ -19,7 +19,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 
@@ -57,8 +56,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     bindToContext(): void;
     connect(services: IChannelServices): void;
     get connected(): boolean;
-    // @deprecated (undocumented)
-    protected debugAssert(condition: boolean, event: ITelemetryErrorEvent): void;
     protected didAttach(): void;
     protected dirty(): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
@@ -90,11 +87,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected runtime: IFluidDataStoreRuntime;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
-    protected setOwner(): string | undefined;
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
-    toJSON(): void;
 }
 
 // @public
