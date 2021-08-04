@@ -244,8 +244,6 @@ export interface IContainerConfig {
 export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
-    // @deprecated
-    createOnLoad?: boolean;
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
@@ -300,9 +298,6 @@ export interface ILoaderServices {
     readonly subLogger: ITelemetryLogger;
     readonly urlResolver: IUrlResolver;
 }
-
-// @public @deprecated
-export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 // @public
 export class Loader implements IHostLoader {
