@@ -6,12 +6,17 @@
 import { strict as assert } from "assert";
 import { TestHistorian } from "../testHistorian";
 import { GitManager } from "@fluidframework/server-services-client";
-import { ICreateCommitParams } from "@fluidframework/gitresources";
+import { ICreateBlobParams, ICreateCommitParams } from "@fluidframework/gitresources";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 
-describe("Test for TestUtils", () => {
-    it("Historian", async () => {
+describe("Test for Historian", () => {
+    let gitManager: GitManager;
+    beforeEach(async () => {
         const historian = new TestHistorian();
-        const gitManager = new GitManager(historian);
+        gitManager = new GitManager(historian);
+    });
+
+    it("Commit Test", async () => {
         const documentId = "documentId";
         const commitParams: ICreateCommitParams = {
             author: {
@@ -28,5 +33,22 @@ describe("Test for TestUtils", () => {
         const getCommit = await gitManager.getCommit(documentId);
         assert.equal(getCommit.sha, putCommit.sha, "Sha not equal of commits!!");
         assert.equal(getCommit.message, commitParams.message, "Message not equal of commits!!");
+    });
+
+    it("Blob Test for insertion of duplicate blobs", async () => {
+        const historian = new TestHistorian();
+        const gitManager = new GitManager(historian);
+        const blob1: ICreateBlobParams = {
+            content: "content",
+            encoding: "utf8",
+        };
+        const blob2: ICreateBlobParams = {
+            content: fromUtf8ToBase64(blob1.content),
+            encoding: "base64",
+        };
+        const createBlobResponse1 = await gitManager.createBlob(blob1.content, blob1.encoding);
+        const createBlobResponse2 = await gitManager.createBlob(blob2.content, blob2.encoding);
+        assert.strictEqual(createBlobResponse1.sha, createBlobResponse2.sha,
+            "Sha for both blobs should match as only 1 blob is stored as contents of both are same");
     });
 });

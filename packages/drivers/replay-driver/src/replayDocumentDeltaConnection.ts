@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/common-definitions";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaStorageService,
@@ -185,7 +186,7 @@ export class ReplayControllerStatic extends ReplayController {
 
 export class ReplayDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+    implements IDocumentDeltaConnection, IDisposable {
     /**
      * Creates a new delta connection and mimics the delta connection to replay ops on it.
      * @param documentService - The document service to be used to get underlying endpoints.
@@ -291,8 +292,12 @@ export class ReplayDocumentDeltaConnection
     public async submitSignal(message: any) {
     }
 
-    public close() {
-    }
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose() { this._disposed = true; }
+
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(): void { this.dispose(); }
 
     /**
      * This gets the specified ops from the delta storage endpoint and replays them in the replayer.

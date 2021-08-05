@@ -24,6 +24,7 @@ export enum BaseTelemetryProperties {
     documentId = "documentId",
 }
 
+// Incoming message properties
 export enum QueuedMessageProperties {
     topic = "topic",
     partition = "partition",
@@ -31,11 +32,20 @@ export enum QueuedMessageProperties {
 }
 
 export enum CommonProperties {
-    restart = "restart",
+    // Post checkpoint properties
+    clientCount = "clientCount",
+    minSequenceNumber = "minSequenceNumber",
     sequenceNumber = "sequenceNumber",
-    clientId = "clientId",
-    clientSequenceNumber = "clientSequenceNumber",
-    statusCode = "statusCode",
+    checkpointOffset = "checkpointOffset",
+
+    // Summary related properties
+    clientSummarySuccess = "clientSummarySuccess",
+    serviceSummarySuccess = "serviceSummarySuccess",
+    maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
+    lastSummarySequenceNumber = "lastSummarySequenceNumber",
+
+    // Miscellaneous properties
+    restart = "restart",
     telemetryGroupName = "telemetryGroupName",
 }
 

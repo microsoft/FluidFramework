@@ -54,7 +54,6 @@ import {
 import {
     isSystemMessage,
     ProtocolOpHandler,
-    QuorumProxy,
 } from "@fluidframework/protocol-base";
 import {
     FileMode,
@@ -103,6 +102,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
+import { QuorumProxy } from "./quorum";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -630,6 +630,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+                triggerConnectionRecovery: (reason: string) => {
+                    // We get here when socket does not receive any ops on "write" connection, including
+                    // its own join op. Attempt recovery option.
+                    this._deltaManager.triggerConnectionRecovery(
+                        reason,
+                        {
+                            duration: performance.now() - this.connectionTransitionTimes[this.connectionState],
+                        },
+                    );
+                },
             },
             this.logger,
         );
