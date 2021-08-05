@@ -94,7 +94,6 @@ class SimpleFluidError implements IFluidErrorBase {
         this.stack = errorProps.stack;
         this.name = errorProps.name;
 
-        // (like I wonder if it will show up in Kusto as "undefined" -- Oh I think not, recalling the Bohemia code)
         this.addTelemetryProperties(errorProps);
     }
 
