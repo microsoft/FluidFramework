@@ -8,7 +8,6 @@ import {
     AttachState,
     ContainerWarning,
     IDeltaManager,
-    ILoader,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import {
@@ -52,10 +51,6 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
-    (
-        event: "fluidDataStoreInstantiated",
-        listener: (dataStorePkgName: string, registryPath: string, createNew: boolean) => void,
-    );
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents =
@@ -69,22 +64,12 @@ export interface IContainerRuntime extends
     IProvideFluidDataStoreRegistry,
     IContainerRuntimeBaseWithCombinedEvents {
     readonly id: string;
-    readonly existing: boolean;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
     readonly connected: boolean;
-    /**
-     * @deprecated 0.38 The leader property and events will be removed in an upcoming release.
-     */
-    readonly leader: boolean;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly storage: IDocumentStorageService;
-    /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    readonly loader: ILoader;
     readonly flushMode: FlushMode;
     readonly scope: IFluidObject;
     /**

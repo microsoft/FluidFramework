@@ -1,0 +1,9 @@
+{{ if ($.Param "includeApiSubmenu") }}
+<div class="col-md-2 docs-navbar-container">
+    {{ partial "apiNav.html" . }}
+</div>
+{{ else }}
+<div class="col-md-2 docs-navbar-container">
+    {{ partial "docNav.html" (dict "context" . "menu" .Site.Menus.section "mainURL" "{{ .Section }}") }}
+</div>
+{{ end }}

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-kafkanode",
-  "version": "0.1026.0",
+  "version": "0.1028.0",
   "description": "Fluid server services kafka-node orderer implementation",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -24,8 +24,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/server-services-core": "^0.1026.0",
-    "@fluidframework/server-services-ordering-zookeeper": "^0.1026.0",
+    "@fluidframework/server-services-core": "^0.1028.0",
+    "@fluidframework/server-services-ordering-zookeeper": "^0.1028.0",
     "kafka-node": "^5.0.0",
     "moniker": "^0.1.2",
     "nconf": "^0.11.0"
@@ -33,13 +33,12 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/server-test-utils": "^0.1026.0",
+    "@fluidframework/server-test-utils": "^0.1028.0",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
     "@types/sinon": "^9.0.9",
-    "@types/socket.io": "^2.1.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

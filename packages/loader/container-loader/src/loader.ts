@@ -6,20 +6,22 @@
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+    IFluidCodeDetails,
     IFluidObject,
+    IFluidRouter,
+    IProvideFluidCodeDetailsComparer,
     IRequest,
     IRequestHeader,
     IResponse,
-    IFluidRouter,
-    IFluidCodeDetails,
 } from "@fluidframework/core-interfaces";
 import {
     ICodeLoader,
     IContainer,
+    IFluidModule,
     IHostLoader,
     ILoader,
     IPendingLocalState,
-    ILoaderOptions,
+    ILoaderOptions as ILoaderOptions1,
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
@@ -27,6 +29,7 @@ import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
+    IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -118,6 +121,39 @@ function createCachedResolver(resolver: IUrlResolver) {
     return cacheResolver;
 }
 
+export interface ILoaderOptions extends ILoaderOptions1{
+    summarizeProtocolTree?: true,
+}
+
+/**
+ * Encapsulates a module entry point with corresponding code details.
+ */
+ export interface IFluidModuleWithDetails {
+     /** Fluid code module that implements the runtime factory needed to instantiate the container runtime. */
+     module: IFluidModule;
+     /**
+      * Code details associated with the module. Represents a document schema this module supports.
+      * If the code loader implements the {@link @fluidframework/core-interfaces#IFluidCodeDetailsComparer} interface,
+      * it'll be called to determine whether the module code details satisfy the new code proposal in the quorum.
+      */
+     details: IFluidCodeDetails;
+ }
+
+/**
+ * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
+ * a package name and package version range.
+ */
+export interface ICodeDetailsLoader
+    extends Partial<IProvideFluidCodeDetailsComparer> {
+    /**
+     * Load the code module (package) that is capable to interact with the document.
+     *
+     * @param source - Code proposal that articulates the current schema the document is written in.
+     * @returns - Code module entry point along with the code details associated with it.
+     */
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
 /**
  * Services and properties necessary for creating a loader
  */
@@ -138,7 +174,7 @@ export interface ILoaderProps {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -162,6 +198,11 @@ export interface ILoaderProps {
      * The logger that all telemetry should be pushed to.
      */
     readonly logger?: ITelemetryBaseLogger;
+
+    /**
+     * Blobs storage for detached containers.
+     */
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
 
 /**
@@ -184,7 +225,7 @@ export interface ILoaderServices {
      * The code loader handles loading the necessary code
      * for running a container once it is loaded.
      */
-    readonly codeLoader: ICodeLoader;
+    readonly codeLoader: ICodeDetailsLoader | ICodeLoader;
 
     /**
      * A property bag of options used by various layers
@@ -208,7 +249,28 @@ export interface ILoaderServices {
      * The logger downstream consumers should construct their loggers from
      */
     readonly subLogger: ITelemetryLogger;
+
+    /**
+     * Blobs storage for detached containers.
+     */
+    readonly detachedBlobStorage?: IDetachedBlobStorage;
 }
+
+/**
+ * Subset of IDocumentStorageService which only supports createBlob() and readBlob(). This is used to support
+ * blobs in detached containers.
+ */
+export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
+    size: number;
+ };
+
+ /**
+ * To be included in the `IClientDetails.environment` value for the `IRequest` header
+ * if the client must be able to create a container at load when an existing container is not available.
+ *
+ * @deprecated - avoid using this flow, this key is only for temporarily supporting a legacy scenario.
+ */
+export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
 
 /**
  * Manages Fluid resource loading
@@ -224,7 +286,7 @@ export class Loader implements IHostLoader {
     public static _create(
         resolver: IUrlResolver | IUrlResolver[],
         documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        codeLoader: ICodeLoader,
+        codeLoader: ICodeDetailsLoader | ICodeLoader,
         options: ILoaderOptions,
         scope: IFluidObject,
         proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
@@ -256,6 +318,7 @@ export class Loader implements IHostLoader {
             scope,
             subLogger: DebugLogger.mixinDebugLogger("fluid:telemetry", loaderProps.logger, { all:{loaderId: uuid()} }),
             proxyLoaderFactories: loaderProps.proxyLoaderFactories ?? new Map<string, IProxyLoaderFactory>(),
+            detachedBlobStorage: loaderProps.detachedBlobStorage,
         };
         this.logger = ChildLogger.create(this.services.subLogger, "Loader");
     }
@@ -303,7 +366,10 @@ export class Loader implements IHostLoader {
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
             const resolved = await this.resolveCore(request);
-            return resolved.container.request({ url: `${resolved.parsed.path}${resolved.parsed.query}` });
+            return resolved.container.request({
+                ...request,
+                url: `${resolved.parsed.path}${resolved.parsed.query}`,
+            });
         });
     }
 
@@ -434,6 +500,10 @@ export class Loader implements IHostLoader {
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version] ?? undefined,
                 loadMode: request.headers?.[LoaderHeader.loadMode],
+                createOnLoad: request.headers
+                    ?.[LoaderHeader.clientDetails]
+                    ?.environment
+                    ?.includes(LegacyCreateOnLoadEnvironmentKey),
             },
             pendingLocalState,
         );

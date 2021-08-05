@@ -1,7 +1,84 @@
+## 0.45 Breaking changes
+- [Changes to local testing in insecure environments](#changes-to-local-testing-in-insecure-environments)
+
+### Changes to local testing in insecure environments
+Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.
+
+## 0.44 Breaking changes
+- [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
+- [attach() should only be called once](#attach-should-only-be-called-once)
+- [Loader access in data stores is removed](#loader-access-in-data-stores-is-removed)
+
+### Property removed from the ContainerRuntime class
+- the `existing` property from `ContainerRuntime` has been removed. Inspecting this property in order to decide whether or not to perform initialization operations should be replaced with extending the `RuntimeFactoryHelper` abstract class from `@fluidframework/runtime-utils` and overriding `instantiateFirstTime` and `instantiateFromExisting`. Alternatively, any class implementing `IRuntimeFactory` can supply an `existing` parameter to the `instantiateRuntime` method.
+
+### attach() should only be called once
+`Container.attach()` will now throw if called more than once. Once called, it is responsible for retrying on retriable errors or closing the container on non-retriable errors.
+
+### Loader access in data stores is removed
+Following the deprecation warning [Loader in data stores deprecated](#loader-in-data-stores-deprecated), the associated APIs have now been removed.  In addition to the original deprecation notes, users will automatically have an `ILoader` available on the container scope object as the `ILoader` property if the container was created through a `Loader`.
+
+## 0.43 Breaking changes
+
+- [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)
+- [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
+- [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
+- [Property removed from the Container class](#Property-removed-from-the-Container-class)
+- [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- [Changes to client-api](#changes-to-client-api)
+
+### TinyliciousClient and FrsClient are no longer static
+`TinyliciousClient` and `FrsClient` global static properties are removed. Instead, object instantiation is now required.
+
+### Property removed from the Container class
+- the `existing` property from `Container` has been removed. The caller should differentiate on how the container has been created (`Container.load` vs `Container.createDetached`). See also [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated).
+
+### Routerlicious Driver DeltaStorageService constructor changed
+`DeltaStorageService` from `@fluidframework/routerlicious-driver` now takes a `RestWrapper` as the second constructor parameter, rather than a TokenProvider.
+
+### addGlobalAgentSchedulerAndLeaderElection removed
+In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag was turned off by default in 0.40.  In 0.43 the flag (and the functionality it enabled) has been removed.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on this deprecation and back-compat support, as well as recommendations on how to migrate away from the built-in.
+
+### Creating new containers with Container.load has been deprecated
+- `Container.load` with inexistent files will fail instead of creating a new container. Going forward, please use `Container.createDetached` for this scenario.
+- To enable the legacy scenario, set the `createOnLoad` flag to true inside `IContainerLoadOptions`. `Loader.request` and `Loader.resolve` will enable the legacy scenario if the `IClientDetails.environment` property inside `IRequest.headers` contains the string `enable-legacy-create-on-load` (see `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader`).
+
+### Changes to client-api
+- The `load` function from `document.ts` will fail the container does not exist. Going forward, please use the `create` function to handle this scenario.
+
+## 0.42 Breaking changes
+
+- [Package renames](#0.42-package-renames)
+- [IContainerRuntime property removed](#IContainerRuntime-property-removed)
+- [IContainerRuntimeEvents changes](#IContainerRuntimeEvents-changes)
+- [Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export](#Removed-IParsedUrl-interface,-parseUrl,-getSnapshotTreeFromSerializedContainer-and-convertProtocolAndAppSummaryToSnapshotTree-api-from-export)
+
+### 0.42 package renames
+
+We have renamed some packages to better reflect their status. See the [npm package
+scopes](https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes) page in the wiki for more information about
+the npm scopes.
+
+- `@fluidframework/react-inputs` is renamed to `@fluid-experimental/react-inputs`
+- `@fluidframework/react` is renamed to `@fluid-experimental/react`
+
+### IContainerRuntimeEvents changes
+- `fluidDataStoreInstantiated` has been removed from the interface and will no longer be emitted by the `ContainerRuntime`.
+
+### IContainerRuntime property removed
+- the `existing` property from `IContainerRuntime` has been removed.
+
+### Removed IParsedUrl interface, parseUrl, getSnapshotTreeFromSerializedContainer and convertProtocolAndAppSummaryToSnapshotTree api from export
+These interface and apis are not supposed to be used outside the package. So stop exposing them.
+
 ## 0.41 Breaking changes
 
 - [Package renames](#0.41-package-renames)
 - [LoaderHeader.version could not be null](#LoaderHeader.version-could-not-be-null)
+- [Leadership API surface removed](#Leadership-API-surface-removed)
+- [IContainerContext and Container storage API return type changed](#IContainerContext-and-Container-storage-API-return-type-changed)
 
 ### 0.41 package renames
 
@@ -13,6 +90,14 @@ the npm scopes.
 
 ### LoaderHeader.version could not be null
 `LoaderHeader.version` in ILoader can not be null as we always load from existing snapshot in `container.load()`;
+
+### Leadership API surface removed
+In 0.38, the leadership API surface was deprecated, and in 0.40 it was turned off by default.  In 0.41 it has now been removed.  If you still require leadership functionality, you can use a `TaskSubscription` in combination with an `AgentScheduler`.
+
+See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) for more information on how to use `TaskSubscription` to migrate away from leadership election.
+
+### IContainerContext and Container storage API return type changed
+IContainerContext and Container now will always have storage even in Detached mode, so its return type has changed and undefined is removed.
 
 ## 0.40 Breaking changes
 
@@ -29,6 +114,13 @@ See [AgentScheduler-related deprecations](#AgentScheduler-related-deprecations) 
 ### ITelemetryProperties may be tagged for privacy purposes
 Telemetry properties on logs *can (but are **not** yet required to)* now be tagged. This is **not** a breaking change in 0.40, but users are strongly encouraged to add support for tags (see [UPCOMING.md](./UPCOMING.md) for more details).
 
+_\[edit\]_
+
+This actually was a breaking change in 0.40, in that the type of the `event` parameter of `ITelemetryBaseLogger.send` changed to
+a more inclusive type which needs to be accounted for in implementations.  However, in releases 0.40 through 0.44,
+_no tagged events are sent to any ITelemetryBaseLogger by the Fluid Framework_.  We are preparing to do so
+soon, and will include an entry in BREAKING.md when we do.
+
 ### IContainerRuntimeDirtyable removed
 The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method were deprecated in release 0.38.  They have now been removed in 0.40.  Please refer to the breaking change notice in 0.38 for instructions on migrating away from use of this interface.
 
@@ -43,7 +135,6 @@ The `RouterliciousDocumentServiceFactory` constructor no longer accepts the foll
 - [ITelemetryLogger Remove redundant methods](#ITelemetryLogger-Remove-redundant-methods)
 - [fileOverwrittenInStorage](#fileOverwrittenInStorage)
 - [absolutePath use in IFluidHandle is deprecated](#absolutepath-use-in-ifluidhandle-is-deprecated)
-- [ITelemetryBaseLogger now has a supportsTags property (not breaking)](#itelemetrybaselogger-now-has-a-supportstags-property-not-breaking)
 
 ### connect event removed from Container
 The `"connect"` event would previously fire on the `Container` after `connect_document_success` was received from the server (which likely happens before the client's own join message is processed).  This event does not represent a safe-to-use state, and has been removed.  To detect when the `Container` is fully connected, the `"connected"` event should be used instead.

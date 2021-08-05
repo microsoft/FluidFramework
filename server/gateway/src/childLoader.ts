@@ -123,8 +123,7 @@ class KeyValueLoader {
 
     private async attach(loader: Loader, docUrl: string) {
         const response = await loader.request({ url: docUrl });
-        if (response.status !== 200 ||
-            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return;
         }
         const fluidObject = response.value as IFluidObject;

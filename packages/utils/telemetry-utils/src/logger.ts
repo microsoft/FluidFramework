@@ -14,6 +14,18 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
+import { isILoggingError, extractLogSafeErrorProperties, generateStack } from "./errorLogging";
+
+/**
+ * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
+ * Please do not modify existing entries for backwards compatibility.
+ */
+ export enum TelemetryDataTag {
+    /** Data containing terms from code packages that may have been dynamically loaded */
+    PackageData = "PackageData",
+    /** Personal data of a variety of classifications that pertains to the user */
+    UserData = "UserData",
+}
 
 export interface ITelemetryLoggerPropertyBag {
     [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
@@ -62,14 +74,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        if (isILoggingError(error)) {
-            // First, copy over stack and error message directly
-            // Warning: if these were overwritten with PII-tagged props, they will be logged as-is
-            const errorAsObject = error as Partial<Error>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
+        const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
+        // First, copy over error message, stack, and errorType directly (overwrite if present on event)
+        event.stack = stack;
+        event.error = message; // Note that the error message goes on the 'error' field
+        event.errorType = errorType;
 
-            // Then add any other telemetry properties from the LoggingError
+        if (isILoggingError(error)) {
+            // Add any other telemetry properties from the LoggingError
             const taggableProps = error.getTelemetryProperties();
             for (const key of Object.keys(taggableProps)) {
                 if (event[key] !== undefined) {
@@ -97,42 +109,18 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                         event[key] = "REDACTED (UserData)";
                         break;
                     default:
-                        // This will help us keep this switch statement up to date
-                        (function(_: never) {})(tag);
-
                         // If we encounter a tag we don't recognize
-                        // (e.g. due to interaction between different versions)
                         // then we must assume we should scrub.
                         event[key] = "REDACTED (unknown tag)";
                         break;
                 }
             }
-        } else if (typeof error === "object" && error !== null) {
-            // Try to pull the stack and message off even if it's not an ILoggingError
-            const errorAsObject = error as Partial<Error>;
-            event.stack = errorAsObject.stack;
-            event.error = errorAsObject.message;
-        } else {
-            event.error = error;
         }
 
         // Collect stack if we were not able to extract it from error
         if (event.stack === undefined && fetchStack) {
-            event.stack = TelemetryLogger.getStack();
+            event.stack = generateStack();
         }
-    }
-
-    protected static getStack(): string | undefined {
-        // Some browsers will populate stack right away, others require throwing Error
-        let stack = new Error().stack;
-        if (!stack) {
-            try {
-                throw new Error();
-            } catch (e) {
-                stack = e.stack;
-            }
-        }
-        return stack;
     }
 
     public constructor(
@@ -477,129 +465,6 @@ export class PerformanceEvent {
         }
 
         this.logger.sendPerformanceEvent(event, error);
-    }
-}
-
-// Note - these Telemetry types should move to common-definitions package
-
-/**
- * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
- * Please do not modify existing entries for backwards compatibility.
- */
-export enum TelemetryDataTag {
-    /** Data containing terms from code packages that may have been dynamically loaded */
-    PackageData = "PackageData",
-    /** Personal data of a variety of classifications that pertains to the user */
-    UserData = "UserData",
-}
-
-/**
- * A property to be logged to telemetry containing both the value and the tag
- */
-export interface ITaggedTelemetryPropertyType {
-    value: TelemetryEventPropertyType,
-    tag: TelemetryDataTag
-}
-
-/**
- * Property bag containing a mix of value literals and wrapped values along with a tag
- */
-export interface ITaggableTelemetryProperties {
-    [name: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
-}
-
-/**
- * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
- */
-export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
-    return (typeof(x?.value) !== "object" && typeof(x?.tag) === "string");
-}
-
-/**
- * An error object that supports exporting its properties to be logged to telemetry
- */
-export interface ILoggingError extends Error {
-    /** Return all properties from this object that should be logged to telemetry */
-    getTelemetryProperties(): ITaggableTelemetryProperties;
-}
-export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
-
-/**
- * Walk an object's enumerable properties to find those fit for telemetry.
- */
-function getValidTelemetryProps(obj: any): ITaggableTelemetryProperties {
-    const props: ITaggableTelemetryProperties = {};
-    for (const key of Object.keys(obj)) {
-        const val = obj[key];
-        switch (typeof val) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "undefined":
-                props[key] = val;
-                break;
-            default: {
-                if (isTaggedTelemetryPropertyValue(val)) {
-                    props[key] = val;
-                } else {
-                    // We don't support logging arbitrary objects
-                    props[key] = "REDACTED (arbitrary object)";
-                }
-                break;
-            }
-        }
-    }
-    return props;
-}
-
-/**
- * Helper class for error tracking that can be used to log an error in telemetry.
- * The props passed in (and any set directly on the object after the fact) will be
- * logged in accordance with the given TelemetryDataTag, if present.
- *
- * PLEASE take care to properly tag properties set on this object
- */
-export class LoggingError extends Error implements ILoggingError {
-    private readonly __isFluidLoggingError__ = 1;
-
-    public static is(obj: any): obj is LoggingError {
-        const maybeLogger = obj as Partial<LoggingError>;
-        return maybeLogger !== null
-            && typeof maybeLogger  === "object"
-            && typeof maybeLogger.message === "string"
-            && (maybeLogger as LoggingError).__isFluidLoggingError__ === 1;
-    }
-
-    constructor(
-        message: string,
-        props?: ITaggableTelemetryProperties,
-    ) {
-        super(message);
-        if (props) {
-            this.addTelemetryProperties(props);
-        }
-    }
-
-    /**
-     * Add additional properties to be logged
-     */
-    public addTelemetryProperties(props: ITaggableTelemetryProperties) {
-        Object.assign(this, props);
-    }
-
-    /**
-     * Get all properties fit to be logged to telemetry for this error
-     */
-    public getTelemetryProperties(): ITaggableTelemetryProperties {
-        const taggableProps = getValidTelemetryProps(this);
-        // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
-        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
-        // Not including the 'name' property because it's likely always "Error"
-        return  {
-            stack: this.stack,
-            message: this.message,
-            ...taggableProps,
-        };
     }
 }
 

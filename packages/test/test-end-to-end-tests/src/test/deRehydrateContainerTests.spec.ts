@@ -5,10 +5,7 @@
 
 import { strict as assert } from "assert";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import {
-    getSnapshotTreeFromSerializedContainer,
-    Loader,
-} from "@fluidframework/container-loader";
+import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
     TestFluidObjectFactory,
@@ -22,6 +19,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { IntervalType } from "@fluidframework/merge-tree";
 import { SharedString, SparseMatrix } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
@@ -31,11 +29,13 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { getSnapshotTreeFromSerializedContainer } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
 
-describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
+describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
     function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
@@ -139,6 +139,12 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         };
     };
 
+    const getSnapshotTreeFromSerializedSnapshot = (
+        container: Container,
+    ) => {
+        return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+    };
+
     beforeEach(async () => {
         provider = getTestObjectProvider();
         const documentId = createDocumentId();
@@ -154,8 +160,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -168,6 +173,10 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
                 protocolAttributes.minimumSequenceNumber <= protocolAttributes.sequenceNumber,
                 "Min Seq # <= seq #");
 
+            // Check blobs contents for protocolAttributes
+            const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+            assert(snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !== undefined,
+                "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
             const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
@@ -177,14 +186,12 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree1: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree1 = getSnapshotTreeFromSerializedSnapshot(container);
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const snapshotTree2: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree2 = getSnapshotTreeFromSerializedSnapshot(container);
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -217,8 +224,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const snapshotTree: ISnapshotTree =
-                getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -301,6 +307,31 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
+        it("Storage in detached container", async () => {
+            const { container } =
+                await createDetachedContainerAndGetRootDataStore();
+
+            const snapshotTree = container.serialize();
+            assert(container.storage !== undefined, "Storage should be present in detached container");
+            const response = await container.request({ url: "/" });
+            const defaultDataStore = response.value as TestFluidObject;
+            assert(defaultDataStore.context.storage !== undefined,
+                "Storage should be present in detached data store");
+            let success1: boolean | undefined;
+            await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => success1 = false);
+            assert(success1 === false, "Snapshot fetch should not be allowed in detached data store");
+
+            const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+            assert(container2.storage !== undefined, "Storage should be present in rehydrated container");
+            const response2 = await container2.request({ url: "/" });
+            const defaultDataStore2 = response2.value as TestFluidObject;
+            assert(defaultDataStore2.context.storage !== undefined,
+                "Storage should be present in rehydrated data store");
+            let success2: boolean | undefined;
+            await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => success2 = false);
+            assert(success2 === false, "Snapshot fetch should not be allowed in rehydrated data store");
+        });
+
         it("Change contents of dds, then rehydrate and then check summary", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
@@ -308,7 +339,21 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const responseBefore = await container.request({ url: "/" });
             const defaultDataStoreBefore = responseBefore.value as TestFluidObject;
             const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
+            const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
             sharedStringBefore.insertText(0, "Hello");
+            let interval0 = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
+            let interval1 = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+            let id0;
+            let id1;
+
+            if (typeof(intervalsBefore.change) === "function") {
+                id0 = interval0.getIntervalId();
+                id1 = interval1.getIntervalId();
+                assert.strictEqual(typeof(id0), "string");
+                assert.strictEqual(typeof(id1), "string");
+                intervalsBefore.change(id0, 2, 3);
+                intervalsBefore.change(id1, 0, 3);
+            }
 
             const snapshotTree = container.serialize();
 
@@ -317,10 +362,43 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             const responseAfter = await container2.request({ url: "/" });
             const defaultComponentAfter = responseAfter.value as TestFluidObject;
             const sharedStringAfter = await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
+            const intervalsAfter = sharedStringAfter.getIntervalCollection("intervals");
             assert.strictEqual(
                 JSON.stringify(sharedStringAfter.summarize()),
                 JSON.stringify(sharedStringBefore.summarize()),
                 "Summaries of shared string should match and contents should be same!!");
+            if (typeof(intervalsBefore.change) === "function" &&
+                typeof(intervalsAfter.change) === "function") {
+                interval0 = intervalsAfter.getIntervalById(id0);
+                assert.notStrictEqual(interval0, undefined);
+                assert.strictEqual(interval0.start.getOffset(), 2);
+                assert.strictEqual(interval0.end.getOffset(), 3);
+
+                interval1 = intervalsAfter.getIntervalById(id1);
+                assert.notStrictEqual(interval1, undefined);
+                assert.strictEqual(interval1.start.getOffset(), 0);
+                assert.strictEqual(interval1.end.getOffset(), 3);
+            }
+            for (const interval of intervalsBefore) {
+                if (typeof(interval.getIntervalId) === "function") {
+                    const id = interval.getIntervalId();
+                    assert.strictEqual(typeof(id), "string");
+                    if (id) {
+                        assert.notStrictEqual(intervalsAfter.getIntervalById(id), undefined,
+                            "Interval not present after rehydration");
+                        intervalsAfter.removeIntervalById(id);
+                        assert.strictEqual(intervalsAfter.getIntervalById(id), undefined,
+                            "Interval not deleted");
+                    }
+                }
+                else {
+                    intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
+                }
+            }
+            for (const interval of intervalsAfter) {
+                assert.fail(
+                    `Unexpected interval after rehydration: ${interval.start.getOffset()}-${interval.end.getOffset()}`);
+            }
         });
 
         it("Rehydrate container from summary, change contents of dds and then check summary", async () => {
@@ -564,7 +642,7 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const snapshotTree = getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -575,6 +653,11 @@ describeNoCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) =
     tests();
 
     // Run again with isolated channels disabled
-    disableIsolatedChannels = true;
-    describe("With isolated channels disabled", tests);
+    describe("With isolated channels disabled", () => {
+        before(() => {
+            disableIsolatedChannels = true;
+        });
+
+        tests();
+    });
 });

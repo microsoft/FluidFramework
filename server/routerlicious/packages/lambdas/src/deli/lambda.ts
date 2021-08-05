@@ -41,6 +41,9 @@ import {
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
 } from "@fluidframework/server-services-core";
+import { CommonProperties, Lumber, LumberEventName, Lumberjack,
+    BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
+import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
@@ -60,6 +63,15 @@ enum SendType {
 enum InstructionType {
     ClearCache,
     NoOp,
+}
+
+enum DeliStateProperties {
+    ConnectedClientCount = "ConnectedClientCount",
+    DSN = "DSN",
+    LogOffset = "LogOffset",
+    LastSentMSN = "LastSentMSN",
+    Term = "Term",
+    CheckpointSequenceNumber = "CheckpointSequenceNumber",
 }
 
 interface ITicketedMessageOutput {
@@ -143,7 +155,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         client.lastUpdate,
                         client.canEvict,
                         client.scopes,
-                        client.nack);
+                        client.nack,
+                        client.serverMetadata);
                 }
             }
         }
@@ -173,6 +186,15 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
+        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+            Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
+
+        if (lumberJackMetric)
+        {
+            lumberJackMetric.setProperties(new Map([[BaseTelemetryProperties.tenantId, this.tenantId],
+                [BaseTelemetryProperties.documentId, this.documentId]]));
+            setQueuedMessageProperties(rawMessage, lumberJackMetric);
+        }
 
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
@@ -181,6 +203,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.context.checkpoint(kafkaCheckpointMessage);
             }
 
+            lumberJackMetric?.success("Already processed checkpointed message");
             return undefined;
         }
 
@@ -233,6 +256,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
         const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
+        if (lumberJackMetric)
+        {
+            this.setDeliStateMetrics(checkpoint, lumberJackMetric);
+        }
 
         // TODO optimize this to avoid doing per message
         // Checkpoint the current state
@@ -244,6 +271,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
+                lumberJackMetric?.setProperties(new Map([[CommonProperties.restart, true]]));
+                lumberJackMetric?.error("Restarting as message could not be sent to scriptorium", error);
                 this.context.log?.error(
                     `Could not send message to scriptorium: ${JSON.stringify(error)}`,
                     {
@@ -277,6 +306,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 }
             }
         }
+
+        lumberJackMetric?.success(`Message processed successfully 
+            at seq no ${checkpoint.deliState.sequenceNumber}`);
     }
 
     public close() {
@@ -291,6 +323,19 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.removeAllListeners();
     }
 
+    private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
+        const deliState = new Map([
+            [DeliStateProperties.ConnectedClientCount, checkpoint.deliState.clients?.length],
+            [DeliStateProperties.DSN, checkpoint.deliState.durableSequenceNumber],
+            [DeliStateProperties.LogOffset, checkpoint.deliState.logOffset],
+            [DeliStateProperties.CheckpointSequenceNumber, checkpoint.deliState.sequenceNumber],
+            [DeliStateProperties.Term, checkpoint.deliState.term],
+            [DeliStateProperties.LastSentMSN, checkpoint.deliState.lastSentMSN],
+        ]);
+
+        lumberJackMetric?.setProperties(deliState);
+    }
+
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput | undefined {
         // Exit out early for unknown messages
         if (rawMessage.type !== RawOperationType) {
@@ -303,7 +348,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         // Check if we should nack this message
         const nackMessages = this.nackMessages;
-        if (nackMessages) {
+        if (nackMessages && this.serviceConfiguration.deli.enableNackMessages) {
             let shouldNack = true;
 
             if (nackMessages.allowSystemMessages && (isServiceMessageType(message.type) || !message.clientId)) {
@@ -370,7 +415,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     this.minimumSequenceNumber,
                     message.timestamp,
                     true,
-                    clientJoinMessage.detail.scopes);
+                    clientJoinMessage.detail.scopes,
+                    message.operation.serverMetadata);
                 // Return if the client has already been added due to a prior join message.
                 if (!isNewClient) {
                     return;
@@ -689,7 +735,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (message.type !== MessageType.ClientLeave) {
             const idleClient = this.getIdleClient(message.timestamp);
             if (idleClient?.clientId) {
-                const leaveMessage = this.createLeaveMessage(idleClient.clientId);
+                const leaveMessage = this.createLeaveMessage(idleClient.clientId, idleClient.serverMetadata);
                 void this.sendToAlfred(leaveMessage);
             }
         }
@@ -698,7 +744,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     /**
      * Creates a leave message for inactive clients.
      */
-    private createLeaveMessage(clientId: string): IRawOperationMessage {
+    private createLeaveMessage(clientId: string, serverMetadata?: any): IRawOperationMessage {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
@@ -706,6 +752,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.ClientLeave,
+            serverMetadata,
         };
         const leaveMessage: IRawOperationMessage = {
             clientId: null,

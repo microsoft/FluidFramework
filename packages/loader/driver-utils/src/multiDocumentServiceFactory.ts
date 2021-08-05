@@ -45,7 +45,8 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     async createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
         const urlObj = parse(resolvedUrl.url);
-        if (urlObj.protocol === undefined) {
+        // eslint-disable-next-line no-null/no-null
+        if (urlObj.protocol === undefined || urlObj.protocol === null) {
             throw new Error("No protocol provided");
         }
         const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);
@@ -63,7 +64,8 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
         const urlObj = parse(createNewResolvedUrl.url);
-        if (urlObj.protocol === undefined) {
+        // eslint-disable-next-line no-null/no-null
+        if (urlObj.protocol === undefined || urlObj.protocol === null) {
             throw new Error("No protocol provided");
         }
         const factory: IDocumentServiceFactory | undefined = this.protocolToDocumentFactoryMap.get(urlObj.protocol);

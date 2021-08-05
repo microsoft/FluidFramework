@@ -331,7 +331,7 @@ async function loadAndPatchRC() {
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
     async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
         const rc = await loadAndPatchRC();
-        return rc.tokens?.data[key.server]?.[key.isPush ? "storage" : "push"];
+        return rc.tokens?.data[key.server]?.[key.isPush ? "push" : "storage"];
     },
     async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
         const rc = await loadAndPatchRC();
@@ -346,7 +346,7 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
             prevTokens = {};
             rc.tokens.data[key.server] = prevTokens;
         }
-        prevTokens[key.isPush ? "storage" : "push"] = tokens;
+        prevTokens[key.isPush ? "push" :  "storage"] = tokens;
         return saveRC(rc);
     },
     async lock<T>(callback: () => Promise<T>): Promise<T> {

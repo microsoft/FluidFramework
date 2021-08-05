@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "@fluidframework/historian-base": "^0.0.1",
-    "@fluidframework/server-services-shared": "^0.1025.0-25645",
-    "@fluidframework/server-services-utils": "^0.1025.0-25645",
+    "@fluidframework/server-services-shared": "^0.1027.0",
+    "@fluidframework/server-services-utils": "^0.1027.0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",
@@ -34,7 +34,7 @@
     "nconf": "^0.11.0",
     "split": "^1.0.0",
     "uuid": "^3.3.2",
-    "winston": "^3.1.0"
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.23.0",

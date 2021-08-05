@@ -65,8 +65,7 @@ class WorkerLoader implements ILoader, IFluidRunnable {
         }
 
         const response = await this.container.request(request);
-        if (response.status !== 200 ||
-            (response.mimeType !== "fluid/component" && response.mimeType !== "fluid/object")) {
+        if (response.status !== 200 || response.mimeType !== "fluid/object") {
             return { status: 404, mimeType: "text/plain", value: `${request.url} not found` };
         }
         this.runnable = response.value as IFluidRunnable;

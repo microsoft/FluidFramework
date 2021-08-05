@@ -21,7 +21,7 @@ import {
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
 import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
-import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
+import { IVersionedValueWithEpoch } from "./contracts";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -32,6 +32,9 @@ import { IOdspSnapshot, IVersionedValueWithEpoch } from "./contracts";
  * @param persistedCache - Cache to store the fetched snapshot.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
+ * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
+ *  1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
+ *  the Trees latest call.
  * @returns - True if the snapshot is cached, false otherwise.
  */
 export async function prefetchLatestSnapshot(
@@ -40,6 +43,7 @@ export async function prefetchLatestSnapshot(
     persistedCache: IPersistedCache,
     logger: ITelemetryBaseLogger,
     hostSnapshotFetchOptions: ISnapshotOptions | undefined,
+    enableRedeemFallback?: boolean,
 ): Promise<boolean> {
     const odspLogger = createOdspLogger(ChildLogger.create(logger, "PrefetchSnapshot"));
     const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
@@ -52,7 +56,7 @@ export async function prefetchLatestSnapshot(
     );
 
     const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-        return fetchAndParseAsJSONHelper<IOdspSnapshot>(
+        return fetchAndParseAsJSONHelper(
             url,
             fetchOptions,
         );
@@ -79,6 +83,7 @@ export async function prefetchLatestSnapshot(
                     snapshotDownloader,
                     putInCache,
                     removeEntries,
+                    enableRedeemFallback,
                 );
             assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;

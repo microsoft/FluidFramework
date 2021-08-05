@@ -8,7 +8,7 @@ This implementation demonstrates plugging that Container into a standalone appli
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 <!-- The getting started instructions are automatically generated.
-To update them, edit md-magic.config.js in the root of the repo, then run npm run readme:update -->
+To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
 
 ## Getting Started
 
@@ -42,3 +42,28 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 Dice Roller uses the following distributed data structures:
 
 - SharedDirectory - root
+
+## Backed Locally and running with live FRS instance
+
+We can connect to both live FRS instance by passing in the tenant ID, orderer and storage as well as using the tenant ID as "local" for running against Tinylicious for development purpose.
+
+To run the the `FrsClient` against our local Tinylicious instance, we pass the `tenantId` as "local" and make use of `InsecureTokenProvider`. For the latter, we pass in two values to its constructor: a key string, which can be anything since we are running it locally, and an object identifying the current user. For running the instance locally, the orderer and storage URLs would point to the Tinylicious instance on the default values of `http://localhost:7070`.
+
+"To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window"
+
+When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
+
+```typescript
+const connectionConfig: FrsConnectionConfig = useFrs ? {
+    tenantId: "YOUR-TENANT-ID-HERE",
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
+    orderer: "ENTER-ORDERER-URL-HERE",
+    storage: "ENTER-STORAGE-URL-HERE",
+} : {
+    tenantId: "local",
+    tokenProvider: new InsecureTokenProvider("fooBar", user),
+    orderer: "http://localhost:7070",
+    storage: "http://localhost:7070",
+};
+```
+In this way, we can toggle between remote and local mode using the same config format. We make use of `FrsAzFunctionTokenProvider` for running against live FRS instance since it is more secured, without exposing the tenant secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.

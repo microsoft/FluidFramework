@@ -1,0 +1,10 @@
+public/images/*.pdf
+public/literature
+public/scripts/dist/*.stats.*
+.cache-loader/
+nyc
+*.log
+**/*.tsbuildinfo
+src/test
+dist/test
+**/_api-extractor-temp/**

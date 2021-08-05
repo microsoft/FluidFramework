@@ -17,6 +17,7 @@ export interface ISummaryStats {
     blobNodeCount: number;
     handleNodeCount: number;
     totalBlobSize: number;
+    unreferencedBlobSize: number;
 }
 
 export interface ISummaryTreeWithStats {
@@ -167,6 +168,9 @@ export interface ISummarizerNode {
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     /** The routes in this node that are currently in use. */
     readonly usedRoutes: string[];
+
+    /** The garbage collection data of the node. */
+    readonly gcData: IGarbageCollectionData | undefined;
 
     summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
     createChild(

@@ -65,6 +65,7 @@ jobs:
                       echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "@fluid-internal:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "always-auth=true" >> ./.npmrc
                       cat .npmrc
                   ${{ if eq(parameters.official, true) }}:
@@ -72,6 +73,7 @@ jobs:
                       echo Generating .npmrc for ${{ parameters.feedName }}
                       echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
+                      echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
                       echo "always-auth=true" >> ./.npmrc
                       cat .npmrc
 
