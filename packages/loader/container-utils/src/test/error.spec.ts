@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateContainerError, CreateProcessingError, GenericError } from "../error";
+import { CreateContainerError, CreateProcessingError, DataProcessingError, GenericError } from "../error";
 
 describe("Errors", () => {
     describe("GenericError coercion via CreateContainerError", () => {
@@ -119,10 +119,10 @@ describe("Errors", () => {
         });
     });
 
-    describe("CreateProcessingError", () => {
+    describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
-            const testError = CreateProcessingError(originalError, "", undefined);
+            const testError = CreateProcessingError(originalError, undefined);
 
             assert((testError as any).stack === originalError.stack);
         });
@@ -132,7 +132,7 @@ describe("Errors", () => {
                     errorType: "Some error type",
                     otherProperty: "Considered PII-free property",
                 });
-            const coercedError = CreateProcessingError(originalError, "", undefined);
+            const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any === originalError);
         });
@@ -140,9 +140,10 @@ describe("Errors", () => {
             const originalError = {
                 errorType: "Some error type",
             };
-            const coercedError = CreateProcessingError(originalError, "", undefined);
+            const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.message === "[object Object]");
         });
@@ -151,13 +152,13 @@ describe("Errors", () => {
                 "Inherited error message", {
                     otherProperty: "Considered PII-free property",
                 });
-            const coercedError = CreateProcessingError(originalError, "", undefined);
+            const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.message === "Inherited error message");
-            // Note that this tests case is basically an unsupported case, so we don't copy telemetry props
-            assert(coercedError.getTelemetryProperties().otherProperty !== "Considered PII-free property", "telemetryProps not copied over by normalizeError");
+            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property");
         });
 
         it("Should not fail coercing malformed inputs", () => {
@@ -173,7 +174,7 @@ describe("Errors", () => {
                 [1,2,3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
-                CreateProcessingError(value, "", undefined),
+                CreateProcessingError(value, undefined),
             );
 
             assert(
@@ -202,7 +203,7 @@ describe("Errors", () => {
 
         it("Should be coercible from a string message", () => {
             const originalMessage = "Example of some thrown string";
-            const coercedError = CreateProcessingError(originalMessage, "", undefined);
+            const coercedError = CreateProcessingError(originalMessage, undefined);
 
             assert(coercedError.message === originalMessage);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
@@ -212,7 +213,7 @@ describe("Errors", () => {
             const originalError = {
                 message: "Inherited error message",
             };
-            const coercedError = CreateProcessingError(originalError, "", undefined);
+            const coercedError = CreateProcessingError(originalError, undefined);
 
             assert(coercedError.message === originalError.message);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
@@ -223,7 +224,7 @@ describe("Errors", () => {
                 message: "Inherited error message",
             };
             const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
-            const coercedError = CreateProcessingError(originalError, "", op);
+            const coercedError = CreateProcessingError(originalError, op);
 
             assert(isILoggingError(coercedError));
             assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);
@@ -234,7 +235,7 @@ describe("Errors", () => {
                 errorType: "hello",
             };
             const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
-            const coercedError = CreateProcessingError(originalError, "", op);
+            const coercedError = CreateProcessingError(originalError, op);
 
             assert(isILoggingError(coercedError));
             assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);

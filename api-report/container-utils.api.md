@@ -6,7 +6,6 @@
 
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -18,7 +17,7 @@ import { LoggingError } from '@fluidframework/telemetry-utils';
 export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError;
 
 // @public
-export function CreateProcessingError(originalError: any, errorCode: string, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
+export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
 
 // @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase {
