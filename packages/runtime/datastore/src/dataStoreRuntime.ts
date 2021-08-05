@@ -555,7 +555,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.emit("op", message);
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, "FluidDataStoreRuntime.process", message);
+            throw CreateProcessingError(error, "fluidDataStoreRuntimeFailedToProcessMessage", message);
         }
     }
 

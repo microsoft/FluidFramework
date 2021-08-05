@@ -181,7 +181,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
             this.channel = await this.loadChannel()
                 .catch((err) => {
                     // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                    throw CreateProcessingError(err, "RehydratedLocalChanneLContext.getChannel", undefined);
+                    throw CreateProcessingError(err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
                 });
         }
         return this.channel;

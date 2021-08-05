@@ -95,7 +95,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
      * Conditionally coerce the throwable input into a DataProcessingError.
      * @param originalError - Throwable input to be converted.
      * @param message - Sequenced message (op) to include info about via telemetry props
-     * @param errorCodeIfNone - errorCode identifying the call site, to be used if the originalError has no error code.
+     * @param errorCodeIfNone - pascaleCased code identifying the call site, used if originalError has no error code.
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
