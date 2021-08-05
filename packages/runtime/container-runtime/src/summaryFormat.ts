@@ -74,17 +74,33 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
-export interface IContainerRuntimeMetadata {
+export type GCFeature = number;
+export interface IContainerRuntimeMetadata1 {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
-    readonly gcFeature?: number;
+    readonly gcFeature?: GCFeature;
 }
 
+export interface IContainerRuntimeMetadata2 extends Omit<IContainerRuntimeMetadata1, "summaryFormatVersion"> {
+    readonly summaryFormatVersion: 2;
+    /** The last sequence number at the time of the summary; same as the summary op reference sequence number. */
+    readonly sequenceNumber: number;
+}
+
+export type ReadContainerRuntimeMetadata =
+    | undefined
+    | IContainerRuntimeMetadata1
+    | IContainerRuntimeMetadata2;
+
+export type WriteContainerRuntimeMetadata = IContainerRuntimeMetadata2;
+
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | undefined): number {
+export function getMetadataFormatVersion(metadata: ReadContainerRuntimeMetadata): number {
     /**
+     * Version 2+: Introduces runtime sequence number for data verification.
+     *
      * Version 1+: Introduces .metadata blob and .channels trees for isolation of
      * data store trees from container-level objects.
      * Also introduces enableGC option stored in the summary.
@@ -101,13 +117,13 @@ export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
+export function rootHasIsolatedChannels(metadata: ReadContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
 export function gcFeature(
-    metadata: IContainerRuntimeMetadata | undefined,
-): Required<IContainerRuntimeMetadata>["gcFeature"] {
+    metadata: ReadContainerRuntimeMetadata,
+): GCFeature {
     if (!metadata) {
         // Force to 0/disallowed in prior versions
         return 0;
