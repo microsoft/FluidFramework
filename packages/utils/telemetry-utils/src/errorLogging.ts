@@ -149,7 +149,7 @@ export function normalizeError(
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
-        untrustedOrigin: true, // This will let us filter to errors not originated by our own code
+        untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
     });
 
     if (typeof(error) !== "object") {
