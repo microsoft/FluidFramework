@@ -64,7 +64,8 @@ export enum ContainerErrorType {
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",
-    throttlingError = "throttlingError"
+    throttlingError = "throttlingError",
+    usageError = "usageError"
 }
 
 // @public
@@ -352,6 +353,12 @@ export interface IGenericError extends IErrorBase {
 export interface IHostLoader extends ILoader {
     createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
     rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
+}
+
+// @public
+export interface IUsageError extends IErrorBase {
+    // (undocumented)
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 // @public

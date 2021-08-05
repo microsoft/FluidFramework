@@ -73,7 +73,7 @@ export interface IGenericError extends IErrorBase {
 /**
  * Error indicating an API is being used improperly resulting in an invalid operation.
  */
- export interface IInvalidOperationError extends IErrorBase {
+ export interface IUsageError extends IErrorBase {
     readonly errorType: ContainerErrorType.usageError;
 }
 
