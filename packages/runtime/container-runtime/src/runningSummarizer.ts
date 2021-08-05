@@ -52,7 +52,7 @@ export class RunningSummarizer implements IDisposable {
         internalsProvider: Pick<ISummarizer, "stop">
             & Pick<ISummarizerInternalsProvider, "submitSummary">,
         heuristicData: ISummarizeHeuristicData,
-        raiseSummarizingError: (description: string) => void,
+        raiseSummarizingError: (errorCode: string) => void,
         summaryCollection: SummaryCollection,
         options?: Readonly<Partial<ISummarizerOptions>>,
     ): Promise<RunningSummarizer> {
@@ -101,7 +101,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly internalsProvider: Pick<ISummarizer, "stop">
             & Pick<ISummarizerInternalsProvider, "submitSummary">,
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly raiseSummarizingError: (description: string) => void,
+        private readonly raiseSummarizingError: (errorCode: string) => void,
         private readonly summaryCollection: SummaryCollection,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
@@ -122,7 +122,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             maxAckWaitTime,
             () => {
-                this.raiseSummarizingError("SummaryAckWaitTimeout");
+                this.raiseSummarizingError("summaryAckWaitTimeout");
                 // Note: summaryGenTag (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.

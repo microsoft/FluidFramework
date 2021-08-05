@@ -39,21 +39,24 @@ const summarizingError = "summarizingError";
 
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
     readonly errorType = summarizingError;
-    readonly fluidErrorCode = "TBD";
     readonly canRetry = true;
 
-    constructor(errorMessage: string, readonly logged: boolean = false) {
+    constructor(
+        errorMessage: string,
+        readonly fluidErrorCode: string,
+        readonly logged: boolean = false,
+    ) {
         super(errorMessage);
     }
 
-    static wrap(error: any, logged: boolean = false) {
-        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
+    static wrap(error: any, errorCode: string, logged: boolean = false) {
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, errorCode, logged);
         return wrapError<SummarizingWarning>(error, newErrorFn);
     }
 }
 
 export const createSummarizingWarning =
-    (details: string, logged: boolean) => new SummarizingWarning(details, logged);
+    (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, errorCode, logged);
 
 /**
  * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -97,7 +100,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         try {
             await this.runCore(onBehalfOf, options);
         } catch (error) {
-            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */));
+            this.emit("summarizingError", SummarizingWarning.wrap(error, "summarizerRun", false /* logged */));
             throw error;
         } finally {
             // Cleanup after running
@@ -208,9 +211,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     summaryTime: Date.now(),
                 } as const,
             ),
-            (description: string) => {
+            (errorCode: string) => {
                 if (!this._disposed) {
-                    this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
+                    this.emit("summarizingError", createSummarizingWarning(errorCode, true));
                 }
             },
             this.summaryCollection,
@@ -223,7 +226,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
 
             // Raise error to parent container.
-            this.emit("summarizingError", createSummarizingWarning("Summarizer: HandleSummaryAckFatalError", true));
+            this.emit("summarizingError", createSummarizingWarning("handleSummaryAckFatalError", true));
 
             this.stop();
         });

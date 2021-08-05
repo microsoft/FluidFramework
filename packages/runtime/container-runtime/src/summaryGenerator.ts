@@ -132,7 +132,7 @@ export class SummaryGenerator {
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "submitSummary">,
-        private readonly raiseSummarizingError: (description: string) => void,
+        private readonly raiseSummarizingError: (errorCode: string) => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -194,15 +194,16 @@ export class SummaryGenerator {
             timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
         });
         // Helper functions to report failures and return.
-        const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
+        const getFailMessage =
+            (errorCode: keyof typeof summarizeErrors) => `${errorCode}: ${summarizeErrors[errorCode]}`;
         const fail = (
-            message: keyof typeof summarizeErrors,
+            errorCode: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
         ) => {
-            this.raiseSummarizingError(summarizeErrors[message]);
-            summarizeEvent.cancel({ ...properties, message }, error);
-            resultsBuilder.fail(getFailMessage(message), error);
+            this.raiseSummarizingError(errorCode);
+            summarizeEvent.cancel({ ...properties, message: errorCode }, error);
+            resultsBuilder.fail(getFailMessage(errorCode), error);
         };
 
         // Wait to generate and send summary

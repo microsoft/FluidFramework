@@ -34,7 +34,7 @@ export function isOnline(): OnlineStatus {
  */
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     readonly errorType = DriverErrorType.genericNetworkError;
-    readonly fluidErrorCode = "TBD";
+    readonly fluidErrorCode;
 
     constructor(
         errorMessage: string,
@@ -42,6 +42,7 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
         props?: ITelemetryProperties,
     ) {
         super(errorMessage, props);
+        this.fluidErrorCode = "tbdGenericNetworkError";
     }
 }
 

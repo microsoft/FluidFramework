@@ -25,7 +25,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
  */
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
     readonly errorType = ContainerErrorType.genericError;
-    readonly fluidErrorCode = "TBD";
+    readonly fluidErrorCode = ContainerErrorType.genericError;
 
     /**
      * Create a new GenericError
@@ -48,10 +48,10 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
  */
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     readonly errorType = ContainerErrorType.throttlingError;
-    readonly fluidErrorCode = "TBD";
 
     constructor(
         message: string,
+        readonly fluidErrorCode: string,
         readonly retryAfterSeconds: number,
         props?: ITelemetryProperties,
     ) {
@@ -62,21 +62,22 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
      * Wrap the given error as a ThrottlingWarning, preserving any safe properties for logging
      * and prefixing the wrapped error message with messagePrefix.
      */
-    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning {
+    static wrap(error: any, errorCode: string, retryAfterSeconds: number): IThrottlingWarning {
         const newErrorFn =
-            (errMsg: string) =>
-                new ThrottlingWarning(`${messagePrefix}: ${errMsg}`, retryAfterSeconds);
+            (errMsg: string) => new ThrottlingWarning(errMsg, errorCode, retryAfterSeconds);
         return wrapError(error, newErrorFn);
     }
 }
 
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
-    readonly fluidErrorCode = "TBD";
     readonly canRetry = false;
 
-    constructor(errorMessage: string, props: ITelemetryProperties) {
-        super(errorMessage, props);
+    constructor(
+        readonly fluidErrorCode: string,
+        props: ITelemetryProperties,
+    ) {
+        super(fluidErrorCode, props);
     }
 }
 
@@ -161,16 +162,16 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
 }
 
 /**
- * Create a new error, wrapping and caused by the given unknown error.
+ * Create a new error, wrapping and caused by the given innerError.
  * Copies the inner error's message and stack over but otherwise uses newErrorFn to define the error.
  * The inner error's instance id will also be logged for telemetry analysis.
- * @param innerError - An error from untrusted/unknown origins
+ * @param innerError - An object that describes the error that caused the current error
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
 export function wrapError<T extends IFluidErrorBase>(
     innerError: unknown,
-    newErrorFn: (m: string) => T,
+    newErrorFn: (message: string) => T,
 ): T {
     const {
         message,

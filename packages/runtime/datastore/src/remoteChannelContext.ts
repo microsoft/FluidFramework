@@ -168,7 +168,7 @@ export class RemoteChannelContext implements IChannelContext {
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
                 // TODO: Strip out potential PII content #1920
-                throw new DataCorruptionError("Channel type not available", {
+                throw new DataCorruptionError("channelTypeNotAvailable", {
                     channelId: this.id,
                     dataStoreId: this.dataStoreContext.id,
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
@@ -177,7 +177,7 @@ export class RemoteChannelContext implements IChannelContext {
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
                 // TODO: Strip out potential PII content #1920
-                throw new DataCorruptionError(`Channel Factory ${this.attachMessageType} for attach not registered`, {
+                throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
                     channelId: this.id,
                     dataStoreId: this.dataStoreContext.id,
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
@@ -189,7 +189,7 @@ export class RemoteChannelContext implements IChannelContext {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
                 // TODO: Strip out potential PII content #1920
-                throw new DataCorruptionError(`Channel Factory ${attributes.type} not registered`, {
+                throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
                     channelId: this.id,
                     dataStoreId: this.dataStoreContext.id,
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),

@@ -944,7 +944,7 @@ export class DeltaManager
             this.timeTillThrottling = timeNow + delayMs;
 
             const throttlingWarning: IThrottlingWarning =
-                ThrottlingWarning.wrap(error, "Service busy/throttled", delayMs / 1000 /* retryAfterSeconds */);
+                ThrottlingWarning.wrap(error, "deltaManagerEmitDelayInfo", delayMs / 1000 /* retryAfterSeconds */);
             this.emit("throttled", throttlingWarning);
         }
     }
@@ -1408,7 +1408,7 @@ export class DeltaManager
 
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
-            throw new DataCorruptionError("msn moves backwards", {
+            throw new DataCorruptionError("msnMovesBackwards", {
                 ...extractLogSafeMessageProperties(message),
                 clientId: this.connection?.clientId,
             });
@@ -1416,7 +1416,7 @@ export class DeltaManager
         this.minSequenceNumber = message.minimumSequenceNumber;
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
-            throw new DataCorruptionError("non-seq seq#", {
+            throw new DataCorruptionError("nonSequentialSequenceNumber", {
                 ...extractLogSafeMessageProperties(message),
                 clientId: this.connection?.clientId,
             });

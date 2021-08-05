@@ -145,7 +145,7 @@ export class DataStores implements IDisposable {
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
-                "Duplicate data store created with existing ID",
+                "duplicateDataStoreCreatedWithExistingId",
                 extractSafePropertiesFromMessage(message),
             );
             throw error;
