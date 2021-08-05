@@ -111,7 +111,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 
         // Don't coerce if already has an errorType, to distinguish unknown errors from
         // errors that we raised which we already can interpret apart from this classification
-        const error = isValidLegacyError(originalError)
+        const error = isValidLegacyError(originalError) // also accepts valid Fluid Error
             ? normalizeError(originalError, { errorCodeIfNone })
             : wrapError(originalError, newErrorFn);
 
