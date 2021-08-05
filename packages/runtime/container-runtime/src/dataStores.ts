@@ -231,7 +231,7 @@ export class DataStores implements IDisposable {
         pkg: string[],
         id: string,
         isRoot: boolean,
-        props?: any
+        props?: any,
     ): LocalFluidDataStoreContext {
         const context = new LocalFluidDataStoreContext(
             id,
@@ -276,7 +276,7 @@ export class DataStores implements IDisposable {
     public processFluidDataStoreOp(
         message: ISequencedDocumentMessage,
         local: boolean,
-        localMessageMetadata: unknown
+        localMessageMetadata: unknown,
     ): void {
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
@@ -300,7 +300,7 @@ export class DataStores implements IDisposable {
     public processSignal(
         address: string,
         message: IInboundSignalMessage,
-        local: boolean
+        local: boolean,
     ): void {
         const context = this.contexts.get(address);
         if (!context) {
