@@ -4,22 +4,22 @@
  */
 /* eslint-disable no-param-reassign */
 
-import { PropertyFactory } from "@fluid-experimental/property-properties"
+import { ArrayProperty, BaseProperty, PropertyFactory, ValueProperty } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from './propertyProxy';
-import { Utilities } from './utilities';
+import { PropertyProxy } from "./propertyProxy";
+import { forceType, Utilities } from "./utilities";
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.
- * @param {ComponentArray} target The ComponentArray that holds a reference to the
+ * @param target The ComponentArray that holds a reference to the
  * {@link external:ArrayProperty ArrayProperty}.
  * @return {Iterator} The iterator.
  * @hidden
  */
-const createArrayIterator = (target) => function* () {
+const createArrayIterator = (target: ComponentArray) => function*() {
     for (let i = 0; i < target.getProperty().getLength(); i++) {
-        if (PropertyFactory.instanceOf(target.getProperty().get(i), 'BaseProperty')) {
-            yield PropertyProxy.proxify(target.getProperty().get(i));
+        if (PropertyFactory.instanceOf(target.getProperty().get(i)!, "BaseProperty")) {
+            yield PropertyProxy.proxify(target.getProperty().get(i)!);
         } else {
             yield target.getProperty().get(i);
         }
@@ -28,13 +28,14 @@ const createArrayIterator = (target) => function* () {
 
 /**
  * Prepares the elements that are to be inserted into the {@link external:ArrayProperty ArrayProperty}.
- * @param {external:ArrayProperty} property The ArrayProperty in which elements are to be inserted.
- * @param {Object | external:BaseProperty} elements The elements to be inserted.
- * @return {Array} The array that contains elements ready for insertion.
+ * @param property The ArrayProperty in which elements are to be inserted.
+ * @param elements The elements to be inserted.
+ * @return The array that contains elements ready for insertion.
  * @hidden
  */
 const prepareElementsForInsertion =
-    (property, elements) => elements.map((element) => Utilities.prepareElementForInsertion(property, element));
+    (property: ArrayProperty, elements: (BaseProperty | Record<string, unknown>)[]) =>
+        elements.map((element) => Utilities.prepareElementForInsertion(property, element));
 
 /**
  * ComponentArray extends Array to work directly on the data stored in PropertyDDS.
@@ -44,20 +45,21 @@ const prepareElementsForInsertion =
  * @hidden
  */
 class ComponentArray extends Array {
+    public lastCalledMethod = "";
+
     /**
      * Sets the {@link external:ArrayProperty ArrayProperty} to operate on sets the Symbol.iterator attribute.
-     * @param {external:ArrayProperty} property The ArrayProperty to operate on.
+     * @param property The ArrayProperty to operate on.
      */
-    constructor(property) {
+    constructor(private readonly property: ArrayProperty) {
         super();
         this.property = property;
         this[Symbol.iterator] = createArrayIterator(this);
-        this.lastCalledMethod = '';
     }
 
     /**
      * Returns the ArrayProperty property.
-     * @return {external:ArrayProperty} The ArrayProperty.
+     * @return The ArrayProperty.
      */
     getProperty() {
         return this.property;
@@ -66,7 +68,8 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    includes(searchElement, fromIndex) {
+    // TODO(marcus): any is a workaround here for now
+    includes(searchElement: any, fromIndex) {
         let startSearchIdx = 0;
         if (fromIndex) {
             if (fromIndex >= this.property.getLength()) {
@@ -83,8 +86,9 @@ class ComponentArray extends Array {
             searchElement = searchElement.getProperty();
         }
         for (let i = startSearchIdx; i < this.property.length; ++i) {
-            let prop = this.property.get(i);
-            if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()) {
+            let prop = this.property.get(i)!;
+            if (PropertyFactory.instanceOf(prop, "BaseProperty") && prop.isPrimitiveType()
+                && forceType<ValueProperty>(prop)) {
                 prop = prop.getValue();
             }
             if (prop === searchElement) {
@@ -97,11 +101,11 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    indexOf(searchElement, fromIndex) {
+    indexOf(searchElement: any, fromIndex?: number) {
         let startSearchIdx = 0;
         if (fromIndex) {
             if (fromIndex >= this.property.getLength()) {
-                return false;
+                return -1;
             } else if (fromIndex < 0) {
                 startSearchIdx = Math.max(0, this.property.getLength() + fromIndex);
             } else {
@@ -114,8 +118,9 @@ class ComponentArray extends Array {
             searchElement = searchElement.getProperty();
         }
         for (let i = startSearchIdx; i < this.property.length; ++i) {
-            let prop = this.property.get(i);
-            if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()) {
+            let prop = this.property.get(i)!;
+            if (PropertyFactory.instanceOf(prop, "BaseProperty") && prop.isPrimitiveType()
+                && forceType<ValueProperty>(prop)) {
                 prop = prop.getValue();
             }
             if (prop === searchElement) {
@@ -128,35 +133,29 @@ class ComponentArray extends Array {
     /**
      * @inheritdoc
      */
-    lastIndexOf(searchElement, fromIndex) {
-        // Only handle non-primitive cases,
-        // primitive cases can be handled implicitly (see componentArrayProxyHandler.js)
-
-        if (PropertyFactory.instanceOf(!searchElement, 'BaseProperty')) {
-            return -1;
-        } else {
-            // check if a proxied value was passed
-            if (searchElement.getProperty) {
-                searchElement = searchElement.getProperty();
-            }
-
-            const startSearchIdx = fromIndex ?
-                (fromIndex < 0 ?
-                    this.property.getLength() + fromIndex :
-                    Math.min(fromIndex, this.property.getLength() - 1)) :
-                this.property.getLength() - 1;
-
-            for (let i = startSearchIdx; i >= 0; i--) {
-                let prop = this.property.get(i);
-                if (PropertyFactory.instanceOf(prop, 'BaseProperty') && prop.isPrimitiveType()) {
-                    prop = prop.getValue();
-                }
-                if (prop === searchElement) {
-                    return i;
-                }
-            }
-            return -1;
+    lastIndexOf(searchElement: any, fromIndex?: number) {
+        // check if a proxied value was passed
+        if (searchElement.getProperty) {
+            searchElement = searchElement.getProperty();
         }
+
+        const startSearchIdx = fromIndex ?
+            (fromIndex < 0 ?
+                this.property.getLength() + fromIndex :
+                Math.min(fromIndex, this.property.getLength() - 1)) :
+            this.property.getLength() - 1;
+
+        for (let i = startSearchIdx; i >= 0; i--) {
+            let prop = this.property.get(i)!;
+            if (PropertyFactory.instanceOf(prop, "BaseProperty") && prop.isPrimitiveType()
+                && forceType<ValueProperty>(prop)) {
+                prop = prop.getValue();
+            }
+            if (prop === searchElement) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -164,13 +163,13 @@ class ComponentArray extends Array {
      */
     pop() {
         let popped;
-        if (PropertyFactory.instanceOf(this.property, 'Reference', 'array')) {
+        if (PropertyFactory.instanceOf(this.property, "Reference", "array")) {
             popped = this.property.get(this.property.getLength() - 1);
             this.property.pop();
         } else {
             popped = this.property.pop();
         }
-        if (PropertyFactory.instanceOf(popped, 'BaseProperty')) { return PropertyProxy.proxify(popped); }
+        if (PropertyFactory.instanceOf(popped, "BaseProperty")) { return PropertyProxy.proxify(popped); }
         else { return popped; }
     }
 
@@ -196,13 +195,13 @@ class ComponentArray extends Array {
      */
     shift() {
         let first;
-        if (PropertyFactory.instanceOf(this.property, 'Reference', 'array')) {
+        if (PropertyFactory.instanceOf(this.property, "Reference", "array")) {
             first = this.property.get(0);
             this.property.shift();
         } else {
             first = this.property.shift();
         }
-        if (PropertyFactory.instanceOf(first, 'BaseProperty')) { return PropertyProxy.proxify(first); }
+        if (PropertyFactory.instanceOf(first, "BaseProperty")) { return PropertyProxy.proxify(first); }
         else { return first; }
     }
 
@@ -210,12 +209,13 @@ class ComponentArray extends Array {
      * @inheritdoc
      */
     sort(compareFunction) {
-        this.lastCalledMethod = 'sort';
-        if (PropertyFactory.instanceOf(this.property, 'Reference', 'array')) {
-            const referencedAndReference = [];
+        this.lastCalledMethod = "sort";
+        if (PropertyFactory.instanceOf(this.property, "Reference", "array")) {
+            // TODO(marcus): any is a workaround here to make it work
+            const referencedAndReference: any[] = [];
             for (let i = 0; i < this.property.getLength(); ++i) {
-                const referenced = this.property.get(i);
-                if (PropertyFactory.instanceOf(referenced, 'BaseProperty')) {
+                const referenced = this.property.get(i)!;
+                if (PropertyFactory.instanceOf(referenced, "BaseProperty")) {
                     referencedAndReference.push([PropertyProxy.proxify(referenced), this.property.getValue(i)]);
                 } else {
                     referencedAndReference.push([referenced, this.property.getValue(i)]);
@@ -230,7 +230,7 @@ class ComponentArray extends Array {
         } else {
             super.sort(compareFunction);
         }
-        this.lastCalledMethod = '';
+        this.lastCalledMethod = "";
         return this;
     }
 
@@ -253,12 +253,13 @@ class ComponentArray extends Array {
         const deleteUntil = Number(deleteCount) === deleteCount &&
             startValue + deleteCount < arrayLength ? deleteCount : arrayLength - startValue;
 
-        const removed = [];
+        // TODO(marcus): any is a workaround
+        const removed: any[] = [];
         if (deleteUntil > 0 && startValue < arrayLength) {
             for (let i = startValue; i < startValue + deleteUntil; ++i) {
-                removed.push(this.property.get(i));
+                removed.push(this.property.get(i)!);
                 const lastEntryIdx = removed.length - 1;
-                if (PropertyFactory.instanceOf(removed[lastEntryIdx], 'BaseProperty')) {
+                if (PropertyFactory.instanceOf(removed[lastEntryIdx], "BaseProperty")) {
                     removed[lastEntryIdx] = PropertyProxy.proxify(removed[lastEntryIdx]);
                 }
             }
@@ -279,12 +280,12 @@ class ComponentArray extends Array {
 
     /**
      * Swaps two elements in place in the array.
-     * @param {Number} idxOne The index of one of the elements to be swapped.
-     * @param {Number} idxTwo The index of one of the elements to be swapped.
+     * @param idxOne The index of one of the elements to be swapped.
+     * @param idxTwo The index of one of the elements to be swapped.
      */
-    swap(idxOne, idxTwo) {
+    swap(idxOne: number, idxTwo: number) {
         if (idxOne >= this.property.getLength() || idxTwo >= this.property.getLength()) {
-            throw new RangeError('Cannot swap element that is out of range');
+            throw new RangeError("Cannot swap element that is out of range");
         }
         const tmp = this[idxOne];
         this[idxOne] = this[idxTwo];
@@ -301,7 +302,7 @@ class ComponentArray extends Array {
         }
         const preparedElements = prepareElementsForInsertion(this.property, elementsToAdd);
         Utilities.wrapWithPushPopNotificationDelayScope(
-            this.property, () => this.property.insertRange(0, preparedElements)
+            this.property, () => this.property.insertRange(0, preparedElements),
         );
         return this.property.getLength();
     }
