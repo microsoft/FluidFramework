@@ -59,15 +59,6 @@ export class GenericError extends LoggingError implements IGenericError {
 }
 
 // @public
-export class UsageError extends LoggingError implements IFluidErrorBase {
-    constructor(fluidErrorCode: string);
-    // (undocumented)
-    readonly errorType = "usageError";
-    // (undocumented)
-    readonly fluidErrorCode: string;
-}
-
-// @public
 export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
     constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
     // (undocumented)
@@ -75,6 +66,15 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+}
+
+// @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string);
+    // (undocumented)
+    readonly errorType = "usageError";
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public

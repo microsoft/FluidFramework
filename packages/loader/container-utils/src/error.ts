@@ -43,18 +43,6 @@ export class GenericError extends LoggingError implements IGenericError {
     }
 }
 
-// TODO: implement IInvalidOperationError once available
-/** Error indicating an API is being used improperly resulting in an invalid operation. */
-export class UsageError extends LoggingError implements IFluidErrorBase {
-    readonly errorType = "usageError";
-
-    constructor(
-        readonly fluidErrorCode: string,
-    ) {
-        super(fluidErrorCode, { usageError: true });
-    }
-}
-
 /**
  * Warning emitted when requests to storage are being throttled.
  */
@@ -78,6 +66,18 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
             (errMsg: string) =>
                 new ThrottlingWarning(`${messagePrefix}: ${errMsg}`, retryAfterSeconds);
         return wrapError(error, newErrorFn);
+    }
+}
+
+// TODO: implement IInvalidOperationError once available
+/** Error indicating an API is being used improperly resulting in an invalid operation. */
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    readonly errorType = "usageError";
+
+    constructor(
+        readonly fluidErrorCode: string,
+    ) {
+        super(fluidErrorCode, { usageError: true });
     }
 }
 
