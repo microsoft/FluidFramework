@@ -178,7 +178,7 @@ function setUpTestSharedTreeGeneric<
 	}
 
 	// Enable expensiveValidation
-	const factory = factoryGetter(options.summarizeHistory);
+	const factory = factoryGetter(options.summarizeHistory === undefined ? true : options.summarizeHistory);
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true) as TSharedTree;
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
@@ -305,7 +305,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 		[
 			treeId,
 			factoryGetter(
-				summarizeHistory,
+				summarizeHistory === undefined ? true : summarizeHistory,
 				writeSummaryFormat,
 				uploadEditChunks === undefined ? true : uploadEditChunks
 			),
@@ -382,16 +382,18 @@ export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
 
 	const uuidNamespace = '44864298-500e-4cf8-9f44-a249e5b3a286';
 
-	// First edit is an insert
+	// First edit sets the test tree
+	const edit = newEdit(setTrait(testTrait, [simpleTestTree]));
+
 	const nodeId = 'ae6b24eb-6fa8-42cc-abd2-48f250b7798f' as NodeId;
 	const node = makeEmptyNode(nodeId);
-	const firstEdit = newEdit([
+	const insertEmptyNode = newEdit([
 		Change.build([node], 0 as DetachedSequenceId),
 		Change.insert(0 as DetachedSequenceId, StablePlace.before(left)),
 	]);
 
-	const edits: Edit<Change>[] = [];
-	edits.push({ ...firstEdit, id: uuidv5('test', uuidNamespace) as EditId });
+	const edits: Edit<Change>[] = [{ changes: edit.changes, id: '5a17f20a-0567-41d4-90bb-fcc381d23f05' as EditId }];
+	edits.push({ ...insertEmptyNode, id: uuidv5('test', uuidNamespace) as EditId });
 
 	// Every subsequent edit is a set payload
 	for (let i = 1; i < numberOfEdits - 1; i++) {

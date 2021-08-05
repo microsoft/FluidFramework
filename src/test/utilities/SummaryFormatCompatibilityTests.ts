@@ -7,16 +7,23 @@ import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { assert, expect } from 'chai';
 import { TestObjectProvider } from '@fluidframework/test-utils';
-import { Change, SharedTree } from '../../default-edits';
+import {
+	Change,
+	noHistorySummarizer,
+	noHistorySummarizer_0_1_1,
+	SharedTree,
+	SharedTreeNoHistorySummarizer,
+} from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import {
 	ChangeNode,
 	Edit,
-	EditWithoutId,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
 	SharedTreeSummaryWriteFormat,
+	EditWithoutId,
 	UploadedEditChunkContents,
+	SharedTreeSummaryReadFormat,
 } from '../../generic';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
@@ -35,12 +42,20 @@ import { TestFluidSerializer } from './TestSerializer';
 const pathBase = resolve(__dirname, '../../../src/test/documents/');
 
 /**
- * A version must be specified for a write test to be generated.
+ * A version/summarizer pair must be specified for a no history write test to be generated.
  * Versions that can no longer be written should be removed from this list.
  */
+const noHistorySupportedSummarizers: {
+	version: SharedTreeSummaryWriteFormat;
+	summarizer: SharedTreeNoHistorySummarizer;
+}[] = [
+	{ version: SharedTreeSummaryWriteFormat.Format_0_0_2, summarizer: noHistorySummarizer },
+	{ version: SharedTreeSummaryWriteFormat.Format_0_1_1, summarizer: noHistorySummarizer_0_1_1 },
+];
+
 const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
 	SharedTreeSummaryWriteFormat.Format_0_0_2,
-	SharedTreeSummaryWriteFormat.Format_0_1_0,
+	SharedTreeSummaryWriteFormat.Format_0_1_1,
 ];
 
 /**
@@ -55,15 +70,15 @@ const supportedSummaryWriteFormats: SharedTreeSummaryWriteFormat[] = [
  */
 interface ForwardCompatibilityTestEntry {
 	/** Version of the summarizer, should be older than the load versions. */
-	summarizerVersion: string;
+	summarizerVersion: SharedTreeSummaryWriteFormat;
 	/** A list of all the versions that can be read with directions on how they are expected to be handled by the specified summarizer. */
 	loadVersions: {
 		/** Version of the summary to load for testing. */
-		loadVersion: string;
+		loadVersion: SharedTreeSummaryReadFormat;
 		/** Condition under which the summarizer will write a different format version than the summarizerVersion. */
 		condition: (summary: SharedTreeSummaryBase) => boolean;
 		/** The format version that will be written if the condition is true. */
-		conditionalWriteVersion: string;
+		conditionalWriteVersion: SharedTreeSummaryWriteFormat;
 	}[];
 }
 
@@ -72,10 +87,10 @@ interface ForwardCompatibilityTestEntry {
  */
 const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
 	{
-		summarizerVersion: '0.0.2',
+		summarizerVersion: SharedTreeSummaryWriteFormat.Format_0_0_2,
 		loadVersions: [
 			{
-				loadVersion: '0.1.0',
+				loadVersion: SharedTreeSummaryReadFormat.Format_0_1_1,
 				// In the special case in which a SharedTree loads a summary with handles (which would necessarily
 				// imply that the summary was version >= 0.1.0), then a 0.1.0 summary is written even if the summarizer is 0.0.2.
 				condition: (summary: SharedTreeSummaryBase): boolean => {
@@ -86,7 +101,7 @@ const forwardCompatibilityTests: ForwardCompatibilityTestEntry[] = [
 					// An editChunk is a handle iff its "chunk" field is not an array
 					return castedSummary.editHistory.editChunks.some(({ chunk }) => !Array.isArray(chunk));
 				},
-				conditionalWriteVersion: '0.1.0',
+				conditionalWriteVersion: SharedTreeSummaryWriteFormat.Format_0_1_1,
 			},
 		],
 	},
@@ -132,29 +147,38 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			// cache the contents of the relevant files here to avoid loading more than once
 			// map containing summary file contents, keys are summary versions, values have file contents
 			const summaryByVersion = new Map<string, string>();
+			const noHistorySummaryByVersion = new Map<string, string>();
 
 			// Files of uploaded edit blob contents for summaries that support blobs.
 			const blobsByVersion = new Map<string, string>();
+
 			let historyOrUndefined: Edit<Change>[] | undefined;
 			let changeNodeOrUndefined: ChangeNode | undefined;
 
 			const documentFiles = fs.readdirSync(join(pathBase, document));
 			for (const documentFile of documentFiles) {
-				const summaryFileRegex = /summary-(?<version>\d+\.\d\.\d).json/;
+				const summaryFileRegex = /^summary-(?<version>\d+\.\d\.\d).json/;
 				const match = summaryFileRegex.exec(documentFile);
+
+				const noHistorySummaryFileRegex = /^no-history-summary-(?<version>\d+\.\d\.\d).json/;
+				const noHistoryMatch = noHistorySummaryFileRegex.exec(documentFile);
 
 				const blobFileRegex = /blobs-(?<version>\d+\.\d\.\d).json/;
 				const blobsMatch = blobFileRegex.exec(documentFile);
 
 				const filePath = join(pathBase, document, documentFile);
+				const file = fs.readFileSync(filePath, 'utf8');
+
 				if (match && match.groups) {
-					summaryByVersion.set(match.groups.version, fs.readFileSync(filePath, 'utf8'));
+					summaryByVersion.set(match.groups.version, file);
+				} else if (noHistoryMatch && noHistoryMatch.groups) {
+					noHistorySummaryByVersion.set(noHistoryMatch.groups.version, file);
 				} else if (blobsMatch && blobsMatch.groups) {
-					blobsByVersion.set(blobsMatch.groups.version, fs.readFileSync(filePath, 'utf8'));
+					blobsByVersion.set(blobsMatch.groups.version, file);
 				} else if (documentFile === 'history.json') {
-					historyOrUndefined = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+					historyOrUndefined = JSON.parse(file);
 				} else if (documentFile === 'change-node.json') {
-					changeNodeOrUndefined = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+					changeNodeOrUndefined = JSON.parse(file);
 				}
 			}
 
@@ -186,6 +210,32 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						// The expected tree, tree loaded with the existing summary, and the tree loaded
 						// with the new summary should all be equal.
 						expect(tree2.equals(tree)).to.be.true;
+					});
+				}
+
+				for (const { summarizer, version } of noHistorySupportedSummarizers) {
+					it(`version ${version} with no history can be written`, async () => {
+						history.forEach((edit) => {
+							expectedTree.processLocalEdit(edit);
+						});
+
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
+
+						// Save a new summary with the expected tree and use it to load a new SharedTree
+						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView, true);
+						const { tree: tree2 } = setUpTestSharedTree();
+						tree2.loadSummary(newSummary);
+
+						// Check that the new summary is equivalent to the saved one
+						const serializedSummary = assertNotUndefined(noHistorySummaryByVersion.get(version));
+						const summary = deserialize(serializedSummary, testSerializer);
+
+						expect(JSON.parse(JSON.stringify(newSummary))).to.deep.equals(summary);
+
+						// Ensure the produced change node is the same
+						const newChangeNode = expectedTree.currentView.getChangeNodeTree();
+						expect(newChangeNode).to.deep.equal(changeNode);
 					});
 				}
 
@@ -399,7 +449,7 @@ function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, his
 	const storedBlobs: UploadedEditChunkContents<Change>[] = JSON.parse(blobs);
 
 	switch (version) {
-		case SharedTreeSummaryWriteFormat.Format_0_1_0: {
+		case SharedTreeSummaryWriteFormat.Format_0_1_1: {
 			let loadedEdits: EditWithoutId<Change>[] = [];
 
 			// Obtain all edits from the summary, replacing handles with edits loaded from the stored blob file.

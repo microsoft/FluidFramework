@@ -25,5 +25,10 @@ export * from './Factory';
 export * from './HistoryEditFactory';
 export * from './EditUtilities';
 export { Transaction } from './Transaction';
-export { getSummaryByVersion, noHistorySummarizer, noHistorySummarizer_0_1_0 } from './Summary';
+export {
+	SharedTreeNoHistorySummarizer,
+	getSummaryByVersion,
+	noHistorySummarizer,
+	noHistorySummarizer_0_1_1,
+} from './Summary';
 export { SharedTreeUndoRedoHandler } from './UndoRedoHandler';

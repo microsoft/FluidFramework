@@ -20,8 +20,8 @@ export const formatVersion = '0.0.2';
 
 /**
  * Handler for summarizing the tree state.
- * The handler is invoked when saving a summary. It accepts a view of the current state of the tree, the sequenced edits known
- * to the SharedTree, and optional helpers for serializing the edit information.
+ * The handler is invoked when saving a summary. It accepts a view of the current state of the tree and the sequenced edits known
+ * to the SharedTree.
  * @returns a summary of the supplied state.
  * @internal
  */
@@ -45,7 +45,7 @@ export interface SharedTreeSummaryBase {
  * @public
  */
 export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
-	readonly currentTree: ChangeNode;
+	readonly currentTree?: ChangeNode;
 
 	/**
 	 * Information that can populate an edit log.
@@ -93,7 +93,7 @@ export function fullHistorySummarizer<TChange>(
 
 	// If the edit log includes handles without associated edits, we must write a summary version that supports handles.
 	if (includesHandles) {
-		return fullHistorySummarizer_0_1_0(editLog, currentView);
+		return fullHistorySummarizer_0_1_1(editLog, currentView);
 	}
 
 	return {
@@ -106,7 +106,7 @@ export function fullHistorySummarizer<TChange>(
 /**
  * Generates a summary with format version 0.1.0. This will prefer handles over edits in edit chunks where possible.
  */
-export function fullHistorySummarizer_0_1_0<TChange>(
+export function fullHistorySummarizer_0_1_1<TChange>(
 	editLog: OrderedEditSet<TChange>,
 	currentView: RevisionView
 ): SharedTreeSummary<TChange> {

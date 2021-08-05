@@ -61,7 +61,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
 	): Promise<ISharedObject> {
-		const sharedTree = new SharedTree(runtime, id);
+		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
 	}
@@ -72,15 +72,21 @@ export class SharedTreeFactory implements IChannelFactory {
 	 * @param id - optional name for the SharedTree
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree {
+		this.options.expensiveValidation = expensiveValidation;
+		const sharedTree = this.createSharedTree(runtime, id);
+		sharedTree.initializeLocal();
+		return sharedTree;
+	}
+
+	private createSharedTree(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const sharedTree = new SharedTree(
 			runtime,
 			id,
-			expensiveValidation,
+			this.options.expensiveValidation,
 			this.options.summarizeHistory,
 			this.options.writeSummaryFormat,
 			this.options.uploadEditChunks
 		);
-		sharedTree.initializeLocal();
 		return sharedTree;
 	}
 }

@@ -20,7 +20,7 @@ import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
-import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
+import { CachingLogViewer, EditCacheEntry, EditStatusCallback, LogViewer } from '../LogViewer';
 import {
 	convertSummaryToReadFormat,
 	deserialize,
@@ -117,8 +117,19 @@ export enum SharedTreeDiagnosticEvent {
 export enum SharedTreeSummaryWriteFormat {
 	/** Stores all edits in their raw format. */
 	Format_0_0_2 = '0.0.2',
-	/** Supports history virtualization. */
-	Format_0_1_0 = '0.1.0',
+	/** Supports history virtualization and makes currentView optional. */
+	Format_0_1_1 = '0.1.1',
+}
+
+/**
+ * Format versions that SharedTree supports reading.
+ * @public
+ */
+export enum SharedTreeSummaryReadFormat {
+	/** Stores all edits in their raw format. */
+	Format_0_0_2 = '0.0.2',
+	/** Supports history virtualization and makes currentView optional. */
+	Format_0_1_1 = '0.1.1',
 }
 
 /**
@@ -153,6 +164,8 @@ const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isS
  * @public
  */
 export interface SharedTreeFactoryOptions {
+	/** Enables expensive asserts on SharedTree. */
+	expensiveValidation?: boolean;
 	/** If false, does not include history in summaries. */
 	readonly summarizeHistory?: boolean;
 	/** Determines the summary format version to write, 0.0.2 by default. */
@@ -494,7 +507,6 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		}
 
 		const { editHistory, currentTree } = convertedSummary;
-		const currentView = RevisionView.fromTree(currentTree);
 
 		const editLog = new EditLog(editHistory, this.logger);
 
@@ -502,11 +514,18 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
 		});
 
+		let knownRevisions: [number, EditCacheEntry<TChange>][] | undefined;
+		if (currentTree !== undefined) {
+			const currentView = RevisionView.fromTree(currentTree);
+
+			// TODO:#47830: Store multiple checkpoints in summary.
+			knownRevisions = [[editLog.length, { view: currentView }]];
+		}
+
 		const logViewer = new CachingLogViewer(
 			editLog,
 			RevisionView.fromTree(initialTree),
-			// TODO:#47830: Store multiple checkpoints in summary.
-			[[editLog.length, { view: currentView }]],
+			knownRevisions,
 			this.expensiveValidation,
 			callback,
 			this.logger,

@@ -10,7 +10,7 @@ import { EditLog, getNumberOfHandlesFromEditLogSummary } from './EditLog';
 import { ChangeNode, Edit, SharedTreeSummaryBase, SharedTreeSummary } from './generic';
 
 /** The summary format version that is read by SharedTree. */
-export const readFormatVersion = '0.1.0';
+export const readFormatVersion = '0.1.1';
 
 /**
  * Legacy summary format currently still used for writing.
@@ -19,11 +19,11 @@ export const readFormatVersion = '0.1.0';
  */
 export interface SharedTreeSummary_0_0_2<TChange> extends SharedTreeSummaryBase {
 	readonly currentTree: ChangeNode;
-
 	/**
 	 * A list of edits.
 	 */
 	readonly sequencedEdits: readonly Edit<TChange>[];
+	readonly version: '0.0.2';
 }
 
 /**
@@ -128,7 +128,7 @@ export interface SummaryStatistics extends ITelemetryProperties {
 export function getSummaryStatistics<TChange>(summary: SharedTreeSummaryBase): SummaryStatistics {
 	const { version } = summary;
 
-	if (version === '0.1.0') {
+	if (version === '0.1.1') {
 		const { editHistory } = summary as SharedTreeSummary<TChange>;
 
 		if (editHistory !== undefined) {

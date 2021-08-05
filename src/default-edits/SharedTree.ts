@@ -139,7 +139,7 @@ export class SharedTree extends GenericSharedTree<Change> {
 	 * @returns A factory that creates `SharedTree`s and loads them from storage.
 	 */
 	public static getFactory(
-		summarizeHistory = true,
+		summarizeHistory = false,
 		writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
 		uploadEditChunks = false
 	): SharedTreeFactory {

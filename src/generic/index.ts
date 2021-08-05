@@ -14,6 +14,7 @@ export {
 	SharedTreeDiagnosticEvent,
 	SharedTreeFactoryOptions,
 	SharedTreeSummaryWriteFormat,
+	SharedTreeSummaryReadFormat,
 } from './GenericSharedTree';
 export {
 	Edit,
@@ -37,7 +38,7 @@ export {
 	SharedTreeSummaryBase,
 	SharedTreeSummarizer,
 	fullHistorySummarizer,
-	fullHistorySummarizer_0_1_0,
+	fullHistorySummarizer_0_1_1,
 	formatVersion,
 	serialize,
 } from './Summary';

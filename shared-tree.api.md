@@ -530,6 +530,7 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @public
 export interface SharedTreeFactoryOptions {
+    expensiveValidation?: boolean;
     readonly summarizeHistory?: boolean;
     readonly uploadEditChunks?: boolean;
     readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
@@ -543,7 +544,7 @@ export type SharedTreeSummarizer<TChange> = (editLog: OrderedEditSet<TChange>, c
 // @public
 export interface SharedTreeSummary<TChange> extends SharedTreeSummaryBase {
     // (undocumented)
-    readonly currentTree: ChangeNode;
+    readonly currentTree?: ChangeNode;
     // Warning: (ae-incompatible-release-tags) The symbol "editHistory" is marked as @public, but its signature references "EditLogSummary" which is marked as @internal
     readonly editHistory?: EditLogSummary<TChange>;
 }
@@ -556,7 +557,7 @@ export interface SharedTreeSummaryBase {
 // @public
 export enum SharedTreeSummaryWriteFormat {
     Format_0_0_2 = "0.0.2",
-    Format_0_1_0 = "0.1.0"
+    Format_0_1_1 = "0.1.1"
 }
 
 // @public
