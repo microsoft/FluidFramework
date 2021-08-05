@@ -77,39 +77,6 @@ describe("Error Logging", () => {
             TelemetryLogger.prepareErrorObject(event, error, false);
             assert(event.foo === "foo" && event.bar === 2);
         });
-        it("getTelemetryProperties - tagged UserData is removed", () => {
-            const event = freshEvent();
-            const error = createILoggingError(
-                { somePii: { value: "very personal", tag: "UserData" }});
-            TelemetryLogger.prepareErrorObject(event, error, false);
-            assert.strictEqual(event.somePii, "REDACTED (UserData)", "somePii should be redacted");
-        });
-        it("getTelemetryProperties - tagged PackageData are preserved", () => {
-            const event = freshEvent();
-            const error = createILoggingError({
-                packageName: { value: "myPkg", tag: "PackageData" },
-            });
-            TelemetryLogger.prepareErrorObject(event, error, false);
-            assert.strictEqual(event.packageName, "myPkg");
-        });
-        it("getTelemetryProperties - tagged [unrecognized tag] are removed", () => {
-            const event = freshEvent();
-            const error = createILoggingError(
-                { somePii: { value: "very personal", tag: "FutureTag"}});
-            TelemetryLogger.prepareErrorObject(event, error, false);
-            assert.strictEqual(event.somePii, "REDACTED (unknown tag)", "somePii should be redacted");
-        });
-        it("getTelemetryProperties - tags on overwritten Error base props", () => {
-            const event = freshEvent();
-            const error = createILoggingError({
-                message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
-                stack: { value: "tagged", tag: "PackageData" },
-            });
-            TelemetryLogger.prepareErrorObject(event, error, false);
-            assert.strictEqual(event.message, "REDACTED (UserData)");
-            assert.deepStrictEqual(event.error, "[object Object]"); // weird but ok
-            assert.deepStrictEqual(event.stack, "tagged"); // weird but ok
-        });
         it("fetchStack false - Don't add a stack if missing", () => {
             const event = freshEvent();
             const error = { message: "I have no stack" };
@@ -179,6 +146,24 @@ describe("Error Logging", () => {
             adaptedLogger.send(event);
             assert.strictEqual(events[0].packageDataObject, "REDACTED (unknown tag)", "someUnknownTag should be redacted");
             delete events[0];
+        });
+        it("TaggedLoggerAdapter - tags on overwritten Error base props", () => {
+            function freshEvent(): ITelemetryBaseEvent {
+                return { category: "cat", eventName: "event" };
+            }
+            function createILoggingError(props: ITelemetryProperties) {
+                return {...props, getTelemetryProperties: () => props };
+            }
+            const event = freshEvent();
+            const error = createILoggingError({
+                message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
+                stack: { value: "tagged", tag: "PackageData" },
+            });
+            TelemetryLogger.prepareErrorObject(event, error, false);
+            adaptedLogger.send(event);
+            assert.strictEqual(event.message, "REDACTED (UserData)");
+            assert.deepStrictEqual(event.error, "[object Object]"); // weird but ok
+            assert.deepStrictEqual(event.stack, "tagged"); // weird but ok
         });
     });
     describe("TaggedTelemetryData", () => {
