@@ -15,7 +15,6 @@ import {
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
@@ -129,17 +128,5 @@ export async function loadContainer(
         logger,
     });
 
-    return loader.resolve(
-        {
-            url: resolved.url,
-            headers: {
-                [LoaderHeader.clientDetails]: {
-                    // #6346
-                    // hardcoded keyword to be replaced by `LegacyCreateOnLoadEnvironmentKey`
-                    // from `@fluidframework/container-loader`
-                    environment: `replay enable-legacy-create-on-load`,
-                    capabilities: { interactive: false },
-                },
-            },
-        });
+    return loader.resolve({ url: resolved.url });
 }
