@@ -74,13 +74,13 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
-export type GCFeature = number;
+export type GCVersion = number;
 export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
-    readonly gcFeature?: GCFeature;
+    readonly gcFeature?: GCVersion;
     /** The last sequence number at the time of the summary; same as the summary op reference sequence number. */
     readonly sequenceNumber?: number;
 }
@@ -115,9 +115,9 @@ export function rootHasIsolatedChannels(metadata: ReadContainerRuntimeMetadata):
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
-export function gcFeature(
+export function getGCVersion(
     metadata: ReadContainerRuntimeMetadata,
-): GCFeature {
+): GCVersion {
     if (!metadata) {
         // Force to 0/disallowed in prior versions
         return 0;

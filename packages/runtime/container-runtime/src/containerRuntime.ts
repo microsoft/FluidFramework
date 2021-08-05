@@ -4,12 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    ILoggingError,
-    ITelemetryGenericEvent,
-    ITelemetryLogger,
-    ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -49,7 +44,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
@@ -118,8 +113,8 @@ import {
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
-    gcFeature,
-    GCFeature,
+    getGCVersion,
+    GCVersion,
     ReadContainerRuntimeMetadata,
     metadataBlobName,
     wrapSummaryInChannelsTree,
@@ -314,22 +309,6 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
         // Nothing to do in such case.
     }
     return message;
-}
-
-class LoadSequenceNumberMismatchError extends Error implements ICriticalContainerError, ILoggingError {
-    public readonly errorType = "runtime";
-    constructor(
-        public readonly runtimeSequenceNumber: number,
-        public readonly protocolSequenceNumber: number,
-    ) {
-        super("Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber");
-    }
-    public getTelemetryProperties(): ITelemetryProperties {
-        return {
-            runtimeSequenceNumber: this.runtimeSequenceNumber,
-            protocolSequenceNumber: this.protocolSequenceNumber,
-        };
-    }
 }
 
 export class ScheduleManager {
@@ -601,7 +580,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
             if (verificationBehavior !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
-                const error = new LoadSequenceNumberMismatchError(runtimeSequenceNumber, protocolSequenceNumber);
+                const error = new DataCorruptionError(
+                    "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber",
+                    { runtimeSequenceNumber, protocolSequenceNumber },
+                );
 
                 if (verificationBehavior === "log") {
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
@@ -759,7 +741,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
     // This is the version of GC data in the latest successful summary this client has seen.
-    private summaryGCVersion: GCFeature;
+    private summaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -800,7 +782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           * For existing documents, we get this value from the metadata blob.
           * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
           */
-        const prevSummaryGCVersion = existing ? gcFeature(metadata) : undefined;
+        const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
         // Default to false for now.
         this.summaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
@@ -2187,7 +2169,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
             const metadata = await readAndParse<ReadContainerRuntimeMetadata>(this.storage, metadataBlobId);
-            this.summaryGCVersion = gcFeature(metadata);
+            this.summaryGCVersion = getGCVersion(metadata);
         }
     }
 
