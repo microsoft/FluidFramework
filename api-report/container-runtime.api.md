@@ -159,8 +159,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
     get reSubmitFn(): (type: ContainerMessageType, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined) => void;
-    // (undocumented)
-    readonly runtimeVersion = "0.45.0";
+    // @internal @deprecated (undocumented)
+    readonly runtimeVersion: string;
     // (undocumented)
     get scope(): IFluidObject;
     // (undocumented)

@@ -541,7 +541,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
-    public readonly runtimeVersion = pkgVersion;
+    /**
+     * @internal
+     * @deprecated Back-compat only. Used by the loader in versions earlier than 0.35.
+     */
+    public readonly runtimeVersion: string = pkgVersion;
 
     /**
      * Load the stores from a snapshot and returns the runtime.
