@@ -95,7 +95,11 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
         originalError: any,
         message: ISequencedDocumentMessage | undefined,
     ): ICriticalContainerError {
-        const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
+        const newErrorFn = (errMsg: string) => {
+            const dpe = new DataProcessingError(errMsg);
+            dpe.addTelemetryProperties({ untrustedOrigin: true}); // To match normalizeError
+            return dpe;
+        };
 
         // Don't coerce if already has an errorType, to distinguish unknown errors from
         // errors that we raised which we already can interpret apart from this classification
@@ -103,6 +107,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
             ? originalError
             : wrapError(originalError, newErrorFn);
 
+        error.addTelemetryProperties({ dataProcessingError: true});
         if (message !== undefined) {
             error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
         }
