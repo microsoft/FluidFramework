@@ -641,7 +641,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn {
+    public getCreateChildSummarizerNodeFn(
+        id: string,
+        createParam: CreateChildSummarizerNodeParam,
+    ): CreateChildSummarizerNodeFn {
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,

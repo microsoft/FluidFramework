@@ -512,7 +512,6 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 const waitForSeq = async (
     deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
     targetSeq: number,
-    // eslint-disable-next-line promise/param-names
 ): Promise<void> => new Promise<void>((accept, reject) => {
     // TODO: remove cast to any when actual event is determined
     deltaManager.on("closed" as any, reject);
@@ -1048,6 +1047,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public get IFluidTokenProvider(): IFluidTokenProvider | undefined {
         if (this.options && this.options.intelligence) {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
                 intelligence: this.options.intelligence,
             } as IFluidTokenProvider;
@@ -1222,6 +1222,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async stop(): Promise<{}> {
         this.verifyNotClosed();
 
