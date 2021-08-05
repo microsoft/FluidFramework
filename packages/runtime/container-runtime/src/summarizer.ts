@@ -45,28 +45,23 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
         super(errorMessage);
     }
 
-    static wrap(error: any, logged: boolean = false): SummarizingWarning {
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    static wrap(error: any, logged: boolean = false) {
         const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
         return wrapError<SummarizingWarning>(error, newErrorFn);
     }
 }
 
 export const createSummarizingWarning =
-    (details: string, logged: boolean): SummarizingWarning => new SummarizingWarning(details, logged);
+    (details: string, logged: boolean) => new SummarizingWarning(details, logged);
 
 /**
  * Summarizer is responsible for coordinating when to send generate and send summaries.
  * It is the main entry point for summary work.
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidLoadable() { return this; }
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidRouter() { return this; }
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidRunnable() { return this; }
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get ISummarizer() { return this; }
 
     private readonly logger: ITelemetryLogger;
@@ -120,7 +115,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * the run promise, and also close the container.
      * @param reason - reason code for stopping
      */
-    public stop(reason?: SummarizerStopReason): void {
+    public stop(reason?: SummarizerStopReason) {
         if (this.stopped) {
             // already stopping
             return;
@@ -250,7 +245,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * clear any outstanding timers and reset some of the state
      * properties.
      */
-    public dispose(): void {
+    public dispose() {
         this._disposed = true;
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
@@ -290,7 +285,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return this.runningSummarizer.enqueueSummarize(...args);
     };
 
-    private async handleSummaryAcks(): Promise<void> {
+    private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
         while (this.runningSummarizer) {
             const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;

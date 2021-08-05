@@ -103,7 +103,7 @@ export class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
     public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
-    public fail(message: string, error: any): void {
+    public fail(message: string, error: any) {
         const result = { success: false, message, data: undefined, error } as const;
         this.summarySubmitted.resolve(result);
         this.summaryOpBroadcasted.resolve(result);
@@ -123,10 +123,10 @@ export class SummarizeResultBuilder {
  */
 export class SummaryGenerator {
     private summarizing: Deferred<void> | undefined;
-    public isSummarizing(): boolean { return this.summarizing !== undefined; }
-    public async waitSummarizing(): Promise<void> { await this.summarizing?.promise; }
+    public isSummarizing() { return this.summarizing !== undefined; }
+    public async waitSummarizing() { await this.summarizing?.promise; }
     private summarizeCount = 0;
-    public getSummarizeCount(): number { return this.summarizeCount; }
+    public getSummarizeCount() { return this.summarizeCount; }
     private readonly summarizeTimer: Timer;
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
@@ -194,13 +194,12 @@ export class SummaryGenerator {
             timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
         });
         // Helper functions to report failures and return.
-        const getFailMessage =
-            (message: keyof typeof summarizeErrors): string => `${message}: ${summarizeErrors[message]}`;
+        const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
         const fail = (
             message: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
-        ): void => {
+        ) => {
             this.raiseSummarizingError(summarizeErrors[message]);
             summarizeEvent.cancel({ ...properties, message }, error);
             resultsBuilder.fail(getFailMessage(message), error);
@@ -327,7 +326,7 @@ export class SummaryGenerator {
         }
     }
 
-    private summarizeTimerHandler(time: number, count: number): void {
+    private summarizeTimerHandler(time: number, count: number) {
         this.logger.sendPerformanceEvent({
             eventName: "SummarizeTimeout",
             timeoutTime: time,
@@ -340,7 +339,7 @@ export class SummaryGenerator {
         }
     }
 
-    public dispose(): void {
+    public dispose() {
         this.summarizeTimer.clear();
     }
 }

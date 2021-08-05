@@ -132,8 +132,7 @@ export class PendingStateManager implements IDisposable {
         }
     }
 
-    public get disposed(): boolean { return this.disposeOnce.evaluated; }
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    public get disposed() { return this.disposeOnce.evaluated; }
     public readonly dispose = () => this.disposeOnce.value;
 
     /**
@@ -151,7 +150,7 @@ export class PendingStateManager implements IDisposable {
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined,
-    ): void {
+    ) {
         const pendingMessage: IPendingMessage = {
             type: "message",
             messageType: type,
@@ -171,7 +170,7 @@ export class PendingStateManager implements IDisposable {
      * Called when the FlushMode is updated. Adds the FlushMode to the pending state queue.
      * @param flushMode - The flushMode that was updated.
      */
-    public onFlushModeUpdated(flushMode: FlushMode): void {
+    public onFlushModeUpdated(flushMode: FlushMode) {
         if (flushMode === FlushMode.Automatic) {
             const previousState = this.pendingStates.peekBack();
 
@@ -199,7 +198,7 @@ export class PendingStateManager implements IDisposable {
     /**
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
      */
-    public onFlush(): void {
+    public onFlush() {
         // If the FlushMode is Automatic, we should not track this flush call as it is only applicable when FlushMode
         // is Manual.
         if (this.containerRuntime.flushMode === FlushMode.Automatic) {
@@ -224,7 +223,7 @@ export class PendingStateManager implements IDisposable {
     /**
      * Applies stashed ops at their reference sequence number so they are ready to be ACKed or resubmitted
      */
-    public async applyStashedOpsAt(seqNum: number): Promise<void> {
+    public async applyStashedOpsAt(seqNum: number) {
         // apply stashed ops at sequence number
         while (!this.initialStates.isEmpty()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -253,10 +252,7 @@ export class PendingStateManager implements IDisposable {
      * sent from a previous container.
      * @param message - The messsage that got ack'd and needs to be processed.
      */
-    public processMessage(message: ISequencedDocumentMessage, local: boolean): {
-        localAck: boolean;
-        localOpMetadata: unknown;
-    } {
+    public processMessage(message: ISequencedDocumentMessage, local: boolean) {
         // Do not process chunked ops until all pieces are available.
         if (message.type === ContainerMessageType.ChunkedOp) {
             return { localAck: false, localOpMetadata: undefined };
@@ -272,10 +268,7 @@ export class PendingStateManager implements IDisposable {
     /**
      * Listens for ACKs of stashed ops
      */
-    private processRemoteMessage(message: ISequencedDocumentMessage): {
-        localAck: boolean;
-        localOpMetadata: unknown;
-    } {
+    private processRemoteMessage(message: ISequencedDocumentMessage) {
         // if this is an ack for a stashed op, dequeue one message.
         // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
         if (message.clientId === this.initialClientId && message.clientSequenceNumber >= this.initialClientSeqNum) {
@@ -338,7 +331,7 @@ export class PendingStateManager implements IDisposable {
      * This message could be the first message in batch. If so, set batch state marking the beginning of a batch.
      * @param message - The message that is being processed.
      */
-    private maybeProcessBatchBegin(message: ISequencedDocumentMessage): void {
+    private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
         const pendingState = this.peekNextPendingState();
         if (pendingState.type !== "flush" && pendingState.type !== "flushMode") {
             return;
@@ -363,7 +356,7 @@ export class PendingStateManager implements IDisposable {
         this.pendingStates.shift();
     }
 
-    private maybeProcessBatchEnd(message: ISequencedDocumentMessage): void {
+    private maybeProcessBatchEnd(message: ISequencedDocumentMessage) {
         const nextPendingState = this.peekNextPendingState();
         if (nextPendingState.type !== "flush" && nextPendingState.type !== "flushMode") {
             return;
@@ -415,7 +408,7 @@ export class PendingStateManager implements IDisposable {
      * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
      * states in its queue. This includes setting the FlushMode and triggering resubmission of unacked ops.
      */
-    public replayPendingStates(): void {
+    public replayPendingStates() {
         assert(this.connected, 0x172 /* "The connection state is not consistent with the runtime" */);
 
         // This assert suggests we are about to send same ops twice, which will result in data loss.

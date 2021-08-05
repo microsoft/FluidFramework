@@ -35,7 +35,7 @@ export interface IThrottler {
 export class Throttler implements IThrottler {
     private startTimes: number[] = [];
 
-    public get numAttempts(): number {
+    public get numAttempts() {
         return this.startTimes.length;
     }
 
@@ -51,7 +51,7 @@ export class Throttler implements IThrottler {
      * Latest attempt time after compensating for the delay time itself
      * by adding the delay time to the actual time.
      */
-    public get latestAttemptTime(): number | undefined {
+    public get latestAttemptTime() {
         return this.startTimes.length > 0 ? this.startTimes[this.startTimes.length - 1] : undefined;
     }
 
@@ -68,7 +68,7 @@ export class Throttler implements IThrottler {
         public readonly delayFn: (numAttempts: number) => number,
     ) { }
 
-    public getDelay(): number {
+    public getDelay() {
         const now = Date.now();
 
         const latestAttemptTime = this.latestAttemptTime;
@@ -125,7 +125,6 @@ export class Throttler implements IThrottler {
     : coefficient * (Math.pow(multiplier, numAttempts)) + offset);
 
 /** f(n) = C x (B^(n+A)) + F = (C x B^A) x B^n + F */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const formExponentialFnWithAttemptOffset = (attemptOffset: number, {
     multiplier = 2,
     coefficient = 1,
@@ -152,7 +151,6 @@ export const formLinearFn = ({
     coefficient * numAttempts + offset);
 
 /** f(n) = C x (n+A) + F = C x n + (C x A + F) */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const formLinearFnWithAttemptOffset = (attemptOffset: number, {
     coefficient = 1,
     offset = 0,

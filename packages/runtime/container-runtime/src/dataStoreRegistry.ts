@@ -11,7 +11,6 @@ import {
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     private readonly map: Map<string, FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>>;
 
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidDataStoreRegistry() { return this; }
 
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries) {

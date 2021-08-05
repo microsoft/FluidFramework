@@ -52,19 +52,18 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         return this._contexts.size;
     }
 
-     public get disposed(): boolean { return this.disposeOnce.evaluated; }
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    public get disposed() { return this.disposeOnce.evaluated;}
     public readonly dispose = () => this.disposeOnce.value;
 
-     public notBoundLength(): number {
+    public notBoundLength() {
         return this.notBoundContexts.size;
     }
 
-     public isNotBound(id: string): boolean {
+    public isNotBound(id: string) {
         return this.notBoundContexts.has(id);
     }
 
-     public has(id: string): boolean {
+    public has(id: string) {
         return this._contexts.has(id);
     }
 
@@ -94,7 +93,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     /**
      * Add the given context, marking it as to-be-bound
      */
-     public addUnbound(context: LocalFluidDataStoreContext): void {
+    public addUnbound(context: LocalFluidDataStoreContext) {
         const id = context.id;
         assert(!this._contexts.has(id), 0x158 /* "Creating store with existing ID" */);
 
@@ -132,7 +131,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
     /**
      * Update this context as bound
      */
-     public bind(id: string): void {
+    public bind(id: string) {
         const removed: boolean = this.notBoundContexts.delete(id);
         assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
 
@@ -143,7 +142,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * Triggers the deferred to resolve, indicating the context is not local-only
      * @param id - The id of the context to resolve to
      */
-     private resolveDeferred(id: string): void {
+    private resolveDeferred(id: string) {
         const context = this._contexts.get(id);
         assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
         assert(!this.notBoundContexts.has(id),
@@ -159,7 +158,7 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
      * This could be because it's a local context that's been bound, or because it's a remote context.
      * @param context - The context to add
      */
-     public addBoundOrRemoted(context: FluidDataStoreContext): void {
+    public addBoundOrRemoted(context: FluidDataStoreContext) {
         const id = context.id;
         assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 

@@ -78,7 +78,7 @@ class OpPerfTelemetry {
         });
     }
 
-    private reportGettingUpToDate(): void {
+    private reportGettingUpToDate() {
         this.connectionOpSeqNumber = undefined;
         this.logger.sendPerformanceEvent({
             eventName: "ConnectionSpeed",
@@ -92,7 +92,7 @@ class OpPerfTelemetry {
         });
     }
 
-    private recordPingTime(latency: number): void {
+    private recordPingTime(latency: number) {
         this.pongCount++;
         this.socketLatency += latency;
         const aggregateCount = 100;
@@ -103,7 +103,7 @@ class OpPerfTelemetry {
         }
     }
 
-    private beforeOpSubmit(message: IDocumentMessage): void {
+    private beforeOpSubmit(message: IDocumentMessage) {
         // start with first client op and measure latency every 500 client ops
         if (this.clientSequenceNumberForLatencyStatistics === undefined && message.clientSequenceNumber % 500 === 1) {
             this.opSendTimeForLatencyStatistics = Date.now();
@@ -111,7 +111,7 @@ class OpPerfTelemetry {
         }
     }
 
-    private afterProcessingOp(message: ISequencedDocumentMessage): void {
+    private afterProcessingOp(message: ISequencedDocumentMessage) {
         const sequenceNumber = message.sequenceNumber;
 
         if (sequenceNumber === this.connectionOpSeqNumber) {
@@ -148,7 +148,6 @@ class OpPerfTelemetry {
 export function ReportOpPerfTelemetry(
     clientId: string | undefined,
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-    logger: ITelemetryLogger): void {
-    // eslint-disable-next-line no-new
+    logger: ITelemetryLogger) {
     new OpPerfTelemetry(clientId, deltaManager, logger);
 }

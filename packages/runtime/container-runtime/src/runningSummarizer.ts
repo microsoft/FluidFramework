@@ -75,7 +75,7 @@ export class RunningSummarizer implements IDisposable {
         return summarizer;
     }
 
-    public get disposed(): boolean { return this._disposed; }
+    public get disposed() { return this._disposed; }
 
     private stopping = false;
     private _disposed = false;
@@ -171,12 +171,12 @@ export class RunningSummarizer implements IDisposable {
      * but only if they're logging about that same summary.
      * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
      */
-    public tryGetCorrelatedLogger = (summaryOpRefSeq): ITelemetryLogger | undefined =>
+    public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
         this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
             ? this.logger
             : undefined;
 
-    public handleSystemOp(op: ISequencedDocumentMessage): void {
+    public handleSystemOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.ClientLeave: {
                 const leavingClientId = JSON.parse((op as ISequencedDocumentSystemMessage).data) as string;
@@ -201,7 +201,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    public handleOp(error: any, { sequenceNumber, type, clientId, contents }: ISequencedDocumentMessage): void {
+    public handleOp(error: any, { sequenceNumber, type, clientId, contents }: ISequencedDocumentMessage) {
         if (error !== undefined) {
             return;
         }
@@ -242,7 +242,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private async waitStart(): Promise<void> {
+    private async waitStart() {
         // Wait no longer than ack timeout for all pending
         const waitStartResult = await raceTimer(
             this.summaryWatcher.waitFlushed(),
@@ -396,7 +396,7 @@ export class RunningSummarizer implements IDisposable {
      * After summarizing, we should check to see if we need to summarize again.
      * Rerun the heuristics and check for enqueued summaries.
      */
-    private checkSummarizeAgain(): void {
+    private checkSummarizeAgain() {
         if (this.tryRunEnqueuedSummary()) {
             this.tryWhileSummarizing = false;
         } else if (this.tryWhileSummarizing) {
@@ -407,7 +407,7 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private tryRunEnqueuedSummary(): boolean {
+    private tryRunEnqueuedSummary() {
         if (this.stopping || this.disposed) {
             this.disposeEnqueuedSummary();
             return false;
@@ -429,7 +429,7 @@ export class RunningSummarizer implements IDisposable {
         return true;
     }
 
-    private disposeEnqueuedSummary(): void {
+    private disposeEnqueuedSummary() {
         if (this.enqueuedSummary !== undefined) {
             this.enqueuedSummary.resultsBuilder.fail("RunningSummarizer stopped or disposed", undefined);
             this.enqueuedSummary = undefined;

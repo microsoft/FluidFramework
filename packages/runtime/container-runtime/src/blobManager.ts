@@ -39,11 +39,11 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
         this.absolutePath = generateHandleContextPath(path, this.routeContext);
     }
 
-    public attachGraph(): void {
+    public attachGraph() {
         this.attached = true;
     }
 
-    public bind(handle: IFluidHandle): void {
+    public bind(handle: IFluidHandle) {
         throw new Error("Cannot bind to blob handle");
     }
 }
@@ -53,7 +53,7 @@ export class BlobManager {
     private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
     private readonly blobIds: Set<string> = new Set();
 
-    public get blobCount(): number { return this.blobIds.size; }
+    public get blobCount() { return this.blobIds.size; }
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
@@ -109,7 +109,7 @@ export class BlobManager {
         return handle;
     }
 
-    public processBlobAttachOp(blobId: string, local: boolean): void {
+    public processBlobAttachOp(blobId: string, local: boolean) {
         assert(!local || this.pendingBlobIds.has(blobId), 0x1f8 /* "local BlobAttach op with no pending blob" */);
         this.pendingBlobIds.get(blobId)?.resolve();
         this.pendingBlobIds.delete(blobId);

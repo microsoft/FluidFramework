@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable max-lines */
-
 import { EventEmitter } from "events";
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
@@ -132,8 +130,6 @@ import {
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     ISummarizerRuntime,
-    OnDemandSummarizeResult,
-    EnqueueSummarizeResult,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 
@@ -283,7 +279,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     }
 }
 
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -361,7 +357,7 @@ export class ScheduleManager {
         this.updatePauseState(this.deltaManager.lastSequenceNumber);
     }
 
-    public beginOperation(message: ISequencedDocumentMessage): void {
+    public beginOperation(message: ISequencedDocumentMessage) {
         if (this.batchClientId !== message.clientId) {
             // As a back stop for any bugs marking the end of a batch - if the client ID flipped, we
             // consider the previous batch over.
@@ -389,7 +385,7 @@ export class ScheduleManager {
         }
     }
 
-    public endOperation(error: any | undefined, message: ISequencedDocumentMessage): void {
+    public endOperation(error: any | undefined, message: ISequencedDocumentMessage) {
         if (error) {
             this.batchClientId = undefined;
             this.emitter.emit("batchEnd", error, message);
@@ -410,7 +406,7 @@ export class ScheduleManager {
         }
     }
 
-    public setPaused(localPaused: boolean): void {
+    public setPaused(localPaused: boolean) {
         // Return early if no change in value
         if (this.localPaused === localPaused) {
             return;
@@ -425,7 +421,7 @@ export class ScheduleManager {
         }
     }
 
-    private updatePauseState(sequenceNumber: number): void {
+    private updatePauseState(sequenceNumber: number) {
         // If the inbound queue is ever empty we pause it and wait for new events
         if (this.deltaManager.inbound.length === 0) {
             this.setPaused(true);
@@ -442,7 +438,7 @@ export class ScheduleManager {
         }
     }
 
-    private trackPending(message: ISequencedDocumentMessage): void {
+    private trackPending(message: ISequencedDocumentMessage) {
         const metadata = message.metadata as IRuntimeMessageMetadata | undefined;
 
         // Protocol messages are never part of a runtime batch of messages
@@ -531,13 +527,12 @@ const waitForSeq = async (
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
-    IContainerRuntime,
-    IRuntime,
-    ISummarizerRuntime,
-    ISummarizerInternalsProvider {
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        IContainerRuntime,
+        IRuntime,
+        ISummarizerRuntime,
+        ISummarizerInternalsProvider
+{
     public get IContainerRuntime() { return this; }
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidRouter() { return this; }
 
     // back-compat: Used by loader in <= 0.35
@@ -737,20 +732,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.summarizerClientElection.electedClientId;
     }
 
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     private get summaryConfiguration() {
-        return {
+        return  {
             // the defaults
-            ...DefaultSummaryConfiguration,
+            ... DefaultSummaryConfiguration,
             // the server provided values
             ... this.context?.serviceConfiguration?.summary,
             // the runtime configuration overrides
             ... this.runtimeOptions.summaryOptions?.summaryConfigOverrides,
-        };
+         };
     }
 
     private _disposed = false;
-    public get disposed(): boolean { return this._disposed; }
+    public get disposed() { return this._disposed; }
 
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
@@ -863,17 +857,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
-                summarizeInternal: SummarizeInternalFn,
-                getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
-            ) => this.summarizerNode.createChild(
-                summarizeInternal,
-                id,
-                createParam,
-                undefined,
-                getGCDataFn,
-                getInitialGCSummaryDetailsFn,
-            ),
+                    summarizeInternal: SummarizeInternalFn,
+                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+                    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+                ) => this.summarizerNode.createChild(
+                    summarizeInternal,
+                    id,
+                    createParam,
+                    undefined,
+                    getGCDataFn,
+                    getInitialGCSummaryDetailsFn,
+                ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this._logger);
 
@@ -913,14 +907,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
         const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
-        const defaultAction = (): void => {
+        const defaultAction = () => {
             if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
-                this.logger.sendErrorEvent({ eventName: "SummaryStatus:Behind" });
+                this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                 // unregister default to no log on every op after falling behind
                 // and register summary ack handler to re-register this handler
                 // after successful summary
                 this.summaryCollection.once(MessageType.SummaryAck, () => {
-                    this.logger.sendTelemetryEvent({ eventName: "SummaryStatus:CaughtUp" });
+                    this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
                     // we've caught up, so re-register the default action to monitor for
                     // falling behind, and unregister ourself
                     this.summaryCollection.on("default", defaultAction);
@@ -1049,7 +1043,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.removeAllListeners();
     }
 
-    public get IFluidTokenProvider(): IFluidTokenProvider | undefined {
+    public get IFluidTokenProvider() {
         if (this.options && this.options.intelligence) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             return {
@@ -1205,7 +1199,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return root;
     }
 
-    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats): void {
+    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         if (this.shouldWriteMetadata) {
             addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         }
@@ -1226,8 +1220,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async stop(): Promise<{}> {
+    public async stop() {
         this.verifyNotClosed();
 
         // Reload would not work properly with local changes.
@@ -1236,14 +1229,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // On top of that newly reloaded runtime likely would not be dirty, while it has some changes.
         // And container would assume it's dirty (as there was no notification changing state)
         if (this.dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadRuntime" });
+            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadRuntime"});
         }
 
         this.dispose(new Error("ContainerRuntimeStopped"));
-        return {};
+        return { };
     }
 
-    private replayPendingStates(): void {
+    private replayPendingStates() {
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
 
@@ -1281,7 +1274,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * been applied by "connected" event, but process() doesn't see system ops,
      * so we listen directly from DeltaManager instead.
      */
-    private readonly onOp = (op: ISequencedDocumentMessage): void => {
+    private readonly onOp = (op: ISequencedDocumentMessage) => {
         assert(!this.paused, 0x128 /* "Container should not already be paused before applying stashed ops" */);
         this.paused = true;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -1310,7 +1303,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public setConnectionState(connected: boolean, clientId?: string): void {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -1328,7 +1321,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         raiseConnectedEvent(this._logger, this, connected, clientId);
     }
 
-    public process(messageArg: ISequencedDocumentMessage, local: boolean): void {
+    public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
         // If it's not message for runtime, bail out right away.
@@ -1389,7 +1382,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public processSignal(message: ISignalMessage, local: boolean): void {
+    public processSignal(message: ISignalMessage, local: boolean) {
         const envelope = message.content as ISignalEnvelope;
         const transformed: IInboundSignalMessage = {
             clientId: message.clientId,
@@ -1494,7 +1487,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
-        rootDataStoreId: string): IFluidDataStoreContextDetached {
+        rootDataStoreId: string): IFluidDataStoreContextDetached
+    {
         return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
     }
 
@@ -1520,7 +1514,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot).realize();
     }
 
-    private canSendOps(): boolean {
+    private canSendOps() {
         return this.connected && !this.deltaManager.readonly;
     }
 
@@ -1533,7 +1527,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.context.audience!;
     }
 
-    public readonly raiseContainerWarning = (warning: ContainerWarning): void => {
+    public readonly raiseContainerWarning = (warning: ContainerWarning) => {
         this.context.raiseContainerWarning(warning);
     };
 
@@ -1554,7 +1548,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dirtyContainer;
     }
 
-    private isContainerMessageDirtyable(type: ContainerMessageType, contents: any): boolean {
+    private isContainerMessageDirtyable(type: ContainerMessageType, contents: any) {
         // For legacy purposes, exclude the old built-in AgentScheduler from dirty consideration as a special-case.
         // Ultimately we should have no special-cases from the ContainerRuntime's perspective.
         if (type === ContainerMessageType.Attach) {
@@ -1576,13 +1570,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param type - Type of the signal.
      * @param content - Content of the signal.
      */
-    public submitSignal(type: string, content: any): void {
+    public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         const envelope: ISignalEnvelope = { address: undefined, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
 
-    public submitDataStoreSignal(address: string, type: string, content: any): void {
+    public submitDataStoreSignal(address: string, type: string, content: any) {
         const envelope: ISignalEnvelope = { address, contents: { type, content } };
         return this.context.submitSignalFn(envelope);
     }
@@ -1634,7 +1628,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // Get the container's GC data and run GC on the reference graph in it.
                 const gcData = await this.dataStores.getGCData(fullGC);
                 const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
-                    gcData.gcNodes, ["/"],
+                    gcData.gcNodes, [ "/" ],
                     this.logger,
                 );
 
@@ -1828,16 +1822,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
-                    ? {
-                        proposalHandle: undefined,
-                        ackHandle: this.context.getLoadedFromVersion()?.id,
-                        referenceSequenceNumber: summaryRefSeqNum,
-                    }
-                    : {
-                        proposalHandle: lastAck.summaryOp.contents.handle,
-                        ackHandle: lastAck.summaryAck.contents.handle,
-                        referenceSequenceNumber: summaryRefSeqNum,
-                    };
+                ? {
+                    proposalHandle: undefined,
+                    ackHandle: this.context.getLoadedFromVersion()?.id,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                }
+                : {
+                    proposalHandle: lastAck.summaryOp.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
 
             let handle: string;
             try {
@@ -1890,7 +1884,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private processRemoteChunkedMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+    private processRemoteChunkedMessage(message: ISequencedDocumentMessage) {
         if (message.type !== ContainerMessageType.ChunkedOp) {
             return message;
         }
@@ -1910,7 +1904,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return message;
     }
 
-    private addChunk(clientId: string, chunkedContent: IChunkedOp): void {
+    private addChunk(clientId: string, chunkedContent: IChunkedOp) {
         let map = this.chunkMap.get(clientId);
         if (map === undefined) {
             map = [];
@@ -1921,13 +1915,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         map.push(chunkedContent.contents);
     }
 
-    private clearPartialChunks(clientId: string): void {
+    private clearPartialChunks(clientId: string) {
         if (this.chunkMap.has(clientId)) {
             this.chunkMap.delete(clientId);
         }
     }
 
-    private updateDocumentDirtyState(dirty: boolean): void {
+    private updateDocumentDirtyState(dirty: boolean) {
         if (this.dirtyContainer === dirty) {
             return;
         }
@@ -2051,7 +2045,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private submitSystemMessage(
         type: MessageType,
-        contents: any): number {
+        contents: any) {
         this.verifyNotClosed();
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
@@ -2073,7 +2067,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any): number {
+        appData?: any) {
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
@@ -2086,7 +2080,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Throw an error if the runtime is closed.  Methods that are expected to potentially
      * be called after dispose due to asynchrony should not call this.
      */
-    private verifyNotClosed(): void {
+    private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Runtime is closed");
         }
@@ -2103,7 +2097,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         content: any,
         localOpMetadata: unknown,
         opMetadata: Record<string, unknown> | undefined,
-    ): void {
+    ) {
         switch (type) {
             case ContainerMessageType.FluidDataStoreOp:
                 // For Operations, call resubmitDataStoreOp which will find the right store
@@ -2128,8 +2122,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         proposalHandle: string | undefined,
         ackHandle: string,
         summaryLogger: ITelemetryLogger,
-    ): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
@@ -2167,7 +2160,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             fetchLatest: true,
         });
 
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
 
@@ -2193,7 +2185,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Updates the summary GC version as per the metadata blob in given snapshot.
      */
-    private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree): Promise<void> {
+    private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
             const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
@@ -2201,11 +2193,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    private async fetchSnapshotFromStorage(
-        versionId: string,
-        logger: ITelemetryLogger,
-        event: ITelemetryGenericEvent,
-    ): Promise<ISnapshotTree> {
+    private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
         const perfEvent = PerformanceEvent.start(logger, event);
         const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
         let snapshot: ISnapshotTree;
@@ -2230,11 +2218,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return snapshot;
     }
 
-    public getPendingLocalState(): IPendingLocalState | undefined {
+    public getPendingLocalState() {
         return this.pendingStateManager.getLocalState();
     }
 
-    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args): OnDemandSummarizeResult => {
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this.clientDetails.type === summarizerClientType) {
             return this.summarizer.summarizeOnDemand(...args);
         } else if (this.summaryManager !== undefined) {
@@ -2249,7 +2237,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     };
 
-    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args): EnqueueSummarizeResult => {
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
         if (this.clientDetails.type === summarizerClientType) {
             return this.summarizer.enqueueSummarize(...args);
         } else if (this.summaryManager !== undefined) {
@@ -2265,4 +2253,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     };
 }
 
-/* eslint-enable max-lines */
+/**
+ * Wait for a specific sequence number. Promise should resolve when we reach that number,
+ * or reject if closed.
+ */
+const waitForSeq = async (
+    deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
+    targetSeq: number,
+): Promise<void> => new Promise<void>((accept, reject) => {
+    // TODO: remove cast to any when actual event is determined
+    deltaManager.on("closed" as any, reject);
+
+    const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+        if (message.sequenceNumber >= targetSeq) {
+            accept();
+            deltaManager.off("op", handleOp);
+        }
+    };
+    deltaManager.on("op", handleOp);
+});

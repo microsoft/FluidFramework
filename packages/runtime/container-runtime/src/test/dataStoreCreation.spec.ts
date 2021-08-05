@@ -2,9 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-// eslint-disable-next-line eslint-comments/disable-enable-pair
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-
 import { strict as assert } from "assert";
 import {
     IFluidDataStoreChannel,

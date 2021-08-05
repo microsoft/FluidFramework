@@ -29,19 +29,19 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
         this._lastSuccessfulSummary = { ...attemptBaseline };
     }
 
-    public initialize(lastSummary: Readonly<ISummarizeAttempt>): void {
+    public initialize(lastSummary: Readonly<ISummarizeAttempt>) {
         this._lastAttempt = lastSummary;
         this._lastSuccessfulSummary = { ...lastSummary };
     }
 
-    public recordAttempt(refSequenceNumber?: number): void {
+    public recordAttempt(refSequenceNumber?: number) {
         this._lastAttempt = {
             refSequenceNumber: refSequenceNumber ?? this.lastOpSequenceNumber,
             summaryTime: Date.now(),
         };
     }
 
-    public markLastAttemptAsSuccessful(): void {
+    public markLastAttemptAsSuccessful() {
         this._lastSuccessfulSummary = { ...this.lastAttempt };
     }
 }
@@ -67,7 +67,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
-    public run(): void {
+    public run() {
         const timeSinceLastSummary = Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime;
         const opsSinceLastAck = this.opsSinceLastAck;
         if (timeSinceLastSummary > this.configuration.maxTime) {
@@ -90,7 +90,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         return false;
     }
 
-    public dispose(): void {
+    public dispose() {
         this.idleTimer.clear();
     }
 }

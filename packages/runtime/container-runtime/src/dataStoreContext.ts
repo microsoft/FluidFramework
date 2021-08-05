@@ -50,7 +50,6 @@ import {
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
     IFluidDataStoreContextEvents,
-    IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
     IGarbageCollectionSummaryDetails,
@@ -90,10 +89,10 @@ function createAttributes(
         snapshotFormatVersion: "0.1",
         isRootDataStore,
     } : {
-            pkg: stringifiedPkg,
-            summaryFormatVersion: 2,
-            isRootDataStore,
-        };
+        pkg: stringifiedPkg,
+        summaryFormatVersion: 2,
+        isRootDataStore,
+    };
 }
 export function createAttributesBlob(
     pkg: readonly string[],
@@ -158,7 +157,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.connected;
     }
 
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidHandleContext() {
         return this._containerRuntime.IFluidHandleContext;
     }
@@ -176,7 +174,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private _disposed = false;
-    public get disposed(): boolean { return this._disposed; }
+    public get disposed() { return this._disposed; }
 
     public get attachState(): AttachState {
         return this._attachState;
@@ -239,8 +237,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         };
 
         const thisSummarizeInternal =
-            async (fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> =>
-                this.summarizeInternal(fullTree, trackState);
+            async (fullTree: boolean, trackState: boolean) => this.summarizeInternal(fullTree, trackState);
 
         this.summarizerNode = createSummarizerNode(
             thisSummarizeInternal,
@@ -271,7 +268,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -285,10 +282,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channelDeferred.promise;
     }
 
-    protected async factoryFromPackagePath(packages?: readonly string[]): Promise<{
-        factory: IFluidDataStoreFactory;
-        registry: IFluidDataStoreRegistry | undefined;
-    }> {
+    protected async factoryFromPackagePath(packages?: readonly string[]) {
         assert(this.pkg === packages, 0x13e /* "Unexpected package path" */);
         if (packages === undefined) {
             this.rejectDeferredRealize("packages is undefined");
@@ -340,7 +334,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @param clientId - ID of the client. It's old ID when in disconnected state and
      * it's new client ID when we are connecting or connected.
      */
-    public setConnectionState(connected: boolean, clientId?: string): void {
+    public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
         // Connection events are ignored if the store is not yet loaded
@@ -476,7 +470,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      *    it is done when realizing the data store.
      * @param usedRoutes - The routes that are used in this data store.
      */
-    public updateUsedRoutes(usedRoutes: string[]): void {
+    public updateUsedRoutes(usedRoutes: string[]) {
         // Currently, only data stores can be collected. Once we have GC at DDS layer, the DDS' in the data store will
         // also be notified of their used routes. See - https://github.com/microsoft/FluidFramework/issues/4611
 
@@ -496,7 +490,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * 1. When the used routes of the data store is updated and the data store is loaded.
      * 2. When the data store is realized. This updates the channel's used routes as per last GC run.
      */
-    private updateChannelUsedRoutes(): void {
+    private updateChannelUsedRoutes() {
         assert(this.loaded, 0x144 /* "Channel should be loaded when updating used routes" */);
         assert(this.channel !== undefined, 0x145 /* "Channel should be present when data store is loaded" */);
 
@@ -552,7 +546,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    public submitSignal(type: string, content: any): void {
+    public submitSignal(type: string, content: any) {
         this.verifyNotClosed();
         assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
@@ -562,12 +556,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this.containerRuntime.raiseContainerWarning(warning);
     }
 
-    protected bindRuntime(channel: IFluidDataStoreChannel): void {
+    protected bindRuntime(channel: IFluidDataStoreChannel) {
         if (this.channel) {
             throw new Error("Runtime already bound");
         }
 
-        try {
+        try
+        {
             assert(!this.detachedRuntimeCreation, 0x148 /* "Detached runtime creation on runtime bind" */);
             assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel defferal" */);
             assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
@@ -620,7 +615,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
-    public reSubmit(contents: any, localOpMetadata: unknown): void {
+    public reSubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
         const innerContents = contents as FluidDataStoreMessage;
         this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
@@ -635,16 +630,13 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channel.applyStashedOp(innerContents.content);
     }
 
-    private verifyNotClosed(): void {
+    private verifyNotClosed() {
         if (this._disposed) {
             throw new Error("Context is closed");
         }
     }
 
-    public getCreateChildSummarizerNodeFn(
-        id: string,
-        createParam: CreateChildSummarizerNodeParam,
-    ): CreateChildSummarizerNodeFn {
+    public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
         return (
             summarizeInternal: SummarizeInternalFn,
             getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -691,7 +683,7 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
         );
     }
 
-    private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
+    private readonly initialSnapshotDetailsP =  new LazyPromise<ISnapshotDetails>(async () => {
         let tree: ISnapshotTree | undefined;
         let isRootDataStore = true;
 
@@ -702,7 +694,6 @@ export class RemotedFluidDataStoreContext extends FluidDataStoreContext {
             tree = this.initSnapshotValue;
         }
 
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
         if (tree) {
             const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
@@ -945,7 +936,8 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
     extends LocalFluidDataStoreContextBase
-    implements IFluidDataStoreContextDetached {
+    implements IFluidDataStoreContextDetached
+{
     constructor(
         id: string,
         pkg: Readonly<string[]>,
@@ -972,8 +964,8 @@ export class LocalDetachedFluidDataStoreContext
 
     public async attachRuntime(
         registry: IProvideFluidDataStoreFactory,
-        dataStoreRuntime: IFluidDataStoreChannel,
-    ): Promise<void> {
+        dataStoreRuntime: IFluidDataStoreChannel)
+    {
         assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
         assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 
