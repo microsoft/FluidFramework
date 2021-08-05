@@ -15,7 +15,7 @@ interface IMapState {
     keys: string[];
 }
 
-export class MapComponent extends React.Component<IMapProps, IMapState> {
+export class MapView extends React.Component<IMapProps, IMapState> {
     protected readonly newEntryKeyTextInput = React.createRef<HTMLInputElement>();
     protected readonly newEntryValueTextInput = React.createRef<HTMLInputElement>();
 
@@ -45,7 +45,7 @@ export class MapComponent extends React.Component<IMapProps, IMapState> {
         return <div>
             <h1>{this.props.name}</h1>
             {this.state.keys.map((key) =>
-                <MapEntryComponent key={key} map={this.props.map} mapKey={key}></MapEntryComponent>,
+                <MapEntryView key={key} map={this.props.map} mapKey={key}></MapEntryView>,
             )}
             <span>
                 <input type="text" ref={this.newEntryKeyTextInput}></input>
@@ -83,7 +83,7 @@ interface IMapEntryState {
     mapValue: string;
 }
 
-export class MapEntryComponent extends React.Component<IMapEntryProps, IMapEntryState> {
+export class MapEntryView extends React.Component<IMapEntryProps, IMapEntryState> {
     constructor(props: IMapEntryProps) {
         super(props);
 
