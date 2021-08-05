@@ -595,13 +595,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const loadExisting = existing === true || context.existing === true;
 
         // Verify summary runtime sequence number matches protocol sequence number.
-        if (!(metadata === undefined || metadata.summaryFormatVersion === 1)) {
+        const runtimeSequenceNumber = metadata?.sequenceNumber;
+        if (runtimeSequenceNumber !== undefined) {
             const verificationBehavior = runtimeOptions?.loadSequenceNumberVerification ?? "close";
-            if (verificationBehavior !== "bypass"
-                && metadata.sequenceNumber !== context.deltaManager.initialSequenceNumber
-            ) {
-                const error = new LoadSequenceNumberMismatchError(
-                    metadata.sequenceNumber, context.deltaManager.initialSequenceNumber);
+            const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
+            // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
+            if (verificationBehavior !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
+                const error = new LoadSequenceNumberMismatchError(runtimeSequenceNumber, protocolSequenceNumber);
+
                 if (verificationBehavior === "log") {
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
@@ -1138,7 +1139,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private formMetadata(): WriteContainerRuntimeMetadata {
         return {
-            summaryFormatVersion: 2,
+            summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for now
             sequenceNumber: this.deltaManager.lastSequenceNumber,

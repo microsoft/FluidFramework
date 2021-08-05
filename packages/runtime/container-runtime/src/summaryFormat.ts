@@ -75,26 +75,20 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 export type GCFeature = number;
-export interface IContainerRuntimeMetadata1 {
+export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCFeature;
-}
-
-export interface IContainerRuntimeMetadata2 extends Omit<IContainerRuntimeMetadata1, "summaryFormatVersion"> {
-    readonly summaryFormatVersion: 2;
     /** The last sequence number at the time of the summary; same as the summary op reference sequence number. */
-    readonly sequenceNumber: number;
+    readonly sequenceNumber?: number;
 }
 
-export type ReadContainerRuntimeMetadata =
-    | undefined
-    | IContainerRuntimeMetadata1
-    | IContainerRuntimeMetadata2;
+export type ReadContainerRuntimeMetadata = undefined | IContainerRuntimeMetadata;
 
-export type WriteContainerRuntimeMetadata = IContainerRuntimeMetadata2;
+export type WriteContainerRuntimeMetadata = IContainerRuntimeMetadata
+    & Required<Pick<IContainerRuntimeMetadata, "sequenceNumber">>;
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getMetadataFormatVersion(metadata: ReadContainerRuntimeMetadata): number {
