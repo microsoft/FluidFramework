@@ -171,8 +171,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     setFlushMode(mode: FlushMode): void;
     // @deprecated
     snapshot(): Promise<ITree>;
-    // (undocumented)
-    stop(): Promise<{}>;
+    // @deprecated (undocumented)
+    stop(): Promise<{
+        snapshot?: never;
+        state?: never;
+    }>;
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
