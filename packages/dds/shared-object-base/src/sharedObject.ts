@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidSerializer } from "@fluidframework/core-interfaces";
@@ -21,7 +21,7 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { convertToSummaryTreeWithStats, FluidSerializer } from "@fluidframework/runtime-utils";
-import { ChildLogger, EventEmitterWithErrorHandling, logIfFalse } from "@fluidframework/telemetry-utils";
+import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
@@ -122,11 +122,11 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             id,
             runtime.IFluidHandleContext);
 
-        // Runtime could be null since some package hasn't turn on strictNullChecks yet
-        // We should remove the null check once that is done
         this.logger = ChildLogger.create(
-            // eslint-disable-next-line no-null/no-null
-            runtime !== null ? runtime.logger : undefined, undefined, {all:{ sharedObjectId: uuid() }});
+            runtime.logger,
+            undefined,
+            { all: { sharedObjectId: uuid() } },
+        );
 
         this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 
@@ -146,13 +146,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
                 this.didAttach();
             });
         }
-    }
-
-    /**
-     * Not supported - use handles instead
-     */
-    public toJSON() {
-        throw new Error("Only the handle can be converted to JSON");
     }
 
     /**
@@ -187,8 +180,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         }
 
         this._isBoundToContext = true;
-
-        this.setOwner();
 
         // Allow derived classes to perform custom processing prior to registering this object
         this.registerCore();
@@ -293,14 +284,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @returns A tree representing the snapshot of the shared object.
      */
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
-
-    /**
-     * Set the owner of the object if it is an OwnedSharedObject
-     * @returns The owner of the object if it is an OwnedSharedObject, otherwise undefined
-     */
-    protected setOwner(): string | undefined {
-        return;
-    }
 
     /**
      * Allows the distributed data type to perform custom loading
@@ -412,18 +395,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             // Note: rejectBecauseDispose will never be undefined here
             this.runtime.off("dispose", rejectBecauseDispose);
         });
-    }
-
-    /**
-     * @deprecated - Use logger to log errors
-     * Report ignorable errors in code logic or data integrity to the logger.
-     * Hosting app / container may want to optimize out these call sites and make them no-op.
-     * It may also show assert dialog in non-production builds of application.
-     * @param condition - If false, assert is logged
-     * @param message - Actual message to log; ideally should be unique message to identify call site
-     */
-    protected debugAssert(condition: boolean, event: ITelemetryErrorEvent) {
-        logIfFalse(condition, this.logger, event);
     }
 
     private attachDeltaHandler() {

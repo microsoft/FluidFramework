@@ -41,8 +41,8 @@
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
+    "@fluid-tools/webpack-fluid-loader": "^0.45.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/webpack-fluid-loader": "^0.45.0",
     "@types/node": "^12.19.0",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",

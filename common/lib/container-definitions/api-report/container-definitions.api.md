@@ -436,11 +436,6 @@ export interface IRuntime extends IDisposable {
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
-    // @deprecated (undocumented)
-    stop(): Promise<{
-        snapshot?: never;
-        state?: never;
-    }>;
 }
 
 // @public (undocumented)

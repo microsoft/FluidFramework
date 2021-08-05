@@ -30,13 +30,15 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
 }
 
 // @public (undocumented)
-export class DataProcessingError extends LoggingError implements IErrorBase {
-    constructor(errorMessage: string, props?: ITelemetryProperties);
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    static wrapIfUnrecognized(originalError: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+    // (undocumented)
+    readonly fluidErrorCode: string;
+    static wrapIfUnrecognized(originalError: any, errorCodeIfNone: string, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
 }
 
 // @public (undocumented)
