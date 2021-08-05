@@ -29,8 +29,8 @@ For submitting changes to the snapshot test content, follow these steps:
   - Go to the FluidFramework repo root. `git status` should show changes under `packages/test/snapshots/content`. For example:
   ```
   D:\FluidFramework>git status
-  On branch udpateTestSnasphots
-  Your branch is up to date with 'origin/udpateTestSnasphots'.
+  On branch updateTestSnasphots
+  Your branch is up to date with 'origin/updateTestSnasphots'.
 
   Changes not staged for commit:
     (use "git add <file>..." to update what will be committed)
@@ -44,8 +44,8 @@ For submitting changes to the snapshot test content, follow these steps:
   - Commit these changes to a new branch in the [FluidFramework](https://github.com/microsoft/FluidFramework) repo.
   - Create a PR against `main`, get the changes approved and merge the PR. FluidFramework repo will now point to the new test contents.
 
-### Adding new snapshots
-To add new reference snapshots for a document, follow tests steps:
+## Adding new snapshots to the repo
+To add new reference snapshots to the repo for a document, follow tests steps:
 - Use the [fetch-tool](../../tools/fetch-tool/README.md) tool to fetch and save the snapshots and ops for the document.
 - Create a folder for the new snapshots under [snapshotTestContent](./content/snapshotTestContent).
 - Add the `message.json` file from the output of the [fetch-tool](../../tools/fetch-tool/README.md) to the new folder.
@@ -92,8 +92,8 @@ To add new reference snapshots for a document, follow tests steps:
 - Run the tests to validate that all the tests pass with the new snapshots.
 - Submit the changes by following the steps [here](#Submit-changes-to-test-content).
 
-### Updating existing snapshots
-Whenever the snapshot format changes in the runtime, the existing snapshots should be udpated by following these steps:
+## Updating existing snapshots in the repo
+Whenever the snapshot format changes in the runtime, the existing snapshots in the repo needs to be updated by following these steps:
 - Run the following from the `packages\test\snapshots` directory:
   ```
   npm run test:update
