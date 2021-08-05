@@ -68,6 +68,18 @@ export function isArrayBuffer(obj: any): obj is ArrayBuffer {
         && maybe.buffer === undefined);
 }
 
+function calculateAndValidateBounds(value: any, offset: number, length: number): number {
+    const valueByteOffset: number = value.byteOffset;
+    const valueByteLength: number = value.byteLength;
+    const calculatedOffset = valueByteOffset + offset;
+    if (calculatedOffset < valueByteOffset || length < 0
+        || calculatedOffset >= valueByteOffset + valueByteLength
+        || calculatedOffset + length > valueByteOffset + valueByteLength) {
+        throw new RangeError();
+    }
+    return calculatedOffset;
+}
+
 /**
  * Minimal implementation of Buffer for our usages in the browser environment.
  */
@@ -81,12 +93,6 @@ export class IsoBuffer extends Uint8Array {
     public toString(encoding?: string): string {
         return Uint8ArrayToString(this, encoding);
     }
-    public Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
-        if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
-            return array.buffer;
-        }
-        return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
-    }
 
     /**
      * @param value - string | ArrayBuffer
@@ -98,9 +104,10 @@ export class IsoBuffer extends Uint8Array {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
         // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
         } else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
-            assert(typeof encodingOrOffset === "number" || encodingOrOffset === undefined,
-                "encodingOrOffset should be number if defined");
-            const calculatedOffset = value.byteOffset + (encodingOrOffset ?? 0);
+            const offset = encodingOrOffset ?? 0;
+            const len = length ?? 0;
+            assert(typeof offset === "number", "offset should be number");
+            const calculatedOffset = calculateAndValidateBounds(value, offset, len);
             return IsoBuffer.fromArrayBuffer(value.buffer, calculatedOffset,  length);
         } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
