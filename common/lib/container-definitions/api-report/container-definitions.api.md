@@ -64,7 +64,8 @@ export enum ContainerErrorType {
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",
-    throttlingError = "throttlingError"
+    throttlingError = "throttlingError",
+    usageError = "usageError"
 }
 
 // @public
@@ -454,6 +455,12 @@ export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export interface IUsageError extends IErrorBase {
+    // (undocumented)
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 // @public
