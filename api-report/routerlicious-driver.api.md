@@ -74,7 +74,7 @@ export class DocumentService implements api.IDocumentService {
 
 // @public (undocumented)
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies);
+    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies);
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null>;
     // (undocumented)
@@ -89,6 +89,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
     enablePrefetch: boolean;
+    enableWholeSummaryUpload: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
 }
