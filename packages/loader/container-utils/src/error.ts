@@ -75,7 +75,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
     readonly canRetry = false;
 
     constructor(errorMessage: string, props: ITelemetryProperties) {
-        super(errorMessage, props);
+        super(errorMessage, { ...props, dataProcessingError: 1 });
     }
 }
 
@@ -105,7 +105,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     ): IFluidErrorBase {
         const newErrorFn = (errMsg: string) => {
             const dpe = new DataProcessingError(errMsg, errorCodeIfNone);
-            dpe.addTelemetryProperties({ untrustedOrigin: true}); // To match normalizeError
+            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
             return dpe;
         };
 
@@ -115,7 +115,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
             ? normalizeError(originalError, { errorCodeIfNone })
             : wrapError(originalError, newErrorFn);
 
-        error.addTelemetryProperties({ dataProcessingError: true});
+        error.addTelemetryProperties({ dataProcessingError: 1});
         if (message !== undefined) {
             error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
         }

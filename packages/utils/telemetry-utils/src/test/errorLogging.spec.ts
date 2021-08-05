@@ -411,7 +411,7 @@ describe("normalizeError", () => {
             fluidErrorCode: "<none>",
             message,
             stack: stackHint,
-        }).withExpectedTelemetryProps({ untrustedOrigin: true });
+        }).withExpectedTelemetryProps({ untrustedOrigin: 1 });
         const untrustedInputs: { [label: string]: () => { input: any, expectedOutput: TestFluidError }} = {
             "Fluid Error minus errorType": () => ({
                 input: sampleFluidError().withoutProperty("errorType"),

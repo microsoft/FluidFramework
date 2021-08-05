@@ -156,8 +156,8 @@ describe("Errors", () => {
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.fluidErrorCode === "anErrorCode");
-            assert(coercedError.getTelemetryProperties().dataProcessingError === true);
-            assert(coercedError.getTelemetryProperties().untrustedOrigin === true);
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "[object Object]");
         });
         it("Should coerce LoggingError missing errorType", () => {
@@ -171,8 +171,8 @@ describe("Errors", () => {
             assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.fluidErrorCode === "anErrorCode");
-            assert(coercedError.getTelemetryProperties().dataProcessingError === true);
-            assert(coercedError.getTelemetryProperties().untrustedOrigin === true);
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
             assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps not copied over by normalizeError");
         });
@@ -197,8 +197,8 @@ describe("Errors", () => {
                 coercedErrors.every(
                     (error) =>
                         error.errorType === ContainerErrorType.dataProcessingError &&
-                        error.getTelemetryProperties().dataProcessingError === true &&
-                        error.getTelemetryProperties().untrustedOrigin === true),
+                        error.getTelemetryProperties().dataProcessingError === 1 &&
+                        error.getTelemetryProperties().untrustedOrigin === 1),
         );
             assert(
                 coercedErrors.every(

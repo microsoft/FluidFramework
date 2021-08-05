@@ -277,7 +277,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 this.channelDeferred?.reject(
-                    CreateProcessingError(error, "FluidDataStoreContext.realize", undefined /* message */));
+                    CreateProcessingError(error, "realizeFluidDataStoreContext", undefined /* message */));
             });
         }
         return this.channelDeferred.promise;
