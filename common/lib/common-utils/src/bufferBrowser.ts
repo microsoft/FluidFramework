@@ -4,7 +4,6 @@
  */
 
 import * as base64js from "base64-js";
-import { Uint8ArrayToArrayBuffer } from "./indexNode";
 
 /**
  * Converts a Uint8Array to a string of the provided encoding
@@ -36,6 +35,17 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
     IsoBuffer.from(input, encoding).buffer;
+
+/**
+ * Convert Uint8Array array to ArrayBuffer
+ * @param array - array to convert to ArrayBuffer
+ */
+export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
+    if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
+        return array.buffer;
+    }
+    return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
+}
 
 /**
  * Convert binary blob to string format
