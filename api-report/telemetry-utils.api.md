@@ -168,6 +168,13 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
 
 // @public
+export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
+    constructor(logger: ITelemetryBaseLogger);
+    // (undocumented)
+    send(eventWithTagsMaybe: ITelemetryBaseEvent): void;
+}
+
+// @public
 export enum TelemetryDataTag {
     PackageData = "PackageData",
     UserData = "UserData"
