@@ -502,26 +502,6 @@ function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions):
 }
 
 /**
- * Wait for a specific sequence number. Promise should resolve when we reach that number,
- * or reject if closed.
- */
-const waitForSeq = async (
-    deltaManager: IDeltaManager<Pick<ISequencedDocumentMessage, "sequenceNumber">, unknown>,
-    targetSeq: number,
-): Promise<void> => new Promise<void>((accept, reject) => {
-    // TODO: remove cast to any when actual event is determined
-    deltaManager.on("closed" as any, reject);
-
-    const handleOp = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">): void => {
-        if (message.sequenceNumber >= targetSeq) {
-            accept();
-            deltaManager.off("op", handleOp);
-        }
-    };
-    deltaManager.on("op", handleOp);
-});
-
-/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  */
