@@ -132,7 +132,7 @@ describe("Errors", () => {
 
             assert(coercedError as any === originalError);
             assert(coercedError.fluidErrorCode === "originalErrorCode");
-            assert(coercedError.getTelemetryProperties().dataProcessingError === true);
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
         });
         it("Should skip coercion for LoggingError with errorType", () => {
             const originalError = new LoggingError(
@@ -144,7 +144,7 @@ describe("Errors", () => {
 
             assert(coercedError as any === originalError);
             assert(coercedError.fluidErrorCode === "anErrorCode");
-            assert(coercedError.getTelemetryProperties().dataProcessingError === true);
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
         });
         it("Should coerce non-LoggingError object with errorType", () => {
             const originalError = {
