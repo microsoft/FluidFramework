@@ -1798,9 +1798,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.addMember(newClient.clientId, newClient.client);
             } else if (innerContent.type === MessageType.ClientLeave) {
                 const leftClientId = innerContent.content as string;
-                if (!this._audience.removeMember(leftClientId) && this.connected) {
-                    this.logger.sendErrorEvent({ eventName: "MissingAudienceMember", clientId: leftClientId });
-                }
+                this._audience.removeMember(leftClientId);
             }
         } else {
             const local = this.clientId === message.clientId;
