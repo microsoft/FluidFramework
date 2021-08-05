@@ -4,6 +4,7 @@
  */
 
 import * as base64js from "base64-js";
+import { assert } from "./assert";
 
 /**
  * Converts a Uint8Array to a string of the provided encoding
@@ -35,17 +36,6 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
     IsoBuffer.from(input, encoding).buffer;
-
-/**
- * Convert Uint8Array array to ArrayBuffer
- * @param array - array to convert to ArrayBuffer
- */
-export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
-    if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
-        return array.buffer;
-    }
-    return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
-}
 
 /**
  * Convert binary blob to string format
@@ -91,6 +81,12 @@ export class IsoBuffer extends Uint8Array {
     public toString(encoding?: string): string {
         return Uint8ArrayToString(this, encoding);
     }
+    public Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {
+        if (array.byteOffset === 0 && array.byteLength === array.buffer.byteLength) {
+            return array.buffer;
+        }
+        return array.buffer.slice(array.byteOffset, array.byteOffset + array.byteLength);
+    }
 
     /**
      * @param value - string | ArrayBuffer
@@ -102,8 +98,10 @@ export class IsoBuffer extends Uint8Array {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
         // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
         } else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
-            return IsoBuffer.fromArrayBuffer(
-                Uint8ArrayToArrayBuffer(value), encodingOrOffset as number | undefined, length);
+            assert(typeof encodingOrOffset === "number" || encodingOrOffset === undefined,
+                "encodingOrOffset should be number if defined");
+            const calculatedOffset = value.byteOffset + (encodingOrOffset ?? 0);
+            return IsoBuffer.fromArrayBuffer(value.buffer, calculatedOffset,  length);
         } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
         } else {
