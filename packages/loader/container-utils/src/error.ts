@@ -69,9 +69,9 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     }
 }
 
-// TODO: implement IUsageError once available
 /** Error indicating an API is being used improperly resulting in an invalid operation. */
 export class UsageError extends LoggingError implements IFluidErrorBase {
+    // TODO: implement IUsageError once available
     readonly errorType = "usageError";
 
     constructor(
