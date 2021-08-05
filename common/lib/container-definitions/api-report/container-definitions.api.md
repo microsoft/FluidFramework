@@ -356,12 +356,6 @@ export interface IHostLoader extends ILoader {
 }
 
 // @public
-export interface IUsageError extends IErrorBase {
-    // (undocumented)
-    readonly errorType: ContainerErrorType.usageError;
-}
-
-// @public
 export interface ILoader extends IFluidRouter {
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
@@ -466,6 +460,12 @@ export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export interface IUsageError extends IErrorBase {
+    // (undocumented)
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 // @public
