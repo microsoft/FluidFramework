@@ -6,6 +6,7 @@
 - [Changes to DataObject](#changes-to-DataObject)
 - [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
 - [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
 
 ### Changes to local testing in insecure environments and associated bundle size increase
 Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.
@@ -27,6 +28,9 @@ Previously the `@fluidframework/common-utils` package exposed a `setInsecureCont
 
 ### `webpack-fluid-loader` package name changed
 The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
+
+### Loggers without tag support now deprecated in ContainerContext
+The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
