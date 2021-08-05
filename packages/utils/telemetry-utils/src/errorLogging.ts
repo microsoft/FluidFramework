@@ -61,7 +61,7 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
 /** Copy props from source onto target, but do not overwrite an existing prop that matches */
-function copyProps(source: ITelemetryProperties, target: ITelemetryProperties | LoggingError) {
+function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {
     for (const key of Object.keys(source)) {
         if (target[key] === undefined) {
             target[key] = source[key];
@@ -94,7 +94,6 @@ class SimpleFluidError implements IFluidErrorBase {
         this.stack = errorProps.stack;
         this.name = errorProps.name;
 
-        //* PR: Do I need to avoid adding optional ones, or is it ok to add an explicit undefined value?
         // (like I wonder if it will show up in Kusto as "undefined" -- Oh I think not, recalling the Bohemia code)
         this.addTelemetryProperties(errorProps);
     }
@@ -104,7 +103,7 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(props, this.telemetryProps);
+        copyProps(this.telemetryProps, props);
     }
 }
 
@@ -245,8 +244,7 @@ export class LoggingError extends Error implements ILoggingError {
      * Add additional properties to be logged
      */
     public addTelemetryProperties(props: ITelemetryProperties) {
-        //* PR:  Test case to remember - ensure stack/message can't be overwritten via ATP
-        copyProps(props, this);
+        copyProps(this, props);
     }
 
     /**
