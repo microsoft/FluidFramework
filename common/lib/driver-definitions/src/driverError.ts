@@ -9,7 +9,7 @@
  */
 export enum DriverErrorType {
     /**
-     * @deprecated
+     * @deprecated - use genericNetworkError or add a new specific errorType if needed
      */
     genericError = "genericError",
 
