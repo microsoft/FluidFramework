@@ -954,7 +954,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
                     formExponentialFn({ coefficient: 20, initialDelay: 0 }),
                 ),
-                this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                {
+                    initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                },
                 this.runtimeOptions.summaryOptions.summarizerOptions,
             );
             this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);

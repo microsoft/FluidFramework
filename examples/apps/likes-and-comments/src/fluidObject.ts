@@ -15,9 +15,7 @@ import {
 } from "@fluid-experimental/react";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedObjectSequence, SharedString } from "@fluidframework/sequence";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
-import { LikesAndCommentsView, IComment } from "./view";
+import { IComment } from "./view";
 
 const defaultImgUrl = "https://picsum.photos/id/221/1200/800";
 
@@ -52,15 +50,5 @@ export class LikesAndComments extends SyncedDataObject {
             "imgUrl",
             defaultImgUrl,
         );
-    }
-
-    public render(el: HTMLElement) {
-        ReactDOM.render(
-            <LikesAndCommentsView
-                syncedDataObject={this}
-            />,
-            el,
-        );
-        return el;
     }
 }
