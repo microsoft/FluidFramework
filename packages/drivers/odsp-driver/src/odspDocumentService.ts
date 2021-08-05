@@ -186,11 +186,13 @@ export class OdspDocumentService implements IDocumentService {
             concurrency,
             async (from, to, telemetryProps) => service.get(from, to, telemetryProps),
             async (from, to) => {
+                const res = await this.opsCache?.get(from, to);
+                return res as ISequencedDocumentMessage[] ?? [];
+            },
+            (from, to) => {
                 if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
                     this.currentConnection.requestOps(from, to);
                 }
-                const res = await this.opsCache?.get(from, to);
-                return res as ISequencedDocumentMessage[] ?? [];
             },
             (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
         );
