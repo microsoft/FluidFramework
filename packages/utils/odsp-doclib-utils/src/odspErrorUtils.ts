@@ -68,13 +68,13 @@ export interface IFacetCodes {
 }
 
 /** Empirically-based model of error response inner error from ODSP */
-interface OdspErrorResponseInnerError {
-    code: string;
+export interface OdspErrorResponseInnerError {
+    code?: string;
     innerError?: OdspErrorResponseInnerError
 }
 
 /** Empirically-based model of error responses from ODSP */
-interface OdspErrorResponse {
+export interface OdspErrorResponse {
     error: OdspErrorResponseInnerError & {
         message: string;
     }
@@ -84,10 +84,10 @@ interface OdspErrorResponse {
 function isOdspErrorResponse(x: any): x is OdspErrorResponse {
     const error = x?.error;
     return typeof(error?.message) === "string" &&
-        typeof(error?.code) === "string";
+        (error?.code === undefined || typeof(error?.code) === "string");
 }
 
-function tryParseErrorResponse(
+export function tryParseErrorResponse(
     response: string | undefined,
 ): { success: true, errorResponse: OdspErrorResponse } | { success: false } {
     try {
@@ -102,12 +102,14 @@ function tryParseErrorResponse(
     return { success: false };
 }
 
-function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
+export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
     const stack: string[] = [];
     let error: OdspErrorResponseInnerError | undefined = errorResponse.error;
     // eslint-disable-next-line no-null/no-null
     while (typeof error === "object" && error !== null) {
-        stack.unshift(error.code);
+        if (error.code !== undefined) {
+            stack.unshift(error.code);
+        }
         error = error.innerError;
     }
     return stack;

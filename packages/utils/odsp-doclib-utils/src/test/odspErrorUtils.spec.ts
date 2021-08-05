@@ -133,11 +133,13 @@ describe("OdspErrorUtils", () => {
         });
         it("enriched with facetCodes", () => {
             const error = new GenericNetworkError("Some message", false) as GenericNetworkError & IFacetCodes;
-            enrichOdspError(error, undefined /* response */, '{ "error": { "code": "foo" } }' /* responseText */);
+            enrichOdspError(error, undefined /* response */, '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }' /* responseText */);
 
-            assert.deepStrictEqual(error.facetCodes, ["foo"]);
+            assert.deepStrictEqual(error.facetCodes, ["bar", "foo"]);
             assert(isILoggingError(error));
-            assert.equal(error.getTelemetryProperties().innerMostErrorCode, "foo");
+            assert.equal(error.getTelemetryProperties().odspResponseErrorMessage, "hello");
+            assert.equal(error.getTelemetryProperties().odspResponseInnermostFacet, "bar");
+            assert.equal(error.getTelemetryProperties().odspResponseErrorFacets, "bar << foo");
         });
         it("enriched with response data", () => {
             const mockHeaders = {
@@ -151,9 +153,7 @@ describe("OdspErrorUtils", () => {
             const error = new GenericNetworkError("Some message", false);
             enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "responseText");
 
-            assert.equal((error as any).response, "responseText");
             assert(isILoggingError(error));
-            assert.equal(error.getTelemetryProperties().response, "responseText"); // bug GH #6139
             assert.equal(error.getTelemetryProperties().responseType, "fooType");
             assert.equal(error.getTelemetryProperties().sprequestguid, "mock header sprequestguid");
             assert.equal(error.getTelemetryProperties().requestId, "mock header request-id");
