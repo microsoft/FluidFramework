@@ -96,10 +96,6 @@ export class ContainerContext implements IContainerContext {
     public get logger(): ITelemetryLogger {
         return this.taggedLogger;
     }
-    /** @deprecated See IContainerContext for more details. */
-    public set logger(telemetryLogger: ITelemetryLogger) {
-        this.logger = telemetryLogger;
-    }
 
     public get id(): string {
         return this.container.id;
@@ -185,7 +181,6 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
-        this.logger = container.subLogger;
         this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
