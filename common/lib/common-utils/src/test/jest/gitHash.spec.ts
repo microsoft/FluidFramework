@@ -31,9 +31,6 @@ async function evaluateBrowserHash(
     algorithm: "SHA-1" | "SHA-256" = "SHA-1",
     hashEncoding: "hex" | "base64" = "hex",
 ): Promise<string> {
-    // Navigate to the local test server so crypto is available
-    await page.goto("http://localhost:8080", { waitUntil: "load", timeout: 0 });
-
     // convert the file to a string to pass into page.evaluate because
     // Buffer/Uint8Array are not directly jsonable
     const fileCharCodeString = Array.prototype.map.call(file, (byte) => {
@@ -74,7 +71,6 @@ async function evaluateBrowserHash(
  * Same as evaluateBrowserHash above except prepends the
  * `blob ${size.toString()}${String.fromCharCode(0)}` prefix for git
  * */
-
 async function evaluateBrowserGitHash(page, file: Buffer): Promise<string> {
     // Add the prefix for git hashing
     const size = file.byteLength;
@@ -101,15 +97,13 @@ describe("Common-Utils", () => {
             res.end("basic test server");
         });
         server.listen(8080, "localhost");
+        // Navigate to the local test server so crypto is available
+        await page.goto("http://localhost:8080", { waitUntil: "load", timeout: 0 });
 
-        const xmlPath = path.join(__dirname, `${dataDir}/assets/book.xml`);
-        xmlFile = await getFileContents(xmlPath);
-        const svgPath = path.join(__dirname, `${dataDir}/assets/bindy.svg`);
-        svgFile = await getFileContents(svgPath);
-        const pdfPath = path.join(__dirname, `${dataDir}/assets/aka.pdf`);
-        pdfFile = await getFileContents(pdfPath);
-        const gifPath = path.join(__dirname, `${dataDir}/assets/grid.gif`);
-        gifFile = await getFileContents(gifPath);
+        xmlFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/book.xml`));
+        svgFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/bindy.svg`));
+        pdfFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/aka.pdf`));
+        gifFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/grid.gif`));
     });
 
     afterAll(() => {
