@@ -7,6 +7,7 @@
 - [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
 - [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
 - [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
+- [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
 
 ### Changes to local testing in insecure environments and associated bundle size increase
 Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.
@@ -31,6 +32,11 @@ The `webpack-fluid-loader` utility was previously available from a package named
 
 ### Loggers without tag support now deprecated in ContainerContext
 The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
+
+### Creating new containers with Container.load is no longer supported
+- See [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- The `createOnLoad` flag to inside `IContainerLoadOptions` has been removed.
+- `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader` has been removed.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
