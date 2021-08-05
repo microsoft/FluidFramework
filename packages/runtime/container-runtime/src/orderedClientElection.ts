@@ -87,10 +87,10 @@ export class OrderedClientCollection
     private _youngestClient: LinkNode = this.rootNode;
     private readonly logger: ITelemetryLogger;
 
-    public get count() {
+    public get count(): number {
         return this.clientMap.size;
     }
-    public get oldestClient() {
+    public get oldestClient(): ILinkedClient | undefined {
         return this.rootNode.youngerClient;
     }
 
@@ -243,13 +243,13 @@ export class OrderedClientElection
     private _electedClient: ILinkedClient | undefined;
     private _electionSequenceNumber: number;
 
-    public get eligibleCount() {
+    public get eligibleCount(): number {
         return this._eligibleCount;
     }
-    public get electedClient() {
+    public get electedClient(): ILinkedClient | undefined {
         return this._electedClient;
     }
-    public get electionSequenceNumber() {
+    public get electionSequenceNumber(): number {
         return this._electionSequenceNumber;
     }
 

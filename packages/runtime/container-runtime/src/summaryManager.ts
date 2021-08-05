@@ -76,11 +76,11 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private runningSummarizer?: ISummarizer;
     private _disposed = false;
 
-    public get disposed() {
+    public get disposed(): boolean {
         return this._disposed;
     }
 
-    public get currentState() { return this.state; }
+    public get currentState(): SummaryManagerState { return this.state; }
 
     constructor(
         private readonly clientElection: ISummarizerClientElection,
@@ -123,13 +123,13 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.refreshSummarizer();
     }
 
-    private readonly handleConnected = (clientId: string) => {
+    private readonly handleConnected = (clientId: string): void => {
         this.latestClientId = clientId;
         this.runningSummarizer?.updateOnBehalfOf(clientId);
         this.refreshSummarizer();
     };
 
-    private readonly handleDisconnected = () => {
+    private readonly handleDisconnected = (): void => {
         this.refreshSummarizer();
     };
 
@@ -145,7 +145,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private readonly refreshSummarizer = () => {
+    private readonly refreshSummarizer = (): void => {
         // Transition states depending on shouldSummarize, which is a calculated property
         // that is only true if this client is connected and is the elected summarizer.
         const shouldSummarizeState = this.getShouldSummarizeState();
@@ -180,7 +180,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     };
 
-    private startSummarization() {
+    private startSummarization(): void {
         this.state = SummaryManagerState.Starting;
 
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
@@ -206,7 +206,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         });
     }
 
-    private runSummarizer(summarizer: ISummarizer) {
+    private runSummarizer(summarizer: ISummarizer): void {
         this.state = SummaryManagerState.Running;
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -237,7 +237,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private stop(reason: SummarizerStopReason) {
+    private stop(reason: SummarizerStopReason): void {
         this.state = SummaryManagerState.Stopping;
 
         if (this.runningSummarizer) {
@@ -251,7 +251,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private checkBypassInitialDelay() {
+    private checkBypassInitialDelay(): void {
         if (!this.initialDelay.isCompleted && this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
             this.initialDelay.resolve();
         }
@@ -293,7 +293,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         return this.runningSummarizer.enqueueSummarize(...args);
     };
 
-    public dispose() {
+    public dispose(): void {
         this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
         this.connectedState.off("connected", this.handleConnected);
         this.connectedState.off("disconnected", this.handleDisconnected);
@@ -306,6 +306,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
  * @param loaderRouter - the loader acting as an IFluidRouter
  * @param deltaManager - delta manager to get last sequence number
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const formRequestSummarizerFn = (
     loaderRouter: IFluidRouter,
     deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,

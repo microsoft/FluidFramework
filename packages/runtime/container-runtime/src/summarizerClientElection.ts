@@ -41,7 +41,7 @@ export class SummarizerClientElection
      */
     private lastReportedSeq = 0;
 
-    public get electedClientId() {
+    public get electedClientId(): string | undefined {
         return this.clientElection.electedClient?.clientId;
     }
 

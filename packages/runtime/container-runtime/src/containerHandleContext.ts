@@ -13,7 +13,9 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime";
 
 export class ContainerFluidHandleContext implements IFluidHandleContext {
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidRouter() { return this; }
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public get IFluidHandleContext() { return this; }
     public readonly absolutePath: string;
 
@@ -35,7 +37,7 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
         throw new Error("can't attach container runtime form within container!");
     }
 
-    public get isAttached() {
+    public get isAttached(): boolean {
         return this.runtime.attachState !== AttachState.Detached;
     }
 

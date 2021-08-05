@@ -57,13 +57,13 @@ export class DeltaScheduler {
         this.deltaManager.inbound.on("idle", () => { this.inboundQueueIdle(); });
     }
 
-    public batchBegin() {
+    public batchBegin(): void {
         if (!this.processingStartTime) {
             this.processingStartTime = performance.now();
         }
     }
 
-    public batchEnd() {
+    public batchEnd(): void {
         if (this.shouldRunScheduler()) {
             if (!this.isScheduling) {
                 this.isScheduling = true;
@@ -105,7 +105,7 @@ export class DeltaScheduler {
         }
     }
 
-    private inboundQueueIdle() {
+    private inboundQueueIdle(): void {
         if (this.schedulingLog) {
             // Add the time taken for processing the final ops to the total processing time in the
             // telemetry log object.

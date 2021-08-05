@@ -28,12 +28,12 @@ import {
     ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import {
-     convertSnapshotTreeToSummaryTree,
-     convertSummaryTreeToITree,
-     convertToSummaryTree,
-     create404Response,
-     responseToException,
-     SummaryTreeBuilder,
+    convertSnapshotTreeToSummaryTree,
+    convertSummaryTreeToITree,
+    convertToSummaryTree,
+    create404Response,
+    responseToException,
+    SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -53,10 +53,10 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
- /**
-  * This class encapsulates data store handling. Currently it is only used by the container runtime,
-  * but eventually could be hosted on any channel once we formalize the channel api boundary.
-  */
+/**
+ * This class encapsulates data store handling. Currently it is only used by the container runtime,
+ * but eventually could be hosted on any channel once we formalize the channel api boundary.
+ */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -65,14 +65,14 @@ export class DataStores implements IDisposable {
 
     private readonly logger: ITelemetryLogger;
 
-    private readonly disposeOnce = new Lazy<void>(()=>this.contexts.dispose());
+    private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
         private readonly runtime: ContainerRuntime,
         private readonly submitAttachFn: (attachContent: any) => void,
         private readonly getCreateChildSummarizerNodeFn:
-            (id: string, createParam: CreateChildSummarizerNodeParam)  => CreateChildSummarizerNodeFn,
+            (id: string, createParam: CreateChildSummarizerNodeParam) => CreateChildSummarizerNodeFn,
         private readonly deleteChildSummarizerNodeFn: (id: string) => void,
         baseLogger: ITelemetryBaseLogger,
         private readonly contexts: DataStoreContexts = new DataStoreContexts(baseLogger),
@@ -131,7 +131,7 @@ export class DataStores implements IDisposable {
         });
     }
 
-    public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
+    public processAttachMessage(message: ISequencedDocumentMessage, local: boolean): void {
         const attachMessage = message.contents as InboundAttachMessage;
         // The local object has already been attached
         if (local) {
@@ -142,7 +142,7 @@ export class DataStores implements IDisposable {
             return;
         }
 
-         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+        // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
                 "Duplicate data store created with existing ID",
@@ -212,8 +212,7 @@ export class DataStores implements IDisposable {
     public createDetachedDataStoreCore(
         pkg: Readonly<string[]>,
         isRoot: boolean,
-        id = uuid()): IFluidDataStoreContextDetached
-    {
+        id = uuid()): IFluidDataStoreContextDetached {
         const context = new LocalDetachedFluidDataStoreContext(
             id,
             pkg,
@@ -228,7 +227,12 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
+    public _createFluidDataStoreContext(
+        pkg: string[],
+        id: string,
+        isRoot: boolean,
+        props?: any
+    ): LocalFluidDataStoreContext {
         const context = new LocalFluidDataStoreContext(
             id,
             pkg,
@@ -245,10 +249,11 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public get disposed() {return this.disposeOnce.evaluated;}
+    public get disposed(): boolean { return this.disposeOnce.evaluated; }
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public readonly dispose = () => this.disposeOnce.value;
 
-    public resubmitDataStoreOp(content: any, localOpMetadata: unknown) {
+    public resubmitDataStoreOp(content: any, localOpMetadata: unknown): void {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         assert(!!context, 0x160 /* "There should be a store context for the op" */);
@@ -262,13 +267,17 @@ export class DataStores implements IDisposable {
         return context.applyStashedOp(envelope.contents);
     }
 
-    public async applyStashedAttachOp(message: IAttachMessage) {
+    public async applyStashedAttachOp(message: IAttachMessage): Promise<void> {
         this.pendingAttach.set(message.id, message);
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
     }
 
-    public processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown) {
+    public processFluidDataStoreOp(
+        message: ISequencedDocumentMessage,
+        local: boolean,
+        localMessageMetadata: unknown
+    ): void {
         const envelope = message.contents as IEnvelope;
         const transformed = { ...message, contents: envelope.contents };
         const context = this.contexts.get(envelope.address);
@@ -288,7 +297,11 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public processSignal(address: string, message: IInboundSignalMessage, local: boolean) {
+    public processSignal(
+        address: string,
+        message: IInboundSignalMessage,
+        local: boolean
+    ): void {
         const context = this.contexts.get(address);
         if (!context) {
             // Attach message may not have been processed yet
@@ -303,7 +316,7 @@ export class DataStores implements IDisposable {
         context.processSignal(message, local);
     }
 
-    public setConnectionState(connected: boolean, clientId?: string) {
+    public setConnectionState(connected: boolean, clientId?: string): void {
         for (const [fluidDataStore, context] of this.contexts) {
             try {
                 context.setConnectionState(connected, clientId);
@@ -324,7 +337,7 @@ export class DataStores implements IDisposable {
         } else {
             eventName = "attached";
         }
-        for (const [,context] of this.contexts) {
+        for (const [, context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {
                 context.emit(eventName);
@@ -475,7 +488,10 @@ export class DataStores implements IDisposable {
      * @param usedRoutes - The routes that are used in all data stores in this Container.
      * @returns the total number of data stores and the number of data stores that are unused.
      */
-    public updateUsedRoutes(usedRoutes: string[]) {
+    public updateUsedRoutes(usedRoutes: string[]): {
+        dataStoreCount: number;
+        unusedDataStoreCount: number;
+    } {
         // Get a map of data store ids to routes used in it.
         const usedDataStoreRoutes = getChildNodesUsedRoutes(usedRoutes);
 
@@ -502,7 +518,7 @@ export class DataStores implements IDisposable {
      * scenarios with accessing deleted content.
      * @param unusedRoutes - The routes that are unused in all data stores in this Container.
      */
-    public deleteUnusedRoutes(unusedRoutes: string[]) {
+    public deleteUnusedRoutes(unusedRoutes: string[]): void {
         assert(this.runtime.gcTestMode, 0x1df /* "Data stores should be deleted only in GC test mode" */);
         for (const route of unusedRoutes) {
             const dataStoreId = route.split("/")[1];

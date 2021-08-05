@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICommittedProposal, IQuorum, IQuorumEvents, ISequencedClient } from "@fluidframework/protocol-definitions";

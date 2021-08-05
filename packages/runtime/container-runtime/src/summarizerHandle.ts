@@ -15,7 +15,7 @@ export class SummarizerHandle extends FluidObjectHandle {
         return;
     }
 
-    public bind(handle: IFluidHandle) {
+    public bind(handle: IFluidHandle): void {
         return;
     }
 }
