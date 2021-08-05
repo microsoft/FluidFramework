@@ -17,7 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
-    triggerConnectionRecovery: (reason: string, retryCount: number) => void,
+    triggerConnectionRecovery: (reason: string) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -37,10 +37,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
-
-    static readonly joinOpTimerRetryInitialValue = 0;
-    private joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
-    private joinOpEvent?: PerformanceEvent;
 
     private waitEvent: PerformanceEvent | undefined;
 
@@ -73,46 +69,29 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             },
         );
 
+        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+        // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            10000,
+            45000,
             () => {
-                this.joinOpTimerRetry++;
-
-                assert(this.joinOpEvent !== undefined, "no joinOpEvent");
-                this.joinOpEvent.reportProgress({ category: "error", retry: this.joinOpTimerRetry });
-
-                this.handler.triggerConnectionRecovery(
-                    "NoJoinOp",
-                    this.joinOpTimerRetry);
-
-                this.joinOpTimer.start();
-                },
+                // I've observed timer firing within couple ms from disconnect event, looks like
+                // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
+                if (this.connectionState !== ConnectionState.Disconnected) {
+                    this.handler.triggerConnectionRecovery("NoJoinOp");
+                }
+            },
         );
     }
 
     private startJoinOpTimer() {
         assert(!this.joinOpTimer.hasTimer, "has joinOpTimer");
-        assert(this.joinOpEvent === undefined, "has joinOpEvent");
-        this.joinOpTimerRetry = ConnectionStateHandler.joinOpTimerRetryInitialValue;
-        this.joinOpEvent = PerformanceEvent.start(
-            this.logger,
-            {
-                eventName: "NoJoinOp",
-                clientId: this.pendingClientId,
-            },
-        );
         this.joinOpTimer.start();
     }
 
     private stopJoinOpTimer(reason: string) {
         assert(this.joinOpTimer.hasTimer, "no joinOpTimer");
-        assert(this.joinOpEvent !== undefined, "no joinOpEvent");
-        // report cancellation if we ever reported progress.
-        if (this.joinOpTimerRetry > ConnectionStateHandler.joinOpTimerRetryInitialValue) {
-            this.joinOpEvent.cancel({ reason, retry: this.joinOpTimerRetry, category: "error" });
-        }
         this.joinOpTimer.clear();
-        this.joinOpEvent = undefined;
     }
 
     public receivedAddMemberEvent(clientId: string) {

@@ -36,6 +36,7 @@ import {
     CreateContainerError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    UsageError,
  } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -630,15 +631,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                triggerConnectionRecovery: (reason: string, retryCount: number) => {
+                triggerConnectionRecovery: (reason: string) => {
                     // We get here when socket does not receive any ops on "write" connection, including
-                    // its own join op. Attempt some recovery options. Need to collect more data to see
-                    // If they actually do anything good.
-                    if (retryCount <= 10) {
-                        this._deltaManager.submit(MessageType.NoOp, null);
-                    } else {
-                        this._deltaManager.triggerReconnect(reason);
-                    }
+                    // its own join op. Attempt recovery option.
+                    this._deltaManager.triggerConnectionRecovery(
+                        reason,
+                        {
+                            duration: performance.now() - this.connectionTransitionTimes[this.connectionState],
+                        },
+                    );
                 },
             },
             this.logger,
@@ -799,8 +800,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert(this.loaded, 0x0d4 /* "not loaded" */);
-        assert(!this.closed, 0x0d5 /* "closed" */);
+        if (!this.loaded) {
+            throw new UsageError("containerMustBeLoadedBeforeAttaching");
+        }
+
+        if (this.closed) {
+            throw new UsageError("cannotAttachClosedContainer");
+        }
 
         // If container is already attached or attach is in progress, throw an error.
         assert(this._attachState === AttachState.Detached && !this.attachStarted,
