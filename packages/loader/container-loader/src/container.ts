@@ -791,11 +791,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async attach(request: IRequest): Promise<void> {
         if (this.loaded) {
-            throw new UsageError("Container must be loaded to attach");
+            throw new UsageError("containerMustBeLoadedBeforeAttaching");
         }
 
         if (!this.closed) {
-            throw new UsageError("Cannot attach closed Container");
+            throw new UsageError("cannotAttachClosedContainer");
         }
 
         // If container is already attached or attach is in progress, throw an error.
