@@ -41,6 +41,7 @@ import {
     ChildLogger,
     raiseConnectedEvent,
     PerformanceEvent,
+    TaggedLoggerAdapter,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
@@ -534,7 +535,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
-        const logger = ChildLogger.create(context.logger, undefined, {
+        // If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
+        const passLogger = context.taggedLogger  ?? new TaggedLoggerAdapter(context.logger);
+        const logger = ChildLogger.create(passLogger, undefined, {
             all: {
                 runtimeVersion: pkgVersion,
             },
@@ -1196,20 +1199,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    public async stop() {
-        this.verifyNotClosed();
-
-        // Reload would not work properly with local changes.
-        // First, summarizing code likely does not work (i.e. read - produced unknown result)
-        // in presence of local changes.
-        // On top of that newly reloaded runtime likely would not be dirty, while it has some changes.
-        // And container would assume it's dirty (as there was no notification changing state)
-        if (this.dirtyContainer) {
-            this.logger.sendErrorEvent({ eventName: "DirtyContainerReloadRuntime"});
-        }
-
+    /**
+     * @deprecated in 0.14, use dispose() to stop the runtime.
+     * Remove after IRuntime definition no longer includes it.
+     */
+    public async stop(): Promise<{snapshot?: never, state?: never}> {
         this.dispose(new Error("ContainerRuntimeStopped"));
-        return { };
+        throw new Error("Stop is no longer supported, use dispose to stop the runtime");
     }
 
     private replayPendingStates() {

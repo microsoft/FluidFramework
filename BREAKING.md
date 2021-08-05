@@ -6,6 +6,7 @@
 - [Changes to DataObject](#changes-to-DataObject)
 - [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
 - [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
 - [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
 
 ### Changes to local testing in insecure environments and associated bundle size increase
@@ -28,6 +29,9 @@ Previously the `@fluidframework/common-utils` package exposed a `setInsecureCont
 
 ### `webpack-fluid-loader` package name changed
 The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
+
+### Loggers without tag support now deprecated in ContainerContext
+The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
 
 ### Creating new containers with Container.load is no longer supported
 - See [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
