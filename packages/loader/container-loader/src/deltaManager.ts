@@ -441,7 +441,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, this.lastMessage));
+            this.close(CreateProcessingError(error, "deltaManagerInboundErrorHandler", this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
