@@ -71,6 +71,15 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 // @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string);
+    // (undocumented)
+    readonly errorType = "usageError";
+    // (undocumented)
+    readonly fluidErrorCode: string;
+}
+
+// @public
 export function wrapError<T extends IWriteableLoggingError>(error: any, newErrorFn: (m: string) => T): T;
 
 

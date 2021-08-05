@@ -36,6 +36,7 @@ import {
     CreateContainerError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    UsageError,
  } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -799,8 +800,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert(this.loaded, 0x0d4 /* "not loaded" */);
-        assert(!this.closed, 0x0d5 /* "closed" */);
+        if (!this.loaded) {
+            throw new UsageError("containerMustBeLoadedBeforeAttaching");
+        }
+
+        if (this.closed) {
+            throw new UsageError("cannotAttachClosedContainer");
+        }
 
         // If container is already attached or attach is in progress, throw an error.
         assert(this._attachState === AttachState.Detached && !this.attachStarted,
