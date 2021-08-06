@@ -25,6 +25,7 @@ import {
     MongoDatabaseManager,
     MongoManager,
 } from "@fluidframework/server-services-core";
+import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import {
     DebugLogger,
     ITestDbFactory,
@@ -99,6 +100,13 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             logger,
             serviceConfiguration,
             pubsub);
+
+            const lumberjackEngine = new TestEngine1();
+
+            if (!Lumberjack.isSetupCompleted())
+            {
+                Lumberjack.setup([lumberjackEngine]);
+            }
 
         configureWebSocketServices(
             webSocketServer,

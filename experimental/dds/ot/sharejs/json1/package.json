@@ -20,7 +20,7 @@
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
-    "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../../_api-extractor-temp/",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "dev": "npm run tsc && concurrently 'npm run tsc -- --watch' 'npm run build:test -- --watch'",
     "eslint": "eslint --format stylish src",
@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "@fluid-experimental/ot": "^0.45.0",
-    "@fluidframework/common-utils": "^0.31.0",
+    "@fluidframework/common-utils": "^0.32.0-0",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore-definitions": "^0.45.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",

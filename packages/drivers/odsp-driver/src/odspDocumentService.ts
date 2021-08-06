@@ -88,6 +88,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private _opsCache?: OpsCache;
 
+    private currentConnection?: OdspDocumentDeltaConnection;
+
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -187,6 +189,11 @@ export class OdspDocumentService implements IDocumentService {
                 const res = await this.opsCache?.get(from, to);
                 return res as ISequencedDocumentMessage[] ?? [];
             },
+            (from, to) => {
+                if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
+                    this.currentConnection.requestOps(from, to);
+                }
+            },
             (ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
         );
     }
@@ -247,6 +254,7 @@ export class OdspDocumentService implements IDocumentService {
                 connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
                     this.opsReceived(ops);
                 });
+                this.currentConnection = connection;
                 return connection;
             } catch (error) {
                 this.cache.sessionJoinCache.remove(this.joinSessionKey);
@@ -294,7 +302,7 @@ export class OdspDocumentService implements IDocumentService {
         io: SocketIOClientStatic,
         client: IClient,
         webSocketUrl: string,
-    ): Promise<IDocumentDeltaConnection> {
+    ): Promise<OdspDocumentDeltaConnection> {
         const startTime = performance.now();
         const connection = await OdspDocumentDeltaConnection.create(
             tenantId,

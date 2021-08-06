@@ -146,17 +146,19 @@ export class BlobManager {
      * attachment types returned in snapshot() with blobs.
      */
     public load(blobsTree?: ISnapshotTree): void {
+        const detached = this.runtime.attachState === AttachState.Detached;
         let count = 0;
         if (blobsTree) {
             const values = Object.values(blobsTree.blobs);
             count = values.length;
-            values.map((entry) => this.blobIds.add(entry));
+            values.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
         }
         this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
     }
 
     public snapshot(): ITree {
-        const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        const blobIds = this.runtime.attachState === AttachState.Detached ? this.detachedBlobIds : this.blobIds;
+        const entries = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
         return { entries };
     }
 

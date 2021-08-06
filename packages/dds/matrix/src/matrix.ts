@@ -723,7 +723,7 @@ export class SharedMatrix<T = any>
                     s += ", ";
                 }
 
-                s += `${JSON.stringify(this.getCell(r, c))}`;
+                s += `${this.serializer.stringify(this.getCell(r, c), this.handle)}`;
             }
             s += "]\n";
         }

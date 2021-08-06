@@ -242,4 +242,22 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         // new handle works
         assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
     });
+
+    it("serialize/rehydrate container with blobs", async function() {
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+
+        dataStore._root.set("my blob", blobHandle);
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+
+        const snapshot = container.serialize();
+        const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
+        assert.strictEqual(text, bufferToString(await (await dataStore2._root.wait("my blob")).get(), "utf-8"));
+    });
 });
