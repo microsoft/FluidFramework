@@ -25,6 +25,23 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
+async function initializeFromData(container: Container) {
+    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
+    const url = "/";
+    const response = await container.request({ url });
+
+    // Verify the response to make sure we got what we expected.
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
+    } else if (response.value === undefined) {
+        throw new Error(`Empty response from URL: "${url}"`);
+    }
+
+    // In this app, we know our container code provides a default data object that is an IDiceRoller.
+    const diceRoller: IDiceRoller = response.value;
+    diceRoller.sharedString.insertText(0, "Initial text from external data");
+}
+
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
@@ -44,6 +61,7 @@ async function start(): Promise<void> {
         // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
         // proposal.
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+        await initializeFromData(container);
         await container.attach({ url: documentId });
     } else {
         // Request must be appropriate and parseable by resolver.

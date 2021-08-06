@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { CollaborativeInput } from "@fluid-experimental/react-inputs";
+
+import React from "react";
+import ReactDOM from "react-dom";
+
 import { IDiceRoller } from "./dataObject";
 
 /**
@@ -24,7 +29,10 @@ export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
     // Call the roll method to modify the shared data when the button is clicked.
     rollButton.addEventListener("click", diceRoller.roll);
 
-    wrapperDiv.append(diceCharDiv, rollButton);
+    const inputDiv = document.createElement("div");
+    const inputComponent = React.createElement(CollaborativeInput, { sharedString: diceRoller.sharedString });
+    ReactDOM.render(inputComponent, inputDiv);
+    wrapperDiv.append(diceCharDiv, rollButton, inputDiv);
 
     // Get the current value of the shared data to update the view whenever it changes.
     const updateDiceChar = () => {

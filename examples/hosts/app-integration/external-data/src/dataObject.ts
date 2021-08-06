@@ -6,11 +6,18 @@
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedString } from "@fluidframework/sequence";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
 export interface IDiceRoller extends EventEmitter {
+    /**
+     * Get a SharedString.
+     */
+    readonly sharedString: SharedString;
+
     /**
      * Get the dice value as a number.
      */
@@ -29,17 +36,27 @@ export interface IDiceRoller extends EventEmitter {
 
 // The root is map-like, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
+const sharedStringKey = "sharedString";
 
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class DiceRoller extends DataObject implements IDiceRoller {
+    private _sharedString: SharedString | undefined;
+    public get sharedString() {
+        if (this._sharedString === undefined) {
+            throw new Error("Missing shared string");
+        }
+        return this._sharedString;
+    }
     /**
      * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
      * initialize the state of the DataObject.
      */
     protected async initializingFirstTime() {
         this.root.set(diceValueKey, 1);
+        const sharedString = SharedString.create(this.runtime);
+        this.root.set(sharedStringKey, sharedString.handle);
     }
 
     /**
@@ -53,6 +70,12 @@ export class DiceRoller extends DataObject implements IDiceRoller {
                 this.emit("diceRolled");
             }
         });
+
+        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(sharedStringKey);
+        if (sharedStringHandle === undefined) {
+            throw new Error("Missing shared string");
+        }
+        this._sharedString = await sharedStringHandle.get();
     }
 
     public get value() {
@@ -74,6 +97,6 @@ export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, 
 (
     "dice-roller",
     DiceRoller,
-    [],
+    [SharedString.getFactory()],
     {},
 );
