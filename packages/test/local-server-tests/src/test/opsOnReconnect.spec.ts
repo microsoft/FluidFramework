@@ -505,8 +505,8 @@ describe("Ops on Reconnect", () => {
             container1Object1Map2.set("key5", "value5");
             container1Object1Directory.set("key6", "value6");
 
-            // Set the FlushMode back to Automatic so that the above batch is sent.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+            // Set the FlushMode back to Immediate so that the above batch is sent.
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -548,8 +548,8 @@ describe("Ops on Reconnect", () => {
             // Manually flush the ops so that they are sent as a batch.
             (container1Object1.context.containerRuntime as IContainerRuntime).flush();
 
-            // Set the FlushMode back to Automatic.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+            // Set the FlushMode back to Immediate.
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);

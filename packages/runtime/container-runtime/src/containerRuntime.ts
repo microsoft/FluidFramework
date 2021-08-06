@@ -705,7 +705,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
-    private _flushMode = FlushMode.Automatic;
+    private _flushMode = FlushMode.Immediate;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -1404,8 +1404,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // Flush any pending batches if switching back to automatic
-        if (mode === FlushMode.Automatic) {
+        // Flush any pending batches if switching back to immediate
+        if (mode === FlushMode.Immediate) {
             this.flush();
         }
 
