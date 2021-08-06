@@ -164,7 +164,7 @@ async function createWebLoader(
     const odspHostStoragePolicy: HostStoragePolicy = {};
     if (window.location.hash === "#binarySnapshot") {
         assert(options.mode === "spo-df" || options.mode === "spo",
-            "Binary format snapshot only for odsp driver!!");
+            0x240 /* "Binary format snapshot only for odsp driver!!" */);
         odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
     }
     let documentServiceFactory: IDocumentServiceFactory =
