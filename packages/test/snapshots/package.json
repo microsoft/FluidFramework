@@ -71,7 +71,7 @@
     "@fluidframework/register-collection": "^0.45.0",
     "@fluidframework/replay-driver": "^0.45.0",
     "@fluidframework/sequence": "^0.45.0",
-    "@fluidframework/server-local-server": "^0.1028.0-0",
+    "@fluidframework/server-local-server": "^0.1028.0",
     "@fluidframework/test-utils": "^0.45.0"
   },
   "devDependencies": {
