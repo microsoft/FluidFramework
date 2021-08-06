@@ -154,10 +154,16 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                     dataObject2map2.set("key2", "value2");
                 });
 
+                // Manually flush the ops so that they are sent as a batch.
+                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
+
                 dataObject2.context.containerRuntime.orderSequentially(() => {
                     dataObject2map1.set("key3", "value3");
                     dataObject2map2.set("key4", "value4");
                 });
+
+                // Manually flush the ops so that they are sent as a batch.
+                (dataObject2.context.containerRuntime as IContainerRuntime).flush();
 
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
@@ -230,8 +236,8 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
 
-                // Manually flush the batch.
-                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
+                // Set the FlushMode to Immediate so that the above batch is sent.
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
@@ -246,12 +252,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             });
 
             it("can send and receive single batch op that is manually flushed", async () => {
-                // Manually flush a single message as a batch.
-                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject2map1.set("key1", "value1");
                 (dataObject2.context.containerRuntime as IContainerRuntime).flush();
 
-                // Set the FlushMode back to Immediate.
+                // Set the FlushMode to Immediate.
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
                 // Wait for the ops to get processed by both the containers.
@@ -271,9 +275,6 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                  * This test verifies that among other things, the PendingStateManager's algorithm of handling
                  * consecutive batches is correct.
                  */
-
-                // Set the FlushMode to Manual.
-                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
                 // Send the ops that are to be batched together.
                 dataObject2map1.set("key1", "value1");
@@ -296,7 +297,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 // Manually flush the batch.
                 (dataObject2.context.containerRuntime as IContainerRuntime).flush();
 
-                // Set the FlushMode back to Immediate.
+                // Set the FlushMode to Immediate.
                 dataObject2.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
                 // Wait for the ops to get processed by both the containers.
