@@ -89,7 +89,6 @@ export async function prefetchLatestSnapshot(
                     putInCache,
                     removeEntries,
                     enableRedeemFallback,
-                    fetchBinarySnapshotFormat,
                 );
             assert(cacheP !== undefined, 0x1e7 /* "caching was not performed!" */);
             await cacheP;

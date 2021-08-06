@@ -87,7 +87,6 @@ export async function fetchSnapshotWithRedeem(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
-    fetchBinarySnapshotFormat?: boolean,
 ): Promise<ISnapshotContents> {
     return fetchLatestSnapshotCore(
         odspResolvedUrl,
@@ -96,7 +95,6 @@ export async function fetchSnapshotWithRedeem(
         logger,
         snapshotDownloader,
         putInCache,
-        fetchBinarySnapshotFormat,
     ).catch(async (error) => {
         if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
             // Execute the redeem fallback
@@ -114,7 +112,6 @@ export async function fetchSnapshotWithRedeem(
                 logger,
                 snapshotDownloader,
                 putInCache,
-                fetchBinarySnapshotFormat,
             );
         } else {
             throw error;
@@ -165,7 +162,6 @@ async function fetchLatestSnapshotCore(
             controller?: AbortController,
         ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-    fetchBinarySnapshotFormat?: boolean,
 ): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
         if (tokenFetchOptions.refresh) {
