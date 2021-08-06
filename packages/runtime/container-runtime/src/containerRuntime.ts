@@ -1397,9 +1397,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // If switching to manual mode add a warning trace indicating the underlying loader does not support
+        // If switching to TurnBased mode add a warning trace indicating the underlying loader does not support
         // this feature yet. Can remove in 0.9.
-        if (!this.deltaSender && mode === FlushMode.Manual) {
+        if (!this.deltaSender && mode === FlushMode.TurnBased) {
             debug("DeltaManager does not yet support flush modes");
             return;
         }
@@ -1437,17 +1437,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
-        // If flush mode is already manual we are either
+        // If flush mode is already TurnBased we are either
         // nested in another orderSequentially, or
         // the app is flushing manually, in which
         // case this invocation doesn't own
         // flushing.
-        if (this.flushMode === FlushMode.Manual) {
+        if (this.flushMode === FlushMode.TurnBased) {
             callback();
         } else {
             const savedFlushMode = this.flushMode;
 
-            this.setFlushMode(FlushMode.Manual);
+            this.setFlushMode(FlushMode.TurnBased);
 
             try {
                 callback();
@@ -1959,8 +1959,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-            // If in manual flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
+            // If in TurnBased flush mode we will trigger a flush at the next turn break
+            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
                 opMetadataInternal = {
                     ...opMetadata,
                     batch: true,
@@ -1984,7 +1984,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
-                    /* batch: */ this._flushMode === FlushMode.Manual,
+                    /* batch: */ this._flushMode === FlushMode.TurnBased,
                     opMetadataInternal);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
@@ -2035,7 +2035,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.Manual && this.needsFlush;
+        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
         if (middleOfBatch) {
             this._logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }

@@ -489,8 +489,8 @@ describe("Ops on Reconnect", () => {
             // The Container should be in disconnected state.
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
-            // Set the FlushMode to Manual to send batch ops by manually flushing them.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+            // Set the FlushMode to TurnBased to send batch ops by manually flushing them.
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
@@ -537,8 +537,8 @@ describe("Ops on Reconnect", () => {
             // The Container should be in disconnected state.
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
-            // Set the FlushMode to Manual to send batch ops by manually flushing them.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+            // Set the FlushMode to TurnBased to send batch ops by manually flushing them.
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");

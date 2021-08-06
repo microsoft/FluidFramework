@@ -224,8 +224,8 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
         describe("Manually flushed batches", () => {
             it("can send and receive multiple batch ops that are manually flushed", async () => {
-                // Set the FlushMode to Manual.
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                // Set the FlushMode to TurnBased.
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
                 // Send the ops that are to be batched together.
                 dataObject1map1.set("key1", "value1");
@@ -250,7 +250,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
             it("can send and receive single batch op that is manually flushed", async () => {
                 // Manually flush a single message as a batch.
-                dataObject2.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject2map1.set("key1", "value1");
                 (dataObject2.context.containerRuntime as IContainerRuntime).flush();
 
@@ -276,7 +276,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                  */
 
                 // Set the FlushMode to Manual.
-                dataObject2.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
                 // Send the ops that are to be batched together.
                 dataObject2map1.set("key1", "value1");
@@ -429,7 +429,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         describe("Manually flushed batches", () => {
             it("should clean document dirty state after a batch with single message is flushed", async () => {
                 // Manually flush a single batch message.
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject1map1.set("key1", "value1");
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
@@ -445,7 +445,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
             it("should clean document dirty state after a batch with multiple messages is flushed", async () => {
                 // Manually flush a batch with multiple messages.
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
@@ -464,7 +464,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
             it("should clean document dirty state after consecutive batches are flushed", async () => {
                 // Flush a couple of batches consecutively.
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject1map1.set("key1", "value1");
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
@@ -489,7 +489,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 dataObject1map1.set("key1", "value1");
 
                 // Flush a couple of batches consecutively.
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Manual);
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");

@@ -43,12 +43,12 @@ import {
  */
 export enum FlushMode {
     /**
-     * In immediate flush mode the runtime will immediately send all operations to the driver layer.
+     * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
      */
     Immediate,
 
     /**
-     * When in manual flush mode the runtime will buffer operations in the current turn and send them as a single
+     * When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
      * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
      */
     TurnBased,
