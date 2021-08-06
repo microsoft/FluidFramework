@@ -2,6 +2,7 @@
 title: SharedMap
 menuPosition: 4
 ---
+
 ## Introduction
 
 The `SharedMap` distributed data structure (DDS) is use to store key-value data. It provides the same API as the [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) built-in object that is provided in JavaScript, but also ensures that any edits being made to the object are simultaneously transmitted to all clients.
@@ -9,6 +10,7 @@ The `SharedMap` distributed data structure (DDS) is use to store key-value data.
 For example, in a traditional `Map`, setting a key would only set it on the local object. In a `SharedMap`, the moment one client sets that key, that update is automatically sent to all of the other connected clients who will update their local state with the new remote change. From a development standpoint, this allows you to develop against the `SharedMap` DDS as you would with a traditional `Map`, while ensuring that the data being updated is synced between all clients with all of the logic for managing and merging the changes abstracted away.
 
 {{% callout tip "Differences between Map and SharedMap" %}}
+
 - SharedMaps *must* use string keys.
 - You must only store *plain objects* -- those that are safely JSON-serializable -- as values in a SharedMap. If you store class instances, for example, then data synchronization will not work as expected.
 - When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole. This means that individual changes to the properties of an object are not merged during synchronization. If you need this behavior you should store individual properties in the SharedMap instead of full objects. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
@@ -80,18 +82,24 @@ The `SharedMap` object provides a number of functions to allow you to edit the k
 - `entries()` -- Returns an iterator for all key/value pairs stored on the map
 - `delete(key)` -- Removes the key/value from the map
 - `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map. For example, the following will print out all of the key/value pairs in the map
+
     ```javascript
     this.map.forEach((value, key) => console.log(`${key}-${value}`));
     ```
+
 - `clear()` -- Removes all data from the map, deleting all of the keys and values stored within it
 
 ## Events
 
-The `SharedMap` object will emit events on changes from local and remote clients. There are two events emitted: 
-1. `valueChanged`
+The `SharedMap` object will emit events on changes from local and remote clients. There are two events emitted:
+
+### `valueChanged`
+
 - Signature: `(event: "valueChanged", listener: (changed, local) => void)`
 - Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
-2. `clear`
+
+### `clear`
+
 - Signature: `(event: "clear", listener: (local) => void)`
 - Description: This event is sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
 
@@ -105,7 +113,7 @@ const dataKey = "data";
 const button = document.createElement('button');
 button.textContent = "Randomize!";
 const label = document.createElement('label');
-    
+
 button.addEventListener('click', () =>
     // Set the new value on the SharedMap
     map.set(dataKey, Math.random())
@@ -134,7 +142,7 @@ const dataKey = "data";
 const button = document.createElement('button');
 button.textContent = "Randomize!";
 const label = document.createElement('label');
-    
+
 button.addEventListener('click', () =>
     map.set(dataKey, Math.random())
 );
@@ -149,11 +157,13 @@ updateLabel(undefined, false);
     // Use the changed event to trigger the rerender whenever the value changes.
 map.on('valueChanged', updateLabel);
 ```
+
 Now, with the changes in `updateLabel`, the label will update to say if the value was last updated by the current user or by someone else. It will also compare the current value to the last one, and if the value has increased, it will set the text color to green. Otherwise, it will be red.
 
 ## Storing primitives
 
 As demonstrated in the examples above, you can store and fetch primitive values from a `SharedMap` using the `set`/`get` functions on the same key. The typical pattern is as follows:
+
 1. Create an event listener that updates app state using `get` to fetch the latest data. Connect this listener to the SharedMap's `valueChanged` event.
 2. Add some app functionality to call `set` with new data. This could be from a user action as in the example above or some other mechanism.
 
@@ -171,7 +181,8 @@ If your application requires different fields in an object to be edited simultan
 
 To understand this distinction, consider a scenario where you are building a task management tool where you'd like to assign various task to different people.
 
-Here, each person may have multiple fields such as 
+Here, each person may have multiple fields such as
+
 ```json
 {
     "name": "Joe Schmo",
@@ -179,7 +190,9 @@ Here, each person may have multiple fields such as
     "address": "1234 Fluid Way"
 }
 ```
+
 And each task may also have multiple fields, including the person that it is assigned to, such as
+
 ```json
 {
     "title": "Awesome Task",
@@ -197,6 +210,7 @@ Now, the next question to ask is which of these fields you'd like to be individu
 The most direct -- *but ultimately flawed* -- approach here would be to just to store the entire object into the `SharedMap` under a singular key.
 
 This would look something like this:
+
 ```json
 {
     "task1": {
@@ -210,6 +224,7 @@ This would look something like this:
     }
 }
 ```
+
 Now consider the scenario where two users begin to edit the task at the same time. For example, User A begins editing the `title` while User B is editing the `description`.
 
 Each time that User A makes an edit, `map.set("task1", editedTask)` will get called where `editedTask` will hold the new `title` values. Similarly, whenever User B makes an edit, `map.set("task1", editedTask)` will also be called but `description` will now hold the updated values. However, since `SharedMap` uses the LWW merge strategy, whichever user sent their `editedTask` last will overwrite the others edit. If User A's `set` occurs last, `task1` will now hold the updates to the `title` but will have overwritten User B's updates to `description`. Similarly, if User B's `set` occurs last, `description` will be updated but not `title`.
@@ -217,6 +232,7 @@ Each time that User A makes an edit, `map.set("task1", editedTask)` will get cal
 There are two strategies you can use to avoid this behavior.
 
 ### Storing values in separate keys
+
 You can store each of these values in their own key and only hold the key at which they are stored in the `task1` object itself. This means your `SharedMap` would have an object like this:
 
 ```json
@@ -280,9 +296,9 @@ One way to think about this is that each value stored into the `SharedMap` is th
 
 One of the powerful features of DDSes is that they are nestable. A DDS can be stored in another DDS allowing you to dynamically set up your data hierarchy as best fits your application needs.
 
-When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object’s handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
+When storing a DDS within another DDS, you must store its [handle]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}), not the DDS itself. Similarly, when retrieving DDSes nested within other DDSes, you need to first get the object's handle and then get the object from the handle. This reference based approach allows the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
-That’s all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles]({{< relref "handles.md" >}}).
+That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles, see [Fluid handles]({{< relref "handles.md" >}}).
 
 The following example demonstrates nesting DDSes using `SharedMap`. You specify an initial SharedMap as part of the `initialObjects` in the `ContainerSchema` and add the `SharedMap` type to `dynamicObjectTypes`.
 
@@ -352,6 +368,7 @@ You can further extend the example from the [Storing objects]({{< relref "#stori
     }
 }
 ```
+
 To break this apart, you can have each task itself be its own `SharedMap` and have a parent `SharedMap` hold all of the handles to each task. Then the initial map would look like:
 
 ```json
@@ -360,7 +377,9 @@ To break this apart, you can have each task itself be its own `SharedMap` and ha
     "task2": task2MapHandle
 }
 ```
+
 And the `task1` map would look like:
+
 ```json
 {
     "title": "Awesome Task",
@@ -386,6 +405,7 @@ And the `task2` map would look like:
     }
 }
 ```
+
 With this nested map structure, you can both ensure that each field that will be simultaneously edited is stored separately and that you have a hierarchy in how you store the data in your `SharedMap` that reflects the app's data model.
 
 Whenever a new task is created, you can call `container.create` to create a new `SharedMap` instance and store its handle in the `initialMap` that is provided as an `initialObject`. Since each additional task map will need its own unique key, you can use a random string generator, such as [uuid](https://www.npmjs.com/package/uuid), to create a new one each time and avoid ID conflicts.
