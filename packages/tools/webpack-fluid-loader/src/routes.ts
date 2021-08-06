@@ -252,7 +252,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
             return;
         }
 
-        const documentId = req.params.id;
+        const documentId = req.params["id*"];
         // For testing orderer, we use the path: http://localhost:8080/testorderer. This will use the local storage
         // instead of using actual storage service to which the connection is made. This will enable testing
         // orderer even if the blob storage services are down.
