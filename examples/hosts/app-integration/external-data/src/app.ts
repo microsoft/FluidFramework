@@ -6,10 +6,10 @@
 import { TinyliciousService } from "@fluid-experimental/get-container";
 import { Container, Loader } from "@fluidframework/container-loader";
 
-import { DiceRollerContainerRuntimeFactory } from "./containerCode";
+import { InventoryListContainerRuntimeFactory } from "./containerCode";
 import { IInventoryList } from "./dataObject";
 import { inventoryData } from "./externalData";
-import { renderDiceRoller } from "./view";
+import { renderInventoryList as renderInventoryList } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -30,7 +30,7 @@ function getExternalData() {
     const itemStrings = inventoryData.split("\n");
     return itemStrings.map((itemString) => {
         const [itemNameString, itemQuantityString] = itemString.split(":");
-        return { name: itemNameString, quantity: parseInt(itemQuantityString) };
+        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
     });
 }
 
@@ -46,16 +46,19 @@ async function initializeFromData(container: Container) {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
+    const itemData = getExternalData();
+
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
     const inventoryList: IInventoryList = response.value;
-    inventoryList.sharedString.insertText(0, "Initial text from external data");
-    console.log(getExternalData());
+    for (const { name, quantity } of itemData) {
+        inventoryList.addItem(name, quantity);
+    }
 }
 
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
-    const module = { fluidExport: DiceRollerContainerRuntimeFactory };
+    const module = { fluidExport: InventoryListContainerRuntimeFactory };
     const codeLoader = { load: async () => module };
 
     const loader = new Loader({
@@ -78,7 +81,7 @@ async function start(): Promise<void> {
         container = await loader.resolve({ url: documentId });
     }
 
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
+    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
     const url = "/";
     const response = await container.request({ url });
 
@@ -89,12 +92,12 @@ async function start(): Promise<void> {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const diceRoller: IInventoryList = response.value;
+    // In this app, we know our container code provides a default data object that is an IInventoryList.
+    const inventoryList: IInventoryList = response.value;
 
-    // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
+    // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderDiceRoller(diceRoller, div);
+    renderInventoryList(inventoryList, div);
 }
 
 start().catch((error) => console.error(error));

@@ -6,8 +6,8 @@
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { renderDiceRoller } from "../src/view";
-import { DiceRollerContainerRuntimeFactory } from "../src/containerCode";
+import { renderInventoryList } from "../src/view";
+import { InventoryListContainerRuntimeFactory } from "../src/containerCode";
 import { InventoryList } from "../src/dataObject";
 
 // Since this is a single page Fluid application we are generating a new document id
@@ -26,13 +26,13 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(documentId, DiceRollerContainerRuntimeFactory, createNewFlag);
+    const container = await getSessionStorageContainer(documentId, InventoryListContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
     const defaultObject = await getDefaultObjectFromContainer<InventoryList>(container);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderDiceRoller(defaultObject, element);
+    renderInventoryList(defaultObject, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

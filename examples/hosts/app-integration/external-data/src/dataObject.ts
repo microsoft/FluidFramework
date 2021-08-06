@@ -4,50 +4,106 @@
  */
 
 import { EventEmitter } from "events";
+import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
 import { IEvent } from "@fluidframework/common-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+// import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
  * IInventoryList describes the public API surface for our inventory list object.
  */
 export interface IInventoryList extends EventEmitter {
-    /**
-     * Get a SharedString.
-     */
-    readonly sharedString: SharedString;
+    readonly addItem: (name: string, quantity: number) => void;
+
+    readonly getItems: () => InventoryItem[];
+    readonly getItem: (id: string) => InventoryItem | undefined;
 
     /**
      * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
      */
-    on(event: "listChanged", listener: () => void): this;
+    on(event: "itemAdded" | "itemDeleted", listener: (item: InventoryItem) => void): this;
 }
 
-// The root is map-like, so we'll use this key for storing the value.
-const diceValueKey = "diceValue";
-const sharedStringKey = "sharedString";
+class InventoryItem extends EventEmitter {
+    public get id() {
+        return this._id;
+    }
+    // Probably would be nice to not hand out the SharedString, but the CollaborativeInput expects it.
+    public get name() {
+        return this._name;
+    }
+    public get quantity() {
+        const cellValue = this._quantity.get();
+        if (cellValue === undefined) {
+            throw new Error("Expected a valid quantity");
+        }
+        return cellValue;
+    }
+    public set quantity(newValue: number) {
+        this._quantity.set(newValue);
+    }
+    public constructor(
+        private readonly _id: string,
+        private readonly _name: SharedString,
+        private readonly _quantity: SharedCell<number>,
+    ) {
+        super();
+        // this._name.on("sequenceDelta", () =>{
+        //     this.emit("nameChanged");
+        // });
+        this._quantity.on("valueChanged", () => {
+            this.emit("quantityChanged");
+        });
+    }
+}
+
+// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedCell> };
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
  */
 export class InventoryList extends DataObject implements IInventoryList {
-    private _sharedString: SharedString | undefined;
-    public get sharedString() {
-        if (this._sharedString === undefined) {
-            throw new Error("Missing shared string");
+    private readonly inventoryItems = new Map<string, InventoryItem>();
+
+    public readonly addItem = (name: string, quantity: number) => {
+        const nameString = SharedString.create(this.runtime);
+        nameString.insertText(0, name);
+        const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
+        quantityCell.set(quantity);
+        const id = uuid();
+        this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
+    };
+
+    public readonly getItems = () => {
+        return [...this.inventoryItems.values()];
+    };
+
+    public readonly getItem = (id: string) => {
+        return this.inventoryItems.get(id);
+    };
+
+    private readonly handleItemAdded = async (id: string) => {
+        const itemData = this.root.get(id);
+        const [nameSharedString, quantitySharedCell] = await Promise.all([
+            itemData.name.get(),
+            itemData.quantity.get(),
+        ]);
+        // It's possible the item was deleted while getting the name/quantity, in which case quietly exit.
+        if (this.root.get(id) === undefined) {
+            return;
         }
-        return this._sharedString;
-    }
-    /**
-     * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
-     * initialize the state of the DataObject.
-     */
-    protected async initializingFirstTime() {
-        this.root.set(diceValueKey, 1);
-        const sharedString = SharedString.create(this.runtime);
-        this.root.set(sharedStringKey, sharedString.handle);
-    }
+        const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedCell);
+        this.inventoryItems.set(id, newInventoryItem);
+        this.emit("itemAdded", newInventoryItem);
+    };
+
+    private readonly handleItemDeleted = (id: string) => {
+        const deletedItem = this.inventoryItems.get(id);
+        this.inventoryItems.delete(id);
+        this.emit("itemDeleted", deletedItem);
+    };
 
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
@@ -55,17 +111,28 @@ export class InventoryList extends DataObject implements IInventoryList {
      */
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
-            if (changed.key === diceValueKey) {
-                // When items are added or removed, we'll emit a listChanged event.
-                this.emit("listChanged");
+            if (changed.previousValue === undefined) {
+                // Must be from adding a new item
+                this.handleItemAdded(changed.key).catch((error) => {
+                    console.error(error);
+                });
+            } else if (this.root.get(changed.key) === undefined) {
+                // Must be from a deletion
+                this.handleItemDeleted(changed.key);
+            } else {
+                // Since all data modifications happen within the SharedString or SharedCell, the root directory
+                // should never see anything except adds and deletes.
+                console.error("Unexpected modification to inventory list");
             }
         });
 
-        const sharedStringHandle = this.root.get<IFluidHandle<SharedString>>(sharedStringKey);
-        if (sharedStringHandle === undefined) {
-            throw new Error("Missing shared string");
+        for (const [id, itemData] of this.root) {
+            const [nameSharedString, quantitySharedCell] = await Promise.all([
+                itemData.name.get(),
+                itemData.quantity.get(),
+            ]);
+            this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
         }
-        this._sharedString = await sharedStringHandle.get();
     }
 }
 
@@ -78,6 +145,9 @@ export const InventoryListInstantiationFactory = new DataObjectFactory<Inventory
 (
     "dice-roller",
     InventoryList,
-    [SharedString.getFactory()],
+    [
+        SharedCell.getFactory(),
+        SharedString.getFactory(),
+    ],
     {},
 );
