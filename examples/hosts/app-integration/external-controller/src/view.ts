@@ -57,7 +57,7 @@ export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
     const onAudienceChanged = () => {
         const members = audience.getMembers();
         const self = audience.getMyself();
-        const memberNames: string[] = [];
+        const memberStrings: string[] = [];
         const useFrs = process.env.FLUID_CLIENT === "frs";
 
         members.forEach((member: FrsMember<ICustomUserDetails>) => {
@@ -65,15 +65,15 @@ export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
                 if (useFrs) {
                     const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},
                         Email: ${member.additionalDetails?.email}}`;
-                    memberNames.push(memberString);
+                    memberStrings.push(memberString);
                 } else {
-                    memberNames.push(member.userName);
+                    memberStrings.push(member.userName);
                 }
             }
         });
         audienceDiv.innerHTML = `
             Current User: ${self?.userName} <br />
-            Other Users: ${memberNames.join(", ")}
+            Other Users: ${memberStrings.join(", ")}
         `;
     };
 
