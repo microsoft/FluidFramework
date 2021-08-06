@@ -45,7 +45,7 @@ export enum FlushMode {
     /**
      * In immediate flush mode the runtime will immediately send all operations to the driver layer.
      */
-     Immediate,
+    Immediate,
 
     /**
      * When in manual flush mode the runtime will buffer operations in the current turn and send them as a single
