@@ -16,7 +16,7 @@ import { IsoBuffer } from "./bufferNode";
  * using the node implementation.
  *
  * @param file - The contents of the file in a buffer
- *  * @param algorithm - The hash algorithm to use, artificially constrained by what is used internally
+ * @param algorithm - The hash algorithm to use, artificially constrained by what is used internally
  * @param hashEncoding - The encoding of the returned hash, also artificially constrained
  * @returns The hash of the content of the buffer
  */
