@@ -19,10 +19,7 @@ export interface ICustomUserDetails {
     email?: string;
 }
 
-const userDetails: ICustomUserDetails = {
-    gender: "female",
-    email: "sdeshpande@Microsoft.com",
-};
+const userDetails: ICustomUserDetails = {};
 
 // Define the server we will be using and initialize Fluid
 const useFrs = process.env.FLUID_CLIENT === "frs";
@@ -36,10 +33,10 @@ const frsAzUser = {
 };
 
 const connectionConfig: FrsConnectionConfig = useFrs ? {
-    tenantId: "frs-client-tenant",
-    tokenProvider: new FrsAzFunctionTokenProvider("https://sonaliazfunc.azurewebsites.net/api/GetFrsToken", frsAzUser),
-    orderer: "https://alfred.eus-1.canary.frs.azure.com",
-    storage: "https://historian.eus-1.canary.frs.azure.com",
+    tenantId: "",
+    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzUser),
+    orderer: "",
+    storage: "",
 } : {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", user),
