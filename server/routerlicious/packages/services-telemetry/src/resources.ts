@@ -32,6 +32,9 @@ export enum QueuedMessageProperties {
 }
 
 export enum CommonProperties {
+    // Session properties
+    sessionEndReason = "sessionEndReason",
+
     // Post checkpoint properties
     clientCount = "clientCount",
     minSequenceNumber = "minSequenceNumber",

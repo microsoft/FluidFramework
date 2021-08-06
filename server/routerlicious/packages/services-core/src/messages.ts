@@ -154,11 +154,15 @@ export enum ControlMessageType {
 
     // Instruction sent to control if deli nacks messages
     NackMessages = "nackMessages",
+
+    // Instruction sent to indicate that the lambda started
+    LambdaStartResult = "lambdaStartResult",
 }
 
 export interface IUpdateDSNControlMessageContents {
     durableSequenceNumber: number;
     clearCache: boolean;
+    isClientSummary: boolean;
 }
 
 export interface INackMessagesControlMessageContents {
@@ -177,4 +181,8 @@ export interface INackMessagesControlMessageContents {
      * Controls if system messages should be nacked
      */
     allowSystemMessages?: boolean;
+}
+
+export interface ILambdaStartControlMessageContents {
+    success: boolean;
 }

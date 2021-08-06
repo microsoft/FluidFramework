@@ -37,9 +37,11 @@ import {
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
+    ILambdaStartControlMessageContents,
     IQueuedMessage,
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -128,6 +130,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     // when set, messages will be nacked based on the provided info
     private nackMessages: INackMessagesControlMessageContents | undefined;
+
+    // Session level properties
+    private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -306,11 +311,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             }
         }
 
-        lumberJackMetric?.success(`Message processed successfully 
-            at seq no ${checkpoint.deliState.sequenceNumber}`);
+        // lumberJackMetric?.success(`Message processed successfully at seq no ${checkpoint.deliState.sequenceNumber}`);
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         this.checkpointContext.close();
 
         this.clearActivityIdleTimer();
@@ -320,6 +324,22 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.clearOpMaxTimeTimer();
 
         this.removeAllListeners();
+
+        this.logSessionMetrics(closeType);
+    }
+
+    private logSessionMetrics(closeType: LambdaCloseType) {
+        // Todo: Handle the rebalance case
+        // If closeType is Rebalance, the session is still ongoing
+        if (!(closeType === LambdaCloseType.Rebalance)) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
+        }
+
+        if (closeType === LambdaCloseType.ActivityTimeout) {
+            this.sessionMetric?.success("Session terminated due to inactivity");
+        } else if (closeType === LambdaCloseType.Stop || closeType === LambdaCloseType.Error) {
+            this.sessionMetric?.error("Session terminated due to error");
+        }
     }
 
     private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
@@ -580,6 +600,17 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 case ControlMessageType.NackMessages: {
                     this.nackMessages = controlMessage.contents;
                     break;
+                }
+
+                case ControlMessageType.LambdaStartResult: {
+                    const controlContents = controlMessage.contents as ILambdaStartControlMessageContents;
+                    if (controlContents.success) {
+                        this.sessionMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+                            Lumberjack.newLumberMetric(LumberEventName.SessionResult) : undefined;
+                    } else {
+                        this.context.log?.error("Session creation failed");
+                        // updateSessionState
+                    }
                 }
 
                 default:
