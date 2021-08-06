@@ -518,11 +518,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        {
-            summaryOptions = { generateSummaries: true },
-            gcOptions = {},
-            loadSequenceNumberVerification = "close",
-        }: IContainerRuntimeOptions = {},
+        runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
@@ -533,6 +529,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 runtimeVersion: pkgVersion,
             },
         });
+
+        const {
+            summaryOptions = { generateSummaries: true },
+            gcOptions = {},
+            loadSequenceNumberVerification = "close",
+        } = runtimeOptions;
 
         // We pack at data store level only. If isolated channels are disabled,
         // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
