@@ -133,13 +133,13 @@ describe("OdspErrorUtils", () => {
         });
         it("enriched with facetCodes", () => {
             const error = new GenericNetworkError("Some message", false) as GenericNetworkError & IFacetCodes;
-            enrichOdspError(error, undefined /* response */, '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }' /* responseText */);
+            const responseText = '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }';
+            enrichOdspError(error, undefined /* response */, responseText);
 
             assert.deepStrictEqual(error.facetCodes, ["bar", "foo"]);
             assert(isILoggingError(error));
-            assert.equal(error.getTelemetryProperties().odspResponseErrorMessage, "hello");
-            assert.equal(error.getTelemetryProperties().odspResponseInnermostFacet, "bar");
-            assert.equal(error.getTelemetryProperties().odspResponseErrorFacets, "bar << foo");
+            assert.equal(error.getTelemetryProperties().response, responseText);
+            assert.equal(error.getTelemetryProperties().innerMostErrorCode, "bar");
         });
         it("enriched with response data", () => {
             const mockHeaders = {
@@ -151,9 +151,10 @@ describe("OdspErrorUtils", () => {
                 },
             };
             const error = new GenericNetworkError("Some message", false);
-            enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "responseText");
+            enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "non-standard response text");
 
             assert(isILoggingError(error));
+            assert.equal(error.getTelemetryProperties().response, undefined, "If response text is not standard don't log it");
             assert.equal(error.getTelemetryProperties().responseType, "fooType");
             assert.equal(error.getTelemetryProperties().sprequestguid, "mock header sprequestguid");
             assert.equal(error.getTelemetryProperties().requestId, "mock header request-id");

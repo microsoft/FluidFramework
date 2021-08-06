@@ -198,13 +198,13 @@ export function enrichOdspError(
 
     const parseResult = tryParseErrorResponse(responseText);
     if (parseResult.success) {
-        const errorResponse = parseResult.errorResponse;
-        props.odspResponseErrorMessage = errorResponse.error.message;
+        // Log the whole response if it looks like the error format we expect
+        props.response = responseText;
 
+        const errorResponse = parseResult.errorResponse;
         const facetCodes = parseFacetCodes(errorResponse);
         if (facetCodes !== undefined) {
-            props.odspResponseErrorFacets = facetCodes.join(" << ");
-            props.odspResponseInnermostFacet = facetCodes[0];
+            props.innerMostErrorCode = facetCodes[0];
             error.facetCodes = facetCodes;
         }
     }
