@@ -705,6 +705,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+    private _orderSequentiallyCalls: number = 0;
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
     private flushTrigger = false;
@@ -1416,6 +1417,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public flush(): void {
+        assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
+
         if (!this.deltaSender) {
             debug("DeltaManager does not yet support flush modes");
             return;
@@ -1443,18 +1446,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
+            this.trackOrderSequentiallyCalls(callback);
+            return;
+        }
+
+        const savedFlushMode = this.flushMode;
+        this.setFlushMode(FlushMode.Manual);
+
+        try {
+            this.trackOrderSequentiallyCalls(callback);
+        } finally {
+            this.flush();
+            this.setFlushMode(savedFlushMode);
+        }
+    }
+
+    private trackOrderSequentiallyCalls(callback: () => void): void {
+        try {
+            this._orderSequentiallyCalls++;
             callback();
-        } else {
-            const savedFlushMode = this.flushMode;
-
-            this.setFlushMode(FlushMode.Manual);
-
-            try {
-                callback();
-            } finally {
-                this.flush();
-                this.setFlushMode(savedFlushMode);
-            }
+        } finally {
+            this._orderSequentiallyCalls--;
         }
     }
 
