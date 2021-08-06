@@ -74,7 +74,7 @@ export class TestHistorian implements IHistorian {
 
     public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
         const _id = await gitHashFile(IsoBuffer.from(blob.content, blob.encoding));
-        await this.blobs.insertOne({
+        await this.blobs.findOrCreate({ _id }, {
             _id,
             ...blob,
             value: blob,

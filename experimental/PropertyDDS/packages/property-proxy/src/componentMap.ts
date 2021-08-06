@@ -3,28 +3,31 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable no-param-reassign */
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
+import {
+    PropertyFactory, BaseProperty,
+    MapProperty, ReferenceMapProperty,
+} from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
-import { Utilities } from './utilities';
+import { PropertyProxy } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
+import { forceType, Utilities } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.
- * @param {ComponentMap} target The {@link ComponentMap} that holds a reference
+ * @param target The {@link ComponentMap} that holds a reference
  * to the {@link external:MapProperty MapProperty}.
- * @return {Iterator} An iterator.
+ * @return An iterator.
  * @hidden
  */
-const createMapIterator = (target) => function*() {
+const createMapIterator = (target: ComponentMap) => function*(): Generator<[any, any]> {
     const property = target.getProperty();
     const keys = property.getIds();
-    for (let i = 0; i < keys.length; i++) {
-        const propertyAtKey = property.get(keys[i]);
-        if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
-            yield [keys[i], PropertyProxy.proxify(propertyAtKey)];
+    for (const key of keys) {
+        const propertyAtKey = property.get(key);
+        if (propertyAtKey && PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
+            yield [key, PropertyProxy.proxify(propertyAtKey)];
         } else {
-            yield [keys[i], propertyAtKey];
+            yield [key, propertyAtKey];
         }
     }
 };
@@ -36,20 +39,23 @@ const createMapIterator = (target) => function*() {
  * @hidden
  */
 class ComponentMap extends Map {
+    // workaround, necessary for typescript to handle Object.defineProperty
+    // https://github.com/microsoft/TypeScript/issues/28694
+    private readonly property!: MapProperty;
     /**
      * Sets the {@link external:MapProperty MapProperty} to operate on sets the Symbol.iterator attribute.
-     * @param {external:MapProperty} property The {@link external:MapProperty MapProperty} to operate on.
+     * @param property The {@link external:MapProperty MapProperty} to operate on.
      */
-    constructor(property) {
+    constructor(property: MapProperty) {
         super();
-        Object.defineProperty(this, 'property', { enumerable: false, value: property });
+        Object.defineProperty(this, "property", { enumerable: false, value: property });
         this[Symbol.iterator] = createMapIterator(this);
     }
 
     /**
      * Retrieves the length of the array returned by {@link external:MapProperty#getIds} to infer
      * the size (number of entries).
-     * @return {Number} The size of the {@link external:MapProperty MapProperty}.
+     * @return The size of the {@link external:MapProperty MapProperty}.
      */
     get size() {
         return this.property.getIds().length;
@@ -57,7 +63,7 @@ class ComponentMap extends Map {
 
     /**
      * Returns the wrapped {@link external:MapProperty MapProperty} property.
-     * @return {external:MapProperty} The wrapped {@link external:MapProperty MapProperty}.
+     * @return The wrapped {@link external:MapProperty MapProperty}.
      */
     getProperty() {
         return this.property;
@@ -76,7 +82,7 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    delete(key) {
+    delete(key: string) {
         if (this.property.has(key)) {
             this.property.remove(key);
             return true;
@@ -95,7 +101,7 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    get(key) {
+    get(key: string) {
         if (String(key) !== key) {
             return undefined;
         }
@@ -111,13 +117,13 @@ class ComponentMap extends Map {
         }
 
         if (this.property.has(key)) {
-            const isReferenceMap = PropertyFactory.instanceOf(this.property, 'Reference', 'map');
+            const isReferenceMap = PropertyFactory.instanceOf(this.property, "Reference", "map");
             if (isReferenceMap && asteriskFound) {
                 return this.property.getValue(key);
             } else {
                 if (asteriskFound) {
                     return PropertyProxy.proxify(this.property.get(key,
-                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS }));
+                        { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
                 } else {
                     return Utilities.proxifyInternal(this.property, key, caretFound, isReferenceMap);
                 }
@@ -130,21 +136,22 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    forEach(func) {
+    forEach(func: (value, key, map) => void) {
         const keys = this.property.getIds();
-        for (let i = 0; i < keys.length; i++) {
-            let value = this.property.get(keys[i]);
-            if (PropertyFactory.instanceOf(value, 'BaseProperty')) {
-                value = PropertyProxy.proxify(value);
+        for (const key of keys) {
+            const value = this.property.get(key)!;
+            if (PropertyFactory.instanceOf(value, "BaseProperty")) {
+                func(PropertyProxy.proxify(value), key, this);
+            } else {
+                func(value, key, this);
             }
-            func(value, keys[i], this);
         }
     }
 
     /**
      * @inheritdoc
      */
-    has(key) {
+    has(key: string) {
         return this.property.has(key);
     }
 
@@ -154,8 +161,8 @@ class ComponentMap extends Map {
     keys() {
         const keys = this.property.getIds();
         const keyIterator = function*() {
-            for (let i = 0; i < keys.length; i++) {
-                yield keys[i];
+            for (const key of keys) {
+                yield key;
             }
         };
         return keyIterator();
@@ -164,8 +171,8 @@ class ComponentMap extends Map {
     /**
      * @inheritdoc
      */
-    set(key, value) {
-        if (typeof key !== 'string') {
+    set(key: string, value: any) {
+        if (typeof key !== "string") {
             throw new Error(PropertyProxyErrors.ONLY_STRING_KEYS);
         }
 
@@ -175,10 +182,11 @@ class ComponentMap extends Map {
         }
 
         if (this.property.has(key)) {
-            if (!asteriskFound && PropertyFactory.instanceOf(this.property, 'Reference', 'map')) {
+            if (!asteriskFound && PropertyFactory.instanceOf(this.property, "Reference", "map")
+                && forceType<ReferenceMapProperty>(this.property)) {
                 Utilities.setValueOfReferencedProperty(this.property, key, value);
             } else {
-                if (asteriskFound && !PropertyFactory.instanceOf(this.property, 'Reference', 'map')) {
+                if (asteriskFound && !PropertyFactory.instanceOf(this.property, "Reference", "map")) {
                     throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
                 }
                 this.property.set(key, Utilities.prepareElementForInsertion(this.property, value));
@@ -186,7 +194,6 @@ class ComponentMap extends Map {
         } else {
             this.property.insert(key, Utilities.prepareElementForInsertion(this.property, value));
         }
-
         return this;
     }
 
@@ -195,10 +202,10 @@ class ComponentMap extends Map {
      */
     values() {
         const keys = this.property.getIds();
-        const valuesIterator = function*() {
-            for (let i = 0; i < keys.length; i++) {
-                const propertyAtKey = this.property.get(keys[i]);
-                if (PropertyFactory.instanceOf(propertyAtKey, 'BaseProperty')) {
+        const valuesIterator = function*(this: ComponentMap) {
+            for (const key of keys) {
+                const propertyAtKey = this.property.get(key)!;
+                if (PropertyFactory.instanceOf(propertyAtKey, "BaseProperty")) {
                     yield PropertyProxy.proxify(propertyAtKey);
                 } else {
                     yield propertyAtKey;

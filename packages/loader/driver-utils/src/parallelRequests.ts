@@ -2,16 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred, performance } from "@fluidframework/common-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent} from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
-import { waitForConnectedState } from "./networkUtils";
+import { waitForConnectedState, logNetworkFailure } from "./networkUtils";
 
 const MaxFetchDelayInMs = 10000;
 const MissingFetchDelayInMs = 100;
+
+type WorkingState = "working" | "done" | "canceled";
 
 /**
  * Helper class to organize parallel fetching of data
@@ -29,11 +31,14 @@ export class ParallelRequests<T> {
     private latestRequested: number;
     private nextToDeliver: number;
     private readonly results: Map<number, T[]> = new Map();
-    private working = true;
+    private workingState: WorkingState = "working";
     private requestsInFlight = 0;
     private readonly endEvent = new Deferred<void>();
     private requests = 0;
     private readonly knewTo: boolean;
+
+    private get working() { return this.workingState === "working"; }
+    public get canceled() { return this.workingState === "canceled"; }
 
     constructor(
         from: number,
@@ -54,8 +59,11 @@ export class ParallelRequests<T> {
     }
 
     public cancel() {
-        this.working = false;
-        this.endEvent.resolve();
+        if (this.working) {
+            this.workingState = "canceled";
+            this.logger.sendTelemetryEvent({ eventName: "GetDeltas_cancel" });
+            this.endEvent.resolve();
+        }
     }
 
     public async run(concurrency: number) {
@@ -75,13 +83,17 @@ export class ParallelRequests<T> {
         // We should satisfy request fully.
         assert(this.to !== undefined, 0x104 /* "undefined end point for parallel fetch" */);
         assert(this.nextToDeliver >= this.to, 0x105 /* "unexpected end point for parallel fetch" */);
-        this.working = false;
-        this.endEvent.resolve();
+        if (this.working) {
+            this.workingState = "done";
+            this.endEvent.resolve();
+        }
     }
 
     private fail(error) {
-        this.working = false;
-        this.endEvent.reject(error);
+        if (this.working) {
+            this.workingState = "done";
+            this.endEvent.reject(error);
+        }
     }
 
     private dispatch() {
@@ -348,6 +360,7 @@ async function getSingleOpBatch(
     get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
     props: ITelemetryProperties,
     strongTo: boolean,
+    logger: ITelemetryLogger,
     signal?: AbortSignal):
         Promise<{ partial: boolean, cancel: boolean, payload: ISequencedDocumentMessage[] }>
 {
@@ -360,11 +373,10 @@ async function getSingleOpBatch(
     while (signal?.aborted !== true) {
         retry++;
         let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
-        let canRetry = false;
+        const startTime = performance.now();
 
         try {
             // Issue async request for deltas - limit the number fetched to MaxBatchDeltas
-            canRetry = true;
             const deltasP = get({ ...props, retry } /* telemetry props */);
 
             const { messages, partialResult } = await deltasP;
@@ -381,8 +393,8 @@ async function getSingleOpBatch(
             // count since something prevented us from seeing those deltas
 
             if (lastSuccessTime === undefined) {
-                lastSuccessTime = Date.now();
-            } else if (Date.now() - lastSuccessTime > 30000) {
+                lastSuccessTime = performance.now();
+            } else if (performance.now() - lastSuccessTime > 30000) {
                 // If we are connected and receiving proper responses from server, but can't get any ops back,
                 // then give up after some time. This likely indicates the issue with ordering service not flushing
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
@@ -398,26 +410,27 @@ async function getSingleOpBatch(
                 );
             }
         } catch (error) {
-            canRetry = canRetry && canRetryOnError(error);
+            const canRetry = canRetryOnError(error);
 
             lastSuccessTime = undefined;
 
-            /*
+            const retryAfter = getRetryDelayFromError(error);
+
             logNetworkFailure(
-                this.logger,
+                logger,
                 {
                     eventName: "GetDeltas_Error",
                     ...props,
                     retry,
+                    duration: performance.now() - startTime,
+                    retryAfter,
                 },
                 error);
-                */
 
             if (!canRetry) {
                 // It's game over scenario.
                 throw error;
             }
-            const retryAfter = getRetryDelayFromError(error);
 
             if (retryAfter !== undefined && retryAfter >= 0) {
                 delay = retryAfter;
@@ -450,7 +463,7 @@ export function requestOps(
     };
 
     const telemetryEvent = PerformanceEvent.start(logger, {
-        eventName: `GetDeltas`,
+        eventName: "GetDeltas",
         ...propsTotal,
     });
 
@@ -465,6 +478,7 @@ export function requestOps(
                 async (propsAll) => get(from, to, propsAll),
                 { request, from, to, ...propsTotal, ...propsPerRequest },
                 strongTo,
+                logger,
                 signal,
             );
         },
@@ -474,13 +488,31 @@ export function requestOps(
             queue.pushValue(deltas);
         });
 
+    // Implement faster cancellation. getSingleOpBatch() checks signal, but only in between
+    // waits (up to 10 seconds) and fetches (can take infinite amount of time).
+    // While every such case should be improved and take into account signal (and thus cancel immediately),
+    // it is beneficial to have catch-all
+    const listener = (event: Event) => { manager.cancel(); };
+    if (signal !== undefined) {
+        signal.addEventListener("abort", listener);
+    }
+
     manager.run(concurrency)
-        .then(() => {
-            telemetryEvent.end({
+        .finally(() => {
+            if (signal !== undefined) {
+                signal.removeEventListener("abort", listener);
+            }
+        }).then(() => {
+            const props = {
                 lastFetch,
                 deltasRetrievedTotal,
                 requests,
-            });
+            };
+            if (manager.canceled) {
+                telemetryEvent.cancel(props);
+            } else {
+                telemetryEvent.end(props);
+            }
             queue.pushDone();
         })
         .catch((error) => {

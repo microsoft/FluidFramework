@@ -34,6 +34,7 @@
     "@fluidframework/driver-definitions": "^0.39.6",
     "@fluidframework/driver-utils": "^0.45.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/telemetry-utils": "^0.45.0",
     "debug": "^4.1.1"
   },
   "devDependencies": {

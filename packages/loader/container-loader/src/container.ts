@@ -36,6 +36,7 @@ import {
     CreateContainerError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    UsageError,
  } from "@fluidframework/container-utils";
 import {
     IDocumentService,
@@ -54,7 +55,6 @@ import {
 import {
     isSystemMessage,
     ProtocolOpHandler,
-    QuorumProxy,
 } from "@fluidframework/protocol-base";
 import {
     FileMode,
@@ -103,6 +103,7 @@ import { RetriableDocumentStorageService } from "./retriableDocumentStorageServi
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
+import { QuorumProxy } from "./quorum";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -127,13 +128,6 @@ export interface IContainerLoadOptions {
      * Loads the Container in paused state if true, unpaused otherwise.
      */
     loadMode?: IContainerLoadMode;
-    /**
-     * Create the container on load, without an existing snapshot.
-     * Used only for supporting legacy scenarios.
-     *
-     * @deprecated - avoid using this flow, this property is only for temporarily supporting a legacy scenario.
-     */
-    createOnLoad?: boolean;
 }
 
 export interface IContainerConfig {
@@ -326,7 +320,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 };
                 container.on("closed", onClosed);
 
-                container.load(version, mode, pendingLocalState, loadOptions.createOnLoad)
+                container.load(version, mode, pendingLocalState)
                     .finally(() => {
                         container.removeListener("closed", onClosed);
                     })
@@ -630,6 +624,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+                triggerConnectionRecovery: (reason: string) => {
+                    // We get here when socket does not receive any ops on "write" connection, including
+                    // its own join op. Attempt recovery option.
+                    this._deltaManager.triggerConnectionRecovery(
+                        reason,
+                        {
+                            duration: performance.now() - this.connectionTransitionTimes[this.connectionState],
+                        },
+                    );
+                },
             },
             this.logger,
         );
@@ -789,8 +793,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        assert(this.loaded, 0x0d4 /* "not loaded" */);
-        assert(!this.closed, 0x0d5 /* "closed" */);
+        if (!this.loaded) {
+            throw new UsageError("containerMustBeLoadedBeforeAttaching");
+        }
+
+        if (this.closed) {
+            throw new UsageError("cannotAttachClosedContainer");
+        }
 
         // If container is already attached or attach is in progress, throw an error.
         assert(this._attachState === AttachState.Detached && !this.attachStarted,
@@ -1127,14 +1136,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * @param specifiedVersion - one of the following
      *   - undefined - fetch latest snapshot
      *   - otherwise, version sha to load snapshot
-     * @param createIfNotExisting - create the container when there is no container to load.
-     *        Avoid using this flag, its goal is temporarily supporting a legacy scenario.
      */
     private async load(
         specifiedVersion: string | undefined,
         loadMode: IContainerLoadMode,
         pendingLocalState?: unknown,
-        createIfNotExisting?: boolean,
     ) {
         if (this._resolvedUrl === undefined) {
             throw new Error("Attempting to load without a resolved url");
@@ -1166,6 +1172,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Fetch specified snapshot.
         const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
+        assert(snapshot !== undefined, "Snapshot should exist");
 
         const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 
@@ -1181,50 +1188,34 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
         // the initial details
-        let existing = true;
-        if (snapshot !== undefined) {
-            switch (loadMode.opsBeforeReturn) {
-                case undefined:
-                    if (loadMode.deltaConnection !== "none") {
-                        // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        this._deltaManager.preFetchOps(false);
-                    }
-                    break;
-                case "cached":
-                    opsBeforeReturnP = this._deltaManager.preFetchOps(true);
-                    // Keep going with fetching ops from storage once we have all cached ops in.
-                    // Ops processing will start once cached ops are in and and will stop when queue is empty
-                    // (which in most cases will happen when we are done processing cached ops)
+        switch (loadMode.opsBeforeReturn) {
+            case undefined:
+                if (loadMode.deltaConnection !== "none") {
+                    // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false));
-                    break;
-                case "all":
-                    opsBeforeReturnP = this._deltaManager.preFetchOps(false);
-                    break;
-                default:
-                    unreachableCase(loadMode.opsBeforeReturn);
-            }
-        } else {
-            //
-            // THIS IS LEGACY PATH
-            // The code is maintained for the snapshot back compat tests
-            //
-            assert(createIfNotExisting === true, 0x1fb /* "Snapshot should already exist" */);
-
-            if (startConnectionP === undefined) {
-                startConnectionP = this.connectToDeltaStream(connectionArgs);
-            }
-            // Intentionally don't .catch on this promise - we'll let any error throw below in the await.
-            const details = await startConnectionP;
-            existing = details.existing;
+                    this._deltaManager.preFetchOps(false);
+                }
+                break;
+            case "cached":
+                opsBeforeReturnP = this._deltaManager.preFetchOps(true);
+                // Keep going with fetching ops from storage once we have all cached ops in.
+                // Ops processing will start once cached ops are in and and will stop when queue is empty
+                // (which in most cases will happen when we are done processing cached ops)
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false));
+                break;
+            case "all":
+                opsBeforeReturnP = this._deltaManager.preFetchOps(false);
+                break;
+            default:
+                unreachableCase(loadMode.opsBeforeReturn);
         }
 
         this._protocolHandler = await protocolHandlerP;
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
-            existing,
+            true, // existing
             codeDetails,
             snapshot,
             pendingLocalState,

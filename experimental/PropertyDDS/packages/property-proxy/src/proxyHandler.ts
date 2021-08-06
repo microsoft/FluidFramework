@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable no-param-reassign */
-import { PropertyFactory, BaseProperty } from "@fluid-experimental/property-properties"
+import {
+    PropertyFactory, BaseProperty,
+    ContainerProperty, NodeProperty,
+} from "@fluid-experimental/property-properties";
 
-import { PropertyProxy, proxySymbol } from './propertyProxy';
-import { PropertyProxyErrors } from './errors';
-import { Utilities } from './utilities';
+import { PropertyProxy, proxySymbol } from "./propertyProxy";
+import { PropertyProxyErrors } from "./errors";
+import { Utilities, forceType } from "./utilities";
+import { ProxyType, ReferenceType } from "./interfaces";
 
 /**
  * The additional proxy handlers for non-collection type properties.
@@ -16,12 +20,12 @@ import { Utilities } from './utilities';
 export const proxyHandler = {
     /**
      * The get trap that handles access to properties
-     * @param {Object} target The Object that references a non-collection type
+     * @param target The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param {String} key The name of the property that is to be accessed.
+     * @param key The name of the property that is to be accessed.
      * @return {Object | external:BaseProperty} The accessed primitive or Property.
      */
-    get(target, key) {
+    get(target: ProxyType<ContainerProperty>, key: string) {
         let asteriskFound = false;
         let caretFound = false;
         if (!(target.getProperty().has(key))) {
@@ -34,9 +38,10 @@ export const proxyHandler = {
 
         if (target.getProperty().has(key)) {
             // Recursion with proxies
+
             if (asteriskFound) {
                 return PropertyProxy.proxify(target.getProperty().get(key,
-                    { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS }));
+                    { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NO_LEAFS })!);
             } else {
                 return Utilities.proxifyInternal(target.getProperty(), key, caretFound);
             }
@@ -48,13 +53,14 @@ export const proxyHandler = {
      * The set trap that handles assigning of values to properties. In case the underlying
      * {@link external:BaseProperty BaseProperty} is a {@link external:NodeProperty NodeProperty}
      * and the key does not yet exist an insertion happens.
-     * @param {Object} target The Object that references a non-collection type
+     * @param target The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param {String} key The name of the property something is assigned to.
-     * @param {Object} value The value to be assigned.
-     * @return {Boolean} True on success.
+     * @param key The name of the property something is assigned to.
+     * @param value The value to be assigned.
+     * @return True on success.
      */
-    set(target, key, value) {
+    set(target: ProxyType<ContainerProperty | NodeProperty>
+        , key: string, value: any) {
         const asteriskFound = Utilities.containsAsterisk(key);
         if (asteriskFound) {
             key = key.slice(0, -1);
@@ -64,9 +70,9 @@ export const proxyHandler = {
             // Reference properties
             const property = target.getProperty();
             let propertyAtKey = property.get(key,
-                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-            const isReferenceProperty = PropertyFactory.instanceOf(propertyAtKey, 'Reference');
-            if (!asteriskFound && isReferenceProperty) {
+                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })!;
+            const isReferenceProperty = PropertyFactory.instanceOf(propertyAtKey, "Reference");
+            if (!asteriskFound && isReferenceProperty && forceType<ReferenceType>(propertyAtKey)) {
                 Utilities.setValueOfReferencedProperty(propertyAtKey, undefined, value);
             } else {
                 if (asteriskFound) {
@@ -74,14 +80,14 @@ export const proxyHandler = {
                         throw new Error(PropertyProxyErrors.NON_REFERENCE_ASSIGN);
                     }
                 } else {
-                    propertyAtKey = property.get(key);
+                    propertyAtKey = property.get(key)!;
                 }
                 Utilities.assign(propertyAtKey, value);
             }
             return true;
         } else {
             const property = target.getProperty();
-            if (property.isDynamic()) {
+            if (property.isDynamic() && forceType<NodeProperty>(property)) {
                 property.insert(key, Utilities.prepareElementForInsertion(property, value));
                 return true;
             } else {
@@ -92,14 +98,14 @@ export const proxyHandler = {
 
     /**
      * Traps the `delete`operator and removes the targeted property from the workspace.
-     * @param {Object} target The Object that references a non-collection type
+     * @param target The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param {String} key The name of the property to be deleted.
+     * @param key The name of the property to be deleted.
      * @return {Boolean} Returns `true`on successful removal.
      */
-    deleteProperty(target, key) {
+    deleteProperty(target: ProxyType<ContainerProperty | NodeProperty>, key: string) {
         const property = target.getProperty();
-        if (property.isDynamic() && property.has(key)) {
+        if (property.isDynamic() && property.has(key) && forceType<NodeProperty>(property)) {
             property.remove(key);
             return true;
         } else {
@@ -110,13 +116,13 @@ export const proxyHandler = {
     /**
      * Trap for Object.getOwnPropertyDescriptor().
      * Returns a writeable and enumerable descriptor. Required for the ownKeys trap.
-     * @param {Object} target The Object that references a non-collection type
+     * @param target The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param {String} key The name of the property.
-     * @return {Object} The Descriptor
+     * @param key The name of the property.
+     * @return The Descriptor
      */
-    getOwnPropertyDescriptor(target, key) {
-        if (Reflect.has(target.getProperty().getEntriesReadOnly(), key)) {
+    getOwnPropertyDescriptor(target: ProxyType<ContainerProperty>, key: string | typeof proxySymbol) {
+        if (Reflect.has(target.getProperty().getEntriesReadOnly(), key) && forceType<string>(key)) {
             return {
                 configurable: true,
                 enumerable: true,
@@ -132,20 +138,21 @@ export const proxyHandler = {
 
     /**
      * Trap for the `in` operator.
-     * @param {Object} target The Object that references a non-collection type
+     * @param target The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param {String} key The name of the property.
-     * @return {Boolean} true if `key` is a child of the property.
+     * @param key The name of the property.
+     * @return true if `key` is a child of the property.
      */
-    has: (target, key) => Reflect.has(target.getProperty().getEntriesReadOnly(), key) || key === proxySymbol,
+    has: (target: ProxyType<ContainerProperty>, key: string | typeof proxySymbol) =>
+        Reflect.has(target.getProperty().getEntriesReadOnly(), key) || key === proxySymbol,
 
     /**
      * Trap for the Object.keys().
      * Returns the Ids of the ArrayProperty as an array.
-     * @param {Object} target The Object that references a non-collection type
+     * @param target The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty}
      * the Proxy handles.
-     * @return {Array} The array containing the IDs of the {@link external:BaseProperty BaseProperty}.
+     * @return The array containing the IDs of the {@link external:BaseProperty BaseProperty}.
      */
-    ownKeys: (target) => Reflect.ownKeys(target.getProperty().getEntriesReadOnly()),
+    ownKeys: (target: ProxyType<ContainerProperty>) => Reflect.ownKeys(target.getProperty().getEntriesReadOnly()),
 };
