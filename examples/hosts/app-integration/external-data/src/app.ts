@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
+import { TinyliciousService } from "@fluid-experimental/get-container";
+import { Container, Loader } from "@fluidframework/container-loader";
 
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 import { IDiceRoller } from "./dataObject";
@@ -25,12 +26,29 @@ const documentId = location.hash.substring(1);
 document.title = documentId;
 
 async function start(): Promise<void> {
-    // The getTinyliciousContainer helper function facilitates loading our container code into a Container and
-    // connecting to a locally-running test service called Tinylicious.  This will look different when moving to a
-    // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
-    // function takes the ID of the document we're creating or loading, the container code to load into it, and a
-    // flag to specify whether we're creating a new document or loading an existing one.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+    const tinyliciousService = new TinyliciousService();
+
+    const module = { fluidExport: DiceRollerContainerRuntimeFactory };
+    const codeLoader = { load: async () => module };
+
+    const loader = new Loader({
+        urlResolver: tinyliciousService.urlResolver,
+        documentServiceFactory: tinyliciousService.documentServiceFactory,
+        codeLoader,
+    });
+
+    let container: Container;
+
+    if (createNew) {
+        // We're not actually using the code proposal (our code loader always loads the same module regardless of the
+        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
+        // proposal.
+        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+        await container.attach({ url: documentId });
+    } else {
+        // Request must be appropriate and parseable by resolver.
+        container = await loader.resolve({ url: documentId });
+    }
 
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
     const url = "/";
