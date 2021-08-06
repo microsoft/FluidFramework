@@ -5,7 +5,7 @@
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 
-import { DiceRollerInstantiationFactory } from "./dataObject";
+import { InventoryListInstantiationFactory } from "./dataObject";
 
 /**
  * The DiceRollerContainerRuntimeFactory is the container code for our scenario.
@@ -18,8 +18,8 @@ import { DiceRollerInstantiationFactory } from "./dataObject";
  * Container with a URL of "/", so it can be retrieved via container.request("/").
  */
 export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory,
+    InventoryListInstantiationFactory,
     new Map([
-        DiceRollerInstantiationFactory.registryEntry,
+        InventoryListInstantiationFactory.registryEntry,
     ]),
 );

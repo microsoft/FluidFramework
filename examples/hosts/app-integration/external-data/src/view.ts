@@ -8,40 +8,20 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { IDiceRoller } from "./dataObject";
+import { IInventoryList } from "./dataObject";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.
  * @param diceRoller - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function renderDiceRoller(diceRoller: IInventoryList, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
     div.append(wrapperDiv);
 
-    const diceCharDiv = document.createElement("div");
-    diceCharDiv.style.fontSize = "200px";
-
-    const rollButton = document.createElement("button");
-    rollButton.style.fontSize = "50px";
-    rollButton.textContent = "Roll";
-    // Call the roll method to modify the shared data when the button is clicked.
-    rollButton.addEventListener("click", diceRoller.roll);
-
     const inputDiv = document.createElement("div");
     const inputComponent = React.createElement(CollaborativeInput, { sharedString: diceRoller.sharedString });
     ReactDOM.render(inputComponent, inputDiv);
-    wrapperDiv.append(diceCharDiv, rollButton, inputDiv);
-
-    // Get the current value of the shared data to update the view whenever it changes.
-    const updateDiceChar = () => {
-        // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceRoller.value);
-        diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;
-    };
-    updateDiceChar();
-
-    // Use the diceRolled event to trigger the rerender whenever the value changes.
-    diceRoller.on("diceRolled", updateDiceChar);
+    wrapperDiv.append(inputDiv);
 }

@@ -7,7 +7,8 @@ import { TinyliciousService } from "@fluid-experimental/get-container";
 import { Container, Loader } from "@fluidframework/container-loader";
 
 import { DiceRollerContainerRuntimeFactory } from "./containerCode";
-import { IDiceRoller } from "./dataObject";
+import { IInventoryList } from "./dataObject";
+import { inventoryData } from "./externalData";
 import { renderDiceRoller } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
@@ -25,6 +26,14 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
+function getExternalData() {
+    const itemStrings = inventoryData.split("\n");
+    return itemStrings.map((itemString) => {
+        const [itemNameString, itemQuantityString] = itemString.split(":");
+        return { name: itemNameString, quantity: parseInt(itemQuantityString) };
+    });
+}
+
 async function initializeFromData(container: Container) {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
     const url = "/";
@@ -38,8 +47,9 @@ async function initializeFromData(container: Container) {
     }
 
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const diceRoller: IDiceRoller = response.value;
-    diceRoller.sharedString.insertText(0, "Initial text from external data");
+    const inventoryList: IInventoryList = response.value;
+    inventoryList.sharedString.insertText(0, "Initial text from external data");
+    console.log(getExternalData());
 }
 
 async function start(): Promise<void> {
@@ -80,7 +90,7 @@ async function start(): Promise<void> {
     }
 
     // In this app, we know our container code provides a default data object that is an IDiceRoller.
-    const diceRoller: IDiceRoller = response.value;
+    const diceRoller: IInventoryList = response.value;
 
     // Given an IDiceRoller, we can render the value and provide controls for users to roll it.
     const div = document.getElementById("content") as HTMLDivElement;

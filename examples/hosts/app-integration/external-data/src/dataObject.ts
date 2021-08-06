@@ -10,28 +10,18 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
- * IDiceRoller describes the public API surface for our dice roller data object.
+ * IInventoryList describes the public API surface for our inventory list object.
  */
-export interface IDiceRoller extends EventEmitter {
+export interface IInventoryList extends EventEmitter {
     /**
      * Get a SharedString.
      */
     readonly sharedString: SharedString;
 
     /**
-     * Get the dice value as a number.
+     * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
      */
-    readonly value: number;
-
-    /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-     */
-    roll: () => void;
-
-    /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
-     */
-    on(event: "diceRolled", listener: () => void): this;
+    on(event: "listChanged", listener: () => void): this;
 }
 
 // The root is map-like, so we'll use this key for storing the value.
@@ -39,9 +29,9 @@ const diceValueKey = "diceValue";
 const sharedStringKey = "sharedString";
 
 /**
- * The DiceRoller is our data object that implements the IDiceRoller interface.
+ * The InventoryList is our data object that implements the IInventoryList interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
+export class InventoryList extends DataObject implements IInventoryList {
     private _sharedString: SharedString | undefined;
     public get sharedString() {
         if (this._sharedString === undefined) {
@@ -66,8 +56,8 @@ export class DiceRoller extends DataObject implements IDiceRoller {
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
             if (changed.key === diceValueKey) {
-                // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-                this.emit("diceRolled");
+                // When items are added or removed, we'll emit a listChanged event.
+                this.emit("listChanged");
             }
         });
 
@@ -77,26 +67,17 @@ export class DiceRoller extends DataObject implements IDiceRoller {
         }
         this._sharedString = await sharedStringHandle.get();
     }
-
-    public get value() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.root.get(diceValueKey);
-    }
-
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set(diceValueKey, rollValue);
-    };
 }
 
 /**
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
- * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
+ * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
+ * scenario, the fourth argument is not used.
  */
-export const DiceRollerInstantiationFactory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
+export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList, undefined, undefined, IEvent>
 (
     "dice-roller",
-    DiceRoller,
+    InventoryList,
     [SharedString.getFactory()],
     {},
 );
