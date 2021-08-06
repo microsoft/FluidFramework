@@ -1390,7 +1390,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public flush(): void {
         assert(
             this._orderSequentiallyCalls === 0,
-            0x234 /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
+            "Cannot call `flush()` from `orderSequentially`'s callback");
 
         if (!this.deltaSender) {
             debug("DeltaManager does not yet support flush modes");
@@ -1419,7 +1419,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
-            this.trackOrderedCalls(callback);
+            this.trackOrderSequentiallyCalls(callback);
             return;
         }
 
@@ -1427,14 +1427,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.setFlushMode(FlushMode.Manual);
 
         try {
-            this.trackOrderedCalls(callback);
+            this.trackOrderSequentiallyCalls(callback);
         } finally {
             this.flush();
             this.setFlushMode(savedFlushMode);
         }
     }
 
-    private trackOrderedCalls(callback: () => void): void {
+    private trackOrderSequentiallyCalls(callback: () => void): void {
         try {
             this._orderSequentiallyCalls++;
             callback();

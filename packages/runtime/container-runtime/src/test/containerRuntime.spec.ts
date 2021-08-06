@@ -39,11 +39,7 @@ describe("Runtime", () => {
                 });
 
                 it("Can't call flush() inside orderSequentially's callback", () => {
-                    assert.throws(
-                        () => containerRuntime.orderSequentially(() => containerRuntime.flush()),
-                        {
-                            message: "0x234",
-                        });
+                    assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
                 });
 
                 it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -51,10 +47,7 @@ describe("Runtime", () => {
                         () => containerRuntime.orderSequentially(
                             () => containerRuntime.orderSequentially(
                                 () => containerRuntime.orderSequentially(
-                                    () => containerRuntime.flush()))),
-                        {
-                            message: "0x234",
-                        });
+                                    () => containerRuntime.flush()))));
                 });
             });
         });
