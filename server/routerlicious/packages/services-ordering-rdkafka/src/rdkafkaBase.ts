@@ -36,6 +36,7 @@ export abstract class RdkafkaBase extends EventEmitter {
         }
 
         this.kafka = kafka;
+        console.log(`[KAFKA FEATURES]: ${kafka.features}`);
         this.options = {
             ...options,
             numberOfPartitions: options?.numberOfPartitions ?? 32,

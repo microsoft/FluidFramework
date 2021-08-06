@@ -24,11 +24,15 @@
     },
     "kafka": {
         "lib": {
-            "name": "kafka-node",
+            "name": "rdkafka",
             "endpoint": "kafka:9092",
             "producerPollIntervalMs": 10,
             "numberOfPartitions": 8,
-            "replicationFactor": 1
+            "replicationFactor": 1,
+            "rdkafkaOptimizedRebalance": true,
+            "rdkafkaAutomaticConsume": true,
+            "rdkafkaConsumeTimeout": 5,
+            "rdkafkaMaxConsumerCommitRetries": 10
         }
     },
     "zookeeper": {
