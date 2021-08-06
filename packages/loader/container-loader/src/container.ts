@@ -1172,7 +1172,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Fetch specified snapshot.
         const { snapshot, versionId } = await this.fetchSnapshotTree(specifiedVersion);
-        assert(snapshot !== undefined, "Snapshot should exist");
+        assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
 
         const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 

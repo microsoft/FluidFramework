@@ -45,7 +45,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { CreateContainerError } from "@fluidframework/container-utils";
+import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
@@ -114,10 +114,12 @@ import {
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
-    gcFeature,
-    IContainerRuntimeMetadata,
+    getGCVersion,
+    GCVersion,
+    ReadContainerRuntimeMetadata,
     metadataBlobName,
     wrapSummaryInChannelsTree,
+    WriteContainerRuntimeMetadata,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
@@ -256,6 +258,15 @@ export interface ISummaryRuntimeOptions {
 export interface IContainerRuntimeOptions {
     summaryOptions?: ISummaryRuntimeOptions;
     gcOptions?: IGCRuntimeOptions;
+    /**
+     * Affects the behavior while loading the runtime when the data verification check which
+     * compares the DeltaManager sequence number (obtained from protocol in summary) to the
+     * runtime sequence number (obtained from runtime metadata in summary) finds a mismatch.
+     * 1. "close" (default) will close the container with an assertion.
+     * 2. "log" will log an error event to telemetry, but still continue to load.
+     * 3. "bypass" will skip the check entirely. This is not recommended.
+     */
+    loadSequenceNumberVerification?: "close" | "log" | "bypass";
 }
 
 interface IRuntimeMessageMetadata {
@@ -474,34 +485,6 @@ export class ScheduleManager {
  */
 export const agentSchedulerId = "_scheduler";
 
-/** This is a temporary helper function for parsing runtimeOptions in the old format. */
-function getBackCompatRuntimeOptions(runtimeOptions?: IContainerRuntimeOptions): IContainerRuntimeOptions | undefined {
-    if (runtimeOptions === undefined) {
-        return runtimeOptions;
-    }
-
-    type OldContainerRuntimeOptions = Omit<IGCRuntimeOptions, "gcAllowed"> & ISummaryRuntimeOptions;
-    const oldRuntimeOptions = runtimeOptions as OldContainerRuntimeOptions;
-
-    const summaryOptions: ISummaryRuntimeOptions = runtimeOptions.summaryOptions ?? {
-        generateSummaries: oldRuntimeOptions.generateSummaries,
-        initialSummarizerDelayMs: oldRuntimeOptions.initialSummarizerDelayMs,
-        summaryConfigOverrides: oldRuntimeOptions.summaryConfigOverrides,
-        disableIsolatedChannels: oldRuntimeOptions.disableIsolatedChannels,
-    };
-    const gcOptions: IGCRuntimeOptions = runtimeOptions.gcOptions ?? {
-        disableGC: oldRuntimeOptions.disableGC,
-        runFullGC: oldRuntimeOptions.runFullGC,
-    };
-
-    const backCompatOptions: IContainerRuntimeOptions = {
-        summaryOptions,
-        gcOptions,
-    };
-
-    return backCompatOptions;
-}
-
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -535,7 +518,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        runtimeOptions?: IContainerRuntimeOptions,
+        runtimeOptions: IContainerRuntimeOptions = {},
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
@@ -547,15 +530,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         });
 
-        const backCompatRuntimeOptions = getBackCompatRuntimeOptions(runtimeOptions);
-        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
-            summaryOptions: { generateSummaries: true },
-            gcOptions: {},
-        };
-        const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...backCompatRuntimeOptions };
+        const {
+            summaryOptions = { generateSummaries: true },
+            gcOptions = {},
+            loadSequenceNumberVerification = "close",
+        } = runtimeOptions;
+
         // We pack at data store level only. If isolated channels are disabled,
         // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
-        const packingLevel = combinedRuntimeOptions.summaryOptions.disableIsolatedChannels ? 1 : 2;
+        const packingLevel = summaryOptions.disableIsolatedChannels ? 1 : 2;
 
         let storage = context.storage;
         if (context.baseSnapshot) {
@@ -593,9 +576,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
-        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
+        const metadata = await tryFetchBlob<ReadContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
+
+        // Verify summary runtime sequence number matches protocol sequence number.
+        const runtimeSequenceNumber = metadata?.sequenceNumber;
+        if (runtimeSequenceNumber !== undefined) {
+            const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
+            // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
+            if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
+                const error = new DataCorruptionError(
+                    "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber",
+                    { runtimeSequenceNumber, protocolSequenceNumber },
+                );
+
+                if (loadSequenceNumberVerification === "log") {
+                    logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
+                } else {
+                    context.closeFn(error);
+                }
+            }
+        }
 
         const runtime = new ContainerRuntime(
             context,
@@ -603,7 +605,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
             electedSummarizerData,
             chunks,
-            combinedRuntimeOptions,
+            {
+                summaryOptions,
+                gcOptions,
+                loadSequenceNumberVerification,
+            },
             containerScope,
             logger,
             loadExisting,
@@ -699,6 +705,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+    private _orderSequentiallyCalls: number = 0;
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
     private flushTrigger = false;
@@ -745,7 +752,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
     // This is the version of GC data in the latest successful summary this client has seen.
-    private summaryGCVersion: Required<IContainerRuntimeMetadata>["gcFeature"];
+    private summaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -769,7 +776,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
-        metadata: IContainerRuntimeMetadata | undefined,
+        metadata: ReadContainerRuntimeMetadata,
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
@@ -786,7 +793,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           * For existing documents, we get this value from the metadata blob.
           * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
           */
-        const prevSummaryGCVersion = existing ? gcFeature(metadata) : undefined;
+        const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
         // Default to false for now.
         this.summaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
@@ -1123,11 +1130,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return !this.disableIsolatedChannels || this.gcEnabled;
     }
 
-    private formMetadata(): IContainerRuntimeMetadata {
+    private formMetadata(): WriteContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for nown
+            gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for now
+            sequenceNumber: this.deltaManager.lastSequenceNumber,
         };
     }
 
@@ -1409,6 +1417,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public flush(): void {
+        assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
+
         if (!this.deltaSender) {
             debug("DeltaManager does not yet support flush modes");
             return;
@@ -1436,18 +1446,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
+            this.trackOrderSequentiallyCalls(callback);
+            return;
+        }
+
+        const savedFlushMode = this.flushMode;
+        this.setFlushMode(FlushMode.Manual);
+
+        try {
+            this.trackOrderSequentiallyCalls(callback);
+        } finally {
+            this.flush();
+            this.setFlushMode(savedFlushMode);
+        }
+    }
+
+    private trackOrderSequentiallyCalls(callback: () => void): void {
+        try {
+            this._orderSequentiallyCalls++;
             callback();
-        } else {
-            const savedFlushMode = this.flushMode;
-
-            this.setFlushMode(FlushMode.Manual);
-
-            try {
-                callback();
-            } finally {
-                this.flush();
-                this.setFlushMode(savedFlushMode);
-            }
+        } finally {
+            this._orderSequentiallyCalls--;
         }
     }
 
@@ -2164,8 +2183,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
-            const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
-            this.summaryGCVersion = gcFeature(metadata);
+            const metadata = await readAndParse<ReadContainerRuntimeMetadata>(this.storage, metadataBlobId);
+            this.summaryGCVersion = getGCVersion(metadata);
         }
     }
 

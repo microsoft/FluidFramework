@@ -42,8 +42,9 @@ export interface FrsContainerServices {
  * Since Frs provides user names for all of its members, we extend the IMember interface to include
  * this service-specific value. It will be returned for all audience members connected to Frs.
  */
-export interface FrsMember extends IMember {
+export interface FrsMember<T = any> extends IMember {
     userName: string;
+    additionalDetails?: T;
 }
 
 export interface FrsResources {

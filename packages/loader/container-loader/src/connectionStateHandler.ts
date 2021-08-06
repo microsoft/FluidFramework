@@ -85,12 +85,12 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     private startJoinOpTimer() {
-        assert(!this.joinOpTimer.hasTimer, "has joinOpTimer");
+        assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
         this.joinOpTimer.start();
     }
 
     private stopJoinOpTimer(reason: string) {
-        assert(this.joinOpTimer.hasTimer, "no joinOpTimer");
+        assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
         this.joinOpTimer.clear();
     }
 
@@ -112,7 +112,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
         const protocolHandler = this.handler.protocolHandler();
-        assert(protocolHandler !== undefined, "In all cases it should be already installed");
+        assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
