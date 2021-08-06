@@ -208,6 +208,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             epoch: epochTracker.fluidEpoch,
         };
 
+        // Reference to this client supporting get_ops flow.
+        // back-compat: remove cast to any once new definition of IConnect comes through.
+        (connectMessage as any).supportedFeatures = { get_ops: true };
+
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
             documentId,
