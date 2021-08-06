@@ -108,7 +108,7 @@ export class DocumentDeltaConnection
             if (!DocumentDeltaConnection.eventsToForward.includes(event)) {
                 throw new Error(`DocumentDeltaConnection: Registering for unknown event: ${event}`);
             }
-            assert(!this.disposed, "register for event on disposed object");
+            assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
@@ -120,7 +120,7 @@ export class DocumentDeltaConnection
             // and that there are no "internal" listeners installed (like "error" case we skip above)
             // Better flow might be to always unconditionally register all handlers on successful connection,
             // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
-            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), "mismatch");
+            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), 0x20b /* "mismatch" */);
             if (!this.trackedListeners.has(event)) {
                 this.addTrackedListener(
                     event,
@@ -190,12 +190,18 @@ export class DocumentDeltaConnection
         return this.details.serviceConfiguration;
     }
 
+    private checkNotClosed() {
+        assert(!this.disposed, 0x20c /* "connection disposed" */);
+    }
+
     /**
      * Get messages sent during the connection
      *
      * @returns messages sent during the connection
      */
     public get initialMessages(): ISequencedDocumentMessage[] {
+        this.checkNotClosed();
+
         // If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
         // latest ops.  This could possibly indicate that initialMessages was called twice.
         assert(this.earlyOpHandlerAttached, 0x08e /* "Potentially missed initial messages" */);
@@ -220,6 +226,7 @@ export class DocumentDeltaConnection
      * @returns initial signals returned by ordering service
      */
     public get initialSignals(): ISignalMessage[] {
+        this.checkNotClosed();
         return this.details.initialSignals;
     }
 
@@ -229,6 +236,7 @@ export class DocumentDeltaConnection
      * @returns initial client list sent during the connection
      */
     public get initialClients(): ISignalClient[] {
+        this.checkNotClosed();
         return this.details.initialClients;
     }
 
@@ -238,6 +246,7 @@ export class DocumentDeltaConnection
      * @param message - delta operation to submit
      */
     public submit(messages: IDocumentMessage[]): void {
+        this.checkNotClosed();
         this.submitManager.add("submitOp", messages);
     }
 
@@ -247,6 +256,7 @@ export class DocumentDeltaConnection
      * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
+        this.checkNotClosed();
         this.submitManager.add("submitSignal", [message]);
     }
 
@@ -417,13 +427,13 @@ export class DocumentDeltaConnection
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        assert(!this.connectionListeners.has(event), "double connection listener");
+        assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
         this.connectionListeners.set(event, listener);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        assert(!this.trackedListeners.has(event), "double tracked listener");
+        assert(!this.trackedListeners.has(event), 0x20e /* "double tracked listener" */);
         this.trackedListeners.set(event, listener);
     }
 

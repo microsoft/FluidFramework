@@ -26,6 +26,7 @@
     "start:r11s": "webpack-dev-server --config webpack.config.js --package package.json --env.mode r11s",
     "start:spo": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo",
     "start:spo-df": "webpack-dev-server --config webpack.config.js --package package.json --env.mode spo-df",
+    "start:tinylicious": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -33,13 +34,12 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluid-example/example-utils": "^0.45.0",
     "@fluidframework/aqueduct": "^0.45.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/map": "^0.45.0",
-    "@fluidframework/view-interfaces": "^0.45.0",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react": "^16.10.2"
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.45.0",
@@ -47,7 +47,6 @@
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/node": "^12.19.0",
     "@types/react": "^16.9.15",
-    "@types/react-dom": "^16.9.4",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

@@ -6,8 +6,12 @@
 import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
+import React from "react";
+import ReactDOM from "react-dom";
+
 import { LikesAndComments } from "./fluidObject";
 import { LikesAndCommentsContainer } from "./container";
+import { LikesAndCommentsView } from "./view";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -31,7 +35,12 @@ async function start() {
 
     const contentDiv = document.getElementById("content");
     if (contentDiv !== null) {
-        defaultObject.render(contentDiv);
+        ReactDOM.render(
+            <LikesAndCommentsView
+                syncedDataObject={defaultObject}
+            />,
+            contentDiv,
+        );
     }
 
     // Setting "fluidStarted" is just for our test automation

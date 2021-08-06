@@ -456,7 +456,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let id: string | undefined;
             if (snapshotTree) {
                 id = snapshotTree.id;
-                assert(id !== undefined, "Root tree should contain the id");
+                assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
                 this.setRootTree(id, snapshotTree);
             }
             if (blobs) {
@@ -651,7 +651,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const snapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
                 let treeId = "";
                 if (snapshot.snapshotTree) {
-                    assert(snapshot.snapshotTree.id !== undefined, "Root tree should contain the id!!");
+                    assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);
                     treeId = snapshot.snapshotTree.id;
                     this.setRootTree(treeId, snapshot.snapshotTree);
                 }

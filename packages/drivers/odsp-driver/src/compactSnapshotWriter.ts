@@ -102,8 +102,8 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     // Header node containing versions and snapshot seq number.
     const headerNode = rootNode.addNode();
     const snapshotId = snapshotContents.snapshotTree.id;
-    assert(snapshotId !== undefined, "Snapshot id should be provided");
-    assert(snapshotContents.sequenceNumber !== undefined, "Seq number should be provided");
+    assert(snapshotId !== undefined, 0x21b /* "Snapshot id should be provided" */);
+    assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
     writeHeaderSection(headerNode, snapshotContents.sequenceNumber, snapshotId);
 
     const dict: Set<string> = new Set();

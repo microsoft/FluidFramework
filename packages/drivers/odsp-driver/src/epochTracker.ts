@@ -133,7 +133,7 @@ export class EpochTracker implements IPersistedFileCache {
      */
     public async fetchAndParseAsJSON<T>(
         url: string,
-        fetchOptions: {[index: string]: any},
+        fetchOptions: RequestInit,
         fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
@@ -194,14 +194,17 @@ export class EpochTracker implements IPersistedFileCache {
 
     private addEpochInRequest(
         url: string,
-        fetchOptions: {[index: string]: any},
+        fetchOptions: RequestInit,
         addInBody: boolean): {url: string, fetchOptions: {[index: string]: any}} {
         if (this.fluidEpoch !== undefined) {
             if (addInBody) {
                 // We use multi part form request for post body where we want to use this.
                 // So extract the form boundary to mark the end of form.
-                let body: string = fetchOptions.body;
-                const formBoundary = body.split("\r\n")[0].substring(2);
+                let body = fetchOptions.body;
+                assert(typeof body === "string", 0x21d /* "body is not string" */);
+                const firstLine = body.split("\r\n")[0];
+                assert(firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
+                const formBoundary = firstLine.substring(2);
                 body += `\r\nepoch=${this.fluidEpoch}\r\n`;
                 body += `\r\n--${formBoundary}--`;
                 fetchOptions.body = body;
@@ -253,7 +256,7 @@ export class EpochTracker implements IPersistedFileCache {
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
                 assert(isValidLegacyError(epochError),
-                    "epochError expected to be thrown by throwOdspNetworkError and of known type");
+                    0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
                 epochError.addTelemetryProperties({
                     fromCache,
                     clientEpoch: this.fluidEpoch,

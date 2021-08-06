@@ -51,6 +51,12 @@ export function getDocumentServiceFactory(
             async () => options.mode === "spo" || options.mode === "spo-df" ? options.pushAccessToken : undefined,
             odspPersistantCache,
         ),
-        new RouterliciousDocumentServiceFactory(routerliciousTokenProvider),
+        new RouterliciousDocumentServiceFactory(
+            routerliciousTokenProvider,
+            {
+                enableWholeSummaryUpload: options.mode === "r11s" || options.mode === "docker"
+                    ? options.enableWholeSummaryUpload
+                    : undefined,
+            }),
     ]);
 }

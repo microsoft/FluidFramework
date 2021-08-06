@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-const eslintConfig = require("@fluidframework/eslint-config-fluid");
+module.exports = {
+    "extends": [
+        "@fluidframework/eslint-config-fluid/eslint7"
+    ],
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    },
+    "rules": {
+        // TODO(marcus): remove the linting issues
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "prefer-rest-params": "off"
 
-const noTypeScript = x => !x.includes("typescript");
-
-const jsOnlyRules = {};
-Object.keys(eslintConfig.rules).filter(noTypeScript).forEach(x => jsOnlyRules[x] = eslintConfig.rules[x]);
-eslintConfig.rules = jsOnlyRules;
-
-eslintConfig.extends = eslintConfig.extends.filter(noTypeScript);
-eslintConfig.plugins = eslintConfig.plugins.filter(noTypeScript);
-eslintConfig.parserOptions = {
-    "project": ["./tsconfig.json"]
-};
-module.exports = eslintConfig;
+    }
+}
