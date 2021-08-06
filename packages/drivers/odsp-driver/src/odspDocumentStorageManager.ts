@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
@@ -31,7 +32,7 @@ import {
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
 } from "./contracts";
-import { fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import {
@@ -532,21 +533,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotOptions.timeout = undefined;
         }
 
-        const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-            if (this.hostPolicy.fetchBinarySnapshotFormat) {
-                return this.epochTracker.fetchArray(
-                    url,
-                    fetchOptions,
-                    "treesLatest",
-                );
-            } else {
-                return this.epochTracker.fetchAndParseAsJSON(
-                    url,
-                    fetchOptions,
-                    "treesLatest",
-                    true,
-                );
-            }
+        const snapshotDownloader = async (
+            finalOdspResolvedUrl: IOdspResolvedUrl,
+            storageToken: string,
+            options: ISnapshotOptions | undefined,
+            controller?: AbortController,
+        ) => {
+            return downloadSnapshot(
+                finalOdspResolvedUrl,
+                storageToken,
+                options,
+                this.hostPolicy.fetchBinarySnapshotFormat,
+                controller,
+                this.epochTracker,
+            );
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
             return this.cache.persistedCache.put(

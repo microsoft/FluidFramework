@@ -21,6 +21,7 @@ import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     fetchAndParseAsJSONHelper,
+    fetchArray,
     getWithRetryForTokenRefresh,
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
@@ -29,6 +30,7 @@ import {
 import { convertOdspSnapshotToSnapsohtTreeAndBlobs } from "./odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
+import { EpochTracker } from "./epochTracker";
 
 /**
  * Fetches a snapshot from the server with a given version id.
@@ -76,7 +78,12 @@ export async function fetchSnapshotWithRedeem(
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
+    snapshotDownloader: (
+            finalOdspResolvedUrl: IOdspResolvedUrl,
+            storageToken: string,
+            snapshotOptions: ISnapshotOptions | undefined,
+            controller?: AbortController,
+        ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     removeEntries: () => Promise<void>,
     enableRedeemFallback?: boolean,
@@ -151,7 +158,12 @@ async function fetchLatestSnapshotCore(
     storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
+    snapshotDownloader: (
+            finalOdspResolvedUrl: IOdspResolvedUrl,
+            storageToken: string,
+            snapshotOptions: ISnapshotOptions | undefined,
+            controller?: AbortController,
+        ) => Promise<ISnapshotRequestAndResponseOptions>,
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
     fetchBinarySnapshotFormat?: boolean,
 ): Promise<ISnapshotContents> {
@@ -196,17 +208,10 @@ async function fetchLatestSnapshotCore(
             },
             async (event) => {
                 const startTime = performance.now();
-                const response = fetchBinarySnapshotFormat ? await fetchSnapshotContentsCoreV2(
+                const response = await snapshotDownloader(
                     odspResolvedUrl,
                     storageToken,
                     snapshotOptions,
-                    snapshotDownloader,
-                    controller,
-                ) : await fetchSnapshotContentsCoreV1(
-                    odspResolvedUrl,
-                    storageToken,
-                    snapshotOptions,
-                    snapshotDownloader,
                     controller,
                 );
                 const endTime = performance.now();
@@ -327,8 +332,8 @@ async function fetchSnapshotContentsCoreV1(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
     controller?: AbortController,
+    epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
     const url = `${snapshotUrl}/trees/latest?ump=1`;
@@ -354,15 +359,14 @@ async function fetchSnapshotContentsCoreV1(
         "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
     };
 
-    const response = await snapshotDownloader(
-        url,
-        {
-            body: postBody,
-            headers,
-            signal: controller?.signal,
-            method: "POST",
-        },
-    ) as IOdspResponse<IOdspSnapshot>;
+    const fetchOptions = {
+        body: postBody,
+        headers,
+        signal: controller?.signal,
+        method: "POST",
+    };
+    const response = await (epochTracker?.fetchAndParseAsJSON<IOdspSnapshot>(url, fetchOptions, "treesLatest", true) ??
+        fetchAndParseAsJSONHelper<IOdspSnapshot>(url, fetchOptions));
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
     return  {
@@ -376,8 +380,8 @@ async function fetchSnapshotContentsCoreV2(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
     snapshotOptions: ISnapshotOptions | undefined,
-    snapshotDownloader: (url: string, fetchOptions: {[index: string]: any}) => Promise<IOdspResponse<unknown>>,
     controller?: AbortController,
+    epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
         odspResolvedUrl.itemId}/opStream/attachments/latest/content`;
@@ -388,13 +392,12 @@ async function fetchSnapshotContentsCoreV2(
     }
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);
-    const response = await snapshotDownloader(
-        url,
-        {
-            headers,
-            signal: controller?.signal,
-        },
-    ) as IOdspResponse<ArrayBuffer>;
+    const fetchOptions = {
+        headers,
+        signal: controller?.signal,
+    };
+    const response = await (epochTracker?.fetchArray(url, fetchOptions, "treesLatest") ??
+        fetchArray(url, fetchOptions));
     const snapshotContents: ISnapshotContents = parseCompactSnapshotResponse(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
@@ -426,6 +429,21 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
         numTrees += countTreesInSnapshotTree(tree);
     }
     return numTrees;
+}
+
+export async function downloadSnapshot(
+    odspResolvedUrl: IOdspResolvedUrl,
+    storageToken: string,
+    snapshotOptions: ISnapshotOptions | undefined,
+    fetchBinarySnapshotFormat?: boolean,
+    controller?: AbortController,
+    epochTracker?: EpochTracker,
+): Promise<ISnapshotRequestAndResponseOptions> {
+    if (fetchBinarySnapshotFormat) {
+        return fetchSnapshotContentsCoreV2(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
+    } else {
+        return fetchSnapshotContentsCoreV1(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
+    }
 }
 
 function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {

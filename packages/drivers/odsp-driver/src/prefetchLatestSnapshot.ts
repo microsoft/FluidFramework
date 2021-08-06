@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
+    IOdspResolvedUrl,
     IPersistedCache,
     ISnapshotOptions,
     OdspResourceTokenFetchOptions,
@@ -16,12 +18,10 @@ import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     createCacheSnapshotKey,
     createOdspLogger,
-    fetchAndParseAsJSONHelper,
-    fetchArray,
     getOdspResolvedUrl,
     toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
-import { fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
 
 /**
@@ -57,18 +57,14 @@ export async function prefetchLatestSnapshot(
         true /* throwOnNullToken */,
     );
 
-    const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-        if (fetchBinarySnapshotFormat) {
-            return fetchArray(
-                url,
-                fetchOptions,
-            );
-        } else {
-            return fetchAndParseAsJSONHelper(
-                url,
-                fetchOptions,
-            );
-        }
+    const snapshotDownloader = async (
+        finalOdspResolvedUrl: IOdspResolvedUrl,
+        storageToken: string,
+        snapshotOptions: ISnapshotOptions | undefined,
+        controller?: AbortController,
+    ) => {
+        return downloadSnapshot(
+            finalOdspResolvedUrl, storageToken, snapshotOptions, fetchBinarySnapshotFormat, controller);
     };
     const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;
