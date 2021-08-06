@@ -1,9 +1,12 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
+    "exclude": [
+        "src/test/**/*"
+    ],
     "compilerOptions": {
         "rootDir": "./src",
         "outDir": "./dist",
-        "allowJs": true
+        "composite": true,
     },
     "include": [
         "src/**/*"

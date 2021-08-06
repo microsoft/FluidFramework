@@ -52,6 +52,7 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
+    enableWholeSummaryUpload?: boolean;
 }
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
@@ -60,6 +61,7 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
+    enableWholeSummaryUpload?: boolean;
 }
 
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
