@@ -12,7 +12,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
-import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockLogger, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
@@ -23,6 +23,7 @@ describe("Runtime", () => {
                 const mockContext: Partial<IContainerContext> = {
                     deltaManager: new MockDeltaManager(),
                     quorum: new MockQuorum(),
+                    logger: new MockLogger(),
                 };
 
                 beforeEach(async () => {
