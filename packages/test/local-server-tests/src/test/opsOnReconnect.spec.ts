@@ -489,9 +489,6 @@ describe("Ops on Reconnect", () => {
             // The Container should be in disconnected state.
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
-            // Set the FlushMode to TurnBased to send batch ops by manually flushing them.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
             container1Object1Map2.set("key2", "value2");
@@ -505,7 +502,7 @@ describe("Ops on Reconnect", () => {
             container1Object1Map2.set("key5", "value5");
             container1Object1Directory.set("key6", "value6");
 
-            // Set the FlushMode back to Immediate so that the above batch is sent.
+            // Set the FlushMode to Immediate so that the above batch is sent.
             container1Object1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
             // Wait for the Container to get reconnected.
@@ -537,9 +534,6 @@ describe("Ops on Reconnect", () => {
             // The Container should be in disconnected state.
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
-            // Set the FlushMode to TurnBased to send batch ops by manually flushing them.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
-
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
             container1Object1Map2.set("key2", "value2");
@@ -548,7 +542,7 @@ describe("Ops on Reconnect", () => {
             // Manually flush the ops so that they are sent as a batch.
             (container1Object1.context.containerRuntime as IContainerRuntime).flush();
 
-            // Set the FlushMode back to Immediate.
+            // Set the FlushMode to Immediate.
             container1Object1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
             // Wait for the Container to get reconnected.

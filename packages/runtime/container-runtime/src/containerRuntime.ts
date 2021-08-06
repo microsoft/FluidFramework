@@ -1397,14 +1397,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // If switching to TurnBased mode add a warning trace indicating the underlying loader does not support
-        // this feature yet. Can remove in 0.9.
-        if (!this.deltaSender && mode === FlushMode.TurnBased) {
-            debug("DeltaManager does not yet support flush modes");
-            return;
-        }
-
-        // Flush any pending batches if switching back to immediate
+        // Flush any pending batches if switching to immediate
         if (mode === FlushMode.Immediate) {
             this.flush();
         }

@@ -15,7 +15,6 @@ import {
 import {
     NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
-    FlushMode,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
