@@ -68,18 +68,6 @@ export function isArrayBuffer(obj: any): obj is ArrayBuffer {
         && maybe.buffer === undefined);
 }
 
-function calculateAndValidateBounds(value: any, offset: number, length: number): number {
-    const valueByteOffset: number = value.byteOffset;
-    const valueByteLength: number = value.byteLength;
-    const calculatedOffset = valueByteOffset + offset;
-    if (calculatedOffset < valueByteOffset || length < 0
-        || calculatedOffset >= valueByteOffset + valueByteLength
-        || calculatedOffset + length > valueByteOffset + valueByteLength) {
-        throw new RangeError();
-    }
-    return calculatedOffset;
-}
-
 /**
  * Minimal implementation of Buffer for our usages in the browser environment.
  */
@@ -104,11 +92,10 @@ export class IsoBuffer extends Uint8Array {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
         // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
         } else if (value !== null && typeof value === "object" && isArrayBuffer(value.buffer)) {
-            const offset = encodingOrOffset ?? 0;
-            const len = length ?? 0;
-            assert(typeof offset === "number", "offset should be number");
-            const calculatedOffset = calculateAndValidateBounds(value, offset, len);
-            return IsoBuffer.fromArrayBuffer(value.buffer, calculatedOffset,  length);
+            // Support currently for full array, no view ports! (though it can be added in future)
+            assert(value.byteOffset === 0, 0x000 /* "nonzero isobuffer byte offset" */);
+            assert(value.byteLength === value.buffer.byteLength, 0x001 /* "unexpected isobuffer byte length" */);
+            return IsoBuffer.fromArrayBuffer(value.buffer, encodingOrOffset as number | undefined, length);
         } else if (isArrayBuffer(value)) {
             return IsoBuffer.fromArrayBuffer(value, encodingOrOffset as number | undefined, length);
         } else {
