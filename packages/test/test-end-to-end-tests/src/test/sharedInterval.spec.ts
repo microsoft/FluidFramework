@@ -627,8 +627,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     }
 
                     intervals1.change(id1, 4, 4);
+                    await provider.opProcessingController.processOutgoing();
                     intervals2.change(id1, 2, undefined);
-
                     await provider.ensureSynchronized();
 
                     interval1 = intervals1.getIntervalById(id1);
@@ -640,6 +640,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     assert.strictEqual(interval2.end.getOffset(), 4, "Conflicting transparent change");
 
                     intervals1.change(id1, undefined, 3);
+                    await provider.opProcessingController.processOutgoing();
                     intervals2.change(id1, undefined, 2);
 
                     await provider.ensureSynchronized();
@@ -651,7 +652,48 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                     interval2 = intervals2.getIntervalById(id1);
                     assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
                     assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
-                 }
+                }
+
+                if (typeof(intervals1.changeProperties) === "function" &&
+                    typeof(intervals2.changeProperties) === "function") {
+                    intervals1.changeProperties(id1, { prop1: "prop1" });
+                    await provider.opProcessingController.processOutgoing();
+                    intervals2.changeProperties(id1, { prop2: "prop2" });
+
+                    await provider.ensureSynchronized();
+
+                    interval1 = intervals1.getIntervalById(id1);
+                    assert.strictEqual(interval1.properties.prop1, "prop1", "Mismatch in changed properties 1");
+                    assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 2");
+                    interval2 = intervals2.getIntervalById(id1);
+                    assert.strictEqual(interval2.properties.prop1, "prop1", "Mismatch in changed properties 3");
+                    assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 4");
+
+                    intervals1.changeProperties(id1, { prop1: "no" });
+                    await provider.opProcessingController.processOutgoing();
+                    intervals2.changeProperties(id1, { prop1: "yes" });
+
+                    await provider.ensureSynchronized();
+
+                    assert.strictEqual(interval1.properties.prop1, "yes", "Mismatch in changed properties 5");
+                    assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 6");
+                    assert.strictEqual(interval2.properties.prop1, "yes", "Mismatch in changed properties 7");
+                    assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 8");
+
+                    intervals1.changeProperties(id1, { prop1: "maybe" });
+                    await provider.opProcessingController.processOutgoing();
+                    // eslint-disable-next-line no-null/no-null
+                    intervals2.changeProperties(id1, { prop1: null });
+
+                    await provider.ensureSynchronized();
+
+                    assert.strictEqual(Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"), false,
+                        "Property not deleted 1");
+                    assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 9");
+                    assert.strictEqual(Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"), false,
+                        "Property not deleted 2");
+                    assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 10");
+                }
 
                 // Conflicting removes
                 intervals1.removeIntervalById(id1);

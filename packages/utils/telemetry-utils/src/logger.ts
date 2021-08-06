@@ -14,7 +14,11 @@ import {
     TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
-import { extractLogSafeErrorProperties, isILoggingError } from "./errorLogging";
+import {
+    isILoggingError,
+    extractLogSafeErrorProperties,
+    generateStack,
+} from "./errorLogging";
 
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
@@ -66,15 +70,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Take an unknown error object and add the appropriate info from it to the event
-     * NOTE - message and stack will be copied over from the error object,
-     * along with other telemetry properties if it's an ILoggingError
+     * Take an unknown error object and add the appropriate info from it to the event. Message and stack will be copied
+     * over from the error object, along with other telemetry properties if it's an ILoggingError.
      * @param event - Event being logged
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
-        const { message, errorType, stack} = extractLogSafeErrorProperties(error);
+        const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
         event.error = message; // Note that the error message goes on the 'error' field
@@ -82,58 +85,20 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
 
         if (isILoggingError(error)) {
             // Add any other telemetry properties from the LoggingError
-            const taggableProps = error.getTelemetryProperties();
-            for (const key of Object.keys(taggableProps)) {
+            const telemetryProp = error.getTelemetryProperties();
+            for (const key of Object.keys(telemetryProp)) {
                 if (event[key] !== undefined) {
                     // Don't overwrite existing properties on the event
                     continue;
                 }
-                const taggableProp = taggableProps[key];
-                const { value, tag } = (typeof taggableProp === "object")
-                    ? taggableProp
-                    : { value: taggableProp, tag: undefined };
-                switch (tag) {
-                    case undefined:
-                        // No tag means we can log plainly
-                        event[key] = value;
-                        break;
-                    case TelemetryDataTag.PackageData:
-                        // For Microsoft applications, PackageData is safe for now
-                        // (we don't load 3P code in 1P apps)
-                        // But this determination really belongs in the host layer
-                        event[key] = value;
-                        break;
-                    case TelemetryDataTag.UserData:
-                        // Strip out anything tagged explicitly as PII.
-                        // Alternate strategy would be to hash these props
-                        event[key] = "REDACTED (UserData)";
-                        break;
-                    default:
-                        // If we encounter a tag we don't recognize
-                        // then we must assume we should scrub.
-                        event[key] = "REDACTED (unknown tag)";
-                        break;
-                }
+                event[key] = telemetryProp[key];
             }
         }
 
         // Collect stack if we were not able to extract it from error
         if (event.stack === undefined && fetchStack) {
-            event.stack = TelemetryLogger.getStack();
+            event.stack = generateStack();
         }
-    }
-
-    protected static getStack(): string | undefined {
-        // Some browsers will populate stack right away, others require throwing Error
-        let stack = new Error().stack;
-        if (!stack) {
-            try {
-                throw new Error();
-            } catch (e) {
-                stack = e.stack;
-            }
-        }
-        return stack;
     }
 
     public constructor(
@@ -228,6 +193,50 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             }
         }
         return newEvent;
+    }
+}
+
+/**
+ * TaggedLoggerAdapter class can add tag handling to your logger.
+ */
+ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
+    public constructor(
+        private readonly logger: ITelemetryBaseLogger) {
+    }
+
+    public send(eventWithTagsMaybe: ITelemetryBaseEvent) {
+        const newEvent: ITelemetryBaseEvent = {
+            category: eventWithTagsMaybe.category,
+            eventName: eventWithTagsMaybe.eventName,
+        };
+        for (const key of Object.keys(eventWithTagsMaybe)) {
+            const taggableProp = eventWithTagsMaybe[key];
+            const { value, tag } = (typeof taggableProp === "object")
+                ? taggableProp
+                : { value: taggableProp, tag: undefined };
+            switch (tag) {
+                case undefined:
+                    // No tag means we can log plainly
+                    newEvent[key] = value;
+                    break;
+                case TelemetryDataTag.PackageData:
+                    // For Microsoft applications, PackageData is safe for now
+                    // (we don't load 3P code in 1P apps)
+                    newEvent[key] = value;
+                    break;
+                case TelemetryDataTag.UserData:
+                    // Strip out anything tagged explicitly as PII.
+                    // Alternate strategy would be to hash these props
+                    newEvent[key] = "REDACTED (UserData)";
+                    break;
+                default:
+                    // If we encounter a tag we don't recognize
+                    // then we must assume we should scrub.
+                    newEvent[key] = "REDACTED (unknown tag)";
+                    break;
+            }
+        }
+        this.logger.send(newEvent);
     }
 }
 

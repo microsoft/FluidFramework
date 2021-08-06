@@ -19,13 +19,34 @@ export enum LumberType {
     Log,
 }
 
-export enum SchemaProperties {
+export enum BaseTelemetryProperties {
     tenantId = "tenantId",
     documentId = "documentId",
-    clientId = "clientId",
+}
+
+// Incoming message properties
+export enum QueuedMessageProperties {
+    topic = "topic",
+    partition = "partition",
+    offset = "offset",
+}
+
+export enum CommonProperties {
+    // Post checkpoint properties
+    clientCount = "clientCount",
+    minSequenceNumber = "minSequenceNumber",
     sequenceNumber = "sequenceNumber",
-    clientSequenceNumber = "clientSequenceNumber",
-    statusCode = "statusCode",
+    checkpointOffset = "checkpointOffset",
+
+    // Summary related properties
+    clientSummarySuccess = "clientSummarySuccess",
+    serviceSummarySuccess = "serviceSummarySuccess",
+    maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
+    lastSummarySequenceNumber = "lastSummarySequenceNumber",
+
+    // Miscellaneous properties
+    restart = "restart",
+    telemetryGroupName = "telemetryGroupName",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

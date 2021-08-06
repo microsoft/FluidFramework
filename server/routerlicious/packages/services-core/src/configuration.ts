@@ -108,12 +108,16 @@ export interface IServerConfiguration {
 
     // Enable adding a traces array to operation messages
     enableTraces: boolean;
+
+    // Enable logs and metrics using the Lumber telemetry framework
+    enableLumberTelemetryFramework: boolean;
 }
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     enableTraces: true,
+    enableLumberTelemetryFramework: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,

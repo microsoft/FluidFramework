@@ -12,17 +12,15 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     isILoggingError,
-    annotateError,
     extractLogSafeErrorProperties,
     LoggingError,
+    IWriteableLoggingError,
+    isValidLegacyError,
+    IFluidErrorBase,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-
-/** type guard to ensure it has an errorType e.g. via IErrorBase */
-const hasErrorType = (error: any): error is IErrorBase => {
-    return (typeof error?.errorType === "string");
-};
 
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
@@ -41,7 +39,8 @@ export class GenericError extends LoggingError implements IGenericError {
         readonly error?: any,
         props?: ITelemetryProperties,
     ) {
-        super(errorMessage, props);
+        // Don't try to log the inner error
+        super(errorMessage, props, new Set(["error"]));
     }
 }
 
@@ -71,20 +70,36 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     }
 }
 
+/** Error indicating an API is being used improperly resulting in an invalid operation. */
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    // TODO: implement IUsageError once available
+    readonly errorType = "usageError";
+
+    constructor(
+        readonly fluidErrorCode: string,
+    ) {
+        super(fluidErrorCode, { usageError: true });
+    }
+}
+
 export class DataCorruptionError extends LoggingError implements IErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
     readonly canRetry = false;
 
     constructor(errorMessage: string, props: ITelemetryProperties) {
-        super(errorMessage, props);
+        super(errorMessage, { ...props, dataProcessingError: 1 });
     }
 }
 
-export class DataProcessingError extends LoggingError implements IErrorBase {
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
     readonly canRetry = false;
 
-    constructor(errorMessage: string, props?: ITelemetryProperties) {
+    constructor(
+        errorMessage: string,
+        readonly fluidErrorCode: string,
+        props?: ITelemetryProperties,
+    ) {
         super(errorMessage, props);
     }
 
@@ -92,22 +107,29 @@ export class DataProcessingError extends LoggingError implements IErrorBase {
      * Conditionally coerce the throwable input into a DataProcessingError.
      * @param originalError - Throwable input to be converted.
      * @param message - Sequenced message (op) to include info about via telemetry props
+     * @param errorCodeIfNone - pascaleCased code identifying the call site, used if originalError has no error code.
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
         originalError: any,
+        errorCodeIfNone: string,
         message: ISequencedDocumentMessage | undefined,
-    ): ICriticalContainerError {
-        const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
+    ): IFluidErrorBase {
+        const newErrorFn = (errMsg: string) => {
+            const dpe = new DataProcessingError(errMsg, errorCodeIfNone);
+            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
+            return dpe;
+        };
 
         // Don't coerce if already has an errorType, to distinguish unknown errors from
         // errors that we raised which we already can interpret apart from this classification
-        const error = hasErrorType(originalError)
-            ? originalError
+        const error = isValidLegacyError(originalError) // also accepts valid Fluid Error
+            ? normalizeError(originalError, { errorCodeIfNone })
             : wrapError(originalError, newErrorFn);
 
+        error.addTelemetryProperties({ dataProcessingError: 1});
         if (message !== undefined) {
-            annotateError(error, extractSafePropertiesFromMessage(message));
+            error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
         }
         return error;
     }
@@ -133,14 +155,28 @@ export const CreateProcessingError = DataProcessingError.wrapIfUnrecognized;
  * @param props - Properties to include on the error for logging - They will override props on originalError
  */
 export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError {
-    const newErrorFn = (errMsg: string) => new GenericError(errMsg, originalError);
+    const newErrorFn =
+        (errMsg: string) => {
+            // Don't pass in props here, we want to add them last (see below)
+            const newError = new GenericError(errMsg, originalError);
 
-    const error = hasErrorType(originalError)
+            const { errorType } = extractLogSafeErrorProperties(originalError, false /* sanitizeStack */);
+            if (errorType !== undefined) {
+                // Clobber errorType (which is declared readonly) with the value off the original error
+                Object.assign(newError, { errorType });
+            }
+
+            // By clobbering newError.errorType, we can no longer properly call it a GenericError.
+            // It's still a LoggingError, and does have errorType so it's also IErrorBase
+            return newError as LoggingError & IErrorBase;
+        };
+
+    const error = isValidLegacyError(originalError)
         ? originalError
         : wrapError(originalError, newErrorFn);
 
     if (props !== undefined) {
-        annotateError(error, props);
+        error.addTelemetryProperties(props);
     }
     return error;
 }
@@ -152,18 +188,18 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
-export function wrapError<T>(
+export function wrapError<T extends IWriteableLoggingError>(
     error: any,
     newErrorFn: (m: string) => T,
 ): T {
     const {
         message,
         stack,
-    } = extractLogSafeErrorProperties(error);
+    } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const props = isILoggingError(error) ? error.getTelemetryProperties() : {};
 
     const newError = newErrorFn(message);
-    annotateError(newError, props);
+    newError.addTelemetryProperties(props);
 
     if (stack !== undefined) {
         Object.assign(newError, { stack });

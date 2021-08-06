@@ -52,7 +52,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
 
 // @public (undocumented)
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
-    protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, blobCutOffSize?: number | undefined);
+    protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, packingLevel: number, blobCutOffSize?: number | undefined);
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
@@ -86,7 +86,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     // (undocumented)
     protected virtualBlobs: Map<string, ArrayBufferLike>;
     // (undocumented)
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean): BlobAggregationStorage;
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
     // (undocumented)
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
@@ -246,6 +246,8 @@ export class ParallelRequests<T> {
     }>, responseCallback: (payload: T[]) => void);
     // (undocumented)
     cancel(): void;
+    // (undocumented)
+    get canceled(): boolean;
     // (undocumented)
     run(concurrency: number): Promise<void>;
     }

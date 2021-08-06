@@ -15,7 +15,7 @@ This document will explain how to use the audience APIs and then provide example
 When creating a container, you are also provided a container services object which holds the audience.  This audience is backed by that same container.
 
 ```js
-const { container, containerServices } =
+const { fluidContainer, containerServices } =
     await tinyliciousClient.createContainer(serviceConfig, containerSchema);
 const audience = containerServices.audience;
 ```

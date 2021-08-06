@@ -4,9 +4,8 @@
  */
 
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { IBlob, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IBlob, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
-import { ISequencedDeltaOpMessage } from "./contracts";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
@@ -84,7 +83,7 @@ function writeBlobsSection(node: NodeCore, blobs: Map<string, IBlob | ArrayBuffe
  * @param node - node to serialize to.
  * @param ops - ops that is being serialized
 */
-function writeOpsSection(node: NodeCore, ops: ISequencedDeltaOpMessage[]) {
+function writeOpsSection(node: NodeCore, ops: ISequencedDocumentMessage[]) {
     ops.forEach((op) => {
         node.addString(JSON.stringify(op));
     });
@@ -102,8 +101,8 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     // Header node containing versions and snapshot seq number.
     const headerNode = rootNode.addNode();
     const snapshotId = snapshotContents.snapshotTree.id;
-    assert(snapshotId !== undefined, "Snapshot id should be provided");
-    assert(snapshotContents.sequenceNumber !== undefined, "Seq number should be provided");
+    assert(snapshotId !== undefined, 0x21b /* "Snapshot id should be provided" */);
+    assert(snapshotContents.sequenceNumber !== undefined, 0x21c /* "Seq number should be provided" */);
     writeHeaderSection(headerNode, snapshotContents.sequenceNumber, snapshotId);
 
     const dict: Set<string> = new Set();
