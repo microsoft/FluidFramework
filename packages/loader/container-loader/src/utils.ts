@@ -5,8 +5,7 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
-import { uint8ArrayToArrayBuffer } from "@fluidframework/driver-utils";
+import { assert, bufferToString, stringToBuffer, Uint8ArrayToArrayBuffer } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
@@ -75,7 +74,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
                 const contentBuffer = typeof summaryObject.content === "string" ?
-                    stringToBuffer(summaryObject.content, "utf8") : uint8ArrayToArrayBuffer(summaryObject.content);
+                    stringToBuffer(summaryObject.content, "utf8") : Uint8ArrayToArrayBuffer(summaryObject.content);
                 treeNode.blobsContents[blobId] = contentBuffer;
                 // 0.43 back-compat old runtime will still expect content in the blobs only.
                 // So need to put in blobs for now.

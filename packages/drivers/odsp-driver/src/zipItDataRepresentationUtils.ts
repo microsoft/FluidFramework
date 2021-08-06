@@ -8,8 +8,7 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
 */
 
-import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { uint8ArrayToArrayBuffer } from "@fluidframework/driver-utils";
+import { assert, IsoBuffer, Uint8ArrayToString, Uint8ArrayToArrayBuffer } from "@fluidframework/common-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 
 /**
@@ -120,7 +119,7 @@ export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) 
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
     public get arrayBuffer(): ArrayBufferLike {
-        return uint8ArrayToArrayBuffer(this.buffer);
+        return Uint8ArrayToArrayBuffer(this.buffer);
     }
 
     /**
