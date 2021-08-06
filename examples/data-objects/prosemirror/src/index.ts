@@ -41,8 +41,6 @@ class ProseMirrorFactory extends RuntimeFactoryHelper {
             existing,
         );
 
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
         return runtime;
     }
 }
