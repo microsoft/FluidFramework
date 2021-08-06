@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.0-0",
+    "@fluidframework/common-utils": "^0.32.0",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/driver-base": "^0.45.0",
     "@fluidframework/driver-definitions": "^0.39.6",
