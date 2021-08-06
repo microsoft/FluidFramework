@@ -1417,9 +1417,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public flush(): void {
-        assert(
-            this._orderSequentiallyCalls === 0,
-            "Cannot call `flush()` from `orderSequentially`'s callback");
+        assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
 
         if (!this.deltaSender) {
             debug("DeltaManager does not yet support flush modes");
