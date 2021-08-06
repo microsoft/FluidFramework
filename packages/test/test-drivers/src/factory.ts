@@ -53,7 +53,7 @@ export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes = "local",
     config?: FluidTestDriverConfig,
     api: DriverApiType = DriverApi,
-) {
+): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver> {
     switch (fluidTestDriverType) {
         case "local":
             return new LocalServerTestDriver(api.LocalDriverApi);

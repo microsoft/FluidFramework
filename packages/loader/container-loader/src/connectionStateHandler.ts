@@ -17,7 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
-    triggerReconnect: (reason: string) => void,
+    triggerConnectionRecovery: (reason: string) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -37,6 +37,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
     private readonly joinOpTimer: Timer;
+
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -68,34 +69,35 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             },
         );
 
+        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+        // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            60000,
+            45000,
             () => {
-                // If this event fires too often, then we should look into potential reasons why:
-                // 1. It may happen because it takes client too long to catch up, then we should consider why
-                //    and how to address it. It blocks collab window moving forward. One reason might be -
-                //    we raised "connected" event to runtime right away on establishing "read" connection, allowing
-                //    it to send op and switch to "write" mode too early. We should consider waiting with delivery
-                //    of initial "connected" signal until client is mostly caught (see waitContainerToCatchUp())
-                // 2. It's possible that client does not receive any ops at all on this connection, either due
-                //    to client bug or server bug. We should instrument more to understand this problem better.
-                // Adding telemetry on how far client is behind (from last known seq number) at the time of
-                // connection/failure and how many ops it received on given connection would help here.
-                this.logger.sendErrorEvent({
-                    eventName: "NoJoinOp",
-                    clientId: this.pendingClientId,
-                });
-
-                // Data suggests we hit it too often. Disabling "fixup" for now
-                // this.handler.triggerReconnect("NoJoinOp");
+                // I've observed timer firing within couple ms from disconnect event, looks like
+                // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
+                if (this.connectionState !== ConnectionState.Disconnected) {
+                    this.handler.triggerConnectionRecovery("NoJoinOp");
+                }
             },
         );
+    }
+
+    private startJoinOpTimer() {
+        assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+        this.joinOpTimer.start();
+    }
+
+    private stopJoinOpTimer(reason: string) {
+        assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
+        this.joinOpTimer.clear();
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
-            this.joinOpTimer.clear();
+            this.stopJoinOpTimer("joinOp");
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -110,7 +112,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
         const protocolHandler = this.handler.protocolHandler();
-        assert(protocolHandler !== undefined, "In all cases it should be already installed");
+        assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
@@ -144,7 +146,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedDisconnectEvent(reason: string) {
-        this.joinOpTimer.clear();
+        if (this.joinOpTimer.hasTimer) {
+            this.stopJoinOpTimer(`disconnect: ${reason}`);
+        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
@@ -178,7 +182,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         ) {
             this.setConnectionState(ConnectionState.Connected);
         } else if (connectionMode === "write") {
-            this.joinOpTimer.start();
+            this.startJoinOpTimer();
         }
     }
 
