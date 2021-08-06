@@ -518,7 +518,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         context: IContainerContext,
         registryEntries: NamedFluidDataStoreRegistryEntries,
         requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-        runtimeOptions?: IContainerRuntimeOptions,
+        {
+            summaryOptions = { generateSummaries: true },
+            gcOptions = {},
+            loadSequenceNumberVerification = "close",
+        }: IContainerRuntimeOptions = {},
         containerScope: IFluidObject = context.scope,
         existing?: boolean,
     ): Promise<ContainerRuntime> {
@@ -530,15 +534,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         });
 
-        const defaultRuntimeOptions: Required<IContainerRuntimeOptions> = {
-            summaryOptions: { generateSummaries: true },
-            gcOptions: {},
-            loadSequenceNumberVerification: "close",
-        };
-        const combinedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
         // We pack at data store level only. If isolated channels are disabled,
         // then there are no .channel layers, we pack at level 1, otherwise we pack at level 2
-        const packingLevel = combinedRuntimeOptions.summaryOptions.disableIsolatedChannels ? 1 : 2;
+        const packingLevel = summaryOptions.disableIsolatedChannels ? 1 : 2;
 
         let storage = context.storage;
         if (context.baseSnapshot) {
@@ -583,16 +581,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Verify summary runtime sequence number matches protocol sequence number.
         const runtimeSequenceNumber = metadata?.sequenceNumber;
         if (runtimeSequenceNumber !== undefined) {
-            const verificationBehavior = runtimeOptions?.loadSequenceNumberVerification ?? "close";
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
-            if (verificationBehavior !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
+            if (loadSequenceNumberVerification !== "bypass" && runtimeSequenceNumber !== protocolSequenceNumber) {
                 const error = new DataCorruptionError(
                     "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber",
                     { runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
-                if (verificationBehavior === "log") {
+                if (loadSequenceNumberVerification === "log") {
                     logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
                 } else {
                     context.closeFn(error);
@@ -606,7 +603,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             metadata,
             electedSummarizerData,
             chunks,
-            combinedRuntimeOptions,
+            {
+                summaryOptions,
+                gcOptions,
+                loadSequenceNumberVerification,
+            },
             containerScope,
             logger,
             loadExisting,
