@@ -64,7 +64,7 @@ export async function prefetchLatestSnapshot(
         controller?: AbortController,
     ) => {
         return downloadSnapshot(
-            finalOdspResolvedUrl, storageToken, snapshotOptions, fetchBinarySnapshotFormat, controller);
+            finalOdspResolvedUrl, storageToken, odspLogger, snapshotOptions, fetchBinarySnapshotFormat, controller);
     };
     const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
     let cacheP: Promise<void> | undefined;

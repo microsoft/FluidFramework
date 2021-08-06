@@ -542,6 +542,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             return downloadSnapshot(
                 finalOdspResolvedUrl,
                 storageToken,
+                this.logger,
                 options,
                 this.hostPolicy.fetchBinarySnapshotFormat,
                 controller,

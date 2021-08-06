@@ -212,7 +212,7 @@ async function fetchLatestSnapshotCore(
                 );
                 const endTime = performance.now();
                 const overallTime = endTime - startTime;
-                const snapshot = response.response.content;
+                const snapshot = response.odspSnapshotResponse.content;
                 let dnstime: number | undefined; // domainLookupEnd - domainLookupStart
                 let redirectTime: number | undefined; // redirectEnd -redirectStart
                 let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
@@ -221,7 +221,7 @@ async function fetchLatestSnapshotCore(
                 let fetchStToRespEndTime: number | undefined; // responseEnd  - fetchStart
                 let reqStToRespEndTime: number | undefined; // responseEnd - requestStart
                 let networkTime: number | undefined; // responseEnd - startTime
-                const spReqDuration = response.response.headers.get("sprequestduration");
+                const spReqDuration = response.odspSnapshotResponse.headers.get("sprequestduration");
 
                 // getEntriesByType is only available in browser performance object
                 const resources1 = performance.getEntriesByType?.("resource") ?? [];
@@ -251,12 +251,13 @@ async function fetchLatestSnapshotCore(
                 }
 
                 const { numTrees, numBlobs, encodedBlobsSize } =
-                    validateAndEvalBlobsAndTrees(response.response.content);
+                    validateAndEvalBlobsAndTrees(response.odspSnapshotResponse.content);
                 const clientTime = networkTime ? overallTime - networkTime : undefined;
 
                 // There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
                 // cannot cache using an HTTP response header.
-                const canCache = response.response.headers.get("disablebrowsercachingofusercontent") !== "true";
+                const canCache =
+                    response.odspSnapshotResponse.headers.get("disablebrowsercachingofusercontent") !== "true";
                 const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
                 const seqNumberFromOps = snapshot.ops && snapshot.ops.length > 0 ?
                     snapshot.ops[0].sequenceNumber - 1 :
@@ -267,7 +268,7 @@ async function fetchLatestSnapshotCore(
                     logger.sendErrorEvent({ eventName: "fetchSnapshotError", sequenceNumber, seqNumberFromOps });
                     snapshot.sequenceNumber = undefined;
                 } else if (canCache) {
-                    const fluidEpoch = response.response.headers.get("x-fluid-epoch");
+                    const fluidEpoch = response.odspSnapshotResponse.headers.get("x-fluid-epoch");
                     assert(fluidEpoch !== undefined, 0x1e6 /* "Epoch  should be present in response" */);
                     const valueWithEpoch: IVersionedValueWithEpoch = {
                         value: snapshot,
@@ -298,9 +299,9 @@ async function fetchLatestSnapshotCore(
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
                     // FRS; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem, FRS is the redeem
                     // status (S means success), and FRP is a flag to indicate if the permission has changed.
-                    sltelemetry: response.response.headers.get("x-fluid-sltelemetry"),
+                    sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
                     attempts: tokenFetchOptions.refresh ? 2 : 1,
-                    ...response.response.commonSpoHeaders,
+                    ...response.odspSnapshotResponse.commonSpoHeaders,
                 });
                 return snapshot;
             },
@@ -319,11 +320,20 @@ async function fetchLatestSnapshotCore(
 }
 
 interface ISnapshotRequestAndResponseOptions {
-    response: IOdspResponse<ISnapshotContents>,
+    odspSnapshotResponse: IOdspResponse<ISnapshotContents>,
     requestUrl: string,
     requestHeaders: {[index: string]: any},
 }
 
+/**
+ * This function fetches the older snapshot format which is the json format(IOdspSnapshot).
+ * @param odspResolvedUrl - resolved odsp url.
+ * @param storageToken - token to do the auth for network request.
+ * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param controller - abort controller if caller needs to abort the network call.
+ * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
+ * @returns fetched snapshot.
+ */
 async function fetchSnapshotContentsCoreV1(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
@@ -366,12 +376,22 @@ async function fetchSnapshotContentsCoreV1(
     const snapshotContents: ISnapshotContents = convertOdspSnapshotToSnapsohtTreeAndBlobs(response.content);
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
     return  {
-        response: finalSnapshotContents,
+        odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
     };
 }
 
+/**
+ * This function fetches the binary compact snapshot format. This is an experimental feature
+ * and is behind a feature flag.
+ * @param odspResolvedUrl - resolved odsp url.
+ * @param storageToken - token to do the auth for network request.
+ * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param controller - abort controller if caller needs to abort the network call.
+ * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
+ * @returns fetched snapshot.
+ */
 async function fetchSnapshotContentsCoreV2(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
@@ -398,7 +418,7 @@ async function fetchSnapshotContentsCoreV2(
         new ReadBuffer(new Uint8Array(response.content)));
     const finalSnapshotContents: IOdspResponse<ISnapshotContents> = { ...response, content: snapshotContents };
     return  {
-        response: finalSnapshotContents,
+        odspSnapshotResponse: finalSnapshotContents,
         requestHeaders: headers,
         requestUrl: url,
     };
@@ -430,12 +450,15 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
     odspResolvedUrl: IOdspResolvedUrl,
     storageToken: string,
+    logger: ITelemetryLogger,
     snapshotOptions: ISnapshotOptions | undefined,
     fetchBinarySnapshotFormat?: boolean,
     controller?: AbortController,
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     if (fetchBinarySnapshotFormat) {
+        // Logging an error event here as it is not supposed to be used in production yet and only in experimental mode.
+        logger.sendErrorEvent({ eventName: "BinarySnapshotFetched" });
         return fetchSnapshotContentsCoreV2(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
     } else {
         return fetchSnapshotContentsCoreV1(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
