@@ -4,8 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ISequencedDeltaOpMessage } from "./contracts";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { BlobCore, getAndValidateNodeProps, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
@@ -84,7 +83,7 @@ function readBlobSection(node: NodeCore, dictionary: string[]) {
  * @param node - tree node to read ops section from
  */
 function readOpsSection(node: NodeCore) {
-    const ops: ISequencedDeltaOpMessage[] = [];
+    const ops: ISequencedDocumentMessage[] = [];
     for (let i = 0; i < node.length; ++i) {
         ops.push(JSON.parse(node.getString(i)));
     }
@@ -126,7 +125,7 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
  */
 export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents {
     const builder = TreeBuilder.load(buffer);
-    let ops: ISequencedDeltaOpMessage[] | undefined;
+    let ops: ISequencedDocumentMessage[] | undefined;
 
     assert(builder.length === 1, "1 root should be there");
     const root = builder.getNode(0);

@@ -28,7 +28,6 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
-    ISequencedDeltaOpMessage,
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
 } from "./contracts";
@@ -52,22 +51,6 @@ async function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{ index
             p.then((v) => resolve({ index, value: v })).catch(reject);
         });
     });
-}
-
-// Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
-function gatesBinaryFormatSnapshot() {
-    try {
-        if (typeof localStorage === "object" && localStorage !== null) {
-            if  (localStorage.binaryFormatSnapshot === "1") {
-                return true;
-            }
-            if  (localStorage.binaryFormatSnapshot === "0") {
-                return false;
-            }
-        }
-    } catch (e) {}
-
-    return true;
 }
 
 class BlobCache {
@@ -191,7 +174,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
-    private _ops: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[] | undefined;
+    private _ops: api.ISequencedDocumentMessage[] | undefined;
 
     private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
@@ -214,12 +197,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly blobCache = new BlobCache();
 
-    public set ops(ops: ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[] | undefined) {
+    public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
         this._ops = ops;
     }
 
-    public get ops(): ISequencedDeltaOpMessage[] | api.ISequencedDocumentMessage[] | undefined {
+    public get ops(): api.ISequencedDocumentMessage[] | undefined {
         return this._ops;
     }
 
@@ -241,7 +224,6 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.attachmentPOSTUrl = this.odspResolvedUrl.endpoints.attachmentPOSTStorageUrl;
         this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
         this.odspSummaryUploadManager = new OdspSummaryUploadManager(this.snapshotUrl, getStorageToken, logger, epochTracker);
-        this.hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
     }
 
     public get repositoryUrl(): string {

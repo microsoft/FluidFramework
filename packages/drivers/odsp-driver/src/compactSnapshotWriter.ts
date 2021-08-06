@@ -6,7 +6,6 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import { IBlob, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
-import { ISequencedDeltaOpMessage } from "./contracts";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
@@ -84,7 +83,7 @@ function writeBlobsSection(node: NodeCore, blobs: Map<string, IBlob | ArrayBuffe
  * @param node - node to serialize to.
  * @param ops - ops that is being serialized
 */
-function writeOpsSection(node: NodeCore, ops: ISequencedDeltaOpMessage[] | ISequencedDocumentMessage[]) {
+function writeOpsSection(node: NodeCore, ops: ISequencedDocumentMessage[]) {
     ops.forEach((op) => {
         node.addString(JSON.stringify(op));
     });

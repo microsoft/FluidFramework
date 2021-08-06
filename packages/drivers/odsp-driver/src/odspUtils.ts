@@ -31,7 +31,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion } from "./packageVersion";
-import { IOdspSnapshot, ISequencedDeltaOpMessage } from "./contracts";
+import { IOdspSnapshot } from "./contracts";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -41,7 +41,7 @@ export const getOrigin = (url: string) => new URL(url).origin;
 export interface ISnapshotContents {
     snapshotTree: ISnapshotTree,
     blobs: Map<string, ArrayBuffer>,
-    ops: ISequencedDeltaOpMessage[] | ISequencedDocumentMessage[],
+    ops: ISequencedDocumentMessage[],
     sequenceNumber: number | undefined,
 }
 
