@@ -5,7 +5,7 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, bufferToString, stringToBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
@@ -70,6 +70,9 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 treeNode.trees[key] = convertSummaryToSnapshotWithEmbeddedBlobContents(summaryObject);
                 break;
             }
+            case SummaryType.Attachment:
+                treeNode.blobs[key] = summaryObject.id;
+                break;
             case SummaryType.Blob: {
                 const blobId = uuid();
                 treeNode.blobs[key] = blobId;
@@ -85,7 +88,7 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 throw new Error("No handles should be there in summary in detached container!!");
                 break;
             default: {
-                throw new Error(`Unknown tree type ${summaryObject.type}`);
+                unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
             }
         }
     }
