@@ -22,11 +22,19 @@ import type { Provider } from "nconf";
 export function validateTokenClaims(
     token: string,
     documentId: string,
-    tenantId: string): ITokenClaims {
+    tenantId: string,
+    ignoreDocumentId = false): ITokenClaims {
     const claims = jwt.decode(token) as ITokenClaims;
+    if (!claims) {
+        throw new NetworkError(403, "Missing token claims.");
+    }
 
-    if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
-        throw new NetworkError(403, "DocumentId and/or TenantId in token claims do not match request.");
+    if (claims.tenantId !== tenantId) {
+        throw new NetworkError(403, "TenantId in token claims does not match request.");
+    }
+
+    if (!ignoreDocumentId && claims.documentId !== documentId) {
+        throw new NetworkError(403, "DocumentId in token claims does not match request.");
     }
 
     if (claims.scopes === undefined || claims.scopes.length === 0) {
@@ -83,7 +91,10 @@ export function generateUser(): IUser {
  * Verifies the storage token claims and calls riddler to validate the token.
  */
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function verifyStorageToken(tenantManager: ITenantManager, config: Provider): RequestHandler {
+export function verifyStorageToken(
+    tenantManager: ITenantManager,
+    config: Provider,
+    ignoreDocumentId = false): RequestHandler {
     return (request, res, next) => {
         const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -98,13 +109,16 @@ export function verifyStorageToken(tenantManager: ITenantManager, config: Provid
         }
         const token = tokenMatch[1];
         const tenantId = getParam(request.params, "tenantId");
+        if (!tenantId) {
+            return res.status(403).send("Missing tenantId in request.");
+        }
         const documentId = getParam(request.params, "id") || request.body.id;
-        if (!tenantId || !documentId) {
-            return res.status(403).send("Missing tenantId or documentId in request.");
+        if (!ignoreDocumentId && !documentId) {
+            return res.status(403).send("Missing documentId in request");
         }
         let claims: ITokenClaims;
         try {
-            claims = validateTokenClaims(token, documentId, tenantId);
+            claims = validateTokenClaims(token, documentId, tenantId, ignoreDocumentId);
             if (isTokenExpiryEnabled) {
                 validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
             }

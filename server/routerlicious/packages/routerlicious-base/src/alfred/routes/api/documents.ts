@@ -52,7 +52,7 @@ export function create(
      */
     router.post(
         "/:tenantId",
-        verifyStorageToken(tenantManager, config),
+        verifyStorageToken(tenantManager, config, true),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             // Tenant and document
