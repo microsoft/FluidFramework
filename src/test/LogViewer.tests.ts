@@ -653,13 +653,13 @@ describe('CachingLogViewer', () => {
 			// This is deliberately done to simulate scenarios where a given DDS may not be sent all sequenced ops (because an other DDS
 			// might be receiving them).
 			const edit2 = addFakeEdit(logViewer, 2001, 1001);
-			expectReconciliationPath(edit2, [edit1]);
+			expectReconciliationPath(edit2, []);
 
-			const edit3 = addFakeEdit(logViewer, 3001, 2001);
+			const edit3 = addFakeEdit(logViewer, 3001, 2000);
 			expectReconciliationPath(edit3, [edit2]);
 
 			const edit4 = addFakeEdit(logViewer, 4001, 2500);
-			expectReconciliationPath(edit4, [edit2, edit3]);
+			expectReconciliationPath(edit4, [edit3]);
 
 			const edit5 = addFakeEdit(logViewer, 5001, 500);
 			expectReconciliationPath(edit5, [edit1, edit2, edit3, edit4]);

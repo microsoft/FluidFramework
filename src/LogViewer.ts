@@ -506,12 +506,21 @@ export class CachingLogViewer<TChange> implements LogViewer {
 								const firstEdit = this.getEditResultFromSequenceNumber(targetSequenceNumber);
 								if (firstEdit !== undefined) {
 									if (firstEdit.status === EditStatus.Applied) {
-										reconciliationPath.push({
-											...firstEdit.steps,
-											before: firstEdit.before,
-											after: firstEdit.after,
-											length: firstEdit.steps.length,
-										});
+										const firstEditInfo = this.log.getOrderedEditId(
+											firstEdit.id
+										) as SequencedOrderedEditId;
+										if (
+											firstEditInfo.sequenceInfo !== undefined &&
+											firstEditInfo.sequenceInfo.sequenceNumber >
+												orderedId.sequenceInfo.referenceSequenceNumber
+										) {
+											reconciliationPath.push({
+												...firstEdit.steps,
+												before: firstEdit.before,
+												after: firstEdit.after,
+												length: firstEdit.steps.length,
+											});
+										}
 									}
 									const lowestIndex = this.log.getIndexOfId(firstEdit.id) + 1;
 									const highestIndex = this.log.getIndexOfId(editId) - 1;
