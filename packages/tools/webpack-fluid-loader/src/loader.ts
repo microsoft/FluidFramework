@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
-import { IPersistedCache } from "@fluidframework/odsp-driver-definitions";
+import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
@@ -161,8 +161,14 @@ async function createWebLoader(
     testOrderer: boolean = false,
     odspPersistantCache?: IPersistedCache,
 ): Promise<Loader> {
+    const odspHostStoragePolicy: HostStoragePolicy = {};
+    if (window.location.hash === "#binarySnapshot") {
+        assert(options.mode === "spo-df" || options.mode === "spo",
+            "Binary format snapshot only for odsp driver!!");
+        odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
+    }
     let documentServiceFactory: IDocumentServiceFactory =
-        getDocumentServiceFactory(documentId, options, odspPersistantCache);
+        getDocumentServiceFactory(documentId, options, odspPersistantCache, odspHostStoragePolicy);
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
