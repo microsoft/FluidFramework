@@ -16,7 +16,7 @@ export class WriteBuffer {
     protected index = 0;
 
     protected push(code: number) {
-        assert(this.data !== undefined, "Data should be there");
+        assert(this.data !== undefined, 0x225 /* "Data should be there" */);
         const length = this.data.length;
         if (this.index === length) {
             const newData = new Uint8Array(length * 1.2 + 4096);
@@ -40,11 +40,11 @@ export class WriteBuffer {
             code = Math.floor(code / 256);
             length--;
         }
-        assert(code === 0, `Should write complete data code= ${codeArg} ${lengthArg}`);
+        assert(code === 0, 0x226 /* `Should write complete data code= ${codeArg} ${lengthArg}` */);
     }
 
     public done(): ReadBuffer {
-        assert(this.data !== undefined, "Data should be there");
+        assert(this.data !== undefined, 0x227 /* "Data should be there" */);
         // We can slice it to have smaller memory representation.
         // But it will be way more expensive in terms of CPU cycles!
         const buffer = new ReadBuffer(this.data.subarray(0, this.index));

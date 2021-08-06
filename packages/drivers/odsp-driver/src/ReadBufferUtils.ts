@@ -40,7 +40,7 @@ export class ReadBuffer {
         let multiplier = 1;
         let length = lengthArg;
         while (length > 0) {
-            assert(!this.eof, "unexpected end of buffer");
+            assert(!this.eof, 0x223 /* "unexpected end of buffer" */);
             res += this.data[this.index] * multiplier;
             this.index++;
             multiplier *= 256;
@@ -50,7 +50,7 @@ export class ReadBuffer {
     }
 
     public skip(length: number) {
-        assert(length >= 0, "Skip length should be positive");
+        assert(length >= 0, 0x224 /* "Skip length should be positive" */);
         this.index += length;
     }
 }

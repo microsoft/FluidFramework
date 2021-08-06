@@ -122,7 +122,7 @@ export class RemoteChannelContext implements IChannelContext {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-            assert(this.pending !== undefined, "pending is undefined");
+            assert(this.pending !== undefined, 0x23e /* "pending is undefined" */);
             this.pending.push(message);
             this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }
@@ -214,7 +214,7 @@ export class RemoteChannelContext implements IChannelContext {
             attributes);
 
         // Send all pending messages to the channel
-        assert(this.pending !== undefined, "pending undefined");
+        assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
         for (const message of this.pending) {
             this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }

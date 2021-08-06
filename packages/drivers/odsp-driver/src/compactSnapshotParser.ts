@@ -42,9 +42,9 @@ function readAndValidateHeaderSection(node: NodeCore): ISnapshotHeader {
         SnapshotId: records.SnapshotId.toString(),
     };
     assert(snapshotMinReadVersion >= header.MinReadVersion,
-        "Driver min read version should >= to server minReadVersion");
+        0x20f /* "Driver min read version should >= to server minReadVersion" */);
     assert(header.CreateVersion >= snapshotMinReadVersion,
-        "Snapshot should be created with minReadVersion or above");
+        0x210 /* "Snapshot should be created with minReadVersion or above" */);
     return header;
 }
 
@@ -56,7 +56,7 @@ function readAndValidateHeaderSection(node: NodeCore): ISnapshotHeader {
 function readDictionarySection(node: NodeCore) {
     const dictionary = new Array<string>();
     for (const name of node) {
-        assert(name instanceof BlobCore, "Mapping should be of type BlobCore");
+        assert(name instanceof BlobCore, 0x211 /* "Mapping should be of type BlobCore" */);
         dictionary.push(name.toString());
     }
     return dictionary;
@@ -70,10 +70,10 @@ function readDictionarySection(node: NodeCore) {
 function readBlobSection(node: NodeCore, dictionary: string[]) {
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (const [idIndex, blob] of node.iteratePairs()) {
-        assert(typeof idIndex === "number", "Blob index should be a number");
-        assert(blob instanceof BlobCore, "Blob content should be of type blob");
+        assert(typeof idIndex === "number", 0x212 /* "Blob index should be a number" */);
+        assert(blob instanceof BlobCore, 0x213 /* "Blob content should be of type blob" */);
         const blobId = dictionary[idIndex];
-        assert(blobId !== undefined, "blob id should be present");
+        assert(blobId !== undefined, 0x214 /* "blob id should be present" */);
         blobs.set(blobId, blob.arrayBuffer);
     }
     return blobs;
@@ -103,16 +103,16 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
         trees: {},
     };
     for (const [pathIndex, child] of treeNode.iteratePairs()) {
-        assert(typeof pathIndex == "number", "Tree index should be a number");
+        assert(typeof pathIndex == "number", 0x215 /* "Tree index should be a number" */);
         const path = dictionary[pathIndex];
-        assert(path !== undefined, "Path should not be undefined");
+        assert(path !== undefined, 0x216 /* "Path should not be undefined" */);
 
         if (child instanceof NodeCore) {
             tree.trees[path] = readTreeSection(child, dictionary);
         } else {
-            assert(typeof child == "number", "Should be number to look in dictionary");
+            assert(typeof child == "number", 0x217 /* "Should be number to look in dictionary" */);
             const id = dictionary[child];
-            assert(id !== undefined, "Id is out of range");
+            assert(id !== undefined, 0x218 /* "Id is out of range" */);
             tree.blobs[path] = id;
         }
     }
@@ -128,9 +128,9 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const builder = TreeBuilder.load(buffer);
     let ops: ISequencedDeltaOpMessage[] | undefined;
 
-    assert(builder.length === 1, "1 root should be there");
+    assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
-    assert(root.length >= 4 && root.length <= 5, "4 or 5 sections should be there");
+    assert(root.length >= 4 && root.length <= 5, 0x21a /* "4 or 5 sections should be there" */);
 
     const header = readAndValidateHeaderSection(root.getNode(0));
 
