@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@fluid-experimental/tree": "^0.45.0",
-    "@fluidframework/common-utils": "^0.32.0-0",
+    "@fluidframework/common-utils": "^0.32.0",
     "@graphql-codegen/plugin-helpers": "^1.18.2",
     "@graphql-codegen/visitor-plugin-common": "^1.18.2",
     "graphql": "^15.4.0",
