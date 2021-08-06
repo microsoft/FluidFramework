@@ -15,11 +15,14 @@ import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
 
 export interface ICustomUserDetails {
-    gender?: string;
-    email?: string;
+    gender: string;
+    email: string;
 }
 
-const userDetails: ICustomUserDetails = {};
+const userDetails: ICustomUserDetails = {
+    gender: "female",
+    email: "xyz@microsoft.com",
+};
 
 // Define the server we will be using and initialize Fluid
 const useFrs = process.env.FLUID_CLIENT === "frs";
