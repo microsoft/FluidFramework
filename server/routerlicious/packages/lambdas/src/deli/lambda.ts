@@ -49,6 +49,7 @@ import {
     LumberEventName,
     Lumberjack,
     BaseTelemetryProperties,
+    SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
@@ -132,7 +133,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private nackMessages: INackMessagesControlMessageContents | undefined;
 
     // Session level properties
-    private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
+    private scribeStartSuccess: boolean = false;
+    private serviceSummaryGenerated: boolean = false;
+    private readonly sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -142,6 +145,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         checkpointManager: IDeliCheckpointManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
+        private readonly isNewDocument: boolean,
         private readonly serviceConfiguration: IServiceConfiguration) {
         super();
 
@@ -183,11 +187,14 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (this.serviceConfiguration.deli.opEvent.enable) {
             this.updateOpMaxTimeTimer();
         }
+
+        this.sessionMetric = this.serviceConfiguration.enableLumberMetrics ?
+            Lumberjack.newLumberMetric(LumberEventName.SessionResult) : undefined;
     }
 
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
-        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
             Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
 
         if (lumberJackMetric) {
@@ -325,20 +332,39 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.removeAllListeners();
 
-        this.logSessionMetrics(closeType);
+        this.logSessionEndMetrics(closeType);
     }
 
-    private logSessionMetrics(closeType: LambdaCloseType) {
-        // Todo: Handle the rebalance case
-        // If closeType is Rebalance, the session is still ongoing
-        if (!(closeType === LambdaCloseType.Rebalance)) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
+    private logSessionStartMetrics() {
+        if (this.isNewDocument) {
+            if (this.scribeStartSuccess) {
+                this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+            } else {
+                this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.starting });
+            }
+        } else {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resuming });
+        }
+    }
+
+    private logSessionEndMetrics(closeType: LambdaCloseType) {
+        // Todo: Handle the cases where session spans across restarts
+        this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
+
+        if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+            this.sessionMetric?.error("No service summary before lambda close");
         }
 
         if (closeType === LambdaCloseType.ActivityTimeout) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
             this.sessionMetric?.success("Session terminated due to inactivity");
-        } else if (closeType === LambdaCloseType.Stop || closeType === LambdaCloseType.Error) {
+        } else if (closeType === LambdaCloseType.Error) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
             this.sessionMetric?.error("Session terminated due to error");
+        }  else {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
+            this.sessionMetric?.success("Session paused");
         }
     }
 
@@ -571,6 +597,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     });
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
+                    this.serviceSummaryGenerated = !controlContents.isClientSummary;
                     const dsn = controlContents.durableSequenceNumber;
                     if (dsn >= this.durableSequenceNumber) {
                         // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred
@@ -604,13 +631,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
                 case ControlMessageType.LambdaStartResult: {
                     const controlContents = controlMessage.contents as ILambdaStartControlMessageContents;
-                    if (controlContents.success) {
-                        this.sessionMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
-                            Lumberjack.newLumberMetric(LumberEventName.SessionResult) : undefined;
-                    } else {
-                        this.context.log?.error("Session creation failed");
-                        // updateSessionState
-                    }
+                    this.scribeStartSuccess = controlContents.success;
+                    this.logSessionStartMetrics();
                 }
 
                 default:

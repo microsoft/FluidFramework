@@ -161,8 +161,8 @@ export enum ControlMessageType {
 
 export interface IUpdateDSNControlMessageContents {
     durableSequenceNumber: number;
-    clearCache: boolean;
     isClientSummary: boolean;
+    clearCache: boolean;
 }
 
 export interface INackMessagesControlMessageContents {

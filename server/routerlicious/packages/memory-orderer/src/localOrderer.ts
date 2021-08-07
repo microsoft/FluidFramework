@@ -285,6 +285,7 @@ export class LocalOrderer implements IOrderer {
                     checkpointManager,
                     this.deltasKafka,
                     this.rawDeltasKafka,
+                    true,
                     this.serviceConfiguration);
             });
 

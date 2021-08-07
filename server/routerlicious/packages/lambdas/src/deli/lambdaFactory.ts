@@ -69,6 +69,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             return new NoOpLambda(context);
         }
 
+        let isNewDocument: boolean = false;
         let lastCheckpoint: IDeliState;
 
         const messageMetaData = {
@@ -82,6 +83,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
             context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
+            isNewDocument = true;
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
@@ -137,6 +139,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // The producer as well it shouldn't take. Maybe it just gives an output stream?
             this.forwardProducer,
             this.reverseProducer,
+            isNewDocument,
             this.serviceConfiguration);
     }
 

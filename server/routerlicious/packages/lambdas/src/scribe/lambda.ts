@@ -94,7 +94,7 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     public async handler(message: IQueuedMessage) {
-        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
             Lumberjack.newLumberMetric(LumberEventName.ScribeHandler) : undefined;
 
         if (lumberJackMetric) {
@@ -231,7 +231,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 // Otherwise send a nack and revert the protocol state back to pre summary state.
                                 if (summaryResponse.status) {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
-                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
+                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
                                     await this.updateProtocolHead(this.protocolHandler.sequenceNumber);
                                     lumberJackMetric?.setProperties({[CommonProperties.clientSummarySuccess]: true});
                                     this.context.log?.info(
@@ -308,6 +308,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 }
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
+                                    false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
                                 lumberJackMetric?.setProperties({[CommonProperties.serviceSummarySuccess]: true});
                                 this.context.log?.info(
@@ -546,11 +547,13 @@ export class ScribeLambda implements IPartitionLambda {
     // runs ahead of last summary sequence number (protocolHead). The purpose of dsn is to inform deli about permanent
     // storage so that it can hydrate its state after a failure. The client's are still reponsible for fetching ops
     // from protocolHead to dsn.
-    private async sendSummaryConfirmationMessage(durableSequenceNumber: number, clearCache: boolean) {
+    private async sendSummaryConfirmationMessage(durableSequenceNumber: number,
+        isClientSummary: boolean, clearCache: boolean) {
         const controlMessage: IControlMessage = {
             type: ControlMessageType.UpdateDSN,
             contents: {
                 durableSequenceNumber,
+                isClientSummary,
                 clearCache,
             },
         };
