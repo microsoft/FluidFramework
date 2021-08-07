@@ -93,5 +93,10 @@ export interface HostStoragePolicy {
     /**
      * Policy controlling if we will cache initial summary when we create a document
      */
-     cacheCreateNewSummary?: boolean;
+    cacheCreateNewSummary?: boolean;
+
+    /**
+     * Policy controlling if we want to fetch binary format snapshot.
+     */
+    fetchBinarySnapshotFormat?: boolean;
 }

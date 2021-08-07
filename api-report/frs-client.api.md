@@ -28,7 +28,7 @@ export class FrsAudience extends ServiceAudience<FrsMember> implements IFrsAudie
 
 // @public (undocumented)
 export class FrsAzFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<FrsMember, "userId" | "userName"> | undefined);
+    constructor(azFunctionUrl: string, user?: Pick<FrsMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -72,7 +72,9 @@ export interface FrsContainerServices {
 }
 
 // @public
-export interface FrsMember extends IMember {
+export interface FrsMember<T = any> extends IMember {
+    // (undocumented)
+    additionalDetails?: T;
     // (undocumented)
     userName: string;
 }

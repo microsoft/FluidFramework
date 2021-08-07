@@ -309,6 +309,7 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     // (undocumented)
     gcOptions?: IGCRuntimeOptions;
+    loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     summaryOptions?: ISummaryRuntimeOptions;
 }
