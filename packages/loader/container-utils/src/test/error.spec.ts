@@ -99,9 +99,17 @@ describe("Errors", () => {
     describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
-            const testError = CreateProcessingError(originalError, undefined);
+            const testError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert((testError as any).stack === originalError.stack);
+        });
+        it("Should skip coercion for valid Fluid Error", () => {
+            const originalError = normalizeError("boo", { errorCodeIfNone: "originalErrorCode" });
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
+
+            assert(coercedError as any === originalError);
+            assert(coercedError.fluidErrorCode === "originalErrorCode");
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
         });
         it("Should skip coercion for LoggingError with errorType", () => {
             const originalError = new LoggingError(
@@ -109,18 +117,23 @@ describe("Errors", () => {
                     errorType: "Some error type",
                     otherProperty: "Considered PII-free property",
                 });
-            const coercedError = CreateProcessingError(originalError, undefined);
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any === originalError);
+            assert(coercedError.fluidErrorCode === "anErrorCode");
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
         });
         it("Should coerce non-LoggingError object with errorType", () => {
             const originalError = {
                 errorType: "Some error type",
             };
-            const coercedError = CreateProcessingError(originalError, undefined);
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any !== originalError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.fluidErrorCode === "anErrorCode");
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "[object Object]");
         });
         it("Should coerce LoggingError missing errorType", () => {
@@ -128,10 +141,13 @@ describe("Errors", () => {
                 "Inherited error message", {
                     otherProperty: "Considered PII-free property",
                 });
-            const coercedError = CreateProcessingError(originalError, undefined);
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any !== originalError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.fluidErrorCode === "anErrorCode");
+            assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
+            assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
             assert(coercedError.getTelemetryProperties().otherProperty !== "Considered PII-free property", "telemetry props not copied - this case is unexpected/unsupported");
         });
@@ -149,19 +165,19 @@ describe("Errors", () => {
                 [1,2,3],
             ];
             const coercedErrors = originalMalformations.map((value) =>
-                CreateProcessingError(value, undefined),
+                CreateProcessingError(value, "anErrorCode", undefined),
             );
 
             assert(
                 coercedErrors.every(
                     (error) =>
-                        error.errorType ===
-                        ContainerErrorType.dataProcessingError,
-                ),
-            );
+                        error.errorType === ContainerErrorType.dataProcessingError &&
+                        error.getTelemetryProperties().dataProcessingError === 1 &&
+                        error.getTelemetryProperties().untrustedOrigin === 1),
+        );
             assert(
                 coercedErrors.every(
-                    (error) => typeof error.message === "string",
+                    (error) => typeof error.message === "string" && error.fluidErrorCode === "anErrorCode",
                 ),
             );
             assert(
@@ -178,20 +194,22 @@ describe("Errors", () => {
 
         it("Should be coercible from a string message", () => {
             const originalMessage = "Example of some thrown string";
-            const coercedError = CreateProcessingError(originalMessage, undefined);
+            const coercedError = CreateProcessingError(originalMessage, "anErrorCode", undefined);
 
             assert(coercedError.message === originalMessage);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.fluidErrorCode === "anErrorCode");
         });
 
         it("Should be coercible from a property object (no errorType)", () => {
             const originalError = {
                 message: "Inherited error message",
             };
-            const coercedError = CreateProcessingError(originalError, undefined);
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError.message === originalError.message);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
+            assert(coercedError.fluidErrorCode === "anErrorCode");
         });
 
         it("op props should be logged when coerced", () => {
@@ -199,7 +217,7 @@ describe("Errors", () => {
                 message: "Inherited error message",
             };
             const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
-            const coercedError = CreateProcessingError(originalError, op);
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", op);
 
             assert(isILoggingError(coercedError));
             assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);
@@ -210,7 +228,7 @@ describe("Errors", () => {
                 errorType: "hello",
             };
             const op: ISequencedDocumentMessage = { sequenceNumber: 42 } as any;
-            const coercedError = CreateProcessingError(originalError, op);
+            const coercedError = CreateProcessingError(originalError, "anErrorCode", op);
 
             assert(isILoggingError(coercedError));
             assert(coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber);

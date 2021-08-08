@@ -14,7 +14,7 @@ import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
-export function CreateProcessingError(originalError: unknown, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
+export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
 
 // @public (undocumented)
 export class DataCorruptionError extends LoggingError implements IErrorBase {
@@ -23,6 +23,18 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataCorruptionError;
+}
+
+// @public (undocumented)
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = ContainerErrorType.dataProcessingError;
+    // (undocumented)
+    readonly fluidErrorCode: string;
+    static wrapIfUnrecognized(originalError: any, errorCodeIfNone: string, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -54,6 +66,15 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+}
+
+// @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string);
+    // (undocumented)
+    readonly errorType = "usageError";
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public

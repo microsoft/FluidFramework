@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+import { IDisposable } from "@fluidframework/common-definitions";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions";
 import {
@@ -30,7 +31,7 @@ export interface IOuterDocumentDeltaConnectionProxy {
  */
 export class InnerDocumentDeltaConnection
     extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-    implements IDocumentDeltaConnection {
+    implements IDocumentDeltaConnection, IDisposable {
     /**
      * Create a DocumentDeltaConnection
      *
@@ -190,10 +191,11 @@ export class InnerDocumentDeltaConnection
         this.outerProxy.submitSignal(message);
     }
 
-    /**
-     * Disconnect from the websocket
-     */
-    public close() {
+    public get disposed() { return false; }
+    public dispose() {
         throw new Error("InnerDocumentDeltaConnection: close() not implemented Yet");
     }
+
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(): void { this.dispose(); }
 }

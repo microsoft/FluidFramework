@@ -13,6 +13,7 @@ import {
     IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { isContextExisting } from "@fluidframework/runtime-utils";
 import { ITestFluidObject } from "./interfaces";
 
 /**
@@ -25,9 +26,11 @@ export class TestFluidObject implements ITestFluidObject {
         runtime: IFluidDataStoreRuntime,
         channel: IFluidDataStoreChannel,
         context: IFluidDataStoreContext,
-        factoryEntries: Map<string, IChannelFactory>) {
+        factoryEntries: Map<string, IChannelFactory>,
+        existing: boolean,
+    ) {
         const fluidObject = new TestFluidObject(runtime, channel, context, factoryEntries);
-        await fluidObject.initialize();
+        await fluidObject.initialize(existing);
 
         return fluidObject;
     }
@@ -84,8 +87,8 @@ export class TestFluidObject implements ITestFluidObject {
         return defaultFluidObjectRequestHandler(this, request);
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
+    private async initialize(existing: boolean) {
+        if (!existing) {
             this.root = SharedMap.create(this.runtime, "root");
 
             this.factoryEntriesMap.forEach((sharedObjectFactory: IChannelFactory, key: string) => {
@@ -131,7 +134,10 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     constructor(private readonly factoryEntries: ChannelFactoryRegistry,
         public readonly type = "TestFluidObjectFactory") { }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext): Promise<FluidDataStoreRuntime> {
+    public async instantiateDataStore(
+        context: IFluidDataStoreContext,
+        existing?: boolean,
+    ): Promise<FluidDataStoreRuntime> {
         const dataTypes = new Map<string, IChannelFactory>();
 
         // Add SharedMap's factory which will be used to create the root map.
@@ -160,8 +166,15 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, dataTypes);
-        const routerP = TestFluidObject.load(runtime, runtime, context, factoryEntriesMapForObject);
+        const backCompatExisting = isContextExisting(context, existing);
+        const runtime = new runtimeClass(context, dataTypes, backCompatExisting);
+        const routerP = TestFluidObject.load(
+            runtime,
+            runtime,
+            context,
+            factoryEntriesMapForObject,
+            backCompatExisting,
+        );
 
         return runtime;
     }
