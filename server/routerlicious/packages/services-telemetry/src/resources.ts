@@ -54,20 +54,20 @@ export enum CommonProperties {
 }
 
 export enum SessionState {
-    // Waiting for lambdas to be up and start ticketing ops
-    starting = "starting",
-
     // State set when the document lambdas are up and first op for the document is ticketed
     started = "started",
 
-    // Resuming existing session
-    resuming = "resuming",
+    // Resumed existing session
+    resumed = "resumed",
 
     // State set when a kafka rebalance is triggered or the node process exits
     paused = "paused",
 
     // State set when the session ends
     end = "end",
+
+    // State set when scribe lambda is down
+    scribeDown = "scribeDown",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

@@ -135,7 +135,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     // Session level properties
     private scribeStartSuccess: boolean = false;
     private serviceSummaryGenerated: boolean = false;
-    private readonly sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
+    private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
+    private sessionStartMetric: Lumber<LumberEventName.SessionResult> | undefined;
 
     constructor(
         private readonly context: IContext,
@@ -188,8 +189,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.updateOpMaxTimeTimer();
         }
 
-        this.sessionMetric = this.serviceConfiguration.enableLumberMetrics ?
-            Lumberjack.newLumberMetric(LumberEventName.SessionResult) : undefined;
+        this.sessionMetric = this.createSessionMetric();
+        this.sessionStartMetric = this.createSessionMetric();
     }
 
     public handler(rawMessage: IQueuedMessage) {
@@ -336,19 +337,29 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     }
 
     private logSessionStartMetrics() {
+        if (this.sessionStartMetric?.isCompleted()) {
+            this.sessionStartMetric = this.createSessionMetric();
+        }
+
         if (this.isNewDocument) {
             if (this.scribeStartSuccess) {
-                this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+                this.sessionStartMetric?.success("Session started successfully");
             } else {
-                this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.starting });
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.scribeDown });
+                this.sessionStartMetric?.error("Scribe lambda failed");
             }
         } else {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resuming });
+            this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
+            this.sessionStartMetric?.success("Session resumed successfully");
         }
     }
 
     private logSessionEndMetrics(closeType: LambdaCloseType) {
-        // Todo: Handle the cases where session spans across restarts
+        if (this.sessionMetric?.isCompleted()) {
+            this.sessionMetric = this.createSessionMetric();
+        }
+
         this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
 
         if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
@@ -1026,6 +1037,19 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             clearTimeout(this.opMaxTimeTimer);
             this.opMaxTimeTimer = undefined;
         }
+    }
+
+    private createSessionMetric() {
+        if (!this.serviceConfiguration.enableLumberMetrics) {
+            return;
+        }
+
+        const sessionMetric = Lumberjack.newLumberMetric(LumberEventName.SessionResult);
+        this.sessionStartMetric?.setProperties({
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+        });
+        return sessionMetric;
     }
 
     /**

@@ -69,7 +69,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             return new NoOpLambda(context);
         }
 
-        let isNewDocument: boolean = false;
         let lastCheckpoint: IDeliState;
 
         const messageMetaData = {
@@ -83,7 +82,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // eslint-disable-next-line no-null/no-null
         if (dbObject.deli === undefined || dbObject.deli === null) {
             context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
-            isNewDocument = true;
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
             if (dbObject.deli === "") {
@@ -108,6 +106,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 lastCheckpoint = JSON.parse(dbObject.deli);
             }
         }
+
+        const isNewDocument: boolean = lastCheckpoint.sequenceNumber === 0;
 
         // For cases such as detached container where the document was generated outside the scope of deli
         // and checkpoint was written manually.
