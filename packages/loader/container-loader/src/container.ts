@@ -317,7 +317,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    rej(err ?? new GenericError("Container closed without an error"));
+                    rej(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
                 };
                 container.on("closed", onClosed);
 
@@ -1024,7 +1024,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(new GenericError("ExistingContextDoesNotSatisfyIncomingProposal"));
+        this.close(new GenericError("existingContextDoesNotSatisfyIncomingProposal"));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1713,7 +1713,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 break;
             }
             default:
-                this.close(new GenericError("Runtime can't send arbitrary message type",
+                this.close(new GenericError("invalidContainerSubmitOpType",
                     undefined /* error */,
                     { messageType: type }));
                 return -1;

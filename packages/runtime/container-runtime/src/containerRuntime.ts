@@ -1937,7 +1937,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         if (this.context.pendingLocalState !== undefined) {
-            this.closeFn(new GenericError("op submitted while processing pending initial state"));
+            this.closeFn(new GenericError("containerRuntimeSubmitWithPendingLocalState"));
         }
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
