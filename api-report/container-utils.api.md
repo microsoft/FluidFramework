@@ -68,7 +68,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+    static wrap(error: any, prefix: string, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
 }
 
 // @public
