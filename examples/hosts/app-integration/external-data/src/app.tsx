@@ -10,7 +10,7 @@ import React, { useRef } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
-import { extractStringData, fetchData, applyStringData } from "./dataHelpers";
+import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
 import { IInventoryList } from "./dataObject";
 import { InventoryListView } from "./view";
 
@@ -130,8 +130,8 @@ async function start(): Promise<void> {
         // const stringData = extractStringData(inventoryList);
         // exportContainer.close();
 
-        const stringData = extractStringData(inventoryList);
-        // Here write the data to external storage of choice e.g. externalDataService.write(stringData);
+        const stringData = await extractStringData(inventoryList);
+        await writeData(stringData);
 
         // Normally would be a void, we return the string here for demo purposes only.
         return stringData;
