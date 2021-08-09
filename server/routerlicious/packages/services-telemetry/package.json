@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.0-0",
+    "path-browserify": "^1.0.1",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
