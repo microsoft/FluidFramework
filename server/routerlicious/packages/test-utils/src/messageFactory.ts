@@ -96,7 +96,7 @@ export class MessageFactory {
         return this.createRawOperation(operation, timestamp, this.clientId);
     }
 
-    public createJoin(timestamp = Date.now()) {
+    public createJoin(timestamp = Date.now(), serverMetadata: any = undefined) {
         const joinMessage: IClientJoin = {
             clientId: this.clientId,
             detail: {
@@ -116,6 +116,7 @@ export class MessageFactory {
             referenceSequenceNumber: -1,
             traces: [],
             type: MessageType.ClientJoin,
+            serverMetadata,
         };
 
         return this.createRawOperation(operation, timestamp, null);
@@ -208,7 +209,7 @@ export class MessageFactory {
         return message;
     }
 
-    public createSummarize(referenceSequenceNumber: number,  handle: string): ISequencedOperationMessage {
+    public createSummarize(referenceSequenceNumber: number, handle: string): ISequencedOperationMessage {
         const operation = this.createDocumentMessage(MessageType.Summarize, referenceSequenceNumber);
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: this.clientId,
@@ -269,7 +270,7 @@ export class MessageFactory {
         const sequencedOperation: ISequencedDocumentAugmentedMessage = {
             clientId: null,
             clientSequenceNumber: -1,
-            contents: { handle, summaryProposal : { summarySequenceNumber : 1 } },
+            contents: { handle, summaryProposal: { summarySequenceNumber: 1 } },
             metadata: operation.metadata,
             minimumSequenceNumber: 0,
             origin: undefined,

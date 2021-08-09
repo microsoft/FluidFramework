@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/telemetry-utils",
-  "version": "0.45.0",
+  "version": "0.46.0",
   "description": "Collection of telemetry relates utilities for Fluid",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -18,14 +18,14 @@
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:genver",
-    "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
@@ -60,14 +60,14 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.31.0",
+    "@fluidframework/common-utils": "^0.32.1",
     "debug": "^4.1.1",
     "events": "^3.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.45.0",
+    "@fluidframework/mocha-test-setup": "^0.46.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/debug": "^4.1.5",
     "@types/events": "^3.0.0",
@@ -88,6 +88,7 @@
     "mocha": "^8.4.0",
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
+    "sinon": "^7.4.2",
     "typescript": "~4.1.3"
   }
 }

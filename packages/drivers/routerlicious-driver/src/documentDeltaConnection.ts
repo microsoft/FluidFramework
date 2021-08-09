@@ -14,7 +14,8 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Wrapper over the shared one for driver specific translation.
  */
-export class R11sDocumentDeltaConnection extends DocumentDeltaConnection implements IDocumentDeltaConnection {
+export class R11sDocumentDeltaConnection extends DocumentDeltaConnection
+{
     public static async create(
         tenantId: string,
         id: string,

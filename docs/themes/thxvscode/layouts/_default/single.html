@@ -1,39 +1,7 @@
-{{ define "header" }}
-{{ partial "header.html" . }}
-{{ end }}
 
-{{ define "main" }}
-
-{{ $hasContent := gt (len (default "" .Content)) 0 }}
-
-<div class="container body-content docs">
-    <div class="row">
-        {{ partial "navbar.html" . }}
-        <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
-            <div>
-                <h1>{{.Title}}</h1>
-            </div>
-            <div>
-                {{ if and $hasContent (ne .Params.status "placeholder")}}
-                {{ .Content }}
-                {{ else }}
-                {{ partial "placeholder.html" }}
-                {{ end }}
-            </div>
-        </div>
-
-        <div class="hidden-xs col-sm-3 col-md-2 docs-subnavbar-container">
-            {{ partial "toc.html"  .}}
-        </div>
-    </div>
-</div>
-
-{{ block "footer" . -}}{{ end }}
-{{/* $script := resources.Get "js/main.js" | minify | fingerprint - */}}
-<!-- <script src="{{/* $script.Permalink | relURL */}}" -->
-<!-- {{/* printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr */}}></script> -->
-{{- if templates.Exists "partials/extra-foot.html" -}}
-{{ partial "extra-foot.html" . }}
-{{- end }}
-
+{{ define "content" }}
+    {{ $status := default "_default" .Params.status }}
+    {{ $partialPathTemplate := "placeholders/__LAYOUT__.html" }}
+    {{ $partialPath := replace $partialPathTemplate "__LAYOUT__" $status }}
+    {{ partial $partialPath . }}
 {{ end }}
