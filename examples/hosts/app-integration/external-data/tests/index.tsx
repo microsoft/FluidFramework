@@ -6,9 +6,12 @@
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
-import { renderInventoryList } from "../src/view";
+import React from "react";
+import ReactDOM from "react-dom";
+
 import { InventoryListContainerRuntimeFactory } from "../src/containerCode";
 import { InventoryList } from "../src/dataObject";
+import { InventoryListView } from "../src/view";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -29,10 +32,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, InventoryListContainerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const defaultObject = await getDefaultObjectFromContainer<InventoryList>(container);
+    const inventoryList = await getDefaultObjectFromContainer<InventoryList>(container);
 
     // Given an IDiceRoller, we can render its data using the view we've created in our app.
-    renderInventoryList(defaultObject, element);
+    ReactDOM.render(<InventoryListView inventoryList={ inventoryList } />, element);
 
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

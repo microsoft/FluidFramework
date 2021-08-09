@@ -6,10 +6,13 @@
 import { TinyliciousService } from "@fluid-experimental/get-container";
 import { Container, Loader } from "@fluidframework/container-loader";
 
+import React from "react";
+import ReactDOM from "react-dom";
+
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
 import { IInventoryList } from "./dataObject";
 import { inventoryData } from "./externalData";
-import { renderInventoryList as renderInventoryList } from "./view";
+import { InventoryListView } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -97,7 +100,7 @@ async function start(): Promise<void> {
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
-    renderInventoryList(inventoryList, div);
+    ReactDOM.render(<InventoryListView inventoryList={ inventoryList } />, div);
 }
 
 start().catch((error) => console.error(error));

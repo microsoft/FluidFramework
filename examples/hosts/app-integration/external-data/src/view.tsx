@@ -6,18 +6,8 @@
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
-import ReactDOM from "react-dom";
 
 import { IInventoryItem, IInventoryList } from "./dataObject";
-
-/**
- * Render an IInventoryList into a given div, with controls to modify it.
- * @param inventoryList - The Data Object to be rendered
- * @param div - The div to render into
- */
-export function renderInventoryList(inventoryList: IInventoryList, div: HTMLDivElement) {
-    ReactDOM.render(<InventoryListView inventoryList={ inventoryList } />, div);
-}
 
 export interface IInventoryItemViewProps {
     inventoryItem: IInventoryItem;
@@ -83,7 +73,6 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
             inventoryList.off("itemDeleted", updateItems);
         };
     }, [inventoryList]);
-    inventoryList
 
     const inventoryItemViews = inventoryItems.map((inventoryItem) => (
         <InventoryItemView key={ inventoryItem.id } inventoryItem={ inventoryItem } />
