@@ -464,7 +464,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
@@ -492,9 +492,6 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
                 // Send another non-batch message.
                 dataObject1map1.set("key5", "value5");
-
-                // Set the FlushMode back to Immediate.
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
