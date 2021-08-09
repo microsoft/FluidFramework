@@ -68,19 +68,24 @@ async function initializeFromData(container: Container) {
 
 interface IAppViewProps {
     inventoryList: IInventoryList;
+    getExportData: () => Promise<string>;
 }
 
 const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const { inventoryList } = props;
+    const { inventoryList, getExportData } = props;
 
     // eslint-disable-next-line no-null/no-null
     const exportDataRef = useRef<HTMLTextAreaElement>(null);
 
-    const extractButtonClickHandler = () => {
-        // eslint-disable-next-line no-null/no-null
-        if (exportDataRef.current !== null) {
-            exportDataRef.current.value = extractData(inventoryList);
-        }
+    const exportButtonClickHandler = () => {
+        getExportData()
+            .then((exportData) => {
+                // eslint-disable-next-line no-null/no-null
+                if (exportDataRef.current !== null) {
+                    exportDataRef.current.value = exportData;
+                }
+            })
+            .catch(console.error);
     };
 
     return (
@@ -88,7 +93,7 @@ const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             <div>Data in:</div>
             <textarea rows={ 5 } value={ inventoryData } readOnly></textarea>
             <InventoryListView inventoryList={ inventoryList } />
-            <button onClick={ extractButtonClickHandler }>Export</button>
+            <button onClick={ exportButtonClickHandler }>Export</button>
             <div>Data out:</div>
             <textarea ref={ exportDataRef } rows={ 5 } readOnly></textarea>
         </div>
@@ -137,7 +142,16 @@ async function start(): Promise<void> {
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
-    ReactDOM.render(<AppView inventoryList={ inventoryList } />, div);
+    ReactDOM.render(
+        <AppView
+            inventoryList={ inventoryList }
+            // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
+            // This can be done by making a loader.request() call with appropriate headers (same as we do for the
+            // summarizing client).
+            getExportData={ async () => extractData(inventoryList) }
+        />,
+        div,
+    );
 }
 
 start().catch((error) => console.error(error));

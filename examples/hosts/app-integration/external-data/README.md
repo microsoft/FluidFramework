@@ -6,6 +6,8 @@ In this implementation, the *app* has the knowledge of the external data and its
 
 An alternate implementation might choose to include the external format support in the data object, in which case the data object might have public `import()` and `export()` methods.  This might be nice for keeping the persisted data format "close" to the runtime object to ensure import/export remains supported, but offers less flexibility in the persisted data format.
 
+For demo purposes, this example reads and writes from a string, displaying it in the view.  However, this approach would be equally valid using database read/writes, REST calls, etc.
+
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 <!-- The getting started instructions are automatically generated.
 To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' -->
