@@ -38,7 +38,7 @@ The [FrsAzFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidF
 ```javascript
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId:
+    tokenProvider: new FrsAzFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
     "UserId", userName: "Test User"}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
@@ -46,17 +46,17 @@ const config = {
 
 const client = new FrsClient(config);
 ```
-The user object can also hold optional additional user details such as the gender, address, email, etc.
+The user object can also hold optional additional user details such as the gender, address, email, etc. For example:
 
 ```javascript
-cont userDetails = {
+cont userDetails: ICustomUserDetails = {
   email: "xyz@outlook.com",
   address: "Redmond",
 };
 
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId:
+    tokenProvider: new FrsAzFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
     "UserId", userName: "Test User", additionalDetails: userDetails}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
@@ -105,22 +105,30 @@ const { audience } = containerServices;
 const audienceDiv = document.createElement("div");
 
 const onAudienceChanged = () => {
-    const members = audience.getMembers();
-    const self = audience.getMyself();
-    const memberNames = [];
-    members.forEach((member) => {
-        if (member.userId !== self?.userId) {
-            memberNames.push(member.userName);
-        }
-    });
-    audienceDiv.innerHTML = `
-        Current User: ${self?.userName} <br />
-        Other Users: ${memberNames.join(", ")}
-    `;
-};
+        const members = audience.getMembers();
+        const self = audience.getMyself();
+        const memberStrings: string[] = [];
+        const useFrs = process.env.FLUID_CLIENT === "frs";
 
-onAudienceChanged();
-audience.on("membersChanged", onAudienceChanged);
+        members.forEach((member: FrsMember<ICustomUserDetails>) => {
+            if (member.userId !== self?.userId) {
+                if (useFrs) {
+                    const memberString = `${member.userName}: {Email: ${member.additionalDetails?.email},
+                        Address: ${member.additionalDetails?.address}}`;
+                    memberStrings.push(memberString);
+                } else {
+                    memberStrings.push(member.userName);
+                }
+            }
+        });
+        audienceDiv.innerHTML = `
+            Current User: ${self?.userName} <br />
+            Other Users: ${memberStrings.join(", ")}
+        `;
+    };
+
+    onAudienceChanged();
+    audience.on("membersChanged", onAudienceChanged);
 ```
 
 `audience` provides two functions that will return `FrsMember` objects that have a user ID and user name:
