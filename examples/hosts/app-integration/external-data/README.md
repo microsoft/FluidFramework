@@ -4,7 +4,7 @@ This demo explores importing data from an external source to initialize the cont
 
 In this implementation, the *app* has the knowledge of the external data and its format.  It reads in and parses the data, and does the work to translate that into operations upon the data object.  The data object itself is unaware that the source of the data is external.  Similarly, the app does the work to iterate through the data object's contents and serialize that back out to the external format.
 
-An alternate implementation might choose to include the external format support in the data object, in which case the data object might have public `import()` and `export()` methods.  This might be nice for keeping the persisted data format "close" to the runtime object to ensure import/export remains supported, but offers less flexibility in the persisted data format.
+An alternate implementation might choose to include the external format support in the *data object*, in which case the data object might have public `import()` and `export()` methods for the app to call.  This might be nice for keeping the persisted data format "close" to the data object to ensure import/export remains supported, but offers less flexibility in choosing the persisted data format.
 
 For demo purposes, this example reads and writes from a string, displaying it in the view.  However, this approach would be equally valid using database read/writes, REST calls, etc.
 

@@ -10,8 +10,8 @@ import React, { useRef } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
+import { exportStringData, fetchData, importStringData } from "./dataHelpers";
 import { IInventoryList } from "./dataObject";
-import { inventoryData } from "./externalData";
 import { InventoryListView } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
@@ -29,23 +29,7 @@ if (location.hash.length === 0) {
 const documentId = location.hash.substring(1);
 document.title = documentId;
 
-function getExternalData() {
-    const itemStrings = inventoryData.split("\n");
-    return itemStrings.map((itemString) => {
-        const [itemNameString, itemQuantityString] = itemString.split(":");
-        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
-    });
-}
-
-function extractData(inventoryList: IInventoryList) {
-    const inventoryItems = inventoryList.getItems();
-    const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-        return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
-    });
-    return inventoryItemStrings.join("\n");
-}
-
-async function initializeFromData(container: Container) {
+async function getInventoryListFromContainer(container: Container): Promise<IInventoryList> {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
     const url = "/";
     const response = await container.request({ url });
@@ -57,22 +41,17 @@ async function initializeFromData(container: Container) {
         throw new Error(`Empty response from URL: "${url}"`);
     }
 
-    const itemData = getExternalData();
-
-    // In this app, we know our container code provides a default data object that is an IInventoryList.
-    const inventoryList: IInventoryList = response.value;
-    for (const { name, quantity } of itemData) {
-        inventoryList.addItem(name, quantity);
-    }
+    return response.value as IInventoryList;
 }
 
 interface IAppViewProps {
     inventoryList: IInventoryList;
+    importedStringData: string | undefined;
     getExportData: () => Promise<string>;
 }
 
 const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const { inventoryList, getExportData } = props;
+    const { inventoryList, importedStringData, getExportData } = props;
 
     // eslint-disable-next-line no-null/no-null
     const exportDataRef = useRef<HTMLTextAreaElement>(null);
@@ -88,10 +67,21 @@ const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             .catch(console.error);
     };
 
+    let importedDataView;
+    if (importedStringData !== undefined) {
+        importedDataView = (
+            <div>
+                <div>Imported data:</div>
+                <textarea rows={ 5 } value={ importedStringData } readOnly></textarea>
+            </div>
+        );
+    } else {
+        importedDataView = <div>Loaded from existing container</div>;
+    }
+
     return (
         <div>
-            <div>Data in:</div>
-            <textarea rows={ 5 } value={ inventoryData } readOnly></textarea>
+            { importedDataView }
             <InventoryListView inventoryList={ inventoryList } />
             <button onClick={ exportButtonClickHandler }>Export</button>
             <div>Data out:</div>
@@ -112,43 +102,31 @@ async function start(): Promise<void> {
         codeLoader,
     });
 
+    let fetchedData: string | undefined;
     let container: Container;
+    let inventoryList: IInventoryList;
 
     if (createNew) {
-        // We're not actually using the code proposal (our code loader always loads the same module regardless of the
-        // proposal), but the Container will only give us a NullRuntime if there's no proposal.  So we'll use a fake
-        // proposal.
+        fetchedData = await fetchData();
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
-        await initializeFromData(container);
+        inventoryList = await getInventoryListFromContainer(container);
+        await importStringData(inventoryList, fetchedData);
         await container.attach({ url: documentId });
     } else {
-        // Request must be appropriate and parseable by resolver.
         container = await loader.resolve({ url: documentId });
+        inventoryList = await getInventoryListFromContainer(container);
     }
-
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
-    const url = "/";
-    const response = await container.request({ url });
-
-    // Verify the response to make sure we got what we expected.
-    if (response.status !== 200 || response.mimeType !== "fluid/object") {
-        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
-    } else if (response.value === undefined) {
-        throw new Error(`Empty response from URL: "${url}"`);
-    }
-
-    // In this app, we know our container code provides a default data object that is an IInventoryList.
-    const inventoryList: IInventoryList = response.value;
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
     ReactDOM.render(
         <AppView
+            importedStringData={ fetchedData }
             inventoryList={ inventoryList }
             // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
             // This can be done by making a loader.request() call with appropriate headers (same as we do for the
             // summarizing client).
-            getExportData={ async () => extractData(inventoryList) }
+            getExportData={ async () => exportStringData(inventoryList) }
         />,
         div,
     );
