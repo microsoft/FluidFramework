@@ -444,7 +444,6 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 (dataObject1.context.containerRuntime as IContainerRuntime).flush();
-                dataObject1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
