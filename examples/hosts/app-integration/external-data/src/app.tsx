@@ -10,7 +10,7 @@ import React, { useRef } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
-import { exportStringData, fetchData, importStringData } from "./dataHelpers";
+import { extractStringData, fetchData, applyStringData } from "./dataHelpers";
 import { IInventoryList } from "./dataObject";
 import { InventoryListView } from "./view";
 
@@ -46,22 +46,26 @@ async function getInventoryListFromContainer(container: Container): Promise<IInv
 
 interface IAppViewProps {
     inventoryList: IInventoryList;
+    // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
-    getExportData: () => Promise<string>;
+    // Normally this is probably a Promise<void>.  Returns a string here for demo purposes only.
+    writeToExternalStorage: () => Promise<string>;
 }
 
 const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const { inventoryList, importedStringData, getExportData } = props;
+    const { inventoryList, importedStringData, writeToExternalStorage } = props;
 
     // eslint-disable-next-line no-null/no-null
-    const exportDataRef = useRef<HTMLTextAreaElement>(null);
+    const savedDataRef = useRef<HTMLTextAreaElement>(null);
 
-    const exportButtonClickHandler = () => {
-        getExportData()
-            .then((exportData) => {
+    const saveButtonClickHandler = () => {
+        writeToExternalStorage()
+            // As noted above, in a real scenario we don't need to observe the data in the view.
+            // Here we display it visually for demo purposes only.
+            .then((savedData) => {
                 // eslint-disable-next-line no-null/no-null
-                if (exportDataRef.current !== null) {
-                    exportDataRef.current.value = exportData;
+                if (savedDataRef.current !== null) {
+                    savedDataRef.current.value = savedData;
                 }
             })
             .catch(console.error);
@@ -83,9 +87,9 @@ const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         <div>
             { importedDataView }
             <InventoryListView inventoryList={ inventoryList } />
-            <button onClick={ exportButtonClickHandler }>Export</button>
+            <button onClick={ saveButtonClickHandler }>Save</button>
             <div>Data out:</div>
-            <textarea ref={ exportDataRef } rows={ 5 } readOnly></textarea>
+            <textarea ref={ savedDataRef } rows={ 5 } readOnly></textarea>
         </div>
     );
 };
@@ -110,12 +114,28 @@ async function start(): Promise<void> {
         fetchedData = await fetchData();
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         inventoryList = await getInventoryListFromContainer(container);
-        await importStringData(inventoryList, fetchedData);
+        await applyStringData(inventoryList, fetchedData);
         await container.attach({ url: documentId });
     } else {
         container = await loader.resolve({ url: documentId });
         inventoryList = await getInventoryListFromContainer(container);
     }
+
+    const writeToExternalStorage = async () => {
+        // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
+        // This can be done by making a loader.request() call with appropriate headers (same as we do for the
+        // summarizing client).  E.g.
+        // const exportContainer = await loader.resolve(...);
+        // const inventoryList = (await exportContainer.request(...)).value;
+        // const stringData = extractStringData(inventoryList);
+        // exportContainer.close();
+
+        const stringData = extractStringData(inventoryList);
+        // Here write the data to external storage of choice e.g. externalDataService.write(stringData);
+
+        // Normally would be a void, we return the string here for demo purposes only.
+        return stringData;
+    };
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
@@ -123,10 +143,7 @@ async function start(): Promise<void> {
         <AppView
             importedStringData={ fetchedData }
             inventoryList={ inventoryList }
-            // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
-            // This can be done by making a loader.request() call with appropriate headers (same as we do for the
-            // summarizing client).
-            getExportData={ async () => exportStringData(inventoryList) }
+            writeToExternalStorage={ writeToExternalStorage }
         />,
         div,
     );

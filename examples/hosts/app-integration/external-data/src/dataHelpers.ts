@@ -22,14 +22,14 @@ function parseStringData(stringData: string) {
     });
 }
 
-export const importStringData = async (inventoryList: IInventoryList, stringData: string) => {
+export const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
     const parsedInventoryItemData = parseStringData(stringData);
     for (const { name, quantity } of parsedInventoryItemData) {
         inventoryList.addItem(name, quantity);
     }
 };
 
-export const exportStringData = async (inventoryList: IInventoryList) => {
+export const extractStringData = async (inventoryList: IInventoryList) => {
     const inventoryItems = inventoryList.getItems();
     const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
         return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
