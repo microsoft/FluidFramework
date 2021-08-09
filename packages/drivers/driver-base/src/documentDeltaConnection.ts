@@ -108,7 +108,7 @@ export class DocumentDeltaConnection
             if (!DocumentDeltaConnection.eventsToForward.includes(event)) {
                 throw new Error(`DocumentDeltaConnection: Registering for unknown event: ${event}`);
             }
-            assert(!this.disposed, "register for event on disposed object");
+            assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
             // Register for the event on socket.io
             // "error" is special - we already subscribed to it to modify error object on the fly.
@@ -120,7 +120,7 @@ export class DocumentDeltaConnection
             // and that there are no "internal" listeners installed (like "error" case we skip above)
             // Better flow might be to always unconditionally register all handlers on successful connection,
             // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
-            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), "mismatch");
+            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), 0x20b /* "mismatch" */);
             if (!this.trackedListeners.has(event)) {
                 this.addTrackedListener(
                     event,
@@ -191,7 +191,7 @@ export class DocumentDeltaConnection
     }
 
     private checkNotClosed() {
-        assert(!this.disposed, "connection disposed");
+        assert(!this.disposed, 0x20c /* "connection disposed" */);
     }
 
     /**
@@ -427,13 +427,13 @@ export class DocumentDeltaConnection
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        assert(!this.connectionListeners.has(event), "double connection listener");
+        assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
         this.connectionListeners.set(event, listener);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        assert(!this.trackedListeners.has(event), "double tracked listener");
+        assert(!this.trackedListeners.has(event), 0x20e /* "double tracked listener" */);
         this.trackedListeners.set(event, listener);
     }
 

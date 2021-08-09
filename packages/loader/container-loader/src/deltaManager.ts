@@ -435,7 +435,7 @@ export class DeltaManager
     }
 
     public triggerConnectionRecovery(reason: string, props: ITelemetryProperties) {
-            assert(this.connection !== undefined, "called only in connected state");
+            assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
             this.logger.sendErrorEvent({
                 eventName: "ConnectionRecovery",
                 reason,
@@ -583,7 +583,7 @@ export class DeltaManager
      * @param args - The connection arguments
      */
     private triggerConnect(args: IConnectionArgs) {
-        assert(this.connection === undefined, "called only in disconnected state");
+        assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             return;
         }
@@ -882,7 +882,7 @@ export class DeltaManager
                 // detected gap, this gap can't be filled in later on through websocket).
                 // And in practice that does look like the case. The place where this code gets hit is if we lost
                 // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
-                assert(op.sequenceNumber === this.lastQueuedSequenceNumber, "seq#'s");
+                assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
                 if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                     controller.abort();
                     this._inbound.off("push", listener);

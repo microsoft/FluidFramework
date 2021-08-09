@@ -345,6 +345,8 @@ describe("OdspDeltaStorageWithCache", () => {
             },
             // getCached
             async (from: number, to: number) => filterOps(cachedOps, from, to),
+            // requestFromSocket
+            (from: number, to: number) => { },
             // opsReceived
             (ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
         );
