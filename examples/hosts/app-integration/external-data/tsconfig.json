@@ -12,7 +12,8 @@
             "jest",
             "puppeteer",
             "jest-environment-puppeteer",
-            "expect-puppeteer"
+            "expect-puppeteer",
+            "react"
         ]
     },
     "include": [

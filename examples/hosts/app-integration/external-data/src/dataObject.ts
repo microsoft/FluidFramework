@@ -11,6 +11,12 @@ import { IEvent } from "@fluidframework/common-definitions";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 
+export interface IInventoryItem extends EventEmitter {
+    readonly id: string;
+    readonly name: SharedString;
+    quantity: number;
+}
+
 /**
  * IInventoryList describes the public API surface for our inventory list object.
  */
@@ -26,7 +32,7 @@ export interface IInventoryList extends EventEmitter {
     on(event: "itemAdded" | "itemDeleted", listener: (item: InventoryItem) => void): this;
 }
 
-class InventoryItem extends EventEmitter {
+class InventoryItem extends EventEmitter implements IInventoryItem {
     public get id() {
         return this._id;
     }
