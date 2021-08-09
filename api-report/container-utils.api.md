@@ -31,7 +31,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
 }
 
 // @public (undocumented)
-export class DataProcessingError extends LoggingError implements IErrorBase {
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
@@ -81,10 +81,10 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
 }
 
 // @public
-export function wrapError<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (m: string) => T): T;
+export function wrapError<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
 // @public
-export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (m: string) => T, logger: ITelemetryLogger): T;
+export function wrapErrorAndLog<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (mmessage: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

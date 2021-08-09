@@ -91,7 +91,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
     }
 }
 
-export class DataProcessingError extends LoggingError implements IErrorBase {
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
     readonly canRetry = false;
 
@@ -168,7 +168,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
 
             // By clobbering newError.errorType, we can no longer properly call it a GenericError.
             // It's still a LoggingError, and does have errorType so it's also IErrorBase
-            return newError as LoggingError & IFluidErrorBase;
+            return newError as LoggingError & IErrorBase;
         };
 
     const error = isValidLegacyError(originalError)
@@ -191,7 +191,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
  */
 export function wrapError<T extends IWriteableLoggingError>(
     innerError: unknown,
-    newErrorFn: (m: string) => T,
+    newErrorFn: (message: string) => T,
 ): T {
     const {
         message,
@@ -217,16 +217,19 @@ export function wrapError<T extends IWriteableLoggingError>(
 }
 
 /** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
-export function wrapErrorAndLog<T extends IFluidErrorBase>(
+export function wrapErrorAndLog<T extends IWriteableLoggingError>(
     innerError: unknown,
-    newErrorFn: (m: string) => T,
+    newErrorFn: (mmessage: string) => T,
     logger: ITelemetryLogger,
 ) {
     const newError = wrapError(innerError, newErrorFn);
+    const wrappedByErrorInstanceId = hasErrorInstanceId(newError)
+        ? newError.errorInstanceId
+        : undefined;
 
     logger.sendErrorEvent({
         eventName: "WrapError",
-        wrappedByErrorInstanceId: newError.errorInstanceId,
+        wrappedByErrorInstanceId,
     }, innerError);
 
     return newError;
