@@ -33,12 +33,13 @@ Now that you have an instance of `FrsClient`, you can start using it to create o
 
 ### Token providers
 
-The `FrsAzFunctionTokenProvider` is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `FrsAzFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Your Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
+The [FrsAzFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/FrsAzFunctionTokenProvider.ts" >}}) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `FrsAzFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Your Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
 
 ```javascript
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "UserId", userName: "Test User"}),
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId:
+    "UserId", userName: "Test User"}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
 };
@@ -55,7 +56,8 @@ cont userDetails = {
 
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "UserId", userName: "Test User", additionalDetails: userDetails}),
+    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId:
+    "UserId", userName: "Test User", additionalDetails: userDetails}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
 };
