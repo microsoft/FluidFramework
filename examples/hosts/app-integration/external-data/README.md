@@ -1,8 +1,10 @@
-# @fluid-example/app-integration-external-views
+# @fluid-example/app-integration-external-data
 
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists the value in the root SharedDirectory. The Fluid Container is defined in container/, the data object is defined in dataObject/.
+This demo explores importing data from an external source to initialize the container's data with, and then exporting the container's current data back out to that format on demand.
 
-This implementation demonstrates plugging that Container into a standalone application, rather than using the webpack-fluid-loader environment that most of our packages use.  This implementation relies on [Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will bind to the data in the container.
+In this implementation, the *app* has the knowledge of the external data and its format.  It reads in and parses the data, and does the work to translate that into operations upon the data object.  The data object itself is unaware that the source of the data is external.  Similarly, the app does the work to iterate through the data object's contents and serialize that back out to the external format.
+
+An alternate implementation might choose to include the external format support in the data object, in which case the data object might have public `import()` and `export()` methods.  This might be nice for keeping the persisted data format "close" to the runtime object to ensure import/export remains supported, but offers less flexibility in the persisted data format.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 <!-- The getting started instructions are automatically generated.
@@ -14,9 +16,9 @@ You can run this example using the following steps:
 
 1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
    a. For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-example/app-integration-external-views`
+      `npm run build:fast -- --nolint @fluid-example/app-integration-external-data`
 1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
-1. Run `npm run start` from this directory (examples/hosts/app-integration/external-views) and open <http://localhost:8080> in a web browser to see the app running.
+1. Run `npm run start` from this directory (examples/hosts/app-integration/external-data) and open <http://localhost:8080> in a web browser to see the app running.
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Testing
@@ -34,9 +36,3 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
-
-## Data model
-
-Dice Roller uses the following distributed data structures:
-
-- SharedDirectory - root

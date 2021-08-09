@@ -10,7 +10,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 module.exports = env => {
     return ({
         entry: {
-            app: "./tests/index.ts"
+            app: "./tests/index.tsx"
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],

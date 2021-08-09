@@ -46,7 +46,7 @@ function extractData(inventoryList: IInventoryList) {
 }
 
 async function initializeFromData(container: Container) {
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
+    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
     const url = "/";
     const response = await container.request({ url });
 
@@ -59,7 +59,7 @@ async function initializeFromData(container: Container) {
 
     const itemData = getExternalData();
 
-    // In this app, we know our container code provides a default data object that is an IDiceRoller.
+    // In this app, we know our container code provides a default data object that is an IInventoryList.
     const inventoryList: IInventoryList = response.value;
     for (const { name, quantity } of itemData) {
         inventoryList.addItem(name, quantity);

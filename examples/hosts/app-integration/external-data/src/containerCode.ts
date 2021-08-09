@@ -8,9 +8,9 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { InventoryListInstantiationFactory } from "./dataObject";
 
 /**
- * The DiceRollerContainerRuntimeFactory is the container code for our scenario.
+ * The InventoryListContainerRuntimeFactory is the container code for our scenario.
  *
- * Since we only need to instantiate and retrieve a single dice roller for our scenario, we can use a
+ * Since we only need to instantiate and retrieve a single inventory list for our scenario, we can use a
  * ContainerRuntimeFactoryWithDefaultDataStore. We provide it with the type of the data object we want to create
  * and retrieve by default, and the registry entry mapping the type to the factory.
  *

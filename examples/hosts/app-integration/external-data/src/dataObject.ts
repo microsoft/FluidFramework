@@ -113,7 +113,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 
     /**
      * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-     * DataObject, by registering an event listener for dice rolls.
+     * DataObject, by registering an event listener for changes to the inventory list.
      */
     protected async hasInitialized() {
         this.root.on("valueChanged", (changed) => {
@@ -149,7 +149,7 @@ export class InventoryList extends DataObject implements IInventoryList {
  */
 export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList, undefined, undefined, IEvent>
 (
-    "dice-roller",
+    "inventory-list",
     InventoryList,
     [
         SharedCell.getFactory(),

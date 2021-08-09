@@ -33,8 +33,11 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
 
     // Get the Default Object from the Container
     const inventoryList = await getDefaultObjectFromContainer<InventoryList>(container);
+    // This adds the item twice on each pageload (one for each of the side-by-sides) which isn't great
+    // but doesn't really matter for testing.
+    inventoryList.addItem("testName", 3);
 
-    // Given an IDiceRoller, we can render its data using the view we've created in our app.
+    // Given an IInventoryList, we can render its data using the view we've created in our app.
     ReactDOM.render(<InventoryListView inventoryList={ inventoryList } />, element);
 
     // Setting "fluidStarted" is just for our test automation
@@ -62,6 +65,6 @@ async function setup() {
 setup().catch((e)=> {
     console.error(e);
     console.log(
-        "%cThere were issues setting up and starting the in memory FLuid Server",
+        "%cThere were issues setting up and starting the in memory Fluid Server",
         "font-size:30px");
 });
