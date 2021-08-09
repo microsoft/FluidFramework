@@ -705,8 +705,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
-    private _flushMode = FlushMode.TurnBased;
     private _orderSequentiallyCalls: number = 0;
+    private _flushMode = FlushMode.TurnBased;
     private needsFlush = false;
     private flushTrigger = false;
 
