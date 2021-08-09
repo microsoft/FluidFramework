@@ -46,7 +46,7 @@ const config = {
 
 const client = new FrsClient(config);
 ```
-The user object can also hold additional user details such as the gender, address, email, etc.
+The user object can also hold optional additional user details such as the gender, address, email, etc.
 
 ```javascript
 cont userDetails = {
