@@ -80,7 +80,7 @@ describe("Odsp Create Container Test", () => {
 
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
-        const docID = getHashedDocumentId(driveId, itemId);
+        const docID = await getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true);
         const docService = await mockFetchOk(
             async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
