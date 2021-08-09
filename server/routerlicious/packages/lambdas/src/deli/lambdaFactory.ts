@@ -58,7 +58,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         const { documentId, tenantId, leaderEpoch } = config;
 
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         // Lookup the last sequence number stored
