@@ -6,7 +6,7 @@
  * @fileoverview Helper functions and classes to work with ChangeSets with indexed collections (sets and maps)
  */
 
-import { cloneDeep, isArray, isObject, isEmpty, keys as _keys, isEqual, without, includes } from "lodash";
+import  _  from "lodash"
 import {constants, Strings } from "@fluid-experimental/property-common";
 import { isPrimitiveType as _isPrimitiveType } from "../helpers/typeidHelper";
 import { quotePathSegmentIfNeeded } from "../pathHelper";
@@ -16,7 +16,6 @@ import isEmptyChangeSet from "./isEmptyChangeset";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 const {joinPaths} = Strings;
-const deepCopy = cloneDeep;
 
 /**
  * @namespace property-changeset.ChangeSetOperations.IndexedCollectionOperations
@@ -35,8 +34,8 @@ const deepCopy = cloneDeep;
  * @private
  */
 const _fastIsEmptyObject = function(in_object) {
-    if (!in_object || isArray(in_object) || !isObject(in_object)) {
-        return isEmpty(in_object);
+    if (!in_object || _.isArray(in_object) || !_.isObject(in_object)) {
+        return _.isEmpty(in_object);
     }
 
     for (var key in in_object) { // eslint-disable-line
@@ -75,13 +74,13 @@ const ChangeSetIndexedCollectionFunctions = {
 
             io_basePropertyChanges = io_basePropertyChanges || {};
             io_basePropertyChanges.remove = io_basePropertyChanges.remove ||
-                (isArray(in_appliedPropertyChanges.remove) ? [] : {});
+                (_.isArray(in_appliedPropertyChanges.remove) ? [] : {});
             var baseInserted = io_basePropertyChanges.insert || {};
             var baseRemoved = io_basePropertyChanges.remove;
             var baseModified = io_basePropertyChanges.modify;
             let done = false;
 
-            if (!isArray(removedEntries)) {
+            if (!_.isArray(removedEntries)) {
                 if (isPrimitiveType) {
                     removedEntries = Object.keys(removedEntries);
                 } else {
@@ -96,7 +95,7 @@ const ChangeSetIndexedCollectionFunctions = {
 
                                 // If all entries for a typeid have been removed, we can remove
                                 // the whole typeid from the inserted section
-                                if (baseInserted && isEmpty(baseInserted[removedTypes[t]])) {
+                                if (baseInserted && _.isEmpty(baseInserted[removedTypes[t]])) {
                                     delete baseInserted[removedTypes[t]];
                                 }
                             } else {
@@ -106,11 +105,11 @@ const ChangeSetIndexedCollectionFunctions = {
 
                                     // If all entries for a typeid have been removed, we can remove
                                     // the whole typeid from the inserted section
-                                    if (baseModified && isEmpty(baseModified[removedTypes[t]])) {
+                                    if (baseModified && _.isEmpty(baseModified[removedTypes[t]])) {
                                         delete baseModified[removedTypes[t]];
                                     }
                                 }
-                                if (isArray(baseRemoved)) {
+                                if (_.isArray(baseRemoved)) {
                                     baseRemoved.push(removedKeys[i]);
                                 } else {
                                     if (!baseRemoved[removedTypes[t]]) {
@@ -140,7 +139,7 @@ const ChangeSetIndexedCollectionFunctions = {
                             }
 
                             // Otherwise we add it to the remove list
-                            if (isArray(baseRemoved)) {
+                            if (_.isArray(baseRemoved)) {
                                 baseRemoved.push(key);
                             } else {
                                 baseRemoved[key] = in_appliedPropertyChanges.remove[key];
@@ -148,7 +147,7 @@ const ChangeSetIndexedCollectionFunctions = {
                         }
                     }
                 } else {
-                    const baseInsertedTypeids = _keys(baseInserted);
+                    const baseInsertedTypeids = _.keys(baseInserted);
                     for (var i = 0; i < removedEntries.length; i++) {
                         var key = removedEntries[i];
                         let foundInTypeid;
@@ -169,15 +168,15 @@ const ChangeSetIndexedCollectionFunctions = {
 
                             // If all entries for a typeid have been removed, we can remove
                             // the whole typeid from the inserted or modified section
-                            if (baseInserted && isEmpty(baseInserted[foundInTypeid])) {
+                            if (baseInserted && _.isEmpty(baseInserted[foundInTypeid])) {
                                 delete baseInserted[foundInTypeid];
                             }
-                            if (baseModified && isEmpty(baseModified[foundInTypeid])) {
+                            if (baseModified && _.isEmpty(baseModified[foundInTypeid])) {
                                 delete baseModified[foundInTypeid];
                             }
                         } else {
                             // There could be a modify entry for this key, which we have to remove
-                            const baseModifiedTypeids = _keys(baseModified);
+                            const baseModifiedTypeids = _.keys(baseModified);
                             for (var j = 0; j < baseModifiedTypeids.length; j++) {
                                 if (baseModified[baseModifiedTypeids[j]][key]) {
                                     foundInTypeid = baseModifiedTypeids[j];
@@ -205,12 +204,12 @@ const ChangeSetIndexedCollectionFunctions = {
             // Insert the inserted entries
 
             // If no typeids are included, we just use a placeholder for the iteration below
-            const insertedTypeids = isPrimitiveType ? [undefined] : _keys(in_appliedPropertyChanges.insert);
+            const insertedTypeids = isPrimitiveType ? [undefined] : _.keys(in_appliedPropertyChanges.insert);
             for (var i = 0; i < insertedTypeids.length; i++) {
                 var typeid = insertedTypeids[i];
                 const insertedEntries = isPrimitiveType ?
                     in_appliedPropertyChanges.insert : in_appliedPropertyChanges.insert[typeid];
-                const insertedKeys = _keys(insertedEntries);
+                const insertedKeys = _.keys(insertedEntries);
                 let removalCS;
                 if (baseRemoved) {
                     removalCS = isPrimitiveType ? baseRemoved : baseRemoved[typeid];
@@ -224,37 +223,37 @@ const ChangeSetIndexedCollectionFunctions = {
                     // TODO: We should actually compute a diff between the two and recursively convert portions to modifies
                     // Instead, right now, we only handle the case where the two keys cancel each out perfectly, i.e.,
                     // the insert is reinserting exactly what was removed.
-                    if (!isPrimitiveType && removalCS && isObject(removalCS) && removalCS[key] !== undefined) {
+                    if (!isPrimitiveType && removalCS && _.isObject(removalCS) && removalCS[key] !== undefined) {
                         // Split out the two parts: all the keys other than remove/insert should match exactly.
                         // The contents 'remove' and 'insert', if they exist, should also match.
                         deeplyEqualCS = !!insertedEntries[key].insert === !!removalCS[key].remove;
 
                         // If there are 'insert' and 'remove', see if the removed data matches the inserted data
                         if (deeplyEqualCS && insertedEntries[key].insert) {
-                            deeplyEqualCS = isEqual(
+                            deeplyEqualCS = _.isEqual(
                                 insertedEntries[key].insert,
                                 removalCS[key].remove,
                             );
                         }
 
                         // Finally, check if the data being inserted matches the data that was removed
-                        const insertedEntry = isObject(insertedEntries[key]) ? without(insertedEntries[key], "insert") : insertedEntries[key];
-                        const removedEntry = isObject(removalCS[key]) ? without(removalCS[key], "remove") : removalCS[key];
-                        deeplyEqualCS = deeplyEqualCS && isEqual(insertedEntry, removedEntry);
+                        const insertedEntry = _.isObject(insertedEntries[key]) ? _.without(insertedEntries[key], "insert") : insertedEntries[key];
+                        const removedEntry = _.isObject(removalCS[key]) ? _.without(removalCS[key], "remove") : removalCS[key];
+                        deeplyEqualCS = deeplyEqualCS && _.isEqual(insertedEntry, removedEntry);
                     }
 
                     if ((isPrimitiveType || _isPrimitiveType(typeid) || deeplyEqualCS) &&
                         removalCS &&
-                        ((isArray(removalCS) && includes(baseRemoved, key)) || removalCS[key] !== undefined)) {
+                        ((_.isArray(removalCS) && _.includes(baseRemoved, key)) || removalCS[key] !== undefined)) {
                         // A remove and insert are combined into a modify for primitive types
 
                         // Remove the old remove command
                         let oldValueMatches = false;
-                        if (isArray(removalCS)) {
+                        if (_.isArray(removalCS)) {
                             if (isPrimitiveType) {
-                                io_basePropertyChanges.remove = without(io_basePropertyChanges.remove, key);
+                                io_basePropertyChanges.remove = _.without(io_basePropertyChanges.remove, key);
                             } else {
-                                io_basePropertyChanges.remove[typeid] = without(io_basePropertyChanges.remove[typeid], key);
+                                io_basePropertyChanges.remove[typeid] = _.without(io_basePropertyChanges.remove[typeid], key);
                             }
                         } else {
                             oldValueMatches = deeplyEqualCS || (removalCS[key] === insertedEntries[key]);
@@ -268,14 +267,14 @@ const ChangeSetIndexedCollectionFunctions = {
                                 io_basePropertyChanges.modify[key] = insertedEntries[key];
                             } else {
                                 io_basePropertyChanges.modify[typeid] = io_basePropertyChanges.modify[typeid] || {};
-                                io_basePropertyChanges.modify[typeid][key] = deepCopy(insertedEntries[key]);
+                                io_basePropertyChanges.modify[typeid][key] = _.cloneCopy(insertedEntries[key]);
                             }
                         }
                     } else if (isPrimitiveType && baseInserted[key] === undefined) {
                         baseInserted[key] = insertedEntries[key];
                     } else if (!isPrimitiveType && (!baseInserted[typeid] || baseInserted[typeid][key] === undefined)) {
                         baseInserted[typeid] = baseInserted[typeid] || {};
-                        baseInserted[typeid][key] = deepCopy(insertedEntries[key]);
+                        baseInserted[typeid][key] = _.cloneCopy(insertedEntries[key]);
                     } else {
                         throw new Error(MSG.ALREADY_EXISTING_ENTRY + key);
                     }
@@ -295,11 +294,11 @@ const ChangeSetIndexedCollectionFunctions = {
             // Process the modifications
 
             // If no typeids are included, we just use a placeholder for the iteration below
-            const modifiedTypeids = isPrimitiveType ? [undefined] : _keys(modifiedEntries);
+            const modifiedTypeids = isPrimitiveType ? [undefined] : _.keys(modifiedEntries);
             for (var i = 0; i < modifiedTypeids.length; i++) {
                 var typeid = modifiedTypeids[i];
 
-                const modifyKeys = _keys(isPrimitiveType ? modifiedEntries : modifiedEntries[typeid]);
+                const modifyKeys = _.keys(isPrimitiveType ? modifiedEntries : modifiedEntries[typeid]);
                 for (var j = 0; j < modifyKeys.length; j++) {
                     var key = modifyKeys[j];
 
@@ -376,7 +375,7 @@ const ChangeSetIndexedCollectionFunctions = {
                             }
                         } else {
                             baseModified[typeid] = baseModified[typeid] || {};
-                            baseModified[typeid][key] = deepCopy(modifiedEntries[typeid][key]);
+                            baseModified[typeid][key] = _.cloneCopy(modifiedEntries[typeid][key]);
                         }
                     }
                 }
@@ -429,7 +428,7 @@ const ChangeSetIndexedCollectionFunctions = {
 
             // For remove operations, the ChangeSet is only an array of keys, otherwise it is a map, so we have to
             // distinguish the two cases here
-            const keys = isArray(in_collection) ? in_collection : _keys(in_collection);
+            const keys = _.isArray(in_collection) ? in_collection : _.keys(in_collection);
 
             // Add all entries indexed with the key
             for (let j = 0; j < keys.length; j++) {
@@ -448,7 +447,7 @@ const ChangeSetIndexedCollectionFunctions = {
 
                 // Store the ChangeSet
                 if (in_changePrefix === "other") {
-                    if (!isArray(in_collection)) {
+                    if (!_.isArray(in_collection)) {
                         changesByKeys[key].change = in_collection[key];
                     } else {
                         changesByKeys[key].change = key;
@@ -463,7 +462,7 @@ const ChangeSetIndexedCollectionFunctions = {
                 return;
             }
             // Iterate over the typeids (or use dummy entry for the iteration
-            const addedKeyTypeids = _keys(in_collection);
+            const addedKeyTypeids = _.keys(in_collection);
             for (let i = 0; i < addedKeyTypeids.length; i++) {
                 const Typeid = addedKeyTypeids[i];
                 addChanges(in_collection[Typeid], in_changeIdentifier, in_changePrefix, Typeid);
@@ -471,7 +470,7 @@ const ChangeSetIndexedCollectionFunctions = {
         };
 
         // Insert all changes from the ChangeSet into the lookup map
-        if (isArray(in_ownPropertyChangeSet.remove)) {
+        if (_.isArray(in_ownPropertyChangeSet.remove)) {
             addChanges(in_ownPropertyChangeSet.remove, "remove", "own");
         } else {
             if (isPrimitiveType) {
@@ -481,7 +480,7 @@ const ChangeSetIndexedCollectionFunctions = {
             }
         }
 
-        if (isArray(io_rebasePropertyChangeSet.remove)) {
+        if (_.isArray(io_rebasePropertyChangeSet.remove)) {
             addChanges(io_rebasePropertyChangeSet.remove, "remove", "other");
         } else {
             if (isPrimitiveType) {
@@ -504,7 +503,7 @@ const ChangeSetIndexedCollectionFunctions = {
         }
 
         // Check for modifications that affect the same object
-        const changedKeys = _keys(changesByKeys);
+        const changedKeys = _.keys(changesByKeys);
         for (let i = 0; i < changedKeys.length; i++) {
             const key = changedKeys[i];
             const newPath = in_useSquareBracketsInPath ?
@@ -642,8 +641,8 @@ const ChangeSetIndexedCollectionFunctions = {
 
                     // If we have a duplicated delete, we remove it from the new ChangeSet
                     if (modification.own === "remove") {
-                        if (isArray(io_rebasePropertyChangeSet.remove)) {
-                            io_rebasePropertyChangeSet.remove = without(io_rebasePropertyChangeSet.remove, key);
+                        if (_.isArray(io_rebasePropertyChangeSet.remove)) {
+                            io_rebasePropertyChangeSet.remove = _.without(io_rebasePropertyChangeSet.remove, key);
                         } else {
                             if (isPrimitiveType) {
                                 delete io_rebasePropertyChangeSet.remove[key];
@@ -734,9 +733,9 @@ const ChangeSetIndexedCollectionFunctions = {
                         }
                     } else {
                         // Remove remove operations from the ChangeSet
-                        if (isArray(io_rebasePropertyChangeSet[modification.other])) {
+                        if (_.isArray(io_rebasePropertyChangeSet[modification.other])) {
                             io_rebasePropertyChangeSet[modification.other] =
-                                without(io_rebasePropertyChangeSet[modification.other], key);
+                                _.without(io_rebasePropertyChangeSet[modification.other], key);
                         } else {
                             delete io_rebasePropertyChangeSet[modification.other][key];
                         }
@@ -764,7 +763,7 @@ const ChangeSetIndexedCollectionFunctions = {
 
         // First remove unused typeid sections
         if (in_containsTypeids) {
-            var typeidList = _keys(changes.insert);
+            var typeidList = _.keys(changes.insert);
             for (var j = 0; j < typeidList.length; j++) {
                 if (_fastIsEmptyObject(changes.insert[typeidList[j]])) {
                     delete changes.insert[typeidList[j]];
@@ -779,7 +778,7 @@ const ChangeSetIndexedCollectionFunctions = {
 
         // First remove unused typeid sections
         if (in_containsTypeids) {
-            var typeidList = _keys(changes.remove);
+            var typeidList = _.keys(changes.remove);
             for (var j = 0; j < typeidList.length; j++) {
                 if (_fastIsEmptyObject(changes.remove[typeidList[j]])) {
                     delete changes.remove[typeidList[j]];
@@ -795,10 +794,10 @@ const ChangeSetIndexedCollectionFunctions = {
 
         // First remove unused typeid sections
         if (in_containsTypeids) {
-            var typeidList = _keys(changes.modify);
+            var typeidList = _.keys(changes.modify);
             for (var j = 0; j < typeidList.length; j++) {
                 const modifies = changes.modify[typeidList[j]];
-                const modifyKeys = _keys(modifies);
+                const modifyKeys = _.keys(modifies);
                 for (let k = 0; k < modifyKeys.length; k++) {
                     if (isEmptyChangeSet(modifies[modifyKeys[k]])) {
                         delete modifies[modifyKeys[k]];

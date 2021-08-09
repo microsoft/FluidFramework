@@ -5,7 +5,7 @@
 /**
  * @fileoverview Helper function to check whether a changeset is empty
  */
-import { isObject, isEmpty, size, has } from "lodash";
+import  _  from "lodash"
 
 /**
  * Helper function which checks whether a given serialized changeSet is an empty changeSet.
@@ -14,7 +14,7 @@ import { isObject, isEmpty, size, has } from "lodash";
  * @return {boolean} True if it is an empty changeset.
  */
 const isEmptyChangeSet = (in_changeSet) => in_changeSet === undefined ||
-        (isObject(in_changeSet) &&
-            (isEmpty(in_changeSet) || (size(in_changeSet) === 1 && has(in_changeSet, "typeid"))));
+        (_.isObject(in_changeSet) &&
+            (_.isEmpty(in_changeSet) || (_.size(in_changeSet) === 1 && _.has(in_changeSet, "typeid"))));
 
 module.exports = isEmptyChangeSet;

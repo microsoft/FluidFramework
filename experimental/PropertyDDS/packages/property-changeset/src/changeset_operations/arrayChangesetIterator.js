@@ -6,7 +6,7 @@
  * @fileoverview Iterator to iterate over array ChangeSets
  */
 
-import { isNumber, isString } from "lodash";
+import _ from "lodash";
 import { constants } from "@fluid-experimental/property-common";
 
 const MSG = constants.MSG;
@@ -63,7 +63,7 @@ ArrayChangeSetIterator.prototype.next = function() {
         type = ArrayChangeSetIterator.types.REMOVE;
         currentIndex = this._changeSet.remove[this._currentIndices.remove][0];
         let currentLength = this._changeSet.remove[this._currentIndices.remove][1];
-        if (!isNumber(currentLength)) {
+        if (!_.isNumber(currentLength)) {
             currentLength = currentLength.length;
         }
 
@@ -127,7 +127,7 @@ ArrayChangeSetIterator.prototype.next = function() {
             this.offset = this._currentOffset;
 
             // Update the current offset. For a remove we have to decrement it by the number of the removed elements
-            var removedElements = isNumber(this.operation[1]) ? this.operation[1] : this.operation[1].length;
+            var removedElements = _.isNumber(this.operation[1]) ? this.operation[1] : this.operation[1].length;
             this._lastOperationOffset -= removedElements;
 
             // Shift the internal index
@@ -158,7 +158,7 @@ ArrayChangeSetIterator.prototype.next = function() {
 
                     // build a partial modify and cut the remaining one:
                     const partialModify = [nextModify[0], 0];
-                    if (isString(nextModify[1])) {
+                    if (_.isString(nextModify[1])) {
                         partialModify[1] = nextModify[1].substr(0, insertPosition - nextModify[0]);
                         nextModify[1] = nextModify[1].substr(insertPosition - nextModify[0]);
                     } else {

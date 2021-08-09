@@ -11,10 +11,8 @@
 /* eslint-disable no-use-before-define */
 
 import Ajv from "ajv";
-import { cloneDeep as deepCopy, isString, isArray, every, isObject,
-    isUndefined, each, keys, isEqual as _isEqual, difference,
-     has, isEmpty, mapValues, includes, map, find } from "lodash";
-import { gt, diff, major as _major, valid, compare } from "semver";
+import  _  from "lodash"
+import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
 import { queue } from "async";
 
@@ -58,7 +56,7 @@ const VALID_CONTEXTS = ["single", "array", "map", "set", "enum"];
 
 const _extractTypeid = function(typeidOrReference) {
     // Take Reference<strong-type-id> and return strong-type-id
-    if (!isString(typeidOrReference)) {
+    if (!_.isString(typeidOrReference)) {
         throw new Error(MSG.TYPEID_MUST_BE_STRING + typeidOrReference);
     }
     const reference = "Reference<";
@@ -146,8 +144,8 @@ const _psetDeepEquals = function(in_source, in_target) {
             }
         }
 
-        if (isArray(source)) {
-            if (!isArray(target)) {
+        if (_.isArray(source)) {
+            if (!_.isArray(target)) {
                 return _getPSetDeepEqualsResult(false);
             }
 
@@ -161,10 +159,10 @@ const _psetDeepEquals = function(in_source, in_target) {
 
             // See if we're comparing arrays of objects (like properties) or simple arrays of strings
             // like inheritance lists.
-            const isPropertyArray = every(source, (entry) => isObject(entry) && !isUndefined(entry.id));
+            const isPropertyArray = _.every(source, (entry) => _.isObject(entry) && !_.isUndefined(entry.id));
             if (isPropertyArray) {
                 const targetMap = {};
-                each(target, function(element) {
+                _.each(target, function(element) {
                     targetMap[element.id] = element;
                 });
 
@@ -180,20 +178,20 @@ const _psetDeepEquals = function(in_source, in_target) {
                     idPath.pop();
                 }
             }
-        } else if (isObject(source)) {
-            if (!isObject(target)) {
+        } else if (_.isObject(source)) {
+            if (!_.isObject(target)) {
                 return _getPSetDeepEqualsResult(false);
             }
 
-            const keysSource = keys(source);
-            const keysTarget = keys(target);
+            const keysSource = _.keys(source);
+            const keysTarget = _.keys(target);
             if (keysSource.length !== keysTarget.length) {
                 // A template with abstract properties must equal one with an empty properties array
                 // We check the difference in keys between the source and target and if the only difference is the
                 // properties array we check if it's empty. Then we reverse the condition so it work both ways.
                 if (
-                    (_isEqual(difference(keysTarget, keysSource), ["properties"]) && !target.properties.length) ||
-                    (_isEqual(difference(keysSource, keysTarget), ["properties"]) && !source.properties.length)
+                    (_.isEqual(_.difference(keysTarget, keysSource), ["properties"]) && !target.properties.length) ||
+                    (_.isEqual(_.difference(keysSource, keysTarget), ["properties"]) && !source.properties.length)
                 ) {
                     return _getPSetDeepEqualsResult(true);
                 }
@@ -242,7 +240,7 @@ const _unresolvedTypes = function(in_template) {
             acc = {};
             first = false;
         }
-        if (isObject(x) && has(x, "typeid")) {
+        if (_.isObject(x) && _.has(x, "typeid")) {
             const extractedTypeid = _extractTypeid.call(that, x.typeid);
 
             if (!isPrimitiveType(extractedTypeid)) {
@@ -252,7 +250,7 @@ const _unresolvedTypes = function(in_template) {
         return acc;
     });
 
-    return keys(accSet);
+    return _.keys(accSet);
 };
 
 /**
@@ -296,7 +294,7 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
         return;
     }
 
-    if (_major(in_version) === 0) {
+    if (major(in_version) === 0) {
         // Unstable version doesn't produce any warning.
         return;
     }
@@ -314,11 +312,11 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
             idPath.push(id);
         }
 
-        if (isUndefined(sourceObj) !== isUndefined(targetObj)) {
+        if (_.isUndefined(sourceObj) !== _.isUndefined(targetObj)) {
             var minimumLevel;
             let mutation;
 
-            if (isUndefined(targetObj)) {
+            if (_.isUndefined(targetObj)) {
                 // An element has been deleted.
                 minimumLevel = "major";
                 mutation = "delete";
@@ -369,9 +367,9 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
                 );
             }
 
-            if (isArray(sourceObj)) {
+            if (_.isArray(sourceObj)) {
                 var targetMap = {};
-                each(targetObj, function(element) {
+                _.each(targetObj, function(element) {
                     targetMap[element.id] = element;
                 });
 
@@ -381,12 +379,12 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
                     delete targetMap[element.id];
                 }
 
-                if (!isEmpty(targetMap)) {
+                if (!_.isEmpty(targetMap)) {
                     // Added array element.
                     var minimumLevel = "minor";
                     if (CHANGE_LEVEL[versionDiff] < CHANGE_LEVEL[minimumLevel]) {
                         // Violates rule 5 (warning)
-                        idPath.push(keys(targetMap)[0]);
+                        idPath.push(_.keys(targetMap)[0]);
                         this._resultBuilder.addWarning(
                             MSG.CHANGE_LEVEL_TOO_LOW_1 + JSON.stringify({
                                 mutation: "add",
@@ -404,10 +402,10 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
                         idPath.pop();
                     }
                 }
-            } else if (isObject(sourceObj)) {
-                const keysSource = keys(sourceObj);
+            } else if (_.isObject(sourceObj)) {
+                const keysSource = _.keys(sourceObj);
                 var targetMap = {};
-                mapValues(targetObj, function(val, key) {
+                _.mapValues(targetObj, function(val, key) {
                     targetMap[key] = val;
                 });
 
@@ -424,7 +422,7 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
                 }
 
                 const remainingKeys = Object.keys(targetMap);
-                if (!isEmpty(remainingKeys)) {
+                if (!_.isEmpty(remainingKeys)) {
                     // Added new keys to the target. This is a MINOR change, unless they new key is a
                     // comment, in which case this is a PATCH level change.
                     var minimumLevel = remainingKeys.length === 1 && remainingKeys[0] === "annotation" ? "patch" : "minor";
@@ -589,7 +587,7 @@ const _validateSkipSemver = function(in_template, in_templatePrevious) {
  * @this TemplateValidator
  */
 const getInvalidContextError = function(in_context) {
-    if (in_context && !includes(VALID_CONTEXTS, in_context)) {
+    if (in_context && !_.includes(VALID_CONTEXTS, in_context)) {
         return new Error(`${MSG.NOT_A_VALID_CONTEXT} ${in_context}`);
     }
 
@@ -645,7 +643,7 @@ const _validateContextAsync = async function(in_template) {
 
     let typedValuePromises = [Promise.resolve()];
     if (in_template.typedValue) {
-        typedValuePromises = map(in_template.typedValue, (tv) => that.inheritsFrom(tv.typeid, "NamedProperty"));
+        typedValuePromises = _.map(in_template.typedValue, (tv) => that.inheritsFrom(tv.typeid, "NamedProperty"));
     } else {
         // Since context is 'set' the template must eventually inherit from NamedProperty
         if (in_template.inherits === undefined) {
@@ -653,7 +651,7 @@ const _validateContextAsync = async function(in_template) {
         }
 
         // Since context is 'set' the template must eventually inherit from NamedProperty (same as above)
-        if (includes(in_template.inherits, "NamedProperty") || in_template.inherits === "NamedProperty") {
+        if (_.includes(in_template.inherits, "NamedProperty") || in_template.inherits === "NamedProperty") {
             return Promise.resolve();
         }
     }
@@ -661,14 +659,14 @@ const _validateContextAsync = async function(in_template) {
 
     let parents = {};
     if (in_template.inherits) {
-        parents = isArray(in_template.inherits) ? in_template.inherits : [in_template.inherits];
+        parents = _.isArray(in_template.inherits) ? in_template.inherits : [in_template.inherits];
     }
     const inheritsPromises = parents.map((typeid) => this._inheritsFromAsync(typeid, "NamedProperty"));
 
     // Combine results from inheritsPromises and typedValuePromise
     inheritsPromises.push(typedValuePromise);
     return Promise.all(inheritsPromises).then(function(results) {
-        const foundNamedPropertyDescendant = find(results, (res) => res);
+        const foundNamedPropertyDescendant = _.find(results, (res) => res);
         if (!foundNamedPropertyDescendant) {
             return Promise.reject(Error(MSG.SET_ONLY_NAMED_PROPS));
         }
@@ -698,13 +696,13 @@ const _validateContextAsync = async function(in_template) {
  */
 var _validateConstants = function(in_template) {
     const that = this;
-    if (in_template.constants && isArray(in_template.constants)) {
+    if (in_template.constants && _.isArray(in_template.constants)) {
         for (let i = 0; i < in_template.constants.length; i++) {
             const constant = in_template.constants[i];
             const context = constant.context;
 
             if (context === "map" && constant.contextKeyType === "typeid") {
-                each(constant.value, function(value, key) {
+                _.each(constant.value, function(value, key) {
                     if (!isTemplateTypeid(key)) {
                         that._resultBuilder.addError(new Error(MSG.KEY_MUST_BE_TYPEID + key));
                     }
@@ -730,11 +728,11 @@ const _processValidationResults = function(in_template) {
 
     result.isValid = _syntaxValidator(in_template);
     if (!result.isValid) {
-        ConsoleUtils.assert(!isEmpty(_syntaxValidator.errors), "template validation failed but produced no error");
+        ConsoleUtils.assert(!_.isEmpty(_syntaxValidator.errors), "template validation failed but produced no error");
     }
 
     if (_syntaxValidator.errors) {
-        each(_syntaxValidator.errors, function(error) {
+        _.each(_syntaxValidator.errors, function(error) {
             const regexTypeId = /typeid/;
             switch (error.keyword) {
                 case "pattern":
@@ -792,7 +790,7 @@ const _processValidationResults = function(in_template) {
                     break;
             }
             // Deep-copy for thread-safety.
-            that._resultBuilder.addError(deepCopy(error));
+            that._resultBuilder.addError(_.cloneDeep(error));
         });
     }
 

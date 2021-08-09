@@ -6,14 +6,13 @@
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
 
-import { cloneDeep, isNumber, isArray, isString, isEqual } from "lodash";
+import  _  from "lodash"
 import {constants, ConsoleUtils} from "@fluid-experimental/property-common";
 import { isPrimitiveType as _isPrimitiveType } from "../helpers/typeidHelper";
 import { INSERTED_ENTRY_WITH_SAME_KEY,
      ENTRY_MODIFIED_AFTER_REMOVE, COLLIDING_SET, REMOVE_AFTER_MODIFY } from "./changesetConflictTypes";
 import ArrayChangeSetIterator, { types } from "./arrayChangesetIterator";
 
-const deepCopy = cloneDeep;
 const MSG = constants.MSG;
 
 /**
@@ -108,7 +107,7 @@ const getRangeForCurrentStateOperation = function(io_operation, in_aOffset, io_r
     }
 };
 
-const getOpLength = (op) => isNumber(op[1]) ? op[1] : op[1].length;
+const getOpLength = (op) => _.isNumber(op[1]) ? op[1] : op[1].length;
 /**
  * computes the impact range for a given operation of the applied change set
  * @param {property-changeset.ArrayOperations.OperationDescription} in_operation the op
@@ -161,7 +160,7 @@ const getRangeForAppliedOperation = function(in_operation, io_resultingRange, in
             var numberOfRemovedElements = getOpLength(in_operation.operation);
 
             io_resultingRange.end = in_operation.operation[0] + numberOfRemovedElements;
-            if (isArray(in_operation.operation[1])) {
+            if (_.isArray(in_operation.operation[1])) {
                 io_resultingRange.op.operation[1] = in_operation.operation[1].slice();
             } else {
                 io_resultingRange.op.operation[1] = in_operation.operation[1];
@@ -192,7 +191,7 @@ const getRangeForAppliedOperation = function(in_operation, io_resultingRange, in
  */
 const _splitArrayParameter = function(in_firstResult, in_secondResult, in_data, in_start) {
     let firstTmp;
-    if (isString(in_data[1])) {
+    if (_.isString(in_data[1])) {
         firstTmp = in_data[1].substr(0, in_start);
         in_secondResult[1] = in_data[1].substr(in_start);
         if (in_firstResult) {
@@ -205,7 +204,7 @@ const _splitArrayParameter = function(in_firstResult, in_secondResult, in_data, 
                 in_firstResult[2] = firstTmp;
             }
         }
-    } else if (isArray(in_data[1])) {
+    } else if (_.isArray(in_data[1])) {
         firstTmp = in_data[1].splice(0, in_start);
         in_secondResult[1] = in_data[1];
         if (in_firstResult) {
@@ -352,7 +351,7 @@ const splitOverlapping = function(io_rangeA, io_rangeB, io_resultingSegment, in_
         (io_rangeA.begin <= io_rangeB.begin) &&
         (io_rangeA.begin + nextInsertOffset >= io_rangeB.begin) &&
         (io_rangeA.op.type === types.REMOVE) &&
-        isArray(io_rangeA.op.operation[1]) && // This is a reversible remove operation
+        _.isArray(io_rangeA.op.operation[1]) && // This is a reversible remove operation
         (io_rangeB.op.type === types.INSERT)) {
         // Are the two operations canceling out?
         let startOffset = 0;
@@ -378,7 +377,7 @@ const splitOverlapping = function(io_rangeA, io_rangeB, io_resultingSegment, in_
                     rangeLength = operationMetaInfo.rebasedRemoveInsertRanges[i].rangeLength;
 
                     if (io_rangeA.op.operation[1].length - startOffset >= rangeLength &&
-                        isEqual(io_rangeA.op.operation[1].slice(startOffset, startOffset + rangeLength),
+                        _.isEqual(io_rangeA.op.operation[1].slice(startOffset, startOffset + rangeLength),
                             io_rangeB.op.operation[1].slice(rangeStart, rangeStart + rangeLength))) {
                         matchFound = true;
 
@@ -403,7 +402,7 @@ const splitOverlapping = function(io_rangeA, io_rangeB, io_resultingSegment, in_
             }
         } else {
             if (io_rangeA.op.operation[1].length === rangeLength &&
-                isEqual(io_rangeA.op.operation[1],
+                _.isEqual(io_rangeA.op.operation[1],
                     io_rangeB.op.operation[1])) {
                 matchFound = true;
             }
@@ -503,7 +502,7 @@ const splitOverlapping = function(io_rangeA, io_rangeB, io_resultingSegment, in_
             io_rangeA.end === io_rangeB.begin) {
             if (in_options && in_options.applyAfterMetaInformation) {
                 let length = io_rangeB.op.operation[1];
-                if (!isNumber(length)) {
+                if (!_.isNumber(length)) {
                     length = length.length;
                 }
 
@@ -674,7 +673,7 @@ const mergeWithLastIfPossible = function(in_op, io_changeset, in_targetIndex, in
                 }
 
                 // merge with last insert
-                if (isString(in_op.operation[1])) {
+                if (_.isString(in_op.operation[1])) {
                     for (var i = 0; i < in_op.operation[1].length; i++) {
                         lastOp[1] += in_op.operation[1][i];
                     }
@@ -760,7 +759,7 @@ const pushOp = function(in_op, io_changeset, in_indexOffset, in_options, in_last
     }
     switch (in_op.type) {
         case types.INSERT: {
-            if (in_options && in_options.applyAfterMetaInformation && !isNumber(in_op.operation[1])) {
+            if (in_options && in_options.applyAfterMetaInformation && !_.isNumber(in_op.operation[1])) {
                 // If we don't have any meta information yet, we add an entry with the correct offset applied
                 const metaInfo = in_options.applyAfterMetaInformation.get(in_op.operation[1]);
                 if (!metaInfo) {
@@ -831,7 +830,7 @@ const handleCombinations = function(in_segment, in_isPrimitiveType) {
                 case types.REMOVE: {
                     // Attention: B removes A completely, kill A to avoid zero inserts
                     let opBLen;
-                    if (isNumber(opB.operation[1])) {
+                    if (_.isNumber(opB.operation[1])) {
                         opBLen = opB.operation[1];
                     } else {
                         opBLen = opB.operation[1].length;
@@ -998,7 +997,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
         const originalStartPosition = opB.operation[0] + opB.offset;
         if (in_options && in_options.applyAfterMetaInformation) {
             let length = opB.operation[1];
-            if (!isNumber(opB.operation[1])) {
+            if (!_.isNumber(opB.operation[1])) {
                 length = length.length;
 
                 in_options.applyAfterMetaInformation.set(opB.operation[1], {
@@ -1019,7 +1018,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
         const conflict = {
             path: in_basePath, // TODO: We have to report the range or per element
             type: INSERTED_ENTRY_WITH_SAME_KEY, // todo
-            conflictingChange: deepCopy(opB),
+            conflictingChange: _.cloneCopy(opB),
         };
         out_conflicts.push(conflict);
 
@@ -1070,12 +1069,12 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     // Remove already in A, no need to add the same again -> write nop
 
                     let opBLen; let opALen;
-                    if (isNumber(opB.operation[1])) {
+                    if (_.isNumber(opB.operation[1])) {
                         opBLen = opB.operation[1];
                     } else {
                         opBLen = opB.operation[1].length;
                     }
-                    if (isNumber(opA.operation[1])) {
+                    if (_.isNumber(opA.operation[1])) {
                         opALen = opA.operation[1];
                     } else {
                         opALen = opA.operation[1].length;
@@ -1099,7 +1098,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                         var conflict = {
                             path: in_basePath, // TODO: We have to report the range or per element
                             type: ENTRY_MODIFIED_AFTER_REMOVE,
-                            conflictingChange: deepCopy(opB),
+                            conflictingChange: _.cloneCopy(opB),
                         };
                         out_conflicts.push(conflict);
                     }
@@ -1123,7 +1122,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     var conflict = {
                         path: in_basePath, // TODO: We have to report the range or per element
                         type: COLLIDING_SET,
-                        conflictingChange: deepCopy(opB),
+                        conflictingChange: _.cloneCopy(opB),
                     };
                     out_conflicts.push(conflict);
                     // If opB new value is same as opA new value, replace the modify with a NOP
@@ -1146,7 +1145,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     var conflict = {
                         path: in_basePath, // TODO: We have to report the range or per element
                         type: REMOVE_AFTER_MODIFY,
-                        conflictingChange: deepCopy(opB),
+                        conflictingChange: _.cloneCopy(opB),
                     };
                     out_conflicts.push(conflict);
                 }
@@ -1263,8 +1262,8 @@ const ChangeSetArrayFunctions = {
         in_typeid,
         in_options) {
         ConsoleUtils.assert(in_typeid, "_performApplyAfterOnPropertyArray: typeid missing");
-        ConsoleUtils.assert(!isString(io_basePropertyChanges), io_basePropertyChanges);
-        ConsoleUtils.assert(!isString(in_appliedPropertyChanges), in_appliedPropertyChanges);
+        ConsoleUtils.assert(!_.isString(io_basePropertyChanges), io_basePropertyChanges);
+        ConsoleUtils.assert(!_.isString(in_appliedPropertyChanges), in_appliedPropertyChanges);
 
         const isPrimitiveType = _isPrimitiveType(in_typeid);
 
@@ -1410,7 +1409,7 @@ const ChangeSetArrayFunctions = {
                 if (lastRemove &&
                     lastRemove[0] + getOpLength(lastRemove) === remove[0] &&
                     !insertPosition.has(remove[0])) {
-                    if (isArray(remove[1])) {
+                    if (_.isArray(remove[1])) {
                         lastRemove[1] = lastRemove[1].concat(remove[1]);
                     } else {
                         lastRemove[1] += remove[1];
@@ -1518,7 +1517,7 @@ const ChangeSetArrayFunctions = {
                 if (lastRemove &&
                     lastRemove[0] + getOpLength(lastRemove) === remove[0] &&
                     !insertPosition.has(remove[0])) {
-                    if (isArray(remove[1])) {
+                    if (_.isArray(remove[1])) {
                         lastRemove[1] = lastRemove[1].concat(remove[1]);
                     } else {
                         lastRemove[1] += remove[1];
@@ -1596,13 +1595,13 @@ const ChangeSetArrayFunctions = {
 
     _rebaseChangeSetForString(in_ownPropertyChangeSet, io_rebasePropertyChangeSetParent,
         in_key, in_basePath, out_conflicts, in_options) {
-        if (isString(io_rebasePropertyChangeSetParent[in_key]) || (io_rebasePropertyChangeSetParent[in_key] &&
+        if (_.isString(io_rebasePropertyChangeSetParent[in_key]) || (io_rebasePropertyChangeSetParent[in_key] &&
                 io_rebasePropertyChangeSetParent[in_key].hasOwnProperty("value"))) {
             // other overwrites any old changes, we ignore them and report the conflict
             var conflict = {
                 path: in_basePath,
                 type: COLLIDING_SET,
-                conflictingChange: deepCopy(in_ownPropertyChangeSet),
+                conflictingChange: _.cloneCopy(in_ownPropertyChangeSet),
             };
             out_conflicts.push(conflict);
             // If value is the same, delete the entry
@@ -1617,14 +1616,14 @@ const ChangeSetArrayFunctions = {
             if (ownValue === rebaseValue) {
                 delete io_rebasePropertyChangeSetParent[in_key];
             }
-        } else if (isString(in_ownPropertyChangeSet) || (in_ownPropertyChangeSet &&
+        } else if (_.isString(in_ownPropertyChangeSet) || (in_ownPropertyChangeSet &&
                 in_ownPropertyChangeSet.hasOwnProperty("value"))) {
             // we have a conflict since we cannot allow insert/remove/modify on an unknown state
             // we just ignor other's modifications and take own's set
             var conflict = {
                 path: in_basePath,
                 type: COLLIDING_SET,
-                conflictingChange: deepCopy(io_rebasePropertyChangeSetParent[in_key]),
+                conflictingChange: _.cloneCopy(io_rebasePropertyChangeSetParent[in_key]),
             };
             out_conflicts.push(conflict);
             io_rebasePropertyChangeSetParent[in_key] = in_ownPropertyChangeSet;

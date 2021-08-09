@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { cloneDeep as deepCopy, isObject, isEmpty, isArray,
-     keys as _keys, clone, forEach, extend, each, reduce, map as _map, find, isEqual } from "lodash";
+import  _  from "lodash"
 import { series, whilst, eachOfSeries, timesSeries, eachSeries } from "async";
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import isReservedKeyword from "./isReservedKeyword";
@@ -118,7 +117,7 @@ Utils.TraversalContext.prototype.getLastSegmentEscaped = function() {
  * @param {object} in_context change set traversal context
  * @return {Boolean} Wether the object is empty
  */
-const _isEmptyObject = (in_context) => isObject(in_context._nestedChangeSet) && isEmpty(in_context._nestedChangeSet);
+const _isEmptyObject = (in_context) => _.isObject(in_context._nestedChangeSet) && _.isEmpty(in_context._nestedChangeSet);
 
 const PRIMITIVE_TYPES = {
     Float32: true,
@@ -558,7 +557,7 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
             oldOperationType = in_context._operationType;
             in_context._operationType = "remove";
             paths = nestedChangeSet.remove;
-            if (isArray(paths)) {
+            if (_.isArray(paths)) {
                 for (i = 0; i < paths.length; i++) {
                     // For removals in irreversible CSs, we don't have a typeid and we use the ChangeSet of the
                     // removal operation as nested ChangeSet
@@ -566,10 +565,10 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
                 }
             } else {
                 // for removals in reversible changesets we have an object containing the types
-                typeids = _keys(nestedChangeSet.remove);
+                typeids = _.keys(nestedChangeSet.remove);
                 for (i = 0; i < typeids.length; i++) {
                     typeid = typeids[i];
-                    paths = _keys(nestedChangeSet.remove[typeid]);
+                    paths = _.keys(nestedChangeSet.remove[typeid]);
                     for (j = 0; j < paths.length; j++) {
                         processChange(paths[j], nestedChangeSet.remove[typeid][paths[j]], typeid, true, propertyContainerType);
                     }
@@ -584,10 +583,10 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
             oldOperationType = in_context._operationType;
             in_context._operationType = "insert";
             // Maps and NodeProperties group the insertions by type
-            typeids = _keys(nestedChangeSet.insert);
+            typeids = _.keys(nestedChangeSet.insert);
             for (i = 0; i < typeids.length; i++) {
                 typeid = typeids[i];
-                paths = _keys(nestedChangeSet.insert[typeid]);
+                paths = _.keys(nestedChangeSet.insert[typeid]);
                 for (j = 0; j < paths.length; j++) {
                     processChange(paths[j], nestedChangeSet.insert[typeid][paths[j]], typeid, true, propertyContainerType);
                 }
@@ -597,10 +596,10 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
 
         if (nestedChangeSet.modify) {
             // Maps and NodeProperties group modifications by type
-            typeids = _keys(nestedChangeSet.modify);
+            typeids = _.keys(nestedChangeSet.modify);
             for (i = 0; i < typeids.length; i++) {
                 typeid = typeids[i];
-                paths = _keys(nestedChangeSet.modify[typeid]);
+                paths = _.keys(nestedChangeSet.modify[typeid]);
                 for (j = 0; j < paths.length; j++) {
                     processChange(paths[j], nestedChangeSet.modify[typeid][paths[j]], typeid, true, propertyContainerType);
                 }
@@ -610,11 +609,11 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
 
     // Process nested properties
     if (splitTypeId.context === "single") {
-        typeids = _keys(nestedChangeSet);
+        typeids = _.keys(nestedChangeSet);
         for (i = 0; i < typeids.length; i++) {
             typeid = typeids[i];
             if (!isReservedKeyword(typeid)) {
-                paths = _keys(nestedChangeSet[typeid]);
+                paths = _.keys(nestedChangeSet[typeid]);
                 for (j = 0; j < paths.length; j++) {
                     processChange(paths[j], nestedChangeSet[typeid][paths[j]], typeid, false, "template");
                 }
@@ -903,7 +902,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     oldOperationType = in_context._operationType;
                                     in_context._operationType = "remove";
                                     let paths = nestedChangeSet.remove;
-                                    if (isArray(paths)) {
+                                    if (_.isArray(paths)) {
                                         timesSeries(paths.length, function(i, n5) {
                                             // For removals in irreversible CSs, we don't have a typeid and we use the ChangeSet of the
                                             // removal operation as nested ChangeSet
@@ -925,10 +924,10 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                         });
                                     } else {
                                         // for removals in reversible changesets we have an object containing the types
-                                        const typeids = _keys(nestedChangeSet.remove);
+                                        const typeids = _.keys(nestedChangeSet.remove);
                                         timesSeries(typeids.length, function(i, n5) {
                                             const typeid = typeids[i];
-                                            paths = _keys(nestedChangeSet.remove[typeid]);
+                                            paths = _.keys(nestedChangeSet.remove[typeid]);
                                             timesSeries(paths.length, function(j, n6) {
                                                 processChange(
                                                     paths[j],
@@ -958,11 +957,11 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     oldOperationType = in_context._operationType;
                                     in_context._operationType = "insert";
                                     // Maps and NodeProperties group the insertions by type
-                                    const typeids = _keys(nestedChangeSet.insert);
+                                    const typeids = _.keys(nestedChangeSet.insert);
 
                                     timesSeries(typeids.length, function(i, n5) {
                                         const typeid = typeids[i];
-                                        const paths = _keys(nestedChangeSet.insert[typeid]);
+                                        const paths = _.keys(nestedChangeSet.insert[typeid]);
 
                                         timesSeries(paths.length, function(j, n6) {
                                             processChange(
@@ -990,10 +989,10 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                             function(n4) {
                                 if (nestedChangeSet.modify) {
                                     // Maps and NodeProperties group modifications by type
-                                    const typeids = _keys(nestedChangeSet.modify);
+                                    const typeids = _.keys(nestedChangeSet.modify);
                                     timesSeries(typeids.length, function(i, n5) {
                                         const typeid = typeids[i];
-                                        const paths = _keys(nestedChangeSet.modify[typeid]);
+                                        const paths = _.keys(nestedChangeSet.modify[typeid]);
 
                                         timesSeries(paths.length, function(j, n6) {
                                             processChange(
@@ -1018,12 +1017,12 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                             function(n4) {
                                 // Process nested properties
                                 if (splitTypeId.context === "single") {
-                                    const typeids = _keys(nestedChangeSet);
+                                    const typeids = _.keys(nestedChangeSet);
 
                                     timesSeries(typeids.length, function(i, n5) {
                                         const typeid = typeids[i];
                                         if (!isReservedKeyword(typeid)) {
-                                            const paths = _keys(nestedChangeSet[typeid]);
+                                            const paths = _.keys(nestedChangeSet[typeid]);
 
                                             timesSeries(paths.length, function(j, n6) {
                                                 processChange(
@@ -1192,7 +1191,7 @@ Utils.extractTypeids = function(in_changeSet) {
         },
         userData: result,
     });
-    return _keys(result);
+    return _.keys(result);
 };
 
 /**
@@ -1246,7 +1245,7 @@ Utils._stripTypeids = function(io_changeSet) {
 
             if (in_context.getOperationType() === "remove") {
                 if (!userData[in_context.getOperationType()]) {
-                    userData[in_context.getOperationType()] = clone(in_context.getNestedChangeSet());
+                    userData[in_context.getOperationType()] = _.clone(in_context.getNestedChangeSet());
                 }
                 return;
             }
@@ -1283,10 +1282,10 @@ Utils._stripTypeids = function(io_changeSet) {
     });
 
     // Remove all existing keys from the ChangeSet
-    forEach(_keys(io_changeSet), function(key) { delete io_changeSet[key]; });
+    _.forEach(_.keys(io_changeSet), function(key) { delete io_changeSet[key]; });
 
     // Assign from the result user data
-    extend(io_changeSet, result);
+    _.extend(io_changeSet, result);
 };
 
 /**
@@ -1316,15 +1315,15 @@ Utils.getChangesByType = function(in_typeid, in_changeSet, in_excludetypeids) {
 
     // Exclude typeids if requested by the caller
     if (in_excludetypeids) {
-        const insertKeys = _keys(result.insert);
+        const insertKeys = _.keys(result.insert);
         for (var i = 0; i < insertKeys.length; i++) {
-            result.insert[insertKeys[i]] = deepCopy(result.insert[insertKeys[i]]);
+            result.insert[insertKeys[i]] = _.cloneDeep(result.insert[insertKeys[i]]);
             Utils._stripTypeids(result.insert[insertKeys[i]]);
         }
 
-        const modifyKeys = _keys(result.modify);
+        const modifyKeys = _.keys(result.modify);
         for (var i = 0; i < modifyKeys.length; i++) {
-            result.modify[modifyKeys[i]] = deepCopy(result.modify[modifyKeys[i]]);
+            result.modify[modifyKeys[i]] = _.cloneDeep(result.modify[modifyKeys[i]]);
             Utils._stripTypeids(result.modify[modifyKeys[i]]);
         }
     }
@@ -1397,7 +1396,7 @@ Utils.getChangesByPath = function(in_path, in_root, in_changeSet, in_excludetype
 
                         let currentChangeSet = in_context.getNestedChangeSet();
                         if (in_excludetypeids) {
-                            currentChangeSet = deepCopy(currentChangeSet);
+                            currentChangeSet = _.cloneDeep(currentChangeSet);
                             Utils._stripTypeids(currentChangeSet);
                         }
                         result[in_context.getOperationType()][in_context.getFullPath()] = currentChangeSet;
@@ -1834,7 +1833,7 @@ const _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_c
         in_context.getPropertyContainerType() === "map" ||
         in_context.getPropertyContainerType() === "set") {
         if (in_context.getOperationType() === "remove") {
-            if (isArray(in_context.getNestedChangeSet())) {
+            if (_.isArray(in_context.getNestedChangeSet())) {
                 in_objectToPopulate.remove = in_objectToPopulate.remove || [];
                 in_objectToPopulate.remove.push(in_context.getLastSegment());
             } else {
@@ -1843,7 +1842,7 @@ const _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_c
                 in_objectToPopulate.remove[in_context.getTypeid()] =
                     in_objectToPopulate.remove[in_context.getTypeid()] || {};
                 in_objectToPopulate.remove[in_context.getTypeid()][in_context.getLastSegment()] =
-                    deepCopy(in_context.getNestedChangeSet());
+                    _.cloneDeep(in_context.getNestedChangeSet());
             }
         } else {
             in_objectToPopulate[in_context.getOperationType()] = in_objectToPopulate[in_context.getOperationType()] || {};
@@ -1852,7 +1851,7 @@ const _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_c
 
             if (isPrimitiveType(in_context.getTypeid()) || in_isLeaf) {
                 in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()][in_context.getLastSegment()] =
-                    deepCopy(in_context.getNestedChangeSet());
+                    _.cloneDeep(in_context.getNestedChangeSet());
             } else {
                 in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()][in_context.getLastSegment()] =
                     nestedChangeSet;
@@ -1862,7 +1861,7 @@ const _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_c
         in_objectToPopulate[in_context.getTypeid()] = in_objectToPopulate[in_context.getTypeid()] || {};
         if (isPrimitiveType(in_context.getTypeid()) || in_isLeaf) {
             in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] =
-                deepCopy(in_context.getNestedChangeSet());
+                _.cloneDeep(in_context.getNestedChangeSet());
         } else {
             in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] =
                 nestedChangeSet;
@@ -1917,7 +1916,7 @@ const _filterChangeSetBySegment = function(in_objectToPopulate, in_context, in_c
 Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
     let pathsToObj;
 
-    if (isArray(in_paths)) {
+    if (_.isArray(in_paths)) {
         pathsToObj = Utils.convertPathArrayToTree(in_paths);
     } else if (in_paths instanceof Map) {
         pathsToObj = in_paths;
@@ -1959,7 +1958,7 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
             let currentEntryInPathsToObj = pathsToObj;
 
             const pathsToDelete = [];
-            each(tokenizedPath, function(segment, index) {
+            _.each(tokenizedPath, function(segment, index) {
                 if (index === 0) {
                     parentPath += quotePathSegmentIfNeeded(segment);
                     changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
@@ -2076,9 +2075,9 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
 
     // Delete entries from the change set that we do not want.
     // We can enter this case when dealing with folded paths.
-    each(toPurge, function(item, fullPath) {
+    _.each(toPurge, function(item, fullPath) {
         delete item.changeSet[item.typeid][item.pathToPurge];
-        if (isEmpty(item.changeSet[item.typeid])) {
+        if (_.isEmpty(item.changeSet[item.typeid])) {
             delete item.changeSet[item.typeid];
         }
     });
@@ -2097,17 +2096,17 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
                 const operationCS = CS[operation];
                 var typeidCS = CS[operation][removalInformation.typeid];
                 delete typeidCS[removalInformation.lastSegment];
-                if (isEmpty(typeidCS)) {
+                if (_.isEmpty(typeidCS)) {
                     delete operationCS[removalInformation.typeid];
                 }
-                if (isEmpty(CS[operation])) {
+                if (_.isEmpty(CS[operation])) {
                     delete CS[operation];
                 }
             }
         } else {
             var typeidCS = CS[removalInformation.typeid];
             delete typeidCS[removalInformation.lastSegment];
-            if (isEmpty(typeidCS)) {
+            if (_.isEmpty(typeidCS)) {
                 delete CS[removalInformation.typeid];
             }
         }
@@ -2124,7 +2123,7 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
  *     passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
  */
 Utils.convertPathArrayToTree = function(in_paths) {
-    in_paths = isArray(in_paths) ? in_paths : [in_paths];
+    in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
     const pathsToProcess = new Set(in_paths);
 
     // create an array of arrays splitting by .
@@ -2133,7 +2132,7 @@ Utils.convertPathArrayToTree = function(in_paths) {
     // Create a tree representation of the paths that are passed as an input so that
     // we can leverage getChangesToTokenizedPaths and only be notified on paths
     // that we care about.
-    const pathsToObj = reduce(tokenizedPaths, function(memo, tokenizedPath) {
+    const pathsToObj = _.reduce(tokenizedPaths, function(memo, tokenizedPath) {
         let obj = memo;
         let path = "";
         let segment;
@@ -2195,19 +2194,19 @@ Utils.convertPathArrayToTree = function(in_paths) {
  * @return {property-changeset.SerializedChangeSet} - Filtered ChangeSet
  */
 Utils.excludePathsFromChangeSet = function(in_changeSet, in_paths) {
-    if (!in_changeSet || !in_paths || isEmpty(in_paths)) {
+    if (!in_changeSet || !in_paths || _.isEmpty(in_paths)) {
         return in_changeSet;
     }
 
-    in_paths = isArray(in_paths) ? in_paths : [in_paths];
+    in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
     // create an array of arrays splitting by .
-    const tokenizedPaths = _map(in_paths, (path) => tokenizePathString(path));
+    const tokenizedPaths = _.map(in_paths, (path) => tokenizePathString(path));
 
-    const rootChangeSet = deepCopy(in_changeSet);
+    const rootChangeSet = _.cloneDeep(in_changeSet);
 
     Utils.traverseChangeSetRecursively(rootChangeSet, {
         preCallback: (in_context) => {
-            const shouldExclude = find(tokenizedPaths, (val) => { return isEqual(val, in_context.getParentStack()); });
+            const shouldExclude = _.find(tokenizedPaths, (val) => { return _.isEqual(val, in_context.getParentStack()); });
             if (shouldExclude) {
                 const operationType = in_context.getOperationType();
                 const typeId = in_context.getTypeid();

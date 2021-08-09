@@ -7,7 +7,7 @@
  * @fileoverview In this file, we will test the path helper
  *    functions described in /src/properties/path_helper.js
  */
-import { cloneDeep } from "lodash";
+import  _  from "lodash"
 import ChangeSet from "../changeset";
 
 describe("Reversible ChangeSets", function() {
@@ -21,7 +21,7 @@ describe("Reversible ChangeSets", function() {
                 },
             },
         };
-        const invertedCS = new ChangeSet(cloneDeep(originalCS));
+        const invertedCS = new ChangeSet(_.cloneDeep(originalCS));
         invertedCS._toInverseChangeSet();
 
         const combined = new ChangeSet(originalCS);
@@ -38,7 +38,7 @@ describe("Reversible ChangeSets", function() {
                 },
             },
         };
-        const invertedCS = new ChangeSet(cloneDeep(originalCS));
+        const invertedCS = new ChangeSet(_.cloneDeep(originalCS));
         invertedCS._toInverseChangeSet();
 
         const combined = new ChangeSet(originalCS);
