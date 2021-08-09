@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
+import * as path from "path-browserify";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import {
