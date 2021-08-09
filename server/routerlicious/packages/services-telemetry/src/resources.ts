@@ -67,7 +67,7 @@ export enum SessionState {
     end = "end",
 
     // State set when scribe lambda is down
-    scribeDown = "scribeDown",
+    scribeLambdaDown = "scribeLambdaDown",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

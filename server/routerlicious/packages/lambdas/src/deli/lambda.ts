@@ -191,6 +191,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.sessionMetric = this.createSessionMetric();
         this.sessionStartMetric = this.createSessionMetric();
+
+        if (!isNewDocument) {
+            this.logSessionStartMetrics();
+        }
     }
 
     public handler(rawMessage: IQueuedMessage) {
@@ -346,7 +350,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
                 this.sessionStartMetric?.success("Session started successfully");
             } else {
-                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.scribeDown });
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]:
+                    SessionState.scribeLambdaDown });
                 this.sessionStartMetric?.error("Scribe lambda failed");
             }
         } else {
@@ -361,19 +366,19 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
 
         this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
+        this.sessionMetric?.setProperties({ [CommonProperties.sequenceNumber]: this.sequenceNumber });
+        this.sessionMetric?.setProperties({ [CommonProperties.lastSummarySequenceNumber]: this.durableSequenceNumber });
 
-        if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-            this.sessionMetric?.error("No service summary before lambda close");
-        }
-
-        if (closeType === LambdaCloseType.ActivityTimeout) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-            this.sessionMetric?.success("Session terminated due to inactivity");
-        } else if (closeType === LambdaCloseType.Error) {
+        if (closeType === LambdaCloseType.Error) {
             this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
             this.sessionMetric?.error("Session terminated due to error");
-        }  else {
+        } else if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+            this.sessionMetric?.error("No service summary before lambda close");
+        } else if (closeType === LambdaCloseType.ActivityTimeout) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+            this.sessionMetric?.success("Session terminated due to inactivity");
+        } else {
             this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
             this.sessionMetric?.success("Session paused");
         }
@@ -1045,7 +1050,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
 
         const sessionMetric = Lumberjack.newLumberMetric(LumberEventName.SessionResult);
-        this.sessionStartMetric?.setProperties({
+        sessionMetric?.setProperties({
             [BaseTelemetryProperties.tenantId]: this.tenantId,
             [BaseTelemetryProperties.documentId]: this.documentId,
         });
