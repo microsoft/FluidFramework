@@ -71,7 +71,7 @@
   "dependencies": {
     "@fluid-example/flow-util-lib": "^0.46.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.0-0",
+    "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/data-object-base": "^0.46.0",
     "@fluidframework/map": "^0.46.0",
