@@ -59,7 +59,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
                 assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
                 assert.strictEqual(resolvedUrl.fileVersion, urlWithNav.hasVersion ? fileVersion : undefined);
-                assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId), "Doc id should be equal");
+                assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId), "Doc id should be equal");
                 assert(resolvedUrl.endpoints.snapshotStorageUrl !== undefined, "Snapshot url should not be empty");
             };
             await runTest(urlResolverWithShareLinkFetcher);
@@ -75,7 +75,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 assert.strictEqual(resolvedUrl2.siteUrl, siteUrl, "SiteUrl should be equal");
                 assert.strictEqual(resolvedUrl2.itemId, itemId, "Item id should be equal");
                 assert.strictEqual(resolvedUrl2.fileVersion, urlWithNav.hasVersion  ? fileVersion : undefined);
-                assert.strictEqual(resolvedUrl2.hashedDocumentId, getHashedDocumentId(driveId, itemId), "Doc id should be equal");
+                assert.strictEqual(resolvedUrl2.hashedDocumentId, await getHashedDocumentId(driveId, itemId), "Doc id should be equal");
                 assert(resolvedUrl2.endpoints.snapshotStorageUrl !== undefined, "Snapshot url should not be empty");
             };
             await runTest(urlResolverWithShareLinkFetcher);
