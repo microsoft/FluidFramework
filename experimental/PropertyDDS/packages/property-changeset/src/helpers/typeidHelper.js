@@ -106,7 +106,7 @@ TypeIdHelper.extractContext = function(in_typeid) {
             }
         }
         if (context === "Reference") {
-            typeid = `Reference<${  typeid  }>`;
+            typeid = `Reference<${typeid}>`;
             context = "single";
         }
 
@@ -138,16 +138,16 @@ TypeIdHelper.createSerializationTypeId = function(in_typeid, in_context, in_enum
     if (in_typeid === "BaseProperty") {
         // Special case for BaseProperties. These get represented as a collection
         // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>
-        return `${in_context  }<>`;
+        return `${in_context}<>`;
     } else {
         if (in_enum) {
             if (in_context === "" || in_context === "single") {
-                return `enum<${  in_typeid  }>`;
+                return `enum<${in_typeid}>`;
             } else {
-                return `${in_context  }<enum<${  in_typeid  }>>`;
+                return `${in_context}<enum<${in_typeid}>>`;
             }
         } else {
-            return `${in_context  }<${  in_typeid  }>`;
+            return `${in_context}<${in_typeid}>`;
         }
     }
 };

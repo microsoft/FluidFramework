@@ -438,12 +438,12 @@ const ChangeSetIndexedCollectionFunctions = {
                 // Store the type of the change
                 changesByKeys[key] = changesByKeys[key] || {};
                 changesByKeys[key][in_changePrefix] = changesByKeys[key][in_changePrefix] ?
-                    `${changesByKeys[key][in_changePrefix]  }_${  in_changeIdentifier}` :
+                    `${changesByKeys[key][in_changePrefix]}_${in_changeIdentifier}` :
                     in_changeIdentifier;
 
                 // If applicable store the typeid of the change
                 if (in_typeidChange) {
-                    changesByKeys[key][`${in_changePrefix  }Typeid`] = in_typeidChange;
+                    changesByKeys[key][`${in_changePrefix}Typeid`] = in_typeidChange;
                 }
 
                 // Store the ChangeSet
@@ -508,7 +508,7 @@ const ChangeSetIndexedCollectionFunctions = {
         for (let i = 0; i < changedKeys.length; i++) {
             const key = changedKeys[i];
             const newPath = in_useSquareBracketsInPath ?
-                `${in_basePath  }[${  quotePathSegmentIfNeeded(key)  }]` :
+                `${in_basePath}[${quotePathSegmentIfNeeded(key)}]` :
                 joinPaths(in_basePath, quotePathSegmentIfNeeded(key), PROPERTY_PATH_DELIMITER);
 
             const modification = changesByKeys[key];

@@ -104,7 +104,7 @@ const getRangeForCurrentStateOperation = function(io_operation, in_aOffset, io_r
             io_resultingRange.flag = ArrayChangeSetRangeType.completeA;
             return;
         default:
-            throw new Error(`getRangeForCurrentStateOperation: ${  MSG.UNKNOWN_OPERATION}`);
+            throw new Error(`getRangeForCurrentStateOperation: ${MSG.UNKNOWN_OPERATION}`);
     }
 };
 
@@ -176,7 +176,7 @@ const getRangeForAppliedOperation = function(in_operation, io_resultingRange, in
             }
             return;
         default:
-            throw new Error(`getRangeForCurrentStateOperation: ${  MSG.UNKNOWN_OPERATION}`);
+            throw new Error(`getRangeForCurrentStateOperation: ${MSG.UNKNOWN_OPERATION}`);
     }
 };
 
@@ -718,7 +718,7 @@ const mergeWithLastIfPossible = function(in_op, io_changeset, in_targetIndex, in
             }
             break;
         default:
-            throw new Error(`pushOp: ${  MSG.UNKNOWN_OPERATION  }${in_op.type}`);
+            throw new Error(`pushOp: ${MSG.UNKNOWN_OPERATION}${in_op.type}`);
     }
     return true;
 };
@@ -806,7 +806,7 @@ const pushOp = function(in_op, io_changeset, in_indexOffset, in_options, in_last
             break;
         }
         default:
-            throw new Error(`pushOp: ${  MSG.UNKNOWN_OPERATION  }${in_op.type}`);
+            throw new Error(`pushOp: ${MSG.UNKNOWN_OPERATION}${in_op.type}`);
     }
 };
 
@@ -869,7 +869,7 @@ const handleCombinations = function(in_segment, in_isPrimitiveType) {
                     break;
                 }
                 default:
-                    throw new Error(`handleCombinations: ${  MSG.UNKNOWN_OPERATION  }${opB.type}`);
+                    throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`);
             }
             break;
         }
@@ -906,7 +906,7 @@ const handleCombinations = function(in_segment, in_isPrimitiveType) {
             }
         }
         default:
-            throw new Error(`handleCombinations: ${  MSG.UNKNOWN_OPERATION  }${opA.type}`);
+            throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opA.type}`);
     }
 };
 
@@ -1042,7 +1042,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     break;
                 }
                 default:
-                    throw new Error(`handleCombinations: ${  MSG.UNKNOWN_OPERATION  }${opB.type}`);
+                    throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`);
             }
             break;
         }
@@ -1110,7 +1110,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     break;
                 }
                 default:
-                    throw new Error(`handleCombinations: ${  MSG.UNKNOWN_OPERATION  }${opB.type}`);
+                    throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opB.type}`);
             }
             break;
         }
@@ -1161,7 +1161,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                             opA.operation[1],
                             opB.operation[1],
                             opA.operation[1][i].typeid,
-                            `${in_basePath  }[${  i  }]`,
+                            `${in_basePath}[${i}]`,
                             false,
                             out_conflicts,
                             in_options);
@@ -1171,7 +1171,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
             }
         }
         default:
-            throw new Error(`handleCombinations: ${  MSG.UNKNOWN_OPERATION  }${opA.type}`);
+            throw new Error(`handleCombinations: ${MSG.UNKNOWN_OPERATION}${opA.type}`);
     }
 };
 

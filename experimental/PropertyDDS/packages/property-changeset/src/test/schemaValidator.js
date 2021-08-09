@@ -64,7 +64,7 @@ SchemaValidator.prototype.getAllParentsForTemplate = function(in_typeid, out_par
 
     const template = this.schemaMap[in_typeid];
     if (!template) {
-        throw new Error(`Missing typeid: ${  in_typeid}`);
+        throw new Error(`Missing typeid: ${in_typeid}`);
     }
 
     // Everything inherits from BaseProperty.

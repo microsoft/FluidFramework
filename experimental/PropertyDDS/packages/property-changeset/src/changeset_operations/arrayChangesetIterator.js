@@ -179,7 +179,7 @@ ArrayChangeSetIterator.prototype.next = function() {
                 break;
             }
         default:
-            throw new Error(`ArrayChangeSetIterator: ${  MSG.UNKNOWN_OPERATION}`);
+            throw new Error(`ArrayChangeSetIterator: ${MSG.UNKNOWN_OPERATION}`);
     }
     this._atEnd = false;
     return true;

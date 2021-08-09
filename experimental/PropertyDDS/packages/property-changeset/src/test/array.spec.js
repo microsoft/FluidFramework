@@ -19,7 +19,7 @@ describe("Array Operations", function() {
             if (type === undefined) {
                 return {
                     String: {
-                        guid: `00000000-0000-0000-0000-${  (`000000000000${  id}`).substr(-12)}`,
+                        guid: `00000000-0000-0000-0000-${(`000000000000${id}`).substr(-12)}`,
                     },
                     typeid: "test:namedEntry-1.0.0",
                 };
@@ -922,13 +922,13 @@ describe("Array Operations", function() {
                                 insertNames.push("before remove in B");
                             }
                             if (removeInsideInsertB) {
-                                insertNames.push(`inside remove range in B (${  removeInsideInsertB  })`);
+                                insertNames.push(`inside remove range in B (${removeInsideInsertB})`);
                             }
                             let title = "with ";
                             if (insertNames.length === 0) {
                                 title += "no inserts";
                             } else {
-                                title += `inserts ${  insertNames.join(", ")}`;
+                                title += `inserts ${insertNames.join(", ")}`;
                             }
                             it(title, () => {
                                 const insertsA = [];

@@ -330,7 +330,7 @@ PathHelper.quotePathSegment = function(in_pathSegment) {
     in_pathSegment = in_pathSegment.replace(/"/g, '\\"');
 
     // And finally, we put the string into quotation marks
-    return `"${  in_pathSegment  }"`;
+    return `"${in_pathSegment}"`;
 };
 
 /**
@@ -414,9 +414,9 @@ PathHelper.convertAbsolutePathToCanonical = function(in_absolutePath) {
                 // Skip the leading '/'
                 break;
             case PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN:
-                throw new Error(`No level up ("../") is expected in an absolute path: ${  in_absolutePath}`);
+                throw new Error(`No level up ("../") is expected in an absolute path: ${in_absolutePath}`);
             case PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN:
-                throw new Error(`Dereference ("*") is not supported in canonical paths: ${  in_absolutePath}`);
+                throw new Error(`Dereference ("*") is not supported in canonical paths: ${in_absolutePath}`);
             case PathHelper.TOKEN_TYPES.ARRAY_TOKEN:
             case PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN:
                 path += (PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(tokens[i]));

@@ -195,8 +195,8 @@ Utils.TraversalContext.prototype.replaceNestedChangeSet = function(in_newNestedC
             parent[this.getLastSegment()] = in_newNestedChangeset;
         } else {
             throw new Error(`TEMPORARY - INTERNAL: Was expected to replace a nested ChangeSet under "${
-                this.getLastSegment()  }" by "${  JSON.stringify(in_newNestedChangeset)  }", but could not find "${
-                this.getTypeid()  }" in "${  JSON.stringify(this.getParentNestedChangeSet())  }"`);
+                this.getLastSegment()  }" by "${JSON.stringify(in_newNestedChangeset)  }", but could not find "${
+                this.getTypeid()  }" in "${JSON.stringify(this.getParentNestedChangeSet())  }"`);
         }
     } else if (this.getPropertyContainerType() === "NodeProperty" || this.getPropertyContainerType() === "map") {
         parent[this.getOperationType()][this.getTypeid()][this.getLastSegment()] = in_newNestedChangeset;
@@ -453,7 +453,7 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
         if (currentTypeIdContext === "map" ||
             currentTypeIdContext === "array" ||
             currentTypeIdContext === "set") {
-            in_context._lastSegmentString = `[${  escapedSegment  }]`;
+            in_context._lastSegmentString = `[${escapedSegment}]`;
         } else {
             in_context._lastSegmentString = pathSeparator + escapedSegment;
         }
@@ -470,11 +470,11 @@ var _traverseChangeSetRecursively = function(in_preCallback, in_postCallback, //
         if (in_arrayIteratorOffset !== undefined) {
             if (in_context._operationType === "remove") {
                 nextSegmentToPushInParentStack = in_context._lastSegment + in_arrayIteratorOffset - in_arrayLocalIndex;
-                in_context._fullPostPath = `${currentPostPath  }[${  in_segment +
+                in_context._fullPostPath = `${currentPostPath}[${in_segment +
                     in_arrayIteratorOffset - in_arrayLocalIndex  }]`;
             } else {
                 nextSegmentToPushInParentStack = in_context._lastSegment + in_arrayIteratorOffset;
-                in_context._fullPostPath = `${currentPostPath  }[${  in_segment + in_arrayIteratorOffset  }]`;
+                in_context._fullPostPath = `${currentPostPath}[${in_segment + in_arrayIteratorOffset}]`;
             }
         } else {
             nextSegmentToPushInParentStack = in_context._lastSegment;
@@ -731,7 +731,7 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                             if (currentTypeIdContext === "map" ||
                                 currentTypeIdContext === "array" ||
                                 currentTypeIdContext === "set") {
-                                in_context._lastSegmentString = `[${  escapedSegment  }]`;
+                                in_context._lastSegmentString = `[${escapedSegment}]`;
                             } else {
                                 in_context._lastSegmentString = pathSeparator + escapedSegment;
                             }
@@ -750,11 +750,11 @@ var _traverseChangeSetRecursivelyAsync = function(in_preCallback, in_postCallbac
                                     nextSegmentToPushInParentStack =
                                         in_context._lastSegment + in_arrayIteratorOffset - in_arrayLocalIndex;
                                     in_context._fullPostPath =
-                                        `${currentPostPath  }[${  in_segment +
-                                            in_arrayIteratorOffset - in_arrayLocalIndex  }]`;
+                                        `${currentPostPath}[${in_segment +
+                                            in_arrayIteratorOffset - in_arrayLocalIndex}]`;
                                 } else {
                                     nextSegmentToPushInParentStack = in_context._lastSegment + in_arrayIteratorOffset;
-                                    in_context._fullPostPath = `${currentPostPath  }[${  in_segment + in_arrayIteratorOffset  }]`;
+                                    in_context._fullPostPath = `${currentPostPath}[${in_segment + in_arrayIteratorOffset}]`;
                                 }
                             } else {
                                 nextSegmentToPushInParentStack = in_context._lastSegment;
@@ -1580,7 +1580,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
                     if (in_options.escapeLeadingDoubleUnderscore &&
                         segment[0] === "_" &&
                         segment[1] === "_") {
-                        segment = `_${  segment}`;
+                        segment = `_${segment}`;
                     }
                     nestedSubPath = nestedSubPath.get(segment);
                     if (nestedSubPath === undefined) {
@@ -1597,7 +1597,7 @@ Utils.getChangesToTokenizedPaths = function(in_paths,
                 if (in_options.escapeLeadingDoubleUnderscore &&
                     changesetSegment[0] === "_" &&
                     changesetSegment[1] === "_") {
-                    changesetSegment = `_${  changesetSegment}`;
+                    changesetSegment = `_${changesetSegment}`;
                 }
                 nestedSubPath = currentSubPaths.get(changesetSegment);
             }
@@ -1965,14 +1965,14 @@ Utils.getFilteredChangeSetByPaths = function(in_changeSet, in_paths) {
                     changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
                 } else if (index < tokenizedPath.length - 1) {
                     if (context.getContainerStack()[index] !== "set" && context.getContainerStack()[index] !== "map") {
-                        parentPath += `.${  quotePathSegmentIfNeeded(segment)}`;
+                        parentPath += `.${quotePathSegmentIfNeeded(segment)}`;
                     } else {
                         parentPath += `[${quotePathSegmentIfNeeded(segment)}]`;
                     }
                     changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
                 } else {
                     if (context.getContainerStack()[index] !== "set" && context.getContainerStack()[index] !== "map") {
-                        parentPath += `.${  quotePathSegmentIfNeeded(segment)}`;
+                        parentPath += `.${quotePathSegmentIfNeeded(segment)}`;
                     } else {
                         parentPath += `[${quotePathSegmentIfNeeded(segment)}]`;
                     }
@@ -2144,7 +2144,7 @@ Utils.convertPathArrayToTree = function(in_paths) {
             if (index === 0) {
                 path = quotePathSegmentIfNeeded(segment);
             } else {
-                path += `.${  quotePathSegmentIfNeeded(segment)}`;
+                path += `.${quotePathSegmentIfNeeded(segment)}`;
             }
 
             if (pathsToProcess.has(path) && index < tokenizedPath.length - 1) {

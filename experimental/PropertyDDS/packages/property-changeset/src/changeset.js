@@ -731,7 +731,7 @@ ChangeSet.prototype._recursivelyBuildReversibleChangeSet = function(in_context) 
 
         if (_isPrimitiveType(type)) {
             if (current === undefined) {
-                throw new Error(`${MSG.INVALID_PATH + in_context.getFullPath()  }. Making primitive value reversible.`);
+                throw new Error(`${MSG.INVALID_PATH + in_context.getFullPath()}. Making primitive value reversible.`);
             }
             var oldValue = current;
 
@@ -776,7 +776,7 @@ ChangeSet.prototype._recursivelyBuildReversibleChangeSet = function(in_context) 
             }
         } else if (splitType.context === "array") {
             if (current === undefined) {
-                throw new Error(`${MSG.INVALID_PATH + in_context.getFullPath()  }. Making array value reversible.`);
+                throw new Error(`${MSG.INVALID_PATH + in_context.getFullPath()}. Making array value reversible.`);
             }
             var oldValue = current.insert ? current.insert[0][1] : [];
 
@@ -825,7 +825,7 @@ ChangeSet.prototype._recursivelyBuildReversibleChangeSet = function(in_context) 
                 return;
             }
             if (current === undefined) {
-                throw new Error(`${MSG.INVALID_PATH + in_context.getFullPath()  }. Making map value reversible.`);
+                throw new Error(`${MSG.INVALID_PATH + in_context.getFullPath()}. Making map value reversible.`);
             }
             var oldValue = current.insert;
 
@@ -907,7 +907,7 @@ ChangeSet.prototype._recursivelyBuildReversibleChangeSet = function(in_context) 
  */
 ChangeSet.prototype._toReversibleChangeSet = function(in_oldSerializedState) {
     ConsoleUtils.assert(in_oldSerializedState !== undefined,
-        `${MSG.ASSERTION_FAILED  }Missing function parameter "in_oldSerializedState" of "_toReversibleChangeSet".`);
+        `${MSG.ASSERTION_FAILED} Missing function parameter "in_oldSerializedState" of "_toReversibleChangeSet".`);
 
     if (!isObject(in_oldSerializedState) || isArray(in_oldSerializedState)) {
         if (!isObject(this._changes) || isArray(this._changes)) {
@@ -1102,7 +1102,7 @@ ChangeSet.prototype._recursivelyInvertReversibleChangeset = function(in_context)
 
         if (!splitType) {
             ConsoleUtils.assert(false,
-                `${MSG.ASSERTION_FAILED  }Missing "splitType" in "in_context":${  JSON.stringify(in_context)}`);
+                `${MSG.ASSERTION_FAILED} Missing "splitType" in "in_context":${JSON.stringify(in_context)}`);
         }
 
         const nestedChangeset = in_context.getNestedChangeSet();
@@ -1165,7 +1165,7 @@ ChangeSet.prototype._recursivelyInvertReversibleChangeset = function(in_context)
                         }
                         break;
                     default:
-                        console.error(`applyChangeset: ${  MSG.UNKNOWN_OPERATION  }${arrayIterator.type}`);
+                        console.error(`applyChangeset: ${MSG.UNKNOWN_OPERATION}${arrayIterator.type}`);
                 }
                 arrayIterator.next();
             }

@@ -109,7 +109,7 @@ const _getType = (in_obj) => Object.prototype.toString.call(in_obj).slice(8, -1)
 const _psetDeepEquals = function(in_source, in_target) {
     const idPath = [];
     if (in_source && in_source.typeid) {
-        idPath.push(`<${  in_source.typeid  }>`);
+        idPath.push(`<${in_source.typeid}>`);
     }
 
     /**
@@ -140,9 +140,9 @@ const _psetDeepEquals = function(in_source, in_target) {
 
         if (id) {
             if (typeof id === "number") {
-                idPath.push(`[${  id  }]`);
+                idPath.push(`[${id}]`);
             } else {
-                idPath.push(`.${  id}`);
+                idPath.push(`.${id}`);
             }
         }
 
@@ -301,7 +301,7 @@ const _validatePositiveIncrement = function(in_template, in_templatePrevious, in
         return;
     }
 
-    const idPath = [`<${  in_template.typeid  }>`];
+    const idPath = [`<${in_template.typeid}>`];
 
     var _depthFirstCompare = function(id, sourceObj, targetObj) {
         if (id === "annotation") {
@@ -590,7 +590,7 @@ const _validateSkipSemver = function(in_template, in_templatePrevious) {
  */
 const getInvalidContextError = function(in_context) {
     if (in_context && !includes(VALID_CONTEXTS, in_context)) {
-        return new Error(`${MSG.NOT_A_VALID_CONTEXT  } ${  in_context}`);
+        return new Error(`${MSG.NOT_A_VALID_CONTEXT} ${in_context}`);
     }
 
     return undefined;
@@ -739,18 +739,17 @@ const _processValidationResults = function(in_template) {
             switch (error.keyword) {
                 case "pattern":
                     if (error.dataPath === ".typeid") {
-                        error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${  error.data
+                        error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data
                             } does not match that pattern`;
                     } else if ("pattern" && regexTypeId.test(error.dataPath)) {
                         if (error.schemaPath === "#/definitions/typed-reference-typeid/pattern") {
                             error.message = "";
                         } else {
-                            error.message = `${error.dataPath  } should follow this pattern: <namespace>:<typeid>-<version> ` +
+                            error.message = `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
                                 `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
                                 `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
                                 `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
-                                `RelationshipProperty). '${  error.data
-                                }' is not valid`;
+                                `RelationshipProperty). '${error.data}' is not valid`;
                         }
                     }
                     break;
@@ -759,22 +758,22 @@ const _processValidationResults = function(in_template) {
                     if (regexTypeId.test(error.dataPath)) {
                         error.message = "";
                     } else {
-                        error.message = `${error.dataPath  } should match one of the following: ${  error.schema}`;
+                        error.message = `${error.dataPath} should match one of the following: ${error.schema}`;
                     }
                     break;
 
                 case "type":
-                    error.message = `${error.dataPath  } should be a ${  error.schema}`;
+                    error.message = `${error.dataPath} should be a ${error.schema}`;
                     break;
 
                 case "not":
                     if (error.schemaPath === "#/switch/1/then/anyOf/0/properties/typeid/not") {
                         // remove .typeid at the end of the dataPath
-                        error.message = `For ${  error.dataPath.slice(0, -7)
+                        error.message = `For ${error.dataPath.slice(0, -7)
                             }: Properties should have either a typeid or an array of child properties, but not both.`;
                     } else if (error.schemaPath === "#/switch/1/then/anyOf/1/properties/properties/not") {
                         // remove .properties at the end of the dataPath
-                        error.message = `For ${  error.dataPath.slice(0, -11)
+                        error.message = `For ${error.dataPath.slice(0, -11)
                             }: Properties should have either a typeid or an array of child properties, but not both.`;
                     }
                     break;
@@ -789,7 +788,7 @@ const _processValidationResults = function(in_template) {
                     // for minItems, required and any other error - add dataPath to indicate which part of the
                     // template the error refers to.
                 default:
-                    error.message = `${error.dataPath  } ${  error.message}`;
+                    error.message = `${error.dataPath} ${error.message}`;
                     break;
             }
             // Deep-copy for thread-safety.
