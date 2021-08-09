@@ -12,6 +12,7 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
+import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
@@ -21,18 +22,16 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
 export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
 
 // @public (undocumented)
-export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+export class DataCorruptionError extends LoggingError implements IErrorBase {
     constructor(errorMessage: string, props: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataCorruptionError;
-    // (undocumented)
-    readonly fluidErrorCode = "TBD";
 }
 
 // @public (undocumented)
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+export class DataProcessingError extends LoggingError implements IErrorBase {
     constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
@@ -54,23 +53,19 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 };
 
 // @public
-export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+export class GenericError extends LoggingError implements IGenericError {
     constructor(errorMessage: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
-    // (undocumented)
-    readonly fluidErrorCode = "TBD";
 }
 
 // @public
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
     constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.throttlingError;
-    // (undocumented)
-    readonly fluidErrorCode = "TBD";
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
@@ -86,7 +81,10 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
 }
 
 // @public
-export function wrapError<T extends IWriteableLoggingError>(error: any, newErrorFn: (m: string) => T): T;
+export function wrapError<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (m: string) => T): T;
+
+// @public
+export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (m: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

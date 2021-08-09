@@ -15,8 +15,9 @@ import {
     LoggingError,
     isValidLegacyError,
     IFluidErrorBase,
-    isFluidError,
     normalizeError,
+    hasErrorInstanceId,
+    IWriteableLoggingError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -24,9 +25,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 /**
  * Generic wrapper for an unrecognized/uncategorized error object
  */
-export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+export class GenericError extends LoggingError implements IGenericError {
     readonly errorType = ContainerErrorType.genericError;
-    readonly fluidErrorCode = "TBD";
 
     /**
      * Create a new GenericError
@@ -47,9 +47,8 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 /**
  * Warning emitted when requests to storage are being throttled.
  */
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
     readonly errorType = ContainerErrorType.throttlingError;
-    readonly fluidErrorCode = "TBD";
 
     constructor(
         message: string,
@@ -83,9 +82,8 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     }
 }
 
-export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+export class DataCorruptionError extends LoggingError implements IErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
-    readonly fluidErrorCode = "TBD";
     readonly canRetry = false;
 
     constructor(errorMessage: string, props: ITelemetryProperties) {
@@ -93,9 +91,8 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
     }
 }
 
-export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+export class DataProcessingError extends LoggingError implements IErrorBase {
     readonly errorType = ContainerErrorType.dataProcessingError;
-    readonly fluidErrorCode = "TBD";
     readonly canRetry = false;
 
     constructor(
@@ -192,7 +189,7 @@ export function CreateContainerError(originalError: any, props?: ITelemetryPrope
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
-export function wrapError<T extends IFluidErrorBase>(
+export function wrapError<T extends IWriteableLoggingError>(
     innerError: unknown,
     newErrorFn: (m: string) => T,
 ): T {
@@ -212,7 +209,7 @@ export function wrapError<T extends IFluidErrorBase>(
         }
     }
 
-    if (isFluidError(innerError)) {
+    if (hasErrorInstanceId(innerError)) {
         newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
     }
 
