@@ -8,6 +8,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
@@ -242,6 +243,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             };
             const container = await provider.makeTestContainer(testContainerConfig);
             const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+            dataObject.context.containerRuntime.setFlushMode(FlushMode.Immediate);
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
 
