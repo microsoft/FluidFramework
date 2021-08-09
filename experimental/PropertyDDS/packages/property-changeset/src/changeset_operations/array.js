@@ -6,7 +6,7 @@
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
 
-import  _  from "lodash"
+import _ from "lodash"
 import {constants, ConsoleUtils} from "@fluid-experimental/property-common";
 import { isPrimitiveType as _isPrimitiveType } from "../helpers/typeidHelper";
 import { INSERTED_ENTRY_WITH_SAME_KEY,
@@ -1018,7 +1018,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
         const conflict = {
             path: in_basePath, // TODO: We have to report the range or per element
             type: INSERTED_ENTRY_WITH_SAME_KEY, // todo
-            conflictingChange: _.cloneCopy(opB),
+            conflictingChange: _.cloneDeep(opB),
         };
         out_conflicts.push(conflict);
 
@@ -1098,7 +1098,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                         var conflict = {
                             path: in_basePath, // TODO: We have to report the range or per element
                             type: ENTRY_MODIFIED_AFTER_REMOVE,
-                            conflictingChange: _.cloneCopy(opB),
+                            conflictingChange: _.cloneDeep(opB),
                         };
                         out_conflicts.push(conflict);
                     }
@@ -1122,7 +1122,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     var conflict = {
                         path: in_basePath, // TODO: We have to report the range or per element
                         type: COLLIDING_SET,
-                        conflictingChange: _.cloneCopy(opB),
+                        conflictingChange: _.cloneDeep(opB),
                     };
                     out_conflicts.push(conflict);
                     // If opB new value is same as opA new value, replace the modify with a NOP
@@ -1145,7 +1145,7 @@ const handleRebaseCombinations = function(in_segment, out_conflicts, in_basePath
                     var conflict = {
                         path: in_basePath, // TODO: We have to report the range or per element
                         type: REMOVE_AFTER_MODIFY,
-                        conflictingChange: _.cloneCopy(opB),
+                        conflictingChange: _.cloneDeep(opB),
                     };
                     out_conflicts.push(conflict);
                 }
@@ -1601,7 +1601,7 @@ const ChangeSetArrayFunctions = {
             var conflict = {
                 path: in_basePath,
                 type: COLLIDING_SET,
-                conflictingChange: _.cloneCopy(in_ownPropertyChangeSet),
+                conflictingChange: _.cloneDeep(in_ownPropertyChangeSet),
             };
             out_conflicts.push(conflict);
             // If value is the same, delete the entry
@@ -1623,7 +1623,7 @@ const ChangeSetArrayFunctions = {
             var conflict = {
                 path: in_basePath,
                 type: COLLIDING_SET,
-                conflictingChange: _.cloneCopy(io_rebasePropertyChangeSetParent[in_key]),
+                conflictingChange: _.cloneDeep(io_rebasePropertyChangeSetParent[in_key]),
             };
             out_conflicts.push(conflict);
             io_rebasePropertyChangeSetParent[in_key] = in_ownPropertyChangeSet;

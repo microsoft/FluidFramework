@@ -35,7 +35,7 @@ SchemaValidator.prototype.register = function(schema) {
     this.schemaMap[schema.typeid] = schema;
 };
 
-SchemaValidator.prototype.inheritsFromAsync = async (child, ancestor) => new Promise(function(resolve, reject) {
+SchemaValidator.prototype.inheritsFromAsync = (child, ancestor) => new Promise(function(resolve, reject) {
         setTimeout(function() {
             try {
                 resolve(this.inheritsFrom(child, ancestor));
@@ -46,7 +46,7 @@ SchemaValidator.prototype.inheritsFromAsync = async (child, ancestor) => new Pro
         }, 5);
     });
 
-SchemaValidator.prototype.hasSchemaAsync = async (typeid) => new Promise(function(resolve, reject) {
+SchemaValidator.prototype.hasSchemaAsync = (typeid) => new Promise(function(resolve, reject) {
         setTimeout(function() {
             resolve(this.schemaMap[typeid] !== undefined);
         }, 5);

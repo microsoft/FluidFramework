@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import  _  from "lodash"
+import _ from "lodash"
 import ChangeSet from "./changeset";
 
 function SyncPromise(x) {

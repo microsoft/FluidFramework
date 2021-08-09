@@ -5,7 +5,7 @@
 /**
  * @fileoverview Helper function to check whether a changeset is empty
  */
-import  _  from "lodash"
+import _ from "lodash"
 
 /**
  * Helper function which checks whether a given serialized changeSet is an empty changeSet.

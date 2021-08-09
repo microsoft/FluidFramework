@@ -6,7 +6,7 @@
  * @fileoverview Helper functions and classes to work with ChangeSets with indexed collections (sets and maps)
  */
 
-import  _  from "lodash"
+import _ from "lodash"
 import {constants, Strings } from "@fluid-experimental/property-common";
 import { isPrimitiveType as _isPrimitiveType } from "../helpers/typeidHelper";
 import { quotePathSegmentIfNeeded } from "../pathHelper";
@@ -267,14 +267,14 @@ const ChangeSetIndexedCollectionFunctions = {
                                 io_basePropertyChanges.modify[key] = insertedEntries[key];
                             } else {
                                 io_basePropertyChanges.modify[typeid] = io_basePropertyChanges.modify[typeid] || {};
-                                io_basePropertyChanges.modify[typeid][key] = _.cloneCopy(insertedEntries[key]);
+                                io_basePropertyChanges.modify[typeid][key] = _.cloneDeep(insertedEntries[key]);
                             }
                         }
                     } else if (isPrimitiveType && baseInserted[key] === undefined) {
                         baseInserted[key] = insertedEntries[key];
                     } else if (!isPrimitiveType && (!baseInserted[typeid] || baseInserted[typeid][key] === undefined)) {
                         baseInserted[typeid] = baseInserted[typeid] || {};
-                        baseInserted[typeid][key] = _.cloneCopy(insertedEntries[key]);
+                        baseInserted[typeid][key] = _.cloneDeep(insertedEntries[key]);
                     } else {
                         throw new Error(MSG.ALREADY_EXISTING_ENTRY + key);
                     }
@@ -375,7 +375,7 @@ const ChangeSetIndexedCollectionFunctions = {
                             }
                         } else {
                             baseModified[typeid] = baseModified[typeid] || {};
-                            baseModified[typeid][key] = _.cloneCopy(modifiedEntries[typeid][key]);
+                            baseModified[typeid][key] = _.cloneDeep(modifiedEntries[typeid][key]);
                         }
                     }
                 }

@@ -6,7 +6,7 @@
  * @fileoverview Serialized representation of the changes in a repository
  */
 
-import  _  from "lodash"
+import _ from "lodash"
 
 import { ConsoleUtils , Chronometer, ConsoleUtil, Strings, constants } from "@fluid-experimental/property-common";
 

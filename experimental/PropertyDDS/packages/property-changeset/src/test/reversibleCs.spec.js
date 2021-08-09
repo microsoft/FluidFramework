@@ -7,7 +7,7 @@
  * @fileoverview In this file, we will test the path helper
  *    functions described in /src/properties/path_helper.js
  */
-import  _  from "lodash"
+import _ from "lodash"
 import ChangeSet from "../changeset";
 
 describe("Reversible ChangeSets", function() {

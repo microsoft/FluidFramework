@@ -7,7 +7,7 @@
 /**
  * @fileoverview Tests for the array changeset operations
  */
-import  _  from "lodash"
+import _ from "lodash"
 import ChangeSet from "../changeset";
 
 describe("Array Operations", function() {

@@ -11,7 +11,7 @@
 /* eslint-disable no-use-before-define */
 
 import Ajv from "ajv";
-import  _  from "lodash"
+import _ from "lodash"
 import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
 import { queue } from "async";
@@ -538,7 +538,7 @@ const _validateSemanticAndSyntax = function(in_template) {
  * @return {Promise} a promise that resolved to nothing
  * @ignore
  */
-const _validateSemanticAndSyntaxAsync = async function(in_template) {
+const _validateSemanticAndSyntaxAsync = function(in_template) {
     return _validateSyntaxAsync.call(this, in_template);
 };
 
@@ -624,7 +624,7 @@ const _validateContext = function(in_template) {
  * @return {Promise} promise that returns without any value and rejects in case of validation error
  * @ignore
  */
-const _validateContextAsync = async function(in_template) {
+const _validateContextAsync = function(in_template) {
     const that = this;
     const context = in_template.context;
     const result = false;
@@ -678,7 +678,7 @@ const _validateContextAsync = async function(in_template) {
         }
 
         return that._inheritsFromAsync(in_template.typeid, "NamedProperty");
-    }).then(async function(res) {
+    }).then(function(res) {
         if (res) {
             return undefined;
         }
@@ -847,7 +847,7 @@ const createContextCheckAsyncQueue = function() {
  * @return {Promise} Promise that resolves without any result
  * @ignore
  */
-var _validateSyntaxAsync = async function(in_template) {
+var _validateSyntaxAsync = function(in_template) {
     const that = this;
 
     return new Promise(function(resolve, reject) {
@@ -1054,7 +1054,7 @@ TemplateValidator.prototype.validate = function(in_template, in_templatePrevious
  * }
  * It's possible for 'isValid' to be true while 'warnings' contains one or more messages.
  */
-TemplateValidator.prototype.validateAsync = async function(in_template, in_templatePrevious) {
+TemplateValidator.prototype.validateAsync = function(in_template, in_templatePrevious) {
     this._resultBuilder = new ValidationResultBuilder(in_template ? in_template.typeid : "");
     _validateBasic.call(this, in_template);
     if (in_templatePrevious) {
@@ -1077,7 +1077,7 @@ TemplateValidator.prototype.validateAsync = async function(in_template, in_templ
  * @return {Promise} A promise that resolves to the validation results as an objet. See validateAsync
  * @ignore
  */
-TemplateValidator.prototype._validateAsyncWithPreviousSchema = async function(in_template, in_templatePrevious) {
+TemplateValidator.prototype._validateAsyncWithPreviousSchema = function(in_template, in_templatePrevious) {
     const that = this;
     return _validateSemanticAndSyntaxAsync.call(that, in_template).then(() => _validateSemanticAndSyntaxAsync.call(that, in_templatePrevious)).then(function() {
         if (!that._resultBuilder.isValid()) {

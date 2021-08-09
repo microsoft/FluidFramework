@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import  _  from "lodash"
+import _ from "lodash"
 import { series, whilst, eachOfSeries, timesSeries, eachSeries } from "async";
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import isReservedKeyword from "./isReservedKeyword";
