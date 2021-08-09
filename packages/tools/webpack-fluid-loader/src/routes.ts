@@ -35,7 +35,9 @@ export const before = async (app: express.Application) => {
 
 export const after = (app: express.Application, server: WebpackDevServer, baseDir: string, env: RouteOptions) => {
     const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
-    const config: nconf.Provider = nconf.env("__").file(path.join(baseDir, "config.json"));
+    const config: nconf.Provider = nconf
+        .env({ parseValules: true, inputSeparator: "__"})
+        .file(path.join(baseDir, "config.json"));
     const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
         type: "browserLogin",
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -71,6 +73,11 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
         options.bearerSecret = options.bearerSecret || config.get("fluid:webpack:bearerSecret");
         if (options.mode !== "tinylicious") {
             options.tenantId = options.tenantId || config.get("fluid:webpack:tenantId") || "fluid";
+            options.enableWholeSummaryUpload =
+                options.enableWholeSummaryUpload ?? config.get("fluid:webpack:enableWholeSummaryUpload") ?? false;
+            if (typeof options.enableWholeSummaryUpload === "string") {
+                options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
+            }
             if (options.mode === "docker") {
                 options.tenantSecret = options.tenantSecret
                     || config.get("fluid:webpack:docker:tenantSecret")
@@ -282,7 +289,7 @@ const fluid = (req: express.Request, res: express.Response, baseDir: string, opt
     <div id="content" style="min-height: 100%;">
     </div>
 
-    <script src="/node_modules/@fluidframework/webpack-fluid-loader/dist/fluid-loader.bundle.js"></script>
+    <script src="/node_modules/@fluid-tools/webpack-fluid-loader/dist/fluid-loader.bundle.js"></script>
     ${packageJson.fluid.browser.umd.files.map((file) => `<script src="/${file}"></script>\n`)}
     <script>
         var pkgJson = ${JSON.stringify(packageJson)};

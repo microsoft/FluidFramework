@@ -16,6 +16,7 @@ import {
     isValidLegacyError,
     IFluidErrorBase,
     isFluidError,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -70,13 +71,25 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     }
 }
 
+/** Error indicating an API is being used improperly resulting in an invalid operation. */
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    // TODO: implement IUsageError once available
+    readonly errorType = "usageError";
+
+    constructor(
+        readonly fluidErrorCode: string,
+    ) {
+        super(fluidErrorCode, { usageError: true });
+    }
+}
+
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
     readonly fluidErrorCode = "TBD";
     readonly canRetry = false;
 
     constructor(errorMessage: string, props: ITelemetryProperties) {
-        super(errorMessage, props);
+        super(errorMessage, { ...props, dataProcessingError: 1 });
     }
 }
 
@@ -85,7 +98,11 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     readonly fluidErrorCode = "TBD";
     readonly canRetry = false;
 
-    constructor(errorMessage: string, props?: ITelemetryProperties) {
+    constructor(
+        errorMessage: string,
+        readonly fluidErrorCode: string,
+        props?: ITelemetryProperties,
+    ) {
         super(errorMessage, props);
     }
 
@@ -93,20 +110,27 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
      * Conditionally coerce the throwable input into a DataProcessingError.
      * @param originalError - Throwable input to be converted.
      * @param message - Sequenced message (op) to include info about via telemetry props
+     * @param errorCodeIfNone - pascaleCased code identifying the call site, used if originalError has no error code.
      * @returns Either a new DataProcessingError, or (if wrapping is deemed unnecessary) the given error
      */
     static wrapIfUnrecognized(
         originalError: any,
+        errorCodeIfNone: string,
         message: ISequencedDocumentMessage | undefined,
-    ): ICriticalContainerError {
-        const newErrorFn = (errMsg: string) => new DataProcessingError(errMsg);
+    ): IFluidErrorBase {
+        const newErrorFn = (errMsg: string) => {
+            const dpe = new DataProcessingError(errMsg, errorCodeIfNone);
+            dpe.addTelemetryProperties({ untrustedOrigin: 1}); // To match normalizeError
+            return dpe;
+        };
 
         // Don't coerce if already has an errorType, to distinguish unknown errors from
         // errors that we raised which we already can interpret apart from this classification
-        const error = isValidLegacyError(originalError)
-            ? originalError
+        const error = isValidLegacyError(originalError) // also accepts valid Fluid Error
+            ? normalizeError(originalError, { errorCodeIfNone })
             : wrapError(originalError, newErrorFn);
 
+        error.addTelemetryProperties({ dataProcessingError: 1});
         if (message !== undefined) {
             error.addTelemetryProperties(extractSafePropertiesFromMessage(message));
         }

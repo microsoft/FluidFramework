@@ -33,14 +33,14 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 
 // @public (undocumented)
 export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(errorMessage: string, props?: ITelemetryProperties);
+    constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
     // (undocumented)
-    readonly fluidErrorCode = "TBD";
-    static wrapIfUnrecognized(originalError: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+    readonly fluidErrorCode: string;
+    static wrapIfUnrecognized(originalError: any, errorCodeIfNone: string, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -77,10 +77,16 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 // @public
-export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (m: string) => T): T;
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string);
+    // (undocumented)
+    readonly errorType = "usageError";
+    // (undocumented)
+    readonly fluidErrorCode: string;
+}
 
 // @public
-export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (m: string) => T, logger: ITelemetryLogger): T;
+export function wrapError<T extends IWriteableLoggingError>(error: any, newErrorFn: (m: string) => T): T;
 
 
 // (No @packageDocumentation comment for this package)

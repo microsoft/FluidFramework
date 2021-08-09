@@ -52,8 +52,7 @@ export class BlobManager {
     public static readonly basePath = "_blobs";
     private readonly pendingBlobIds: Map<string, Deferred<void>> = new Map();
     private readonly blobIds: Set<string> = new Set();
-
-    public get blobCount() { return this.blobIds.size; }
+    private readonly detachedBlobIds: Set<string> = new Set();
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
@@ -69,8 +68,12 @@ export class BlobManager {
         });
     }
 
+    private hasBlob(id: string): boolean {
+        return this.blobIds.has(id) || this.detachedBlobIds.has(id);
+    }
+
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
-        assert(this.blobIds.has(blobId) || this.pendingBlobIds.has(blobId), 0x11f /* "requesting unknown blobs" */);
+        assert(this.hasBlob(blobId), 0x11f /* "requesting unknown blobs" */);
         return new BlobHandle(
             `${BlobManager.basePath}/${blobId}`,
             this.routeContext,
@@ -92,6 +95,7 @@ export class BlobManager {
         );
 
         if (this.runtime.attachState === AttachState.Detached) {
+            this.detachedBlobIds.add(response.id);
             return handle;
         }
 
@@ -131,17 +135,19 @@ export class BlobManager {
      * attachment types returned in snapshot() with blobs.
      */
     public load(blobsTree?: ISnapshotTree): void {
+        const detached = this.runtime.attachState === AttachState.Detached;
         let count = 0;
         if (blobsTree) {
             const values = Object.values(blobsTree.blobs);
             count = values.length;
-            values.map((entry) => this.blobIds.add(entry));
+            values.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
         }
         this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
     }
 
     public snapshot(): ITree {
-        const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        const blobIds = this.runtime.attachState === AttachState.Detached ? this.detachedBlobIds : this.blobIds;
+        const entries = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
         return { entries };
     }
 }
