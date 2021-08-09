@@ -23,7 +23,7 @@ export function validateTokenClaims(
     token: string,
     documentId: string,
     tenantId: string,
-    ignoreDocumentId = false): ITokenClaims {
+    requireDocumentId = true): ITokenClaims {
     const claims = jwt.decode(token) as ITokenClaims;
     if (!claims) {
         throw new NetworkError(403, "Missing token claims.");
@@ -33,7 +33,7 @@ export function validateTokenClaims(
         throw new NetworkError(403, "TenantId in token claims does not match request.");
     }
 
-    if (!ignoreDocumentId && claims.documentId !== documentId) {
+    if (requireDocumentId && claims.documentId !== documentId) {
         throw new NetworkError(403, "DocumentId in token claims does not match request.");
     }
 
@@ -94,7 +94,7 @@ export function generateUser(): IUser {
 export function verifyStorageToken(
     tenantManager: ITenantManager,
     config: Provider,
-    ignoreDocumentId = false): RequestHandler {
+    requireDocumentId = true): RequestHandler {
     return (request, res, next) => {
         const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
         const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -113,12 +113,12 @@ export function verifyStorageToken(
             return res.status(403).send("Missing tenantId in request.");
         }
         const documentId = getParam(request.params, "id") || request.body.id;
-        if (!ignoreDocumentId && !documentId) {
+        if (requireDocumentId && !documentId) {
             return res.status(403).send("Missing documentId in request");
         }
         let claims: ITokenClaims;
         try {
-            claims = validateTokenClaims(token, documentId, tenantId, ignoreDocumentId);
+            claims = validateTokenClaims(token, documentId, tenantId, requireDocumentId);
             if (isTokenExpiryEnabled) {
                 validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
             }
