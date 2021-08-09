@@ -1,5 +1,5 @@
 ## 0.46 Breaking changes
-- [FlushMode enum values renamed](#FlushMode-enum-renamed)
+- [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
 - [FlushMode default changed for ContainerRuntime](#FlushMode-default-changed-for-ContainerRuntime)
 
 ### `FlushMode` enum values renamed
