@@ -1,3 +1,15 @@
+## 0.46 Breaking changes
+- [FlushMode enum values renamed](#FlushMode-enum-renamed)
+- [FlushMode default changed for ContainerRuntime](#FlushMode-default-changed-for-ContainerRuntime)
+
+### `FlushMode` enum values renamed
+`FlushMode` enum values have ben renamed as following:
+- `FlushMode.Manual` to `FlushMode.TurnBased`
+- `FlushMode.Automatic` to `FlushMode.Immediate`
+
+### `FlushMode` default changed for `ContainerRuntime`
+Previously, `ContainerRuntime` had the default flush mode as `FlushMode.Immediate` (formerly `FlushMode.Automatic`). This default has been changed to `FlushMode.TurnBased` (formerly `FlushMode.Manual`).
+
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
 - [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
