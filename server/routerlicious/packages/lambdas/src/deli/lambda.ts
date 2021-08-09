@@ -323,7 +323,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             }
         }
 
-        // lumberJackMetric?.success(`Message processed successfully at seq no ${checkpoint.deliState.sequenceNumber}`);
+        lumberJackMetric?.success(`Message processed successfully at seq no ${checkpoint.deliState.sequenceNumber}`);
     }
 
     public close(closeType: LambdaCloseType) {
