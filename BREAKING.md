@@ -3,7 +3,7 @@
 - [FlushMode default changed for ContainerRuntime](#FlushMode-default-changed-for-ContainerRuntime)
 
 ### `FlushMode` enum values renamed
-`FlushMode` enum values have ben renamed as following:
+`FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
 - `FlushMode.Manual` to `FlushMode.TurnBased`
 - `FlushMode.Automatic` to `FlushMode.Immediate`
 
