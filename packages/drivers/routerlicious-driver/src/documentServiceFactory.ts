@@ -81,7 +81,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             rateLimiter,
             resolvedUrl.endpoints.ordererUrl,
         );
-        const containerId = await ordererRestWrapper.post<string>(
+        const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
                 id,
@@ -90,13 +90,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
-        parsedUrl.pathname = parsedUrl.pathname.split("/").slice(0, -1).concat([containerId]).join("/");
+        parsedUrl.pathname = parsedUrl.pathname.split("/").slice(0, -1).concat([documentId]).join("/");
 
         return this.createDocumentService(
             {
                 ...resolvedUrl,
                 url: parsedUrl.href,
-                id: containerId,
+                id: documentId,
             },
             logger);
     }
