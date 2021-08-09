@@ -170,7 +170,7 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     // (undocumented)
     readonly errorType = DriverErrorType.genericNetworkError;
     // (undocumented)
-    readonly fluidErrorCode: any;
+    readonly fluidErrorCode: string;
 }
 
 // @public

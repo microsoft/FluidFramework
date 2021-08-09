@@ -61,7 +61,7 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
     // (undocumented)
-    readonly fluidErrorCode = ContainerErrorType.genericError;
+    readonly fluidErrorCode: string;
 }
 
 // @public

@@ -34,7 +34,7 @@ export function isOnline(): OnlineStatus {
  */
 export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     readonly errorType = DriverErrorType.genericNetworkError;
-    readonly fluidErrorCode;
+    readonly fluidErrorCode: string;
 
     constructor(
         errorMessage: string,

@@ -26,7 +26,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
  */
 export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
     readonly errorType = ContainerErrorType.genericError;
-    readonly fluidErrorCode = ContainerErrorType.genericError;
+    readonly fluidErrorCode: string = ContainerErrorType.genericError;
 
     /**
      * Create a new GenericError
