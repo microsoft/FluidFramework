@@ -6,7 +6,7 @@
 import { TinyliciousService } from "@fluid-experimental/get-container";
 import { Container, Loader } from "@fluidframework/container-loader";
 
-import React from "react";
+import React, { useRef } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
@@ -37,6 +37,14 @@ function getExternalData() {
     });
 }
 
+function extractData(inventoryList: IInventoryList) {
+    const inventoryItems = inventoryList.getItems();
+    const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+        return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
+    });
+    return inventoryItemStrings.join("\n");
+}
+
 async function initializeFromData(container: Container) {
     // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our dice roller is available at the URL "/".
     const url = "/";
@@ -57,6 +65,35 @@ async function initializeFromData(container: Container) {
         inventoryList.addItem(name, quantity);
     }
 }
+
+interface IAppViewProps {
+    inventoryList: IInventoryList;
+}
+
+const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
+    const { inventoryList } = props;
+
+    // eslint-disable-next-line no-null/no-null
+    const exportDataRef = useRef<HTMLTextAreaElement>(null);
+
+    const extractButtonClickHandler = () => {
+        // eslint-disable-next-line no-null/no-null
+        if (exportDataRef.current !== null) {
+            exportDataRef.current.value = extractData(inventoryList);
+        }
+    };
+
+    return (
+        <div>
+            <div>Data in:</div>
+            <textarea rows={ 5 } value={ inventoryData } readOnly></textarea>
+            <InventoryListView inventoryList={ inventoryList } />
+            <button onClick={ extractButtonClickHandler }>Export</button>
+            <div>Data out:</div>
+            <textarea ref={ exportDataRef } rows={ 5 } readOnly></textarea>
+        </div>
+    );
+};
 
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
@@ -100,7 +137,7 @@ async function start(): Promise<void> {
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
-    ReactDOM.render(<InventoryListView inventoryList={ inventoryList } />, div);
+    ReactDOM.render(<AppView inventoryList={ inventoryList } />, div);
 }
 
 start().catch((error) => console.error(error));
