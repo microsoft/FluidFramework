@@ -144,10 +144,18 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		const documentFolders = fs.readdirSync(pathBase);
 
 		for (const document of documentFolders) {
-			// cache the contents of the relevant files here to avoid loading more than once
-			// map containing summary file contents, keys are summary versions, values have file contents
+			// Cache the contents of the relevant files here to avoid loading more than once.
+			// Map containing summary file contents, keys are summary versions, values have file contents
 			const summaryByVersion = new Map<string, string>();
 			const noHistorySummaryByVersion = new Map<string, string>();
+
+			// Denormalized files are indicated with ending suffixes that describe the type of denormalization.
+			// For each version key, this maps has a mapping from each type to its corresponding file.
+			// This allows us to test multiple types of denormalization on the same document type and version.
+			const denormalizedSummaryByVersion = new Map<string, Map<string, string>>();
+
+			// Map containing denormalized history files by type of denormalization.
+			const denormalizedHistoryByType = new Map<string, string>();
 
 			// Files of uploaded edit blob contents for summaries that support blobs.
 			const blobsByVersion = new Map<string, string>();
@@ -160,6 +168,12 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				const summaryFileRegex = /^summary-(?<version>\d+\.\d\.\d).json/;
 				const match = summaryFileRegex.exec(documentFile);
 
+				const denormalizedSummaryFileRegex = /summary-(?<version>\d+\.\d\.\d)-(?<type>[a-z-]+[a-z]+).json/;
+				const denormalizedSummaryMatch = denormalizedSummaryFileRegex.exec(documentFile);
+
+				const denormalizedHistoryFileRegex = /history-(?<type>[a-z-]+[a-z]+).json/;
+				const denormalizedHistoryMatch = denormalizedHistoryFileRegex.exec(documentFile);
+
 				const noHistorySummaryFileRegex = /^no-history-summary-(?<version>\d+\.\d\.\d).json/;
 				const noHistoryMatch = noHistorySummaryFileRegex.exec(documentFile);
 
@@ -171,6 +185,18 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 				if (match && match.groups) {
 					summaryByVersion.set(match.groups.version, file);
+				} else if (denormalizedSummaryMatch && denormalizedSummaryMatch.groups) {
+					const typesByVersion = denormalizedSummaryByVersion.get(denormalizedSummaryMatch.groups.version);
+					if (typesByVersion !== undefined) {
+						typesByVersion.set(denormalizedSummaryMatch.groups.type, file);
+					} else {
+						denormalizedSummaryByVersion.set(
+							denormalizedSummaryMatch.groups.version,
+							new Map<string, string>().set(denormalizedSummaryMatch.groups.type, file)
+						);
+					}
+				} else if (denormalizedHistoryMatch && denormalizedHistoryMatch.groups) {
+					denormalizedHistoryByType.set(denormalizedHistoryMatch.groups.type, file);
 				} else if (noHistoryMatch && noHistoryMatch.groups) {
 					noHistorySummaryByVersion.set(noHistoryMatch.groups.version, file);
 				} else if (blobsMatch && blobsMatch.groups) {
@@ -287,6 +313,21 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					});
 				}
 
+				// For each denormalized history type, load the edits into SharedTree and test that it produces a normalized change node tree.
+				denormalizedHistoryByType.forEach((file, type) => {
+					it(`load denormalized history type ${type} produces the correct change node`, async () => {
+						const denormalizedHistory: Edit<Change>[] = JSON.parse(file);
+						denormalizedHistory.forEach((edit) => {
+							expectedTree.processLocalEdit(edit);
+						});
+
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
+
+						expect(changeNode).deep.equals(expectedTree.currentView.getChangeNodeTree());
+					});
+				});
+
 				const firstVersion = sortedVersions[0];
 				sortedVersions.forEach((version, index) => {
 					if (index !== 0) {
@@ -315,6 +356,20 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const newChangeNode = expectedTree.currentView.getChangeNodeTree();
 						expect(newChangeNode).to.deep.equal(changeNode);
 					});
+
+					// Load each denormalized summary by version and verify that it produces a normalized change node tree.
+					const denormalizedSummaryTypes = denormalizedSummaryByVersion.get(version);
+					if (denormalizedSummaryTypes !== undefined) {
+						denormalizedSummaryTypes.forEach((file, type) => {
+							it(`version ${version} produces a normalized change node for denormalized summary type ${type}`, () => {
+								const denormalizedSummary = deserialize(file, testSerializer);
+								expectedTree.loadSummary(denormalizedSummary);
+
+								const newChangeNode = expectedTree.currentView.getChangeNodeTree();
+								expect(newChangeNode).to.deep.equal(changeNode);
+							});
+						});
+					}
 				});
 
 				// Check that clients with certain loaded versions can write their supported write versions.
@@ -352,7 +407,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 								// Check the newly written summary is equivalent to its corresponding test summary file.
 								// This assumes the input file is normalized (that summarizing it produces an identical output).
-								// TODO: Add support for testing de-normalized files, such as files with empty traits.
 								const expectedSummary = JSON.parse(
 									assertNotUndefined(summaryByVersion.get(writeVersion))
 								);
