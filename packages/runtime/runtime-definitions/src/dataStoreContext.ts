@@ -236,7 +236,6 @@ export interface IFluidDataStoreContext extends
     IEventProvider<IFluidDataStoreContextEvents>,
     Partial<IProvideFluidDataStoreRegistry>,
     IProvideFluidHandleContext {
-    // readonly documentId: string;
     readonly id: string;
     /**
      * A data store created by a client, is a local data store for that client. Also, when a detached container loads

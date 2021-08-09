@@ -169,7 +169,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
-    // public readonly documentId: string;
     public readonly id: string;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -198,7 +197,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             undefined,
             {all:{ dataStoreId: uuid() }},
         );
-        // this.documentId = dataStoreContext.documentId;
+
         this.id = dataStoreContext.id;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;

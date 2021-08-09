@@ -56,10 +56,6 @@ export class Document extends EventEmitter {
         return this.runtime.clientId;
     }
 
-    // public get id(): string {
-    //     return this.runtime.documentId;
-    // }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.runtime.deltaManager;
     }
