@@ -13,6 +13,7 @@ export class FrsAudience extends ServiceAudience<FrsMember> implements IFrsAudie
       userId: audienceMember.user.id,
       userName: (audienceMember.user as any).name,
       connections: [],
+      additionalDetails: (audienceMember.user as any).additionalDetails,
     };
   }
 }

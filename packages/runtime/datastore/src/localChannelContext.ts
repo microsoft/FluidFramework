@@ -179,8 +179,10 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
     public async getChannel(): Promise<IChannel> {
         if (this.channel === undefined) {
             this.channel = await this.loadChannel()
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                .catch((err)=>{throw CreateProcessingError(err, undefined);});
+                .catch((err) => {
+                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                    throw CreateProcessingError(err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
+                });
         }
         return this.channel;
     }

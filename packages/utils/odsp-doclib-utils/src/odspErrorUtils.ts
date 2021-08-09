@@ -65,18 +65,46 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
 
 export interface IFacetCodes {
     facetCodes?: string[];
- }
+}
 
-export function parseFacetCodes(response: string): string[] {
-    const stack: string[] = [];
-    let error;
+/** Empirically-based model of error response inner error from ODSP */
+export interface OdspErrorResponseInnerError {
+    code?: string;
+    innerError?: OdspErrorResponseInnerError
+}
+
+/** Empirically-based model of error responses from ODSP */
+export interface OdspErrorResponse {
+    error: OdspErrorResponseInnerError & {
+        message: string;
+    }
+}
+
+/** Empirically-based type guard for error responses from ODSP */
+function isOdspErrorResponse(x: any): x is OdspErrorResponse {
+    const error = x?.error;
+    return typeof(error?.message) === "string" &&
+        (error?.code === undefined || typeof(error?.code) === "string");
+}
+
+export function tryParseErrorResponse(
+    response: string | undefined,
+): { success: true, errorResponse: OdspErrorResponse } | { success: false } {
     try {
-        error = JSON.parse(response).error;
+        if (response !== undefined) {
+            const parsed = JSON.parse(response);
+            if (isOdspErrorResponse(parsed)) {
+                return { success: true, errorResponse: parsed };
+            }
+        }
     }
-    catch(e) {
-        return stack;
-    }
+    catch(e) {}
+    return { success: false };
+}
 
+export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
+    const stack: string[] = [];
+    let error: OdspErrorResponseInnerError | undefined = errorResponse.error;
     // eslint-disable-next-line no-null/no-null
     while (typeof error === "object" && error !== null) {
         if (error.code !== undefined) {
@@ -147,7 +175,7 @@ export function createOdspNetworkError(
             error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
+            error = new RetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
@@ -168,11 +196,19 @@ export function enrichOdspError(
 ) {
     error.online = OnlineStatus[isOnline()];
 
-    const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
-    error.facetCodes = facetCodes;
-    (error as any).response = responseText; // Issue #6139: This shouldn't be logged - will be fixed with #6485
+    const parseResult = tryParseErrorResponse(responseText);
+    if (parseResult.success) {
+        // Log the whole response if it looks like the error format we expect
+        props.response = responseText;
 
-    props.innerMostErrorCode = facetCodes !== undefined ? facetCodes[0] : undefined;
+        const errorResponse = parseResult.errorResponse;
+        const facetCodes = parseFacetCodes(errorResponse);
+        if (facetCodes !== undefined) {
+            props.innerMostErrorCode = facetCodes[0];
+            error.facetCodes = facetCodes;
+        }
+    }
+
     if (response) {
         props.responseType = response.type;
         if (response.headers) {

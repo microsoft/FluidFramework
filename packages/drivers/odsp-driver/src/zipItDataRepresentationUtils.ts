@@ -77,13 +77,13 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
     const propSet = new Set(props);
     const res: Record<string, NodeTypes> = {};
     for (const [key, value] of node.iteratePairs()) {
-        assert(key instanceof BlobCore, "Prop name should be a blob");
+        assert(key instanceof BlobCore, 0x228 /* "Prop name should be a blob" */);
         const keyStr = key.toString();
-        assert(propSet.has(keyStr), "Property should exist");
+        assert(propSet.has(keyStr), 0x229 /* "Property should exist" */);
         propSet.delete(keyStr);
         res[keyStr] = value;
     }
-    assert(propSet.size === 0, "All properties should exist");
+    assert(propSet.size === 0, 0x22a /* "All properties should exist" */);
     return res;
 }
 
@@ -95,7 +95,7 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
                 return { value: undefined, done: true };
             }
             const b = it.next();
-            assert(b.done !== true, "Should be a pair");
+            assert(b.done !== true, 0x22b /* "Should be a pair" */);
             return { value: [a.value, b.value], done: b.done };
         },
         [Symbol.iterator]: () => { return res; },
@@ -215,7 +215,7 @@ export class NodeCore {
     }
 
     public iteratePairs() {
-        assert((this.length % 2) === 0, "reading pairs");
+        assert((this.length % 2) === 0, 0x22c /* "reading pairs" */);
         return iteratePairs(iterate(this));
     }
 
@@ -227,28 +227,28 @@ export class NodeCore {
     public getString(index: number)
     {
         const node = this.children[index];
-        assert(node instanceof BlobCore, "Type of node does not match");
+        assert(node instanceof BlobCore, 0x22d /* "Type of node does not match" */);
         return node.toString();
     }
 
     public getBlob(index: number)
     {
         const node = this.children[index];
-        assert(node instanceof BlobCore, "Type of node does not match");
+        assert(node instanceof BlobCore, 0x22e /* "Type of node does not match" */);
         return node;
     }
 
     public getNode(index: number)
     {
         const node = this.children[index];
-        assert(node instanceof NodeCore, "Type of node does not match");
+        assert(node instanceof NodeCore, 0x22f /* "Type of node does not match" */);
         return node;
     }
 
     public getNumber(index: number): number
     {
         const node = this.children[index];
-        assert(typeof node === "number", "Type of node does not match");
+        assert(typeof node === "number", 0x230 /* "Type of node does not match" */);
         return node;
     }
 
@@ -267,8 +267,8 @@ export class NodeCore {
     }
 
     public addNumber(payload: number | undefined) {
-        assert(Number.isInteger(payload), "Number should be an integer");
-        assert(payload !== undefined && payload >= 0, "Payload should not be negative");
+        assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
+        assert(payload !== undefined && payload >= 0, 0x232 /* "Payload should not be negative" */);
         this.children.push(payload);
     }
 
@@ -333,7 +333,7 @@ export class TreeBuilder extends NodeCore {
     static load(buffer: ReadBuffer): TreeBuilder {
         const builder = new TreeBuilder();
         builder.load(buffer);
-        assert(buffer.eof, "Unexpected data at the end of buffer");
+        assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
         return builder;
     }
 }

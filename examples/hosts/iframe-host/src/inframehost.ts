@@ -81,6 +81,10 @@ class ProxyRuntime implements IRuntime {
     }
     async setConnectionState(connected: boolean, clientId?: string) {
     }
+    /**
+     * @deprecated in 0.14, use dispose() to stop the runtime.
+     * Remove after IRuntime definition no longer includes it.
+     */
     async stop(): Promise<{snapshot?: never, state?: never}> {
         throw new Error("Method not implemented.");
     }
