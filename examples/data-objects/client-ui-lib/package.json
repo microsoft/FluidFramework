@@ -51,7 +51,7 @@
   "dependencies": {
     "@fluid-example/search-menu": "^0.45.1",
     "@fluid-internal/client-api": "^0.45.1",
-    "@fluidframework/common-utils": "^0.32.0",
+    "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore-definitions": "^0.45.1",
