@@ -1,3 +1,18 @@
+## 0.46 Breaking changes
+- [FrsClient has been renamed to AzureClient](#FrsClient-has-been-renamed-to-AzureClient)
+
+### FrsClient has been renamed to AzureClient
+The `@fluid-experimental/frs-client` package for connecting with the Azure Fluid Relay service has been renamed to now be `@fluid-experimental/azure-client`. This also comes with the following name changes for the exported classes and interfaces from the package:
+- `FrsClient` -> `AzureClient`
+- `FrsAudience` -> `AzureAudience`
+- `IFrsAudience` -> `IAzureAudience`
+- `FrsMember` -> `AzureMember`
+- `FrsConnectionConfig` -> `AzureConnectionConfig`
+- `FrsContainerConfig` -> `AzureContainerConfig`
+- `FrsResources` -> `AzureResources`
+- `FrsAzFunctionTokenProvider` -> `AzureFunctionTokenProvider`
+- `FrsUrlResolver` -> `AzureUrlResolver`
+
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
 - [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
@@ -54,15 +69,15 @@ Following the deprecation warning [Loader in data stores deprecated](#loader-in-
 
 ## 0.43 Breaking changes
 
-- [TinyliciousClient and AzureClient are no longer static](#TinyliciousClient-and-AzureClient-are-no-longer-static)
+- [TinyliciousClient and FrsClient are no longer static](#TinyliciousClient-and-FrsClient-are-no-longer-static)
 - [Routerlicious Driver DeltaStorageService constructor changed](#Routerlicious-Driver-DeltaStorageService-constructor-changed)
 - [addGlobalAgentSchedulerAndLeaderElection removed](#addGlobalAgentSchedulerAndLeaderElection-removed)
 - [Property removed from the Container class](#Property-removed-from-the-Container-class)
 - [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
 - [Changes to client-api](#changes-to-client-api)
 
-### TinyliciousClient and AzureClient are no longer static
-`TinyliciousClient` and `AzureClient` global static properties are removed. Instead, object instantiation is now required.
+### TinyliciousClient and FrsClient are no longer static
+`TinyliciousClient` and `FrsClient` global static properties are removed. Instead, object instantiation is now required.
 
 ### Property removed from the Container class
 - the `existing` property from `Container` has been removed. The caller should differentiate on how the container has been created (`Container.load` vs `Container.createDetached`). See also [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated).
