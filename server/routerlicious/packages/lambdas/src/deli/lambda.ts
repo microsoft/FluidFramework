@@ -384,6 +384,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (closeType === LambdaCloseType.Error) {
             this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
             this.sessionMetric?.error("Session terminated due to error");
+        } else if (!closeType || closeType === LambdaCloseType.Stop) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
+            this.sessionMetric?.success("Session paused");
         } else if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
             this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
             this.sessionMetric?.error("No service summary before lambda close");
@@ -391,8 +394,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
             this.sessionMetric?.success("Session terminated due to inactivity");
         } else {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
-            this.sessionMetric?.success("Session paused");
+            this.sessionMetric?.error("Unknown session end state");
         }
     }
 
