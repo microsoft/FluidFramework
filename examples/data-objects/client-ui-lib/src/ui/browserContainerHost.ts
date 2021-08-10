@@ -19,6 +19,8 @@ export class BrowserContainerHost {
     private parent: HTMLElement = null;
 
     public attach(root: Component, parent?: HTMLElement) {
+        debug("Attaching new component to browser host");
+
         // Make note of the root node
         if (this.root) {
             throw new Error("A component has already been attached");
@@ -28,6 +30,7 @@ export class BrowserContainerHost {
 
         // Listen for resize messages and propagate them to child elements
         window.addEventListener("resize", () => {
+            debug("resize");
             this.resize();
         });
 
