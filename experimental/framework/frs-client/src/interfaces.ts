@@ -24,7 +24,7 @@ export interface FrsConnectionConfig {
 }
 
 /**
- * FrsContainerServices is returned by the FrsClient alongside a FluidContainer.
+ * FrsContainerServices is returned by the AzureClient alongside a FluidContainer.
  * It holds the functionality specifically tied to the Frs service, and how the data stored in
  * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,

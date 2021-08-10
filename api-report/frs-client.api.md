@@ -36,7 +36,7 @@ export class FrsAzFunctionTokenProvider implements ITokenProvider {
     }
 
 // @public
-export class FrsClient {
+export class AzureClient {
     constructor(connectionConfig: FrsConnectionConfig);
     // (undocumented)
     createContainer(containerConfig: FrsContainerConfig, containerSchema: ContainerSchema): Promise<FrsResources>;

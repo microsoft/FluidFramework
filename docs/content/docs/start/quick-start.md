@@ -69,10 +69,10 @@ local in-memory service called Tinylicious, which runs on port 7070 by default.
 
 To use an Azure Fluid Relay instance instead, replace the configuration values with your Azure Fluid Relay tenant ID,
 orderer, and storage URLs that were provided as part of the onboarding process. Then pass that configuration object into
-the `FrsClient` constructor:
+the `AzureClient` constructor:
 
 ```typescript
-// This configures the FrsClient to use a remote Azure Fluid Service instance.
+// This configures the AzureClient to use a remote Azure Fluid Service instance.
 const config: FrsConnectionConfig = {
     tenantId: "myFrsTenantId",
     // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
@@ -81,7 +81,7 @@ const config: FrsConnectionConfig = {
     storage: "https://myFrsStorageUrl",
 }
 
-const client = new FrsClient(config);
+const client = new AzureClient(config);
 ```
 
 ### TokenProvider
@@ -93,7 +93,7 @@ that fetches the token from a secure, developer-provided backend service prior t
 
 ### Build and run the client only
 
-Now that you've updated the `FrsClient` configuration, now run just the client to test it. You no longer need to run a
+Now that you've updated the `AzureClient` configuration, now run just the client to test it. You no longer need to run a
 local service, because you're using the remote Azure Fluid Relay service instance!
 
 ```bash

@@ -5,19 +5,19 @@
 
 import { generateUser } from "@fluidframework/server-services-client";
 import {
-    FrsClient,
+    AzureClient,
     InsecureTokenProvider,
 } from "..";
 
 // This function will detemine if local or remote mode is required (based on FLUID_CLIENT),
-// and return a new FrsClient instance based on the mode by setting the ConnectionConfig
+// and return a new AzureClient instance based on the mode by setting the ConnectionConfig
 // accordingly.
-export function createFrsClient(): FrsClient {
+export function createAzureClient(): AzureClient {
     const useFrs = process.env.FLUID_CLIENT === "frs";
     const tenantKey = useFrs ? process.env.fluid__webpack__tenantKey as string : "";
     const user = generateUser();
 
-    // use FrsClient remote mode will run against live Frs service. Default to running Tinylicious for PR validation
+    // use AzureClient remote mode will run against live Frs service. Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
     const connectionConfig = useFrs ? {
         tenantId: "frs-client-tenant",
@@ -32,5 +32,5 @@ export function createFrsClient(): FrsClient {
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new FrsClient(connectionConfig);
+    return new AzureClient(connectionConfig);
 }

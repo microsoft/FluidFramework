@@ -72,7 +72,7 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 
 ## 3. <a style="position: relative; top: 20px" name="import"></a> Import and Initialize Fluid Dependencies
 
-`FrsClient` is a client for `Tinylicious`, a local test Fluid server while testing our application. It provides methods to create a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a set of initial [DDSes](https://fluidframework.com/docs/concepts/dds/) or [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) that are defined in the `containerSchema`.
+`AzureClient` is a client for `Tinylicious`, a local test Fluid server while testing our application. It provides methods to create a [Fluid container](https://fluidframework.com/docs/glossary/#container) with a set of initial [DDSes](https://fluidframework.com/docs/concepts/dds/) or [DataObjects](https://fluidframework.com/docs/glossary/#dataobject) that are defined in the `containerSchema`.
 
 > The Fluid container interacts with the processes and distributes operations, manages the lifecycle of Fluid objects, and provides a request API for accessing Fluid objects.
 
@@ -85,7 +85,7 @@ Lastly, open up the `App.js` file, as that will be the only file we need to edit
 // Add to the top of the file
 
 import React from "react";
-import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";
+import { AzureClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 ```
 
@@ -135,7 +135,7 @@ Since `getFluidData` is an async function, we'll need to `await` for the `initia
 const getFluidData = async () => {
     const { containerId, isNew } = getContainerId();
 
-    const client = new FrsClient(localConfig);
+    const client = new AzureClient(localConfig);
 
     const containerSchema = {
         name: 'cra-demo-container',

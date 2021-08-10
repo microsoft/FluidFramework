@@ -3,15 +3,15 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/azure-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluid-experimental/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
-The sections below will explain how to use `FrsClient` in your own application.
+The sections below will explain how to use `AzureClient` in your own application.
 
 {{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
 ## Connecting to the service
 
-To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `azure-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
+To connect to an Azure Fluid Relay instance you first need to create an `AzureClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `azure-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
 
 {{< callout danger >}}
 The `InsecureTokenProvider` should only be used for development purposes because **using it exposes the tenant key secret in your client-side code bundle.** This must be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key.
@@ -26,10 +26,10 @@ const config = {
     storage: "https://myStorageUrl",
 }
 
-const client = new FrsClient(config);
+const client = new AzureClient(config);
 ```
 
-Now that you have an instance of `FrsClient`, you can start using it to create or load Fluid containers!
+Now that you have an instance of `AzureClient`, you can start using it to create or load Fluid containers!
 
 ### Token providers
 
@@ -37,7 +37,7 @@ Now that you have an instance of `FrsClient`, you can start using it to create o
 
 ## Managing containers
 
-The `FrsClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
+The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
 
 * A *container config* that defines the ID of the container and an optional entry point for logging.
 * A *container schema* that defines the container data model.
@@ -50,7 +50,7 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const frsClient = new FrsClient(config);
+const frsClient = new AzureClient(config);
 await frsClient.createContainer({ id: "_unique-id_" }, schema);
 const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
 ```
@@ -65,7 +65,7 @@ The container being fetched back will hold the `initialObjects` as defined in th
 
 Calls to `createContainer` and `getContainer` return an `FrsResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
 
-The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `FrsClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the Fluid shared objects within the container can be reused when moving to using `FrsClient`.
+The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the Fluid shared objects within the container can be reused when moving to using `AzureClient`.
 
 The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 

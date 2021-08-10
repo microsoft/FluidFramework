@@ -61,7 +61,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import React from "react";
-    import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";;
+    import { AzureClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";;
     import { SharedMap } from "@fluid-experimental/fluid-framework";
     ```
 
@@ -85,7 +85,7 @@ const getContainerId = () => {
 };
 ```
 
-### Configure the `FrsClient`
+### Configure the `AzureClient`
 
 Add the following constant below the helper function. This object configures the Azure Fluid Relay service client to
 connect with a Fluid service that runs on localhost. Note that in a production application, you would use a real security token
@@ -103,7 +103,7 @@ const frsClientConfig = {
 
 ### Move Fluid data to the view
 
-1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the `FrsClient` configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the `AzureClient` configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
 
     ```js
     const getFluidData = async () => {
@@ -118,7 +118,7 @@ const frsClientConfig = {
 
     ```js
     const { containerId, isNew } = getContainerId();
-    const frsClient = new FrsClient(frsClientConfig);
+    const frsClient = new AzureClient(frsClientConfig);
     const containerSchema = {
         name: 'fluid-react-tutorial-container',
         initialObjects: { sharedTimestamp: SharedMap }

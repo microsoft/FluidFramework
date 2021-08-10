@@ -47,7 +47,7 @@ Dice Roller uses the following distributed data structures:
 
 We can connect to both live FRS instance by passing in the tenant ID, orderer and storage as well as using the tenant ID as "local" for running against Tinylicious for development purpose.
 
-To run the the `FrsClient` against our local Tinylicious instance, we pass the `tenantId` as "local" and make use of `InsecureTokenProvider`. For the latter, we pass in two values to its constructor: a key string, which can be anything since we are running it locally, and an object identifying the current user. For running the instance locally, the orderer and storage URLs would point to the Tinylicious instance on the default values of `http://localhost:7070`.
+To run the the `AzureClient` against our local Tinylicious instance, we pass the `tenantId` as "local" and make use of `InsecureTokenProvider`. For the latter, we pass in two values to its constructor: a key string, which can be anything since we are running it locally, and an object identifying the current user. For running the instance locally, the orderer and storage URLs would point to the Tinylicious instance on the default values of `http://localhost:7070`.
 
 "To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window"
 

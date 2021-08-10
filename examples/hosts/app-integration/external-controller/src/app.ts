@@ -5,7 +5,7 @@
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import {
     FrsAzFunctionTokenProvider,
-    FrsClient,
+    AzureClient,
     FrsConnectionConfig,
     InsecureTokenProvider,
 } from "@fluid-experimental/azure-client";
@@ -74,7 +74,7 @@ async function start(): Promise<void> {
 
     // Get or create the document depending if we are running through the create new flow
 
-    const client = new FrsClient(connectionConfig);
+    const client = new AzureClient(connectionConfig);
     const { fluidContainer, containerServices } = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);

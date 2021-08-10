@@ -26,10 +26,10 @@ import { FrsAudience } from "./FrsAudience";
 import { FrsUrlResolver } from "./FrsUrlResolver";
 
 /**
- * FrsClient provides the ability to have a Fluid object backed by the FRS service or, when running with
+ * AzureClient provides the ability to have a Fluid object backed by the FRS service or, when running with
  * local tenantId, have it be backed by a Tinylicious local service instance
  */
-export class FrsClient {
+export class AzureClient {
     public readonly documentServiceFactory: IDocumentServiceFactory;
 
     constructor(private readonly connectionConfig: FrsConnectionConfig) {

@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";
+import { AzureClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 
 const getContainerId = () => {
@@ -33,7 +33,7 @@ const getFluidData = async () => {
         initialObjects: { mySharedMap: SharedMap }
     };
 
-    const client = new FrsClient(localConfig);
+    const client = new AzureClient(localConfig);
     const { fluidContainer } = isNew
         ? await client.createContainer({ id: containerId }, containerSchema)
         : await client.getContainer({ id: containerId }, containerSchema);

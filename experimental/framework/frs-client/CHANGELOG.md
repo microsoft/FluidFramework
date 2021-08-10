@@ -1,4 +1,4 @@
-# Changes across versions for the Frs-Client
+# Changes across versions for the Azure-Client
 
-- [Changes across versions for the Frs-Client](#changes-across-versions-for-the-azure-client)
+- [Changes across versions for the Azure-Client](#changes-across-versions-for-the-azure-client)
  

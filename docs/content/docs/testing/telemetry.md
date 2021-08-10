@@ -25,11 +25,11 @@ interface definition takes an optional parameter `logger`. (The definition is si
 
 [createContainer()](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50)
 interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
-`FrsClient` will take `FrsContainerConfig` for its respective methods)
+`AzureClient` will take `FrsContainerConfig` for its respective methods)
 
 [getContainer()](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65)
 interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
-`FrsClient` will take `FrsContainerConfig` for its respective methods)
+`AzureClient` will take `FrsContainerConfig` for its respective methods)
 
 ```ts
 const loader = new Loader({
@@ -250,7 +250,7 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
-    const client = useFrs ? FrsClient :  new TinyliciousClient();
+    const client = useFrs ? AzureClient :  new TinyliciousClient();
     const [fluidContainer, containerServices] = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
