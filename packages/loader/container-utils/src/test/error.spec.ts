@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateProcessingError, GenericError } from "../error";
+import { CreateProcessingError, DataProcessingError, GenericError } from "../error";
 
 // NOTE about this (temporary) alias:
 // CreateContainerError has been removed, with most call sites now using normalizeError.
@@ -130,6 +130,7 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.fluidErrorCode === "anErrorCode");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
@@ -144,12 +145,13 @@ describe("Errors", () => {
             const coercedError = CreateProcessingError(originalError, "anErrorCode", undefined);
 
             assert(coercedError as any !== originalError);
+            assert(coercedError instanceof DataProcessingError);
             assert(coercedError.errorType === ContainerErrorType.dataProcessingError);
             assert(coercedError.fluidErrorCode === "anErrorCode");
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty !== "Considered PII-free property", "telemetry props not copied - this case is unexpected/unsupported");
+            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps not copied over by normalizeError");
         });
 
         it("Should not fail coercing malformed inputs", () => {
