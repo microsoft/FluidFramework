@@ -76,7 +76,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         };
 
         try {
-            const tenant = await this.tenantManager.getTenant(tenantId);
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
             gitManager = tenant.gitManager;
 
             summaryReader = new SummaryReader(documentId, gitManager);

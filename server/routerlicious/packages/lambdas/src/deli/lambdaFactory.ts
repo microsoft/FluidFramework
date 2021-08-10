@@ -72,7 +72,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         let dbObject: IDocument;
 
         try {
-            const tenant = await this.tenantManager.getTenant(tenantId);
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
             gitManager = tenant.gitManager;
 
             // Lookup the last sequence number stored
