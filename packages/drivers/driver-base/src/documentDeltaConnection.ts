@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -53,8 +53,6 @@ export class DocumentDeltaConnection
 
     private socketConnectionTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
-
     private _details: IConnected | undefined;
 
     // Listeners only needed while the connection is in progress
@@ -94,17 +92,7 @@ export class DocumentDeltaConnection
 
         this.logger = ChildLogger.create(logger, "DeltaConnection");
 
-        this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                // Although the implementation here disconnects the socket and does not reuse it, other subclasses
-                // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
-                // on the still-live socket.
-                if (!this.disposed) {
-                    this.socket.emit(submitType, this.clientId, work);
-                }
-            });
-
-        this.on("newListener", (event, listener) => {
+        this.on("newListener", (event) => {
             if (!DocumentDeltaConnection.eventsToForward.includes(event)) {
                 throw new Error(`DocumentDeltaConnection: Registering for unknown event: ${event}`);
             }
@@ -240,14 +228,18 @@ export class DocumentDeltaConnection
         return this.details.initialClients;
     }
 
+    private submitCore(type: string, messages: IDocumentMessage[]) {
+        this.checkNotClosed();
+        this.socket.emit(type, this.clientId, messages);
+    }
+
     /**
      * Submits a new delta operation to the server
      *
      * @param message - delta operation to submit
      */
     public submit(messages: IDocumentMessage[]): void {
-        this.checkNotClosed();
-        this.submitManager.add("submitOp", messages);
+        this.submitCore("submitOp", messages);
     }
 
     /**
@@ -256,8 +248,7 @@ export class DocumentDeltaConnection
      * @param message - signal to submit
      */
     public submitSignal(message: IDocumentMessage): void {
-        this.checkNotClosed();
-        this.submitManager.add("submitSignal", [message]);
+        this.submitCore("submitSignal", [message]);
     }
 
     /**
