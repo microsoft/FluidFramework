@@ -5,33 +5,9 @@
 
 import { inspect } from "util";
 import winston from "winston";
-import { IConsumer, IContextErrorData, IProducer } from "@fluidframework/server-services-core";
-import { KafkaNodeConsumer, KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
-import { RdkafkaConsumer, RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
-
-export function createConsumer(
-    type: string,
-    kafkaEndPoint: string,
-    zookeeperEndPoint: string,
-    clientId: string,
-    groupId: string,
-    topic: string,
-    numberOfPartitions?: number,
-    replicationFactor?: number): IConsumer {
-    if (type === "rdkafka") {
-        const endpoints = { kafka: [kafkaEndPoint], zooKeeper: [zookeeperEndPoint] };
-        return new RdkafkaConsumer(endpoints, clientId, topic, groupId, { numberOfPartitions, replicationFactor });
-    }
-
-    return new KafkaNodeConsumer(
-        { kafkaHost: kafkaEndPoint },
-        clientId,
-        groupId,
-        topic,
-        zookeeperEndPoint,
-        numberOfPartitions,
-        replicationFactor);
-}
+import { IContextErrorData, IProducer } from "@fluidframework/server-services-core";
+import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
+import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
 
 export function createProducer(
     type: string,
@@ -41,7 +17,8 @@ export function createProducer(
     enableIdempotence?: boolean,
     pollIntervalMs?: number,
     numberOfPartitions?: number,
-    replicationFactor?: number): IProducer {
+    replicationFactor?: number,
+    sslCACertLocation?: string): IProducer {
     let producer: IProducer;
 
     if (type === "rdkafka") {
@@ -49,7 +26,7 @@ export function createProducer(
             { kafka: [kafkaEndPoint] },
             clientId,
             topic,
-            { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor });
+            { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor, sslCACertLocation });
 
         producer.on("error", (error, errorData: IContextErrorData) => {
             if (errorData?.restart) {

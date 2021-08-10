@@ -76,7 +76,10 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
 			...this.producerOptions.additionalOptions,
+			...this.sslOptions,
 		};
+
+		console.log(`[RDKAFKA ALL PRODUCER OPTIONS]: ${JSON.stringify(options)}`);
 
 		const producer: kafkaTypes.Producer = this.producer =
 			new this.kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
