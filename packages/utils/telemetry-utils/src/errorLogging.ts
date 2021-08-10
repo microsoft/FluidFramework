@@ -21,14 +21,17 @@ const isRegularObject = (value: any): boolean => {
 
 /** Inspect the given error for common "safe" props and return them */
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
-    const removeMessageFromStack = (stack: string, errorName?: string) => {
+    const removeMessageFromStack = (stack: string, errorMessage: string, errorName?: string) => {
         if (!sanitizeStack) {
+            return stack;
+        }
+        if (errorMessage === "" || !stack.includes(errorMessage)) {
             return stack;
         }
         const stackFrames = stack.split("\n");
         stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
         if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
+            stackFrames.unshift(`${errorName}: <error message>`); // Add [ErrorName] and <error message> placeholder
         }
         return stackFrames.join("\n");
     };
@@ -50,7 +53,7 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 
         if (typeof stack === "string") {
             const errorName = (typeof name === "string") ? name : undefined;
-            safeProps.stack = removeMessageFromStack(stack, errorName);
+            safeProps.stack = removeMessageFromStack(stack, message, errorName);
         }
     }
 

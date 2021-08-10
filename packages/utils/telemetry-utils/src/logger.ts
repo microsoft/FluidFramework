@@ -78,20 +78,21 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
         const { message, errorType, stack} = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
-        // First, copy over error message, stack, and errorType directly (overwrite if present on event)
+
+        // These key error props should override info of the same name that may have been set on the event
         event.stack = stack;
         event.error = message; // Note that the error message goes on the 'error' field
         event.errorType = errorType;
 
+        // Add other telemetry properties, but with lower precedence than existing event properties.
         if (isILoggingError(error)) {
-            // Add any other telemetry properties from the LoggingError
-            const telemetryProp = error.getTelemetryProperties();
-            for (const key of Object.keys(telemetryProp)) {
+            const telemetryProps = error.getTelemetryProperties();
+            for (const key of Object.keys(telemetryProps)) {
                 if (event[key] !== undefined) {
                     // Don't overwrite existing properties on the event
                     continue;
                 }
-                event[key] = telemetryProp[key];
+                event[key] = telemetryProps[key];
             }
         }
 
@@ -124,8 +125,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             ...event,
             category: event.category ?? (error === undefined ?  "generic" : "error"),
         };
+        const fetchStack = event.category === "error";
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, false);
+            TelemetryLogger.prepareErrorObject(newEvent, error, fetchStack);
         }
         this.send(newEvent);
     }
