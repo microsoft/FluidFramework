@@ -227,6 +227,13 @@ describe("Error Logging", () => {
             assert.strictEqual(errorAsAny.p3, true);
             assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "PackageData" });
         });
+        it("errorInstanceId unique each time", () => {
+            const e1 = new LoggingError("1");
+            const e2 = new LoggingError("2");
+            assert.equal(e1.errorInstanceId.length, 36, "should be guid-length");
+            assert.equal(e2.errorInstanceId.length, 36, "should be guid-length");
+            assert.notEqual(e1.errorInstanceId, e2.errorInstanceId, "each error instance should get unique id");
+        });
         it("getTelemetryProperties extracts all untagged ctor props", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
             const props = loggingError.getTelemetryProperties();

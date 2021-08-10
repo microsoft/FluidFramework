@@ -9,7 +9,8 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateContainerError, CreateProcessingError, DataProcessingError, GenericError } from "../error";
+import { MockLogger } from "@fluidframework/test-runtime-utils";
+import { CreateContainerError, CreateProcessingError, DataProcessingError, GenericError, wrapError, wrapErrorAndLog } from "../error";
 
 describe("Errors", () => {
     describe("GenericError coercion via CreateContainerError", () => {
@@ -118,7 +119,30 @@ describe("Errors", () => {
             assert.equal(error2.errorType, err1.errorType, "Preserve errorType 2");
         });
     });
-
+    describe("wrapError", () => {
+        it("Copy message and stack", () => {
+            const innerError = new LoggingError("hello");
+            innerError.stack = "extra special stack";
+            const newError = wrapError(innerError, (message) => new LoggingError(message));
+            assert.equal(newError.message, innerError.message, "messages should match");
+            assert.equal(newError.stack, innerError.stack, "stacks should match");
+        });
+        it("Include innerErrorInstanceId in telemetry props", () => {
+            const innerError = new LoggingError("hello");
+            const newError = wrapError(innerError, (message) => new LoggingError(message));
+            assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
+        });
+    });
+    describe("wrapErrorAndLog", () => {
+        const mockLogger = new MockLogger();
+        const innerError = new LoggingError("hello");
+        const newError = wrapErrorAndLog(innerError, (message) => new LoggingError(message), mockLogger);
+        assert(mockLogger.matchEvents([{
+            eventName: "WrapError",
+            wrappedByErrorInstanceId: newError.errorInstanceId,
+            error: "hello",
+         }]), "Expected the 'WrapError' event to be logged");
+});
     describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
