@@ -21,14 +21,14 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { ServiceAudience } from '@fluid-experimental/fluid-framework';
 
 // @public (undocumented)
-export class FrsAudience extends ServiceAudience<FrsMember> implements IFrsAudience {
+export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
     // (undocumented)
-    protected createServiceMember(audienceMember: IClient): FrsMember;
+    protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
 // @public (undocumented)
-export class FrsAzFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<FrsMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
+export class AzureFunctionTokenProvider implements ITokenProvider {
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -37,17 +37,17 @@ export class FrsAzFunctionTokenProvider implements ITokenProvider {
 
 // @public
 export class AzureClient {
-    constructor(connectionConfig: FrsConnectionConfig);
+    constructor(connectionConfig: AzureConnectionConfig);
     // (undocumented)
-    createContainer(containerConfig: FrsContainerConfig, containerSchema: ContainerSchema): Promise<FrsResources>;
+    createContainer(containerConfig: AzureContainerConfig, containerSchema: ContainerSchema): Promise<AzureResources>;
     // (undocumented)
     readonly documentServiceFactory: IDocumentServiceFactory;
     // (undocumented)
-    getContainer(containerConfig: FrsContainerConfig, containerSchema: ContainerSchema): Promise<FrsResources>;
+    getContainer(containerConfig: AzureContainerConfig, containerSchema: ContainerSchema): Promise<AzureResources>;
     }
 
 // @public (undocumented)
-export interface FrsConnectionConfig {
+export interface AzureConnectionConfig {
     // (undocumented)
     orderer: string;
     // (undocumented)
@@ -59,7 +59,7 @@ export interface FrsConnectionConfig {
 }
 
 // @public (undocumented)
-export interface FrsContainerConfig {
+export interface AzureContainerConfig {
     // (undocumented)
     id: string;
     // (undocumented)
@@ -67,12 +67,12 @@ export interface FrsContainerConfig {
 }
 
 // @public
-export interface FrsContainerServices {
-    audience: IFrsAudience;
+export interface AzureContainerServices {
+    audience: IAzureAudience;
 }
 
 // @public
-export interface FrsMember<T = any> extends IMember {
+export interface AzureMember<T = any> extends IMember {
     // (undocumented)
     additionalDetails?: T;
     // (undocumented)
@@ -80,9 +80,9 @@ export interface FrsMember<T = any> extends IMember {
 }
 
 // @public (undocumented)
-export interface FrsResources {
+export interface AzureResources {
     // (undocumented)
-    containerServices: FrsContainerServices;
+    containerServices: AzureContainerServices;
     // (undocumented)
     fluidContainer: FluidContainer;
 }
@@ -97,7 +97,7 @@ export class AzureUrlResolver implements IUrlResolver {
     }
 
 // @public (undocumented)
-export type IFrsAudience = IServiceAudience<FrsMember>;
+export type IAzureAudience = IServiceAudience<AzureMember>;
 
 export { InsecureTokenProvider }
 

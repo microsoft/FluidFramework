@@ -17,12 +17,12 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
-    FrsConnectionConfig,
-    FrsContainerConfig,
-    FrsContainerServices,
-    FrsResources,
+    AzureConnectionConfig,
+    AzureContainerConfig,
+    AzureContainerServices,
+    AzureResources,
 } from "./interfaces";
-import { FrsAudience } from "./FrsAudience";
+import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver } from "./AzureUrlResolver";
 
 /**
@@ -32,16 +32,16 @@ import { AzureUrlResolver } from "./AzureUrlResolver";
 export class AzureClient {
     public readonly documentServiceFactory: IDocumentServiceFactory;
 
-    constructor(private readonly connectionConfig: FrsConnectionConfig) {
+    constructor(private readonly connectionConfig: AzureConnectionConfig) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.connectionConfig.tokenProvider,
         );
     }
 
     public async createContainer(
-        containerConfig: FrsContainerConfig,
+        containerConfig: AzureContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FrsResources> {
+    ): Promise<AzureResources> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
@@ -52,9 +52,9 @@ export class AzureClient {
     }
 
     public async getContainer(
-        containerConfig: FrsContainerConfig,
+        containerConfig: AzureContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FrsResources> {
+    ): Promise<AzureResources> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.resolve({ url: containerConfig.id });
         return this.getFluidContainerAndServices(container);
@@ -62,24 +62,24 @@ export class AzureClient {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<FrsResources> {
+    ): Promise<AzureResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices: FrsContainerServices = this.getContainerServices(container);
-        const frsResources: FrsResources = { fluidContainer, containerServices };
+        const containerServices: AzureContainerServices = this.getContainerServices(container);
+        const frsResources: AzureResources = { fluidContainer, containerServices };
         return frsResources;
     }
 
     private getContainerServices(
         container: Container,
-    ): FrsContainerServices {
+    ): AzureContainerServices {
         return {
-            audience: new FrsAudience(container),
+            audience: new AzureAudience(container),
         };
     }
 
     private createLoader(
-        containerConfig: FrsContainerConfig,
+        containerConfig: AzureContainerConfig,
         containerSchema: ContainerSchema,
     ): Loader {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(

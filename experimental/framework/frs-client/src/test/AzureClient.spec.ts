@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { SharedMap, ContainerSchema } from "@fluid-experimental/fluid-framework";
 import {
-    FrsContainerConfig,
+    AzureContainerConfig,
 } from "..";
 import { createAzureClient } from "./AzureClientFactory";
 
@@ -19,7 +19,7 @@ describe("AzureClient", () => {
     });
 
     it("can create FRS container successfully", async () => {
-        const containerConfig: FrsContainerConfig = { id: documentId };
+        const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
             initialObjects: {

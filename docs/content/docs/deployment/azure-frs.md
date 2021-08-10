@@ -63,7 +63,7 @@ The container being fetched back will hold the `initialObjects` as defined in th
 
 ## Getting audience details
 
-Calls to `createContainer` and `getContainer` return an `FrsResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
+Calls to `createContainer` and `getContainer` return an `AzureResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
 
 The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the Fluid shared objects within the container can be reused when moving to using `AzureClient`.
 
@@ -94,14 +94,14 @@ onAudienceChanged();
 audience.on("membersChanged", onAudienceChanged);
 ```
 
-`audience` provides two functions that will return `FrsMember` objects that have a user ID and user name:
+`audience` provides two functions that will return `AzureMember` objects that have a user ID and user name:
 
 * `getMembers` returns a map of all the users connected to the container. These values will change anytime a member joins or leaves the container.
 * `getMyself` returns the current user on this client.
 
 `audience` also emits events for when the roster of members changes. `membersChanged` will fire for any roster changes, whereas `memberAdded` and `memberRemoved` will fire for their respective changes with the `clientId` and `member` values that have been modified. After any of these events fire, a new call to `getMembers` will return the updated member roster.
 
-A sample `FrsMember` object looks like the following:
+A sample `AzureMember` object looks like the following:
 
 ```json
 {
@@ -120,7 +120,7 @@ A sample `FrsMember` object looks like the following:
 }
 ```
 
-Alongside the user ID and name, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients.
+Alongside the user ID and name, `AzureMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients.
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 

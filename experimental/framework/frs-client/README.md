@@ -18,7 +18,7 @@ Fluid requires a backing service to enable collaborative communication. The `Azu
 
 NOTE: You can use one instance of the `AzureClient` to create/fetch multiple containers from the same FRS service instance.
 
-In the example below we will walk through both connecting to a a live FRS service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against Tinylicious. We make use of `FrsAzFunctionTokenProvider` for token generation while running against a live FRS instance and `InsecureTokenProvider` to authenticate a given user for access to the service locally. The `FrsAzFunctionTokenProvider` is an implemention that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
+In the example below we will walk through both connecting to a a live FRS service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against Tinylicious. We make use of `AzureFunctionTokenProvider` for token generation while running against a live FRS instance and `InsecureTokenProvider` to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implemention that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
 
 ### Backed Locally
 
@@ -30,9 +30,9 @@ npx tinylicous
 Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our Tinylicous instance is running at.
 
 ```typescript
-import { AzureClient, FrsConnectionConfig } from "@fluid-experimental/azure-client";
+import { AzureClient, AzureConnectionConfig } from "@fluid-experimental/azure-client";
 
-const config: FrsConnectionConfig = {
+const config: AzureConnectionConfig = {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
     orderer: "http://localhost:7070",
@@ -42,14 +42,14 @@ const frsClient = new AzureClient(config);
 ```
 
 ### Backed by a Live FRS Instance
-When running against a live FRS instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetFrsToken` along with the current user object to `FrsAzFunctionTokenProvider`. Later on, in `FrsAzFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
+When running against a live FRS instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetFrsToken` along with the current user object to `AzureFunctionTokenProvider`. Later on, in `AzureFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
-import { AzureClient, FrsConnectionConfig } from "@fluid-experimental/azure-client";
+import { AzureClient, AzureConnectionConfig } from "@fluid-experimental/azure-client";
 
-const config: FrsConnectionConfig = {
+const config: AzureConnectionConfig = {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
+    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 };

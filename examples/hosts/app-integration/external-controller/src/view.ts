@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FrsMember, IFrsAudience } from "@fluid-experimental/azure-client";
+import { AzureMember, IAzureAudience } from "@fluid-experimental/azure-client";
 import { ICustomUserDetails } from "./app";
 import { IDiceRollerController } from "./controller";
 
@@ -45,7 +45,7 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
  * @param audience - Object that provides the list of current members and listeners for when the list changes
  * @param div - The div to render into
  */
-export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
+export function renderAudience(audience: IAzureAudience, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
     wrapperDiv.style.margin = "70px";
@@ -60,7 +60,7 @@ export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
         const memberStrings: string[] = [];
         const useFrs = process.env.FLUID_CLIENT === "frs";
 
-        members.forEach((member: FrsMember<ICustomUserDetails>) => {
+        members.forEach((member: AzureMember<ICustomUserDetails>) => {
             if (member.userId !== self?.userId) {
                 if (useFrs) {
                     const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},

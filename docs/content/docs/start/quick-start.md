@@ -73,7 +73,7 @@ the `AzureClient` constructor:
 
 ```typescript
 // This configures the AzureClient to use a remote Azure Fluid Service instance.
-const config: FrsConnectionConfig = {
+const config: AzureConnectionConfig = {
     tenantId: "myFrsTenantId",
     // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
     tokenProvider: new InsecureTokenProvider("myFrsTenantKey", { id: "UserId", name: "Test User" }),

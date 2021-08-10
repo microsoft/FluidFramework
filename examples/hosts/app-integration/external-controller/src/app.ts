@@ -4,9 +4,9 @@
  */
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 import {
-    FrsAzFunctionTokenProvider,
+    AzureFunctionTokenProvider,
     AzureClient,
-    FrsConnectionConfig,
+    AzureConnectionConfig,
     InsecureTokenProvider,
 } from "@fluid-experimental/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
@@ -35,9 +35,9 @@ const frsAzUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: FrsConnectionConfig = useFrs ? {
+const connectionConfig: AzureConnectionConfig = useFrs ? {
     tenantId: "",
-    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzUser),
+    tokenProvider: new AzureFunctionTokenProvider("", frsAzUser),
     orderer: "",
     storage: "",
 } : {

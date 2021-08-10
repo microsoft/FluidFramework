@@ -7,7 +7,7 @@ export { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 export { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 export * from "./interfaces";
-export * from "./FrsAudience";
+export * from "./AzureAudience";
 export * from "./AzureUrlResolver";
 export * from "./AzureClient";
-export * from "./FrsAzFunctionTokenProvider";
+export * from "./AzureFunctionTokenProvider";

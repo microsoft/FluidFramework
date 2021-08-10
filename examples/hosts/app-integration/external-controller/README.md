@@ -51,12 +51,12 @@ To run the the `AzureClient` against our local Tinylicious instance, we pass the
 
 "To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window"
 
-When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `FrsAzFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
+When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
-const connectionConfig: FrsConnectionConfig = useFrs ? {
+const connectionConfig: AzureConnectionConfig = useFrs ? {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
+    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 } : {
@@ -66,4 +66,4 @@ const connectionConfig: FrsConnectionConfig = useFrs ? {
     storage: "http://localhost:7070",
 };
 ```
-In this way, we can toggle between remote and local mode using the same config format. We make use of `FrsAzFunctionTokenProvider` for running against live FRS instance since it is more secured, without exposing the tenant secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
+In this way, we can toggle between remote and local mode using the same config format. We make use of `AzureFunctionTokenProvider` for running against live FRS instance since it is more secured, without exposing the tenant secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
