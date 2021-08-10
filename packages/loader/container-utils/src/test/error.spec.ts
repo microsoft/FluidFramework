@@ -62,13 +62,13 @@ describe("Errors", () => {
 
             assert((testError as GenericError).stack === originalError.stack);
         });
-        it("Should add errorType but preserve existing telemetry props, as a new object", () => {
+        it("Should add errorType but drop telemetry props, as a new object", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" });
             const testError = CreateContainerError(loggingError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo === "bar");
+            assert(testError.getTelemetryProperties().foo === undefined, "telemetryProps shouldn't be copied when wrapping");
             assert(testError as any !== loggingError);
             assert((testError as GenericError).error === loggingError);
         });
@@ -174,7 +174,7 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps not copied over by normalizeError");
+            assert(coercedError.getTelemetryProperties().otherProperty === undefined, "telemetryProps shouldn't be copied when wrapping");
         });
 
         it("Should not fail coercing malformed inputs", () => {

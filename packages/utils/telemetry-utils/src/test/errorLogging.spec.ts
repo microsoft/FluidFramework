@@ -290,8 +290,8 @@ describe("Error Logging", () => {
             const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
-            const { message, stack } = loggingError;
-            assert.deepStrictEqual(props, { message, stack }, "addTelemetryProperties should not overwrite existing props");
+            const { message, stack, errorInstanceId } = loggingError;
+            assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (tagged)", () => {
             const loggingError = new LoggingError("myMessage");
@@ -301,8 +301,8 @@ describe("Error Logging", () => {
             };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
-            const { message, stack } = loggingError;
-            assert.deepStrictEqual(props, { message, stack }, "addTelemetryProperties should not overwrite existing props");
+            const { message, stack, errorInstanceId } = loggingError;
+            assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
         it("addTelemetryProperties - Does not overwrite existing telemetry props", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1 });
