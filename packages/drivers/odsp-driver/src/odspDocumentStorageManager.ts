@@ -612,7 +612,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         break;
                     case "NoConnection": // Race condition. Worth logging to make sure there are no logic errors.
                     case "NoResult": // Some internal PUSH error?
-                    case "FlushOpsTooMany": // Should not happen, at least not often
+                    case "TooManyCalls": // Should not happen, at least not often
                         this.logger.sendErrorEvent({ eventName: "FlushNoResult", reason: result });
                         break;
                     default:
@@ -625,7 +625,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 break;
             }
             this.logger.sendErrorEvent({
-                eventName: "FlushExtra",
+                eventName: "FlushExtraCall",
                 current: result,
                 referenceSequenceNumber: context.referenceSequenceNumber,
             });

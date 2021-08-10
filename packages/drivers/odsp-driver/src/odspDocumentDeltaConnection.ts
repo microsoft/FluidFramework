@@ -23,7 +23,7 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush = "api_flush_ops";
 
-export type FlushResult = number | "NotSupported" | "NoResult" | "FlushOpsTooMany";
+export type FlushResult = number | "NotSupported" | "NoResult" | "TooManyCalls";
 
 // How long to wait before disconnecting the socket after the last reference is removed
 // This allows reconnection after receiving a nack to be smooth
@@ -382,7 +382,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // get overlapping requests, but it should be very rare
         if (this.flushOpNonce !== undefined) {
             this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany"});
-            this.flushAccept!("FlushOpsTooMany");
+            this.flushAccept!("TooManyCalls");
         }
         this.flushOpNonce = nonce;
         return new Promise<FlushResult>((accept) => {
@@ -426,7 +426,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         this.socket.on("flush_ops_response", (result) => {
             if (this.flushOpNonce === result.nonce) {
-                this.flushAccept!((result.lastPersistedSequenceNumber as (number | undefined)) ?? "NoResult");
+                const seq = result.lastPersistedSequenceNumber as (number | undefined);
+                if (seq === undefined || result.code !== 200) {
+                    this.logger.sendErrorEvent({
+                        eventName: "FlushError",
+                        code: result.code,
+                        sequenceNumber: seq,
+                    });
+                }
+                this.flushAccept!(seq ?? "NoResult");
                 this.flushAccept = undefined;
                 this.flushOpNonce = undefined;
             }
