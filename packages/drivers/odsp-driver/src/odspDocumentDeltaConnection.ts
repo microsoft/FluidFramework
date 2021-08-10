@@ -20,6 +20,7 @@ import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
+const feature_get_ops = "api_get_ops";
 
 // How long to wait before disconnecting the socket after the last reference is removed
 // This allows reconnection after receiving a nack to be smooth
@@ -210,7 +211,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         // Reference to this client supporting get_ops flow.
         // back-compat: remove cast to any once new definition of IConnect comes through.
-        (connectMessage as any).supportedFeatures = { get_ops: true };
+        (connectMessage as any).supportedFeatures = { [feature_get_ops]: true };
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
