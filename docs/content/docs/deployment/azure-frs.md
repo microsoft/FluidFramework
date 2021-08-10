@@ -153,11 +153,15 @@ A sample `FrsMember` object looks like the following:
       "id": "0e662aca-9d7d-4ff0-8faf-9f8672b70f15",
       "mode": "write"
     }
-  ]
+  ],
+  "additionalDetails": {
+      "email": "xyz@outlook.com",
+      "address": "Redmond",
+  }
 }
 ```
 
-Alongside the user ID and name, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients.
+Alongside the user ID, name and addiitonalDetails, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients. The values in the `additionalDetails` field match up to the values provided in the `FrsAzFunctionTokenProvider` token generation.
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 
