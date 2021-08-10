@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/merge-tree-client-replay",
-  "version": "0.45.0",
+  "version": "0.46.0",
   "private": true,
   "description": "A tool that lets the user to replay ops.",
   "homepage": "https://fluidframework.com",
@@ -16,10 +16,10 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc",
-    "build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
+    "ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
@@ -30,13 +30,13 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.0-0",
-    "@fluidframework/container-runtime": "^0.45.0",
-    "@fluidframework/file-driver": "^0.45.0",
-    "@fluidframework/merge-tree": "^0.45.0",
+    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/container-runtime": "^0.46.0",
+    "@fluidframework/file-driver": "^0.46.0",
+    "@fluidframework/merge-tree": "^0.46.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/runtime-definitions": "^0.45.0",
-    "@fluidframework/sequence": "^0.45.0"
+    "@fluidframework/runtime-definitions": "^0.46.0",
+    "@fluidframework/sequence": "^0.46.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",

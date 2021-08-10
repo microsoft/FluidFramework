@@ -47,7 +47,7 @@ async function initializeODSPCore(
         return;
     }
 
-    const docId = odsp.getHashedDocumentId(driveId, itemId);
+    const docId = await odsp.getHashedDocumentId(driveId, itemId);
 
     console.log(`Connecting to ODSP:
   server: ${server}

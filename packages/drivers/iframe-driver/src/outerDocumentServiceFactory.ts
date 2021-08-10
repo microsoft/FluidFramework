@@ -26,7 +26,6 @@ import {
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { debug } from "./debug";
 import { IOuterDocumentDeltaConnectionProxy } from "./innerDocumentDeltaConnection";
 
 const socketIOEvents = [
@@ -105,7 +104,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     public async connected(): Promise<void> {
-        debug("IFrame Connection Succeeded");
         return;
     }
 
