@@ -29,7 +29,6 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
-import { debug } from "./debug";
 import {
     IntervalCollection,
     SequenceInterval,

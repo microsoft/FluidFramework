@@ -16,7 +16,6 @@ import {
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import { SharedXTreeFactory } from "./runtime";
 
 export class SharedXTree extends SharedObject

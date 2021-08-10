@@ -21,7 +21,6 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import {
     ISharedMap,
     ISharedMapEvents,

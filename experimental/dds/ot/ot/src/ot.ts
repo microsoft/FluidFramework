@@ -17,7 +17,6 @@ import {
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 
 interface ISequencedOpInfo<TOp> {
     client: string;

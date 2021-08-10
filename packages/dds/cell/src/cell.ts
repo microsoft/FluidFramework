@@ -23,7 +23,6 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
 /**

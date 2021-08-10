@@ -18,7 +18,6 @@ import {
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import {
     Interval,
     IntervalCollection,

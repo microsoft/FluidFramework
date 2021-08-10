@@ -23,7 +23,6 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { delay, TypedEventEmitter } from "@fluidframework/common-utils";
-import { debug } from "./debug";
 import { ReplayController } from "./replayController";
 
 const ReplayDocumentId = "documentId";

@@ -6,7 +6,6 @@
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
 
 const debugOp = debug.extend("ops");

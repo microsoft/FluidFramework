@@ -21,7 +21,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
-import { debug } from "./debug";
 import {
     IDirectory,
     IDirectoryEvents,

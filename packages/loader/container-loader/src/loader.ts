@@ -25,7 +25,6 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -41,7 +40,6 @@ import {
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
-import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
