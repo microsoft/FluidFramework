@@ -17,6 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
+    triggerConnectionRecovery: (reason: string) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -35,6 +36,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
     private readonly prevClientLeftTimer: Timer;
+    private readonly joinOpTimer: Timer;
+
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
@@ -65,11 +68,36 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
                 this.applyForConnectedState("timeout");
             },
         );
+
+        // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
+        // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
+        // if retrying fixes the problem, we should not see these events.
+        this.joinOpTimer = new Timer(
+            45000,
+            () => {
+                // I've observed timer firing within couple ms from disconnect event, looks like
+                // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
+                if (this.connectionState !== ConnectionState.Disconnected) {
+                    this.handler.triggerConnectionRecovery("NoJoinOp");
+                }
+            },
+        );
+    }
+
+    private startJoinOpTimer() {
+        assert(!this.joinOpTimer.hasTimer, 0x234 /* "has joinOpTimer" */);
+        this.joinOpTimer.start();
+    }
+
+    private stopJoinOpTimer(reason: string) {
+        assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
+        this.joinOpTimer.clear();
     }
 
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
+            this.stopJoinOpTimer("joinOp");
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -84,12 +112,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     private applyForConnectedState(source: "removeMemberEvent" | "addMemberEvent" | "timeout") {
         const protocolHandler = this.handler.protocolHandler();
+        assert(protocolHandler !== undefined, 0x236 /* "In all cases it should be already installed" */);
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
         // or timeout has occured while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
-            && protocolHandler !== undefined && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
+            && protocolHandler.quorum.getMember(this.pendingClientId) !== undefined
             && !this.prevClientLeftTimer.hasTimer
         ) {
             this.waitEvent?.end({ source });
@@ -117,6 +146,9 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     }
 
     public receivedDisconnectEvent(reason: string) {
+        if (this.joinOpTimer.hasTimer) {
+            this.stopJoinOpTimer(`disconnect: ${reason}`);
+        }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }
 
@@ -149,6 +181,8 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             || connectionMode === "read"
         ) {
             this.setConnectionState(ConnectionState.Connected);
+        } else if (connectionMode === "write") {
+            this.startJoinOpTimer();
         }
     }
 

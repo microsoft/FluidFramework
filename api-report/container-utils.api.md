@@ -6,6 +6,7 @@
 
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -29,13 +30,15 @@ export class DataCorruptionError extends LoggingError implements IErrorBase {
 }
 
 // @public (undocumented)
-export class DataProcessingError extends LoggingError implements IErrorBase {
-    constructor(errorMessage: string, props?: ITelemetryProperties);
+export class DataProcessingError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    constructor(errorMessage: string, fluidErrorCode: string, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataProcessingError;
-    static wrapIfUnrecognized(originalError: any, message: ISequencedDocumentMessage | undefined): ICriticalContainerError;
+    // (undocumented)
+    readonly fluidErrorCode: string;
+    static wrapIfUnrecognized(originalError: any, errorCodeIfNone: string, message: ISequencedDocumentMessage | undefined): IFluidErrorBase;
 }
 
 // @public (undocumented)
@@ -65,6 +68,15 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     // (undocumented)
     readonly retryAfterSeconds: number;
     static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+}
+
+// @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(fluidErrorCode: string);
+    // (undocumented)
+    readonly errorType = "usageError";
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public

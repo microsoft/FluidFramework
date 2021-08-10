@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryErrorEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { isOnline, OnlineStatus } from "./network";
+import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any) {
     const newEvent = { ...event };
@@ -24,10 +24,10 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
     }
 
     // If we are online, log it as an error, such that we look at it ASAP.
-    // But if we  are offline, log non-error event - we will remove
+    // But if we are offline, log non-error event - we will remove
     // it in the future once confident it's right thing to do.
     // Note: Unfortunately false positives happen in here (i.e. cable disconnected, but it reports true)!
-    newEvent.category = newEvent.online === OnlineStatus.Online ? "error" : "generic";
+    newEvent.category = (newEvent.online === OnlineStatus.Online || !canRetryOnError(error)) ? "error" : "generic";
     logger.sendTelemetryEvent(newEvent, error);
 }
 

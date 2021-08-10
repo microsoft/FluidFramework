@@ -1,8 +1,42 @@
 ## 0.45 Breaking changes
-- [Changes to local testing in insecure environments](#changes-to-local-testing-in-insecure-environments)
+- [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
+- [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
+- [Changes to client-api Document](#changes-to-client-api-Document)
+- [Changes to PureDataObject](#changes-to-PureDataObject)
+- [Changes to DataObject](#changes-to-DataObject)
+- [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
+- [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
+- [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
 
-### Changes to local testing in insecure environments
-Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.
+### Changes to local testing in insecure environments and associated bundle size increase
+Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.
+
+### Property removed from IFluidDataStoreRuntime
+- the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` function has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
+
+### Changes to client-api Document
+- The `existing` property from the `Document` class in `@fluid-internal/client-api` has been removed. It can be assumed that the property would have always been `true`.
+
+### Changes to PureDataObject
+- The `initializeInternal` and the `finishInitialization` functions have a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to DataObject
+- The `initializeInternal` function has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to PureDataObjectFactory
+- The `createDataObject` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### `webpack-fluid-loader` package name changed
+The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
+
+### Loggers without tag support now deprecated in ContainerContext
+The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
+
+### Creating new containers with Container.load is no longer supported
+- See [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- The `createOnLoad` flag to inside `IContainerLoadOptions` has been removed.
+- `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader` has been removed.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)

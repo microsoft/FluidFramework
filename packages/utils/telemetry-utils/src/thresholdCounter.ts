@@ -13,13 +13,20 @@ export class ThresholdCounter {
     public constructor(
         private readonly threshold: number,
         private readonly logger: ITelemetryLogger,
+        private thresholdMultiple = threshold,
     ) {}
 
     /**
      * Sends the value if it's above the treshold.
      */
-    public send(eventName: string, value?: number) {
-        this.sendInternal(eventName, value);
+    public send(eventName: string, value: number) {
+        if (value < this.threshold) {
+            return;
+        }
+        this.logger.sendPerformanceEvent({
+            eventName,
+            value,
+        });
     }
 
     /**
@@ -29,20 +36,14 @@ export class ThresholdCounter {
      * To be used in scenarios where we'd like to record a
      * threshold violation while reducing telemetry noise.
      */
-    public sendIfMultiple(eventName: string, value?: number) {
-        this.sendInternal(eventName, value, 0);
-    }
-
-    private sendInternal(event: string, value?: number, deltaRemainder?: number) {
-        if (value === undefined || value < this.threshold) {
-            return;
-        }
-
-        if (deltaRemainder === undefined || value % this.threshold === deltaRemainder) {
+    public sendIfMultiple(eventName: string, value: number) {
+        if (value === this.thresholdMultiple) {
             this.logger.sendPerformanceEvent({
-                eventName: event,
+                eventName,
                 value,
             });
+            // reduce number of "multiple" events.
+            this.thresholdMultiple = this.thresholdMultiple * 2;
         }
     }
 }

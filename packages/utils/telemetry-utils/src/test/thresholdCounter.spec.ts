@@ -44,7 +44,6 @@ describe("ThresholdCounter", () => {
     });
 
     it("Send only if it passes threshold", () => {
-        sender.send("event_0", undefined);
         sender.send("event_1", threshold);
         sender.send("event_2", threshold + 1);
         sender.send("event_3", threshold - 1);
@@ -56,7 +55,6 @@ describe("ThresholdCounter", () => {
     });
 
     it("Send only if value is multiple", () => {
-        sender.sendIfMultiple("event_0", undefined);
         sender.sendIfMultiple("event_1", threshold);
         sender.sendIfMultiple("event_2", threshold * 2);
         sender.sendIfMultiple("event_3", threshold - 1);
