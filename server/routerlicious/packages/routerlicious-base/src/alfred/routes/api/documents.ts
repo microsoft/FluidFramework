@@ -52,7 +52,11 @@ export function create(
      */
     router.post(
         "/:tenantId",
-        verifyStorageToken(tenantManager, config, false),
+        verifyStorageToken(tenantManager, config, {
+            requireDocumentId: true,
+            ensureSingleUseToken: true,
+            singleUseTokenCache: {}, // TODO: get a redis instance down here... new Redis config?
+        }),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             // Tenant and document
