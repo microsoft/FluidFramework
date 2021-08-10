@@ -64,11 +64,11 @@ This example combines the concepts from this document to show how you can write 
 First you need to create a client that can adapt to the test scenario.  This example uses an environment variable to determine which service to target and for the tenant key.  The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
 ```typescript
 function createAzureClient(): AzureClient {
-    const useFrs = process.env.FLUID_CLIENT === "frs";
-    const tenantKey = useFrs ? process.env.FLUID_TENANTKEY as string : "";
+    const useAzure = process.env.FLUID_CLIENT === "azure";
+    const tenantKey = useAzure ? process.env.FLUID_TENANTKEY as string : "";
     const user = { id: "userId", name: "Test User" };
 
-    const connectionConfig = useFrs ? {
+    const connectionConfig = useAzure ? {
         tenantId: "myTenantId",
         tokenProvider: new InsecureTokenProvider(tenantKey, user),
         orderer: "https://myOrdererUrl",
@@ -97,7 +97,7 @@ describe("ClientTest", () => {
     });
 
     it("can create FRS container successfully", async () => {
-        const containerConfig: FrsContainerConfig = { id: documentId };
+        const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
         };
@@ -114,7 +114,7 @@ You can then use the following npm scripts:
     ...
     "start:tinylicious": "tinylicious > tinylicious.log 2>&1",
     "test:mocha": "mocha",
-    "test:frs": "cross-env process.env.FLUID_CLIENT='\"frs\"' && npm run test:mocha",
+    "test:azure": "cross-env process.env.FLUID_CLIENT='\"azure\"' && npm run test:mocha",
     "test:tinylicious": "start-server-and-test start:tinylicious 7070 test:mocha",
     ...
 }

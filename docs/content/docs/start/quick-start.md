@@ -72,13 +72,13 @@ orderer, and storage URLs that were provided as part of the onboarding process. 
 the `AzureClient` constructor:
 
 ```typescript
-// This configures the AzureClient to use a remote Azure Fluid Service instance.
+// This configures the AzureClient to use a remote Azure Fluid Relay Service instance.
 const config: AzureConnectionConfig = {
-    tenantId: "myFrsTenantId",
+    tenantId: "myTenantId",
     // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
-    tokenProvider: new InsecureTokenProvider("myFrsTenantKey", { id: "UserId", name: "Test User" }),
-    orderer: "https://myFrsOrdererUrl",
-    storage: "https://myFrsStorageUrl",
+    tokenProvider: new InsecureTokenProvider("myTenantKey", { id: "UserId", name: "Test User" }),
+    orderer: "https://myOrdererUrl",
+    storage: "https://myStorageUrl",
 }
 
 const client = new AzureClient(config);

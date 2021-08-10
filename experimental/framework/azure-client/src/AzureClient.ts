@@ -66,8 +66,8 @@ export class AzureClient {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
         const containerServices: AzureContainerServices = this.getContainerServices(container);
-        const frsResources: AzureResources = { fluidContainer, containerServices };
-        return frsResources;
+        const azureResources: AzureResources = { fluidContainer, containerServices };
+        return azureResources;
     }
 
     private getContainerServices(
