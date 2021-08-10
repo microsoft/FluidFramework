@@ -13,13 +13,14 @@ import {
 // and return a new AzureClient instance based on the mode by setting the ConnectionConfig
 // accordingly.
 export function createAzureClient(): AzureClient {
-    const useFrs = process.env.FLUID_CLIENT === "frs";
-    const tenantKey = useFrs ? process.env.fluid__webpack__tenantKey as string : "";
+    const useAzure = process.env.FLUID_CLIENT === "azure";
+    const tenantKey = useAzure ? process.env.fluid__webpack__tenantKey as string : "";
     const user = generateUser();
 
-    // use AzureClient remote mode will run against live Frs service. Default to running Tinylicious for PR validation
+    // use AzureClient remote mode will run against live Azure Relay Service.
+    // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
-    const connectionConfig = useFrs ? {
+    const connectionConfig = useAzure ? {
         tenantId: "frs-client-tenant",
         tokenProvider: new InsecureTokenProvider(
             tenantKey, user,

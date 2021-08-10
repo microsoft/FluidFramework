@@ -58,11 +58,11 @@ export function renderAudience(audience: IAzureAudience, div: HTMLDivElement) {
         const members = audience.getMembers();
         const self = audience.getMyself();
         const memberStrings: string[] = [];
-        const useFrs = process.env.FLUID_CLIENT === "frs";
+        const useAzure = process.env.FLUID_CLIENT === "azure";
 
         members.forEach((member: AzureMember<ICustomUserDetails>) => {
             if (member.userId !== self?.userId) {
-                if (useFrs) {
+                if (useAzure) {
                     const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},
                         Email: ${member.additionalDetails?.email}}`;
                     memberStrings.push(memberString);

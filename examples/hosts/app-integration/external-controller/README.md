@@ -54,7 +54,7 @@ To run the the `AzureClient` against our local Tinylicious instance, we pass the
 When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
-const connectionConfig: AzureConnectionConfig = useFrs ? {
+const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "YOUR-TENANT-ID-HERE",
     tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",

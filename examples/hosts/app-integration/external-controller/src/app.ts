@@ -25,19 +25,19 @@ const userDetails: ICustomUserDetails = {
 };
 
 // Define the server we will be using and initialize Fluid
-const useFrs = process.env.FLUID_CLIENT === "frs";
+const useAzure = process.env.FLUID_CLIENT === "azure";
 
 const user = generateUser() as any;
 
-const frsAzUser = {
+const azureUser = {
     userId: user.id,
     userName: user.name,
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureConnectionConfig = useFrs ? {
+const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "",
-    tokenProvider: new AzureFunctionTokenProvider("", frsAzUser),
+    tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",
     storage: "",
 } : {

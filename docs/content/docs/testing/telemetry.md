@@ -250,7 +250,7 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
-    const client = useFrs ? AzureClient :  new TinyliciousClient();
+    const client = useAzure ? AzureClient :  new TinyliciousClient();
     const [fluidContainer, containerServices] = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);

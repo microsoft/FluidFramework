@@ -26,15 +26,6 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
-// @public (undocumented)
-export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
-    // (undocumented)
-    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
-    // (undocumented)
-    fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
-    }
-
 // @public
 export class AzureClient {
     constructor(connectionConfig: AzureConnectionConfig);
@@ -70,6 +61,15 @@ export interface AzureContainerConfig {
 export interface AzureContainerServices {
     audience: IAzureAudience;
 }
+
+// @public (undocumented)
+export class AzureFunctionTokenProvider implements ITokenProvider {
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
+    // (undocumented)
+    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    // (undocumented)
+    fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    }
 
 // @public
 export interface AzureMember<T = any> extends IMember {
