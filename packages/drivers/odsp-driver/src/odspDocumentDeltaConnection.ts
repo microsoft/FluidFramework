@@ -20,6 +20,10 @@ import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
+const feature_get_ops = "api_get_ops";
+const feature_flush = "api_flush_ops";
+
+export type FlushResult = number | "NotSupported" | "NoResult" | "FlushOpsTooMany";
 
 // How long to wait before disconnecting the socket after the last reference is removed
 // This allows reconnection after receiving a nack to be smooth
@@ -246,8 +250,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     private socketReference: SocketReference | undefined;
 
     private readonly requestOpsNoncePrefix: string;
-    private getOpsCounter = 0;
+    private pushCallCounter = 0;
     private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
+    private flushOpNonce: string | undefined;
+    private flushAccept: undefined | ((seq: FlushResult | PromiseLike<FlushResult>) => void);
 
     /**
      * Error raising for socket.io issues
@@ -317,28 +323,71 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     public requestOps(from: number, to: number) {
-        this.getOpsCounter++;
-        const nonce = `${this.requestOpsNoncePrefix}${this.getOpsCounter}`;
+        this.pushCallCounter++;
+        const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
 
-        // PUSH may disable this functionality, in such case we will keep accumulating memory for nothing.
-        // Prevent that by allowing to track only 10 overlapping requests.
-        // Telemetry in get_ops_response will clearly indicate when we have over 5 requests.
-        // Note that we should never have overlapping requests, as DeltaManager allows only one
-        // outstanding request to storage, and that's the only way to get here.
-        if (this.getOpsMap.size < 5) {
-            this.getOpsMap.set(
-                nonce,
-                {
-                    start: performance.now(),
-                    from,
-                    to,
-                },
-            );
+        // PUSH may disable this functionality
+        // back-compat: remove cast to any once latest version of IConnected is consumed
+        if ((this.details as any).supportedFeatures?.[feature_get_ops] !== true) {
+            return;
         }
+
+        const start = performance.now();
+
+        // We may keep keep accumulating memory for nothing, if we are not getting responses.
+        // Note that we should not have overlapping requests, as DeltaManager allows only one
+        // outstanding request to storage, and that's the only way to get here.
+        // But requests could be cancelled, and thus overlapping requests might be in the picture
+        // If it happens, we do not care about stale requests.
+        // So track some number of requests, but log if we get too many in flight - that likely
+        // indicates an error somewhere.
+        if (this.getOpsMap.size >= 5) {
+            this.logger.sendTelemetryEvent({
+                eventName: "GetOpsTooMany",
+            });
+            let time = start;
+            let key: string | undefined;
+            for (const [keyCandidate, value] of this.getOpsMap.entries()) {
+                if (value.start <= time || key === undefined) {
+                    time = value.start;
+                    key = keyCandidate;
+                }
+            }
+            this.getOpsMap.delete(key!);
+        }
+        this.getOpsMap.set(
+            nonce,
+            {
+                start,
+                from,
+                to,
+            },
+        );
         this.socket.emit("get_ops", this.clientId, {
             nonce,
             from,
             to,
+        });
+    }
+
+    public async flush(): Promise<FlushResult> {
+        // back-compat: remove cast to any once latest version of IConnected is consumed
+        if ((this.details as any).supportedFeatures?.[feature_flush] !== true) {
+            return "NotSupported";
+        }
+        this.pushCallCounter++;
+        const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
+        // There should be only one flush ops in flight, kicked out by upload summary workflow
+        // That said, it could timeout, and request could be repeated, so theoretically we can
+        // get overlapping requests, but it should be very rare
+        if (this.flushOpNonce !== undefined) {
+            this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany"});
+            this.flushAccept!("FlushOpsTooMany");
+        }
+        this.flushOpNonce = nonce;
+        return new Promise<FlushResult>((accept) => {
+            this.flushAccept = accept;
+            this.socket.emit("flush_ops", this.clientId, { nonce });
         });
     }
 
@@ -375,7 +424,15 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             }
         });
 
-        return super.initialize(connectMessage, timeout);
+        this.socket.on("flush_ops_response", (result) => {
+            if (this.flushOpNonce === result.nonce) {
+                this.flushAccept!((result.lastPersistedSequenceNumber as (number | undefined)) ?? "NoResult");
+                this.flushAccept = undefined;
+                this.flushOpNonce = undefined;
+            }
+        });
+
+        await super.initialize(connectMessage, timeout);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {

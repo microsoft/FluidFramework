@@ -8,6 +8,8 @@ import {
     assert,
     stringToBuffer,
     bufferToString,
+    delay,
+    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -42,6 +44,7 @@ import {
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import { FlushResult } from "./odspDocumentDeltaConnection";
 
 /* eslint-disable max-len */
 
@@ -219,6 +222,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
+        private readonly flushCallback: () => Promise<FlushResult | "NoConnection">,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -596,6 +600,37 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
+
+        for (;;) {
+            const result = await this.flushCallback();
+            if (typeof result !== "number") {
+                switch (result) {
+                    case "NotSupported":
+                        // It is assumed that if client-initiated op flushing is not implemented by PUSH,
+                        // then there is internal to SPO+PUSH mechanism to ensure proper ops land in SPO
+                        // on summary processing.
+                        break;
+                    case "NoConnection": // Race condition. Worth logging to make sure there are no logic errors.
+                    case "NoResult": // Some internal PUSH error?
+                    case "FlushOpsTooMany": // Should not happen, at least not often
+                        this.logger.sendErrorEvent({ eventName: "FlushNoResult", reason: result });
+                        break;
+                    default:
+                        unreachableCase(result);
+                }
+                break;
+            }
+
+            if (result >= context.referenceSequenceNumber) {
+                break;
+            }
+            this.logger.sendErrorEvent({
+                eventName: "FlushExtra",
+                current: result,
+                referenceSequenceNumber: context.referenceSequenceNumber,
+            });
+            await delay(1000);
+        }
 
         const id = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
