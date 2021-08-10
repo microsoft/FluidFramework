@@ -728,7 +728,7 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     // (undocumented)
     readonly logged: boolean;
     // (undocumented)
-    static wrap(error: any, logged?: boolean): SummarizingWarning;
+    static wrap(error: any, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
 }
 
 // @public
