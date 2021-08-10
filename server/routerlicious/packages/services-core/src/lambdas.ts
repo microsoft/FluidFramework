@@ -18,6 +18,10 @@ export enum LambdaCloseType {
     Error = "Error",
 }
 
+export enum LambdaName {
+    Scribe = "Scribe",
+}
+
 export interface ILogger {
     info(message: string, metaData?: any): void;
     warn(message: string, metaData?: any): void;

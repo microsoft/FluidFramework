@@ -19,4 +19,5 @@ export enum LumberEventName {
 
     // Miscellaneous
     SessionResult = "SessionResult",
+    StartSessionResult = "StartSessionResult",
 }

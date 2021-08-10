@@ -66,8 +66,8 @@ export enum SessionState {
     // State set when the session ends
     end = "end",
 
-    // State set when scribe lambda is down
-    scribeLambdaDown = "scribeLambdaDown",
+    // State set when a lambda could not start successfully
+    LambdaStartFailed = "lambdaStartFailed",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

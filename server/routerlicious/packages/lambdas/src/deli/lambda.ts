@@ -42,6 +42,7 @@ import {
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
     LambdaCloseType,
+    LambdaName,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -51,10 +52,12 @@ import {
     BaseTelemetryProperties,
     SessionState,
 } from "@fluidframework/server-services-telemetry";
+import * as _ from "lodash";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
+import { createSessionMetric } from "./utils";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -133,10 +136,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     private nackMessages: INackMessagesControlMessageContents | undefined;
 
     // Session level properties
-    private scribeStartSuccess: boolean = false;
     private serviceSummaryGenerated: boolean = false;
-    private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined;
-    private sessionStartMetric: Lumber<LumberEventName.SessionResult> | undefined;
+    private readonly isNewDocument: boolean = false;
+    private readonly successfullyStartedLambdas: LambdaName[] = [];
+    private readonly expectedSuccessfullyStartedLambdas: LambdaName[] = [LambdaName.Scribe];
 
     constructor(
         private readonly context: IContext,
@@ -146,8 +149,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         checkpointManager: IDeliCheckpointManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly isNewDocument: boolean,
-        private readonly serviceConfiguration: IServiceConfiguration) {
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
+        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined) {
         super();
 
         // Instantiate existing clients
@@ -175,6 +179,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
         this.nackMessages = lastCheckpoint.nackMessages;
+        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas;
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
@@ -189,12 +194,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.updateOpMaxTimeTimer();
         }
 
-        this.sessionMetric = this.createSessionMetric();
-        this.sessionStartMetric = this.createSessionMetric();
+        this.isNewDocument = this.sequenceNumber === 0;
 
-        if (!isNewDocument) {
-            this.logSessionStartMetrics();
-        }
+        this.logSessionStartMetrics();
     }
 
     public handler(rawMessage: IQueuedMessage) {
@@ -340,29 +342,39 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.logSessionEndMetrics(closeType);
     }
 
-    private logSessionStartMetrics() {
+    private logSessionStartMetrics(failMetric: boolean = false) {
         if (this.sessionStartMetric?.isCompleted()) {
-            this.sessionStartMetric = this.createSessionMetric();
+            this.sessionStartMetric = createSessionMetric(this.tenantId, this.documentId,
+                true, this.serviceConfiguration);
         }
 
-        if (this.isNewDocument) {
-            if (this.scribeStartSuccess) {
-                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
-                this.sessionStartMetric?.success("Session started successfully");
+        if (failMetric) {
+            this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]:
+                SessionState.LambdaStartFailed });
+            this.sessionStartMetric?.error("Lambda start failed");
+            return;
+        }
+
+        if (this.verifyRequiredLambdaStarted()) {
+            if (this.isNewDocument) {
+                    this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+                    this.sessionStartMetric?.success("Session started successfully");
             } else {
-                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]:
-                    SessionState.scribeLambdaDown });
-                this.sessionStartMetric?.error("Scribe lambda failed");
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
+                this.sessionStartMetric?.success("Session resumed successfully");
             }
         } else {
-            this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
-            this.sessionStartMetric?.success("Session resumed successfully");
+            this.context.log?.info("All required lambdas have not started");
         }
+    }
+
+    private verifyRequiredLambdaStarted() {
+        return this.expectedSuccessfullyStartedLambdas.every((val) => this.successfullyStartedLambdas.includes(val));
     }
 
     private logSessionEndMetrics(closeType: LambdaCloseType) {
         if (this.sessionMetric?.isCompleted()) {
-            this.sessionMetric = this.createSessionMetric();
+            this.sessionMetric = createSessionMetric(this.tenantId, this.documentId, false, this.serviceConfiguration);
         }
 
         this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
@@ -647,8 +659,12 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
                 case ControlMessageType.LambdaStartResult: {
                     const controlContents = controlMessage.contents as ILambdaStartControlMessageContents;
-                    this.scribeStartSuccess = controlContents.success;
-                    this.logSessionStartMetrics();
+
+                    if (controlContents.success) {
+                        this.successfullyStartedLambdas.push(controlContents.lambdaName);
+                    }
+
+                    this.logSessionStartMetrics(!controlContents.success);
                 }
 
                 default:
@@ -937,6 +953,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             term: this.term,
             lastSentMSN: this.lastSentMSN,
             nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,
+            successfullyStartedLambdas: this.successfullyStartedLambdas,
         };
     }
 
@@ -1042,19 +1059,6 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             clearTimeout(this.opMaxTimeTimer);
             this.opMaxTimeTimer = undefined;
         }
-    }
-
-    private createSessionMetric() {
-        if (!this.serviceConfiguration.enableLumberMetrics) {
-            return;
-        }
-
-        const sessionMetric = Lumberjack.newLumberMetric(LumberEventName.SessionResult);
-        sessionMetric?.setProperties({
-            [BaseTelemetryProperties.tenantId]: this.tenantId,
-            [BaseTelemetryProperties.documentId]: this.documentId,
-        });
-        return sessionMetric;
     }
 
     /**

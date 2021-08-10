@@ -10,6 +10,7 @@ import {
     ISequencedDocumentMessage,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -184,5 +185,6 @@ export interface INackMessagesControlMessageContents {
 }
 
 export interface ILambdaStartControlMessageContents {
+    lambdaName: LambdaName;
     success: boolean;
 }

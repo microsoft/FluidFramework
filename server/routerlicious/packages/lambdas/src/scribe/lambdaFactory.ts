@@ -22,6 +22,7 @@ import {
     ISequencedOperationMessage,
     IServiceConfiguration,
     ITenantManager,
+    LambdaName,
     MongoManager,
 } from "@fluidframework/server-services-core";
 import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
@@ -96,7 +97,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             opMessages = dbMessages.map((message) => message.operation);
         } catch (error) {
             context.log?.error(`Scribe lambda creation failed. Exception: ${inspect(error)}`);
-            await this.sendLambdaStartResult(tenantId, documentId, {success: false});
+            await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
             throw error;
         }
 
@@ -133,7 +134,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         let expectedSequenceNumber = lastCheckpoint.protocolState.sequenceNumber + 1;
         for (const message of opsSinceLastSummary) {
             if (message.sequenceNumber !== expectedSequenceNumber) {
-                await this.sendLambdaStartResult(tenantId, documentId, {success: false});
+                await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
                 throw new Error(`Invalid message sequence from checkpoint/summary.`
                     + `Current message @${message.sequenceNumber}.`
                     + `Expected message @${expectedSequenceNumber}`);
@@ -166,7 +167,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             latestSummary.protocolHead,
             opMessages);
 
-        await this.sendLambdaStartResult(tenantId, documentId, {success: true});
+        await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});
         return scribeLambda;
     }
 
