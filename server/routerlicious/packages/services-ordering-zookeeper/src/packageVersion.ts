@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-services-ordering-zookeeper";
-export const pkgVersion = "0.1028.1";
+export const pkgVersion = "0.1028.2";
