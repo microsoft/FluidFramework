@@ -93,7 +93,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -1449,9 +1448,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
-                debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`codeProposal ${JSON.stringify(value)}`);
                     if (!isFluidCodeDetails(value)) {
                         this.logger.sendErrorEvent({
                                 eventName: "CodeProposalNotIFluidCodeDetails",

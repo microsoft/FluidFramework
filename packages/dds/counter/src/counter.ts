@@ -19,7 +19,6 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
-import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
 /**
@@ -171,9 +170,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() {
-        debug(`SharedCounter ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * Process a counter operation

@@ -67,7 +67,6 @@
     "@fluidframework/runtime-utils": "^0.46.0",
     "@fluidframework/shared-object-base": "^0.46.0",
     "@fluidframework/telemetry-utils": "^0.46.0",
-    "debug": "^4.1.1",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -79,7 +78,6 @@
     "@fluidframework/server-services-client": "^0.1028.1",
     "@fluidframework/test-runtime-utils": "^0.46.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/debug": "^4.1.5",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
