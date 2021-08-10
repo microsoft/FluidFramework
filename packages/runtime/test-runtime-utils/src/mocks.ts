@@ -312,6 +312,7 @@ export class MockQuorum implements IQuorum, EventEmitter {
 
             case "addMember":
             case "removeMember":
+            case "addProposal":
             case "approveProposal":
             case "commitProposal":
                 this.eventEmitter.on(event, listener);

@@ -19,8 +19,6 @@ The `SyncedDataObject` essentially acts as the data store for the React app that
 
 - A `syncedStateConfig` where users can define the different types of values that they would like to see prepared for their view to consume. Values defined here are guaranteed to be initialized and available prior to `render` being called. Here, users can assign the DDSes that their React views will need by using the pre-built helper functions available to them from the `syncedObjects` folder, i.e. `setSyncedStringConfig`, `setSyncedArrayConfig`, etc. or they can manually define their own unique configuration with `this.setConfig`. Each value set on the config will have its own `syncedStateId` which we will use to refer to the prepared value from the view.
 
-- An implementation of `IFluidHTMLView` where users fill in the `render` function and the `IFluidHTMLView` interface is already fulfilled without any further code. The React view used in the `render` function should pass in the synced data object for the view to use.
-
 - A `fluidObjectMap` that guarantees that all Fluid DDSes/objects used by this `SyncedDataObject` will be automatically created and loaded without the need for component lifecycle methods such as `initializeStateFirstTime` and `initializeStateFromExisting`
 
 #### SyncedDataObject Example
@@ -45,19 +43,6 @@ export class LikesAndComments extends SyncedDataObject {
             "imgUrl",
             defaultImgUrl,
         );
-    }
-
-    // Renders the React view
-    public render(div: HTMLElement) {
-        ReactDOM.render(
-            <div>
-                <LikesAndCommentsView
-                    syncedDataObject={this}
-                />
-            </div>,
-            div,
-        );
-        return div;
     }
 }
 ```

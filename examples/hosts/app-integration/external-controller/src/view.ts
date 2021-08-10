@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFrsAudience } from "@fluid-experimental/frs-client";
+import { FrsMember, IFrsAudience } from "@fluid-experimental/frs-client";
+import { ICustomUserDetails } from "./app";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -56,15 +57,23 @@ export function renderAudience(audience: IFrsAudience, div: HTMLDivElement) {
     const onAudienceChanged = () => {
         const members = audience.getMembers();
         const self = audience.getMyself();
-        const memberNames: string[] = [];
-        members.forEach((member) => {
+        const memberStrings: string[] = [];
+        const useFrs = process.env.FLUID_CLIENT === "frs";
+
+        members.forEach((member: FrsMember<ICustomUserDetails>) => {
             if (member.userId !== self?.userId) {
-                memberNames.push(member.userName);
+                if (useFrs) {
+                    const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},
+                        Email: ${member.additionalDetails?.email}}`;
+                    memberStrings.push(memberString);
+                } else {
+                    memberStrings.push(member.userName);
+                }
             }
         });
         audienceDiv.innerHTML = `
             Current User: ${self?.userName} <br />
-            Other Users: ${memberNames.join(", ")}
+            Other Users: ${memberStrings.join(", ")}
         `;
     };
 

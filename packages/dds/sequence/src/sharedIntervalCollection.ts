@@ -18,7 +18,6 @@ import {
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import {
     Interval,
     IntervalCollection,
@@ -168,9 +167,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}

@@ -133,9 +133,7 @@
       "server": "server/routerlicious",
       "client": {
         "directory": "",
-        "ignoredDirs": [
-          "examples/apps/cra-demo"
-        ]
+        "ignoredDirs": []
       },
       "tools": [
         "tools/benchmark",
