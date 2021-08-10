@@ -1165,8 +1165,8 @@ export class DeltaManager
                     this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
                 }
             // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
-            } else if (connection.mode !== "write") {
-                this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
+            } else if (connection.mode === "read") {
+                this.fetchMissingDeltas("AfterConnectionRead", this.lastQueuedSequenceNumber);
             }
         } else {
             this.connectionStateProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;

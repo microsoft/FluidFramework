@@ -135,7 +135,7 @@ class SocketReference {
         this._socket = undefined;
 
         // Delay closing socket, to make sure all users of socket observe the same event that causes
-        // this instance to close, and thus properly record reason for clusure.
+        // this instance to close, and thus properly record reason for closure.
         // All event raising is synchronous, so clients will have a chance to react before socket is
         // closed without any extra data on why it was closed.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
