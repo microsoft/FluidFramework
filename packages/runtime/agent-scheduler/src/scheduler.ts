@@ -19,7 +19,6 @@ import {
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { isContextExisting } from "@fluidframework/runtime-utils";
-import debug from "debug";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
