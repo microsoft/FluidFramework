@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/platform-dependent",
-  "version": "0.45.1",
+  "version": "0.45.2",
   "private": true,
   "description": "Helper package that separates code for browser and server.",
   "homepage": "https://fluidframework.com",
