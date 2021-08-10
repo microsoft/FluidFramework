@@ -114,6 +114,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message1: "message1",
                 message2: "message2",
                 exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
+                dataProcessingError: 1,
             }]));
         });
     });
@@ -154,6 +155,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 error: "dataCorruptionErrorTest",
                 exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
                 sequenceNumber: 0,
+                dataProcessingError: 1,
             }]));
         });
     });
