@@ -96,7 +96,7 @@ describe("ClientTest", () => {
         documentId = uuid();
     });
 
-    it("can create FRS container successfully", async () => {
+    it("can create Azure container successfully", async () => {
         const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
