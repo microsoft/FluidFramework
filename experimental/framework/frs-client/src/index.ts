@@ -8,6 +8,6 @@ export { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 export * from "./interfaces";
 export * from "./FrsAudience";
-export * from "./FrsUrlResolver";
+export * from "./AzureUrlResolver";
 export * from "./AzureClient";
 export * from "./FrsAzFunctionTokenProvider";

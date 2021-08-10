@@ -23,11 +23,11 @@ import {
     FrsResources,
 } from "./interfaces";
 import { FrsAudience } from "./FrsAudience";
-import { FrsUrlResolver } from "./FrsUrlResolver";
+import { AzureUrlResolver } from "./AzureUrlResolver";
 
 /**
- * AzureClient provides the ability to have a Fluid object backed by the FRS service or, when running with
- * local tenantId, have it be backed by a Tinylicious local service instance
+ * AzureClient provides the ability to have a Fluid object backed by the Azure Relay Service or,
+ * when running with local tenantId, have it be backed by a Tinylicious local service instance
  */
 export class AzureClient {
     public readonly documentServiceFactory: IDocumentServiceFactory;
@@ -87,7 +87,7 @@ export class AzureClient {
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
-        const urlResolver = new FrsUrlResolver(
+        const urlResolver = new AzureUrlResolver(
             this.connectionConfig.tenantId,
             this.connectionConfig.orderer,
             this.connectionConfig.storage,

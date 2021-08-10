@@ -88,7 +88,7 @@ export interface FrsResources {
 }
 
 // @public (undocumented)
-export class FrsUrlResolver implements IUrlResolver {
+export class AzureUrlResolver implements IUrlResolver {
     constructor(tenantId: string, orderer: string, storage: string, documentId: string, tokenProvider: ITokenProvider);
     // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
