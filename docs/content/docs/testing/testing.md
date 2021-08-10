@@ -50,9 +50,9 @@ const config = {
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
-// This FrsClient instance connects to a local Tinylicious
+// This AzureClient instance connects to a local Tinylicious
 // instance rather than a live Azure Fluid Relay service
-const client = new FrsClient(config);
+const client = new AzureClient(config);
 ```
 
 These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
@@ -63,7 +63,7 @@ This example combines the concepts from this document to show how you can write 
 
 First you need to create a client that can adapt to the test scenario.  This example uses an environment variable to determine which service to target and for the tenant key.  The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
 ```typescript
-function createFrsClient(): FrsClient {
+function createAzureClient(): AzureClient {
     const useFrs = process.env.FLUID_CLIENT === "frs";
     const tenantKey = useFrs ? process.env.FLUID_TENANTKEY as string : "";
     const user = { id: "userId", name: "Test User" };
@@ -79,7 +79,7 @@ function createFrsClient(): FrsClient {
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new FrsClient(connectionConfig);
+    return new AzureClient(connectionConfig);
 }
 ```
 
@@ -90,7 +90,7 @@ import { v4 as uuid } from "uuid";
 ...
 
 describe("ClientTest", () => {
-    const client = createFrsClient();
+    const client = createAzureClient();
     let documentId: string;
     beforeEach(() => {
         documentId = uuid();

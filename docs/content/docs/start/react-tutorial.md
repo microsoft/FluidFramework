@@ -93,7 +93,7 @@ service to protect access to the Azure Fluid Relay service (see [Authentication 
 `InsecureTokenProvider`.
 
 ```js
-const frsClientConfig = {
+const azureClientConfig = {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("anyValue", { id: "userId" }),
     orderer: "http://localhost:7070",
@@ -118,7 +118,7 @@ const frsClientConfig = {
 
     ```js
     const { containerId, isNew } = getContainerId();
-    const frsClient = new AzureClient(frsClientConfig);
+    const azureClient = new AzureClient(azureClientConfig);
     const containerSchema = {
         name: 'fluid-react-tutorial-container',
         initialObjects: { sharedTimestamp: SharedMap }
@@ -129,8 +129,8 @@ const frsClientConfig = {
 
     ```js
     const { fluidContainer } = isNew
-        ? await frsClient.createContainer({id: containerId}, containerSchema)
-        : await frsClient.getContainer({id: containerId}, containerSchema);
+        ? await azureClient.createContainer({id: containerId}, containerSchema)
+        : await azureClient.getContainer({id: containerId}, containerSchema);
     ```
 
 1. Replace `TODO 3` with the following code.

@@ -50,9 +50,9 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const frsClient = new AzureClient(config);
-await frsClient.createContainer({ id: "_unique-id_" }, schema);
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const azureClient = new AzureClient(config);
+await azureClient.createContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session just needs to call `getContainer` with the same container `id`.

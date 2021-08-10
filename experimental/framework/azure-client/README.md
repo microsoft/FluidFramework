@@ -38,7 +38,7 @@ const config: AzureConnectionConfig = {
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
-const frsClient = new AzureClient(config);
+const azureClient = new AzureClient(config);
 ```
 
 ### Backed by a Live FRS Instance
@@ -53,7 +53,7 @@ const config: AzureConnectionConfig = {
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 };
-const frsClient = new AzureClient(config);
+const azureClient = new AzureClient(config);
 ```
 
 ## Fluid Containers
@@ -69,9 +69,9 @@ Using the `AzureClient` object the developer can create and get Fluid containers
 ```typescript
 import { AzureClient } from "@fluid-experimental/azure-client";
 
-const frsClient = new AzureClient(config);
-await frsClient.createContainer( { id: "_unique-id_" }, /* schema */);
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, /* schema */);
+const azureClient = new AzureClient(config);
+await azureClient.createContainer( { id: "_unique-id_" }, /* schema */);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
 
 NOTE: When using the `AzureClient` with tenant ID as "local", all containers that have been created will be deleted when the instance of the Tinylicious service (not client) that was run from the terminal window is closed. However, any containers created when running against the FRS service itself will be persisted. Container IDs can NOT be reused between Tinylicious and FRS to fetch back the same container.
@@ -90,9 +90,9 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const frsClient = new AzureClient(config);
-await frsClient.createContainer({ id: "_unique-id_" }, schema);
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const azureClient = new AzureClient(config);
+await azureClient.createContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -112,7 +112,7 @@ const schema = {
 }
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = fluidContainer.initialObjects;
@@ -138,7 +138,7 @@ const schema = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);
