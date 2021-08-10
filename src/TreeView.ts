@@ -72,7 +72,7 @@ export enum Side {
 
 /**
  * Specifies the range of nodes from `start` to `end` within a trait within a particular `TreeView`.
- * Valid iff start and end are valid and are withing the same trait.
+ * Valid iff start and end are valid and are within the same trait.
  * @public
  */
 export interface TreeViewRange {
