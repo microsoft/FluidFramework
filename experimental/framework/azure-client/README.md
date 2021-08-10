@@ -1,6 +1,6 @@
 # @fluid-experimental/azure-client
 
-The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Frs service.
+The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service (FRS).
 
 This package is marked as experimental and currently under development. The API surface is currently under going drastic breaking changes with no guarantees on compatibility.
 

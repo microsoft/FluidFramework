@@ -22,7 +22,7 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server",
-    "start:frs": "webpack-dev-server --define process.env.FLUID_CLIENT='\"azure\"'",
+    "start:azure": "webpack-dev-server --define process.env.FLUID_CLIENT='\"azure\"'",
     "start:test": "webpack-dev-server --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
