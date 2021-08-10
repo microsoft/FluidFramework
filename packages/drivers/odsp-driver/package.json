@@ -68,7 +68,6 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/telemetry-utils": "^0.46.0",
     "abort-controller": "^3.0.0",
-    "debug": "^4.1.1",
     "node-fetch": "^2.6.1",
     "socket.io-client": "^2.1.1",
     "uuid": "^8.3.1"
@@ -78,7 +77,6 @@
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.46.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",
     "@types/node-fetch": "^2.5.10",
     "@types/sha.js": "^2.4.0",

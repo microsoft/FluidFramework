@@ -23,7 +23,6 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import { debug } from "./debug";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
 /**
@@ -265,9 +264,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() {
-        debug(`Cell ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * Process a cell operation
