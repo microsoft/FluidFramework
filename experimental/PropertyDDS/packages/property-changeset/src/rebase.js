@@ -3,26 +3,21 @@
  * Licensed under the MIT License.
  */
 
-const ChangeSet = require('./changeset');
-const _ = require('lodash');
+import _ from "lodash"
+import ChangeSet from "./changeset";
 
 function SyncPromise(x) {
     if (!(this instanceof SyncPromise)) { return new SyncPromise(x); }
-    if (x instanceof SyncPromise) { x = x.value };
+    if (x instanceof SyncPromise) { x = x.value; }
     this.value = x;
 }
 
 SyncPromise.prototype.then = function(fn) {
     this.value = SyncPromise(fn(this.value)).value;
     return this;
-}
+};
 
-
-function loop(promise, fn, makePromise) {
-    return promise.then(fn).then(function(result) {
-        return result === null ? result : loop(makePromise(result), fn, makePromise);
-    });
-}
+const loop = (promise, fn, makePromise) => promise.then(fn).then((result) => result === null ? result : loop(makePromise(result), fn, makePromise));
 
 function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, isAsync = false) {
     const makePromise = isAsync ? Promise.resolve.bind(Promise) : SyncPromise;
@@ -48,11 +43,11 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                 currentGuid = currentChange.referenceGuid;
                 return getUnrebasedChange(currentGuid);
             },
-            makePromise
+            makePromise,
         );
 
         // Now we extract all changes until we arrive at a change that is relative to a remote change
-        let alreadyRebasedChanges = [];
+        const alreadyRebasedChanges = [];
 
         mainPromise = mainPromise.then(() =>
             loop(makePromise(getUnrebasedChange(change.localBranchStart)),
@@ -61,7 +56,7 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                         return null;
                     }
                     return makePromise(getUnrebasedChange(currentRebasedChange.referenceGuid))
-                        .then(rebaseChange => {
+                        .then((rebaseChange) => {
                             alreadyRebasedChanges.unshift(rebaseChange);
                             if (rebaseChange === undefined) {
                                 throw new Error("Received change that references a non-existing parent change");
@@ -69,9 +64,9 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                             return rebaseChange;
                         });
                 },
-                makePromise
-            )
-        )
+                makePromise,
+            ),
+        );
 
         // Compute the base Changeset to rebase the changes on the branch that was still the local branch
         // when the incoming change was created
@@ -85,7 +80,7 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
 
                 // Then apply all changes on the local remote branch
                 const endGuid = change.remoteHeadGuid;
-                return getRebasedChanges(startGuid, endGuid)
+                return getRebasedChanges(startGuid, endGuid);
             })
             .then((relevantRemoteChanges) => {
                 let rebaseBaseChangeSetForAlreadyRebasedChanges = new ChangeSet({});
@@ -122,7 +117,7 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
                     changesOnOtherLocalBranch[0].remoteHeadGuid = change.remoteHeadGuid;
                     changesOnOtherLocalBranch[0].referenceGuid = change.remoteHeadGuid;
                 }
-            })
+            });
     }
 
     return mainPromise
@@ -164,7 +159,7 @@ function rebaseToRemoteChanges(change, getUnrebasedChange, getRebasedChanges, is
             rebaseBaseChangeSet._rebaseChangeSet(change.changeSet, conflicts, {
                 applyAfterMetaInformation: change.rebaseMetaInformation,
             });
-        })
+        });
 }
 
 function rebaseChangeArrays(baseChangeSet, changesToRebase) {
@@ -187,6 +182,4 @@ function rebaseChangeArrays(baseChangeSet, changesToRebase) {
     }
 }
 
-module.exports = {
-    rebaseToRemoteChanges
-};
+module.exports = rebaseToRemoteChanges;
