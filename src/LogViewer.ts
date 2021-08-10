@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import Denque from 'denque';
 import { assert, fail, noop } from './Common';
 import { EditLog, SequencedOrderedEditId } from './EditLog';
@@ -34,6 +33,38 @@ import { ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
  * To use this call back to track when the actual computational work of applying edits is done, only count cases when `wasCached` is false.
  */
 export type EditStatusCallback = (editResult: EditStatus, editId: EditId, wasCached: boolean) => void;
+
+/**
+ * Callback for when a sequenced edit is applied.
+ * This includes local edits though the callback is only invoked once the sequenced version is received.
+ *
+ * For edits that were local (see {@link SequencedEditResult.wasLocal}, this callback will only be called once.
+ * For non-local edits, it may be called multiple times: the number of calls and when they occur depends on caching and is an implementation
+ * detail.
+ */
+export type SequencedEditResultCallback<TChange> = (args: SequencedEditResult<TChange>) => void;
+
+/**
+ * The relevant information pertaining to the application of a sequenced edit.
+ */
+export interface SequencedEditResult<TChange> {
+	/**
+	 * The edit that was applied.
+	 */
+	edit: Edit<TChange>;
+	/**
+	 * true iff the edit was local.
+	 */
+	wasLocal: boolean;
+	/**
+	 * The result of applying the edit.
+	 */
+	result: AttemptedEditResultCacheEntry<TChange>;
+	/**
+	 * The reconciliation path for the edit.
+	 */
+	reconciliationPath: ReconciliationPath<TChange>;
+}
 
 /**
  * Result of applying an identified transaction.
@@ -165,6 +196,13 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	private readonly sequencedRevisionCache: RevisionValueCache<EditCacheEntry<TChange>>;
 
 	/**
+	 * Called whenever a sequenced edit is applied.
+	 * This will have been called at least once for any edit if a revision after than edit has been requested.
+	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
+	 */
+	private readonly processSequencedEditResult: SequencedEditResultCallback<TChange>;
+
+	/**
 	 * Called whenever an edit is processed.
 	 * This will have been called at least once for any edit if a revision after than edit has been requested.
 	 * It may be called multiple times: the number of calls and when they occur depends on caching and is an implementation detail.
@@ -175,11 +213,6 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * Iff true, additional correctness assertions will be run during LogViewer operations.
 	 */
 	private readonly expensiveValidation: boolean;
-
-	/**
-	 * Telemetry logger, used to log events such as edit application rejection.
-	 */
-	private readonly logger: ITelemetryBaseLogger;
 
 	/**
 	 * The ordered queue of edits that originated from this client that have never been applied (by this log viewer) in a sequenced state.
@@ -219,7 +252,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * These revisions are guaranteed to never be evicted from the cache.
 	 * @param expensiveValidation - Iff true, additional correctness assertions will be run during LogViewer operations.
 	 * @param processEditStatus - called after applying an edit.
-	 * @param logger - used to log telemetry
+	 * @param processSequencedEditResult - called after applying a sequenced edit.
 	 */
 	public constructor(
 		log: EditLog<TChange>,
@@ -227,7 +260,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 		knownRevisions: [Revision, EditCacheEntry<TChange>][] = [],
 		expensiveValidation = false,
 		processEditStatus: EditStatusCallback = noop,
-		logger: ITelemetryBaseLogger,
+		processSequencedEditResult: SequencedEditResultCallback<TChange> = noop,
 		transactionFactory: (view: RevisionView) => GenericTransaction<TChange>,
 		minimumSequenceNumber = 0
 	) {
@@ -248,8 +281,8 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			[...knownRevisions, [0, { view: baseView }]]
 		);
 		this.processEditStatus = processEditStatus ?? noop;
+		this.processSequencedEditResult = processSequencedEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;
-		this.logger = logger;
 		this.transactionFactory = transactionFactory;
 		this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
 	}
@@ -287,7 +320,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 								status: entry.status,
 						  }
 				);
-				this.handleSequencedEditResult(edit, entry);
+				this.handleSequencedEditResult(edit, entry, []);
 			}
 		} else {
 			// Invalidate any cached results of applying edits which are ordered after `edit` (which are all remaining local edits)
@@ -403,6 +436,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	): AttemptedEditResultCacheEntry<TChange> {
 		let editingResult: EditingResult<TChange>;
 		let cached;
+		let reconciliationPath: ReconciliationPath<TChange> = [];
 		if (
 			this.cachedEditResult !== undefined &&
 			this.cachedEditResult.editId === edit.id &&
@@ -411,9 +445,8 @@ export class CachingLogViewer<TChange> implements LogViewer {
 			editingResult = this.cachedEditResult.result;
 			cached = true;
 		} else {
-			editingResult = this.transactionFactory(prevView)
-				.applyChanges(edit.changes, this.reconciliationPathFromEdit(edit.id))
-				.close();
+			reconciliationPath = this.reconciliationPathFromEdit(edit.id);
+			editingResult = this.transactionFactory(prevView).applyChanges(edit.changes, reconciliationPath).close();
 			cached = false;
 		}
 
@@ -432,7 +465,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 
 		if (this.log.isSequencedRevision(revision)) {
 			this.sequencedRevisionCache.cacheValue(revision, computedCacheEntry);
-			this.handleSequencedEditResult(edit, computedCacheEntry);
+			this.handleSequencedEditResult(edit, computedCacheEntry, reconciliationPath);
 		} else {
 			// This relies on local edits being append only, and that generating the view for a local revision requires generating
 			// the views for all local revisions before it in the log. Thus, generating such a view will necessarily require
@@ -454,23 +487,21 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	}
 
 	/**
-	 * Helper for performing caching and telemetry logging when a sequenced local edit is first applied.
+	 * Helper for performing caching when a sequenced local edit is first applied.
+	 * Invokes the `processSequencedEditResult` handler that was passed to the constructor (if any).
 	 * Must only be called for non-cached sequenced edits.
 	 */
-	private handleSequencedEditResult(edit: Edit<TChange>, result: AttemptedEditResultCacheEntry<TChange>): void {
+	private handleSequencedEditResult(
+		edit: Edit<TChange>,
+		result: AttemptedEditResultCacheEntry<TChange>,
+		reconciliationPath: ReconciliationPath<TChange>
+	): void {
+		let wasLocal = false;
 		// This is the first time this sequenced edit has been processed by this LogViewer. If it was a local edit, log telemetry
 		// in the event that it was invalid or malformed.
 		if (this.unappliedSelfEdits.length > 0) {
 			if (edit.id === this.unappliedSelfEdits.peekFront()) {
-				if (result.status !== EditStatus.Applied) {
-					this.logger.send({
-						category: 'generic',
-						eventName:
-							result.status === EditStatus.Malformed
-								? 'MalformedSharedTreeEdit'
-								: 'InvalidSharedTreeEdit',
-					});
-				}
+				wasLocal = true;
 				this.unappliedSelfEdits.shift();
 			} else if (this.expensiveValidation) {
 				for (let i = 0; i < this.unappliedSelfEdits.length; i++) {
@@ -478,6 +509,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 				}
 			}
 		}
+		this.processSequencedEditResult({ edit, wasLocal, result, reconciliationPath });
 	}
 
 	/**

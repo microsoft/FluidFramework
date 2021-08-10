@@ -944,6 +944,57 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					expect(isSharedTreeEvent(event)).is.true;
 				});
 			});
+
+			it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
+				const events: ITelemetryBaseEvent[] = [];
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+					initialTree: simpleTestTree,
+					logger: { send: (event) => events.push(event) },
+					allowInvalid: true,
+				});
+				// Invalid edit
+				tree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
+				expect(events.length).equals(0);
+				containerRuntimeFactory.processAllMessages();
+				// Force demand, which will cause a telemetry event for the invalid edit to be emitted
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				expect(events.length).equals(1);
+				expect(events[0].category).equals('generic');
+				expect(events[0].eventName).equals('SharedTree:InvalidSharedTreeEdit');
+			});
+
+			it('is not logged for valid edits', async () => {
+				const events: ITelemetryBaseEvent[] = [];
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+					initialTree: simpleTestTree,
+					logger: { send: (event) => events.push(event) },
+				});
+
+				tree.editor.insert(makeEmptyNode(), StablePlace.after(left));
+				containerRuntimeFactory.processAllMessages();
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				expect(events.length).equals(0);
+			});
+
+			it('is not logged for remote edits', async () => {
+				const events: ITelemetryBaseEvent[] = [];
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+					initialTree: simpleTestTree,
+					logger: { send: (event) => events.push(event) },
+					allowInvalid: true,
+					localMode: false,
+				});
+				const { tree: secondTree } = setUpTestSharedTree({
+					containerRuntimeFactory,
+					id: 'secondTestSharedTree',
+					localMode: false,
+				});
+
+				secondTree.editor.insert(makeEmptyNode(), StablePlace.after(makeEmptyNode()));
+				containerRuntimeFactory.processAllMessages();
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				expect(events.length).equals(0);
+			});
 		});
 	});
 }

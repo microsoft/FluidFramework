@@ -4,14 +4,19 @@
  */
 
 import { expect } from 'chai';
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { v4 as uuidv4 } from 'uuid';
 import { EditLog } from '../EditLog';
 import { Change, ConstraintEffect, Insert, StablePlace, StableRange, Transaction } from '../default-edits';
-import { CachingLogViewer, EditStatusCallback, LogViewer } from '../LogViewer';
+import {
+	CachingLogViewer,
+	EditStatusCallback,
+	LogViewer,
+	SequencedEditResult,
+	SequencedEditResultCallback,
+} from '../LogViewer';
 import { RevisionView } from '../TreeView';
 import { EditId } from '../Identifiers';
-import { assert, noop } from '../Common';
+import { assert } from '../Common';
 import { newEdit, Edit, EditStatus } from '../generic';
 import {
 	initialRevisionView,
@@ -162,15 +167,11 @@ function runLogViewerCorrectnessTests(
 }
 
 describe('CachingLogViewer', () => {
-	function getMockLogger(callback?: (event: ITelemetryBaseEvent) => void): ITelemetryBaseLogger {
-		return { send: callback ?? noop };
-	}
-
 	function getCachingLogViewerAssumeAppliedEdits(
 		log: EditLog<Change>,
 		baseView?: RevisionView,
-		editCallback?: EditStatusCallback,
-		logger?: ITelemetryBaseLogger,
+		editStatusCallback?: EditStatusCallback,
+		sequencedEditResultCallback?: SequencedEditResultCallback<Change>,
 		knownRevisions?: [number, RevisionView][]
 	): CachingLogViewer<Change> {
 		return new CachingLogViewer(
@@ -178,8 +179,8 @@ describe('CachingLogViewer', () => {
 			baseView,
 			knownRevisions?.map((pair) => [pair[0], { view: pair[1], result: EditStatus.Applied }]),
 			/* expensiveValidation */ true,
-			editCallback,
-			logger ?? getMockLogger(),
+			editStatusCallback,
+			sequencedEditResultCallback,
 			Transaction.factory,
 			log.numberOfSequencedEdits
 		);
@@ -482,21 +483,21 @@ describe('CachingLogViewer', () => {
 		expect(editsProcessed).deep.equal([false, true, false]);
 	});
 
-	describe('Telemetry', () => {
+	describe('Callbacks', () => {
 		function getViewer(): {
 			log: EditLog<Change>;
 			viewer: CachingLogViewer<Change>;
-			events: ITelemetryBaseEvent[];
+			events: SequencedEditResult<Change>[];
 		} {
 			const log = getSimpleLog();
-			const events: ITelemetryBaseEvent[] = [];
+			const events: SequencedEditResult<Change>[] = [];
 			const viewer = new CachingLogViewer(
 				log,
 				simpleRevisionViewNoTraits,
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				getMockLogger((event) => events.push(event)),
+				(args: SequencedEditResult<Change>) => events.push(args),
 				Transaction.factory
 			);
 			return { log, viewer, events };
@@ -517,31 +518,41 @@ describe('CachingLogViewer', () => {
 			return edit;
 		}
 
-		it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
+		it('processSequencedEditResult is called when a sequenced edit is applied', async () => {
 			const { log, events, viewer } = getViewer();
-			const edit = addInvalidEdit(log);
 			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
-			expect(events.length).equals(0, 'Invalid local edit should not log telemetry');
-			log.addSequencedEdit(edit, { sequenceNumber: 3, referenceSequenceNumber: 2 });
-			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
-			expect(events.length).equals(1);
-		});
+			events.splice(0);
 
-		it('is only logged once upon first application for invalid locally generated edits', async () => {
-			const { log, events, viewer } = getViewer();
-			const numEdits = 10;
-			const localEdits = [...Array(numEdits).keys()].map(() => addInvalidEdit(log));
+			// Non-sequenced edit should not trigger a call
+			const invalidEdit = addInvalidEdit(log);
 			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
 			expect(events.length).equals(0);
-			for (let i = 0; i < numEdits; i++) {
-				const localEdit = localEdits[i];
-				log.addSequencedEdit(localEdit, { sequenceNumber: i + 1, referenceSequenceNumber: 1 });
-				await viewer.getRevisionView(Number.POSITIVE_INFINITY);
-				expect(events.length).equals(i + 1);
-				const currentEvent = events[i];
-				expect(currentEvent.category).equals('generic');
-				expect(currentEvent.eventName).equals('InvalidSharedTreeEdit');
-			}
+
+			log.addSequencedEdit(invalidEdit, { sequenceNumber: 3, referenceSequenceNumber: 2 });
+			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			expect(events.length).equals(1);
+			expect(events[0].edit.id).equals(invalidEdit.id);
+			expect(events[0].wasLocal).equals(true);
+			expect(events[0].result.status).equals(EditStatus.Invalid);
+			expect(events[0].reconciliationPath.length).equals(0);
+
+			const validEdit1 = newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation)));
+			log.addSequencedEdit(validEdit1, { sequenceNumber: 3, referenceSequenceNumber: 2 });
+			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			expect(events.length).equals(2);
+			expect(events[1].edit.id).equals(validEdit1.id);
+			expect(events[1].wasLocal).equals(false);
+			expect(events[1].result.status).equals(EditStatus.Applied);
+			expect(events[1].reconciliationPath.length).equals(0);
+
+			const validEdit2 = newEdit(Insert.create([makeEmptyNode()], StablePlace.atStartOf(leftTraitLocation)));
+			log.addSequencedEdit(validEdit2, { sequenceNumber: 4, referenceSequenceNumber: 2 });
+			await viewer.getRevisionView(Number.POSITIVE_INFINITY);
+			expect(events.length).equals(3);
+			expect(events[2].edit.id).equals(validEdit2.id);
+			expect(events[2].wasLocal).equals(false);
+			expect(events[2].result.status).equals(EditStatus.Applied);
+			expect(events[2].reconciliationPath.length).equals(1);
 		});
 	});
 
@@ -568,7 +579,7 @@ describe('CachingLogViewer', () => {
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				getMockLogger(),
+				undefined,
 				MockTransaction.factory
 			);
 		}

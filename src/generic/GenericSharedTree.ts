@@ -20,7 +20,14 @@ import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import { initialTree } from '../InitialTree';
-import { CachingLogViewer, EditCacheEntry, EditStatusCallback, LogViewer } from '../LogViewer';
+import {
+	CachingLogViewer,
+	EditCacheEntry,
+	EditStatusCallback,
+	LogViewer,
+	SequencedEditResult,
+	SequencedEditResultCallback,
+} from '../LogViewer';
 import {
 	convertSummaryToReadFormat,
 	deserialize,
@@ -210,6 +217,15 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		this.emit(GenericSharedTree.eventFromEditResult(editResult), editId);
 	};
 
+	private readonly processSequencedEditResult = ({ wasLocal, result }: SequencedEditResult<TChange>): void => {
+		if (wasLocal && result.status !== EditStatus.Applied) {
+			this.logger.send({
+				category: 'generic',
+				eventName: result.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
+			});
+		}
+	};
+
 	/**
 	 * Create a new SharedTreeFactory.
 	 * @param runtime - The runtime the SharedTree will be associated with
@@ -244,7 +260,11 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		runtime.on('disconnected', this.updateOldest);
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
-		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(initialSummary, this.processEditResult);
+		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
+			initialSummary,
+			this.processEditResult,
+			this.processSequencedEditResult
+		);
 
 		this.editLog = editLog;
 		this.cachingLogViewer = cachingLogViewer;
@@ -450,7 +470,11 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
-		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(summary, this.processEditResult);
+		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
+			summary,
+			this.processEditResult,
+			this.processSequencedEditResult
+		);
 		this.editLog = editLog;
 		this.cachingLogViewer = cachingLogViewer;
 
@@ -495,7 +519,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 	private createEditLogFromSummary(
 		summary: SharedTreeSummaryBase,
-		callback: EditStatusCallback
+		editStatusCallback: EditStatusCallback,
+		sequencedEditResultCallback: SequencedEditResultCallback<TChange>
 	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
 		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
 
@@ -527,8 +552,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			RevisionView.fromTree(initialTree),
 			knownRevisions,
 			this.expensiveValidation,
-			callback,
-			this.logger,
+			editStatusCallback,
+			sequencedEditResultCallback,
 			this.transactionFactory,
 			0
 		);
