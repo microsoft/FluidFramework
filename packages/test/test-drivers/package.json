@@ -60,7 +60,7 @@
     "@fluidframework/odsp-urlresolver": "^0.45.1",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/routerlicious-driver": "^0.45.1",
-    "@fluidframework/server-local-server": "^0.1028.0",
+    "@fluidframework/server-local-server": "^0.1028.1",
     "@fluidframework/test-driver-definitions": "^0.45.1",
     "@fluidframework/test-pairwise-generator": "^0.45.1",
     "@fluidframework/test-runtime-utils": "^0.45.1",
