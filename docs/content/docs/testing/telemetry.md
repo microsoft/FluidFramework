@@ -1,6 +1,6 @@
 ---
 title: Logging and telemetry
-menuPosition: 1
+menuPosition: 2
 aliases:
   - "/docs/start/telemetry"
 ---
