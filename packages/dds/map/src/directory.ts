@@ -21,7 +21,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import * as path from "path-browserify";
-import { debug } from "./debug";
 import {
     IDirectory,
     IDirectoryEvents,
@@ -583,9 +582,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
-    protected onDisconnect() {
-        debug(`Directory ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}

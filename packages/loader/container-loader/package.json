@@ -67,7 +67,6 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/telemetry-utils": "^0.46.0",
     "abort-controller": "^3.0.0",
-    "debug": "^4.1.1",
     "double-ended-queue": "^2.1.0-0",
     "lodash": "^4.17.21",
     "uuid": "^8.3.1"
@@ -78,7 +77,6 @@
     "@fluidframework/mocha-test-setup": "^0.46.0",
     "@fluidframework/test-loader-utils": "^0.46.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/debug": "^4.1.5",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",
     "@types/mocha": "^8.2.2",
