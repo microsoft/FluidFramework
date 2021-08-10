@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/frs-client";
+import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";
 import { SharedMap } from "@fluid-experimental/fluid-framework";
 
 const getContainerId = () => {

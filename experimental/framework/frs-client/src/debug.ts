@@ -6,5 +6,5 @@
 import registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion";
 
-export const debug = registerDebug("fluid:frs-client");
+export const debug = registerDebug("fluid:azure-client");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);

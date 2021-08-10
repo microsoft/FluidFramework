@@ -8,7 +8,7 @@ import {
     FrsClient,
     FrsConnectionConfig,
     InsecureTokenProvider,
-} from "@fluid-experimental/frs-client";
+} from "@fluid-experimental/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";

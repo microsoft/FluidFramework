@@ -152,7 +152,7 @@
             "HostUtils": {
                 "dev": true,
                 "packages": [
-                    "@fluid-experimental/frs-client",
+                    "@fluid-experimental/azure-client",
                     "@fluid-experimental/get-container",
                     "@fluid-experimental/tinylicious-client"                  
                 ],

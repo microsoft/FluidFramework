@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@fluid-experimental/fluid-framework": "^0.46.0",
-    "@fluid-experimental/frs-client": "^0.46.0",
+    "@fluid-experimental/azure-client": "^0.46.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/server-services-client": "^0.1028.0-0",

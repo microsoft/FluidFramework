@@ -38,7 +38,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     Run the following command to install the libraries.
 
     ```dotnetcli
-    npm install @fluid-experimental/frs-client @fluid-experimental/fluid-framework
+    npm install @fluid-experimental/azure-client @fluid-experimental/fluid-framework
     ```
 
 ## Code the project
@@ -61,7 +61,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import React from "react";
-    import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/frs-client";;
+    import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/azure-client";;
     import { SharedMap } from "@fluid-experimental/fluid-framework";
     ```
 

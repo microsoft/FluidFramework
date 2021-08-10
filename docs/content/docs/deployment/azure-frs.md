@@ -3,7 +3,7 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/azure-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `FrsClient` in your own application.
 
@@ -11,7 +11,7 @@ The sections below will explain how to use `FrsClient` in your own application.
 
 ## Connecting to the service
 
-To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `frs-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
+To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `azure-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
 
 {{< callout danger >}}
 The `InsecureTokenProvider` should only be used for development purposes because **using it exposes the tenant key secret in your client-side code bundle.** This must be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key.

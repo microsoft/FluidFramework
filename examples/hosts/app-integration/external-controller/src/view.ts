@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FrsMember, IFrsAudience } from "@fluid-experimental/frs-client";
+import { FrsMember, IFrsAudience } from "@fluid-experimental/azure-client";
 import { ICustomUserDetails } from "./app";
 import { IDiceRollerController } from "./controller";
 

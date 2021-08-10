@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@fluid-experimental/fluid-framework": "^0.46.0",
-    "@fluid-experimental/frs-client": "^0.46.0",
+    "@fluid-experimental/azure-client": "^0.46.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
