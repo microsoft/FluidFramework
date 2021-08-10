@@ -498,9 +498,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {

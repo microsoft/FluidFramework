@@ -265,9 +265,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() {
-        debug(`Cell ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * Process a cell operation

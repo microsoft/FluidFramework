@@ -44,7 +44,7 @@ export class SharedXTree extends SharedObject
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) { throw new Error("not implemented"); }
 
-    protected onDisconnect() { debug(`${this.id} is now disconnected`); }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}

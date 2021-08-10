@@ -40,7 +40,6 @@ export class OuterUrlResolver {
     }
 
     public async connected() {
-        debug("IFrame Connection Succeeded");
     }
 
     public async resolve(

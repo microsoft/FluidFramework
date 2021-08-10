@@ -168,9 +168,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}

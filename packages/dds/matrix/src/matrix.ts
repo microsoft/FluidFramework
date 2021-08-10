@@ -570,9 +570,7 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}

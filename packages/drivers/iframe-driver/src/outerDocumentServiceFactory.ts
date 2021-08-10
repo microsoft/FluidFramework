@@ -105,7 +105,6 @@ export class DocumentServiceFactoryProxy implements IDocumentServiceFactoryProxy
     }
 
     public async connected(): Promise<void> {
-        debug("IFrame Connection Succeeded");
         return;
     }
 

@@ -416,7 +416,6 @@ export class DocumentDeltaConnection
     }
 
     protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-        debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 

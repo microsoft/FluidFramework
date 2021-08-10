@@ -46,7 +46,6 @@
     "body-parser": "^1.18.3",
     "chalk": "2.4.1",
     "cls-hooked": "4.2.2",
-    "debug": "^4.1.1",
     "empty-dir": "0.2.1",
     "express": "^4.16.3",
     "express-http-proxy": "1.5.1",

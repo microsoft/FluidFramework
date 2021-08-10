@@ -318,8 +318,6 @@ export class Loader implements IHostLoader {
     public get IFluidRouter(): IFluidRouter { return this; }
 
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${performance.now()} `);
-
         const container = await Container.createDetached(
             this,
             codeDetails,
@@ -339,8 +337,6 @@ export class Loader implements IHostLoader {
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
-        debug(`Container creating in detached state: ${performance.now()} `);
-
         return Container.rehydrateDetachedFromSnapshot(this, snapshot);
     }
 
@@ -471,7 +467,6 @@ export class Loader implements IHostLoader {
         request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
         const canCache = this.canCacheForRequest(request.headers);
-        debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
 
         return {
             canCache,

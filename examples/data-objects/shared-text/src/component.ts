@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import { parse } from "querystring";
 import * as url from "url";
-import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
 import * as API from "@fluid-internal/client-api";
@@ -42,8 +41,6 @@ import {
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
 import { Document } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
-
-const debug = registerDebug("fluid:shared-text");
 
 export class SharedTextRunner
     extends EventEmitter

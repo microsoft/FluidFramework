@@ -227,9 +227,7 @@ export class ConsensusRegisterCollection<T>
 
     protected registerCore() { }
 
-    protected onDisconnect() {
-        debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {

@@ -1401,7 +1401,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // If switching to manual mode add a warning trace indicating the underlying loader does not support
         // this feature yet. Can remove in 0.9.
         if (!this.deltaSender && mode === FlushMode.Manual) {
-            debug("DeltaManager does not yet support flush modes");
             return;
         }
 
@@ -1420,7 +1419,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
 
         if (!this.deltaSender) {
-            debug("DeltaManager does not yet support flush modes");
             return;
         }
 

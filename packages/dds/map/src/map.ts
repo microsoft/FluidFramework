@@ -349,9 +349,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
-    protected onDisconnect() {
-        debug(`Map ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}

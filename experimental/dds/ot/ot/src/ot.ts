@@ -106,9 +106,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
     protected registerCore() {}
 
-    protected onDisconnect() {
-        debug(`OT ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         // Discard any sequenced ops that are now below the minimum sequence number.

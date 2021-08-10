@@ -130,7 +130,6 @@ export class ReplayControllerStatic extends ReplayController {
                 let nextInterval = ReplayControllerStatic.DelayInterval;
                 current += 1;
 
-                debug(`Replay next ${this.replayCurrent + current}`);
                 if (this.unitIsTime === true) {
                     const currentTimeStamp = currentOp.timestamp;
                     if (currentTimeStamp !== undefined) {
@@ -172,9 +171,7 @@ export class ReplayControllerStatic extends ReplayController {
             const scheduleNext = (nextInterval: number) => {
                 if (nextInterval >= 0 && current < fetchedOps.length) {
                     setTimeout(replayNextOps, nextInterval);
-                    debug(`Replay scheduled ${this.replayCurrent + current} ${nextInterval}`);
                 } else {
-                    debug(`Replay done ${this.replayCurrent + current}`);
                     this.replayCurrent += current;
                     resolve();
                 }
