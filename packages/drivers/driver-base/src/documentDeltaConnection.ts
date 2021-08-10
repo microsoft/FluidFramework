@@ -228,7 +228,7 @@ export class DocumentDeltaConnection
         return this.details.initialClients;
     }
 
-    private submitCore(type: string, messages: IDocumentMessage[]) {
+    protected submitCore(type: string, messages: IDocumentMessage[]) {
         this.checkNotClosed();
         this.socket.emit(type, this.clientId, messages);
     }

@@ -4,7 +4,6 @@
 
 ```ts
 
-import { BatchManager } from '@fluidframework/common-utils';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { DriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
@@ -66,7 +65,7 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected readonly socket: SocketIOClient.Socket;
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
-    protected readonly submitManager: BatchManager<IDocumentMessage[]>;
+    protected submitCore(type: string, messages: IDocumentMessage[]): void;
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }
