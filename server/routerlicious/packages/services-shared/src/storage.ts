@@ -5,10 +5,11 @@
 
 import { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
-    ITreeEntry,
+    IDocumentAttributes,
     ICommittedProposal,
     ISequencedDocumentMessage,
     ISummaryTree,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { IGitCache, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
 import {
@@ -22,11 +23,6 @@ import {
     SequencedOperationType,
     IDocument,
 } from "@fluidframework/server-services-core";
-import {
-    getQuorumTreeEntries,
-    IQuorumSnapshot,
-    mergeAppAndProtocolTree,
-} from "@fluidframework/protocol-base";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
 
@@ -34,6 +30,7 @@ export class DocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager,
+        // private readonly enableWholeSummaryUpload: boolean,
     ) { }
 
     /**
@@ -50,10 +47,48 @@ export class DocumentStorage implements IDocumentStorage {
         return getOrCreateP;
     }
 
+    private createInitialProtocolTree(
+        documentId: string,
+        sequenceNumber: number,
+        term: number,
+        values: [string, ICommittedProposal][],
+        ): ISummaryTree {
+        const documentAttributes: IDocumentAttributes = {
+            branch: documentId,
+            minimumSequenceNumber: sequenceNumber,
+            sequenceNumber,
+            term,
+        };
+
+        const summary: ISummaryTree = {
+            tree: {
+                attributes: {
+                    content: JSON.stringify(documentAttributes),
+                    type: SummaryType.Blob,
+                },
+                quorumMembers: {
+                    content: JSON.stringify([]),
+                    type: SummaryType.Blob,
+                },
+                quorumProposals: {
+                    content: JSON.stringify([]),
+                    type: SummaryType.Blob,
+                },
+                quorumValues: {
+                    content: JSON.stringify(values),
+                    type: SummaryType.Blob,
+                },
+            },
+            type: SummaryType.Tree,
+        };
+
+        return summary;
+    }
+
     public async createDocument(
         tenantId: string,
         documentId: string,
-        summary: ISummaryTree,
+        appTree: ISummaryTree,
         sequenceNumber: number,
         term: number,
         values: [string, ICommittedProposal][],
@@ -61,32 +96,24 @@ export class DocumentStorage implements IDocumentStorage {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
+        const messageMetaData = { documentId, tenantId };
+
+        const protocolTree = this.createInitialProtocolTree(documentId, sequenceNumber, term, values);
+        const fullTree: ISummaryTree = {
+            type: SummaryType.Tree,
+            tree: {
+                ".protocol": protocolTree,
+                // ".app": appTree,
+                ...appTree.tree,
+            },
+        };
+
         const blobsShaCache = new Map<string, string>();
         const summaryTreeUploadManager = new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
-        const handle = await summaryTreeUploadManager.writeSummaryTree(summary, "");
+        const handle = await summaryTreeUploadManager.writeSummaryTree(fullTree, "");
 
-        // At this point the summary op and its data are all valid and we can perform the write to history
-        const quorumSnapshot: IQuorumSnapshot = {
-            members: [],
-            proposals: [],
-            values,
-        };
-        const entries: ITreeEntry[] =
-            getQuorumTreeEntries(documentId, sequenceNumber, sequenceNumber, term, quorumSnapshot);
+        winston.info(`Tree sha: ${JSON.stringify(handle)}`, { messageMetaData });
 
-        const [protocolTree, appSummaryTree] = await Promise.all([
-            gitManager.createTree({ entries }),
-            gitManager.getTree(handle, false),
-        ]);
-
-        const messageMetaData = { documentId, tenantId };
-        winston.info(`protocolTree ${JSON.stringify(protocolTree)}`, { messageMetaData });
-        winston.info(`appSummaryTree ${JSON.stringify(appSummaryTree)}`, { messageMetaData });
-
-        // Combine the app summary with .protocol
-        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
-
-        const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
         const commitParams: ICreateCommitParams = {
             author: {
                 date: new Date().toISOString(),
@@ -95,13 +122,13 @@ export class DocumentStorage implements IDocumentStorage {
             },
             message: "New document",
             parents: [],
-            tree: gitTree.sha,
+            tree: handle,
         };
 
         const commit = await gitManager.createCommit(commitParams);
         await gitManager.createRef(documentId, commit.sha);
 
-        winston.info(`commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
+        winston.info(`Commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
 
         const deli: IDeliState = {
             clients: undefined,
