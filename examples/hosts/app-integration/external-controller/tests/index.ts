@@ -5,9 +5,9 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { SharedMap } from "@fluid-experimental/fluid-framework";
 import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
+import { SharedMap } from "fluid-framework";
 
 import { DiceRollerController } from "../src/controller";
 import { renderDiceRoller } from "../src/view";

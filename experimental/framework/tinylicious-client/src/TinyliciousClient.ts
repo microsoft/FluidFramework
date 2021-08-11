@@ -5,12 +5,6 @@
 
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
-    ContainerSchema,
-    DOProviderContainerRuntimeFactory,
-    FluidContainer,
-    RootDataObject,
-} from "@fluid-experimental/fluid-framework";
-import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
@@ -21,6 +15,12 @@ import {
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import {
+    ContainerSchema,
+    DOProviderContainerRuntimeFactory,
+    FluidContainer,
+    RootDataObject,
+} from "fluid-framework";
 import {
     TinyliciousConnectionConfig,
     TinyliciousContainerConfig,

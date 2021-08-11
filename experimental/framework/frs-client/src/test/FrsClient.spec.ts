@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { SharedMap, ContainerSchema } from "@fluid-experimental/fluid-framework";
+import { SharedMap, ContainerSchema } from "fluid-framework";
 import {
     FrsContainerConfig,
 } from "..";
