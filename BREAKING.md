@@ -1,5 +1,5 @@
 ## 0.46 Breaking changes
-- [@fluid-experimental/tinylicious-client package name changed](#@fluid-experimental/tinylicious-client-package-name-changed)
+- [@fluid-experimental/tinylicious-client package name changed](#fluid-experimental/tinylicious-client-package-name-changed)
 
 ### `@fluid-experimental/tinylicious-client` package name changed
 The `@fluid-experimental/tinylicious-client` package has been renamed to now be `@fluidframework/tinylicious-client`.
