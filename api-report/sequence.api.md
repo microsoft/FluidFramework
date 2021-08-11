@@ -7,11 +7,11 @@
 import { BaseSegment } from '@fluidframework/merge-tree';
 import { Client } from '@fluidframework/merge-tree';
 import { Deferred } from '@fluidframework/common-utils';
-import { EventEmitter } from 'events';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IEvent } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -36,6 +36,7 @@ import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { PropertySet } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: MergeTree.PropertySet) => void;
@@ -58,7 +59,7 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
 export class Interval implements ISerializableInterval {
     constructor(start: number, end: number, props?: MergeTree.PropertySet);
     // (undocumented)
-    addProperties(newProps: MergeTree.PropertySet, collaborating?: boolean, seq?: number, op?: MergeTree.ICombiningOp): void;
+    addProperties(newProps: MergeTree.PropertySet, collaborating?: boolean, seq?: number, op?: MergeTree.ICombiningOp): MergeTree.PropertySet | undefined;
     // (undocumented)
     addPropertySet(props: MergeTree.PropertySet): void;
     // (undocumented)
@@ -95,8 +96,10 @@ export class Interval implements ISerializableInterval {
     union(b: Interval): Interval;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IIntervalCollectionEvent" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export class IntervalCollection<TInterval extends ISerializableInterval> extends EventEmitter {
+export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
@@ -143,8 +146,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     nextInterval(pos: number): TInterval;
     // (undocumented)
-    on(event: "addInterval" | "deleteInterval", listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this;
-    // (undocumented)
     previousInterval(pos: number): TInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
@@ -177,7 +178,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 // @public (undocumented)
 export interface ISerializableInterval extends MergeTree.IInterval {
     // (undocumented)
-    addProperties(props: MergeTree.PropertySet, collaborating?: boolean, seq?: number): any;
+    addProperties(props: MergeTree.PropertySet, collaborating?: boolean, seq?: number): MergeTree.PropertySet | undefined;
     // (undocumented)
     getIntervalId(): string | undefined;
     // (undocumented)
@@ -348,7 +349,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(start: MergeTree.LocalReference, end: MergeTree.LocalReference, intervalType: MergeTree.IntervalType, props?: MergeTree.PropertySet);
     // (undocumented)
-    addProperties(newProps: MergeTree.PropertySet, collab?: boolean, seq?: number, op?: MergeTree.ICombiningOp): void;
+    addProperties(newProps: MergeTree.PropertySet, collab?: boolean, seq?: number, op?: MergeTree.ICombiningOp): MergeTree.PropertySet | undefined;
     // (undocumented)
     clone(): SequenceInterval;
     // (undocumented)
