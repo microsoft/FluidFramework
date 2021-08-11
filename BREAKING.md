@@ -1,8 +1,8 @@
 ## 0.46 Breaking changes
-- [documentId removed from dataStoreRuntime and dataStoreContext interfaces](#documentId-removed-from-dataStoreRuntime-and-dataStoreContext-interfaces)
+- [documentId removed from FluidDataStoreRuntime and FluidDataStoreContext](#documentId-removed-from-FluidDataStoreRuntime-and-FluidDataStoreContext)
 
-### documentId removed from dataStoreRuntime and dataStoreContext interfaces
-- `documentId` property is removed from FluidDataStoreRuntime, FluidDataStoreContext, IFluidDataStoreRuntime, and IFluidDataStoreContext. It is a document level concept and is no longer exposed from data store level.
+### documentId removed from FluidDataStoreRuntime and FluidDataStoreContext
+- `documentId` property is removed from FluidDataStoreRuntime and FluidDataStoreContext. It is a document level concept and is no longer exposed from data store level.
 
 ## 0.45 Breaking changes
 
