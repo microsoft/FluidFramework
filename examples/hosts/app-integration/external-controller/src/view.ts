@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AzureMember, IAzureAudience } from "@fluid-experimental/azure-client";
+import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import { ICustomUserDetails } from "./app";
 import { IDiceRollerController } from "./controller";
 

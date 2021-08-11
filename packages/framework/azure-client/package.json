@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/azure-client",
+  "name": "@fluidframework/azure-client",
   "version": "0.46.0",
   "description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
   "homepage": "https://fluidframework.com",

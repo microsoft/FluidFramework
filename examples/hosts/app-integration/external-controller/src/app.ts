@@ -8,7 +8,7 @@ import {
     AzureClient,
     AzureConnectionConfig,
     InsecureTokenProvider,
-} from "@fluid-experimental/azure-client";
+} from "@fluidframework/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
