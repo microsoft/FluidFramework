@@ -22,7 +22,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -60,10 +60,10 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
-    CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
     wrapError,
+    GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
@@ -489,7 +489,7 @@ export class DeltaManager
             });
 
         this._outbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(normalizeError(error));
         });
 
         // Inbound signal queue
@@ -504,7 +504,7 @@ export class DeltaManager
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(normalizeError(error));
         });
 
         // Initially, all queues are created paused.
@@ -676,7 +676,7 @@ export class DeltaManager
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
-                        const error = CreateContainerError(origError);
+                        const error = normalizeError(origError);
                         this.close(error);
                         // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
@@ -768,7 +768,7 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = CreateContainerError("Op is sent in read-only document state", {
+            const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,
@@ -1547,7 +1547,7 @@ export class DeltaManager
                 cacheOnly);
         } catch (error) {
             this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
-            this.close(CreateContainerError(error));
+            this.close(normalizeError(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetchReason = undefined;
