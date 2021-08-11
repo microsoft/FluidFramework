@@ -21,10 +21,10 @@
 ## 0.39.0
 
 ### [BREAKING] 'FluidStatic' has been moved to have separate client packages unique to each service
-There is no longer a general `FluidStatic` class. It has instead been replaced by implementations that define a unique paradigm for each service that the client is trying to communicate with. For example, when using Tinylicious, please see the details on using the `TinyliciousClient` from the [documentation](../tinylicious-client/README.MD) `@fluid-experimental/tinylicious-client`. 
+There is no longer a general `FluidStatic` class. It has instead been replaced by implementations that define a unique paradigm for each service that the client is trying to communicate with. For example, when using Tinylicious, please see the details on using the `TinyliciousClient` from the [documentation](../tinylicious-client/README.MD) `@fluidframework/tinylicious-client`.
 
 ### [BREAKING] 'ContainerConfig' has been renamed to 'ContainerSchema'
-The interface for defining the container's initial object and supported dynamic object types has been renamed to `ContainerSchema` to differentiate it from the config interfaces that will be supplied for each service, i.e. `TinyliciousConnectionConfig` and `TinyliciousContainerConfig` from `@fluid-experimental/tinylicious-client`. 
+The interface for defining the container's initial object and supported dynamic object types has been renamed to `ContainerSchema` to differentiate it from the config interfaces that will be supplied for each service, i.e. `TinyliciousConnectionConfig` and `TinyliciousContainerConfig` from `@fluidframework/tinylicious-client`.
 
 `ContainerSchema` is used uniformly across all different services that are using the container supplied by the `FluidStatic` package, whereas the service configs are unique.
 
