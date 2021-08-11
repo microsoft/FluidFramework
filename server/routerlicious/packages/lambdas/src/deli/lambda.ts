@@ -340,7 +340,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.removeAllListeners();
 
-        this.logSessionEndMetrics(closeType);
+        if (this.serviceConfiguration.enableLumberMetrics) {
+            this.logSessionEndMetrics(closeType);
+        }
     }
 
     private logSessionStartMetrics(failMetric: boolean = false) {
@@ -365,7 +367,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.sessionStartMetric?.success("Session resumed successfully");
             }
         } else {
-            this.context.log?.info("All required lambdas have not started");
+            this.context.log?.info("Not all required lambdas started");
         }
     }
 
