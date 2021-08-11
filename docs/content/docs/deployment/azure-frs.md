@@ -33,7 +33,36 @@ Now that you have an instance of `FrsClient`, you can start using it to create o
 
 ### Token providers
 
-{{< placeholder >}}
+The [FrsAzFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/FrsAzFunctionTokenProvider.ts" >}}) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `FrsAzFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
+
+```javascript
+const config = {
+    tenantId: "myTenantId",
+    tokenProvider: new FrsAzFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    "UserId", userName: "Test User"}),
+    orderer: "https://myOrdererUrl",
+    storage: "https://myStorageUrl",
+};
+
+const client = new FrsClient(config);
+```
+The user object can also hold optional additional user details such as the gender, address, email, etc. For example:
+
+```javascript
+cont userDetails: ICustomUserDetails = {
+  email: "xyz@outlook.com",
+  address: "Redmond",
+};
+
+const config = {
+    tenantId: "myTenantId",
+    tokenProvider: new FrsAzFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    "UserId", userName: "Test User", additionalDetails: userDetails}),
+    orderer: "https://myOrdererUrl",
+    storage: "https://myStorageUrl",
+};
+```
+Your Azure Function will generate the FRS token for the given user that is signed using the tenant's secret key and returned to the client without exposing the secret itself.
 
 ## Managing containers
 
@@ -76,22 +105,30 @@ const { audience } = containerServices;
 const audienceDiv = document.createElement("div");
 
 const onAudienceChanged = () => {
-    const members = audience.getMembers();
-    const self = audience.getMyself();
-    const memberNames = [];
-    members.forEach((member) => {
-        if (member.userId !== self?.userId) {
-            memberNames.push(member.userName);
-        }
-    });
-    audienceDiv.innerHTML = `
-        Current User: ${self?.userName} <br />
-        Other Users: ${memberNames.join(", ")}
-    `;
-};
+        const members = audience.getMembers();
+        const self = audience.getMyself();
+        const memberStrings: string[] = [];
+        const useFrs = process.env.FLUID_CLIENT === "frs";
 
-onAudienceChanged();
-audience.on("membersChanged", onAudienceChanged);
+        members.forEach((member: FrsMember<ICustomUserDetails>) => {
+            if (member.userId !== self?.userId) {
+                if (useFrs) {
+                    const memberString = `${member.userName}: {Email: ${member.additionalDetails?.email},
+                        Address: ${member.additionalDetails?.address}}`;
+                    memberStrings.push(memberString);
+                } else {
+                    memberStrings.push(member.userName);
+                }
+            }
+        });
+        audienceDiv.innerHTML = `
+            Current User: ${self?.userName} <br />
+            Other Users: ${memberStrings.join(", ")}
+        `;
+    };
+
+    onAudienceChanged();
+    audience.on("membersChanged", onAudienceChanged);
 ```
 
 `audience` provides two functions that will return `FrsMember` objects that have a user ID and user name:
@@ -116,11 +153,15 @@ A sample `FrsMember` object looks like the following:
       "id": "0e662aca-9d7d-4ff0-8faf-9f8672b70f15",
       "mode": "write"
     }
-  ]
+  ],
+  "additionalDetails": {
+      "email": "xyz@outlook.com",
+      "address": "Redmond",
+  }
 }
 ```
 
-Alongside the user ID and name, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients.
+Alongside the user ID, name and addiitonal details, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients. The values in the `additionalDetails` field match up to the values provided in the `FrsAzFunctionTokenProvider` token generation.
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 
