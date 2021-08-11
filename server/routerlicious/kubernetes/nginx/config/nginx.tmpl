@@ -198,6 +198,7 @@ http {
     server_name_in_redirect off;
     port_in_redirect        off;
 
+    # For security reasons, disable TLS 1.0 and 1.1; Only TLS 1.2 is supported
     ssl_protocols TLSv1.2;
 
     # turn on session caching to drastically improve performance
