@@ -457,8 +457,8 @@ export async function downloadSnapshot(
     epochTracker?: EpochTracker,
 ): Promise<ISnapshotRequestAndResponseOptions> {
     if (fetchBinarySnapshotFormat) {
-        // Logging an error event here as it is not supposed to be used in production yet and only in experimental mode.
-        logger.sendErrorEvent({ eventName: "BinarySnapshotFetched" });
+        // Logging an event here as it is not supposed to be used in production yet and only in experimental mode.
+        logger.sendTelemetryEvent({ eventName: "BinarySnapshotFetched" });
         return fetchSnapshotContentsCoreV2(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);
     } else {
         return fetchSnapshotContentsCoreV1(odspResolvedUrl, storageToken, snapshotOptions, controller, epochTracker);

@@ -10,7 +10,7 @@ import {
     IDisposable,
     ITelemetryLogger,
 } from "@fluidframework/common-definitions";
-import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
+import { assert, performance, unreachableCase, Timer } from "@fluidframework/common-utils";
 import {
     IRequest,
     IResponse,
@@ -33,9 +33,9 @@ import {
     IContainerLoadMode,
 } from "@fluidframework/container-definitions";
 import {
-    CreateContainerError,
     DataCorruptionError,
     extractSafePropertiesFromMessage,
+    GenericError,
     UsageError,
  } from "@fluidframework/container-utils";
 import {
@@ -90,10 +90,10 @@ import {
     TelemetryLogger,
     connectedEventName,
     disconnectedEventName,
+    normalizeError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { debug } from "./debug";
 import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
@@ -215,16 +215,44 @@ export async function waitContainerToCatchUp(container: Container) {
     });
 }
 
+// Here are key considerations when deciding conditions for when to send non-immediate noops:
+// 1. Sending them too often results in increase in file size and bandwidth, as well as catch up performance
+// 2. Sending too infrequently ensures that collab window is large, and as result Sequence DDS would have
+//    large catchUp blobs - see Issue #6364
+// 3. Similarly, processes that rely on "core" snapshot (and can't parse trailing ops, including above), like search
+//    parser in SPO, will result in non-accurate results due to presence of catch up blobs.
+// 4. Ordering service used 250ms timeout to coalesce non-immediate noops. It was changed to 2000 ms to allow more
+//    aggressive noop sending from client side.
+// 5. Number of ops sent by all clients is proportional to number of "write" clients (every client sends noops),
+//    but number of sequenced noops is a function of time (one op per 2 seconds at most).
+// Please also see Issue #5629 for more discussions.
+//
+// With that, the current algorithm is as follows:
+// 1. Sent noop 250 ms of receiving an op if no ops were sent by this client within this timeframe.
+//    This will ensure that MSN moves forward with reasonable speed. If that results in too many noops, server timeout
+//    of 2000ms should be reconsidered to be increased.
+// 2. If there are more than 50 ops received without sending any ops, send noop to keep collab window small.
+//    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
 export class CollabWindowTracker {
     private opsCountSinceNoop = 0;
-    private lastNoopTime: number  | undefined;
+    private readonly timer: Timer;
 
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
         private readonly activeConnection: () => boolean,
-        private readonly NoopTimeFrequency: number = 2000,
-        private readonly NoopCountFrequency: number = 300,
-    ) {}
+        NoopTimeFrequency: number = 250,
+        private readonly NoopCountFrequency: number = 50,
+    ) {
+        this.timer = new Timer(NoopTimeFrequency, () => {
+            // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
+            // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
+            if (this.opsCountSinceNoop !== 0) {
+                assert(this.activeConnection(), "disconnect should result in stopSequenceNumberUpdate() call");
+                this.submitNoop(false /* immediate */);
+            }
+        });
+    }
+
     /**
      * Schedules as ack to the server to update the reference sequence number
      */
@@ -232,50 +260,49 @@ export class CollabWindowTracker {
         // Exit early for inactive (not in quorum or not writers) clients.
         // They don't take part in the minimum sequence number calculation.
         if (!this.activeConnection()) {
-            this.stopSequenceNumberUpdate();
             return;
         }
 
         // While processing a message, an immediate no-op can be requested.
         // i.e. to expedite approve or commit phase of quorum.
         if (immediateNoOp) {
-            this.stopSequenceNumberUpdate();
-            this.submit(MessageType.NoOp, ""); // This can be anything other than null
-            return;
-        }
-
-        // Filter out system messages.
-        if (isSystemMessage(message)) {
+            this.submitNoop(true /* immediate */);
             return;
         }
 
         // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
         // update, which updates the MSN, then ack the update, etc...). Also, don't
         // count system messages in ops count.
+        if (isSystemMessage(message)) {
+            return;
+        }
         assert(message.type !== MessageType.NoOp, 0x0ce /* "Don't acknowledge no-ops" */);
 
-        if (this.lastNoopTime === undefined) {
-            this.lastNoopTime = Date.now();
-        }
-
         this.opsCountSinceNoop++;
-
-        // If the ops count since last op is greater than NoopCountFrequency and time since last noop is
-        // greater than NoopTimeFrequency, then send a Noop.
-        // We will send a message(Noop) to update our reference sequence number upon receiving a server
-        // operation. This allows the server to know our true reference sequence number and be able to
-        // correctly update the minimum sequence number (MSN).
-        if (this.opsCountSinceNoop >= this.NoopCountFrequency
-            && Date.now() - this.lastNoopTime >= this.NoopTimeFrequency
-        ) {
-            this.stopSequenceNumberUpdate();
-            this.submit(MessageType.NoOp, null);
+        if (this.opsCountSinceNoop >= this.NoopCountFrequency) {
+            this.submitNoop(false /* immediate */);
+            return;
         }
+        if (this.opsCountSinceNoop === 1) {
+            this.timer.restart();
+        }
+        assert(this.timer.hasTimer, "has timer");
+    }
+
+    private submitNoop(immediate: boolean) {
+        // Anything other than null is immediate noop
+        this.submit(MessageType.NoOp, immediate ? "" : null);
+        assert(this.opsCountSinceNoop === 0, "stopSequenceNumberUpdate should be called as result of sending any op!");
     }
 
     public stopSequenceNumberUpdate(): void {
         this.opsCountSinceNoop = 0;
-        this.lastNoopTime = undefined;
+        // Ideally, we cancel timer here. But that will result in too often set/reset cycle if this client
+        // keeps sending ops. In most cases it's actually better to let it expire (at most - 4 times per second)
+        // for nothing, then have a ton of set/reset cycles.
+        // Note that Timer.restart() is smart and will not change timer expiration if we keep extending timer
+        // expiration - it will restart the timer instead when it fires with adjusted expiration.
+        // this.timer.clear();
     }
 }
 
@@ -316,7 +343,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
-                    rej(err ?? CreateContainerError("Container closed without an error"));
+                    rej(err ?? new GenericError("containerClosedWithoutErrorDuringLoad"));
                 };
                 container.on("closed", onClosed);
 
@@ -329,11 +356,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         res(container);
                     },
                     (error) => {
-                        const err = CreateContainerError(error);
+                        const err = normalizeError(error);
                         // Depending where error happens, we can be attempting to connect to web socket
                         // and continuously retrying (consider offline mode)
                         // Host has no container to close, so it's prudent to do it here
-                        container.close(error);
+                        container.close(err);
                         onClosed(err);
                     });
             }),
@@ -432,7 +459,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _closed = false;
 
     private readonly collabWindowTracker = new CollabWindowTracker(
-        (type, contents) => this._deltaManager.submit(type, contents),
+        (type, contents) => this.submitMessage(type, contents),
         () => this.activeConnection(),
         this.loader.services.options?.noopTimeFrequency,
         this.loader.services.options?.noopCountFrequency,
@@ -728,7 +755,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // Ensure that we raise all key events even if one of these throws
         try {
-            this.collabWindowTracker.stopSequenceNumberUpdate();
             this._deltaManager.close(error);
 
             this._protocolHandler?.close();
@@ -1023,8 +1049,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             return;
         }
 
-        this.close(CreateContainerError(
-            new Error("ExistingContextDoesNotSatisfyIncomingProposal")));
+        this.close(new GenericError("existingContextDoesNotSatisfyIncomingProposal"));
     }
 
     private async snapshotCore(tagMessage: string, fullTree: boolean = false) {
@@ -1449,16 +1474,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         protocol.quorum.on(
             "approveProposal",
             (sequenceNumber, key, value) => {
-                debug(`approved ${key}`);
                 if (key === "code" || key === "code2") {
-                    debug(`codeProposal ${JSON.stringify(value)}`);
                     if (!isFluidCodeDetails(value)) {
                         this.logger.sendErrorEvent({
                                 eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
                     this.processCodeProposal().catch((error) => {
-                        this.close(CreateContainerError(error));
+                        this.close(normalizeError(error));
                         throw error;
                     });
                 }
@@ -1573,6 +1596,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         deltaManager.on("disconnect", (reason: string) => {
             this.manualReconnectInProgress = false;
+            this.collabWindowTracker.stopSequenceNumberUpdate();
             this.connectionStateHandler.receivedDisconnectEvent(reason);
         });
 
@@ -1713,7 +1737,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 break;
             }
             default:
-                this.close(CreateContainerError(`Runtime can't send arbitrary message type: ${type}`));
+                this.close(new GenericError("invalidContainerSubmitOpType",
+                    undefined /* error */,
+                    { messageType: type }));
                 return -1;
         }
         return this.submitMessage(type, contents, batch, metadata);
@@ -1746,7 +1772,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 const error = new DataCorruptionError(
                     errorMsg,
                     extractSafePropertiesFromMessage(message));
-                this.close(CreateContainerError(error));
+                this.close(normalizeError(error));
             }
         }
 

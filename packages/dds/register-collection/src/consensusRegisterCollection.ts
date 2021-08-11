@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
-import { debug } from "./debug";
 import { IConsensusRegisterCollection, ReadPolicy, IConsensusRegisterCollectionEvents } from "./interfaces";
 
 interface ILocalData<T> {
@@ -227,9 +226,7 @@ export class ConsensusRegisterCollection<T>
 
     protected registerCore() { }
 
-    protected onDisconnect() {
-        debug(`ConsensusRegisterCollection ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {

@@ -44,13 +44,11 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/routerlicious-driver": "^0.46.0",
     "@fluidframework/runtime-utils": "^0.46.0",
-    "@fluidframework/server-services-client": "^0.1028.0-0",
+    "@fluidframework/server-services-client": "^0.1028.1",
     "@fluidframework/test-runtime-utils": "^0.46.0",
-    "axios": "^0.21.1",
-    "debug": "^4.1.1"
+    "axios": "^0.21.1"
   },
   "devDependencies": {
-    "@fluid-experimental/fluid-framework": "^0.45.0",
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",

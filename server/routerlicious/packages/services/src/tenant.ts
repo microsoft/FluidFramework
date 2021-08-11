@@ -49,7 +49,7 @@ export class TenantManager implements core.ITenantManager {
         return result.data;
     }
 
-    public async getTenant(tenantId: string): Promise<core.ITenant> {
+    public async getTenant(tenantId: string, documentId: string): Promise<core.ITenant> {
         const [details, key] = await Promise.all([
             Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
             this.getKey(tenantId)]);
@@ -59,7 +59,7 @@ export class TenantManager implements core.ITenantManager {
         };
         const getDefaultHeaders = () => {
             const credentials: ICredentials = {
-                password: generateToken(tenantId, null, key, null),
+                password: generateToken(tenantId, documentId, key, null),
                 user: tenantId,
             };
             return ({

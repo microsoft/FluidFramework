@@ -24,7 +24,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { debug } from "./debug";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -45,6 +44,7 @@ export class DocumentDeltaConnection
 
     // Listen for ops sent before we receive a response to connect_document
     protected readonly queuedMessages: ISequencedDocumentMessage[] = [];
+    protected readonly queuedSignals: ISignalMessage[] = [];
     /**
      * A flag to indicate whether we have our handler attached.  If it's attached, we're queueing incoming ops
      * to later be retrieved via initialMessages.
@@ -221,12 +221,22 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Get initial signals
+     * Get signals sent during the connection
      *
-     * @returns initial signals returned by ordering service
+     * @returns signals sent during the connection
      */
     public get initialSignals(): ISignalMessage[] {
         this.checkNotClosed();
+        assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
+
+        this.removeEarlySignalHandler();
+
+        if (this.queuedSignals.length > 0) {
+            // Some signals were queued.
+            // add them to the list of initialSignals to be processed
+            this.details.initialSignals.push(...this.queuedSignals);
+            this.queuedSignals.length = 0;
+        }
         return this.details.initialSignals;
     }
 
@@ -311,6 +321,7 @@ export class DocumentDeltaConnection
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
         this.socket.on("op", this.earlyOpHandler);
+        this.socket.on("signal", this.earlySignalHandler);
         this.earlyOpHandlerAttached = true;
 
         let success = false;
@@ -416,13 +427,20 @@ export class DocumentDeltaConnection
     }
 
     protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-        debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
+    };
+
+    protected earlySignalHandler = (msg: ISignalMessage) => {
+        this.queuedSignals.push(msg);
     };
 
     private removeEarlyOpHandler() {
         this.socket.removeListener("op", this.earlyOpHandler);
         this.earlyOpHandlerAttached = false;
+    }
+
+    private removeEarlySignalHandler() {
+        this.socket.removeListener("signal", this.earlySignalHandler);
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
@@ -445,6 +463,7 @@ export class DocumentDeltaConnection
         this.removeConnectionListeners();
 
         this.removeEarlyOpHandler();
+        this.removeEarlySignalHandler();
 
         this.trackedListeners.clear();
     }

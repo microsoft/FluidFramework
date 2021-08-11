@@ -24,7 +24,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.0-0",
+    "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/server-services-core": "^0.1029.0",
     "@fluidframework/server-services-ordering-zookeeper": "^0.1029.0",
     "moniker": "^0.1.2",
