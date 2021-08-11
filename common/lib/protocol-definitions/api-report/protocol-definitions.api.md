@@ -141,6 +141,7 @@ export interface IConnected {
     mode: ConnectionMode;
     nonce?: string;
     serviceConfiguration: IClientConfiguration;
+    supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
     version: string;
 }
