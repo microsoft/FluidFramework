@@ -52,7 +52,6 @@ import {
     BaseTelemetryProperties,
     SessionState,
 } from "@fluidframework/server-services-telemetry";
-import * as _ from "lodash";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -196,7 +195,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
         this.isNewDocument = this.sequenceNumber === 0;
 
-        this.logSessionStartMetrics();
+        if (serviceConfiguration.enableLumberMetrics) {
+            this.logSessionStartMetrics();
+        }
     }
 
     public handler(rawMessage: IQueuedMessage) {
