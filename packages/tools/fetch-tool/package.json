@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fluid-internal/fluidapp-odsp-urlresolver": "^0.46.0",
-    "@fluidframework/common-utils": "^0.32.0-0",
+    "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-runtime": "^0.46.0",
     "@fluidframework/datastore": "^0.46.0",
     "@fluidframework/driver-definitions": "^0.39.6",

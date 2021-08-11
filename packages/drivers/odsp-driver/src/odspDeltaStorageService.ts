@@ -81,7 +81,7 @@ export class OdspDeltaStorageService {
             this.logger.sendPerformanceEvent({
                 eventName: "OpsFetch",
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
-                count: messages.length,
+                length: messages.length,
                 duration: response.duration, // this duration for single attempt!
                 ...response.commonSpoHeaders,
                 attempts: options.refresh ? 2 : 1,

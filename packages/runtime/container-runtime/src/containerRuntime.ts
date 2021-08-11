@@ -101,7 +101,6 @@ import {
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
 import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
@@ -236,7 +235,7 @@ export interface ISummaryRuntimeOptions {
 
     // Flag that disables putting channels in isolated subtrees for each data store
     // and the root node when generating a summary if set to true.
-    // Defaults to TRUE (disabled) for now.
+    // Defaults to FALSE (enabled) for now.
     disableIsolatedChannels?: boolean;
 
     // Defaults to 7000 ops
@@ -705,6 +704,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
+    private _orderSequentiallyCalls: number = 0;
     private _flushMode = FlushMode.Automatic;
     private needsFlush = false;
     private flushTrigger = false;
@@ -1400,7 +1400,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // If switching to manual mode add a warning trace indicating the underlying loader does not support
         // this feature yet. Can remove in 0.9.
         if (!this.deltaSender && mode === FlushMode.Manual) {
-            debug("DeltaManager does not yet support flush modes");
             return;
         }
 
@@ -1416,8 +1415,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public flush(): void {
+        assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
+
         if (!this.deltaSender) {
-            debug("DeltaManager does not yet support flush modes");
             return;
         }
 
@@ -1443,18 +1443,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // case this invocation doesn't own
         // flushing.
         if (this.flushMode === FlushMode.Manual) {
+            this.trackOrderSequentiallyCalls(callback);
+            return;
+        }
+
+        const savedFlushMode = this.flushMode;
+        this.setFlushMode(FlushMode.Manual);
+
+        try {
+            this.trackOrderSequentiallyCalls(callback);
+        } finally {
+            this.flush();
+            this.setFlushMode(savedFlushMode);
+        }
+    }
+
+    private trackOrderSequentiallyCalls(callback: () => void): void {
+        try {
+            this._orderSequentiallyCalls++;
             callback();
-        } else {
-            const savedFlushMode = this.flushMode;
-
-            this.setFlushMode(FlushMode.Manual);
-
-            try {
-                callback();
-            } finally {
-                this.flush();
-                this.setFlushMode(savedFlushMode);
-            }
+        } finally {
+            this._orderSequentiallyCalls--;
         }
     }
 
