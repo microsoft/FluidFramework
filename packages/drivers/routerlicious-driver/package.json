@@ -68,7 +68,7 @@
     "axios": "^0.21.1",
     "debug": "^4.1.1",
     "json-stringify-safe": "5.0.1",
-    "socket.io-client": "^2.1.1",
+    "socket.io-client": "^2.4.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
