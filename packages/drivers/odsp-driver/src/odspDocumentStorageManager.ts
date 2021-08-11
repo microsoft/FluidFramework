@@ -628,12 +628,14 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     });
                     break;
                 }
+
                 this.logger.sendPerformanceEvent({
                     eventName: "FlushExtraCall",
                     ...result,
                     retry,
                     referenceSequenceNumber: context.referenceSequenceNumber,
                 });
+
                 await delay(1000 * (result.retryAfter ?? 1));
             }
         }
