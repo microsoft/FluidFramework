@@ -4,15 +4,15 @@
 
 ```ts
 
-import { ContainerSchema } from '@fluid-experimental/fluid-framework';
-import { FluidContainer } from '@fluid-experimental/fluid-framework';
+import { ContainerSchema } from 'fluid-framework';
+import { FluidContainer } from 'fluid-framework';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IMember } from '@fluid-experimental/fluid-framework';
-import { IServiceAudience } from '@fluid-experimental/fluid-framework';
+import { IMember } from 'fluid-framework';
+import { IServiceAudience } from 'fluid-framework';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { ServiceAudience } from '@fluid-experimental/fluid-framework';
+import { ServiceAudience } from 'fluid-framework';
 
 // @public (undocumented)
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
