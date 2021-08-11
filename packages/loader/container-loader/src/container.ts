@@ -219,11 +219,11 @@ export async function waitContainerToCatchUp(container: Container) {
 // 2. Sending too infrequently ensures that collab window is large, and as result Sequence DDS would have
 //    large catchUp blobs - see Issue #6364
 // 3. Similarly, processes that rely on "core" snapshot (and can't parse trailing ops, including above), like search
-//    parser in SPO, will result in non-accurate results due to presence of catch up blobs/
+//    parser in SPO, will result in non-accurate results due to presence of catch up blobs.
 // 4. Ordering service used 250ms timeout to coalesce non-immediate noops. It was changed to 2000 ms to allow more
 //    aggressive noop sending from client side.
 // 5. Number of ops sent by all clients is proportional to number of "write" clients (every client sends noops),
-//    but  number of sequences noops is a function of time (1 per 2 seconds at most).
+//    but number of sequenced noops is a function of time (one op per 2 seconds at most).
 // Please also see Issue #5629 for more discussions.
 //
 // With that, the current algorithm is as follows:
@@ -231,7 +231,7 @@ export async function waitContainerToCatchUp(container: Container) {
 //    This will ensure that MSN moves forward with reasonable speed. If that results in too many noops, server timeout
 //    of 2000ms should be reconsidered to be increased.
 // 2. If there are more than 50 ops received without sending any ops, send noop to keep collab window small.
-//    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 100 real ops.
+//    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
 export class CollabWindowTracker {
     private opsCountSinceNoop = 0;
     private readonly timer: Timer;
