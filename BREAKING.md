@@ -1,4 +1,6 @@
 ## 0.45 Breaking changes
+- [Changes to dataStoreRuntime and dataStoreContext interfaces]
+(#changes-to-dataStoreRuntime-and-dataStoreContext-interfaces)
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
 - [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
 - [Changes to client-api Document](#changes-to-client-api-Document)
@@ -9,6 +11,9 @@
 - [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
 - [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
 - [getHashedDocumentId is now async](#gethasheddocumentid-is-now-async)
+
+### Changes to dataStoreRuntime and dataStoreContext interfaces
+- `documentId` property is removed from dataStoreRuntime and dataStoreContext interfaces. It should not be exposed at data store level.
 
 ### Changes to local testing in insecure environments and associated bundle size increase
 Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.

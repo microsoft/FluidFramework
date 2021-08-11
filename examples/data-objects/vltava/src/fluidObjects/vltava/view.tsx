@@ -81,7 +81,7 @@ export class VltavaView extends React.Component<IVltavaViewProps, IVltavaViewSta
                 <div style={viewStyle}>
                     <div>
                         <h2>
-                            {"vltava"}
+                            Vltava
                         </h2>
                     </div>
                     <VltavaFacepile users={this.state.users} />
