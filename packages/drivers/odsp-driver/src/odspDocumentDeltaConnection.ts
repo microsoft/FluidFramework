@@ -21,7 +21,7 @@ import { errorObjectFromSocketError } from "./odspError";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
-const feature_flush = "api_flush_ops";
+const feature_flush_ops = "api_flush_ops";
 
 export interface FlushResult {
     lastPersistedSequenceNumber?: number;
@@ -142,7 +142,7 @@ class SocketReference {
         this._socket = undefined;
 
         // Delay closing socket, to make sure all users of socket observe the same event that causes
-        // this instance to close, and thus properly record reason for clusure.
+        // this instance to close, and thus properly record reason for closure.
         // All event raising is synchronous, so clients will have a chance to react before socket is
         // closed without any extra data on why it was closed.
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -215,6 +215,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             nonce: uuid(),
             epoch: epochTracker.fluidEpoch,
         };
+
+        // Reference to this client supporting get_ops flow.
+        // back-compat: remove cast to any once new definition of IConnect comes through.
+        (connectMessage as any).supportedFeatures = { [feature_get_ops]: true };
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
@@ -375,7 +379,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     public async flush(): Promise<FlushResult> {
         // back-compat: remove cast to any once latest version of IConnected is consumed
-        if ((this.details as any).supportedFeatures?.[feature_flush] !== true) {
+        if ((this.details as any).supportedFeatures?.[feature_flush_ops] !== true) {
             // Once single-commit summary is enabled end-to-end, flush support is a must!
             // The only alternative is change in design where SPO fetches ops from PUSH OR
             // summary includes required ops and SPO has some validation mechanism to ensure
@@ -407,6 +411,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
                 if (this.documentId === messageDocumentId) {
                     this.queuedMessages.push(...msgs);
+                }
+            };
+
+            this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
+                if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
+                    this.queuedSignals.push(msg);
                 }
             };
         }

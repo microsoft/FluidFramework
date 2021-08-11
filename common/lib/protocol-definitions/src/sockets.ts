@@ -52,6 +52,13 @@ export interface IConnect {
      * for connection to be successful.
      */
     epoch?: string;
+
+    /**
+     * A list of optional features that client supports.
+     * Features supported might be service specific.
+     * If we have standardized features across all services, they need to be exposed in more structured way.
+     */
+     supportedFeatures?: Record<string, any>;
 }
 
 /**
