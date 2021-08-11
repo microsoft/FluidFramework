@@ -198,7 +198,7 @@ http {
     server_name_in_redirect off;
     port_in_redirect        off;
 
-    ssl_protocols {{ $cfg.SSLProtocols }};
+    ssl_protocols TLSv1.2;
 
     # turn on session caching to drastically improve performance
     {{ if $cfg.SSLSessionCache }}
