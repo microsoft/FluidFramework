@@ -602,12 +602,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not supported");
     }
 
-    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext, initialSummary = false): Promise<string> {
         this.checkSnapshotUrl();
 
         const id = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
-            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context));
+            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context, initialSummary));
         return id;
     }
 

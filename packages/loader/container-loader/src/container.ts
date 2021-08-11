@@ -880,20 +880,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             // post summary here
             if (hasAttachmentBlobs) {
-                const appSummary: ISummaryTree = this.context.createSummary();
+                const appSummary: ISummaryTree = this.context.createSummary(new Map<string, string>());
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                 this._attachState = AttachState.Attaching;
                 this.context.notifyAttaching();
 
-                await this.storageService.uploadSummaryWithContext(summary, {
+                await (this.storageService as any).uploadSummaryWithContext(summary, {
                     referenceSequenceNumber: 0,
                     ackHandle: undefined,
                     proposalHandle: undefined,
-                });
+                }, true);
 
-                assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
+                // assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
             }
 
             this._attachState = AttachState.Attached;

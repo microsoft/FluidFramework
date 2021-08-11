@@ -211,8 +211,8 @@ export class ContainerContext implements IContainerContext {
         return this.container.attachState;
     }
 
-    public createSummary(): ISummaryTree {
-        return this.runtime.createSummary();
+    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+        return this.runtime.createSummary(blobRedirectTable);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {

@@ -70,9 +70,14 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        return this.runWithRetry(
-            async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
+    public async uploadSummaryWithContext(
+        summary: ISummaryTree,
+        context: ISummaryContext,
+        initialSummary = false,
+    ): Promise<string> {
+        return this.runWithRetry<string>(
+            // eslint-disable-next-line max-len
+            async () => (this.internalStorageService as any).uploadSummaryWithContext(summary, context, initialSummary) as Promise<string>,
             "storage_uploadSummaryWithContext",
         );
     }

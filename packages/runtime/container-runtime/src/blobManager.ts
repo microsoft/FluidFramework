@@ -145,8 +145,9 @@ export class BlobManager {
         this.logger.sendTelemetryEvent({ eventName: "AttachmentBlobsLoaded", count });
     }
 
-    public snapshot(): ITree {
-        const blobIds = this.runtime.attachState === AttachState.Detached ? this.detachedBlobIds : this.blobIds;
+    public snapshot(attaching?: boolean): ITree {
+        const useDetachedBlobIds = this.runtime.attachState === AttachState.Detached && !attaching;
+        const blobIds = useDetachedBlobIds ? this.detachedBlobIds : this.blobIds;
         const entries = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
         return { entries };
     }
