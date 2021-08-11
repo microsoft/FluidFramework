@@ -1,3 +1,3 @@
 module.exports = {
-	...require('../../.mocharc.js'),
+	...require('../repository-tools/mocha-configuration'),
 };
