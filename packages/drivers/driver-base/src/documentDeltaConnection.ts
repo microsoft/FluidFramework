@@ -431,7 +431,6 @@ export class DocumentDeltaConnection
     };
 
     protected earlySignalHandler = (msg: ISignalMessage) => {
-        debug("Queued early signals");
         this.queuedSignals.push(msg);
     };
 
