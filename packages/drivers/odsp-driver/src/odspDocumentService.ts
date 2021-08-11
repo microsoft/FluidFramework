@@ -174,7 +174,7 @@ export class OdspDocumentService implements IDocumentService {
                     if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
                         return this.currentConnection.flush();
                     }
-                    return "NoConnection";
+                    throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
             );
         }

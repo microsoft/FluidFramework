@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert, performance, Deferred } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
 import {
@@ -15,7 +15,7 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IOdspSocketError } from "./contracts";
+import { IOdspSocketError, IGetOpsResponse, IFLushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 
@@ -23,7 +23,10 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush = "api_flush_ops";
 
-export type FlushResult = number | "NotSupported" | "NoResult" | "TooManyCalls" | "retry" | "current";
+export interface FlushResult {
+    lastPersistedSequenceNumber?: number;
+    retryAfter?: number;
+}
 
 // How long to wait before disconnecting the socket after the last reference is removed
 // This allows reconnection after receiving a nack to be smooth
@@ -254,7 +257,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     private pushCallCounter = 0;
     private readonly getOpsMap: Map<string, { start: number, from: number, to: number }> = new Map();
     private flushOpNonce: string | undefined;
-    private flushAccept: undefined | ((seq: FlushResult | PromiseLike<FlushResult>) => void);
+    private flushDeferred: Deferred<FlushResult> | undefined;
 
     /**
      * Error raising for socket.io issues
@@ -324,15 +327,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     public requestOps(from: number, to: number) {
-        this.pushCallCounter++;
-        const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
-
         // PUSH may disable this functionality
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_get_ops] !== true) {
             return;
         }
 
+        this.pushCallCounter++;
+        const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
         const start = performance.now();
 
         // We may keep keep accumulating memory for nothing, if we are not getting responses.
@@ -374,22 +376,29 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     public async flush(): Promise<FlushResult> {
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_flush] !== true) {
-            return "NotSupported";
+            // Once single-commit summary is enabled end-to-end, flush support is a must!
+            // The only alternative is change in design where SPO fetches ops from PUSH OR
+            // summary includes required ops and SPO has some validation mechanism to ensure
+            // they are not forged by client.
+            // If design changes, we can reconsider it, but right now it's non-recoverable failure.
+            this.logger.sendErrorEvent({ eventName: "FlushOpsNotSupported"});
+            throw new Error("flush() API is not supported by PUSH, required for single-commit summaries");
         }
+
         this.pushCallCounter++;
         const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
         // There should be only one flush ops in flight, kicked out by upload summary workflow
         // That said, it could timeout, and request could be repeated, so theoretically we can
         // get overlapping requests, but it should be very rare
-        if (this.flushOpNonce !== undefined) {
+        if (this.flushDeferred !== undefined) {
             this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany"});
-            this.flushAccept!("TooManyCalls");
+            this.flushDeferred.reject("process involving flush() was cancelled OR unsupported concurrency");
         }
+        this.socket.emit("flush_ops", this.clientId, { nonce });
+
         this.flushOpNonce = nonce;
-        return new Promise<FlushResult>((accept) => {
-            this.flushAccept = accept;
-            this.socket.emit("flush_ops", this.clientId, { nonce });
-        });
+        this.flushDeferred = new Deferred<FlushResult>();
+        return this.flushDeferred.promise;
     }
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
@@ -402,8 +411,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             };
         }
 
-        this.socket.on("get_ops_response", (result) => {
-            const messages = result.messages as ISequencedDocumentMessage[] | undefined;
+        this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
+            const messages = result.messages;
             const data = this.getOpsMap.get(result.nonce);
             // Due to socket multiplexing, this client may not have asked for any data
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
@@ -425,30 +434,31 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             }
         });
 
-        this.socket.on("flush_ops_response", (result) => {
+        this.socket.on("flush_ops_response", (result: IFLushOpsResponse) => {
             if (this.flushOpNonce === result.nonce) {
-                const seq = result.lastPersistedSequenceNumber as (number | undefined);
-                let ret: "retry" | "current" | undefined;
-                if (ret === undefined || result.code !== 200) {
+                const seq = result.lastPersistedSequenceNumber;
+                let category: "generic" | "error" = "generic";
+                if (result.lastPersistedSequenceNumber === undefined || result.code !== 200) {
                     switch (result.code) {
                         case 409:
                         case 429:
-                            ret = "retry";
+                            category = "error";
                             break;
                         case 204:
-                            ret = "current";
                             break;
                         default:
+                            category = "error";
+                            break;
                     }
-                    this.logger.sendTelemetryEvent({
-                        eventName: "FlushResult",
-                        code: result.code,
-                        sequenceNumber: seq,
-                        category: ret === undefined ? "generic" : "error",
-                    });
                 }
-                this.flushAccept!(ret ?? seq ?? "NoResult");
-                this.flushAccept = undefined;
+                this.logger.sendTelemetryEvent({
+                    eventName: "FlushResult",
+                    code: result.code,
+                    sequenceNumber: seq,
+                    category,
+                });
+                this.flushDeferred!.resolve(result);
+                this.flushDeferred = undefined;
                 this.flushOpNonce = undefined;
             }
         });

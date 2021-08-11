@@ -10,7 +10,6 @@ import {
     stringToBuffer,
     bufferToString,
     delay,
-    unreachableCase,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -222,7 +221,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
-        private readonly flushCallback: () => Promise<FlushResult | "NoConnection">,
+        private readonly flushCallback: () => Promise<FlushResult>,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -609,53 +608,34 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        let retry = 0;
-        for (;;) {
-            const result = await this.flushCallback();
-            if (typeof result === "number") {
-                if (result >= context.referenceSequenceNumber) {
+        // Enable flushing only if we have single commit summary
+        if (".protocol" in summary.tree) {
+            let retry = 0;
+            for (;;) {
+                const result = await this.flushCallback();
+                const seq = result.lastPersistedSequenceNumber;
+                if (seq !== undefined && seq >= context.referenceSequenceNumber) {
                     break;
                 }
-            } else if (result !== "retry") {
-                switch (result) {
-                    case "NotSupported":
-                        // It is assumed that if client-initiated op flushing is not implemented by PUSH,
-                        // then there is internal to SPO+PUSH mechanism to ensure proper ops land in SPO
-                        // on summary processing.
-                        break;
-                    case "current":
-                        // PUSH had no ops to flush, and thus did not provide latest sequence number that was flushed.
-                        // We will assume that we have all the ops needed, but telemetry recorded should be sufficient
-                        // to see if it's not.
-                        break;
-                    case "NoConnection": // Race condition. Worth logging to make sure there are no logic errors.
-                    case "NoResult": // Some internal PUSH error?
-                    case "TooManyCalls": // Should not happen, at least not often
-                        this.logger.sendErrorEvent({ eventName: "FlushNoResult", reason: result });
-                        break;
-                    default:
-                        unreachableCase(result);
-                }
-                break;
-            }
 
-            retry++;
-            if (retry > 3) {
-                this.logger.sendErrorEvent({
-                    eventName: "FlushFailure",
-                    reason: result,
+                retry++;
+                if (retry > 3) {
+                    this.logger.sendErrorEvent({
+                        eventName: "FlushFailure",
+                        ...result,
+                        retry,
+                        referenceSequenceNumber: context.referenceSequenceNumber,
+                    });
+                    break;
+                }
+                this.logger.sendPerformanceEvent({
+                    eventName: "FlushExtraCall",
+                    ...result,
                     retry,
                     referenceSequenceNumber: context.referenceSequenceNumber,
                 });
-                break;
+                await delay(1000 * (result.retryAfter ?? 1));
             }
-            this.logger.sendPerformanceEvent({
-                eventName: "FlushExtraCall",
-                reason: result,
-                retry,
-                referenceSequenceNumber: context.referenceSequenceNumber,
-            });
-            await delay(1000);
         }
 
         const id = await PerformanceEvent.timedExecAsync(this.logger,
