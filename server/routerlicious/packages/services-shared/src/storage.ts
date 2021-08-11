@@ -11,7 +11,10 @@ import {
     ISummaryTree,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGitCache, SummaryTreeUploadManager } from "@fluidframework/server-services-client";
+import {
+    IGitCache,
+    SummaryTreeUploadManager,
+    WholeSummaryUploadManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDeliState,
@@ -30,7 +33,7 @@ export class DocumentStorage implements IDocumentStorage {
     constructor(
         private readonly databaseManager: IDatabaseManager,
         private readonly tenantManager: ITenantManager,
-        // private readonly enableWholeSummaryUpload: boolean,
+        private readonly enableWholeSummaryUpload: boolean,
     ) { }
 
     /**
@@ -85,6 +88,26 @@ export class DocumentStorage implements IDocumentStorage {
         return summary;
     }
 
+    private createFullTree(appTree: ISummaryTree, protocolTree: ISummaryTree): ISummaryTree {
+        if (this.enableWholeSummaryUpload) {
+            return {
+                type: SummaryType.Tree,
+                tree: {
+                    ".protocol": protocolTree,
+                    ".app": appTree,
+                },
+            };
+        } else {
+            return {
+                type: SummaryType.Tree,
+                tree: {
+                    ".protocol": protocolTree,
+                    ...appTree.tree,
+                },
+            };
+        }
+    }
+
     public async createDocument(
         tenantId: string,
         documentId: string,
@@ -99,36 +122,33 @@ export class DocumentStorage implements IDocumentStorage {
         const messageMetaData = { documentId, tenantId };
 
         const protocolTree = this.createInitialProtocolTree(documentId, sequenceNumber, term, values);
-        const fullTree: ISummaryTree = {
-            type: SummaryType.Tree,
-            tree: {
-                ".protocol": protocolTree,
-                // ".app": appTree,
-                ...appTree.tree,
-            },
-        };
+        const fullTree = this.createFullTree(appTree, protocolTree);
 
         const blobsShaCache = new Map<string, string>();
-        const summaryTreeUploadManager = new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
-        const handle = await summaryTreeUploadManager.writeSummaryTree(fullTree, "");
+        const uploadManager = this.enableWholeSummaryUpload ?
+            new WholeSummaryUploadManager(gitManager) :
+            new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
+        const handle = await uploadManager.writeSummaryTree(fullTree, "", "container");
 
-        winston.info(`Tree sha: ${JSON.stringify(handle)}`, { messageMetaData });
+        winston.info(`Tree reference: ${JSON.stringify(handle)}`, { messageMetaData });
 
-        const commitParams: ICreateCommitParams = {
-            author: {
-                date: new Date().toISOString(),
-                email: "dummy@microsoft.com",
-                name: "Routerlicious Service",
-            },
-            message: "New document",
-            parents: [],
-            tree: handle,
-        };
+        if (!this.enableWholeSummaryUpload) {
+            const commitParams: ICreateCommitParams = {
+                author: {
+                    date: new Date().toISOString(),
+                    email: "dummy@microsoft.com",
+                    name: "Routerlicious Service",
+                },
+                message: "New document",
+                parents: [],
+                tree: handle,
+            };
 
-        const commit = await gitManager.createCommit(commitParams);
-        await gitManager.createRef(documentId, commit.sha);
+            const commit = await gitManager.createCommit(commitParams);
+            await gitManager.createRef(documentId, commit.sha);
 
-        winston.info(`Commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
+            winston.info(`Commit sha: ${JSON.stringify(commit.sha)}`, { messageMetaData });
+        }
 
         const deli: IDeliState = {
             clients: undefined,
