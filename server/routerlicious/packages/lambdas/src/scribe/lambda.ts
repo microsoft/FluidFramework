@@ -25,11 +25,9 @@ import {
     IContext,
     IControlMessage,
     IProducer,
-    IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
     IServiceConfiguration,
-    RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
     IPartitionLambda,
@@ -46,7 +44,7 @@ import Deque from "double-ended-queue";
 import * as _ from "lodash";
 import { setQueuedMessageProperties } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
-import { initializeProtocol } from "./utils";
+import { initializeProtocol, sendToDeli } from "./utils";
 
 export class ScribeLambda implements IPartitionLambda {
     // Value of the last processed Kafka offset
@@ -96,7 +94,7 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     public async handler(message: IQueuedMessage) {
-        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
             Lumberjack.newLumberMetric(LumberEventName.ScribeHandler) : undefined;
 
         if (lumberJackMetric) {
@@ -233,7 +231,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 // Otherwise send a nack and revert the protocol state back to pre summary state.
                                 if (summaryResponse.status) {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
-                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
+                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
                                     await this.updateProtocolHead(this.protocolHandler.sequenceNumber);
                                     lumberJackMetric?.setProperties({[CommonProperties.clientSummarySuccess]: true});
                                     this.context.log?.info(
@@ -310,6 +308,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 }
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
+                                    false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
                                 lumberJackMetric?.setProperties({[CommonProperties.serviceSummarySuccess]: true});
                                 this.context.log?.info(
@@ -379,8 +378,7 @@ export class ScribeLambda implements IPartitionLambda {
 
         if (lumberJackMetric) {
             this.setScribeStateMetrics(checkpoint, lumberJackMetric);
-            lumberJackMetric.success(`Message processed successfully 
-                at seq no ${checkpoint.sequenceNumber}`);
+            lumberJackMetric.success(`Message processed successfully at seq no ${checkpoint.sequenceNumber}`);
         }
     }
 
@@ -530,7 +528,7 @@ export class ScribeLambda implements IPartitionLambda {
             type: MessageType.SummaryAck,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private async sendSummaryNack(contents: ISummaryNack) {
@@ -542,18 +540,20 @@ export class ScribeLambda implements IPartitionLambda {
             type: MessageType.SummaryNack,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     // Sends a confirmation back to deli as a signal to update its DSN. Note that 'durableSequenceNumber (dsn)'
     // runs ahead of last summary sequence number (protocolHead). The purpose of dsn is to inform deli about permanent
     // storage so that it can hydrate its state after a failure. The client's are still reponsible for fetching ops
     // from protocolHead to dsn.
-    private async sendSummaryConfirmationMessage(durableSequenceNumber: number, clearCache: boolean) {
+    private async sendSummaryConfirmationMessage(durableSequenceNumber: number,
+        isClientSummary: boolean, clearCache: boolean) {
         const controlMessage: IControlMessage = {
             type: ControlMessageType.UpdateDSN,
             contents: {
                 durableSequenceNumber,
+                isClientSummary,
                 clearCache,
             },
         };
@@ -567,7 +567,7 @@ export class ScribeLambda implements IPartitionLambda {
             type: MessageType.Control,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private async sendNackMessage(contents: INackMessagesControlMessageContents | undefined) {
@@ -585,28 +585,7 @@ export class ScribeLambda implements IPartitionLambda {
             type: MessageType.Control,
         };
 
-        return this.sendToDeli(operation);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private sendToDeli(operation: IDocumentMessage | IDocumentSystemMessage): Promise<any> {
-        const message: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-
-        if (!this.producer) {
-            throw new Error("Invalid producer");
-        }
-
-        return this.producer.send(
-            [message],
-            this.tenantId,
-            this.documentId);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private setStateFromCheckpoint(scribe: IScribe) {
