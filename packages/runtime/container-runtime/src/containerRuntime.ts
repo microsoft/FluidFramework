@@ -236,7 +236,7 @@ export interface ISummaryRuntimeOptions {
 
     // Flag that disables putting channels in isolated subtrees for each data store
     // and the root node when generating a summary if set to true.
-    // Defaults to TRUE (disabled) for now.
+    // Defaults to FALSE (enabled) for now.
     disableIsolatedChannels?: boolean;
 
     // Defaults to 7000 ops
