@@ -2,8 +2,6 @@
 
 The tinylicious-client package provides a simple and powerful way to consume collaborative Fluid data with the Tinylicious service.
 
-This package is marked as experimental and currently under development. The API surface is currently under going drastic braking changes with no guarantees on compatibility.
-
 ## Using tinylicious-client
 
 The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
