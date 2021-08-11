@@ -23,6 +23,7 @@ import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -85,7 +86,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             `/documents/${tenantId}`,
             {
                 id,
-                summary: appSummary,
+                summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             },
