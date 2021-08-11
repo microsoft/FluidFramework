@@ -58,7 +58,7 @@ export class DocumentStorage implements IDocumentStorage {
         term: number,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         const blobsShaCache = new Map<string, string>();
@@ -165,21 +165,21 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         return gitManager.getCommits(documentId, count);
     }
 
     public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
 
         return gitManager.getCommit(sha);
     }
 
     public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache, code: string }> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const versions = await tenant.gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
             return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
@@ -270,7 +270,7 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const gitManager = tenant.gitManager;
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {

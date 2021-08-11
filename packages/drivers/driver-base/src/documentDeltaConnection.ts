@@ -24,7 +24,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { debug } from "./debug";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -112,9 +111,7 @@ export class DocumentDeltaConnection
             });
 
         this.on("newListener", (event, listener) => {
-            // Register for the event on socket.io, on as needed bases
-
-            assert(!this.disposed, "register for event on disposed object");
+            assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
             // Some events are already forwarded - see this.addTrackedListener() calls in initialize().
             if (DocumentDeltaConnection.eventsAlwaysForwarded.includes(event)) {
@@ -131,7 +128,7 @@ export class DocumentDeltaConnection
             // and that there are no "internal" listeners installed (like "error" case we skip above)
             // Better flow might be to always unconditionally register all handlers on successful connection,
             // though some logic (naming assert in initialMessages getter) might need to be adjusted (it becomes noop)
-            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), "mismatch");
+            assert((this.listeners(event).length !== 0) === this.trackedListeners.has(event), 0x20b /* "mismatch" */);
             if (!this.trackedListeners.has(event)) {
                 this.addTrackedListener(
                     event,
@@ -202,7 +199,7 @@ export class DocumentDeltaConnection
     }
 
     private checkNotClosed() {
-        assert(!this.disposed, "connection disposed");
+        assert(!this.disposed, 0x20c /* "connection disposed" */);
     }
 
     /**
@@ -415,7 +412,6 @@ export class DocumentDeltaConnection
     }
 
     protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-        debug("Queued early ops", msgs.length);
         this.queuedMessages.push(...msgs);
     };
 
@@ -428,13 +424,13 @@ export class DocumentDeltaConnection
         assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event), "Use addTrackedListener instead");
         assert(!DocumentDeltaConnection.eventsToForward.includes(event), "should not subscribe to forwarded events");
         this.socket.on(event, listener);
-        assert(!this.connectionListeners.has(event), "double connection listener");
+        assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
         this.connectionListeners.set(event, listener);
     }
 
     protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
         this.socket.on(event, listener);
-        assert(!this.trackedListeners.has(event), "double tracked listener");
+        assert(!this.trackedListeners.has(event), 0x20e /* "double tracked listener" */);
         this.trackedListeners.set(event, listener);
     }
 

@@ -276,7 +276,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         if (!this.channelDeferred) {
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
-                this.channelDeferred?.reject(CreateProcessingError(error, undefined /* message */));
+                this.channelDeferred?.reject(
+                    CreateProcessingError(error, "realizeFluidDataStoreContext", undefined /* message */));
             });
         }
         return this.channelDeferred.promise;
@@ -364,7 +365,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             return this.channel?.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x142 /* "local store channel is not loaded" */);
-            assert(this.pending !== undefined, "pending is undefined");
+            assert(this.pending !== undefined, 0x23d /* "pending is undefined" */);
             this.pending.push(message);
             this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }

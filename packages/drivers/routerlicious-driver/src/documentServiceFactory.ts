@@ -29,6 +29,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     maxConcurrentStorageRequests: 100,
     maxConcurrentOrdererRequests: 100,
     aggregateBlobsSmallerThanBytes: undefined,
+    enableWholeSummaryUpload: false,
 };
 
 /**
@@ -80,7 +81,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             rateLimiter,
             resolvedUrl.endpoints.ordererUrl,
         );
-        await ordererRestWrapper.post(
+        const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
                 id,
@@ -89,8 +90,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
+        parsedUrl.pathname = parsedUrl.pathname.split("/").slice(0, -1).concat([documentId]).join("/");
 
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(
+            {
+                ...resolvedUrl,
+                url: parsedUrl.href,
+                id: documentId,
+            },
+            logger);
     }
 
     /**
@@ -115,7 +123,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
             throw new Error(
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);

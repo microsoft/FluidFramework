@@ -81,7 +81,7 @@ export class OdspDeltaStorageService {
             this.logger.sendPerformanceEvent({
                 eventName: "OpsFetch",
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
-                count: messages.length,
+                length: messages.length,
                 duration: response.duration, // this duration for single attempt!
                 ...response.commonSpoHeaders,
                 attempts: options.refresh ? 2 : 1,
@@ -116,6 +116,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             to: number,
             telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
         private readonly getCached: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
+        private readonly requestFromSocket: (from: number, to: number) => void,
         private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
     ) {
     }
@@ -148,6 +149,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                     }
                     this.snapshotOps = undefined;
                 }
+
+                // Kick out request to PUSH for ops if it has them
+                this.requestFromSocket(from, to);
 
                 // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
                 // This saves a bit of processing time
