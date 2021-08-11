@@ -609,14 +609,24 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
+        let retry = 0;
         for (;;) {
             const result = await this.flushCallback();
-            if (typeof result !== "number") {
+            if (typeof result === "number") {
+                if (result >= context.referenceSequenceNumber) {
+                    break;
+                }
+            } else if (result !== "retry") {
                 switch (result) {
                     case "NotSupported":
                         // It is assumed that if client-initiated op flushing is not implemented by PUSH,
                         // then there is internal to SPO+PUSH mechanism to ensure proper ops land in SPO
                         // on summary processing.
+                        break;
+                    case "current":
+                        // PUSH had no ops to flush, and thus did not provide latest sequence number that was flushed.
+                        // We will assume that we have all the ops needed, but telemetry recorded should be sufficient
+                        // to see if it's not.
                         break;
                     case "NoConnection": // Race condition. Worth logging to make sure there are no logic errors.
                     case "NoResult": // Some internal PUSH error?
@@ -629,12 +639,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 break;
             }
 
-            if (result >= context.referenceSequenceNumber) {
+            retry++;
+            if (retry > 3) {
+                this.logger.sendErrorEvent({
+                    eventName: "FlushFailure",
+                    reason: result,
+                    retry,
+                    referenceSequenceNumber: context.referenceSequenceNumber,
+                });
                 break;
             }
-            this.logger.sendErrorEvent({
+            this.logger.sendPerformanceEvent({
                 eventName: "FlushExtraCall",
-                current: result,
+                reason: result,
+                retry,
                 referenceSequenceNumber: context.referenceSequenceNumber,
             });
             await delay(1000);
