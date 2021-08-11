@@ -113,16 +113,17 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await documentServiceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
-                // eslint-disable-next-line prefer-promise-reject-errors
-                service.connectToStorage = async () => Promise.reject(false);
+                service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
                 return service;
             };
 
             await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
-            const err = error as IGenericError;
-            success = err.error as boolean;
+            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
+            const genericError = error as IGenericError;
+            assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
+            success = false;
         }
         assert.strictEqual(success, false);
     });
@@ -136,17 +137,17 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await documentServiceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
-                // eslint-disable-next-line prefer-promise-reject-errors
-                service.connectToDeltaStorage = async () => Promise.reject(false);
+                service.connectToDeltaStorage = async () => Promise.reject(new Error("expectedFailure"));
                 return service;
             };
             const container2 = await loadContainer({ documentServiceFactory: mockFactory });
             await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");
+            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
             const genericError = error as IGenericError;
-            success = genericError.error as boolean;
+            assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
+            success = false;
         }
         assert.strictEqual(success, false);
     });

@@ -4,7 +4,6 @@
 
 ```ts
 
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IErrorBase } from '@fluidframework/container-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
@@ -13,9 +12,6 @@ import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
 import { LoggingError } from '@fluidframework/telemetry-utils';
-
-// @public
-export function CreateContainerError(originalError: any, props?: ITelemetryProperties): ICriticalContainerError;
 
 // @public
 export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
@@ -52,12 +48,14 @@ export const extractSafePropertiesFromMessage: (message: ISequencedDocumentMessa
 };
 
 // @public
-export class GenericError extends LoggingError implements IGenericError {
-    constructor(errorMessage: string, error?: any, props?: ITelemetryProperties);
+export class GenericError extends LoggingError implements IGenericError, IFluidErrorBase {
+    constructor(fluidErrorCode: string, error?: any, props?: ITelemetryProperties);
     // (undocumented)
     readonly error?: any;
     // (undocumented)
     readonly errorType = ContainerErrorType.genericError;
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public
