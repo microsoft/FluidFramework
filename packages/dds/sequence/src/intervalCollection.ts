@@ -585,9 +585,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             if (props) {
                 interval.addProperties(props);
             }
-            if (this.label && (this.label.length > 0)) {
-                interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
-            }
             if (interval.properties[reservedIntervalIdKey] === undefined) {
                 // Create a new ID.
                 interval.properties[reservedIntervalIdKey] = uuid();
