@@ -124,10 +124,6 @@ interface FluidDataStoreMessage {
 export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements
     IFluidDataStoreContext,
     IDisposable {
-    public get documentId(): string {
-        return this._containerRuntime.id;
-    }
-
     public get packagePath(): readonly string[] {
         assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
         return this.pkg;

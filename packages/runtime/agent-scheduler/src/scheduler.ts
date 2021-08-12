@@ -19,7 +19,6 @@ import {
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { isContextExisting } from "@fluidframework/runtime-utils";
-import debug from "debug";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
@@ -115,7 +114,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         if (this.isActive()) {
             const currentClient = this.getTaskClientId(taskId);
             if (currentClient === undefined || currentClient === null) {
-                debug(`Requesting ${taskId}`);
                 await this.writeCore(taskId, this.clientId);
             }
         }
@@ -145,7 +143,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         if (taskUrls.length > 0) {
             const registersP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
-                debug(`Registering ${taskUrl}`);
                 registersP.push(this.writeCore(taskUrl, null));
             }
             await Promise.all(registersP);
@@ -156,12 +153,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
 
                 // Task should be either registered (null) or picked up.
                 assert(taskStatus !== undefined, 0x11a /* `Unsuccessful registration` */);
-
-                if (taskStatus === null) {
-                    debug(`Registered ${taskUrl}`);
-                } else {
-                    debug(`${taskStatus} is running ${taskUrl}`);
-                }
             }
         }
     }
@@ -170,7 +161,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         if (taskUrls.length > 0) {
             const releasesP: Promise<void>[] = [];
             for (const taskUrl of taskUrls) {
-                debug(`Releasing ${taskUrl}`);
                 // Remove from local map so that it can be picked later.
                 this.locallyRunnableTasks.delete(taskUrl);
                 releasesP.push(this.writeCore(taskUrl, null));
@@ -183,7 +173,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         assert(this.isActive(), 0x11b /* "Trying to clear tasks on inactive agent" */);
         const clearP: Promise<void>[] = [];
         for (const taskUrl of taskUrls) {
-            debug(`Clearing ${taskUrl}`);
             clearP.push(this.writeCore(taskUrl, null));
         }
         await Promise.all(clearP);
@@ -212,7 +201,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
                 for (const taskUrl of this.consensusRegisterCollection.keys()) {
                     if (this.getTaskClientId(taskUrl) === clientId) {
                         if (this.locallyRunnableTasks.has(taskUrl)) {
-                            debug(`Requesting ${taskUrl}`);
                             tasks.push(this.writeCore(taskUrl, this.clientId));
                         } else {
                             leftTasks.push(taskUrl);
@@ -289,7 +277,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
             // If not, initializeCore() will do it when connected
             if (currentClient === null) {
                 if (this.locallyRunnableTasks.has(key)) {
-                    debug(`Requesting ${key}`);
                     await this.writeCore(key, this.clientId);
                 }
             }
@@ -325,7 +312,6 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
 
         for (const [taskUrl] of this.locallyRunnableTasks) {
             if (!this.getTaskClientId(taskUrl)) {
-                debug(`Requesting ${taskUrl}`);
                 tasks.push(this.writeCore(taskUrl, this.clientId));
             }
         }

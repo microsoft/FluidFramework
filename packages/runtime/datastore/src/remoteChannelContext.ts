@@ -27,7 +27,7 @@ import {
     ISummarizeInternalResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, ThresholdCounter } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryDataTag, ThresholdCounter } from "@fluidframework/telemetry-utils";
 import {
     attributesBlobKey,
     createServiceEndpoints,
@@ -37,7 +37,6 @@ import {
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
-import { debug } from "./debug";
 
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
@@ -201,10 +200,20 @@ export class RemoteChannelContext implements IChannelContext {
         // Compare snapshot version to collaborative object version
         if (attributes.snapshotFormatVersion !== undefined
             && attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
-            debug(`Snapshot version mismatch. Type: ${attributes.type}, ` +
-                `Snapshot format@pkg version: ${attributes.snapshotFormatVersion}@${attributes.packageVersion}, ` +
-                // eslint-disable-next-line max-len
-                `client format@pkg version: ${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`);
+                this.subLogger.sendTelemetryEvent(
+                    {
+                        eventName: "ChannelAttributesVersionMismatch",
+                        channelType: {value: attributes.type, tag: TelemetryDataTag.PackageData},
+                        channelSnapshotVersion: {
+                            value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                        channelCodeVersion: {
+                            value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                    },
+                );
         }
 
         const channel = await factory.load(

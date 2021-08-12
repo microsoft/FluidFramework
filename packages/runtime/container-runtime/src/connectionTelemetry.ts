@@ -97,7 +97,10 @@ class OpPerfTelemetry {
         this.socketLatency += latency;
         const aggregateCount = 100;
         if (this.pongCount === aggregateCount) {
-            this.logger.sendTelemetryEvent({ eventName: "DeltaLatency", value: this.socketLatency / aggregateCount });
+            this.logger.sendTelemetryEvent({
+                eventName: "DeltaLatency",
+                duration: this.socketLatency / aggregateCount,
+            });
             this.pongCount = 0;
             this.socketLatency = 0;
         }

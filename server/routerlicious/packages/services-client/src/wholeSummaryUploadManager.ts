@@ -5,13 +5,16 @@
 
 import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
+    ISummaryTree,
     IWholeSummaryPayload,
+    IWholeSummaryPayloadType,
     IWholeSummaryTree,
     WholeSummaryTreeValue,
     IWholeSummaryTreeBaseEntry,
     WholeSummaryTreeEntry,
+    IEmbeddedSummaryHandle,
 } from "./storageContracts";
 import { IGitManager, ISummaryUploadManager } from "./storage";
 
@@ -27,8 +30,9 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
     public async writeSummaryTree(
         summaryTree: ISummaryTree,
         parentHandle: string | undefined,
+        summaryType: IWholeSummaryPayloadType,
     ): Promise<string> {
-        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree);
+        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType);
         if (!id) {
             throw new Error(`Failed to write summary tree`);
         }
@@ -38,6 +42,7 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
     private async writeSummaryTreeCore(
         parentHandle: string | undefined,
         tree: ISummaryTree,
+        type: IWholeSummaryPayloadType,
     ): Promise<string> {
         const snapshotTree = await this.convertSummaryToSnapshotTree(
             parentHandle,
@@ -48,7 +53,7 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
             entries: snapshotTree.entries,
             message: undefined,
             sequenceNumber: undefined,
-            type: "channel",
+            type,
         };
 
         return this.manager.createSummary(snapshotPayload).then((response) => response.id);
@@ -103,10 +108,15 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
                     break;
                 }
                 case SummaryType.Handle: {
-                    if (!parentHandle) {
-                        throw Error("Parent summary does not exist to reference by handle.");
+                    const handleValue = summaryObject as IEmbeddedSummaryHandle;
+                    if (handleValue.embedded) {
+                        id = summaryObject.handle;
+                    } else {
+                        if (!parentHandle) {
+                            throw Error("Parent summary does not exist to reference by handle.");
+                        }
+                        id = `${parentHandle}/${summaryObject.handle}`;
                     }
-                    id = `${parentHandle}/${summaryObject.handle}`;
                     break;
                 }
                 case SummaryType.Attachment: {

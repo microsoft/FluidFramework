@@ -58,10 +58,9 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore-definitions": "^0.46.0",
-    "@fluidframework/protocol-base": "^0.1028.1",
+    "@fluidframework/protocol-base": "^0.1029.0-0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/shared-object-base": "^0.46.0",
-    "debug": "^4.1.1"
+    "@fluidframework/shared-object-base": "^0.46.0"
   },
   "devDependencies": {
     "@fluid-internal/test-dds-utils": "^0.46.0",
@@ -70,7 +69,6 @@
     "@fluidframework/mocha-test-setup": "^0.46.0",
     "@fluidframework/test-runtime-utils": "^0.46.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
