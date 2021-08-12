@@ -15,7 +15,7 @@ import {
     ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
-import { IOdspSocketError, IGetOpsResponse, IFLushOpsResponse } from "./contracts";
+import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { errorObjectFromSocketError } from "./odspError";
 
@@ -444,7 +444,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             }
         });
 
-        this.socket.on("flush_ops_response", (result: IFLushOpsResponse) => {
+        this.socket.on("flush_ops_response", (result: IFlushOpsResponse) => {
             if (this.flushOpNonce === result.nonce) {
                 const seq = result.lastPersistedSequenceNumber;
                 let category: "generic" | "error" = "generic";
