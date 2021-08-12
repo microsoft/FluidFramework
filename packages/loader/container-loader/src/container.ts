@@ -247,7 +247,8 @@ export class CollabWindowTracker {
             // Can get here due to this.stopSequenceNumberUpdate() not resetting timer.
             // Also timer callback can fire even after timer cancellation if it was queued before cancellation.
             if (this.opsCountSinceNoop !== 0) {
-                assert(this.activeConnection(), "disconnect should result in stopSequenceNumberUpdate() call");
+                assert(this.activeConnection(),
+                    0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
                 this.submitNoop(false /* immediate */);
             }
         });
@@ -286,13 +287,14 @@ export class CollabWindowTracker {
         if (this.opsCountSinceNoop === 1) {
             this.timer.restart();
         }
-        assert(this.timer.hasTimer, "has timer");
+        assert(this.timer.hasTimer, 0x242 /* "has timer" */);
     }
 
     private submitNoop(immediate: boolean) {
         // Anything other than null is immediate noop
         this.submit(MessageType.NoOp, immediate ? "" : null);
-        assert(this.opsCountSinceNoop === 0, "stopSequenceNumberUpdate should be called as result of sending any op!");
+        assert(this.opsCountSinceNoop === 0,
+            0x243 /* "stopSequenceNumberUpdate should be called as result of sending any op!" */);
     }
 
     public stopSequenceNumberUpdate(): void {
