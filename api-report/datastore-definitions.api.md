@@ -100,8 +100,6 @@ export interface IFluidDataStoreRuntime extends IFluidRouter, IEventProvider<IFl
     createChannel(id: string | undefined, type: string): IChannel;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    readonly documentId: string;
     getAudience(): IAudience;
     getChannel(id: string): Promise<IChannel>;
     getQuorum(): IQuorum;

@@ -159,8 +159,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    readonly documentId: string;
     // @deprecated (undocumented)
     readonly existing: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

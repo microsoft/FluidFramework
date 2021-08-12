@@ -71,8 +71,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    readonly documentId: string;
-    // (undocumented)
     getAttachSummary(): IChannelSummarizeResult;
     // (undocumented)
     getAudience(): IAudience;

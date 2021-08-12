@@ -1,5 +1,10 @@
 ## 0.46 Breaking changes
+
+- [documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext](#documentId-removed-from-IFluidDataStoreRuntime-and-IFluidDataStoreContext)
 - [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
+
+### documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext
+- `documentId` property is removed from IFluidDataStoreRuntime and IFluidDataStoreContext. It is a document level concept and is no longer exposed from data store level.
 
 ### `@fluid-experimental/tinylicious-client` package name changed
 The `@fluid-experimental/tinylicious-client` package has been renamed to now be `@fluidframework/tinylicious-client`.
