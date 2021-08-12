@@ -12,7 +12,7 @@ import {
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
@@ -47,7 +47,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-describeNoCompat("Audience correctness", (getTestObjectProvider) => {
+describeFullCompat("Audience correctness", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -72,7 +72,7 @@ describeNoCompat("Audience correctness", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
     });
 
-    it("should add / remove clients in audience as expected", async () => {
+    it("should add clients in audience as expected", async () => {
         // Create a client - client1.
         const client1Container = await createContainer();
         const client1DataStore = await requestFluidObject<TestDataObject>(client1Container, "default");
@@ -111,7 +111,7 @@ describeNoCompat("Audience correctness", (getTestObjectProvider) => {
         );
     });
 
-    it("should add / remove clients in audience as expected in write mode", async () => {
+    it("should add clients in audience as expected in write mode", async () => {
         // Create a client - client1.
         const client1Container = await createContainer();
         const client1DataStore = await requestFluidObject<TestDataObject>(client1Container, "default");
@@ -127,15 +127,16 @@ describeNoCompat("Audience correctness", (getTestObjectProvider) => {
         // Ensure that clients are connected and synchronized.
         await provider.ensureSynchronized();
 
-        // Validate that client1 is in its own audience.
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
+        assert(client2Container.clientId !== undefined, "client2 does not have clientId");
+
+        // Validate that client1 is in its own audience.
         assert(
             client1DataStore.audienceClientList.has(client1Container.clientId),
             "client1's audience does not have client1's clientId",
         );
 
         // Validate that client2 is in its own audience.
-        assert(client2Container.clientId !== undefined, "client does not have clientId");
         assert(
             client2DataStore.audienceClientList.has(client2Container.clientId),
             "client2's audience does not have client2's clientId",
@@ -151,6 +152,42 @@ describeNoCompat("Audience correctness", (getTestObjectProvider) => {
         assert(
             client1DataStore.audienceClientList.has(client2Container.clientId),
             "Client1's audience does not have client2",
+        );
+    });
+
+    it("should remove clients in audience as expected", async () => {
+        // Create a client - client1.
+        const client1Container = await createContainer();
+        const client1DataStore = await requestFluidObject<TestDataObject>(client1Container, "default");
+
+        // Load a second client - client2.
+        const client2Container = await loadContainer();
+        const client2DataStore = await requestFluidObject<TestDataObject>(client2Container, "default");
+
+        // Ensure that clients are connected and synchronized.
+        await provider.ensureSynchronized();
+
+        assert(client1Container.clientId !== undefined, "client1 does not have clientId");
+        assert(client2Container.clientId !== undefined, "client2 does not have clientId");
+
+        // Validate that client2 is in both client's audiences.
+        assert(
+            client2DataStore.audienceClientList.has(client2Container.clientId),
+            "client2's audience does not have client2's clientId",
+        );
+        assert(
+            client1DataStore.audienceClientList.has(client2Container.clientId),
+            "Client1's audience does not have client2",
+        );
+
+        // Close client2. It should be removed from the audience.
+        client2Container.close();
+        await provider.ensureSynchronized();
+
+        // Validate that client2 is removed from client1's audience.
+        assert(
+            !client1DataStore.audienceClientList.has(client2Container.clientId),
+            "Client1's audience should not have client2",
         );
     });
 });
