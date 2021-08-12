@@ -76,11 +76,6 @@ export interface IAttachMessage {
     type: string;
 }
 
-// @public (undocumented)
-export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    gcData: IGarbageCollectionData;
-}
-
 // @public
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IProvideFluidHandleContext {
     // (undocumented)
@@ -112,11 +107,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
 }
 
-// @public (undocumented)
-export interface IContextSummarizeResult extends ISummarizeResult {
-    gcData: IGarbageCollectionData;
-}
-
 // @public
 export interface IEnvelope {
     address: string;
@@ -129,7 +119,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     applyStashedOp(content: any): Promise<unknown>;
     readonly attachState: AttachState;
     bindToContext(): void;
-    getAttachSummary(): IChannelSummarizeResult;
+    getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
@@ -137,7 +127,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
@@ -263,7 +253,7 @@ export interface ISignalEnvelope {
 }
 
 // @public (undocumented)
-export interface ISummarizeInternalResult extends IContextSummarizeResult {
+export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
@@ -324,7 +314,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
     // (undocumented)
-    summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     updateUsedRoutes(usedRoutes: string[]): void;
     readonly usedRoutes: string[];
 }

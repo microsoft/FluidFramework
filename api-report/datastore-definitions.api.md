@@ -7,7 +7,6 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IChannelSummarizeResult } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -24,6 +23,7 @@ import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
@@ -36,7 +36,7 @@ export interface IChannel extends IFluidLoadable {
     isAttached(): boolean;
     // (undocumented)
     readonly owner?: string;
-    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
+    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 }
 
 // @public
