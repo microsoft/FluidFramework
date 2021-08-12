@@ -49,6 +49,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly producer: IProducer,
         private readonly tenantManager: ITenantManager,
         private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly enableWholeSummaryUpload: boolean,
     ) {
         super();
     }
@@ -124,7 +125,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
         const protocolHandler = initializeProtocol(lastCheckpoint.protocolState, latestSummary.term);
 
-        const summaryWriter = new SummaryWriter(tenantId, documentId, gitManager, this.messageCollection, false);
+        const summaryWriter = new SummaryWriter(
+            tenantId,
+            documentId,
+            gitManager,
+            this.messageCollection,
+            this.enableWholeSummaryUpload);
         const checkpointManager = new CheckpointManager(
             tenantId,
             documentId,
