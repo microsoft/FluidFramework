@@ -391,6 +391,7 @@ export class SummaryWriter implements ISummaryWriter {
             tree: {
                 ".logTail": this.createSummaryTreeFromEntry(logTailEntries),
                 ".serviceProtocol": this.createSummaryTreeFromEntry(serviceProtocolEntries),
+                ".protocol": { type: SummaryType.Handle, handle: ".protocol", handleType: SummaryType.Tree },
                 ".app": { type: SummaryType.Handle, handle: ".app", handleType: SummaryType.Tree },
             },
         };
