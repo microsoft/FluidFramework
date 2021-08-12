@@ -122,7 +122,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
-        // Redis connection for client manager.
+        // Redis connection for client manager and single-use JWTs.
         const redisConfig2 = config.get("redis2");
         const redisOptions2: Redis.RedisOptions = {
             host: redisConfig2.host,
@@ -141,6 +141,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
         const redisClient = new Redis(redisOptions2);
         const clientManager = new services.ClientManager(redisClient, redisParams2);
+
+        const redisClientForJwtCache = new Redis(redisOptions2);
+        const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
