@@ -7,7 +7,13 @@ import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { BlobCore, getAndValidateNodeProps, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
+import {
+    assertBlobCoreInstance,
+    assertNumberInstance,
+    getAndValidateNodeProps,
+    NodeCore,
+    TreeBuilder,
+} from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
 
@@ -54,9 +60,10 @@ function readAndValidateHeaderSection(node: NodeCore): ISnapshotHeader {
  */
 function readDictionarySection(node: NodeCore) {
     const dictionary = new Array<string>();
-    for (const name of node) {
-        assert(name instanceof BlobCore, 0x211 /* "Mapping should be of type BlobCore" */);
-        dictionary.push(name.toString());
+    for (const childNode of node) {
+        assertBlobCoreInstance(
+            childNode.value, childNode.startIndex, childNode.endIndex, "Mapping should be of type BlobCore");
+        dictionary.push(childNode.value.toString());
     }
     return dictionary;
 }
@@ -68,12 +75,14 @@ function readDictionarySection(node: NodeCore) {
  */
 function readBlobSection(node: NodeCore, dictionary: string[]) {
     const blobs: Map<string, ArrayBuffer> = new Map();
-    for (const [idIndex, blob] of node.iteratePairs()) {
-        assert(typeof idIndex === "number", 0x212 /* "Blob index should be a number" */);
-        assert(blob instanceof BlobCore, 0x213 /* "Blob content should be of type blob" */);
-        const blobId = dictionary[idIndex];
+    for (const [idIndexNode, blobNode] of node.iteratePairs()) {
+        assertNumberInstance(
+            idIndexNode.value, idIndexNode.startIndex, idIndexNode.endIndex, "Blob index should be a number");
+        assertBlobCoreInstance(
+            blobNode.value, blobNode.startIndex, blobNode.endIndex, "Blob content should be of type blob");
+        const blobId = dictionary[idIndexNode.value];
         assert(blobId !== undefined, 0x214 /* "blob id should be present" */);
-        blobs.set(blobId, blob.arrayBuffer);
+        blobs.set(blobId, blobNode.value.arrayBuffer);
     }
     return blobs;
 }
@@ -101,16 +110,18 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
         commits: {},
         trees: {},
     };
-    for (const [pathIndex, child] of treeNode.iteratePairs()) {
-        assert(typeof pathIndex == "number", 0x215 /* "Tree index should be a number" */);
-        const path = dictionary[pathIndex];
+    for (const [pathIndexNode, childNode] of treeNode.iteratePairs()) {
+        assertNumberInstance(
+            pathIndexNode.value, pathIndexNode.startIndex, pathIndexNode.endIndex, "Tree index should be a number");
+        const path = dictionary[pathIndexNode.value];
         assert(path !== undefined, 0x216 /* "Path should not be undefined" */);
 
-        if (child instanceof NodeCore) {
-            tree.trees[path] = readTreeSection(child, dictionary);
+        if (childNode.value instanceof NodeCore) {
+            tree.trees[path] = readTreeSection(childNode.value, dictionary);
         } else {
-            assert(typeof child == "number", 0x217 /* "Should be number to look in dictionary" */);
-            const id = dictionary[child];
+            assertNumberInstance(
+                childNode.value, childNode.startIndex, childNode.endIndex, "Should be number to look in dictionary");
+            const id = dictionary[childNode.value];
             assert(id !== undefined, 0x218 /* "Id is out of range" */);
             tree.blobs[path] = id;
         }
@@ -125,11 +136,10 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
  */
 export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotContents {
     const builder = TreeBuilder.load(buffer);
-    let ops: ISequencedDocumentMessage[] | undefined;
 
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
-    assert(root.length >= 4 && root.length <= 5, 0x21a /* "4 or 5 sections should be there" */);
+    assert(root.length === 5, "5 sections should be there");
 
     const header = readAndValidateHeaderSection(root.getNode(0));
 
@@ -139,14 +149,12 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     snapshotTree.id = header.SnapshotId;
     const blobs = readBlobSection(root.getNode(3), dictionary);
 
-    if (root.length === 5) {
-        ops = readOpsSection(root.getNode(4));
-    }
+    const ops: ISequencedDocumentMessage[] = readOpsSection(root.getNode(4));
 
     return {
         snapshotTree,
         blobs,
-        ops: ops ?? [],
+        ops,
         sequenceNumber: header.SnapshotSequenceNumber,
     };
 }

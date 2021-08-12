@@ -4,12 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { ReadBuffer } from "../ReadBufferUtils";
 import { TreeBuilderSerializer } from "../WriteBufferUtils";
 import {
     TreeBuilder,
     BlobCore,
     NodeCore,
     NodeTypes,
+    BlobShallowCopy,
+    assertBlobCoreInstance,
+    assertNodeCoreInstance,
+    assertNumberInstance,
 } from "../zipItDataRepresentationUtils";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes) {
@@ -17,7 +22,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
         assert(node2 instanceof NodeCore, "Node 2 should be a NodeCore type");
         assert.strictEqual(node1.length, node2.length, "Node lengths are not same");
         for (let i = 0; i < node1.length; i++) {
-            compareNodes(node1.get(i), node2.get(i));
+            compareNodes(node1.get(i).value, node2.get(i).value);
         }
     } else if (node1 instanceof BlobCore) {
         assert(node2 instanceof BlobCore, "Node2 should also be a blob");
@@ -138,5 +143,53 @@ describe("Tree Representation tests", () => {
         const node2 = node.addNode();
         node2.addString("fourth");
         validate(2 + 5 + 2 + 2 + 6 + 2 + 5 + 2 + 2 + 6);
+    });
+
+    it("blob instance test", async () => {
+        const blobNode = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        assertBlobCoreInstance(blobNode, undefined, undefined);
+
+        let success = true;
+        const nonBlobNode: NodeTypes = 5;
+        try {
+            assertBlobCoreInstance(nonBlobNode, 0, 1);
+        } catch (err) {
+            success = false;
+            assert(err.startIndex === 0, "Start index should match");
+            assert(err.endIndex === 1, "End index should match");
+        }
+        assert(!success, "Error should have occured");
+    });
+
+    it("node instance test", async () => {
+        const node = new NodeCore();
+        assertNodeCoreInstance(node, undefined, undefined);
+
+        let success = true;
+        const nonNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        try {
+            assertNodeCoreInstance(nonNode, 0, 1);
+        } catch (err) {
+            success = false;
+            assert(err.startIndex === 0, "Start index should match");
+            assert(err.endIndex === 1, "End index should match");
+        }
+        assert(!success, "Error should have occured");
+    });
+
+    it("number instance test", async () => {
+        const numNode = 5;
+        assertNumberInstance(numNode, undefined, undefined);
+
+        let success = true;
+        const nonNumberNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        try {
+            assertNumberInstance(nonNumberNode, 0, 1);
+        } catch (err) {
+            success = false;
+            assert(err.startIndex === 0, "Start index should match");
+            assert(err.endIndex === 1, "End index should match");
+        }
+        assert(!success, "Error should have occured");
     });
 });
