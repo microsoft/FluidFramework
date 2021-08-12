@@ -9,7 +9,6 @@ import {
     LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { CreateContainerError } from "@fluidframework/container-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IFluidResolvedUrl,
@@ -20,7 +19,7 @@ import {
 import {
     createOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
-import { ChildLogger, isILoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,
     LocalCodeLoader,
@@ -103,8 +102,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 
     it("Check double conversion of network error", async () => {
         const networkError = createOdspNetworkError("Test Error", 400);
-        const error1 = CreateContainerError(networkError);
-        const error2 = CreateContainerError(error1);
+        const error1 = normalizeError(networkError);
+        const error2 = normalizeError(error1);
         assertCustomPropertySupport(error1);
         assertCustomPropertySupport(error2);
         assert.deepEqual(networkError, error1, "networkError, error1 should be the same!");
