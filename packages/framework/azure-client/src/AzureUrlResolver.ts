@@ -7,11 +7,11 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
-// Implementation of a URL resolver to resolve documents stored using the FRS service
+// Implementation of a URL resolver to resolve documents stored using the Azure Relay Service
 // based off of the orderer and storage URLs provide. The token provider here can be a
 // InsecureTokenProvider for basic scenarios or more robust, secure providers that fulfill the
 // ITokenProvider interface
-export class FrsUrlResolver implements IUrlResolver {
+export class AzureUrlResolver implements IUrlResolver {
     constructor(
         private readonly tenantId: string,
         private readonly orderer: string,

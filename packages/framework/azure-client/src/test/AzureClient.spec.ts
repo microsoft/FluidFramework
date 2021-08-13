@@ -7,19 +7,19 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { SharedMap, ContainerSchema } from "fluid-framework";
 import {
-    FrsContainerConfig,
+    AzureContainerConfig,
 } from "..";
-import { createFrsClient } from "./FrsClientFactory";
+import { createAzureClient } from "./AzureClientFactory";
 
-describe("FrsClient", () => {
-    const client = createFrsClient();
+describe("AzureClient", () => {
+    const client = createAzureClient();
     let documentId: string;
     beforeEach(() => {
         documentId = uuid();
     });
 
     it("can create FRS container successfully", async () => {
-        const containerConfig: FrsContainerConfig = { id: documentId };
+        const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
             name: documentId,
             initialObjects: {
