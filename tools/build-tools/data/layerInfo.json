@@ -185,7 +185,7 @@
                     "@fluid-internal/client-api",
                     "@fluid-experimental/fluid-framework",
                     "@fluid-experimental/data-objects",
-                    "@fluid-experimental/fluid-static"
+                    "@fluidframework/fluid-static"
                 ],
                 "dirs": [
                     "experimental/framework/",

@@ -27,7 +27,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-experimental/fluid-static": "^0.46.0",
+    "@fluidframework/fluid-static": "^0.46.0",
     "@fluidframework/aqueduct": "^0.46.0",
     "@fluidframework/map": "^0.46.0",
     "@fluidframework/merge-tree": "^0.46.0",
