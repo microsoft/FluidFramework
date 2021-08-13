@@ -9,7 +9,8 @@ import { strict as assert } from "assert";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { CreateProcessingError, DataProcessingError, GenericError } from "../error";
+import { MockLogger } from "@fluidframework/test-runtime-utils";
+import { CreateProcessingError, DataProcessingError, GenericError, wrapError, wrapErrorAndLog } from "../error";
 
 // NOTE about this (temporary) alias:
 // CreateContainerError has been removed, with most call sites now using normalizeError.
@@ -66,15 +67,16 @@ describe("Errors", () => {
 
             assert((testError as GenericError).stack === originalError.stack);
         });
-        it("Should not preserve existing telemetry props if not fully valid", () => {
+        it("Should add errorType but drop telemetry props, as a new object", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" });
             const testError = CreateContainerErrorViaNormalize(loggingError);
 
             assert(testError.errorType === ContainerErrorType.genericError);
             assert(isILoggingError(testError));
-            assert(testError.getTelemetryProperties().foo !== "bar");
+            assert(testError.getTelemetryProperties().foo === undefined, "telemetryProps shouldn't be copied when wrapping");
             assert(testError as any !== loggingError);
         });
+
         it("Should preserve telemetry props and existing errorType, and return same object", () => {
             const loggingError = new LoggingError("hello", { foo: "bar" }) as LoggingError & { errorType: string };
             loggingError.errorType = "someErrorType";
@@ -95,7 +97,30 @@ describe("Errors", () => {
             assert.deepEqual(error2.message, err.message, "Message text should not be lost!!");
         });
     });
-
+    describe("wrapError", () => {
+        it("Copy message and stack", () => {
+            const innerError = new LoggingError("hello");
+            innerError.stack = "extra special stack";
+            const newError = wrapError(innerError, (message) => new LoggingError(message));
+            assert.equal(newError.message, innerError.message, "messages should match");
+            assert.equal(newError.stack, innerError.stack, "stacks should match");
+        });
+        it("Include innerErrorInstanceId in telemetry props", () => {
+            const innerError = new LoggingError("hello");
+            const newError = wrapError(innerError, (message) => new LoggingError(message));
+            assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
+        });
+    });
+    describe("wrapErrorAndLog", () => {
+        const mockLogger = new MockLogger();
+        const innerError = new LoggingError("hello");
+        const newError = wrapErrorAndLog(innerError, (message) => new LoggingError(message), mockLogger);
+        assert(mockLogger.matchEvents([{
+            eventName: "WrapError",
+            wrappedByErrorInstanceId: newError.errorInstanceId,
+            error: "hello",
+         }]), "Expected the 'WrapError' event to be logged");
+});
     describe("DataProcessingError coercion via CreateProcessingError", () => {
         it("Should preserve the stack", () => {
             const originalError = new Error();
@@ -151,7 +176,7 @@ describe("Errors", () => {
             assert(coercedError.getTelemetryProperties().dataProcessingError === 1);
             assert(coercedError.getTelemetryProperties().untrustedOrigin === 1);
             assert(coercedError.message === "Inherited error message");
-            assert(coercedError.getTelemetryProperties().otherProperty === "Considered PII-free property", "telemetryProps not copied over by normalizeError");
+            assert(coercedError.getTelemetryProperties().otherProperty === undefined, "telemetryProps shouldn't be copied when wrapping");
         });
 
         it("Should not fail coercing malformed inputs", () => {
