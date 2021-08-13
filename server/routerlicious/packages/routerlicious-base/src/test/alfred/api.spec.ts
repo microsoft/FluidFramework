@@ -13,6 +13,7 @@ import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
+import { TestCache } from "@fluidframework/server-test-utils";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -73,6 +74,7 @@ describe("Routerlicious", () => {
                 appTenant1,
                 appTenant2,
             ];
+            const defaultSingleUseTokenCache = new TestCache();
             const scopes= [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]
             const tenantToken1 =`Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
             const tenantToken2 =`Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
@@ -87,6 +89,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
+                        defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
@@ -175,6 +178,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
+                        defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
@@ -239,6 +243,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
+                        defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,

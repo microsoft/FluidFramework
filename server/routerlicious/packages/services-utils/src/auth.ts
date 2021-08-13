@@ -100,17 +100,7 @@ function parseAuthorizationHeader(authorizationHeader: string): string | false {
 interface IVerifyTokenOptions {
     requireDocumentId: boolean;
     ensureSingleUseToken: boolean;
-    singleUseTokenCache: ICache;
-}
-
-class MemoryCache implements ICache {
-    private readonly map = new Map<string, string>();
-    public async get(key: string): Promise<string> {
-        return this.map.get(key) ?? "";
-    }
-    public async set(key: string, value: string): Promise<void> {
-        this.map.set(key, value);
-    }
+    singleUseTokenCache: ICache | undefined;
 }
 
 /**
@@ -123,7 +113,7 @@ export function verifyStorageToken(
     options: IVerifyTokenOptions = {
         requireDocumentId: true,
         ensureSingleUseToken: false,
-        singleUseTokenCache: new MemoryCache(),
+        singleUseTokenCache: undefined,
     }): RequestHandler {
     return async (request, res, next) => {
         const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
@@ -166,10 +156,10 @@ export function verifyStorageToken(
             // TODO: remove `as any` after #7065 is merged and released
             const singleUseKey = (claims as any).jti ?? token;
             // TODO: should we eat cache errors here or block flow?
-            if (await options.singleUseTokenCache.get(singleUseKey).catch(() => false)) {
+            if (await options.singleUseTokenCache?.get(singleUseKey).catch(() => false)) {
                 return res.status(403).send("Access token has already been used.");
             }
-            options.singleUseTokenCache.set(singleUseKey, "used").catch((error) => {});
+            options.singleUseTokenCache?.set(singleUseKey, "used").catch((error) => {});
         }
         next();
     };

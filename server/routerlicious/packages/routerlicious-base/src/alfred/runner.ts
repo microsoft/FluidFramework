@@ -5,6 +5,7 @@
 
 import { Deferred } from "@fluidframework/common-utils";
 import {
+    ICache,
     IClientManager,
     IDocumentStorage,
     IOrdererManager,
@@ -36,6 +37,7 @@ export class AlfredRunner implements IRunner {
         private readonly restThrottler: IThrottler,
         private readonly socketConnectThrottler: IThrottler,
         private readonly socketSubmitOpThrottler: IThrottler,
+        private readonly singleUseTokenCache: ICache,
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
@@ -53,6 +55,7 @@ export class AlfredRunner implements IRunner {
             this.config,
             this.tenantManager,
             this.restThrottler,
+            this.singleUseTokenCache,
             this.storage,
             this.appTenants,
             this.mongoManager,
