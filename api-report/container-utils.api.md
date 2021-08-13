@@ -8,6 +8,7 @@ import { IErrorBase } from '@fluidframework/container-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IGenericError } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
 import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
@@ -65,7 +66,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: any, messagePrefix: string, retryAfterSeconds: number): IThrottlingWarning;
+    static wrap(error: any, prefix: string, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
 }
 
 // @public
@@ -78,7 +79,10 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
 }
 
 // @public
-export function wrapError<T extends IWriteableLoggingError>(error: any, newErrorFn: (m: string) => T): T;
+export function wrapError<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
+
+// @public
+export function wrapErrorAndLog<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

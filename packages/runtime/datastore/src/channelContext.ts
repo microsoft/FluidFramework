@@ -7,9 +7,9 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-    IChannelSummarizeResult,
-    IContextSummarizeResult,
     IGarbageCollectionData,
+    ISummarizeResult,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
@@ -24,7 +24,7 @@ export interface IChannelContext {
 
     processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
 
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummarizeResult>;
 
     reSubmit(content: any, localOpMetadata: unknown): void;
 
@@ -72,7 +72,7 @@ export function summarizeChannel(
     channel: IChannel,
     fullTree: boolean = false,
     trackState: boolean = false,
-): IChannelSummarizeResult {
+): ISummaryTreeWithStats {
     const summarizeResult = channel.summarize(fullTree, trackState);
 
     // Add the channel attributes to the returned result.

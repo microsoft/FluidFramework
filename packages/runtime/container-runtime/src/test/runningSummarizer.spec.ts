@@ -168,7 +168,6 @@ describe("Runtime", () => {
                                     summarizedDataStoreCount: 0,
                                     unreferencedBlobSize: 0,
                                 },
-                                gcData: { gcNodes: {} },
                                 handle: "test-handle",
                                 clientSequenceNumber: lastClientSeq,
                             } as const;

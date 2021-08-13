@@ -80,7 +80,6 @@ import {
     NamedFluidDataStoreRegistryEntries,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
     channelsTreeName,
@@ -1685,7 +1684,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean,
         /** True to generate full GC data; defaults to false */
         fullGC?: boolean,
-    }): Promise<IChannelSummarizeResult> {
+    }): Promise<ISummaryTreeWithStats> {
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
         if (runGC) {
@@ -1696,7 +1695,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return summarizeResult as IChannelSummarizeResult;
+        return summarizeResult as ISummaryTreeWithStats;
     }
 
     /**
@@ -1771,7 +1770,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            let summarizeResult: IChannelSummarizeResult;
+            let summarizeResult: ISummaryTreeWithStats;
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
@@ -1783,7 +1782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } catch (error) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
-            const { summary: summaryTree, stats: partialStats, gcData } = summarizeResult;
+            const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
@@ -1803,7 +1802,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 referenceSequenceNumber: summaryRefSeqNum,
                 summaryTree,
                 summaryStats,
-                gcData,
                 generateDuration: trace.trace().duration,
             } as const;
 
