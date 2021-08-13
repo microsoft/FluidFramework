@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { DOProviderContainerRuntimeFactory } from "@fluid-experimental/fluid-static";
+import { DOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
 import { SharedMap } from "fluid-framework";
 

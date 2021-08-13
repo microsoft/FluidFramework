@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerSchema, SignalManager } from "@fluid-experimental/fluid-static";
+import { ContainerSchema, SignalManager } from "@fluidframework/fluid-static";
 import { TinyliciousClient, TinyliciousMember } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 

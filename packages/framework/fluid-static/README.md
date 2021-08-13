@@ -1,4 +1,4 @@
-# @fluid-experimental/fluid-static
+# @fluidframework/fluid-static
 
 The `fluid-static` package provides a simple and powerful way to consume collaborative Fluid data.
 

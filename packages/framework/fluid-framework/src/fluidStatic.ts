@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "@fluid-experimental/fluid-static";
+export * from "@fluidframework/fluid-static";

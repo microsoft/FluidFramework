@@ -184,8 +184,8 @@
                 "packages": [
                     "@fluid-internal/client-api",
                     "@fluid-experimental/data-objects",
-                    "@fluid-experimental/fluid-static",
-                    "fluid-framework"
+                    "fluid-framework",
+                    "@fluidframework/fluid-static"
                 ],
                 "dirs": [
                     "experimental/framework/",

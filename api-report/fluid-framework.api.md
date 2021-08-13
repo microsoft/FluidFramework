@@ -5,8 +5,8 @@
 ```ts
 
 
-export * from "@fluid-experimental/fluid-static";
 export * from "@fluidframework/aqueduct";
+export * from "@fluidframework/fluid-static";
 export * from "@fluidframework/map";
 export * from "@fluidframework/merge-tree";
 export * from "@fluidframework/sequence";
