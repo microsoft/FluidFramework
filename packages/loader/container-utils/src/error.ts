@@ -186,7 +186,7 @@ export function wrapError<T extends IWriteableLoggingError>(
 /** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
 export function wrapErrorAndLog<T extends IWriteableLoggingError>(
     innerError: unknown,
-    newErrorFn: (mmessage: string) => T,
+    newErrorFn: (message: string) => T,
     logger: ITelemetryLogger,
 ) {
     const newError = wrapError(innerError, newErrorFn);
