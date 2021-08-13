@@ -226,34 +226,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         // make sure we are still detached
         assert.strictEqual(container.attachState, AttachState.Detached);
 
-        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-        if (provider.driver.type !== "odsp") {
-            // only works in ODSP currently
-            return assert.rejects(attachP, /0x202/);
-        }
-        await attachP;
-    });
-
-    it("summary posted in attach() is used by new clients", async function() {
-        if (provider.driver.type !== "odsp") {
-            // only works in ODSP currently
-            return this.skip();
-        }
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-        const text = "this is more example text";
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-        const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer("just a blob", "utf-8"));
-
-        dataStore._root.set("my text", text);
-        dataStore._root.set("my blob", blobHandle);
-
-        await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-
-        const container2 = await provider.loadTestContainer(testContainerConfig);
-        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
-        assert.strictEqual(dataStore2._root.get("my text"), text);
+        await assert.rejects(
+            container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
+            /(0x206)|(0x202)|(0x204)/,
+        );
     });
 
     it("serialize/rehydrate container with blobs", async function() {

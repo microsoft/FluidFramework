@@ -3,15 +3,15 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
-The sections below will explain how to use `FrsClient` in your own application.
+The sections below will explain how to use `AzureClient` in your own application.
 
 {{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
 
 ## Connecting to the service
 
-To connect to an Azure Fluid Relay instance you first need to create an `FrsClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `frs-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
+To connect to an Azure Fluid Relay instance you first need to create an `AzureClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `azure-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
 
 {{< callout danger >}}
 The `InsecureTokenProvider` should only be used for development purposes because **using it exposes the tenant key secret in your client-side code bundle.** This must be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key.
@@ -26,10 +26,10 @@ const config = {
     storage: "https://myStorageUrl",
 }
 
-const client = new FrsClient(config);
+const client = new AzureClient(config);
 ```
 
-Now that you have an instance of `FrsClient`, you can start using it to create or load Fluid containers!
+Now that you have an instance of `AzureClient`, you can start using it to create or load Fluid containers!
 
 ### Token providers
 
@@ -66,7 +66,7 @@ Your Azure Function will generate the FRS token for the given user that is signe
 
 ## Managing containers
 
-The `FrsClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
+The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in the below two properties:
 
 * A *container config* that defines the ID of the container and an optional entry point for logging.
 * A *container schema* that defines the container data model.
@@ -79,9 +79,9 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const frsClient = new FrsClient(config);
-await frsClient.createContainer({ id: "_unique-id_" }, schema);
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const azureClient = new AzureClient(config);
+await azureClient.createContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session just needs to call `getContainer` with the same container `id`.
@@ -92,9 +92,9 @@ The container being fetched back will hold the `initialObjects` as defined in th
 
 ## Getting audience details
 
-Calls to `createContainer` and `getContainer` return an `FrsResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
+Calls to `createContainer` and `getContainer` return an `AzureResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
 
-The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `FrsClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the Fluid shared objects within the container can be reused when moving to using `FrsClient`.
+The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the Fluid shared objects within the container can be reused when moving to using `AzureClient`.
 
 The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 
@@ -131,14 +131,14 @@ const onAudienceChanged = () => {
     audience.on("membersChanged", onAudienceChanged);
 ```
 
-`audience` provides two functions that will return `FrsMember` objects that have a user ID and user name:
+`audience` provides two functions that will return `AzureMember` objects that have a user ID and user name:
 
 * `getMembers` returns a map of all the users connected to the container. These values will change anytime a member joins or leaves the container.
 * `getMyself` returns the current user on this client.
 
 `audience` also emits events for when the roster of members changes. `membersChanged` will fire for any roster changes, whereas `memberAdded` and `memberRemoved` will fire for their respective changes with the `clientId` and `member` values that have been modified. After any of these events fire, a new call to `getMembers` will return the updated member roster.
 
-A sample `FrsMember` object looks like the following:
+A sample `AzureMember` object looks like the following:
 
 ```json
 {
@@ -161,7 +161,7 @@ A sample `FrsMember` object looks like the following:
 }
 ```
 
-Alongside the user ID, name and addiitonal details, `FrsMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients. The values in the `additionalDetails` field match up to the values provided in the `FrsAzFunctionTokenProvider` token generation.
+Alongside the user ID, name and addiitonal details, `AzureMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients. The values in the `additionalDetails` field match up to the values provided in the `AzureFunctionTokenProvider` token generation.
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 

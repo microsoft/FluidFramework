@@ -94,7 +94,7 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 ## The token provider
 
-A token provider is responsible for creating and signing tokens that the `@fluid-experimental/frs-client` uses to make
+A token provider is responsible for creating and signing tokens that the `@fluidframework/azure-client` uses to make
 requests to the Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
 However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret and returns signed tokens. This token
 provider is useful for testing, but in production scenarios you must use a secure token provider.
