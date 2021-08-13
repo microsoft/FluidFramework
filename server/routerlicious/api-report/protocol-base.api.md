@@ -54,7 +54,7 @@ export class BlobTreeEntry {
 }
 
 // @public
-export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>): ISnapshotTreeEx;
+export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
 // @public
 export class CommitTreeEntry {

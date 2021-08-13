@@ -34,6 +34,9 @@
     "zookeeper": {
         "endpoint": "zookeeper:2181"
     },
+    "storage": {
+        "enableWholeSummaryUpload": false
+    },
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",

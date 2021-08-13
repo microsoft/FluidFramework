@@ -86,7 +86,7 @@ class DocumentStorageServiceCore implements IDocumentStorageService {
                 return response;
             },
         );
-        const tree = buildHierarchy(rawTree, this.blobsShaCache);
+        const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
         return tree;
     }
 
@@ -127,7 +127,7 @@ class DocumentStorageServiceCore implements IDocumentStorageService {
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? ""),
+            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
         );
         return summaryHandle;
     }

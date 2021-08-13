@@ -37,9 +37,12 @@ import {
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
+    ILambdaStartControlMessageContents,
     IQueuedMessage,
     INackMessagesControlMessageContents,
     IUpdateDSNControlMessageContents,
+    LambdaCloseType,
+    LambdaName,
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
@@ -47,11 +50,13 @@ import {
     LumberEventName,
     Lumberjack,
     BaseTelemetryProperties,
+    SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { setQueuedMessageProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
+import { createSessionMetric } from "./utils";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -129,6 +134,12 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
     // when set, messages will be nacked based on the provided info
     private nackMessages: INackMessagesControlMessageContents | undefined;
 
+    // Session level properties
+    private serviceSummaryGenerated: boolean = false;
+    private readonly isNewDocument: boolean = false;
+    private readonly successfullyStartedLambdas: LambdaName[] = [];
+    private readonly expectedSuccessfullyStartedLambdas: LambdaName[] = [LambdaName.Scribe];
+
     constructor(
         private readonly context: IContext,
         private readonly tenantId: string,
@@ -137,7 +148,9 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         checkpointManager: IDeliCheckpointManager,
         private readonly forwardProducer: IProducer,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration) {
+        private readonly serviceConfiguration: IServiceConfiguration,
+        private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
+        private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined) {
         super();
 
         // Instantiate existing clients
@@ -165,6 +178,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
         this.nackMessages = lastCheckpoint.nackMessages;
+        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas;
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
@@ -178,11 +192,17 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         if (this.serviceConfiguration.deli.opEvent.enable) {
             this.updateOpMaxTimeTimer();
         }
+
+        this.isNewDocument = this.sequenceNumber === 0;
+
+        if (serviceConfiguration.enableLumberMetrics) {
+            this.logSessionStartMetrics();
+        }
     }
 
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
-        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
             Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
 
         if (lumberJackMetric) {
@@ -306,11 +326,10 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             }
         }
 
-        lumberJackMetric?.success(`Message processed successfully 
-            at seq no ${checkpoint.deliState.sequenceNumber}`);
+        lumberJackMetric?.success(`Message processed successfully at seq no ${checkpoint.deliState.sequenceNumber}`);
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
         this.checkpointContext.close();
 
         this.clearActivityIdleTimer();
@@ -320,6 +339,66 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.clearOpMaxTimeTimer();
 
         this.removeAllListeners();
+
+        if (this.serviceConfiguration.enableLumberMetrics) {
+            this.logSessionEndMetrics(closeType);
+        }
+    }
+
+    private logSessionStartMetrics(failMetric: boolean = false) {
+        if (this.sessionStartMetric?.isCompleted()) {
+            this.sessionStartMetric = createSessionMetric(this.tenantId, this.documentId,
+                true, this.serviceConfiguration);
+        }
+
+        if (failMetric) {
+            this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]:
+                SessionState.LambdaStartFailed });
+            this.sessionStartMetric?.error("Lambda start failed");
+            return;
+        }
+
+        if (this.verifyRequiredLambdaStarted()) {
+            if (this.isNewDocument) {
+                    this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+                    this.sessionStartMetric?.success("Session started successfully");
+            } else {
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
+                this.sessionStartMetric?.success("Session resumed successfully");
+            }
+        } else {
+            this.context.log?.info("Not all required lambdas started");
+        }
+    }
+
+    private verifyRequiredLambdaStarted() {
+        return this.expectedSuccessfullyStartedLambdas.every((val) => this.successfullyStartedLambdas.includes(val));
+    }
+
+    private logSessionEndMetrics(closeType: LambdaCloseType) {
+        if (this.sessionMetric?.isCompleted()) {
+            this.sessionMetric = createSessionMetric(this.tenantId, this.documentId, false, this.serviceConfiguration);
+        }
+
+        this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
+        this.sessionMetric?.setProperties({ [CommonProperties.sequenceNumber]: this.sequenceNumber });
+        this.sessionMetric?.setProperties({ [CommonProperties.lastSummarySequenceNumber]: this.durableSequenceNumber });
+
+        if (closeType === LambdaCloseType.Error) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+            this.sessionMetric?.error("Session terminated due to error");
+        } else if (!closeType || closeType === LambdaCloseType.Stop || closeType === LambdaCloseType.Rebalance) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
+            this.sessionMetric?.success("Session paused");
+        } else if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+            this.sessionMetric?.error("No service summary before lambda close");
+        } else if (closeType === LambdaCloseType.ActivityTimeout) {
+            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
+            this.sessionMetric?.success("Session terminated due to inactivity");
+        } else {
+            this.sessionMetric?.error("Unknown session end state");
+        }
     }
 
     private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
@@ -551,6 +630,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     });
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
+                    this.serviceSummaryGenerated = !controlContents.isClientSummary;
                     const dsn = controlContents.durableSequenceNumber;
                     if (dsn >= this.durableSequenceNumber) {
                         // Deli cache is only cleared when no clients have joined since last noClient was sent to alfred
@@ -580,6 +660,16 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 case ControlMessageType.NackMessages: {
                     this.nackMessages = controlMessage.contents;
                     break;
+                }
+
+                case ControlMessageType.LambdaStartResult: {
+                    const controlContents = controlMessage.contents as ILambdaStartControlMessageContents;
+
+                    if (controlContents.success) {
+                        this.successfullyStartedLambdas.push(controlContents.lambdaName);
+                    }
+
+                    this.logSessionStartMetrics(!controlContents.success);
                 }
 
                 default:
@@ -868,6 +958,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             term: this.term,
             lastSentMSN: this.lastSentMSN,
             nackMessages: this.nackMessages ? { ...this.nackMessages } : undefined,
+            successfullyStartedLambdas: this.successfullyStartedLambdas,
         };
     }
 
