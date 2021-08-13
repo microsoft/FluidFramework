@@ -2,6 +2,7 @@
 - [FrsClient has been renamed to AzureClient and moved out of experimental state](#FrsClient-has-been-renamed-to-AzureClient-and-moved-out-of-experimental-state)
 - [documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext](#documentId-removed-from-IFluidDataStoreRuntime-and-IFluidDataStoreContext)
 - [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
+- [@fluid-experimental/fluid-static package name changed](#fluid-experimentalfluid-static-package-name-changed)
 
 ### FrsClient has been renamed to AzureClient and moved out of experimental state
 The `@fluid-experimental/frs-client` package for connecting with the Azure Fluid Relay service has been renamed to now be `@fluidframework/azure-client`. This also comes with the following name changes for the exported classes and interfaces from the package:
@@ -20,6 +21,9 @@ The `@fluid-experimental/frs-client` package for connecting with the Azure Fluid
 
 ### `@fluid-experimental/tinylicious-client` package name changed
 The `@fluid-experimental/tinylicious-client` package has been renamed to now be `@fluidframework/tinylicious-client`.
+
+### `@fluid-experimental/fluid-static` package name changed
+The `@fluid-experimental/fluid-static` package has been renamed to now be `@fluidframework/fluid-static`.
 
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
