@@ -46,17 +46,28 @@ export class CheckpointManager implements ICheckpointManager {
         const dbOps = pending.map((message) => ({ ...message,
             mongoTimestamp: new Date(message.operation.timestamp) }));
         if (dbOps.length > 0) {
-            await this.opCollection
-                .insertMany(dbOps, false)
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                .catch((error) => {
+            let retryCount = 0;
+            let success = false;
+            const wait = async (retryNumber) => new Promise((resolve) => setTimeout(resolve, 10 ** retryNumber));
+            do  {
+                try {
+                    await this.opCollection.insertMany(dbOps, false);
+                    success = true;
+                } catch (error) {
                     // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                    // All other errors result in a rejected promise.
-                    if (error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
+                    // All other errors result in a retry of max 3 times
+                    if (error.code === 11000) {
+                        break;
+                    } else {
+                        if (retryCount > 3) {
+                            // Needs to be a full rejection here
+                            return Promise.reject(error);
+                        }
+                        await wait(retryCount);
+                        retryCount++;
                     }
-                });
+                }
+            } while (!success);
         }
 
         // Write out the full state first that we require

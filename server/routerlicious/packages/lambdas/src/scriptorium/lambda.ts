@@ -100,17 +100,28 @@ export class ScriptoriumLambda implements IPartitionLambda {
             ...message,
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
-        return this.opCollection
-            .insertMany(dbOps, false)
-            .catch(async (error) => {
+        let retryCount = 0;
+        let success = false;
+        const wait = async (retryNumber) => new Promise((resolve) => setTimeout(resolve, 10 ** retryNumber));
+        do  {
+            try {
+                await this.opCollection.insertMany(dbOps, false);
+                success = true;
+            } catch (error) {
                 this.context.log?.error(`Error inserting operation in the database: ${inspect(error)}`);
-
                 // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                // All other errors result in a rejected promise.
-                if (error.code !== 11000) {
-                    // Needs to be a full rejection here
-                    return Promise.reject(error);
+                // All other errors result in a retry (max 3 times)
+                if (error.code === 11000) {
+                    break;
+                } else {
+                    if (retryCount > 3) {
+                        // Needs to be a full rejection here
+                        return Promise.reject(error);
+                    }
+                    await wait(retryCount);
+                    retryCount++;
                 }
-            });
+            }
+        } while (!success);
     }
 }
