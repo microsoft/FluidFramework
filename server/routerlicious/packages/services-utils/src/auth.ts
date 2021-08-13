@@ -13,7 +13,6 @@ import { NetworkError, validateTokenClaimsExpiration } from "@fluidframework/ser
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
 import type { RequestHandler } from "express";
 import type { Provider } from "nconf";
-import { Redis } from "ioredis";
 
 /**
  * Validates a JWT token to authorize routerlicious.
@@ -88,15 +87,6 @@ export function generateUser(): IUser {
     return randomUser;
 }
 
-function parseAuthorizationHeader(authorizationHeader: string): string | false {
-    const tokenRegex = /Basic (.+)/;
-    const tokenMatch = tokenRegex.exec(authorizationHeader);
-    if (!tokenMatch || !tokenMatch[1]) {
-        return false;
-    }
-    return tokenMatch[1];
-}
-
 interface IVerifyTokenOptions {
     requireDocumentId: boolean;
     ensureSingleUseToken: boolean;
@@ -122,10 +112,12 @@ export function verifyStorageToken(
         if (!authorizationHeader) {
             return res.status(403).send("Missing Authorization header.");
         }
-        const token = parseAuthorizationHeader(authorizationHeader);
-        if (!token) {
+        const tokenRegex = /Basic (.+)/;
+        const tokenMatch = tokenRegex.exec(authorizationHeader);
+        if (!tokenMatch || !tokenMatch[1]) {
             return res.status(403).send("Missing access token.");
         }
+        const token = tokenMatch[1];
         const tenantId = getParam(request.params, "tenantId");
         if (!tenantId) {
             return res.status(403).send("Missing tenantId in request.");
@@ -135,10 +127,11 @@ export function verifyStorageToken(
             return res.status(403).send("Missing documentId in request");
         }
         let claims: ITokenClaims;
+        let tokenLifetimeMs: number | undefined;
         try {
             claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
             if (isTokenExpiryEnabled) {
-                validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+                tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
             }
         } catch (error) {
             if (error instanceof NetworkError) {
@@ -159,14 +152,15 @@ export function verifyStorageToken(
             if (await options.singleUseTokenCache?.get(singleUseKey).catch(() => false)) {
                 return res.status(403).send("Access token has already been used.");
             }
-            options.singleUseTokenCache?.set(singleUseKey, "used").catch((error) => {});
+            options.singleUseTokenCache?.set(
+                singleUseKey,
+                "used",
+                tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
+            ).catch((error) => {});
         }
         next();
     };
 }
-
-export const verifySingleUseToken = (redisClient: Redis): RequestHandler => (request, response, next) => {
-};
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getParam(params: Params, key: string) {
