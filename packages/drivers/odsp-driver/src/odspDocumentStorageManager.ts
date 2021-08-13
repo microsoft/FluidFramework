@@ -605,11 +605,11 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         throw new Error("Not supported");
     }
 
-    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext, initialSummary = false): Promise<string> {
+    public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
         // Enable flushing only if we have single commit summary
-        if (".protocol" in summary.tree) {
+        if (".protocol" in summary.tree && !(context as any).initialSummary) {
             let retry = 0;
             for (;;) {
                 const result = await this.flushCallback();
@@ -642,7 +642,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
         const id = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
-            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context, initialSummary));
+            async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context));
         return id;
     }
 

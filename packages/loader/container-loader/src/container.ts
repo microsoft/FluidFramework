@@ -43,6 +43,7 @@ import {
     IDocumentStorageService,
     IFluidResolvedUrl,
     IResolvedUrl,
+    ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
     readAndParse,
@@ -890,11 +891,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._attachState = AttachState.Attaching;
                 this.context.notifyAttaching();
 
-                await (this.storageService as any).uploadSummaryWithContext(summary, {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                await this.storageService.uploadSummaryWithContext(summary, {
+                    initialSummary: true,
                     referenceSequenceNumber: 0,
                     ackHandle: undefined,
                     proposalHandle: undefined,
-                }, true);
+                } as ISummaryContext);
 
                 // assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
             }

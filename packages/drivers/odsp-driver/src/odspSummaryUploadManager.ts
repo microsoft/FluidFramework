@@ -57,7 +57,7 @@ export class OdspSummaryUploadManager {
     ) {
     }
 
-    public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext, initialSummary: boolean) {
+    public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
         // If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
         // then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
         if (context.proposalHandle !== this.lastSummaryProposalHandle) {
@@ -67,7 +67,12 @@ export class OdspSummaryUploadManager {
                 lastSummaryProposalHandle: this.lastSummaryProposalHandle,
             });
         }
-        const result = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree, initialSummary);
+        const result = await this.writeSummaryTreeCore(
+            context.ackHandle,
+            context.referenceSequenceNumber,
+            tree,
+            (context as any).initialSummary,
+        );
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);
@@ -92,6 +97,8 @@ export class OdspSummaryUploadManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
+            // for initial summary after empty file creation, send container
+            // payload so server will use it without a summary op
             type: initialSummary ? "container" : "channel",
         };
 
