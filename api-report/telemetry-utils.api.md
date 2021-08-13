@@ -59,6 +59,11 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 // @public (undocumented)
 export function generateStack(): string | undefined;
 
+// @public (undocumented)
+export const hasErrorInstanceId: (x: any) => x is {
+    errorInstanceId: string;
+};
+
 // @public
 export interface IFluidErrorAnnotations {
     errorCodeIfNone?: string;
@@ -66,12 +71,12 @@ export interface IFluidErrorAnnotations {
 }
 
 // @public
-export interface IFluidErrorBase extends Readonly<Partial<Error>>, IWriteableLoggingError {
-    // (undocumented)
+export interface IFluidErrorBase extends Readonly<Partial<Error>> {
+    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    readonly errorInstanceId: string;
     readonly errorType: string;
-    // (undocumented)
     readonly fluidErrorCode: string;
-    // (undocumented)
+    getTelemetryProperties(): ITelemetryProperties;
     readonly message: string;
 }
 
@@ -120,9 +125,11 @@ export interface IWriteableLoggingError {
 }
 
 // @public
-export class LoggingError extends Error implements ILoggingError {
+export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
+    // (undocumented)
+    readonly errorInstanceId: string;
     getTelemetryProperties(): ITelemetryProperties;
     }
 

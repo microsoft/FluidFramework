@@ -10,7 +10,6 @@ import { EventEmitter } from 'events';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IChannelSummarizeResult } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -34,7 +33,6 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidRunnable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -48,6 +46,7 @@ import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
@@ -190,7 +189,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         trackState?: boolean;
         runGC?: boolean;
         fullGC?: boolean;
-    }): Promise<IChannelSummarizeResult>;
+    }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)
@@ -347,7 +346,6 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 // @public
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
-    readonly gcData: IGarbageCollectionData;
     readonly generateDuration: number;
     // (undocumented)
     readonly stage: "generate";
@@ -728,7 +726,7 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
     // (undocumented)
     readonly logged: boolean;
     // (undocumented)
-    static wrap(error: any, logged?: boolean): SummarizingWarning;
+    static wrap(error: any, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
 }
 
 // @public

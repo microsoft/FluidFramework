@@ -38,6 +38,7 @@
     "@fluidframework/server-services-client": "^0.1028.1",
     "@fluidframework/server-services-core": "^0.1028.1",
     "@fluidframework/server-services-shared": "^0.1028.1",
+    "@fluidframework/server-services-telemetry": "^0.1028.1",
     "@fluidframework/server-services-utils": "^0.1028.1",
     "@fluidframework/server-test-utils": "^0.1028.1",
     "axios": "^0.21.1",
@@ -60,6 +61,7 @@
     "semver": "^6.3.0",
     "socket.io": "^2.4.1",
     "split": "^1.0.0",
+    "uuid": "^8.3.2",
     "winston": "^3.3.3"
   },
   "devDependencies": {
@@ -84,6 +86,7 @@
     "@types/semver": "^6.2.0",
     "@types/socket.io": "^2.1.4",
     "@types/split": "^0.3.28",
+    "@types/uuid": "^8.3.1",
     "@types/ws": "^6.0.4",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/eslint-plugin-tslint": "~2.16.0",

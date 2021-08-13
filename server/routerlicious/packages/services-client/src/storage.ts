@@ -5,7 +5,7 @@
 
 import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
-import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { IWholeSummaryPayload, IWholeSummaryPayloadType, IWriteSummaryResponse } from "./storageContracts";
 
 /**
  * Required params to create ref with config
@@ -112,8 +112,12 @@ export interface ISummaryUploadManager {
     /**
      * Writes summary tree to storage.
      * @param summaryTree Summary tree to write to storage
-     * @param parentHandle Parent summary acked handle (from summary ack)
-     * @returns Id of created tree.
+     * @param parentHandle Parent summary acked handle (if available from summary ack)
+     * @param summaryType type of summary being uploaded
+     * @returns Id of created tree as a string.
      */
-    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string): Promise<string>;
+    writeSummaryTree(
+        summaryTree: api.ISummaryTree,
+        parentHandle: string,
+        summaryType: IWholeSummaryPayloadType): Promise<string>;
 }
