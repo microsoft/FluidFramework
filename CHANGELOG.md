@@ -1,5 +1,23 @@
 # Change Log
 
+## 4.0.0
+
+* refactor: BREAKING CHANGE: clarify some of the intermediate stages of document to domain
+  * Associated pull request: [33172](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33172)
+  * Commit: [aed9773c4d88edc07eb4832311f71d9983fa8427](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/aed9773c4d88edc07eb4832311f71d9983fa8427)
+* refactor: LogViewer telemetry now logged from GenericSharedTree
+  * Associated pull request: [33131](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33131)
+  * Commit: [ae1184ac9f2cc883cfe6601d8b0e2f351a35ed0f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ae1184ac9f2cc883cfe6601d8b0e2f351a35ed0f)
+* test: Support Denormalized Summary Test Files
+  * Associated pull request: [32535](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32535)
+  * Commit: [412b57fe64a4d6e18ce75818580da063edc4b3fc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/412b57fe64a4d6e18ce75818580da063edc4b3fc)
+* fix: prevent superfluous edit in reconciliation path
+  * Associated pull request: [33126](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33126)
+  * Commit: [d8eca8fde02ab2d481c1b7c54742e709787ba725](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d8eca8fde02ab2d481c1b7c54742e709787ba725)
+* feat: Add SharedTree summary format 0.1.1 which allows optional currentViews
+  * Associated pull request: [32989](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32989)
+  * Commit: [f6aa3a2d0b929b1dc4a94c2bba34f9a34072ec51](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f6aa3a2d0b929b1dc4a94c2bba34f9a34072ec51)
+
 ## 3.9.1
 
 * build: Update Dependencies & Refresh package-lock Files
