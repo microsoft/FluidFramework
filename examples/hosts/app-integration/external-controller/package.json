@@ -22,7 +22,7 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "start": "webpack-dev-server",
-    "start:frs": "webpack-dev-server --define process.env.FLUID_CLIENT='\"frs\"'",
+    "start:azure": "webpack-dev-server --define process.env.FLUID_CLIENT='\"azure\"'",
     "start:test": "webpack-dev-server --config webpack.test.js",
     "test": "npm run test:jest",
     "test:jest": "jest",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@fluid-experimental/fluid-framework": "^0.46.0",
-    "@fluid-experimental/frs-client": "^0.46.0",
+    "@fluidframework/azure-client": "^0.46.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/server-services-client": "^0.1029.0-0",

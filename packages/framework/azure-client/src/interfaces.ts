@@ -11,12 +11,12 @@ import {
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
-export interface FrsContainerConfig {
+export interface AzureContainerConfig {
     id: string;
     logger?: ITelemetryBaseLogger;
 }
 
-export interface FrsConnectionConfig {
+export interface AzureConnectionConfig {
     tenantId: "local" | string;
     orderer: string;
     storage: string;
@@ -24,32 +24,32 @@ export interface FrsConnectionConfig {
 }
 
 /**
- * FrsContainerServices is returned by the FrsClient alongside a FluidContainer.
- * It holds the functionality specifically tied to the Frs service, and how the data stored in
+ * AzureContainerServices is returned by the AzureClient alongside a FluidContainer.
+ * It holds the functionality specifically tied to the Azure Fluid Relay service (FRS), and how the data stored in
  * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,
  * will not be included here but rather on the FluidContainer class itself.
  */
-export interface FrsContainerServices {
+export interface AzureContainerServices {
     /**
      * Provides an object that can be used to get the users that are present in this Fluid session and
      * listeners for when the roster has any changes from users joining/leaving the session
      */
-    audience: IFrsAudience;
+    audience: IAzureAudience;
 }
 
 /**
- * Since Frs provides user names for all of its members, we extend the IMember interface to include
- * this service-specific value. It will be returned for all audience members connected to Frs.
+ * Since Azure provides user names for all of its members, we extend the IMember interface to include
+ * this service-specific value. It will be returned for all audience members connected to Azure.
  */
-export interface FrsMember<T = any> extends IMember {
+export interface AzureMember<T = any> extends IMember {
     userName: string;
     additionalDetails?: T;
 }
 
-export interface FrsResources {
+export interface AzureResources {
     fluidContainer: FluidContainer;
-    containerServices: FrsContainerServices;
+    containerServices: AzureContainerServices;
 }
 
-export type IFrsAudience = IServiceAudience<FrsMember>;
+export type IAzureAudience = IServiceAudience<AzureMember>;
