@@ -33,11 +33,7 @@
   },
   "dependencies": {
     "@fluid-experimental/fluid-framework": "^0.46.0",
-<<<<<<< HEAD
     "@fluidframework/fluid-static": "^0.46.0",
-=======
-    "@fluid-experimental/fluid-static": "^0.46.0",
->>>>>>> 749906d963d1da8a55d22701b49c542a24dbaf76
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.39.8",
