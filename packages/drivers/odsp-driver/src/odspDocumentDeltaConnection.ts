@@ -439,7 +439,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                         duration: performance.now() - data.start,
                         length: messages.length,
                     });
-                    this.socket.emit("op", this.documentId, messages);
+                    this.emit("op", this.documentId, messages);
                 }
             }
         });
