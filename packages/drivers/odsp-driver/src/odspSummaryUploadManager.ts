@@ -71,7 +71,6 @@ export class OdspSummaryUploadManager {
             context.ackHandle,
             context.referenceSequenceNumber,
             tree,
-            (context as any).initialSummary,
         );
         const id = result ? result.id : undefined;
         if (!result || !id) {
@@ -85,7 +84,6 @@ export class OdspSummaryUploadManager {
         parentHandle: string | undefined,
         referenceSequenceNumber: number,
         tree: api.ISummaryTree,
-        initialSummary: boolean,
     ): Promise<IWriteSummaryResponse> {
         const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
             parentHandle,
@@ -97,9 +95,9 @@ export class OdspSummaryUploadManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
-            // for initial summary after empty file creation, send container
-            // payload so server will use it without a summary op
-            type: initialSummary ? "container" : "channel",
+            // no ack handle implies this is initial summary after empty file creation.
+            // send container payload so server will use it without a summary op
+            type: !parentHandle ? "container" : "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {

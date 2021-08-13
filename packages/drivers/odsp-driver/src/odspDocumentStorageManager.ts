@@ -608,8 +608,8 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
-        // Enable flushing only if we have single commit summary
-        if (".protocol" in summary.tree && !(context as any).initialSummary) {
+        // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
+        if (".protocol" in summary.tree && context.ackHandle) {
             let retry = 0;
             for (;;) {
                 const result = await this.flushCallback();
