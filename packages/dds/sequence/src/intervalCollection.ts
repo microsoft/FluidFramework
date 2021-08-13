@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { IEvent } from "@fluidframework/common-definitions";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
@@ -852,11 +852,12 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     }
 }
 
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends ISharedObjectEvents {
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "addInterval" | "deleteInterval",
-        listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void);
+        listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
     (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: MergeTree.PropertySet) => void);
 }
+
 export class IntervalCollection<TInterval extends ISerializableInterval>
     extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     private savedSerializedIntervals?: ISerializedInterval[];
