@@ -319,4 +319,10 @@ export interface ISummaryContext {
     readonly ackHandle: string | undefined;
 
     readonly referenceSequenceNumber: number;
+
+    /**
+     * Indicates that this is the first summary for a previously created empty file.
+     * The server should use this as the first summary for the file without any corresponding summary op.
+     */
+    readonly initialSummary: boolean;
 }
