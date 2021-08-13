@@ -623,7 +623,12 @@ describe("Data Store Context Tests", () => {
                     createSummarizerNodeFn,
                 );
 
-                // Update used routes before calling summarize. This is a requirement for GC.
+                // Since GC is enabled, GC must run before summarize. Get the GC data and update used routes to
+                // emulate the GC process.
+                const gcData = await remotedDataStoreContext.getGCData();
+                assert.deepStrictEqual(gcData, emptyGCData, "GC data from getGCData should be empty.");
+                // Update used routes to the same as in initial GC details. This will ensure that the used state
+                // matches the initial used state.
                 remotedDataStoreContext.updateUsedRoutes([""]);
 
                 // The data in the store has not changed since last summary and the reference used routes (from initial

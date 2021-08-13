@@ -169,6 +169,13 @@ export class OdspDocumentService implements IDocumentService {
                 this.cache,
                 this.hostPolicy,
                 this.epochTracker,
+                // flushCallback
+                async () => {
+                    if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
+                        return this.currentConnection.flush();
+                    }
+                    throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+                },
             );
         }
 

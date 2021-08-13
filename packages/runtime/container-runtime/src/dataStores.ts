@@ -17,7 +17,6 @@ import {
     CreateChildSummarizerNodeParam,
     CreateSummarizerNodeSource,
     IAttachMessage,
-    IChannelSummarizeResult,
     IEnvelope,
     IFluidDataStoreChannel,
     IFluidDataStoreContextDetached,
@@ -374,8 +373,7 @@ export class DataStores implements IDisposable {
         return this.contexts.size;
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean): Promise<IChannelSummarizeResult> {
-        const gcDataBuilder = new GCDataBuilder();
+    public async summarize(fullTree: boolean, trackState: boolean): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each store and ask it to snapshot
@@ -388,20 +386,9 @@ export class DataStores implements IDisposable {
             }).map(async ([contextId, context]) => {
                 const contextSummary = await context.summarize(fullTree, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
-
-                if (contextSummary.gcData !== undefined) {
-                    // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node to
-                    // be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                }
             }));
 
-        // Get the outbound routes and add a GC node for this channel.
-        gcDataBuilder.addNode("/", await this.getOutboundRoutes());
-        return {
-            ...summaryBuilder.getSummaryTree(),
-            gcData: gcDataBuilder.getGCData(),
-        };
+        return summaryBuilder.getSummaryTree();
     }
 
     public createSummary(): ISummaryTreeWithStats {

@@ -32,6 +32,10 @@ export enum QueuedMessageProperties {
 }
 
 export enum CommonProperties {
+    // Session properties
+    sessionState = "sessionState",
+    sessionEndReason = "sessionEndReason",
+
     // Post checkpoint properties
     clientCount = "clientCount",
     minSequenceNumber = "minSequenceNumber",
@@ -47,6 +51,23 @@ export enum CommonProperties {
     // Miscellaneous properties
     restart = "restart",
     telemetryGroupName = "telemetryGroupName",
+}
+
+export enum SessionState {
+    // State set when the document lambdas are up and first op for the document is ticketed
+    started = "started",
+
+    // Resumed existing session
+    resumed = "resumed",
+
+    // State set when a kafka rebalance is triggered or the node process exits
+    paused = "paused",
+
+    // State set when the session ends
+    end = "end",
+
+    // State set when a lambda could not start successfully
+    LambdaStartFailed = "lambdaStartFailed",
 }
 
 // Implementations of ILumberjackEngine are used by Lumberjack and Lumber

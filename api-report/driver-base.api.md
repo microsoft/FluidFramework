@@ -48,6 +48,8 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     // (undocumented)
     protected earlySignalHandler: (msg: ISignalMessage) => void;
     // (undocumented)
+    static readonly eventsAlwaysForwarded: string[];
+    // (undocumented)
     static readonly eventsToForward: string[];
     get existing(): boolean;
     // (undocumented)

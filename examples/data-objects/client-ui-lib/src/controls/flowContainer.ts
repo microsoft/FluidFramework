@@ -80,8 +80,6 @@ export class FlowContainer extends ui.Component {
             this.initSpellcheck(value);
         });
 
-        this.status.addButton("Versions", `/sharedText/${this.collabDocument.id}/commits`, false);
-
         // Add flowView to the panel
         this.layerPanel.addChild(this.flowView);
 

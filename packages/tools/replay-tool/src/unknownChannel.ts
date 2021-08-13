@@ -16,7 +16,7 @@ import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol
 import {
     IFluidDataStoreContext,
     IGarbageCollectionData,
-    IChannelSummarizeResult,
+    ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 
 class UnknownChannel implements IChannel {
@@ -42,9 +42,8 @@ class UnknownChannel implements IChannel {
         throw new Error("not implemented");
     }
 
-    public summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult {
+    public summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats {
         return {
-            gcData: { gcNodes: { "/": [] } },
             stats: {
                 treeNodeCount: 1,
                 blobNodeCount: 0,

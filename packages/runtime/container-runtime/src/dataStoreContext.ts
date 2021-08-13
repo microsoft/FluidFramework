@@ -45,7 +45,6 @@ import {
     FluidDataStoreRegistryEntry,
     gcBlobKey,
     IAttachMessage,
-    IContextSummarizeResult,
     IFluidDataStoreChannel,
     IFluidDataStoreContext,
     IFluidDataStoreContextDetached,
@@ -56,6 +55,7 @@ import {
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
+    ISummarizeResult,
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
@@ -124,10 +124,6 @@ interface FluidDataStoreMessage {
 export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements
     IFluidDataStoreContext,
     IDisposable {
-    public get documentId(): string {
-        return this._containerRuntime.id;
-    }
-
     public get packagePath(): readonly string[] {
         assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
         return this.pkg;
@@ -395,7 +391,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
         return this.summarizerNode.summarize(fullTree, trackState);
     }
 

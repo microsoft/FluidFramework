@@ -38,6 +38,7 @@
     "@fluidframework/server-services-client": "^0.1028.1",
     "@fluidframework/server-services-core": "^0.1028.1",
     "@fluidframework/server-services-shared": "^0.1028.1",
+    "@fluidframework/server-services-telemetry": "^0.1028.1",
     "@fluidframework/server-services-utils": "^0.1028.1",
     "@fluidframework/server-test-utils": "^0.1028.1",
     "axios": "^0.21.1",
