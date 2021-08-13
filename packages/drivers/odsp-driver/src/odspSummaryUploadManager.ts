@@ -93,7 +93,7 @@ export class OdspSummaryUploadManager {
             sequenceNumber: referenceSequenceNumber,
             // no ack handle implies this is initial summary after empty file creation.
             // send container payload so server will use it without a summary op
-            type: !parentHandle ? "container" : "channel",
+            type: parentHandle === undefined ? "container" : "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {

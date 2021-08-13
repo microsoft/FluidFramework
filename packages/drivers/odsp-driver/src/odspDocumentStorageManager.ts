@@ -609,7 +609,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         this.checkSnapshotUrl();
 
         // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
-        if (".protocol" in summary.tree && context.ackHandle) {
+        if (".protocol" in summary.tree && context.ackHandle !== undefined) {
             let retry = 0;
             for (;;) {
                 const result = await this.flushCallback();
