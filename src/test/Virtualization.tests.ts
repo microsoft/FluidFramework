@@ -4,7 +4,8 @@
  */
 
 import { expect } from 'chai';
-import { TestObjectProvider } from '@fluidframework/test-utils';
+// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
+import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { EditHandle, EditLog } from '../EditLog';
 import { Edit, EditWithoutId, newEdit, SharedTreeSummary } from '../generic';
 import { SharedTree, setTrait, Change } from '../default-edits';

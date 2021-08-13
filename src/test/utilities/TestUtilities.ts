@@ -18,7 +18,8 @@ import {
 	TestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
-} from '@fluidframework/test-utils';
+	// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
+} from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';

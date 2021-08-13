@@ -6,7 +6,8 @@
 import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { assert, expect } from 'chai';
-import { TestObjectProvider } from '@fluidframework/test-utils';
+// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
+import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import {
 	Change,
 	noHistorySummarizer,
