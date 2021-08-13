@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/execution-context-loader";
-export const pkgVersion = "0.45.2";
+export const pkgVersion = "0.45.3";
