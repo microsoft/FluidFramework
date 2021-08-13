@@ -15,7 +15,9 @@ import { createTestDriver, getProfile, initialize, safeExit } from "./utils";
 import { AppInsightsLogger } from "./appinsightslogger";
 
 interface ITestUserConfig {
-    [userName: string]: string
+    credentials: Record<string, string>;
+    rampup: number;
+    docUrl: string;
 }
 
 async function getTestUsers() {
@@ -87,12 +89,12 @@ async function orchestratorProcess(
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
 
-    const userNames = Object.keys(profile.testUsers);
+    const userNames = Object.keys(profile.testUsers.credentials);
 
     {
         const userIndex = Math.floor(Math.random() * userNames.length);
         const userName = userNames[userIndex];
-        const password = profile.testUsers[userName];
+        const password = profile.testUsers.credentials[userName];
         process.env.login__odsp__test__accounts = createLoginEnv(userName, password);
     }
 
@@ -101,11 +103,16 @@ async function orchestratorProcess(
         seed,
         undefined,
         args.browserAuth);
-
-    // Create a new file if a testId wasn't provided
-    const url = args.testId !== undefined
+    let url = "";
+    if(profile.testUsers.docUrl !== undefined && profile.testUsers.docUrl) {
+        // if docUrl is found from config file then reuse this document
+        url = profile.testUsers.docUrl;
+    }else {
+        // Create a new file if a testId wasn't provided
+        url = args.testId !== undefined
         ? await testDriver.createContainerUrl(args.testId)
         : await initialize(testDriver, seed);
+    }
 
     telemetryClient.setCommonProperty("url", url);
 
@@ -162,7 +169,7 @@ async function orchestratorProcess(
             await new Promise<void>((resolve) => setTimeout(resolve, 5000 + Math.random() * 10000));
 
             const userName = userNames[(index + startIndex) % userNames.length];
-            const password: string = profile.testUsers[userName];
+            const password: string = profile.testUsers.credentials[userName];
 
             const homeDir = path.join(os.homedir(), "fluidStressTest", userName);
 

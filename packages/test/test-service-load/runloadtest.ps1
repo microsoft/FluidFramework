@@ -9,7 +9,10 @@ function RunLoadTest {
 		[Parameter(Mandatory = $false)]
         [string]$Namespace = 'odsp-perf-lg-fluid',
         [Parameter(Mandatory = $false)]
+        [string]$TenantDocsFilePath = $null,
+        [Parameter(Mandatory = $false)]
         [string]$TestUid = [guid]::NewGuid()
+        
     )
 
     if ( ( $NumOfDocs -gt 10 ) -and ( $Namespace -ne 'odsp-perf-lg-fluid' ) ) {
@@ -21,13 +24,13 @@ function RunLoadTest {
 
     $StorageAccountName = "fluidconfig"
 	$StorageAccountKey = $env:StorageAccountKey
-
+            
     $Profiles = Get-Content -Raw -Path .\testConfig.json | ConvertFrom-Json
     [int]$NumOfUsersPerDoc = $Profiles.profiles.$Profile.numClients
     Write-Host "NumOfDocs: $NumOfDocs, Profile: $Profile, NumOfUsersPerDoc: $NumOfUsersPerDoc"
 	kubectl config set-context --current --namespace=$Namespace | out-null
 	CreateInfra -NumOfPods $NumOfDocs -Namespace $Namespace -TestUid $TestUid -Profile $Profile -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
-	CreateAndUploadConfig -Profile $Profile -Namespace $Namespace -NumOfUsersPerDoc $NumOfUsersPerDoc -NumOfDocs $NumOfDocs -TestUid $TestUid -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+	CreateAndUploadConfig -Profile $Profile -Namespace $Namespace -NumOfUsersPerDoc $NumOfUsersPerDoc -NumOfDocs $NumOfDocs -TestUid $TestUid -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -TenantDocsFilePath $TenantDocsFilePath
 	Write-Output "Triggered LoadTest for TestUid: $TestUid"
 }
 
@@ -47,7 +50,7 @@ function CreateInfra{
         [string]$StorageAccountName,
 		[Parameter(Mandatory = $true)]
         [string]$StorageAccountKey
-    )
+        )
 
 	kubectl create namespace $Namespace
 
@@ -80,21 +83,46 @@ function CreateAndUploadConfig{
 		[Parameter(Mandatory = $true)]
         [string]$StorageAccountName,
 		[Parameter(Mandatory = $true)]
-        [string]$StorageAccountKey
+        [string]$StorageAccountKey,
+        [Parameter(Mandatory = $true)]
+        [string]$TenantDocsFilePath
     )
 
     $Tenants = (Get-Content -Raw -Path testTenantConfig.json | ConvertFrom-Json).tenants
+    $TenantDocs = $null
+    # case 1 : If TenantDocsFilePath is not provided then PODS need to create their own config file
+    # case 2 : If TenantDocsFilePath is provided
+    #   case a : If TenantDocsFilePath path exists.In that case, we read that file :
+    #       case a:  If we read file content and it doesn't have tenantDocUrls object then we throw error and return.
+    #       case b : Proceed ahead for populating url in config file. 
+    #   case b : If path doesn't exist then we throw error and exit.          
+    if($TenantDocsFilePath){
+        if((Test-Path $TenantDocsFilePath)){
+            $TenantDocs = (Get-Content -Raw -Path $TenantDocsFilePath | ConvertFrom-Json).tenantDocUrls
+            if(!$TenantDocs){
+                Write-Error "File content of $TenantDocsFilePath is corrupted.Exiting..."
+                return
+            }
+        }else{
+            Write-Error "$TenantDocsFilePath file does not exist.Exiting..."
+            return
+        }   
+    }     
     $TenantNames = $Tenants | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
     $TenantsCount = $TenantNames.Count
 	$Pods = $(kubectl get pods -n $Namespace --field-selector status.phase=Running -o json | ConvertFrom-Json).items
     [int]$PodsCount = $Pods.count
 
     if ( $PodsCount -ne $NumOfDocs ) {
-        Write-Error "Number of pods not equal to number of docs"
-        return
-     }
-
+       Write-Error "Number of pods not equal to number of docs"
+       return
+    }
     Write-Output "Starting pod's configuration creation at $(Get-Date)"
+    #Hast table is maintained for storing index of url per tenant which can be used next time
+    $TenantUrlIndexHt = [hashtable]::new()
+    for($i = 0; $i -lt $TenantNames.length; $i++){
+        $TenantUrlIndexHt[$TenantNames[$i]] = 0
+    } 
     $TempPath = "\tmp"
 	az storage directory create --account-key $StorageAccountKey  --account-name $StorageAccountName  --name $TestUid --share-name fluid-config-store
 	$PodConfigPath = (Join-Path -Path $TempPath -ChildPath $TestUid)
@@ -102,12 +130,30 @@ function CreateAndUploadConfig{
 	foreach ($i in 1..$PodsCount) {
 		$PodName = $Pods[$i - 1].metadata.name
         $TenantIndex = ($i-1) % $TenantsCount
-		$TenantId = $TenantNames[$TenantIndex]
-		$TenantContent = [PSCustomObject]@{
+        $TenantId = $TenantNames[$TenantIndex]
+        $DocUrlPath = $null
+        if($TenantDocs){
+            $TenantDocUrls = $TenantDocs.$TenantId
+            if($TenantDocUrls){
+                if ($TenantUrlIndexHt[$TenantId] -gt $TenantDocUrls.count-1) {
+                    #if there are not enough URLs remaining for the tenant, just exit then
+                    Write-Error "Sufficient number of doc urls for tenant:$TenantId are not provided.Exiting..."
+                    return                     
+                }
+                $DocUrlPath = $TenantDocUrls[$TenantUrlIndexHt[$TenantId]]
+                $TenantUrlIndexHt[$TenantId] = $TenantUrlIndexHt[$TenantId] + 1                
+            }else{
+                #Here, for that particular tenant, no Doc urls have been provided in the given file
+                Write-Error "No doc urls are provided for tenant:$TenantId.Exiting..."
+                return
+            }  
+        }
+        $TenantContent = [PSCustomObject]@{
             credentials = $Tenants.$TenantId
 		    rampup = $i
-        }
-		$LocalFile = (Join-Path -Path $PodConfigPath -ChildPath ($PodName + "_PodConfig.json"))
+            docUrl = $DocUrlPath #will be set as null if we want PODs to create url by their own
+        }        
+        $LocalFile = (Join-Path -Path $PodConfigPath -ChildPath ($PodName + "_PodConfig.json"))
 		$TenantContent | ConvertTo-Json | Out-File -Encoding ascii -FilePath $LocalFile
         Write-Output "Pod configuration created for PodNo:${i}, PodName:${PodName}`n"
     }
