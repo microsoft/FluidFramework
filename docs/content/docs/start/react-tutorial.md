@@ -38,11 +38,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     Run the following command to install the libraries.
 
     ```dotnetcli
-<<<<<<< HEAD
-    npm install @fluid-experimental/frs-client fluid-framework
-=======
-    npm install @fluidframework/azure-client @fluid-experimental/fluid-framework
->>>>>>> 0f6b1c09bc521905b74e54afed4abdc796ceb1aa
+    npm install @fluidframework/azure-client fluid-framework
     ```
 
 ## Code the project
