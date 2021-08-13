@@ -1,15 +1,13 @@
-# @fluid-experimental/tinylicious-client
+# @fluidframework/tinylicious-client
 
 The tinylicious-client package provides a simple and powerful way to consume collaborative Fluid data with the Tinylicious service.
-
-This package is marked as experimental and currently under development. The API surface is currently under going drastic braking changes with no guarantees on compatibility.
 
 ## Using tinylicious-client
 
 The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
 
 ```javascript
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient from "@fluidframework/tinylicious-client";
 ```
 
 ## Instantiating TinyliciousClient
@@ -19,7 +17,7 @@ Fluid requires a backing service to enable collaborative communication. The Tiny
 In the example below we are connecting to a locally running instance of our Tinylicious service running on port 7070 by filling out the optional `port` parameter in `TinyliciousConnectionConfig`.
 
 ```javascript
-import TinyliciousClient, { TinyliciousConnectionConfig } from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient, { TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
 
 const config: TinyliciousConnectionConfig = { port: 7070 };
 const tinyliciousClient = new TinyliciousClient(config);
@@ -36,7 +34,7 @@ Containers are created and identified by unique ids. Management and storage of t
 Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
 
 ```javascript
-import TinyliciousClient from "@fluid-experimental/tinylicious-client";
+import TinyliciousClient from "@fluidframework/tinylicious-client";
 
 const tinyliciousClient = new TinyliciousClient(config);
 await tinyliciousClient.createContainer( { id: "_unique-id_" }, /* schema */);

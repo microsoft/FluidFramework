@@ -154,7 +154,7 @@
                 "packages": [
                     "@fluidframework/azure-client",
                     "@fluid-experimental/get-container",
-                    "@fluid-experimental/tinylicious-client"                  
+                    "@fluidframework/tinylicious-client"
                 ],
                 "deps": [
                     "Framework",
@@ -162,7 +162,7 @@
                     "Routerlicious-Driver",
                     "Server-Libs",
                     "Server-Shared-Utils",
-                    "Test"                    
+                    "Test"
                 ]
             },
             "Runtime": {
