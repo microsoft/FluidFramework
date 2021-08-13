@@ -19,7 +19,7 @@ import {
     ISequencedDocumentMessage,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryStats } from "@fluidframework/runtime-definitions";
+import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
@@ -128,8 +128,6 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryTree: ISummaryTree;
     /** Stats for generated summary tree. */
     readonly summaryStats: IGeneratedSummaryStats;
-    /** Garbage collection data gathered while generating the summary. */
-    readonly gcData: IGarbageCollectionData;
     /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
 }

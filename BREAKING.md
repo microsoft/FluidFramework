@@ -1,6 +1,10 @@
 ## 0.46 Breaking changes
+- [documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext](#documentId-removed-from-IFluidDataStoreRuntime-and-IFluidDataStoreContext)
 - [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
 - [FlushMode default changed for ContainerRuntime](#FlushMode-default-changed-for-ContainerRuntime)
+
+### documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext
+- `documentId` property is removed from IFluidDataStoreRuntime and IFluidDataStoreContext. It is a document level concept and is no longer exposed from data store level.
 
 ### `FlushMode` enum values renamed
 `FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:

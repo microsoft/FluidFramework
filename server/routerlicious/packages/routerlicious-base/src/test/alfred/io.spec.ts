@@ -83,6 +83,7 @@ describe("Routerlicious", () => {
                     const testStorage = new services.DocumentStorage(
                         databaseManager,
                         testTenantManager,
+                        false,
                     );
                     const kafkaOrderer = new KafkaOrdererFactory(
                         producer,
@@ -325,6 +326,7 @@ describe("Routerlicious", () => {
             testStorage = new services.DocumentStorage(
                 databaseManager,
                 testTenantManager,
+                false,
             );
         });
 
