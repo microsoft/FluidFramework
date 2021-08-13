@@ -207,3 +207,19 @@ export interface IVersionedValueWithEpoch {
 }
 
 export const persistedCacheValueVersion = 3;
+
+export interface IGetOpsResponse {
+    nonce: string;
+    code: number;
+    /** Time in seconds. Currently never set by PUSH */
+    retryAfter?: number;
+    messages?: api.ISequencedDocumentMessage[];
+}
+
+export interface IFlushOpsResponse {
+    nonce: string;
+    code: number;
+    /** Time in seconds */
+    retryAfter?: number;
+    lastPersistedSequenceNumber?: number;
+}

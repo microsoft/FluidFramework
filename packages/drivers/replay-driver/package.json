@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/replay-driver",
-  "version": "0.45.0",
+  "version": "0.46.0",
   "description": "Document replay version of Socket.IO implementation",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -30,18 +30,16 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.0-0",
+    "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-definitions": "^0.39.6",
-    "@fluidframework/driver-utils": "^0.45.0",
+    "@fluidframework/driver-utils": "^0.46.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/telemetry-utils": "^0.45.0",
-    "debug": "^4.1.1"
+    "@fluidframework/telemetry-utils": "^0.46.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
-    "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
     "@types/node": "^12.19.0",

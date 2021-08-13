@@ -29,7 +29,6 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
-import { debug } from "./debug";
 import {
     IntervalCollection,
     SequenceInterval,
@@ -498,9 +497,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
         this.client.startOrUpdateCollaboration(this.runtime.clientId);
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         if (!this.intervalMapKernel.trySubmitMessage(content, localOpMetadata)) {

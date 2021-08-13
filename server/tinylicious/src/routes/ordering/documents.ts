@@ -5,6 +5,7 @@
 
 import { IDocumentStorage } from "@fluidframework/server-services-core";
 import { Router } from "express";
+import { v4 as uuid } from "uuid";
 import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage): Router {
@@ -29,7 +30,7 @@ export function create(storage: IDocumentStorage): Router {
     router.post("/:tenantId", (request, response, next) => {
         // Tenant and document
         const tenantId = getParam(request.params, "tenantId");
-        const id = request.body.id;
+        const id = request.body.id || uuid();
 
         // Summary information
         const summary = request.body.summary;

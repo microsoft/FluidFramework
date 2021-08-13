@@ -11,12 +11,47 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { ScheduleManager } from "../containerRuntime";
+import { IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
+import { MockDeltaManager, MockLogger, MockQuorum } from "@fluidframework/test-runtime-utils";
+import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
+        describe("ContainerRuntime", () => {
+            describe("orderSequentially", () => {
+                let containerRuntime: ContainerRuntime;
+                const mockContext: Partial<IContainerContext> = {
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorum(),
+                    logger: new MockLogger(),
+                };
+
+                beforeEach(async () => {
+                    containerRuntime = await ContainerRuntime.load(
+                        mockContext as IContainerContext,
+                        [],
+                        undefined, // requestHandler
+                        {
+                            summaryOptions: {
+                                generateSummaries: false,
+                            },
+                        },
+                    );
+                });
+
+                it("Can't call flush() inside orderSequentially's callback", () => {
+                    assert.throws(() => containerRuntime.orderSequentially(() => containerRuntime.flush()));
+                });
+
+                it("Can't call flush() inside orderSequentially's callback when nested", () => {
+                    assert.throws(
+                        () => containerRuntime.orderSequentially(
+                            () => containerRuntime.orderSequentially(
+                                () => containerRuntime.orderSequentially(
+                                    () => containerRuntime.flush()))));
+                });
+            });
+        });
         describe("ScheduleManager", () => {
             describe("Batch processing events", () => {
                 let batchBegin: number = 0;

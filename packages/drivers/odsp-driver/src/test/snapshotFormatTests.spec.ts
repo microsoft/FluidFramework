@@ -6,9 +6,8 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluidframework/common-utils";
-import { ISequencedDeltaOpMessage } from "../contracts";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { ISnapshotContents } from "../odspUtils";
@@ -72,10 +71,8 @@ const blobs = new Map<string, ArrayBuffer>(
     ],
 );
 
-const ops: ISequencedDeltaOpMessage[] = [
+const ops: ISequencedDocumentMessage[] = [
     {
-        sequenceNumber: 1,
-        op: {
         clientId: "X",
         clientSequenceNumber: -1,
         contents: null,
@@ -85,21 +82,17 @@ const ops: ISequencedDeltaOpMessage[] = [
         term: 1,
         timestamp: 1623883807452,
         type: "join",
-        },
     },
     {
+        clientId: "Y",
+        clientSequenceNumber: -1,
+        contents: null,
+        minimumSequenceNumber: 0,
+        referenceSequenceNumber: -1,
         sequenceNumber: 2,
-        op: {
-            clientId: "Y",
-            clientSequenceNumber: -1,
-            contents: null,
-            minimumSequenceNumber: 0,
-            referenceSequenceNumber: -1,
-            sequenceNumber: 2,
-            term: 1,
-            timestamp: 1623883811928,
-            type: "join",
-        },
+        term: 1,
+        timestamp: 1623883811928,
+        type: "join",
     },
 ];
 

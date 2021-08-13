@@ -73,7 +73,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
-        const { gcData, stats, summary } = await containerRuntime.summarize({
+        const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
             fullTree: false,
             trackState: false,
@@ -116,12 +116,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
         assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
             "Expected .attributes blob in default root DDS summary tree.");
-
-        // Validate GC nodes
-        const gcNodeIds = Object.keys(gcData.gcNodes);
-        assert(gcNodeIds.includes("/"), "Expected root gc node.");
-        assert(gcNodeIds.includes("/default"), "Expected default data store gc node.");
-        assert(gcNodeIds.includes("/default/root"), "Expected default root DDS gc node.");
     });
 
     it("Should generate summary tree with isolated channels disabled", async () => {
@@ -131,7 +125,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
         await provider.ensureSynchronized();
 
-        const { gcData, stats, summary } = await containerRuntime.summarize({
+        const { stats, summary } = await containerRuntime.summarize({
             runGC: false,
             fullTree: false,
             trackState: false,
@@ -170,11 +164,5 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
         assert(!defaultDdsNode.unreferenced, "Default root DDS should be referenced.");
         assert(defaultDdsNode.tree[".attributes"]?.type === SummaryType.Blob,
             "Expected .attributes blob in default root DDS summary tree.");
-
-        // Validate GC nodes
-        const gcNodeIds = Object.keys(gcData.gcNodes);
-        assert(gcNodeIds.includes("/"), "Expected root gc node.");
-        assert(gcNodeIds.includes("/default"), "Expected default data store gc node.");
-        assert(gcNodeIds.includes("/default/root"), "Expected default root DDS gc node.");
     });
 });

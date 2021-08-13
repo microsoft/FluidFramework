@@ -2,9 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import {
+    ISummaryHandle,
+    ISummaryTree as BaseSummaryTree,
+    SummaryObject,
+} from "@fluidframework/protocol-definitions";
+
+export type IWholeSummaryPayloadType = "container" | "channel";
 
 export interface IWholeSummaryPayload {
-    type: "container" | "channel";
+    type: IWholeSummaryPayloadType;
     message: string;
     sequenceNumber: number;
     entries: WholeSummaryTreeEntry[];
@@ -42,4 +49,15 @@ export interface IWholeSummaryBlob {
     type: "blob";
     content: string;
     encoding: "base64" | "utf-8";
+}
+
+export interface IEmbeddedSummaryHandle extends ISummaryHandle {
+    // Indicates that the handle belongs to the same version of summary
+    embedded: boolean;
+}
+
+export type ExtendedSummaryObject = SummaryObject | IEmbeddedSummaryHandle;
+
+export interface ISummaryTree extends BaseSummaryTree {
+    tree: { [path: string]: ExtendedSummaryObject };
 }

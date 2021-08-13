@@ -36,6 +36,19 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
+
+// Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
+function gatesBinaryFormatSnapshot() {
+    try {
+        if (typeof localStorage === "object" && localStorage !== null) {
+            if  (localStorage.binaryFormatSnapshot === "1") {
+                return true;
+            }
+        }
+    } catch (e) {}
+    return false;
+}
+
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
@@ -128,6 +141,7 @@ export class OdspDocumentService implements IDocumentService {
             });
 
         this.hostPolicy = hostPolicy;
+        this.hostPolicy.fetchBinarySnapshotFormat ??= gatesBinaryFormatSnapshot();
         if (this.odspResolvedUrl.summarizer) {
             this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
         }
@@ -155,6 +169,13 @@ export class OdspDocumentService implements IDocumentService {
                 this.cache,
                 this.hostPolicy,
                 this.epochTracker,
+                // flushCallback
+                async () => {
+                    if (this.currentConnection !== undefined && !this.currentConnection.disposed) {
+                        return this.currentConnection.flush();
+                    }
+                    throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+                },
             );
         }
 
@@ -178,9 +199,8 @@ export class OdspDocumentService implements IDocumentService {
         // batch size, please see issue #5211 for data around batch sizing
         const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
         const concurrency = this.hostPolicy.concurrentOpsBatches ?? 1;
-
         return new OdspDeltaStorageWithCache(
-            snapshotOps.map((op) => op.op),
+            snapshotOps,
             this.logger,
             batchSize,
             concurrency,

@@ -153,7 +153,7 @@ export class BlobManager {
             count = values.length;
             values.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
         }
-        this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
+        this.logger.sendTelemetryEvent({ eventName: "AttachmentBlobsLoaded", count });
     }
 
     public snapshot(): ITree {

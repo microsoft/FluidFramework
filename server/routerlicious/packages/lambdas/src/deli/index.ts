@@ -6,3 +6,4 @@
 export * from "./checkpointManager";
 export * from "./lambda";
 export * from "./lambdaFactory";
+export * from "./utils";

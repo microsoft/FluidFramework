@@ -245,7 +245,7 @@ export const after = (app: express.Application, server: WebpackDevServer, baseDi
      * http://localhost:8080/doc/<id>.
      */
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    app.get("/:id*", async (req, res) => {
+    app.get("/:id*", async (req: express.Request, res) => {
         // Ignore favicon.ico urls.
         if (req.url === "/favicon.ico") {
             res.end();

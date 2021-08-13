@@ -87,7 +87,7 @@ describe("Create New Utils Tests", () => {
         const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
         const driveId = "driveId";
         const itemId = "itemId";
-        const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
         const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
         const localCache = createUtLocalCache();
         // use null logger here as we expect errors

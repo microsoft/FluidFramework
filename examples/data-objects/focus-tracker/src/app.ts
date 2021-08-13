@@ -4,7 +4,7 @@
  */
 
 import { ContainerSchema, SignalManager } from "@fluid-experimental/fluid-static";
-import { TinyliciousClient, TinyliciousMember } from "@fluid-experimental/tinylicious-client";
+import { TinyliciousClient, TinyliciousMember } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 
 let createNew = false;
