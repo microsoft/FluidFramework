@@ -1,1 +1,0 @@
-{"version":3,"file":"FrsClient.spec.js","sourceRoot":"","sources":["../../src/test/FrsClient.spec.ts"],"names":[],"mappings":";AAAA;;;GAGG;AAEH,qDAAqD","sourcesContent":["/*!\n * Copyright (c) Microsoft Corporation and contributors. All rights reserved.\n * Licensed under the MIT License.\n */\n\n// TODO: Add tests here that mock a connection to FRS\n"]}
