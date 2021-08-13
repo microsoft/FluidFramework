@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/tinylicious-client",
+  "name": "@fluidframework/tinylicious-client",
   "version": "0.46.0",
   "description": "A tool to enable creation and loading of Fluid containers using the Tinylicious service",
   "homepage": "https://fluidframework.com",
