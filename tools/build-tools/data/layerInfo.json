@@ -183,9 +183,13 @@
             "Framework": {
                 "packages": [
                     "@fluid-internal/client-api",
-                    "@fluid-experimental/fluid-framework",
                     "@fluid-experimental/data-objects",
+<<<<<<< HEAD
                     "@fluidframework/fluid-static"
+=======
+                    "@fluid-experimental/fluid-static",
+                    "fluid-framework"
+>>>>>>> 9587a3ce1e12d15a92501a62bba6cf149623c643
                 ],
                 "dirs": [
                     "experimental/framework/",

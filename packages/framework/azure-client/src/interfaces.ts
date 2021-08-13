@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import {
     FluidContainer,
     IMember,
     IServiceAudience,
-} from "@fluid-experimental/fluid-framework";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+} from "fluid-framework";
 
 export interface AzureContainerConfig {
     id: string;

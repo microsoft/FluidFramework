@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedMap } from "@fluid-experimental/fluid-framework";
 import {
     AzureFunctionTokenProvider,
     AzureClient,
@@ -10,6 +9,7 @@ import {
     InsecureTokenProvider,
 } from "@fluidframework/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
+import { SharedMap } from "fluid-framework";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
