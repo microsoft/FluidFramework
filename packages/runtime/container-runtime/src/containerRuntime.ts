@@ -1189,7 +1189,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return root;
     }
 
-    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats, attaching?: boolean) {
+    private addContainerBlobsToSummary(summaryTree: ISummaryTreeWithStats) {
         if (this.shouldWriteMetadata) {
             addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(this.formMetadata()));
         }
@@ -1200,7 +1200,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
         addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 
-        const snapshot = this.blobManager.snapshot(attaching);
+        const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
@@ -1584,13 +1584,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.setAttachState(attachState);
     }
 
-    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+    public createSummary(): ISummaryTree {
         const summarizeResult = this.dataStores.createSummary();
         if (!this.disableIsolatedChannels) {
             // Wrap data store summaries in .channels subtree.
             wrapSummaryInChannelsTree(summarizeResult);
         }
-        this.addContainerBlobsToSummary(summarizeResult, !!blobRedirectTable);
+        this.addContainerBlobsToSummary(summarizeResult);
         return summarizeResult.summary;
     }
 

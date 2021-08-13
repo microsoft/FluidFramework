@@ -67,11 +67,7 @@ export class OdspSummaryUploadManager {
                 lastSummaryProposalHandle: this.lastSummaryProposalHandle,
             });
         }
-        const result = await this.writeSummaryTreeCore(
-            context.ackHandle,
-            context.referenceSequenceNumber,
-            tree,
-        );
+        const result = await this.writeSummaryTreeCore(context.ackHandle, context.referenceSequenceNumber, tree);
         const id = result ? result.id : undefined;
         if (!result || !id) {
             throw new Error(`Failed to write summary tree`);

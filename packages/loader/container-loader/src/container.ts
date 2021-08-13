@@ -883,21 +883,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             // post summary here
             if (hasAttachmentBlobs) {
-                const appSummary: ISummaryTree = this.context.createSummary(new Map<string, string>());
+                const appSummary: ISummaryTree = this.context.createSummary();
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
                 this._attachState = AttachState.Attaching;
                 this.context.notifyAttaching();
 
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 await this.storageService.uploadSummaryWithContext(summary, {
                     referenceSequenceNumber: 0,
                     ackHandle: undefined,
                     proposalHandle: undefined,
                 });
 
-                // assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
+                assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
             }
 
             this._attachState = AttachState.Attached;
