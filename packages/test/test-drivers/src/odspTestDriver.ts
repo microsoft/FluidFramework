@@ -9,7 +9,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
- } from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions";
 import type { OdspResourceTokenFetchOptions, HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
 import {
     OdspTokenConfig,
@@ -46,25 +46,69 @@ interface IOdspTestDriverConfig extends TokenConfig {
     options: HostStoragePolicy | undefined
 }
 
+// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
+interface LoginTenantRange {
+    prefix: string,
+    start: number,
+    count: number,
+    password: string,
+}
+
+interface LoginTenants {
+    [tenant: string]: {
+        range: LoginTenantRange,
+        // add different format here
+    }
+}
+
+function getCredentials(requestedUserName?: string) {
+    const creds: { [user: string]: string } = {};
+    const loginTenants = process.env.login__odsp__test__tenants;
+    if (loginTenants !== undefined) {
+        const tenants: LoginTenants = JSON.parse(loginTenants);
+        // Only choose the first one for now
+        const tenant = Object.keys(tenants)[0];
+        const tenantInfo = tenants[tenant];
+        // Translate all the user from that user to the full user principle name by appending the tenant domain
+        const range = tenantInfo.range;
+
+        for (let i = 0; i < range.count; i++) {
+            const username = `${range.prefix}${range.start + i}@${tenant}`;
+            if (requestedUserName === undefined || requestedUserName === username) {
+                creds[username] = range.password;
+            }
+        }
+    } else {
+        const loginAccounts = process.env.login__odsp__test__accounts;
+        assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
+        // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
+        const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+        const username = requestedUserName ?? Object.keys(passwords)[0];
+        assert(passwords[username], `No password for username: ${username}`);
+        creds[username] = passwords[username];
+    }
+    return creds;
+}
+
 export class OdspTestDriver implements ITestDriver {
     // Share the tokens and driverId across multiple instance of the test driver
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private static readonly driverIdPCache = new Map<string, Promise<string>>();
     private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
-        try{
-            return await getDriveId(server,"",undefined,
+        try {
+            return await getDriveId(server, "", undefined,
                 {
                     accessToken: await this.getStorageToken({ siteUrl, refresh: false }, tokenConfig),
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: true }, tokenConfig),
                 });
-        }catch(ex) {
-            if(tokenConfig.supportsBrowserAuth !== true) {
+        } catch (ex) {
+            if (tokenConfig.supportsBrowserAuth !== true) {
                 throw ex;
             }
         }
         return getDriveId(
-            server,"",undefined,
+            server, "", undefined,
             {
                 accessToken: await this.getStorageToken({ siteUrl, refresh: false, useBrowserAuth: true }, tokenConfig),
                 refreshTokenFn:
@@ -76,12 +120,11 @@ export class OdspTestDriver implements ITestDriver {
         config?: { directory?: string, username?: string, options?: HostStoragePolicy, supportsBrowserAuth?: boolean },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
-        const loginAccounts = process.env.login__odsp__test__accounts;
-        assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
-        // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-        const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
-        const username = config?.username ?? Object.keys(passwords)[0];
-        assert(passwords[username], `No password for username: ${username}`);
+        const creds = getCredentials(config?.username);
+        // Pick a random one on the list
+        const users = Object.keys(creds);
+        const userIndex = Math.floor(Math.random() * users.length);
+        const username = users[userIndex];
 
         const emailServer = username.substr(username.indexOf("@") + 1);
         const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
@@ -89,7 +132,7 @@ export class OdspTestDriver implements ITestDriver {
         return this.create(
             {
                 username,
-                password: passwords[username],
+                password: creds[username],
                 server,
                 supportsBrowserAuth: config?.supportsBrowserAuth,
             },
@@ -135,17 +178,17 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     private static async getStorageToken(
-        options: OdspResourceTokenFetchOptions & {useBrowserAuth?: boolean},
+        options: OdspResourceTokenFetchOptions & { useBrowserAuth?: boolean },
         config: IOdspTestLoginInfo & IClientConfig,
     ) {
         const hostname = new URL(options.siteUrl).hostname;
-        if(options.useBrowserAuth === true) {
+        if (options.useBrowserAuth === true) {
             const browserTokens = await this.odspTokenManager.getOdspTokens(
                 hostname,
                 config,
                 {
                     type: "browserLogin",
-                    navigator: (openUrl)=>{
+                    navigator: (openUrl) => {
                         // eslint-disable-next-line max-len
                         console.log(`Open the following url in a new private browser window, and login with user: ${config.username}`);
                         // eslint-disable-next-line max-len
@@ -192,7 +235,7 @@ export class OdspTestDriver implements ITestDriver {
             this.testIdToUrl.set(
                 testId,
                 this.api.createOdspUrl({
-                    ... driveItem,
+                    ...driveItem,
                     siteUrl,
                     dataStorePath: "/",
                 }));
