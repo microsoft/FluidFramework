@@ -81,10 +81,15 @@ export abstract class RdkafkaBase extends EventEmitter {
     }
 
     protected async ensureTopics() {
-        const adminClient = this.kafka.AdminClient.create({
+        const options: kafkaTypes.GlobalConfig = {
             "client.id": `${this.clientId}-admin`,
             "metadata.broker.list": this.endpoints.kafka.join(","),
-        });
+            ...this.sslOptions,
+        };
+
+        console.log(`[RDKAFKA ADMIN CLIENT OPTIONS]: ${JSON.stringify(options)}`);
+
+        const adminClient = this.kafka.AdminClient.create(options);
 
         const newTopic: kafkaTypes.NewTopic = {
             topic: this.topic,
