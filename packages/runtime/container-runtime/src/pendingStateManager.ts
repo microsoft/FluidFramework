@@ -304,7 +304,7 @@ export class PendingStateManager implements IDisposable {
         if (pendingState.clientSequenceNumber !== message.clientSequenceNumber) {
             // Close the container because this indicates data corruption.
             const error = new DataCorruptionError(
-                "Unexpected ack received",
+                "unexpectedAckReceived",
                 {
                     clientId: message.clientId,
                     sequenceNumber: message.sequenceNumber,

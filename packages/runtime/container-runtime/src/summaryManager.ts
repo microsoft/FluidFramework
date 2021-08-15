@@ -189,7 +189,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             // we can't create a summarizer for some reason; raise error on container
             this.emit(
                 "summarizerWarning",
-                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false),
+                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
             );
         }
 
