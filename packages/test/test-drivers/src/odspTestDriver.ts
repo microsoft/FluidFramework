@@ -61,6 +61,11 @@ interface LoginTenants {
     }
 }
 
+/**
+ * Get from the env a set of credential to use from a single tenant
+ * @param requestedUserName specific user name to filter to
+ */
+
 function getCredentials(requestedUserName?: string) {
     const creds: { [user: string]: string } = {};
     const loginTenants = process.env.login__odsp__test__tenants;
@@ -72,6 +77,7 @@ function getCredentials(requestedUserName?: string) {
         // Translate all the user from that user to the full user principle name by appending the tenant domain
         const range = tenantInfo.range;
 
+        // Return the set of account to choose from a single tenant
         for (let i = 0; i < range.count; i++) {
             const username = `${range.prefix}${range.start + i}@${tenant}`;
             if (requestedUserName === undefined || requestedUserName === username) {
@@ -83,6 +89,8 @@ function getCredentials(requestedUserName?: string) {
         assert(loginAccounts !== undefined, "Missing login__odsp__test__accounts");
         // Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
         const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
+
+        // Need to choose one out of the set as these account might be from different tenant
         const username = requestedUserName ?? Object.keys(passwords)[0];
         assert(passwords[username], `No password for username: ${username}`);
         creds[username] = passwords[username];
