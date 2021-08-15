@@ -78,6 +78,7 @@ export class OdspDocumentService implements IDocumentService {
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
+        socketReferenceKeyPrefix: string | undefined,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             getOdspResolvedUrl(resolvedUrl),
@@ -88,6 +89,7 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             hostPolicy,
             epochTracker,
+            socketReferenceKeyPrefix,
         );
     }
 
@@ -125,6 +127,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
+        private readonly socketReferenceKeyPrefix: string | undefined,
     ) {
         this._policies = {
             // load in storage-only mode if a file version is specified
@@ -334,6 +337,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             60000,
             this.epochTracker,
+            this.socketReferenceKeyPrefix,
         );
         const duration = performance.now() - startTime;
         // This event happens rather often, so it adds up to cost of telemetry.

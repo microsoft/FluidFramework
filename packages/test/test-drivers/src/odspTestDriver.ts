@@ -93,7 +93,7 @@ function getCredentials(requestedUserName?: string) {
 export class OdspTestDriver implements ITestDriver {
     // Share the tokens and driverId across multiple instance of the test driver
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
-    private static readonly driverIdPCache = new Map<string, Promise<string>>();
+    private static readonly driveIdPCache = new Map<string, Promise<string>>();
     private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
         try {
@@ -143,13 +143,17 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     private static async create(
-        loginConfig: IOdspTestLoginInfo, directory: string, api = OdspDriverApi, options?: HostStoragePolicy) {
+        loginConfig: IOdspTestLoginInfo,
+        directory: string,
+        api = OdspDriverApi,
+        options?: HostStoragePolicy,
+    ) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
             ...getMicrosoftConfiguration(),
         };
 
-        let driveIdP = this.driverIdPCache.get(loginConfig.server);
+        let driveIdP = this.driveIdPCache.get(loginConfig.server);
         if (!driveIdP) {
             driveIdP = this.getDriveIdFromConfig(loginConfig.server, tokenConfig);
         }
@@ -250,6 +254,7 @@ export class OdspTestDriver implements ITestDriver {
             this.getPushToken.bind(this),
             undefined,
             this.config.options,
+            this.config.username, // delta socket are per user, use the user name to separate the socket caches per user
         );
     }
 

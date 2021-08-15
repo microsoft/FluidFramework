@@ -72,12 +72,12 @@ export type OdspDocumentInfo = OdspFluidDataStoreLocator;
 
 // @public
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, socketReferenceKeyPrefix?: string);
 }
 
 // @public
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, getSocketIOClient: () => Promise<SocketIOClientStatic>, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, getSocketIOClient: () => Promise<SocketIOClientStatic>, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, socketReferenceKeyPrefix?: string | undefined);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)
@@ -86,11 +86,11 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
-}
+    }
 
 // @public (undocumented)
 export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy, socketReferenceKeyPrefix?: string);
 }
 
 // @public

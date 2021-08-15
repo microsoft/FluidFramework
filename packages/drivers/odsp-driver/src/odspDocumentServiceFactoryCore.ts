@@ -123,6 +123,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         private readonly getSocketIOClient: () => Promise<SocketIOClientStatic>,
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
+        private readonly socketReferenceKeyPrefix?: string,
     ) {
     }
 
@@ -170,6 +171,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
+            this.socketReferenceKeyPrefix,
         );
     }
 }

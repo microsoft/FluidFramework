@@ -180,6 +180,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * @param mode - mode of the client
      * @param url - websocket URL
      * @param telemetryLogger - optional telemetry logger
+     * @param timeoutMs - time limit on making the connection
+     * @param epochTracker - track epoch changes
+     * @param socketReferenceKeyPrefix - (optional) prefix to separate socket reuse cache
      */
     public static async create(
         tenantId: string,
@@ -190,15 +193,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         url: string,
         telemetryLogger: ITelemetryLogger,
         timeoutMs: number,
-        epochTracker: EpochTracker): Promise<OdspDocumentDeltaConnection>
-    {
+        epochTracker: EpochTracker,
+        socketReferenceKeyPrefix: string | undefined): Promise<OdspDocumentDeltaConnection> {
         // enable multiplexing when the websocket url does not include the tenant/document id
         const parsedUrl = new URL(url);
         const enableMultiplexing = !parsedUrl.searchParams.has("documentId") && !parsedUrl.searchParams.has("tenantId");
 
         // do not include the specific tenant/doc id in the ref key when multiplexing
         // this will allow multiple documents to share the same websocket connection
-        const socketReferenceKey = enableMultiplexing ? url : `${url},${tenantId},${documentId}`;
+        const key = socketReferenceKeyPrefix ? `${socketReferenceKeyPrefix},${url}` : url;
+        const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
             io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
@@ -289,9 +293,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         enableMultiplexing: boolean,
         tenantId: string,
         documentId: string,
-        logger: ITelemetryLogger): SocketReference
-    {
-        const existingSocketReference  = SocketReference.find(key, logger);
+        logger: ITelemetryLogger,
+    ): SocketReference {
+        const existingSocketReference = SocketReference.find(key, logger);
         if (existingSocketReference) {
             return existingSocketReference;
         }
@@ -323,8 +327,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         documentId: string,
         socketReference: SocketReference,
         logger: ITelemetryLogger,
-        private readonly enableMultiplexing?: boolean)
-    {
+        private readonly enableMultiplexing?: boolean
+    ) {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
         this.requestOpsNoncePrefix = `${this.documentId}-`;
@@ -385,7 +389,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             // summary includes required ops and SPO has some validation mechanism to ensure
             // they are not forged by client.
             // If design changes, we can reconsider it, but right now it's non-recoverable failure.
-            this.logger.sendErrorEvent({ eventName: "FlushOpsNotSupported"});
+            this.logger.sendErrorEvent({ eventName: "FlushOpsNotSupported" });
             throw new Error("flush() API is not supported by PUSH, required for single-commit summaries");
         }
 
@@ -395,7 +399,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // That said, it could timeout, and request could be repeated, so theoretically we can
         // get overlapping requests, but it should be very rare
         if (this.flushDeferred !== undefined) {
-            this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany"});
+            this.logger.sendErrorEvent({ eventName: "FlushOpsTooMany" });
             this.flushDeferred.reject("process involving flush() was cancelled OR unsupported concurrency");
         }
         this.socket.emit("flush_ops", this.clientId, { nonce });
