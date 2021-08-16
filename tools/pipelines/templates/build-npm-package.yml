@@ -218,46 +218,6 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
-        # Test
-        - ${{ if ne(parameters.taskTest, 'false') }}:
-          # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
-          - ${{ parameters.additionalTests }}
-
-          # Test - No coverage
-          - ${{ if ne(variables['testCoverage'], true) }}:
-            - task: Npm@1
-              displayName: npm run ${{ parameters.taskTest }}
-              inputs:
-                command: 'custom'
-                workingDir: ${{ parameters.buildDirectory }}
-                customCommand: 'run ${{ parameters.taskTest }}'
-
-          # Test - With coverage
-          - ${{ if eq(variables['testCoverage'], true) }}:
-            - task: Npm@1
-              displayName: npm run ci:test:coverage
-              inputs:
-                command: 'custom'
-                workingDir: ${{ parameters.buildDirectory }}
-                customCommand: 'run ci:test:coverage'
-            - task: PublishCodeCoverageResults@1
-              displayName: Publish Code Coverage
-              inputs:
-                codeCoverageTool: Cobertura
-                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage.xml
-                reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
-              condition: succeededOrFailed()
-
-          # Test - Upload results
-          - task: PublishTestResults@2
-            displayName: Publish Test Results
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/*junit-report.xml'
-              searchFolder: ${{ parameters.buildDirectory }}/nyc
-              mergeTestResults: false
-            condition: succeededOrFailed()
-
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
@@ -275,8 +235,11 @@ stages:
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
                 fi
-          - ${{ each parameter in parameters.nonScopedPackages }}:
-            - script: echo ${{ parameter }}
+
+          - task: MoveArtifacts@1
+            displayName: Move Non-Scoped Packages
+            - ${{ each parameter in parameters.nonScopedPackages }}:
+              - script: echo ${{ parameter }}
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
