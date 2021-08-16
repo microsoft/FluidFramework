@@ -136,6 +136,9 @@ stages:
                 Test=${{ parameters.taskTest }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
+              
+              Publish Parameters:
+                nonScopedPackages=${{join(' ',parameters.nonScopedPackages)}}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -144,7 +147,6 @@ stages:
                 canRelease=${{ variables.canRelease }}
 
                 release=$(release)"
-              for i in ${ parameters.nonScopedPackages }[@]; do echo $i;
               # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
