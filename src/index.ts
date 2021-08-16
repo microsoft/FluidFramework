@@ -40,7 +40,6 @@ export { BasicCheckout } from './BasicCheckout';
 export * from './ReconciliationPath';
 export {
 	SharedTree,
-	SharedTreeEditor,
 	ChangeType,
 	Change,
 	Build,
