@@ -22,6 +22,8 @@ if (window.location.hash.length === 0) {
 }
 const documentId = window.location.hash.substring(1);
 
+const containerRuntimeFactory = new InventoryListContainerRuntimeFactory();
+
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
@@ -29,7 +31,7 @@ const documentId = window.location.hash.substring(1);
 export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
-    const container = await getSessionStorageContainer(documentId, InventoryListContainerRuntimeFactory, createNewFlag);
+    const container = await getSessionStorageContainer(documentId, containerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
     const inventoryList = await getDefaultObjectFromContainer<InventoryList>(container);

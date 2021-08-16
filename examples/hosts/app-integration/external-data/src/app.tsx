@@ -47,7 +47,7 @@ async function getInventoryListFromContainer(container: Container): Promise<IInv
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
-    const module = { fluidExport: InventoryListContainerRuntimeFactory };
+    const module = { fluidExport: new InventoryListContainerRuntimeFactory() };
     const codeLoader = { load: async () => module };
 
     const loader = new Loader({
