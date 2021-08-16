@@ -97,18 +97,19 @@ describe("Routerlicious", () => {
                     supertest = request(app);
                 });
 
-                const assertThrottle = async (url: string, token: string, body: any, method: "get" | "post" | "patch" = "get"): Promise<void> => {
+                const assertThrottle = async (url: string, token: string | (() => string), body: any, method: "get" | "post" | "patch" = "get"): Promise<void> => {
+                    const tokenProvider = typeof token === "function" ? token : () => token;
                     for (let i = 0; i < limit; i++) {
                         // we're not interested in making the requests succeed with 200s, so just assert that not 429
                         await supertest[method](url)
-                            .set('Authorization', token)
+                            .set('Authorization', tokenProvider())
                             .send(body)
                             .expect((res) => {
                                 assert.notStrictEqual(res.status, 429);
                             });
                     };
                     await supertest[method](url)
-                        .set('Authorization', token)
+                        .set('Authorization', tokenProvider())
                         .send(body)
                         .expect(429);
                 };
@@ -134,7 +135,8 @@ describe("Routerlicious", () => {
                             .expect(429);
                     });
                     it("/:tenantId", async () => {
-                        await assertThrottle(`/documents/${appTenant1.id}`, tenantToken1, {id: document1._id}, "post");
+                        const token = () => `Basic ${generateToken(appTenant1.id, "", appTenant1.key, scopes)}`;
+                        await assertThrottle(`/documents/${appTenant1.id}`, token, {id: ""}, "post");
                     });
                 });
 

@@ -75,7 +75,7 @@ export function generateToken(
         ver,
     };
 
-    return jwt.sign(claims, key);
+    return jwt.sign(claims, key, { jwtid: uuid()});
 }
 
 export function generateUser(): IUser {

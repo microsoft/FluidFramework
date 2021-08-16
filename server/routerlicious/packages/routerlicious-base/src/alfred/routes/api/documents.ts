@@ -54,7 +54,7 @@ export function create(
     router.post(
         "/:tenantId",
         verifyStorageToken(tenantManager, config, {
-            requireDocumentId: true,
+            requireDocumentId: false,
             ensureSingleUseToken: true,
             singleUseTokenCache,
         }),
