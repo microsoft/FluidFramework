@@ -148,9 +148,9 @@ stages:
 
                 release=$(release)"
 
-              for entry in ${{parameters.nonScopedPackages}}
+              ${{ each value in parameters.nonScopedPackages }}:
                 do
-                  echo "$entry"
+                  echo ${{ value }}
                 done
               # Error checking
               if [[ "$(release)" == "release" ]]; then
