@@ -256,6 +256,13 @@ stages:
               ArtifactName: 'pack'
               publishLocation: 'Container'
 
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Non-Scoped Artifact - pack
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack-non-scoped'
+              ArtifactName: 'pack-non-scoped'
+              publishLocation: 'Container'
+
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
