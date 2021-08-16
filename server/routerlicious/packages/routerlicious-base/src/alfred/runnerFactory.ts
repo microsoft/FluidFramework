@@ -48,7 +48,7 @@ export class OrdererManager implements core.IOrdererManager {
     }
 
     public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-        const tenant = await this.tenantManager.getTenant(tenantId);
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
 
         const messageMetaData = { documentId, tenantId };
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
@@ -261,7 +261,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             deltasCollectionName,
             scribeCollectionName);
 
-        const storage = new services.DocumentStorage(databaseManager, tenantManager);
+        const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+        const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const address = `${await utils.getHostIp()}:4000`;

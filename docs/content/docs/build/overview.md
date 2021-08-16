@@ -51,6 +51,8 @@ For more information about these types and the differences between them, see [Da
 
 There are two primary libraries you'll use when building with Fluid. The basic Fluid Framework library and a service-specific client library such as the Tinylicious client library.
 
+For more information see [Packages]({{< relref "packages.md" >}}).
+
 ### The Fluid Framework library
 
 The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the  built-in Fluid objects. The library is in the package `@fluid-experimental/fluid-framework`.
@@ -63,3 +65,4 @@ For specifics about each service-specific client implementation see their corres
 
 - The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluid-experimental/tinylicious-client`.
 - The client library for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) is in the package `@fluid-experimental/frs-client`.
+

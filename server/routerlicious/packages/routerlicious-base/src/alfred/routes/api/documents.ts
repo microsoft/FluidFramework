@@ -14,6 +14,7 @@ import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Provider } from "nconf";
+import { v4 as uuid } from "uuid";
 import { Constants, handleResponse } from "../../../utils";
 
 export function create(
@@ -51,12 +52,12 @@ export function create(
      */
     router.post(
         "/:tenantId",
-        verifyStorageToken(tenantManager, config),
+        verifyStorageToken(tenantManager, config, false),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
-            const id = request.body.id as string;
+            const id = request.body.id as string || uuid();
 
             // Summary information
             const summary = request.body.summary;

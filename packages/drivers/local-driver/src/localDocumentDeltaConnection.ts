@@ -5,7 +5,6 @@
 
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import {
     IClient,
     IConnect,
@@ -20,9 +19,7 @@ const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 /**
  * Represents a connection to a stream of delta updates
  */
-export class LocalDocumentDeltaConnection
-    extends DocumentDeltaConnection
-    implements IDocumentDeltaConnection {
+export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Create a LocalDocumentDeltaConnection
      * Handle initial messages, contents or signals if they were in queue
@@ -46,14 +43,6 @@ export class LocalDocumentDeltaConnection
         // Cast LocalWebSocket to SocketIOClient.Socket which is the socket that the base class needs. This is hacky
         // but should be fine because this delta connection is for local use only.
         const socketWithListener = socket as unknown as SocketIOClient.Socket;
-
-        // Add `off` method the socket which is called by the base class `DocumentDeltaConnection` to remove
-        // event listeners.
-        // We may have to add more methods from SocketIOClient.Socket if they start getting used.
-        socketWithListener.off = (event: string, listener: (...args: any[]) => void) => {
-            socketWithListener.removeListener(event, listener);
-            return socketWithListener;
-        };
 
         const deltaConnection = new LocalDocumentDeltaConnection(socketWithListener, id);
 

@@ -16,8 +16,10 @@ import {
     TreeEntry,
     FileMode,
     ISequencedDocumentAugmentedMessage,
+    SummaryObject,
+    SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { IGitManager, ISummaryTree, WholeSummaryUploadManager } from "@fluidframework/server-services-client";
 import {
     ICollection,
     IScribe,
@@ -34,6 +36,7 @@ export class SummaryWriter implements ISummaryWriter {
         private readonly documentId: string,
         private readonly summaryStorage: IGitManager,
         private readonly opStorage: ICollection<ISequencedOperationMessage>,
+        private readonly enableWholeSummaryUpload: boolean,
     ) {
 
     }
@@ -146,54 +149,65 @@ export class SummaryWriter implements ISummaryWriter {
             op.additionalContent,
             JSON.stringify(checkpoint));
 
-        const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
-            this.summaryStorage.createTree({ entries: logTailEntries }),
-            this.summaryStorage.createTree({ entries: protocolEntries }),
-            this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-            this.summaryStorage.getTree(content.handle, false),
-        ]);
-
-        // Combine the app summary with .protocol
-        const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
-
-        // Now combine with .logtail and .serviceProtocol
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".logTail",
-            sha: logTailTree.sha,
-            type: "tree",
-        });
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".serviceProtocol",
-            sha: serviceProtocolTree.sha,
-            type: "tree",
-        });
-
-        // Finally perform the write to git
-        const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
-        const commitParams: ICreateCommitParams = {
-            author: {
-                date: new Date().toISOString(),
-                email: "praguertdev@microsoft.com",
-                name: "Routerlicious Service",
-            },
-            message: content.message,
-            parents: content.parents,
-            tree: gitTree.sha,
-        };
-
-        const commit = await this.summaryStorage.createCommit(commitParams);
-
-        if (existingRef) {
-            await this.summaryStorage.upsertRef(this.documentId, commit.sha);
+        let uploadHandle: string;
+        if (this.enableWholeSummaryUpload) {
+            uploadHandle = await this.updateWholeSummary(
+                content.head,
+                content.handle,
+                protocolEntries,
+                logTailEntries,
+                serviceProtocolEntries);
         } else {
-            await this.summaryStorage.createRef(this.documentId, commit.sha);
+            const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
+                this.summaryStorage.createTree({ entries: logTailEntries }),
+                this.summaryStorage.createTree({ entries: protocolEntries }),
+                this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+                this.summaryStorage.getTree(content.handle, false),
+            ]);
+
+            // Combine the app summary with .protocol
+            const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
+
+            // Now combine with .logtail and .serviceProtocol
+            newTreeEntries.push({
+                mode: FileMode.Directory,
+                path: ".logTail",
+                sha: logTailTree.sha,
+                type: "tree",
+            });
+            newTreeEntries.push({
+                mode: FileMode.Directory,
+                path: ".serviceProtocol",
+                sha: serviceProtocolTree.sha,
+                type: "tree",
+            });
+
+            // Finally perform the write to git
+            const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
+            const commitParams: ICreateCommitParams = {
+                author: {
+                    date: new Date().toISOString(),
+                    email: "praguertdev@microsoft.com",
+                    name: "Routerlicious Service",
+                },
+                message: content.message,
+                parents: content.parents,
+                tree: gitTree.sha,
+            };
+
+            const commit = await this.summaryStorage.createCommit(commitParams);
+            uploadHandle = commit.sha;
+
+            if (existingRef) {
+                await this.summaryStorage.upsertRef(this.documentId, uploadHandle);
+            } else {
+                await this.summaryStorage.createRef(this.documentId, uploadHandle);
+            }
         }
 
         return {
             message: {
-                handle: commit.sha,
+                handle: uploadHandle,
                 summaryProposal: {
                     summarySequenceNumber: op.sequenceNumber,
                 },
@@ -241,52 +255,56 @@ export class SummaryWriter implements ISummaryWriter {
 
         // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
         const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
-        const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
-            this.summaryStorage.createTree({ entries: logTailEntries }),
-            this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-            this.summaryStorage.getTree(lastCommit.tree.sha, false),
-        ]);
 
-        // Combine the last summary tree with .logTail and .serviceProtocol
-        const newTreeEntries = lastSummaryTree.tree.map((value) => {
-            const createTreeEntry: ICreateTreeEntry = {
-                mode: value.mode,
-                path: value.path,
-                sha: value.sha,
-                type: value.type,
+        if (this.enableWholeSummaryUpload) {
+            await this.createWholeServiceSummary(lastCommit.sha, logTailEntries, serviceProtocolEntries);
+        } else {
+            const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
+                this.summaryStorage.createTree({ entries: logTailEntries }),
+                this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+                this.summaryStorage.getTree(lastCommit.tree.sha, false),
+            ]);
+
+            // Combine the last summary tree with .logTail and .serviceProtocol
+            const newTreeEntries = lastSummaryTree.tree.map((value) => {
+                const createTreeEntry: ICreateTreeEntry = {
+                    mode: value.mode,
+                    path: value.path,
+                    sha: value.sha,
+                    type: value.type,
+                };
+                return createTreeEntry;
+            });
+            newTreeEntries.push({
+                mode: FileMode.Directory,
+                path: ".logTail",
+                sha: logTailTree.sha,
+                type: "tree",
+            });
+            newTreeEntries.push({
+                mode: FileMode.Directory,
+                path: ".serviceProtocol",
+                sha: serviceProtocolTree.sha,
+                type: "tree",
+            });
+
+            // Finally perform the write to git
+            const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
+            const commitParams: ICreateCommitParams = {
+                author: {
+                    date: new Date().toISOString(),
+                    email: "praguertdev@microsoft.com",
+                    name: "Routerlicious Service",
+                },
+                message: `Service Summary @${op.sequenceNumber}`,
+                parents: [lastCommit.sha],
+                tree: gitTree.sha,
             };
-            return createTreeEntry;
-        });
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".logTail",
-            sha: logTailTree.sha,
-            type: "tree",
-        });
-        newTreeEntries.push({
-            mode: FileMode.Directory,
-            path: ".serviceProtocol",
-            sha: serviceProtocolTree.sha,
-            type: "tree",
-        });
 
-        // Finally perform the write to git
-        const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
-        const commitParams: ICreateCommitParams = {
-            author: {
-                date: new Date().toISOString(),
-                email: "praguertdev@microsoft.com",
-                name: "Routerlicious Service",
-            },
-            message: `Service Summary @${op.sequenceNumber}`,
-            parents: [lastCommit.sha],
-            tree: gitTree.sha,
-        };
-
-        // Finally commit the service summary and update the ref.
-        const commit = await this.summaryStorage.createCommit(commitParams);
-        await this.summaryStorage.upsertRef(this.documentId, commit.sha);
-
+            // Finally commit the service summary and update the ref.
+            const commit = await this.summaryStorage.createCommit(commitParams);
+            await this.summaryStorage.upsertRef(this.documentId, commit.sha);
+        }
         return true;
     }
 
@@ -337,5 +355,60 @@ export class SummaryWriter implements ISummaryWriter {
             }
             return logTail.map((log) => log.operation);
         }
+    }
+
+    private async updateWholeSummary(
+        parentHandle: string,
+        appSummaryHandle: string,
+        protocolEntries: ITreeEntry[],
+        logTailEntries: ITreeEntry[],
+        serviceProtocolEntries: ITreeEntry[]): Promise<string> {
+        const fullTree: ISummaryTree =  {
+            type: SummaryType.Tree,
+            tree: {
+                ".protocol": this.createSummaryTreeFromEntry(protocolEntries),
+                ".logTail": this.createSummaryTreeFromEntry(logTailEntries),
+                ".serviceProtocol": this.createSummaryTreeFromEntry(serviceProtocolEntries),
+                ".app": {
+                    type: SummaryType.Handle,
+                    handle: appSummaryHandle,
+                    handleType: SummaryType.Tree,
+                    embedded: true,
+                },
+            },
+        };
+        const uploadManager = new WholeSummaryUploadManager(this.summaryStorage);
+        const uploadHandle = await uploadManager.writeSummaryTree(fullTree, parentHandle, "container");
+        return uploadHandle;
+    }
+
+    private async createWholeServiceSummary(
+        parentHandle: string,
+        logTailEntries: ITreeEntry[],
+        serviceProtocolEntries: ITreeEntry[]): Promise<string> {
+        const fullTree: ISummaryTree =  {
+            type: SummaryType.Tree,
+            tree: {
+                ".logTail": this.createSummaryTreeFromEntry(logTailEntries),
+                ".serviceProtocol": this.createSummaryTreeFromEntry(serviceProtocolEntries),
+                ".protocol": { type: SummaryType.Handle, handle: ".protocol", handleType: SummaryType.Tree },
+                ".app": { type: SummaryType.Handle, handle: ".app", handleType: SummaryType.Tree },
+            },
+        };
+        const uploadManager = new WholeSummaryUploadManager(this.summaryStorage);
+        const uploadHandle = await uploadManager.writeSummaryTree(fullTree, parentHandle, "container");
+        return uploadHandle;
+    }
+
+    // We should optimize our API so that we don't have to do this conversion.
+    private createSummaryTreeFromEntry(treeEntries: ITreeEntry[]): ISummaryTree {
+        const tree: { [path: string]: SummaryObject } = {};
+        for (const entry of treeEntries) {
+            tree[entry.path] = entry.value as SummaryObject;
+        }
+        return {
+            tree,
+            type: SummaryType.Tree,
+        };
     }
 }

@@ -36,11 +36,11 @@ const schema = {
     }
 }
 
-const { container, containerServices } = await client.createContainer(/*service config*/, schema);
+const { fluidContainer, containerServices } = await client.createContainer(/*service config*/, schema);
 
-const initialObjects = container.initialObjects;
-const map = container.initialObjects.customMap;
-const cell = container.initialObjects["custom-cell"];
+const initialObjects = fluidContainer.initialObjects;
+const map = fluidContainer.initialObjects.customMap;
+const cell = fluidContainer.initialObjects["custom-cell"];
 ```
 
 ## Dynamic objects
@@ -62,10 +62,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell, SharedMap ],
 }
 
-const { container, containerServices } = await client.getContainer(/*service config*/, schema);
+const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
 
-const newCell = await container.create(SharedCell); // Create a new SharedCell
-const newMap = await container.create(SharedMap); // Create a new SharedMap
+const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
+const newMap = await fluidContainer.create(SharedMap); // Create a new SharedMap
 ```
 
 {{% callout tip %}}
@@ -102,10 +102,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell ],
 }
 
-const { container, containerServices } = await client.getContainer(/*service config*/, schema);
-const map = container.initialObjects.map;
+const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const map = fluidContainer.initialObjects.map;
 
-const newCell = await container.create(SharedCell); // Create a new SharedCell
+const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
 map.set("cell-id", newCell.handle); // Attach the new SharedCell
 
 // ...

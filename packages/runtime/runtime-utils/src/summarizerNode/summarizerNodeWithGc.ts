@@ -10,10 +10,10 @@ import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeParam,
     gcBlobKey,
-    IContextSummarizeResult,
     IGarbageCollectionData,
     IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
+    ISummarizeResult,
     ISummarizerNodeConfigWithGC,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
@@ -98,7 +98,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     ) {
         super(
             logger,
-            async (fullTree: boolean) => this.summarizeInternal(fullTree, true /* trackState */),
+            async (fullTree: boolean) => summarizeFn(fullTree, true /* trackState */),
             config,
             changeSequenceNumber,
             latestSummary,
@@ -143,16 +143,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         }
     }
 
-    public async summarize(fullTree: boolean, trackState: boolean = true): Promise<IContextSummarizeResult> {
-        if (!this.gcDisabled) {
-            // Load GC details from the initial summary, if it's not already loaded. If this is the first time this
-            // node is being summarized, the used routes in it are needed to find out if this node has changed since
-            // last summary. If it hasn't changed, the GC data in it needs to be returned as part of the summary.
-            await this.loadInitialGCSummaryDetails();
-        }
-
+    public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
         // If GC is not disabled and we are tracking a summary, GC should have run and updated the used routes for this
-        //  summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
+        // summary by calling updateUsedRoutes which sets wipSerializedUsedRoutes.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
             assert(this.wipSerializedUsedRoutes !== undefined,
                 0x1b1 /* "wip used routes should be set if tracking a summary" */);
@@ -160,28 +153,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         // If trackState is true, get summary from base summarizer node which tracks summary state.
         // If trackState is false, get summary from summarizeInternal.
-        if (trackState) {
-            const summarizeResult = await super.summarize(fullTree);
-
-            // If there is no cached GC data, return empty data in summarize result. It is the caller's responsibility
-            // to ensure that GC data is available by calling getGCData before calling summarize.
-            const gcData = this._gcData !== undefined ? cloneGCData(this._gcData) : { gcNodes: {} };
-
-            return {
-                ...summarizeResult,
-                gcData,
-            };
-        } else {
-            return this.summarizeInternal(fullTree, trackState);
-        }
-    }
-
-    private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
-        const summarizeResult = await this.summarizeFn(fullTree, trackState);
-        if (summarizeResult.gcData !== undefined && !this.gcDisabled) {
-            this._gcData = cloneGCData(summarizeResult.gcData);
-        }
-        return summarizeResult;
+        return trackState ? super.summarize(fullTree) : this.summarizeFn(fullTree, trackState);
     }
 
     /**

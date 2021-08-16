@@ -5,6 +5,5 @@
 
 export * from "./compatConfig";
 export * from "./compatUtils";
-export * from "./debug";
 export * from "./packageVersion";
 export * from "./testApi";

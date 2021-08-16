@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
+import * as path from "path-browserify";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import {
@@ -91,6 +91,10 @@ export class Lumberjack {
         properties?: Map<string, any> | Record<string, any>) {
         this.errorOnIncompleteSetup();
         return new Lumber<T>(eventName, LumberType.Metric, this._engineList, this._schemaValidator, properties);
+    }
+
+    public static isSetupCompleted() {
+        return this.instance._isSetupCompleted;
     }
 
     public log(

@@ -71,7 +71,8 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
         readonly tenantId: string | undefined,
         props?: ITelemetryProperties,
     ) {
-        super(errorMessage, props);
+        // don't log claims or tenantId
+        super(errorMessage, props, new Set(["claims", "tenantId"]));
     }
 }
 
@@ -129,7 +130,8 @@ export function createGenericNetworkError(
     errorMessage: string,
     canRetry: boolean,
     retryAfterMs?: number,
-    props?: ITelemetryProperties) {
+    props?: ITelemetryProperties,
+): ThrottlingError | GenericNetworkError {
     if (retryAfterMs !== undefined && canRetry) {
         return new ThrottlingError(errorMessage, retryAfterMs / 1000, props);
     }
