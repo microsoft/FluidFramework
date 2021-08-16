@@ -53,7 +53,7 @@ jobs:
               inputs:
                 version: 12.x
             - task: Bash@3
-              displayName: Generate .npmrc
+              displayName: Generate .npmrc for scoped packages
               inputs:
                 targetType: 'inline'
                 workingDirectory: $(Pipeline.Workspace)/pack
@@ -87,16 +87,57 @@ jobs:
                     echo "registry=${{ parameters.feedName }}" >> ./.npmrc
                     echo "always-auth=true" >> ./.npmrc
                     cat .npmrc
+            - task: Bash@3
+              displayName: Generate .npmrc for non-scoped packages
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(Pipeline.Workspace)/pack-non-scoped
+                script: |
+                    echo Generating .npmrc for ${{ parameters.feedName }}
+                    echo "registry=${{ parameters.feedName }}" >> ./.npmrc
+                    echo "always-auth=true" >> ./.npmrc
+                    cat .npmrc
             - task: npmAuthenticate@0
-              displayName: npm Authenticate
+              displayName: npm Authenticate scoped
               inputs:
                 workingFile: $(Pipeline.Workspace)/pack/.npmrc
                 customEndPoint: ${{ parameters.customEndPoint }}
+            - task: npmAuthenticate@0
+              displayName: npm Authenticate non-scoped
+              inputs:
+                workingFile: $(Pipeline.Workspace)/pack-non-scoped/.npmrc
+                customEndPoint: ${{ parameters.customEndPoint }}
             - task: Bash@3
-              displayName: Publish Packages
+              displayName: Publish Scoped Packages
               inputs:
                 targetType: 'inline'
                 workingDirectory: $(Pipeline.Workspace)/pack
+                script: |
+                  tag="--tag canary"
+                  if [[ "$(release)" == "release" ]]; then
+                    if [ "$(isLatest)" = "true" ]; then
+                      tag="--tag latest"
+                    fi
+                  elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
+                    tag="--tag next"
+                  fi
+                  echo Tag: $tag
+                  cp .npmrc ~/.npmrc
+                  t1=0
+                  for f in *.tgz
+                  do
+                      if ! npm publish $f $tag ${{ parameters.publishFlags }}
+                      then
+                          let t1+=1
+                      fi
+                  done
+                  rm ~/.npmrc
+                  exit $t1
+            - task: Bash@3
+              displayName: Publish Non-Scoped Packages
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(Pipeline.Workspace)/pack-non-scoped
                 script: |
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then
