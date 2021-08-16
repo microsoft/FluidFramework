@@ -138,7 +138,7 @@ stages:
                 TestCoverage=$(testCoverage)
               
               Publish Parameters:
-                nonScopedPackages=${{join(' ',parameters.nonScopedPackages)}}
+                nonScopedPackages=${{join(', ',parameters.nonScopedPackages)}}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -236,10 +236,10 @@ stages:
                   mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
                 fi
 
-          - task: MoveArtifacts@1
-            displayName: Move Non-Scoped Packages
-            - ${{ each parameter in parameters.nonScopedPackages }}:
-              - script: echo ${{ parameter }}
+          - ${{ each parameter in parameters.nonScopedPackages }}:
+            - task: MoveArtifacts@1
+              displayName: Move Non-Scoped Package ${{parameter}}
+                - script: echo ${{ parameter }}
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
