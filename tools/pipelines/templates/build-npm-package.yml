@@ -235,9 +235,9 @@ stages:
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
                 fi
+              - ${{ each parameter in parameters.nonScopedPackages }}:
+                - script: echo ${{ parameter }}
 
-          - ${{ each parameter in parameters.nonScopedPackages }}:
-            - script: echo ${{ parameter }}
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
