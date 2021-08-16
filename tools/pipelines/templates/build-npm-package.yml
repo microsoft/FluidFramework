@@ -148,7 +148,7 @@ stages:
 
                 release=$(release)"
 
-              for entry in "${{parameters.nonScopedPackages[@]}}"
+              for entry in ${{parameters.nonScopedPackages}}
                 do
                   echo "$entry"
                 done
