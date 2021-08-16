@@ -147,11 +147,6 @@ stages:
                 canRelease=${{ variables.canRelease }}
 
                 release=$(release)"
-
-              ${{ each value in parameters.nonScopedPackages }}:
-                do
-                  echo ${{ value }}
-                done
               # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
