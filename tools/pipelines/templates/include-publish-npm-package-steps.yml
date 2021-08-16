@@ -20,6 +20,9 @@ parameters:
 - name: official
   type: string
 
+- name: artifact
+  type: string
+
 - name: publishFlags
   type: string
   default:
@@ -34,7 +37,7 @@ parameters:
 
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
-  displayName: Publish ${{ parameters.environment }}
+  displayName: Publish ${{ parameters.environment }} for ${{parameters.artifact}}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
   workspace:
@@ -47,16 +50,16 @@ jobs:
         deploy:
             steps:
             - download: current
-              artifact: pack
+              artifact: ${{ parameters.artifact }}
             - task: UseNode@1
               displayName: Use Node 12.x
               inputs:
                 version: 12.x
             - task: Bash@3
-              displayName: Generate .npmrc for scoped packages
+              displayName: Generate .npmrc
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Build.ArtifactStagingDirectory)/pack
+                workingDirectory: $(Pipeline.Workspace)/${{ parameters.artifact }}
                 ${{ if eq(parameters.namespace, true) }}:
                   ${{ if eq(parameters.official, false) }}:
                     script: |
@@ -87,57 +90,16 @@ jobs:
                     echo "registry=${{ parameters.feedName }}" >> ./.npmrc
                     echo "always-auth=true" >> ./.npmrc
                     cat .npmrc
-            - task: Bash@3
-              displayName: Generate .npmrc for non-scoped packages
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(Build.ArtifactStagingDirectory)/pack-non-scoped
-                script: |
-                    echo Generating .npmrc for ${{ parameters.feedName }}
-                    echo "registry=${{ parameters.feedName }}" >> ./.npmrc
-                    echo "always-auth=true" >> ./.npmrc
-                    cat .npmrc
             - task: npmAuthenticate@0
-              displayName: npm Authenticate scoped
+              displayName: npm Authenticate
               inputs:
-                workingFile: $(Build.ArtifactStagingDirectory)/pack/.npmrc
-                customEndPoint: ${{ parameters.customEndPoint }}
-            - task: npmAuthenticate@0
-              displayName: npm Authenticate non-scoped
-              inputs:
-                workingFile: $(Build.ArtifactStagingDirectory)/pack-non-scoped/.npmrc
+                workingFile: $(Pipeline.Workspace)/${{ parameters.artifact }}/.npmrc
                 customEndPoint: ${{ parameters.customEndPoint }}
             - task: Bash@3
-              displayName: Publish Scoped Packages
+              displayName: Publish Packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Build.ArtifactStagingDirectory)/pack
-                script: |
-                  tag="--tag canary"
-                  if [[ "$(release)" == "release" ]]; then
-                    if [ "$(isLatest)" = "true" ]; then
-                      tag="--tag latest"
-                    fi
-                  elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
-                    tag="--tag next"
-                  fi
-                  echo Tag: $tag
-                  cp .npmrc ~/.npmrc
-                  t1=0
-                  for f in *.tgz
-                  do
-                      if ! npm publish $f $tag ${{ parameters.publishFlags }}
-                      then
-                          let t1+=1
-                      fi
-                  done
-                  rm ~/.npmrc
-                  exit $t1
-            - task: Bash@3
-              displayName: Publish Non-Scoped Packages
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(Build.ArtifactStagingDirectory)/pack-non-scoped
+                workingDirectory: $(Pipeline.Workspace)/${{ parameters.artifact }}
                 script: |
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then

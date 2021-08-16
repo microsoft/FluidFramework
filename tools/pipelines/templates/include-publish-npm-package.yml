@@ -22,6 +22,15 @@ stages:
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       environment: test-package-build-feed
       official: false
+      artifact: pack
+
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+      environment: test-package-build-feed
+      official: false
+      artifact: pack-non-scoped
 
 - stage: publish_npm_internal
   dependsOn: build
