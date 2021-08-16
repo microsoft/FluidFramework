@@ -42,9 +42,11 @@ export class OdspDeltaStorageService {
             const storageToken = await this.getStorageToken(options, "DeltaStorage");
 
             const formBoundary = uuid();
+            const SPResponseGuid = uuid();
             let postBody = `--${formBoundary}\r\n`;
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
+            postBody += `SPResponseGuid: ${SPResponseGuid}\r\n`;
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
@@ -83,6 +85,7 @@ export class OdspDeltaStorageService {
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
                 length: messages.length,
                 duration: response.duration, // this duration for single attempt!
+                SPResponseGuid,
                 ...response.commonSpoHeaders,
                 attempts: options.refresh ? 2 : 1,
                 from,
