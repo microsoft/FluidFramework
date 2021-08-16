@@ -5,7 +5,7 @@
 
 // API Exports
 
-export { SharedTree } from './SharedTree';
+export { SharedTree, SharedTreeEditor } from './SharedTree';
 export {
 	ChangeType,
 	Change,

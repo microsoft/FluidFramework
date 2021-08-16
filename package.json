@@ -29,7 +29,7 @@
 		"lint:fix": "npm run eslint:fix",
 		"perf": "env-cmd -e production mocha \"dist/**/*.tests.js\" --config ./.mocharc.js --expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"test": "npm run test:mocha",
-		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\"--config ./.mocharc.js --unhandled-rejections=strict",
+		"test:mocha": "nyc --report-dir='./coverage' mocha \"dist/**/*.tests.js\" --config ./.mocharc.js --unhandled-rejections=strict",
 		"tsc": "tsc --pretty"
 	},
 	"dependencies": {

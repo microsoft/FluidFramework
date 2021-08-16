@@ -476,6 +476,7 @@ export interface SetValue {
 export class SharedTree extends GenericSharedTree<Change> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
+    get editor(): SharedTreeEditor;
     protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase;
     static getFactory(summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean): SharedTreeFactory;
 }
@@ -491,6 +492,20 @@ export enum SharedTreeDiagnosticEvent {
     DroppedMalformedEdit = "droppedMalformedEdit",
     EditChunkUploaded = "uploadedEditChunk",
     UnexpectedHistoryChunk = "unexpectedHistoryChunk"
+}
+
+// @public
+export class SharedTreeEditor {
+    constructor(tree: SharedTree);
+    delete(target: NodeData): EditId;
+    delete(target: NodeId): EditId;
+    delete(target: StableRange): EditId;
+    insert(node: BuildNode, destination: StablePlace): EditId;
+    insert(nodes: BuildNode[], destination: StablePlace): EditId;
+    move(source: NodeData, destination: StablePlace): EditId;
+    move(source: NodeId, destination: StablePlace): EditId;
+    move(source: StableRange, destination: StablePlace): EditId;
+    revert(edit: Edit<Change>, view: RevisionView): EditId;
 }
 
 // @public

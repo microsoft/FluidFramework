@@ -7,7 +7,7 @@ import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils'
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { noop } from '../../Common';
-import { Change, Delete, Insert, SharedTree, StablePlace, StableRange } from '../../default-edits';
+import { Change, SharedTree, StablePlace, StableRange } from '../../default-edits';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { ChangeNode, TraitLocation } from '../../generic';
 import { TreeNodeHandle } from '../../TreeNodeHandle';
@@ -131,7 +131,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		it('works for Insert', () => {
 			const newNode = makeEmptyNode();
 
-			const insertId = tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
+			const insertId = tree.editor.insert(newNode, StablePlace.after(left));
 			afterEdit();
 			expect(tree.edits.length).to.equal(2);
 
@@ -188,9 +188,9 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			for (let startIndex = 0; startIndex < leftTraitPlaces.length; ++startIndex) {
 				for (let endIndex = startIndex; endIndex < leftTraitPlaces.length; ++endIndex) {
 					it(`works for Detach [${startIndex} -> ${endIndex}]`, () => {
-						tree.applyEdit(...Insert.create([leftTraitNodes[0]], StablePlace.before(left)));
+						tree.editor.insert(leftTraitNodes[0], StablePlace.before(left));
 						afterEdit();
-						tree.applyEdit(...Insert.create([leftTraitNodes[2]], StablePlace.before(left)));
+						tree.editor.insert(leftTraitNodes[2], StablePlace.after(left));
 						afterEdit();
 						expect(tree.currentView.getTrait(leftTrait).length).to.equal(3);
 
@@ -199,7 +199,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 							end: leftTraitPlaces[endIndex].place,
 						};
 						const countDetached = leftTraitPlaces[endIndex].index - leftTraitPlaces[startIndex].index;
-						const deleteId = tree.applyEdit(Delete.create(range));
+						const deleteId = tree.editor.delete(range);
 						afterEdit();
 
 						expect(tree.edits.length).to.equal(4);
@@ -236,7 +236,7 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 		it('works for SetValue', () => {
 			const newNode = makeEmptyNode();
 
-			tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
+			tree.editor.insert(newNode, StablePlace.after(left));
 			afterEdit();
 			const testPayload = 5;
 			const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
@@ -287,9 +287,9 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				const firstNode = makeEmptyNode();
 				const secondNode = makeEmptyNode();
 
-				const firstInsertId = tree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
+				const firstInsertId = tree.editor.insert(firstNode, StablePlace.after(left));
 				afterEdit();
-				tree.applyEdit(...Insert.create([secondNode], StablePlace.after(left)));
+				tree.editor.insert(secondNode, StablePlace.after(left));
 				afterEdit();
 				expect(tree.edits.length).to.equal(3);
 
@@ -337,11 +337,11 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 				const firstNode = makeEmptyNode();
 				const secondNode = makeEmptyNode();
 
-				tree.applyEdit(...Insert.create([firstNode], StablePlace.after(left)));
+				tree.editor.insert(firstNode, StablePlace.after(left));
 				afterEdit();
-				const deleteId = tree.applyEdit(Delete.create(StableRange.only(firstNode)));
+				const deleteId = tree.editor.delete(firstNode);
 				afterEdit();
-				tree.applyEdit(...Insert.create([secondNode], StablePlace.after(left)));
+				tree.editor.insert(secondNode, StablePlace.after(left));
 				afterEdit();
 				expect(tree.edits.length).to.equal(4);
 
@@ -387,12 +387,12 @@ export function runSharedTreeUndoRedoTestSuite(options: SharedTreeUndoRedoOption
 			it('works for out-of-order SetValue', () => {
 				const newNode = makeEmptyNode();
 
-				tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
+				tree.editor.insert(newNode, StablePlace.after(left));
 				afterEdit();
 				const testPayload = 10;
 				const setValueId = tree.applyEdit(Change.setPayload(newNode.identifier, testPayload));
 				afterEdit();
-				tree.applyEdit(...Insert.create([newNode], StablePlace.after(left)));
+				tree.editor.insert(newNode, StablePlace.after(left));
 				afterEdit();
 				expect(tree.edits.length).to.equal(4);
 
