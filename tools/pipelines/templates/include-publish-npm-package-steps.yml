@@ -56,7 +56,7 @@ jobs:
               displayName: Generate .npmrc for scoped packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack
+                workingDirectory: $(Build.ArtifactStagingDirectory)/pack
                 ${{ if eq(parameters.namespace, true) }}:
                   ${{ if eq(parameters.official, false) }}:
                     script: |
@@ -91,7 +91,7 @@ jobs:
               displayName: Generate .npmrc for non-scoped packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack-non-scoped
+                workingDirectory: $(Build.ArtifactStagingDirectory)/pack-non-scoped
                 script: |
                     echo Generating .npmrc for ${{ parameters.feedName }}
                     echo "registry=${{ parameters.feedName }}" >> ./.npmrc
@@ -100,18 +100,18 @@ jobs:
             - task: npmAuthenticate@0
               displayName: npm Authenticate scoped
               inputs:
-                workingFile: $(Pipeline.Workspace)/pack/.npmrc
+                workingFile: $(Build.ArtifactStagingDirectory)/pack/.npmrc
                 customEndPoint: ${{ parameters.customEndPoint }}
             - task: npmAuthenticate@0
               displayName: npm Authenticate non-scoped
               inputs:
-                workingFile: $(Pipeline.Workspace)/pack-non-scoped/.npmrc
+                workingFile: $(Build.ArtifactStagingDirectory)/pack-non-scoped/.npmrc
                 customEndPoint: ${{ parameters.customEndPoint }}
             - task: Bash@3
               displayName: Publish Scoped Packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack
+                workingDirectory: $(Build.ArtifactStagingDirectory)/pack
                 script: |
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then
@@ -137,7 +137,7 @@ jobs:
               displayName: Publish Non-Scoped Packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack-non-scoped
+                workingDirectory: $(Build.ArtifactStagingDirectory)/pack-non-scoped
                 script: |
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then
