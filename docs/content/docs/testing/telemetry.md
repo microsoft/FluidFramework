@@ -15,21 +15,21 @@ your other telemetry, and route the event data in whatever way you need.
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
 be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter.
 
-All Fluid service clients (for example, `FrsContainerConfig` and `TinyliciousContainerConfig`) allow passing a `logger?:
+All Fluid service clients (for example, `AzureContainerConfig` and `TinyliciousContainerConfig`) allow passing a `logger?:
 ITelemetryBaseLogger` into the service client configuration. Both `createContainer()` and `getContainer()` methods will
 create an instance of a `Loader` class object, where the logger defined in the service client configuration is passed in
 as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
 
 [TinyliciousContainerConfig](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/interfaces.ts#L9)
-interface definition takes an optional parameter `logger`. (The definition is similar to `FrsContainerConfig` interface)
+interface definition takes an optional parameter `logger`. (The definition is similar to `AzureContainerConfig` interface)
 
 [createContainer()](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50)
 interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
-`FrsClient` will take `FrsContainerConfig` for its respective methods)
+`AzureClient` will take `AzureContainerConfig` for its respective methods)
 
 [getContainer()](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65)
 interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
-`FrsClient` will take `FrsContainerConfig` for its respective methods)
+`AzureClient` will take `AzureContainerConfig` for its respective methods)
 
 ```ts
 const loader = new Loader({
@@ -250,7 +250,7 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     // Get or create the document depending if we are running through the create new flow
-    const client = useFrs ? FrsClient :  new TinyliciousClient();
+    const client = useAzure ? AzureClient :  new TinyliciousClient();
     const [fluidContainer, containerServices] = createNew
         ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
         : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
