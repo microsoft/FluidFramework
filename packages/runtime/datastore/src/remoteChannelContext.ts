@@ -20,11 +20,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
-    IContextSummarizeResult,
     IFluidDataStoreContext,
     IGarbageCollectionData,
     IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
+    ISummarizeResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
 import { ChildLogger, TelemetryDataTag, ThresholdCounter } from "@fluidframework/telemetry-utils";
@@ -138,7 +138,7 @@ export class RemoteChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
         return this.summarizerNode.summarize(fullTree, trackState);
     }
 

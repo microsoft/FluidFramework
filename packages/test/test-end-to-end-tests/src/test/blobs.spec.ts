@@ -228,7 +228,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
         await assert.rejects(
             container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
-            /(0x206)|(0x202)/,
+            /(0x206)|(0x202)|(0x204)/,
         );
     });
 

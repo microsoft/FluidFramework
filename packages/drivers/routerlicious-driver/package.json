@@ -60,14 +60,14 @@
     "@fluidframework/driver-base": "^0.46.0",
     "@fluidframework/driver-definitions": "^0.39.6",
     "@fluidframework/driver-utils": "^0.46.0",
-    "@fluidframework/gitresources": "^0.1028.1",
-    "@fluidframework/protocol-base": "^0.1028.1",
+    "@fluidframework/gitresources": "^0.1029.0-0",
+    "@fluidframework/protocol-base": "^0.1029.0-0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/server-services-client": "^0.1028.1",
+    "@fluidframework/server-services-client": "^0.1029.0-0",
     "@fluidframework/telemetry-utils": "^0.46.0",
     "axios": "^0.21.1",
     "json-stringify-safe": "5.0.1",
-    "socket.io-client": "^2.1.1",
+    "socket.io-client": "^2.4.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

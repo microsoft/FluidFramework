@@ -8,6 +8,7 @@ import {
     ITaggedTelemetryPropertyType,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
 import {
     IFluidErrorBase,
     isFluidError,
@@ -86,13 +87,20 @@ class SimpleFluidError implements IFluidErrorBase {
     readonly message: string;
     readonly stack?: string;
     readonly name?: string;
+    readonly errorInstanceId: string;
 
-    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
+    constructor(
+        errorProps: Omit<IFluidErrorBase,
+            "getTelemetryProperties" |
+            "addTelemetryProperties" |
+            "errorInstanceId">,
+    ) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
+        this.errorInstanceId = uuid();
 
         this.addTelemetryProperties(errorProps);
     }
@@ -217,7 +225,9 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
  *
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
-export class LoggingError extends Error implements ILoggingError {
+export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
+    readonly errorInstanceId = uuid();
+
     /**
      * Create a new LoggingError
      * @param message - Error message to use for Error base class

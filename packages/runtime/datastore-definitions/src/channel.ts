@@ -5,7 +5,7 @@
 
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IChannelSummarizeResult, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
 
@@ -23,7 +23,7 @@ export interface IChannel extends IFluidLoadable {
      * Generates summary of the channel.
      * @returns A tree representing the summary of the channel.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
+    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 
     /**
      * True if the data structure is attached to storage.

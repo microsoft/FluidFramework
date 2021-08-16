@@ -61,7 +61,6 @@ export class ParallelRequests<T> {
     public cancel() {
         if (this.working) {
             this.workingState = "canceled";
-            this.logger.sendTelemetryEvent({ eventName: "GetDeltas_cancel" });
             this.endEvent.resolve();
         }
     }
