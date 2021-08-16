@@ -10,15 +10,18 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
+import { ContainerKillBitInstantiationFactory } from "./containerKillBit";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
-const inventoryListId = "inventory-list";
+const inventoryListId = "default-inventory-list";
+const containerKillBitId = "container-kill-bit";
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
         super(
             new Map([
                 InventoryListInstantiationFactory.registryEntry,
+                ContainerKillBitInstantiationFactory.registryEntry,
             ]), // registryEntries
             [], // providerEntries
             [
@@ -32,9 +35,15 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(
-            InventoryListInstantiationFactory.type,
-            inventoryListId,
-        );
+        await Promise.all([
+            runtime.createRootDataStore(
+                InventoryListInstantiationFactory.type,
+                inventoryListId,
+            ),
+            runtime.createRootDataStore(
+                ContainerKillBitInstantiationFactory.type,
+                containerKillBitId,
+            ),
+        ]);
     }
 }

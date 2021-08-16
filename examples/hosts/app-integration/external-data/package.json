@@ -35,6 +35,7 @@
   "dependencies": {
     "@fluid-experimental/get-container": "^0.45.0",
     "@fluid-experimental/react-inputs": "^0.45.0",
+    "@fluid-experimental/task-manager": "^0.45.0",
     "@fluidframework/aqueduct": "^0.45.0",
     "@fluidframework/cell": "^0.45.0",
     "@fluidframework/common-definitions": "^0.20.1",
