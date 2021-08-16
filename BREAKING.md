@@ -37,7 +37,7 @@ The `@fluid-experimental/fluid-static` package has been renamed to now be `@flui
 - `FlushMode.Automatic` to `FlushMode.Immediate`
 
 ### `FlushMode` default changed for `ContainerRuntime`
-Previously, `ContainerRuntime` had the default flush mode as `FlushMode.Immediate` (formerly `FlushMode.Automatic`). This default has been changed to `FlushMode.TurnBased` (formerly `FlushMode.Manual`).
+Previously, `ContainerRuntime` had the default flush mode as `FlushMode.Immediate` (formerly `FlushMode.Automatic`). This default has been changed to `FlushMode.TurnBased` (formerly `FlushMode.Manual`). Note that the `batchBegin` and `batchEnd` events from `IContainerRuntime` will no longer be emitted for each processed op by default.
 
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
