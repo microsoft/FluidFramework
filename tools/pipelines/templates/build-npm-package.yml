@@ -238,7 +238,7 @@ stages:
 
           - ${{ each parameter in parameters.nonScopedPackages }}:
             - task: MoveArtifacts@1
-              displayName: Move Non-Scoped Package ${{parameter}}
+              displayName: Move Non-Scoped Package
                 - script: echo ${{ parameter }}
 
           - task: PublishBuildArtifacts@1
