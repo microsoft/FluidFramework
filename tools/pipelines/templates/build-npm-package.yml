@@ -243,11 +243,7 @@ stages:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
-                  if [ -f "lerna.json" ]; then
-                    npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack-non-scoped/ $(Build.ArtifactStagingDirectory)/pack/${{parameter}}*.tgz
-                  else
-                    mv -t $(Build.ArtifactStagingDirectory)/pack-non-scoped/ $(Build.ArtifactStagingDirectory)/pack/${{parameter}}*.tgz
-                  fi
+                  mv -t $(Build.ArtifactStagingDirectory)/pack-non-scoped/ $(Build.ArtifactStagingDirectory)/pack/${{parameter}}*.tgz
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
