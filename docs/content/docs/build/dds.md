@@ -8,10 +8,11 @@ editor: sambroner
 ---
 
 The Fluid Framework provides developers with two types of Fluid objects: *distributed data structures* (DDSes) and
-`DataObjects`. DDSes are low-level data structures, while `DataObject`s are composed of DDSes and other Fluid objects.
-In other words, you can't have `DataObject`s without DDSes, because `DataObject`s are composed of DDSes. DataObjects are
-used to organize distributed data structures into semantically meaningful groupings for your scenario, as well as
-providing an API surface to your data. However, many Fluid applications will use only DDSes.
+Data Objects. DDSes are low-level data structures, while Data Object`s are composed of DDSes and other Fluid objects. Data Objects are
+used to organize DDSes into semantically meaningful groupings for your scenario, as well as
+providing an API surface to your app's data. However, many Fluid applications will use only DDSes.
+
+There are a number of DDS types built into the Fluid Framework base library and you can create your own by extending base classes.
 
 {{% callout note "See also" %}}
 
@@ -25,7 +26,7 @@ sequences/lists. The APIs provided by DDSes are designed to be familiar to progr
 structures before. For example, the [SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary
 data structure, and provides `get` and `set` methods to store and retrieve data in the map.
 
-When using a DDS, you can largely treat it as a local object. You can add data to it, remove data, update it, etc.
+When using a DDS, you can largely treat it as a local object. Your code can add data to it, remove data, update it, etc.
 However, a DDS is not *just* a local object. A DDS can also be changed by other users that are editing.
 
 {{% callout tip %}}
@@ -36,7 +37,7 @@ etc. This prefix indicates that the object is shared between multiple clients.
 {{% /callout %}}
 
 When a DDS is changed by any client, it raises an [event](#events) locally. Your code can listen to these events so that
-you know when data is changed and can react appropriately. For example, you may need to recalculate a derived value when
+the app knows when data is changed and can react appropriately. For example, your app may need to recalculate a derived value when
 some data in a DDS changes.
 
 ## Merge behavior
@@ -64,7 +65,7 @@ generally fall into two broad categories: *optimistic* and *consensus-based*.
 
 ### Optimistic data structures
 
-Optimistic DDSes are capable of applying Fluid operations before they are sequenced by the Fluid service. The local
+Optimistic DDSes apply Fluid operations locally before they are sequenced by the Fluid service. The local
 changes are said to be applied *optimistically*, hence the name *optimistic DDSes*. The DDSes also apply remote
 operations as they are made in a consistent way.
 
@@ -82,12 +83,6 @@ part of what makes Fluid so fast, so using optimistic DDSes is almost always pre
 for behavioral guarantees.
 
 #### Why consensus-based DDSes are useful
-
-{{% callout note "Not required reading" %}}
-
-You don't need to read this section if you're just getting started with Fluid. Feel free to skip it and return later.
-
-{{% /callout %}}
 
 To understand why consensus-based DDSes are useful, consider implementing a stack DDS. It's not possible (as far as we
 know!) to implement a stack DDS as an optimistic one. In the ops-based Fluid architecture, one would define an operation
@@ -113,7 +108,7 @@ A distributed data structure object is created using its type's static `create` 
 const myMap = SharedMap.create(this.runtime);
 ```
 
-You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
+Your code must pass in an `IFluidDataStoreRuntime` object that will managethe DDS. We'll cover the runtime in more detail in
 the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
@@ -122,7 +117,7 @@ Distributed data structures can store primitive values like numbers and strings,
 objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called *handles*, which *are*
 serializable.
 
-When storing a DDS within another DDS, you must store its handle, not the DDS itself. For example, consider this code:
+When storing a DDS within another DDS, your code must store its handle, not the DDS itself. For example, consider this code:
 
 ```ts
 // Create a new map for our Fluid data
@@ -140,8 +135,8 @@ see [Fluid handles](../advanced/handles.md) in the Advanced section.
 
 ## Events
 
-When a distributed data structure is changed by the Fluid runtime, it raises events. You can listen to these events so
-that you know when data is changed by remote clients and can react appropriately. For example, you may need to
+When a distributed data structure is changed by the Fluid runtime, it raises events. Your app can listen to these events so
+that the app knows when data is changed by remote clients and can react appropriately. For example, the app may need to
 recalculate a derived value when some data in a DDS changes.
 
 ```ts
@@ -160,9 +155,8 @@ models. The following two questions can help determine the best data structures 
 * What is the *granularity of collaboration* that my scenario needs?
 * How does the merge behavior of a distributed data structure affect this?
 
-In your scenario, what do users need to individually edit? For example, imagine that you are storing data about
-geometric shapes because you're building a collaborative editing tool. You might store the coordinates of the shape, its
-length, width, etc.
+In your scenario, what do users need to individually edit? For example, imagine that your app is a collaborative editing tool and it is storing data about
+geometric shapes. The app might store the coordinates of the shape, its length, width, etc.
 
 When users edit this data, what pieces of the data can be edited simultaneously? This is an important question to answer
 because it influences how you structure the data in your DDSes.
@@ -196,23 +190,21 @@ Recall that the [SharedMap uses a last writer wins merge strategy](#merge-behavi
 editing the data at the same time, then the one who made the most recent change will overwrite the changes made by the
 other user.
 
-Imagine that you are collaborating with a colleague, and you change the shape's width while your colleague changes the
-shape's height. This will generate two operations: a `set` operation for you, and another `set` operation for your
-colleague. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's
-merge behavior is LWW. Since we're storing the shape as an object, both `set` operations *set the whole object*.
+Imagine that a user "A" is collaborating with a colleague, and the user changes the shape's width while the colleague "B" changes the
+shape's height. This will generate two operations: a `set` operation for A, and another `set` operation for B. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's merge behavior is LWW. Since we're storing the shape as an object, both `set` operations *set the whole object*.
 
 This results in someone's changes being "lost" from a user's perspective. This may be perfectly fine for your needs.
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
 strategy probably won't give you the behavior you want.
 
-However, you could address this problem by storing individual shape properties in SharedMap keys. Instead of storing a
-JSON object with all the data, you can break it apart and store the length in one SharedMap key, the width in another,
+However, you could address this problem by storing individual shape properties in `SharedMap` keys. Instead of storing a
+JSON object with all the data, your code can break it apart and store the length in one `SharedMap` key, the width in another,
 etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
 
-You likely have more than one shape in your data model, so you could create a SharedMap to store all your shapes, then
-store the SharedMaps representing each shape within that SharedMap.
+You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
+store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
-To learn more about how you use DDSes to create more complex Fluid objects, see the [Encapsulating data with
+To learn more about how to use DDSes to create more complex Fluid objects, see the [Encapsulating data with
 DataObject](./dataobject-aqueduct.md) section.
 
 ### Key-value data

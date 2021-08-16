@@ -4,15 +4,14 @@ menuPosition: 5
 editor: tylerbutler
 ---
 
-## Overview
 
-The audience is the collection of users connected to a container.  When you create a container using a service-specific client package, you are provided a service-specific audience object for that container as well.  You can query the audience for connected users and use that information to build rich and collaborative user presence features.
+The audience is the collection of users connected to a container.  When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, `tinylicious-client` is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the Tinylicious Fluid service is used.
 
 ## Working with the audience
 
-When creating a container, you are also provided a container services object which holds the audience.  This audience is backed by that same container.
+When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container.
 
 ```typescript
 const { container, containerServices } =
@@ -47,7 +46,7 @@ Connections can be short-lived and are not reused. A client that disconnects fro
 
 ### Service-specific audience data
 
-The `ServiceAudience` class represents the base audience implementation, and individual services are expected to extend this class for their needs.  Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension.  For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
+The `ServiceAudience` class represents the base audience implementation, and individual Fluid services are expected to extend this class for their needs.  Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension.  For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
 
 ```typescript
 export interface TinyliciousMember extends IMember {
@@ -59,7 +58,7 @@ export interface TinyliciousMember extends IMember {
 
 #### getMembers
 
-The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` for that user ID.  You can further query the individual `IMember`s for its client connections.
+The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` for that user ID.  Your code can further query the individual `IMember`s for its client connections.
 
 {{% callout tip %}}
 
@@ -69,7 +68,7 @@ Because `ServiceAudience` exists to facilitate user presence scenarios, it may e
 
 {{% callout tip %}}
 
-The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, you should subscribe to `ServiceAudience`'s events for member changes.
+The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, your code should subscribe to `ServiceAudience`'s events for member changes.
 
 {{% /callout %}}
 
@@ -105,19 +104,19 @@ While the audience is the foundation for user presence features, the list of con
 
 #### Shared persisted data
 
-Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members.  Some of those scenarios will require you to save data for each user for future sessions.  For example, consider a scenario where you want to display how long each user has spent in your application.  An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect.  This means that the time each user has spent must be persisted so it can survive disconnections.
+Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members. Some of those scenarios will require the app to save data for each user for future sessions. For example, consider a scenario where you want to display how long each user has spent in your application.  An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect.  This means that the time each user has spent must be persisted so it can survive disconnections.
 
-One option is to use a `SharedMap` with a `SharedCounter` as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})).  All other connected users will then receive changes to that SharedMap automatically.  Your UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
+One option is to use a `SharedMap` with a `SharedCounter` as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})).  All other connected users will then receive changes to that SharedMap automatically.  Your app's UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
 
 #### Shared transient data
 
-Many presence scenarios involve data that are short-lived and do not need to be persisted.  For example, consider a scenario where you want to display where each user has selected in your UI.  Each user will need to tell other users their own information -- where they clicked -- but the past data are irrelevant.
+Many presence scenarios involve data that are short-lived and do not need to be persisted.  For example, consider a scenario where you want to display what each user has selected in the UI.  Each user will need to tell other users their own information -- where they clicked -- but the past data are irrelevant.
 
 You can address this scenario using DDSes in the same way as with the persisted data scenario.  However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients.  [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation.  Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally.  Newly connected users can request other connected users to send their selection data using another signal.  When a user disconnects, the local data are discarded.
 
 #### Unshared data
 
-In some cases, the user data could be generated locally or fetched from an external service. For example, consider a scenario where you want to display the connected users with a profile picture and a color border. If you retrieve a user's profile picture from your user metadata service and assign each user a color based on a hash of their user ID, you will have the desired data on other users without needing to communicate with them.
+In some cases, the user data could be generated locally or fetched from an external service. For example, consider a scenario where you want to display the connected users with a profile picture and a color border. If your app retrieves a user's profile picture from a user metadata service and assigns each user a color based on a hash of their user ID, then the app will have the desired data on other users without needing to communicate with them.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->

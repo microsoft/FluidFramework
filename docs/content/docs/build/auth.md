@@ -26,7 +26,7 @@ In summary, the secret key is how the Azure Fluid Relay service knows that reque
 Anyone with access to the secret can impersonate your application when communicating with Azure Fluid Relay service.
 {{% /callout %}}
 
-Now you have a mechanism to establish trust. You can sign some data, send it to the Azure Fluid Relay service, and the service can validate whether the
+Now you have a mechanism to establish trust. Your app can sign some data, send it to the Azure Fluid Relay service, and the service can validate whether the
 data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard method for encoding
 authentication and user-related data with a signature for verification: JSON Web Tokens (JWTs).
 
@@ -42,12 +42,12 @@ The specifics of JWTs are beyond the scope of this article. For more details abo
 JSON Web Tokens are a signed bit of JSON that can include additional information about the rights conferred by the
 JWT. The Azure Fluid Relay service uses signed JWTs for establishing trust with calling clients.
 
-The next question is: what data should you send?
+The next question is: what data should your app send?
 
-You need to send your *tenant ID* so that Azure Fluid Relay service can look up the right secret key to validate your
-request. You need to send the *container ID* (called `documentId` in the JWT) so Azure Fluid Relay service knows which
-container the request is about. Finally, you need to also set the *scopes (permissions)* that the request is permitted
-to use -- this allows you to establish your own user permissions model if you wish.
+The app must send the *tenant ID* so that Azure Fluid Relay service can look up the right secret key to validate the
+request. The app also must send the *container ID* (called `documentId` in the JWT) so Azure Fluid Relay service knows which
+container the request is about. Finally, the app must also set the *scopes (permissions)* that the request is permitted
+to use -- this enables you to establish your own user permissions model if you wish.
 
 ```json {linenos=inline,hl_lines=["5-6",13]}
 {
@@ -96,13 +96,13 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 A token provider is responsible for creating and signing tokens that the `@fluid-experimental/frs-client` uses to make
 requests to the Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
-However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret and returns signed tokens. This token
+However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret, then locally generates and returns a signed token. This token
 provider is useful for testing, but in production scenarios you must use a secure token provider.
 
 ### A secure serverless token provider
 
 One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
-provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Function to
+provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to
 generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
 
 ## Adding custom data to tokens
@@ -122,7 +122,7 @@ authenticated with AAD.
 
 Since the Azure Function is now your entrypoint into obtaining a valid token, only users who have properly authenticated
 to the Function will then be able to relay that token to the Azure Fluid Relay service from their client application.
-This two-step approach allows you to use your own custom authentication process in conjunction with the Azure Fluid
+This two-step approach enables you to use your own custom authentication process in conjunction with the Azure Fluid
 Relay service.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->

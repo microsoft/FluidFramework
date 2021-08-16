@@ -5,7 +5,11 @@ author: skylerjokiel
 editor: tylerbutler
 ---
 
-## Architecture overview
+{{< callout note >}}
+
+This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works](../_index.md#how-fluid-works).
+
+{{< /callout >}}
 
 There are three primary concepts to understand when building an application with Fluid.
 
@@ -15,44 +19,47 @@ There are three primary concepts to understand when building an application with
 
 ### Service
 
-Fluid clients require a centralized service that all connected clients use to send and receive operations. When using Fluid in an application you must use the correct package that corresponds to the underlying service you are connecting to. Fluid offers multiple service implementations developers can use out of the box. See [Available Fluid Services]({{< relref "service-options.md" >}}) for more information about Fluid service options.
+Fluid clients require a centralized service that all connected clients use to send and receive operations. Fluid offers multiple service implementations that developers can use without any modifications. For each of them, there is a corresponding client library. You must use the client library that corresponds to the service you are connecting to. See [Available Fluid Services]({{< relref "service-options.md" >}}) for more information about Fluid service options.
 
-Each service specific package adhere to a common API structure and has the primary goal of creating and retrieving container objects.
+Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes. There are two services currently available:
 
-The [Tinylicious service]({{< relref "Tinylicious" >}}) is a local testing service and is used in Fluid examples throughout this documentation. Other services include the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) which enables high-scale production scenarios.
+- The [Tinylicious service]({{< relref "Tinylicious" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
+- The [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) runs in Azure and enables high-scale production scenarios.
 
-See [Supported service-specific client packages](#service-specific-client-packages) for more details.
+See [Service-specific client libraries](#service-specific-client-libraries) for more details.
 
 ### Container
 
-The container is the primary unit of encapsulation in Fluid. It consists of a collection of Fluid objects and supporting APIs to manage the lifecycle of the container and the objects within it.
-
-New containers require a client-driven action and container lifetimes are bound to the data stored on the supporting server. When getting existing containers it's important to consider the previous state of the container.
+The container is the primary unit of encapsulation in Fluid. It consists of a collection of Fluid objects and supporting APIs to manage the lifecycle of the container and the objects within it. New containers must be created from a client, but are bound to the data stored on the supporting server. After a container has been created, it can be accessed by other clients.
 
 For more about containers see [Containers](./containers.md).
 
 ### Fluid objects
 
-
 A *Fluid object* is any object type that supports collaboration (simultaneous editing). Fluid Framework contains two
-types of Fluid objects: distributed data structures (DDSes) and `DataObject`s.
+types of Fluid objects:
 
-For more information see [Data modeling](./data-modeling.md).
+- **Distributed Data Structures (DDSes):** A DDS holds shared data that the collaborators are working with.
+- **Data Objects:** A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
 
-## Package structure
+DDSes are low-level data structures, while `DataObject`s are composed of DDSes and other Fluid objects. Data Objects are
+used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data. 
 
-There are two primary packages you'll use when building with Fluid. The `fluid-framework` package
-and a service-specific client package like `tinylicious-client`.
+For more information about these types and the differences between them, see [Data modeling](./data-modeling.md) and [Introducing distributed data structures](./dds.md).
 
-### The `fluid-framework` package
+## Library structure
 
-The `fluid-framework` package is a collection of core Fluid APIs that make it easy to build and use applications. This package contains all the common type definitions as well as all the primitive Fluid objects.
+There are two primary libraries you'll use when building with Fluid. The basic Fluid Framework library and a service-specific client library such as the Tinylicious client library.
 
-### Service-specific client packages
+### The Fluid Framework library
 
-Fluid works with multiple service implementations. Each service has a corresponding service-specific client package. These packages contain a common API structure but also support functionality unique to each service.
+The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the  built-in Fluid objects. The library is in the package `@fluid-experimental/fluid-framework`.
 
-The Tinylicious service is a local Fluid service. This documentation uses `@fluid-experimental/tinylicious-client` (or simply `client`). For specifics about each service-specific client implementation see their corresponding documentation.
+### Service-specific client libraries
 
-- `@fluid-experimental/tinylicious-client` -- the client for the [Tinylicious]({{< relref "Tinylicious" >}}) service.
-- `@fluid-experimental/frs-client` -- the client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
+Fluid works with multiple service implementations. Each service has a corresponding service-specific client library. These libraries have a common API structure but also support functionality unique to each service.
+
+For specifics about each service-specific client implementation see their corresponding documentation.
+
+- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluid-experimental/tinylicious-client`.
+- The client library for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) is in the package `@fluid-experimental/frs-client`.
