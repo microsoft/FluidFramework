@@ -77,9 +77,9 @@ jobs:
                       echo "always-auth=true" >> ./.npmrc
                       cat .npmrc
 
-                      echo Deleteing @fluid-internal packages
+                      echo Deleting @fluid-internal packages
                       rm -f fluid-internal-*
-                      echo Deleteing @fluid-example packages
+                      echo Deleting @fluid-example packages
                       rm -f fluid-example-*
                 ${{ if eq(parameters.namespace, false) }}:
                   script: |

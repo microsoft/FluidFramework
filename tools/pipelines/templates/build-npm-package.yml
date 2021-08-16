@@ -74,6 +74,9 @@ parameters:
 - name: releaseBuildOverride
   type: string
 
+- name: nonScopedPackages
+  type: object
+
 - name: tagName
   type: string
 
@@ -141,7 +144,7 @@ stages:
                 canRelease=${{ variables.canRelease }}
 
                 release=$(release)"
-
+              for i in ${ parameters.nonScopedPackages }[@]; do echo $i;
               # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
@@ -262,6 +265,7 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
+                mkdir $(Build.ArtifactStagingDirectory)/pack-non-scoped/
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
