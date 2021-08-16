@@ -276,7 +276,7 @@ stages:
                   mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
                 fi
           - ${{ each parameter in parameters.nonScopedPackages }}:
-            - script: echo ${{ value }}
+            - script: echo ${{ parameter }}
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
