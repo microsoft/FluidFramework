@@ -234,6 +234,25 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	}
 
 	/**
+	 * Apply an edit, if valid, otherwise does nothing (the edit is not added to the history).
+	 * If the edit applied, its changes will be immediately visible on this checkout, though it still may end up invalid once sequenced due to concurrent edits.
+	 * @returns The EditId if the edit was valid and thus applied, and undefined if it was invalid and thus not applied.
+	 */
+	public tryApplyEdit(...changes: TChange[]): EditId | undefined {
+		this.openEdit();
+
+		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
+		const { status } = this.currentEdit.applyChanges(changes);
+		if (status === EditStatus.Applied) {
+			this.emitChange();
+			return this.closeEdit();
+		}
+
+		this.abortEdit();
+		return undefined;
+	}
+
+	/**
 	 * Rebases the ongoing edit to the latest revision loaded by this 'Checkout'.
 	 * If the rebase succeeds (none of the changes in the ongoing edit became invalid), the ongoing edit will remain open and the current
 	 * view will reflect those changes.

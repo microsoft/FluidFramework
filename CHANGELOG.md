@@ -18,6 +18,12 @@
   * Associated pull request: [32989](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32989)
   * Commit: [f6aa3a2d0b929b1dc4a94c2bba34f9a34072ec51](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f6aa3a2d0b929b1dc4a94c2bba34f9a34072ec51)
 
+## 3.9.2
+
+* fix: Prevent invalid out-of-order-undo error
+  * Associated pull request: [33320](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33320)
+  * Commit: [79a0a7a54006109cc3dd6ed25dd345c895ba61f7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/79a0a7a54006109cc3dd6ed25dd345c895ba61f7)
+
 ## 3.9.1
 
 * build: Update Dependencies & Refresh package-lock Files

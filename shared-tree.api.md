@@ -102,6 +102,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     readonly tree: GenericSharedTree<TChange>;
+    tryApplyEdit(...changes: TChange[]): EditId | undefined;
     // (undocumented)
     abstract waitForPendingUpdates(): Promise<void>;
 }

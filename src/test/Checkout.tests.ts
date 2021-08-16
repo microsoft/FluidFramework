@@ -164,6 +164,18 @@ export function checkoutTests(
 			checkout.closeEdit();
 		});
 
+		it('can try to apply an invalid edit and abort without causing an error', async () => {
+			const { checkout } = await setUpTestCheckout({ initialTree: simpleTestTree });
+
+			// tryApplyEdit aborts when applying an invalid edit and returns undefined
+			expect(checkout.tryApplyEdit(...Insert.create([left], StablePlace.after(left)))).to.be.undefined;
+
+			// Next edit is unaffected
+			checkout.openEdit();
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
+			checkout.closeEdit();
+		});
+
 		it('cannot get the edit status if no edit is open', async () => {
 			const { checkout } = await setUpTestCheckout();
 			expect(() => checkout.getEditStatus()).throws();
