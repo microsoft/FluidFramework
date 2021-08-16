@@ -10,8 +10,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "../src/containerCode";
-import { InventoryList } from "../src/dataObject";
-import { InventoryListView } from "../src/view";
+import { InventoryList } from "../src/inventoryList";
+import { InventoryListView } from "../src/inventoryView";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided

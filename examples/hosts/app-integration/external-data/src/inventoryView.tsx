@@ -7,7 +7,7 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { IInventoryItem, IInventoryList } from "./dataObject";
+import { IInventoryItem, IInventoryList } from "./inventoryList";
 
 export interface IInventoryItemViewProps {
     inventoryItem: IInventoryItem;

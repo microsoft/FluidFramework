@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInventoryList } from "./dataObject";
+import { IInventoryList } from "./inventoryList";
 
 export const fetchData = async () => {
     const inventoryData =

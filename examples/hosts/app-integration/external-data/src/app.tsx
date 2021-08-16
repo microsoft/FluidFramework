@@ -12,7 +12,7 @@ import ReactDOM from "react-dom";
 import { AppView } from "./appView";
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
 import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
-import { IInventoryList } from "./dataObject";
+import { IInventoryList } from "./inventoryList";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.

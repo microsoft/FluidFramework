@@ -5,8 +5,8 @@
 
 import React, { useRef } from "react";
 
-import { IInventoryList } from "./dataObject";
-import { InventoryListView } from "./view";
+import { IInventoryList } from "./inventoryList";
+import { InventoryListView } from "./inventoryView";
 
 export interface IAppViewProps {
     inventoryList: IInventoryList;

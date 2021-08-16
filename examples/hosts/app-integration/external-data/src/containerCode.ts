@@ -10,7 +10,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
-import { InventoryListInstantiationFactory } from "./dataObject";
+import { InventoryListInstantiationFactory } from "./inventoryList";
 
 const inventoryListId = "inventory-list";
 
