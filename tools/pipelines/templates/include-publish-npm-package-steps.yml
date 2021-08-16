@@ -36,7 +36,7 @@ parameters:
   default:
 
 jobs:
-- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}_${parameters.artifact}
   displayName: Publish ${{ parameters.environment }} for ${{parameters.artifact}}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
