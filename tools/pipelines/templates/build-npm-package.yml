@@ -147,6 +147,11 @@ stages:
                 canRelease=${{ variables.canRelease }}
 
                 release=$(release)"
+
+              for entry in "${parameters.nonScopedPackages[@]}"
+                do
+                  echo "$entry"
+                done
               # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
