@@ -6,13 +6,13 @@
 import { TinyliciousService } from "@fluid-experimental/get-container";
 import { Container, Loader } from "@fluidframework/container-loader";
 
-import React, { useRef } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
 
+import { AppView } from "./appView";
 import { InventoryListContainerRuntimeFactory } from "./containerCode";
 import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
 import { IInventoryList } from "./dataObject";
-import { InventoryListView } from "./view";
 
 // In interacting with the service, we need to be explicit about whether we're creating a new document vs. loading
 // an existing one.  We also need to provide the unique ID for the document we are creating or loading from.
@@ -43,56 +43,6 @@ async function getInventoryListFromContainer(container: Container): Promise<IInv
 
     return response.value as IInventoryList;
 }
-
-interface IAppViewProps {
-    inventoryList: IInventoryList;
-    // Normally there's no need to display the imported string data, this is for demo purposes only.
-    importedStringData: string | undefined;
-    // Normally this is probably a Promise<void>.  Returns a string here for demo purposes only.
-    writeToExternalStorage: () => Promise<string>;
-}
-
-const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const { inventoryList, importedStringData, writeToExternalStorage } = props;
-
-    // eslint-disable-next-line no-null/no-null
-    const savedDataRef = useRef<HTMLTextAreaElement>(null);
-
-    const saveButtonClickHandler = () => {
-        writeToExternalStorage()
-            // As noted above, in a real scenario we don't need to observe the data in the view.
-            // Here we display it visually for demo purposes only.
-            .then((savedData) => {
-                // eslint-disable-next-line no-null/no-null
-                if (savedDataRef.current !== null) {
-                    savedDataRef.current.value = savedData;
-                }
-            })
-            .catch(console.error);
-    };
-
-    let importedDataView;
-    if (importedStringData !== undefined) {
-        importedDataView = (
-            <div>
-                <div>Imported data:</div>
-                <textarea rows={ 5 } value={ importedStringData } readOnly></textarea>
-            </div>
-        );
-    } else {
-        importedDataView = <div>Loaded from existing container</div>;
-    }
-
-    return (
-        <div>
-            { importedDataView }
-            <InventoryListView inventoryList={ inventoryList } />
-            <button onClick={ saveButtonClickHandler }>Save</button>
-            <div>Data out:</div>
-            <textarea ref={ savedDataRef } rows={ 5 } readOnly></textarea>
-        </div>
-    );
-};
 
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
