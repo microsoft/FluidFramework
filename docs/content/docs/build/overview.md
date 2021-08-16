@@ -52,7 +52,7 @@ The `fluid-framework` package is a collection of core Fluid APIs that make it ea
 
 Fluid works with multiple service implementations. Each service has a corresponding service-specific client package. These packages contain a common API structure but also support functionality unique to each service.
 
-The Tinylicious service is a local Fluid service. This documentation uses `@fluid-experimental/tinylicious-client` (or simply `client`). For specifics about each service-specific client implementation see their corresponding documentation.
+The Tinylicious service is a local Fluid service. This documentation uses `@fluidframework/tinylicious-client` (or simply `client`). For specifics about each service-specific client implementation see their corresponding documentation.
 
-- `@fluid-experimental/tinylicious-client` -- the client for the [Tinylicious]({{< relref "Tinylicious" >}}) service.
-- `@fluid-experimental/frs-client` -- the client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
+- `@fluidframework/tinylicious-client` -- the client for the [Tinylicious]({{< relref "Tinylicious" >}}) service.
+- `@fluidframework/azure-client` -- the client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).

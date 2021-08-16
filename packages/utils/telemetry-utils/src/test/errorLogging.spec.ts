@@ -7,6 +7,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
+import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
 import { LoggingError, isTaggedTelemetryPropertyValue, normalizeError, IFluidErrorAnnotations } from "../errorLogging";
@@ -226,6 +227,13 @@ describe("Error Logging", () => {
             assert.strictEqual(errorAsAny.p3, true);
             assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "PackageData" });
         });
+        it("errorInstanceId unique each time", () => {
+            const e1 = new LoggingError("1");
+            const e2 = new LoggingError("2");
+            assert.equal(e1.errorInstanceId.length, 36, "should be guid-length");
+            assert.equal(e2.errorInstanceId.length, 36, "should be guid-length");
+            assert.notEqual(e1.errorInstanceId, e2.errorInstanceId, "each error instance should get unique id");
+        });
         it("getTelemetryProperties extracts all untagged ctor props", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true});
             const props = loggingError.getTelemetryProperties();
@@ -289,8 +297,8 @@ describe("Error Logging", () => {
             const propsWillBeIgnored = { message: "surprise1", stack: "surprise2" };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
-            const { message, stack } = loggingError;
-            assert.deepStrictEqual(props, { message, stack }, "addTelemetryProperties should not overwrite existing props");
+            const { message, stack, errorInstanceId } = loggingError;
+            assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (tagged)", () => {
             const loggingError = new LoggingError("myMessage");
@@ -300,8 +308,8 @@ describe("Error Logging", () => {
             };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();
-            const { message, stack } = loggingError;
-            assert.deepStrictEqual(props, { message, stack }, "addTelemetryProperties should not overwrite existing props");
+            const { message, stack, errorInstanceId } = loggingError;
+            assert.deepStrictEqual(props, { message, stack, errorInstanceId }, "addTelemetryProperties should not overwrite existing props");
         });
         it("addTelemetryProperties - Does not overwrite existing telemetry props", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1 });
@@ -322,13 +330,15 @@ class TestFluidError implements IFluidErrorBase {
     readonly message: string;
     readonly stack?: string;
     readonly name?: string;
+    readonly errorInstanceId: string;
 
-    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
+    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties" | "errorInstanceId">) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
+        this.errorInstanceId = uuid();
 
         this.atpStub = sinon.stub(this, "addTelemetryProperties");
         this.expectedTelemetryProps = { ...errorProps };
@@ -368,7 +378,7 @@ describe("normalizeError", () => {
             const annotations = annotationCases[annotationCase];
             it(`Valid legacy error - Patch and return (annotations: ${annotationCase})`, () => {
                 // Arrange
-                const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> =
+                const errorProps =
                     {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
                 const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
                 const expectedErrorCode = annotations.errorCodeIfNone === undefined
@@ -418,7 +428,7 @@ describe("normalizeError", () => {
         });
         it("Frozen legacy error - Throws", () => {
             // Arrange
-            const errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties"> =
+            const errorProps =
                 {errorType: "et1", message: "m1", fluidErrorCode: "toBeRemoved" };
             const legacyError = new TestFluidError(errorProps).withoutProperty("fluidErrorCode");
             Object.freeze(legacyError);
