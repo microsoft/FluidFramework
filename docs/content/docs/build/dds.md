@@ -108,7 +108,7 @@ A distributed data structure object is created using its type's static `create` 
 const myMap = SharedMap.create(this.runtime);
 ```
 
-Your code must pass in an `IFluidDataStoreRuntime` object that will managethe DDS. We'll cover the runtime in more detail in
+Your code must pass in an `IFluidDataStoreRuntime` object that will manage the DDS. We'll cover the runtime in more detail in
 the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
 
 ### Storing a DDS within another DDS
