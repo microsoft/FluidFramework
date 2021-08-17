@@ -78,9 +78,6 @@ parameters:
 - name: releaseBuildOverride
   type: string
 
-- name: nonScopedPackages
-  type: object
-
 - name: tagName
   type: string
 
@@ -97,6 +94,7 @@ variables:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+      nonScopedPackages: ${{ parameters.nonScopedPackages }}
 
 stages:
   # Install / Build / Test Stage
@@ -149,6 +147,7 @@ stages:
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
+                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
 
                 release=$(release)"
               # Error checking
@@ -231,7 +230,9 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/pack-scoped/
-                mkdir $(Build.ArtifactStagingDirectory)/pack-non-scoped/
+                if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
+                  mkdir $(Build.ArtifactStagingDirectory)/pack-non-scoped/
+                fi
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack-scoped/ ./*.tgz
@@ -239,15 +240,16 @@ stages:
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack-scoped/ ./*.tgz
                 fi
-              
-          - ${{ each parameter in parameters.nonScopedPackages }}:
-            - task: Bash@3
-              displayName: Move Non-Scoped Package ${{parameter}}
-              inputs:
-                targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
-                script: |
-                  mv -t $(Build.ArtifactStagingDirectory)/pack-non-scoped/ $(Build.ArtifactStagingDirectory)/pack-scoped/${{parameter}}*.tgz
+
+          - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+            - ${{ each parameter in parameters.nonScopedPackages }}:
+              - task: Bash@3
+                displayName: Move Non-Scoped Package ${{parameter}}
+                inputs:
+                  targetType: 'inline'
+                  workingDirectory: ${{ parameters.buildDirectory }}
+                  script: |
+                    mv -t $(Build.ArtifactStagingDirectory)/pack-non-scoped/ $(Build.ArtifactStagingDirectory)/pack-scoped/${{parameter}}*.tgz
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact for Scoped Packages - pack-scoped
@@ -256,12 +258,13 @@ stages:
               ArtifactName: 'pack-scoped'
               publishLocation: 'Container'
 
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact for Non-Scoped Packages - pack-non-scoped
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack-non-scoped'
-              ArtifactName: 'pack-non-scoped'
-              publishLocation: 'Container'
+          - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+            - task: PublishBuildArtifacts@1
+              displayName: Publish Artifact for Non-Scoped Packages - pack-non-scoped
+              inputs:
+                PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack-non-scoped'
+                ArtifactName: 'pack-non-scoped'
+                publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
