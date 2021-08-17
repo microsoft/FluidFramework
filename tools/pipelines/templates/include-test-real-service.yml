@@ -41,6 +41,7 @@ jobs:
       value: $(Pipeline.Workspace)/client/pack-scoped/${{ variables.testPackageFilePattern }}
     - name: testBuild
       value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+
     - ${{ if eq(variables.testBuild, true) }}:
       - name: feedName
         value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
