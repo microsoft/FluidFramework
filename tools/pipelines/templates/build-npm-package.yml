@@ -68,14 +68,15 @@ parameters:
   type: string
   default:
 
+- name: nonScopedPackages
+  type: object
+  default: []
+
 - name: publishOverride
   type: string
 
 - name: releaseBuildOverride
   type: string
-
-- name: nonScopedPackages
-  type: object
 
 - name: tagName
   type: string
