@@ -354,3 +354,4 @@ stages:
       parameters:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
+        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
