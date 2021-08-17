@@ -277,7 +277,7 @@ describe("Routerlicious", () => {
                     it("/:tenantId/:id", async () => {
                         await assertCorrelationId(`/documents/${appTenant1.id}/${document1._id}`);
                     });
-                    it("/:tenantId/:id/blobs", async () => {
+                    it("/:tenantId", async () => {
                         await assertCorrelationId(`/documents/${appTenant1.id}`, "post");
                     });
                 });
@@ -294,6 +294,40 @@ describe("Routerlicious", () => {
                     });
                     it("/:tenantId/:id/v1", async () => {
                         await assertCorrelationId(`/deltas/${appTenant1.id}/${document1._id}/v1`);
+                    });
+                });
+            });
+
+            describe("single-use JWTs", () => {
+                const limit = 1000000;
+                beforeEach(() => {
+                    const throttler = new TestThrottler(limit);
+                    app = alfredApp.create(
+                        defaultProvider,
+                        defaultTenantManager,
+                        throttler,
+                        defaultSingleUseTokenCache,
+                        defaultStorage,
+                        defaultAppTenants,
+                        defaultMongoManager,
+                        defaultProducer);
+                    supertest = request(app);
+                });
+                describe("/documents", () => {
+                    it("/:tenantId", async () => {
+                        const url = `/documents/${appTenant1.id}`;
+                        await supertest.post(url)
+                            .set('Authorization', tenantToken1)
+                            .send({id: ""})
+                            .expect((res) => {
+                                assert.notStrictEqual(res.status, 401);
+                                assert.notStrictEqual(res.status, 403);
+                            });
+
+                        await supertest.post(url)
+                            .set('Authorization', tenantToken1)
+                            .send({id: ""})
+                            .expect(403);
                     });
                 });
             });
