@@ -45,7 +45,7 @@ jobs:
       - name: feedName
         value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
     - ${{ if ne(variables.testBuild, true) }}:
-      - name: release
+      - name: feedName
         value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
     steps:
@@ -69,6 +69,8 @@ jobs:
           Pipeline Variables:
             testWorkspace=${{ parameters.testWorkspace }}
             testPackageFilePattern=${{ variables.testPackageFilePattern }}
+            testBuild=${{ variables.testBuild }}
+            feedName=${{ variables.feedName }}
           "
 
     # Install
