@@ -68,6 +68,10 @@ parameters:
   type: string
   default:
 
+- name: nonScopedPackages
+  type: object
+  default: []
+
 - name: publishOverride
   type: string
 
@@ -138,7 +142,7 @@ stages:
                 TestCoverage=$(testCoverage)
               
               Publish Parameters:
-                nonScopedPackages=${{join(', ',parameters.nonScopedPackages)}}
+                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
