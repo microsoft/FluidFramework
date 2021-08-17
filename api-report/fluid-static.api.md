@@ -57,6 +57,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
+    get id(): string;
+    // (undocumented)
     get initialObjects(): Record<string, IFluidLoadable>;
     }
 
@@ -78,6 +80,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     dispose(): void;
     // (undocumented)
     readonly disposed: boolean;
+    // (undocumented)
+    readonly id: string;
     // (undocumented)
     readonly initialObjects: LoadableObjectRecord;
 }

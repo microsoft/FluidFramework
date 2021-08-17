@@ -15,8 +15,9 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
-    readonly disposed: boolean;
     readonly connected: boolean;
+    readonly disposed: boolean;
+    readonly id: string;
     readonly initialObjects: LoadableObjectRecord;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
@@ -35,6 +36,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
+    }
+
+    public get id() {
+        return this.container.id;
     }
 
     public get disposed() {
