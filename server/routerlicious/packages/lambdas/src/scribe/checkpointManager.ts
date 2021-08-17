@@ -11,6 +11,7 @@ import {
     IScribe,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
+import { runWithRetry } from "@fluidframework/server-services-utils";
 import { ICheckpointManager } from "./interfaces";
 
 /**
@@ -46,28 +47,11 @@ export class CheckpointManager implements ICheckpointManager {
         const dbOps = pending.map((message) => ({ ...message,
             mongoTimestamp: new Date(message.operation.timestamp) }));
         if (dbOps.length > 0) {
-            let retryCount = 0;
-            let success = false;
-            const wait = async (retryNumber) => new Promise((resolve) => setTimeout(resolve, 10 ** retryNumber));
-            do  {
-                try {
-                    await this.opCollection.insertMany(dbOps, false);
-                    success = true;
-                } catch (error) {
-                    // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                    // All other errors result in a retry of max 3 times
-                    if (error.code === 11000) {
-                        break;
-                    } else {
-                        if (retryCount > 3) {
-                            // Needs to be a full rejection here
-                            return Promise.reject(error);
-                        }
-                        await wait(retryCount);
-                        retryCount++;
-                    }
-                }
-            } while (!success);
+            await runWithRetry(
+                async () => {return this.opCollection.insertMany(dbOps, false);},
+                "writeCheckpointScribe",
+                3,
+                (error) => {return error.code !== 11000;});
         }
 
         // Write out the full state first that we require

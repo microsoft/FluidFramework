@@ -11,5 +11,6 @@ export * from "./generateNames";
 export * from "./logger";
 export * from "./port";
 export * from "./redisUtils";
+export * from "./runWithRetry";
 export * from "./throttlerMiddleware";
 export * from "./winstonLumberjackEngine";

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { inspect } from "util";
 import {
     extractBoxcar,
     ICollection,
@@ -13,6 +12,7 @@ import {
     ISequencedOperationMessage,
     SequencedOperationType,
 } from "@fluidframework/server-services-core";
+import { runWithRetry } from "@fluidframework/server-services-utils";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -100,28 +100,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
             ...message,
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
-        let retryCount = 0;
-        let success = false;
-        const wait = async (retryNumber) => new Promise((resolve) => setTimeout(resolve, 10 ** retryNumber));
-        do  {
-            try {
-                await this.opCollection.insertMany(dbOps, false);
-                success = true;
-            } catch (error) {
-                this.context.log?.error(`Error inserting operation in the database: ${inspect(error)}`);
-                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                // All other errors result in a retry (max 3 times)
-                if (error.code === 11000) {
-                    break;
-                } else {
-                    if (retryCount > 3) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
-                    }
-                    await wait(retryCount);
-                    retryCount++;
-                }
-            }
-        } while (!success);
+        await runWithRetry(
+            async () => {return this.opCollection.insertMany(dbOps, false);},
+            "insertOpScriptorium",
+            3,
+            (error) => {return error.code !== 11000;});
     }
 }
