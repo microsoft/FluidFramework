@@ -41,11 +41,12 @@ import {
     ChildLogger,
     raiseConnectedEvent,
     PerformanceEvent,
+    normalizeError,
     TaggedLoggerAdapter,
 } from "@fluidframework/telemetry-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, BlobAggregationStorage } from "@fluidframework/driver-utils";
-import { CreateContainerError, DataCorruptionError } from "@fluidframework/container-utils";
+import { DataCorruptionError, GenericError } from "@fluidframework/container-utils";
 import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import {
     BlobTreeEntry,
@@ -79,7 +80,6 @@ import {
     NamedFluidDataStoreRegistryEntries,
     ISummaryTreeWithStats,
     ISummarizeInternalResult,
-    IChannelSummarizeResult,
     CreateChildSummarizerNodeParam,
     SummarizeInternalFn,
     channelsTreeName,
@@ -101,7 +101,6 @@ import {
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { debug } from "./debug";
 import { Summarizer } from "./summarizer";
 import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
@@ -236,7 +235,7 @@ export interface ISummaryRuntimeOptions {
 
     // Flag that disables putting channels in isolated subtrees for each data store
     // and the root node when generating a summary if set to true.
-    // Defaults to TRUE (disabled) for now.
+    // Defaults to FALSE (enabled) for now.
     disableIsolatedChannels?: boolean;
 
     // Defaults to 7000 ops
@@ -1268,7 +1267,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.paused = false;
             this.context.deltaManager.inbound.resume();
         }, (error) => {
-            this.closeFn(CreateContainerError(error));
+            this.closeFn(normalizeError(error));
         });
     };
 
@@ -1401,7 +1400,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // If switching to manual mode add a warning trace indicating the underlying loader does not support
         // this feature yet. Can remove in 0.9.
         if (!this.deltaSender && mode === FlushMode.Manual) {
-            debug("DeltaManager does not yet support flush modes");
             return;
         }
 
@@ -1420,7 +1418,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
 
         if (!this.deltaSender) {
-            debug("DeltaManager does not yet support flush modes");
             return;
         }
 
@@ -1687,7 +1684,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean,
         /** True to generate full GC data; defaults to false */
         fullGC?: boolean,
-    }): Promise<IChannelSummarizeResult> {
+    }): Promise<ISummaryTreeWithStats> {
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
         if (runGC) {
@@ -1698,7 +1695,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(summarizeResult.summary.type === SummaryType.Tree,
             0x12f /* "Container Runtime's summarize should always return a tree" */);
 
-        return summarizeResult as IChannelSummarizeResult;
+        return summarizeResult as ISummaryTreeWithStats;
     }
 
     /**
@@ -1773,7 +1770,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const trace = Trace.start();
-            let summarizeResult: IChannelSummarizeResult;
+            let summarizeResult: ISummaryTreeWithStats;
             try {
                 summarizeResult = await this.summarize({
                     summaryLogger,
@@ -1785,7 +1782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } catch (error) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
             }
-            const { summary: summaryTree, stats: partialStats, gcData } = summarizeResult;
+            const { summary: summaryTree, stats: partialStats } = summarizeResult;
 
             // Counting dataStores and handles
             // Because handles are unchanged dataStores in the current logic,
@@ -1805,7 +1802,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 referenceSequenceNumber: summaryRefSeqNum,
                 summaryTree,
                 summaryStats,
-                gcData,
                 generateDuration: trace.trace().duration,
             } as const;
 
@@ -1959,7 +1955,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         if (this.context.pendingLocalState !== undefined) {
-            this.closeFn(CreateContainerError("op submitted while processing pending initial state"));
+            this.closeFn(new GenericError("containerRuntimeSubmitWithPendingLocalState"));
         }
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);

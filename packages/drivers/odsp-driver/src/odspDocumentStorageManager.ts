@@ -9,6 +9,7 @@ import {
     assert,
     stringToBuffer,
     bufferToString,
+    delay,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -42,6 +43,7 @@ import {
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import { FlushResult } from "./odspDocumentDeltaConnection";
 
 /* eslint-disable max-len */
 
@@ -219,6 +221,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
+        private readonly flushCallback: () => Promise<FlushResult>,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -604,6 +607,38 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
+
+        // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
+        if (".protocol" in summary.tree && context.ackHandle !== undefined) {
+            let retry = 0;
+            for (;;) {
+                const result = await this.flushCallback();
+                const seq = result.lastPersistedSequenceNumber;
+                if (seq !== undefined && seq >= context.referenceSequenceNumber) {
+                    break;
+                }
+
+                retry++;
+                if (retry > 3) {
+                    this.logger.sendErrorEvent({
+                        eventName: "FlushFailure",
+                        ...result,
+                        retry,
+                        referenceSequenceNumber: context.referenceSequenceNumber,
+                    });
+                    break;
+                }
+
+                this.logger.sendPerformanceEvent({
+                    eventName: "FlushExtraCall",
+                    ...result,
+                    retry,
+                    referenceSequenceNumber: context.referenceSequenceNumber,
+                });
+
+                await delay(1000 * (result.retryAfter ?? 1));
+            }
+        }
 
         const id = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },

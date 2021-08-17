@@ -44,7 +44,6 @@ describe("Runtime", () => {
                 return {
                     id: ids[depth],
                     pathPartsForChildren: undefined, // extra path parts between nodes
-                    gcData: { gcNodes: {} },
                     stats: mergeStats(),
                     summary: { type: SummaryType.Tree, tree: {} } as const,
                 };

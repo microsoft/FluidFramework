@@ -15,7 +15,7 @@ distributed-data-structures:
     url: "/docs/apis/sequence/sharedstring/"
 - "@fluid-experimental/task-manager"
 libraries:
-- "@fluid-experimental/fluid-framework"
+- "fluid-framework"
 - "@fluidframework/aqueduct"
 definitions:
 - "@fluidframework/common-definitions"

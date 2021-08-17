@@ -61,7 +61,6 @@ export class ParallelRequests<T> {
     public cancel() {
         if (this.working) {
             this.workingState = "canceled";
-            this.logger.sendTelemetryEvent({ eventName: "GetDeltas_cancel" });
             this.endEvent.resolve();
         }
     }
@@ -454,7 +453,7 @@ export function requestOps(
 ): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
-    let deltasRetrievedTotal = 0;
+    let length = 0;
     const queue = new Queue<ISequencedDocumentMessage[]>();
 
     const propsTotal: ITelemetryProperties = {
@@ -484,7 +483,7 @@ export function requestOps(
         },
         (deltas: ISequencedDocumentMessage[]) => {
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
-            deltasRetrievedTotal += deltas.length;
+            length += deltas.length;
             queue.pushValue(deltas);
         });
 
@@ -505,11 +504,11 @@ export function requestOps(
         }).then(() => {
             const props = {
                 lastFetch,
-                deltasRetrievedTotal,
+                length,
                 requests,
             };
             if (manager.canceled) {
-                telemetryEvent.cancel(props);
+                telemetryEvent.cancel({ ...props, error: "ops request cancelled by client" });
             } else {
                 telemetryEvent.end(props);
             }
@@ -518,7 +517,7 @@ export function requestOps(
         .catch((error) => {
             telemetryEvent.cancel({
                 lastFetch,
-                deltasRetrievedTotal,
+                length,
                 requests,
             }, error);
             queue.pushError(error);

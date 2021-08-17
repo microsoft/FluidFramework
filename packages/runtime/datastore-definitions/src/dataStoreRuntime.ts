@@ -61,8 +61,6 @@ export interface IFluidDataStoreRuntime extends
 
     readonly clientId: string | undefined;
 
-    readonly documentId: string;
-
     readonly connected: boolean;
 
     readonly logger: ITelemetryLogger;
