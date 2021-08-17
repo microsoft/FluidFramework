@@ -39,6 +39,14 @@ jobs:
       value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
     - name: testPackagePathPattern
       value: $(Pipeline.Workspace)/client/pack-scoped/${{ variables.testPackageFilePattern }}
+    - name: testBuild
+      value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+    ${{ if eq(variables.testBuild, true) }}:
+      - name: feedName
+        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+    ${{ if ne(variables.testBuild, true) }}:
+      - name: release
+        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
     steps:
     # Setup
@@ -96,10 +104,10 @@ jobs:
           echo "registry=https://registry.npmjs.org" >> ./.npmrc
           echo "always-auth=false" >> ./.npmrc
 
-          echo "@fluidframework:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@fluid-experimental:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@fluid-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@fluidframework:registry=${{ variables.feedName }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ variables.feedName }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ variables.feedName }}" >> ./.npmrc
+          echo "@ff-internal:registry=${{ variables.feedName }}" >> ./.npmrc
           echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
