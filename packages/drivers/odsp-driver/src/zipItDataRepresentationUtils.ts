@@ -9,6 +9,7 @@
 */
 
 import { assert, IsoBuffer, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { createOdspNetworkError, fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 
 /**
@@ -352,7 +353,7 @@ export function assertBlobCoreInstance(
     if (node instanceof BlobCore) {
         return;
     }
-    throwBufferParseException(node, startIndex, endIndex, message);
+    throwBufferParseException(node, startIndex, endIndex, "BlobCore", message);
 }
 
 export function assertNodeCoreInstance(
@@ -364,7 +365,7 @@ export function assertNodeCoreInstance(
     if (node instanceof NodeCore) {
         return;
     }
-    throwBufferParseException(node, startIndex, endIndex, message);
+    throwBufferParseException(node, startIndex, endIndex, "NodeCore", message);
 }
 
 export function assertNumberInstance(
@@ -376,29 +377,40 @@ export function assertNumberInstance(
     if (typeof node === "number") {
         return;
     }
-    throwBufferParseException(node, startIndex, endIndex, message);
+    throwBufferParseException(node, startIndex, endIndex, "Number", message);
 }
 
 function throwBufferParseException(
     node: NodeTypes,
     startIndex: number | undefined,
     endIndex: number | undefined,
+    expectedNodeType: NodeType,
     message?: string,
 ): never {
-    const error = new Error(`BufferParsingException: ${message}`);
-    (error as any).startIndex = startIndex;
-    (error as any).endIndex = endIndex;
-    (error as any).nodeType = getNodeType(node);
+    const error = createOdspNetworkError(
+        `BufferParsingException: ${message}`,
+        fetchIncorrectResponse,
+        undefined,
+        undefined,
+        undefined,
+        {
+            startIndex,
+            endIndex,
+            nodeType: getNodeType(node),
+            expectedNodeType,
+        });
     throw error;
 }
 
-function getNodeType(value: NodeTypes): string {
+function getNodeType(value: NodeTypes): NodeType {
     if (typeof value === "number") {
-        return "number";
+        return "Number";
     } else if(value instanceof BlobCore) {
         return "BlobCore";
     } else if (value instanceof NodeCore) {
         return "NodeCore";
     }
-    return "unknownType";
+    return "UnknownType";
 }
+
+type NodeType = "Number" | "BlobCore" | "NodeCore" | "UnknownType";
