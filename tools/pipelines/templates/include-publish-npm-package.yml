@@ -10,6 +10,10 @@ parameters:
 - name: tagName
   type: string
 
+- name: publishNonScopedPackages
+  type: boolean
+  default: false
+
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
@@ -23,7 +27,7 @@ stages:
       environment: test-package-build-feed
       official: false
       artifact: pack-scoped
-  - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+  - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
     - template: include-publish-npm-package-steps.yml
       parameters:
         namespace: false
@@ -44,7 +48,7 @@ stages:
       environment: package-build-feed
       official: false
       artifact: pack-scoped
-  - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+  - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
     - template: include-publish-npm-package-steps.yml
       parameters:
         namespace: false
@@ -68,7 +72,7 @@ stages:
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
       artifact: pack-scoped
-  - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+  - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
     - template: include-publish-npm-package-steps.yml
       parameters:
         namespace: false
