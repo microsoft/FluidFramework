@@ -139,7 +139,7 @@ stages:
                 TestCoverage=$(testCoverage)
               
               Publish Parameters:
-                nonScopedPackages=${{join(', ',parameters.nonScopedPackages)}}
+                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
