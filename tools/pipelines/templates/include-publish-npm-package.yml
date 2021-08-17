@@ -22,6 +22,15 @@ stages:
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       environment: test-package-build-feed
       official: false
+      artifact: pack-scoped
+
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: false
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+      environment: test-package-build-feed
+      official: false
+      artifact: pack-non-scoped
 
 - stage: publish_npm_internal
   dependsOn: build
@@ -34,6 +43,14 @@ stages:
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
       environment: package-build-feed
       official: false
+      artifact: pack-scoped
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: false
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      environment: package-build-feed
+      official: false
+      artifact: pack-non-scoped
 
 - stage: publish_npm_official
   dependsOn: build
@@ -49,3 +66,14 @@ stages:
       official: true
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
+      artifact: pack-scoped
+  - template: include-publish-npm-package-steps.yml
+    parameters:
+      namespace: false
+      feedName: https://registry.npmjs.org
+      environment: package-npmjs-feed
+      customEndPoint: npmjs
+      official: true
+      publishFlags: --access public
+      tagName: ${{ parameters.tagName }}
+      artifact: pack-non-scoped

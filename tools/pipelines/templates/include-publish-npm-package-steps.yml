@@ -20,6 +20,9 @@ parameters:
 - name: official
   type: string
 
+- name: artifact
+  type: string
+
 - name: publishFlags
   type: string
   default:
@@ -33,8 +36,8 @@ parameters:
   default:
 
 jobs:
-- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
-  displayName: Publish ${{ parameters.environment }}
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}_${{ replace(parameters.artifact, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }} for ${{parameters.artifact}}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
   workspace:
@@ -47,7 +50,7 @@ jobs:
         deploy:
             steps:
             - download: current
-              artifact: pack
+              artifact: ${{ parameters.artifact }}
             - task: UseNode@1
               displayName: Use Node 12.x
               inputs:
@@ -56,7 +59,7 @@ jobs:
               displayName: Generate .npmrc
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack
+                workingDirectory: $(Pipeline.Workspace)/${{ parameters.artifact }}
                 ${{ if eq(parameters.namespace, true) }}:
                   ${{ if eq(parameters.official, false) }}:
                     script: |
@@ -77,9 +80,9 @@ jobs:
                       echo "always-auth=true" >> ./.npmrc
                       cat .npmrc
 
-                      echo Deleteing @fluid-internal packages
+                      echo Deleting @fluid-internal packages
                       rm -f fluid-internal-*
-                      echo Deleteing @fluid-example packages
+                      echo Deleting @fluid-example packages
                       rm -f fluid-example-*
                 ${{ if eq(parameters.namespace, false) }}:
                   script: |
@@ -90,13 +93,13 @@ jobs:
             - task: npmAuthenticate@0
               displayName: npm Authenticate
               inputs:
-                workingFile: $(Pipeline.Workspace)/pack/.npmrc
+                workingFile: $(Pipeline.Workspace)/${{ parameters.artifact }}/.npmrc
                 customEndPoint: ${{ parameters.customEndPoint }}
             - task: Bash@3
               displayName: Publish Packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/pack
+                workingDirectory: $(Pipeline.Workspace)/${{ parameters.artifact }}
                 script: |
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then
