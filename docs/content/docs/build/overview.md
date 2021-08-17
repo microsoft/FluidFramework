@@ -7,7 +7,7 @@ editor: tylerbutler
 
 {{< callout note >}}
 
-This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works](../_index.md#how-fluid-works).
+This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works](../../_index.md#how-fluid-works).
 
 {{< /callout >}}
 
