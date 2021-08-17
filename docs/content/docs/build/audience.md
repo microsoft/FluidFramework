@@ -11,11 +11,11 @@ This document will explain how to use the audience APIs and then provide example
 
 ## Working with the audience
 
-When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container.
+When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library. 
 
 ```js
 const { fluidContainer, containerServices } =
-    await tinyliciousClient.createContainer(serviceConfig, containerSchema);
+    await client.createContainer(serviceConfig, containerSchema);
 const audience = containerServices.audience;
 ```
 
@@ -30,7 +30,7 @@ export interface IMember {
 }
 ```
 
-An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
+An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection` objects, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
 
 {{% callout tip %}}
 
@@ -57,7 +57,7 @@ Because audience data is service-specific, code that interacts with audience may
 
 #### getMembers
 
-The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` for that user ID.  Your code can further query the individual `IMember`s for its client connections.
+The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` objects for the corresponding user IDs.  Your code can further query the individual `IMember` objects for their client connections.
 
 {{% callout tip "Tips" %}}
 
@@ -71,7 +71,7 @@ The `getMyself` method returns the `IMember` object from the audience correspond
 
 {{% callout tip %}}
 
-Connection transitions can result in short timing windows where `getMyself` returns undefined.  This is because the current client connection will not have been added to the audience yet, so a matching connection ID cannot be found.  Similarly, offline scenarios may produce the same behavior.
+Connection transitions can result in short timing windows where `getMyself` returns `undefined`.  This is because the current client connection will not have been added to the audience yet, so a matching connection ID cannot be found.  Similarly, offline scenarios may produce the same behavior.
 
 {{% /callout %}}
 
@@ -83,11 +83,11 @@ The `membersChanged` event is emitted whenever a change to the audience members'
 
 #### memberAdded
 
-The `memberAdded` event is emitted whenever a client connection is added to the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` may be queried for more information on the new connection using the provided connection client ID.  Depending on if it already had previous connections, the `IMember` may be either new or existing.
+The `memberAdded` event is emitted whenever a client connection is added to the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` object may be queried for more information on the new connection using the provided connection client ID.  Depending on if it already had previous connections, the `IMember` object may be either new or existing.
 
 #### memberRemoved
 
-The `memberRemoved` event is emitted whenver a client connection leaves the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` reflects its state in the audience before the connection's removal, and may be queried for more information on the removed connection using the provided connection client ID.
+The `memberRemoved` event is emitted whenever a client connection leaves the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` object reflects its state in the audience before the connection's removal, and may be queried for more information on the removed connection using the provided connection client ID.
 
 ## Using audience to build presence features
 
@@ -99,7 +99,7 @@ While the audience is the foundation for user presence features, the list of con
 
 Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members. Some of those scenarios will require the app to save data for each user for future sessions. For example, consider a scenario where you want to display how long each user has spent in your application.  An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect.  This means that the time each user has spent must be persisted so it can survive disconnections.
 
-One option is to use a `SharedMap` with a `SharedCounter` as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})).  All other connected users will then receive changes to that SharedMap automatically.  Your app's UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
+One option is to use a `SharedMap` object with a `SharedCounter` object as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})).  All other connected users will then receive changes to that SharedMap automatically.  Your app's UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
 
 #### Shared transient data
 

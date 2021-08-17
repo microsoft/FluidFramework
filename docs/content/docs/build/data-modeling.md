@@ -11,7 +11,7 @@ that are immediately and always available to all clients; or, for more complex s
 ## Defining initial objects
 
 The most straightforward way to use Fluid is by defining **initial objects** that are created when the
-[Fluid container](./container.md) is created, and exist for the lifetime of the container. Initial objects serve as a base
+[Fluid container](./containers.md) is created, and exist for the lifetime of the container. Initial objects serve as a base
 foundation for a Fluid *schema* -- a definition of the shape of the data.
 
 Initial objects are always *connected* -- that is, they are connected to the Fluid service and are fully distributed.
@@ -85,7 +85,7 @@ it dynamically at runtime.
 
 All Fluid objects have a `handle` property that can be used to store and retrieve them from other Fluid objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
 
-Dynamically created objects need to be stored on an already connected Fluid object, so the most common case is to store them in an `initialObject`, because `initialObjects` are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense Fluid objects are arbitrarily nestable. But the hierarchy of referenced objects must rest in an initial object that holds the references to the first level of dynamic objects. So, there is always at least one initial object in every container.
+Dynamically created objects need to be stored on an already connected Fluid object, so the most common case is to store references to them in an initial object property, because initial objects are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense Fluid objects are arbitrarily nestable. But the hierarchy of referenced objects must rest in an initial object that holds the references to the first level of dynamic objects. So, there is always at least one initial object in every container.
 
 When retrieving dynamically created objects your code needs to first get the object's handle then get the object from the handle. This reference based approach enables the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
@@ -131,7 +131,7 @@ map.on("valueChanged", (changed) => {
 
 ### When to use dynamic objects
 
-Dynamic objects are more difficult to work with than `initialObjects`, but are especially valuable in two scenarios:
+Dynamic objects are more difficult to work with than initial objects, but are especially valuable in two scenarios:
 
 - When the app has a very large data set. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded.
 - When the data needed by the app will vary depending on choices made by the user. Dynamic objects are also not strictly defined in the container schema. This enables your app to create containers with flexible, user-generated schemas.

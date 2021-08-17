@@ -131,7 +131,7 @@ myMap.set("counter", myCounter.handle);
 ```
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
-see [Fluid handles](../advanced/handles.md) in the Advanced section.
+see [Fluid handles](../deep/handles.md) in the Advanced section.
 
 ## Events
 

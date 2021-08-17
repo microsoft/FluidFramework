@@ -26,7 +26,7 @@ Your code must define a schema that represents the structure of the data within 
 
 The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling](./data-modeling.md).
 
-This example schema defines two initial objects, `layout` and `text`, and declares the Distributed Data Structures (DDSes) `SharedCell` and `SharedString` as Fluid object types that can be created at runtime.
+This example schema defines two initial objects, `layout` and `text`, and declares the distributed data structures (DDSes) `SharedCell` and `SharedString` as Fluid object types that can be created at runtime.
 
 ```typescript
 const schema = {

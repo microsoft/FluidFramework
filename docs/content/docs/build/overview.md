@@ -39,10 +39,10 @@ For more about containers see [Containers](./containers.md).
 A *Fluid object* is any object type that supports collaboration (simultaneous editing). Fluid Framework contains two
 types of Fluid objects:
 
-- **Distributed Data Structures (DDSes):** A DDS holds shared data that the collaborators are working with.
+- **Distributed data structures (DDSes):** A DDS holds shared data that the collaborators are working with.
 - **Data Objects:** A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
 
-DDSes are low-level data structures, while `DataObject`s are composed of DDSes and other Fluid objects. Data Objects are
+DDSes are low-level data structures, while Data Objects are composed of DDSes and other Fluid objects. Data Objects are
 used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data. 
 
 For more information about these types and the differences between them, see [Data modeling](./data-modeling.md) and [Introducing distributed data structures](./dds.md).
@@ -50,8 +50,6 @@ For more information about these types and the differences between them, see [Da
 ## Library structure
 
 There are two primary libraries you'll use when building with Fluid. The basic Fluid Framework library and a service-specific client library such as the Tinylicious client library.
-
-For more information see [Packages]({{< relref "packages.md" >}}).
 
 ### The Fluid Framework library
 
@@ -66,3 +64,4 @@ For specifics about each service-specific client implementation see their corres
 - The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluid-experimental/tinylicious-client`.
 - The client library for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) is in the package `@fluid-experimental/frs-client`.
 
+For more information see [Packages]({{< relref "packages.md" >}}).
