@@ -23,7 +23,6 @@ stages:
       environment: test-package-build-feed
       official: false
       artifact: pack-scoped
-
   - template: include-publish-npm-package-steps.yml
     parameters:
       namespace: false
