@@ -137,6 +137,12 @@ export class OdspTestDriver implements ITestDriver {
         const emailServer = username.substr(username.indexOf("@") + 1);
         const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
 
+        // force isolateSocketCache because we are using different users in a single context
+        // and socket can't be shared between different users
+        const options = config?.options ?? {};
+        options.sessionOptions ??= {};
+        options.sessionOptions.isolateSocketCache = true;
+
         return this.create(
             {
                 username,
@@ -146,7 +152,7 @@ export class OdspTestDriver implements ITestDriver {
             },
             config?.directory ?? "",
             api,
-            config?.options,
+            options,
         );
     }
 
@@ -262,7 +268,6 @@ export class OdspTestDriver implements ITestDriver {
             this.getPushToken.bind(this),
             undefined,
             this.config.options,
-            this.config.username, // delta socket are per user, use the user name to separate the socket caches per user
         );
     }
 

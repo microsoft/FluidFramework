@@ -56,6 +56,11 @@ export interface ICollabSessionOptions {
      * This name will be used in attribution associated with edits made by such user.
      */
      unauthenticatedUserDisplayName?: string;
+
+    /**
+     * If set to true, socket cache are per OdspDocumentService instead of shared across all instances
+     */
+    isolateSocketCache?: boolean;
 }
 
 export interface HostStoragePolicy {

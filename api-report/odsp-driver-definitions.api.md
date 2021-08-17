@@ -34,6 +34,7 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
+    isolateSocketCache?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
 

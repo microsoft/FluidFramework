@@ -25,7 +25,6 @@ export class OdspDocumentServiceFactory
         getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
         persistedCache?: IPersistedCache,
         hostPolicy?: HostStoragePolicy,
-        socketReferenceKeyPrefix?: string,
     ) {
         super(
             getStorageToken,
@@ -33,7 +32,6 @@ export class OdspDocumentServiceFactory
             async () => getSocketIo(),
             persistedCache,
             hostPolicy,
-            socketReferenceKeyPrefix,
         );
     }
 }
