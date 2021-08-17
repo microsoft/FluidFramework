@@ -22,6 +22,17 @@ parameters:
   type: number
   default: 60
 
+variables:
+- name: testBuild
+  value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+
+${{ if eq(variables.testBuild, true) }}:
+  - name: feedName
+    value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+${{ if ne(variables.testBuild, true) }}:
+  - name: release
+    value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+
 jobs:
   - job: run
     displayName: Run Tests
@@ -39,15 +50,6 @@ jobs:
       value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
     - name: testPackagePathPattern
       value: $(Pipeline.Workspace)/client/pack-scoped/${{ variables.testPackageFilePattern }}
-    - name: testBuild
-      value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
-
-    ${{ if eq(variables.testBuild, true) }}:
-      - name: feedName
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-    ${{ if ne(variables.testBuild, true) }}:
-      - name: release
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
     steps:
     # Setup
