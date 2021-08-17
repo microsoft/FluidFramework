@@ -77,7 +77,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
      * Submits a new signal to the server
      */
     public submitSignal(message: any): void {
-        this.submitCore("submitSignal", message);
+        this.submitCore("submitSignal", [message]);
     }
 
     /**

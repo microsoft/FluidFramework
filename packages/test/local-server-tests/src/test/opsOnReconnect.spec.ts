@@ -489,9 +489,6 @@ describe("Ops on Reconnect", () => {
                 container1Object1Directory.set("key6", "value6");
             });
 
-            // Manually flush the ops so that they are sent as a batch.
-            flush(container1Object1);
-
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
 
@@ -534,9 +531,6 @@ describe("Ops on Reconnect", () => {
             container1Object1Map1.set("key4", "value4");
             container1Object1Map2.set("key5", "value5");
             container1Object1Directory.set("key6", "value6");
-
-            // Manually flush the ops so that they are sent as a batch.
-            flush(container1Object1);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);

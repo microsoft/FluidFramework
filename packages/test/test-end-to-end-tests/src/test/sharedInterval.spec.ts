@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     IntervalCollection,
@@ -225,6 +225,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
+
+    let dataObject: ITestFluidObject & IFluidLoadable;
+    const flush = () => (dataObject.context.containerRuntime as IContainerRuntime).flush();
+
     describe("one client", () => {
         const stringId = "stringKey";
 
@@ -243,8 +247,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 registry,
             };
             const container = await provider.makeTestContainer(testContainerConfig);
-            const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-            dataObject.context.containerRuntime.setFlushMode(FlushMode.Immediate);
+            dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
 
@@ -256,9 +259,11 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         it("replace all is included", async () => {
             sharedString.insertText(3, ".");
             intervals.add(0, 3, IntervalType.SlideOnRemove);
+            flush();
             assertIntervals([{ start: 0, end: 3 }]);
 
             sharedString.replaceText(0, 3, `xxx`);
+            flush();
             assertIntervals([{ start: 0, end: 3 }]);
         });
 
