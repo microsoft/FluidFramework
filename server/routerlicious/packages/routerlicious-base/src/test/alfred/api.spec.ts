@@ -306,7 +306,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
-                        defaultSingleUseTokenCache,
+                        new TestCache(),
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,

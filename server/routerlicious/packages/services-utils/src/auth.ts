@@ -148,7 +148,8 @@ export function verifyStorageToken(
         if (options.ensureSingleUseToken) {
             // TODO: remove `as any` after #7065 is merged and released
             const singleUseKey = (claims as any).jti ?? token;
-            // TODO: should we eat cache errors here or block flow?
+            // TODO: monitor uptime of services and switch to errors blocking
+            // flow if needed to prevent malicious activity
             if (await options.singleUseTokenCache?.get(singleUseKey).catch(() => false)) {
                 return res.status(403).send("Access token has already been used.");
             }
