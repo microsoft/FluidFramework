@@ -26,7 +26,7 @@ stages:
 
   - template: include-publish-npm-package-steps.yml
     parameters:
-      namespace: ${{ parameters.namespace }}
+      namespace: false
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       environment: test-package-build-feed
       official: false
@@ -46,7 +46,7 @@ stages:
       artifact: pack
   - template: include-publish-npm-package-steps.yml
     parameters:
-      namespace: ${{ parameters.namespace }}
+      namespace: false
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
       environment: package-build-feed
       official: false
@@ -69,7 +69,7 @@ stages:
       artifact: pack
   - template: include-publish-npm-package-steps.yml
     parameters:
-      namespace: ${{ parameters.namespace }}
+      namespace: false
       feedName: https://registry.npmjs.org
       environment: package-npmjs-feed
       customEndPoint: npmjs
