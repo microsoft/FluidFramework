@@ -253,7 +253,7 @@ stages:
               publishLocation: 'Container'
 
           - task: PublishBuildArtifacts@1
-            displayName: Publish Non-Scoped Artifact - pack
+            displayName: Publish Non-Scoped Artifact - pack-non-scoped
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack-non-scoped'
               ArtifactName: 'pack-non-scoped'
