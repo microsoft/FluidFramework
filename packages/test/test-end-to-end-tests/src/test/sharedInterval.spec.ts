@@ -237,6 +237,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         let intervalView;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+            flush(); // Make sure all ops have been sent before asserting
             assertIntervalsHelper(sharedString, intervalView, expected);
         };
 

@@ -248,10 +248,9 @@ export class DocumentDeltaConnection
     }
 
     protected submitCore(type: string, messages: IDocumentMessage[]) {
-        void Promise.resolve().then(() => {
-            this.checkNotClosed();
+        if (!this.disposed) {
             this.socket.emit(type, this.clientId, messages);
-        });
+        }
     }
 
     /**
