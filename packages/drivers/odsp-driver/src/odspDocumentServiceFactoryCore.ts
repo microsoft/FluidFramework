@@ -126,7 +126,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
-        if (this.hostPolicy.sessionOptions?.isolateSocketCache === true) {
+        if (this.hostPolicy.isolateSocketCache === true) {
             // create the key to separate the socket reuse cache
             this.socketReferenceKeyPrefix = uuid();
         }

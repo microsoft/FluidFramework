@@ -19,6 +19,7 @@ export interface HostStoragePolicy {
     // (undocumented)
     enableRedeemFallback?: boolean;
     fetchBinarySnapshotFormat?: boolean;
+    isolateSocketCache?: boolean;
     // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;
@@ -34,7 +35,6 @@ export interface ICacheEntry extends IEntry {
 
 // @public (undocumented)
 export interface ICollabSessionOptions {
-    isolateSocketCache?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
 

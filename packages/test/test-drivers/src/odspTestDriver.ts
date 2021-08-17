@@ -140,8 +140,7 @@ export class OdspTestDriver implements ITestDriver {
         // force isolateSocketCache because we are using different users in a single context
         // and socket can't be shared between different users
         const options = config?.options ?? {};
-        options.sessionOptions ??= {};
-        options.sessionOptions.isolateSocketCache = true;
+        options.isolateSocketCache = true;
 
         return this.create(
             {
