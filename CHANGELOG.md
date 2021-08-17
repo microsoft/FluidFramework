@@ -1,5 +1,13 @@
 # Change Log
 
+## 4.0.1
+
+* merge: 'releases/2021.08.1' to 'releases/2021.08.2'
+  * Commit: [738025b6f72771153b8ae7d20bafdc397a60239f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/738025b6f72771153b8ae7d20bafdc397a60239f)
+* fix: Prevent invalid out-of-order-undo error
+  * Associated pull request: [33320](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33320)
+  * Commit: [79a0a7a54006109cc3dd6ed25dd345c895ba61f7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/79a0a7a54006109cc3dd6ed25dd345c895ba61f7)
+
 ## 4.0.0
 
 * refactor: BREAKING CHANGE: clarify some of the intermediate stages of document to domain
@@ -17,6 +25,12 @@
 * feat: Add SharedTree summary format 0.1.1 which allows optional currentViews
   * Associated pull request: [32989](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/32989)
   * Commit: [f6aa3a2d0b929b1dc4a94c2bba34f9a34072ec51](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f6aa3a2d0b929b1dc4a94c2bba34f9a34072ec51)
+
+## 3.9.2
+
+* fix: Prevent invalid out-of-order-undo error
+  * Associated pull request: [33320](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33320)
+  * Commit: [79a0a7a54006109cc3dd6ed25dd345c895ba61f7](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/79a0a7a54006109cc3dd6ed25dd345c895ba61f7)
 
 ## 3.9.1
 
