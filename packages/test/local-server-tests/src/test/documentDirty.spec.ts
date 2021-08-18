@@ -248,7 +248,7 @@ describe("Document Dirty", () => {
 
                 checkDirtyState("after value set", true, 0);
 
-                // Manually flush the ops so that they are sent as a batch.
+                // Manually flush the ops before disconnecting
                 (dataObject.context.containerRuntime as IContainerRuntime).flush();
 
                 // Disconnect the client.
