@@ -117,6 +117,7 @@ export function create(
     const io = new Server(server, {
         // enable compatibility with socket.io v2 clients
         allowEIO3: true,
+        perMessageDeflate: false,
         // ensure long polling is never used
         transports: [ "websocket" ],
         cors: {
