@@ -18,7 +18,7 @@ export function createProducer(
     pollIntervalMs?: number,
     numberOfPartitions?: number,
     replicationFactor?: number,
-    sslCACertLocation?: string): IProducer {
+    sslCACertFilePath?: string): IProducer {
     let producer: IProducer;
 
     if (type === "rdkafka") {
@@ -26,7 +26,7 @@ export function createProducer(
             { kafka: [kafkaEndPoint] },
             clientId,
             topic,
-            { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor, sslCACertLocation });
+            { enableIdempotence, pollIntervalMs, numberOfPartitions, replicationFactor, sslCACertFilePath });
 
         producer.on("error", (error, errorData: IContextErrorData) => {
             if (errorData?.restart) {

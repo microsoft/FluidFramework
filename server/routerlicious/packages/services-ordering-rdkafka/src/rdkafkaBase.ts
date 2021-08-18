@@ -11,7 +11,7 @@ import { tryImportNodeRdkafka } from "./tryImport";
 export interface IKafkaBaseOptions {
     numberOfPartitions: number;
     replicationFactor: number;
-    sslCACertLocation?: string;
+    sslCACertFilePath?: string;
 }
 
 export interface IKafkaEndpoints {
@@ -50,10 +50,10 @@ export abstract class RdkafkaBase extends EventEmitter {
         const rdKafkaHasSSLEnabled =
             kafka.features.filter((feature) => feature.toLowerCase().indexOf("ssl") >= 0).length > 0;
 
-        if (rdKafkaHasSSLEnabled && options?.sslCACertLocation) {
+        if (rdKafkaHasSSLEnabled && options?.sslCACertFilePath) {
             this.sslOptions = {
                 "security.protocol": "ssl",
-                "ssl.ca.location": options?.sslCACertLocation,
+                "ssl.ca.location": options?.sslCACertFilePath,
             };
         }
 
