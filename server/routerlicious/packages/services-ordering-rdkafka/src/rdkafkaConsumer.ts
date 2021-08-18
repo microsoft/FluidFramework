@@ -86,8 +86,6 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			...this.sslOptions,
 		};
 
-		console.log(`[RDKAFKA ALL CONSUMER OPTIONS]: ${JSON.stringify(options)}`);
-
 		const consumer: kafkaTypes.KafkaConsumer = this.consumer =
 			new this.kafka.KafkaConsumer(options, { "auto.offset.reset": "latest" });
 

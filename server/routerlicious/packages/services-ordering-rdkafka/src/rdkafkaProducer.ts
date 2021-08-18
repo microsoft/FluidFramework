@@ -79,8 +79,6 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			...this.sslOptions,
 		};
 
-		console.log(`[RDKAFKA ALL PRODUCER OPTIONS]: ${JSON.stringify(options)}`);
-
 		const producer: kafkaTypes.Producer = this.producer =
 			new this.kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 

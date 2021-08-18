@@ -20,7 +20,11 @@ If you wish to enable SSL for Kafka, please follow these instructions:
       $ cd certs
       ```
 
-   2. Save a copy of [`gen-ssl-certs.sh`](https://github.com/edenhill/librdkafka/blob/master/tests/gen-ssl-certs.sh) in `certs`.
+   2. Save a copy of [`gen-ssl-certs.sh`](https://github.com/edenhill/librdkafka/blob/master/tests/gen-ssl-certs.sh) in `certs`. Make sure to make it executable.
+
+      ```bash
+      $ chmod +rx gen-ssl-certs.sh
+      ```
 
    3. Run the following commands:
 
@@ -112,4 +116,4 @@ If you wish to enable SSL for Kafka, please follow these instructions:
         },
     ```
 
-5. Now, you can build and run routerlicious and it will use SSL/TLS for Kafka.
+5. Now, you can build and run routerlicious as usual and it will use SSL/TLS for Kafka.
