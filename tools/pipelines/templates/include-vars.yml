@@ -31,19 +31,21 @@ variables:
   value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
 - name: shouldPublish
   value: ${{
-    and(
+    or(
       and(
-        ne(variables['Build.Reason'], 'PullRequest'),
-        ne(variables['System.TeamProject'], 'public')
-      ),
-      or(
         and(
-          ne(parameters.buildNumberInPatch, true),
-          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+          ne(variables['Build.Reason'], 'PullRequest'),
+          ne(variables['System.TeamProject'], 'public')
         ),
-        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-        variables.testBuild
-      )
+        or(
+          and(
+            ne(parameters.buildNumberInPatch, true),
+            startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+          ),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        )
+      ),
+      variables.testBuild
     )}}
 - name: canRelease
   value: ${{
