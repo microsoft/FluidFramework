@@ -20,7 +20,7 @@ parameters:
 - name: official
   type: string
 
-- name: artifact
+- name: artifactPath
   type: string
 
 - name: publishFlags
@@ -36,8 +36,8 @@ parameters:
   default:
 
 jobs:
-- deployment: publish_${{ replace(parameters.environment, '-', '_') }}_${{ replace(parameters.artifact, '-', '_') }}
-  displayName: Publish ${{ parameters.environment }} for ${{ parameters.artifact }}
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}_${{ replace(parameters.artifactPath, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }} for ${{ parameters.artifactPath }}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
   workspace:
@@ -50,7 +50,7 @@ jobs:
         deploy:
             steps:
             - download: current
-              artifact: ${{ parameters.artifact }}
+              artifact: pack
             - task: UseNode@1
               displayName: Use Node 12.x
               inputs:
@@ -59,7 +59,7 @@ jobs:
               displayName: Generate .npmrc
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/${{ parameters.artifact }}
+                workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
                 ${{ if eq(parameters.namespace, true) }}:
                   ${{ if eq(parameters.official, false) }}:
                     script: |
@@ -93,13 +93,13 @@ jobs:
             - task: npmAuthenticate@0
               displayName: npm Authenticate
               inputs:
-                workingFile: $(Pipeline.Workspace)/${{ parameters.artifact }}/.npmrc
+                workingFile: $(Pipeline.Workspace)/pack//${{ parameters.artifactPath }}/.npmrc
                 customEndPoint: ${{ parameters.customEndPoint }}
             - task: Bash@3
               displayName: Publish Packages
               inputs:
                 targetType: 'inline'
-                workingDirectory: $(Pipeline.Workspace)/${{ parameters.artifact }}
+                workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
                 script: |
                   tag="--tag canary"
                   if [[ "$(release)" == "release" ]]; then

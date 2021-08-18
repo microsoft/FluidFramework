@@ -38,7 +38,7 @@ jobs:
     - name: testPackageFilePattern
       value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
     - name: testPackagePathPattern
-      value: $(Pipeline.Workspace)/client/pack-scoped/${{ variables.testPackageFilePattern }}
+      value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
 
     steps:
     # Setup
@@ -72,7 +72,7 @@ jobs:
     # Download artifact
     - download: client
       displayName: Download test package
-      artifact: pack-scoped
+      artifact: pack
       patterns: "**/${{ variables.testPackageFilePattern }}"
 
     - task: Bash@3

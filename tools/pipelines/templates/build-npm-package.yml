@@ -270,16 +270,17 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
-                mkdir $(Build.ArtifactStagingDirectory)/pack-scoped/
+                mkdir $(Build.ArtifactStagingDirectory)/pack/
+                mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
-                  mkdir $(Build.ArtifactStagingDirectory)/pack-non-scoped/
+                  mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack-scoped/ ./*.tgz
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 else
                   npm pack --unsafe-perm
-                  mv -t $(Build.ArtifactStagingDirectory)/pack-scoped/ ./*.tgz
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
 
           - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
@@ -290,22 +291,14 @@ stages:
                   targetType: 'inline'
                   workingDirectory: ${{ parameters.buildDirectory }}
                   script: |
-                    mv -t $(Build.ArtifactStagingDirectory)/pack-non-scoped/ $(Build.ArtifactStagingDirectory)/pack-scoped/${{parameter}}*.tgz
+                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
           - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact for Scoped Packages - pack-scoped
+            displayName: Publish Artifact - pack
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack-scoped'
-              ArtifactName: 'pack-scoped'
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+              ArtifactName: 'pack'
               publishLocation: 'Container'
-
-          - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
-            - task: PublishBuildArtifacts@1
-              displayName: Publish Artifact for Non-Scoped Packages - pack-non-scoped
-              inputs:
-                PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack-non-scoped'
-                ArtifactName: 'pack-non-scoped'
-                publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
