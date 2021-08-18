@@ -24,6 +24,9 @@ export interface IDeliServerConfiguration {
 
     // Consider service summary status for successful session close
     checkServiceSummaryStatus: boolean;
+
+    // Controls if ops should be nacked if a summary hasn't been made for a while
+    summaryNackMessages: IDeliSummaryNackMessagesServerConfiguration;
 }
 
 export interface IDeliOpEventServerConfiguration {
@@ -53,12 +56,9 @@ export interface IScribeServerConfiguration {
 
     // Enables writing a summary nack when an exception occurs during summary creation
     ignoreStorageException: boolean;
-
-    // Controls if ops should be nacked if a summarizer hasn't been made for a while
-    nackMessages: IScribeNackMessagesServerConfiguration;
 }
 
-export interface IScribeNackMessagesServerConfiguration {
+export interface IDeliSummaryNackMessagesServerConfiguration {
     // Enables nacking non-system & non-summarizer client message if
     // the op count since the last summary exceeds this limit
     enable: boolean;
@@ -143,13 +143,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
             maxTime: 5 * 60 * 1000,
             maxOps: 1500,
         },
-    },
-    scribe: {
-        generateServiceSummary: true,
-        enablePendingCheckpointMessages: true,
-        clearCacheAfterServiceSummary: false,
-        ignoreStorageException: false,
-        nackMessages: {
+        summaryNackMessages: {
             enable: false,
             maxOps: 5000,
             nackContent: {
@@ -159,6 +153,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
                 message: "Submit a summary before inserting additional operations",
             },
         },
+    },
+    scribe: {
+        generateServiceSummary: true,
+        enablePendingCheckpointMessages: true,
+        clearCacheAfterServiceSummary: false,
+        ignoreStorageException: false,
     },
     moira: {
         enable: false,

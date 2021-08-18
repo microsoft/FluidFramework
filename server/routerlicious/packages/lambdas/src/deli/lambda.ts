@@ -17,6 +17,7 @@ import {
     ITrace,
     MessageType,
     NackErrorType,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize } from "@fluidframework/server-services-client";
 import {
@@ -34,6 +35,7 @@ import {
     ISequencedOperationMessage,
     IServiceConfiguration,
     ITicketedMessage,
+    NackMessagesType,
     NackOperationType,
     RawOperationType,
     SequencedOperationType,
@@ -263,6 +265,21 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                     this.setNoopConsolidationTimer();
                     continue;
                 }
+
+                // Check if Deli is over the max ops since last summary nack limit
+                if (this.serviceConfiguration.deli.summaryNackMessages.enable && !this.nackMessages) {
+                    const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+                    if (opsSinceLastSummary > this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+                        // this op brings us over the limit
+                        // start nacking non-system ops and ops that are submitted by non-summarizers
+                        this.nackMessages = {
+                            identifier: NackMessagesType.SummaryMaxOps,
+                            content: this.serviceConfiguration.deli.summaryNackMessages.nackContent,
+                            allowSystemMessages: true,
+                            allowedScopes: [ScopeType.SummaryWrite],
+                        };
+                    }
+                }
             }
 
             // Update the msn last sent.
@@ -320,7 +337,7 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                 this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
                 if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
-                    lumberJackMetric?.setProperties({[CommonProperties.maxOpsSinceLastSummary]: true});
+                    lumberJackMetric?.setProperties({ [CommonProperties.maxOpsSinceLastSummary]: true });
                     this.emitOpEvent(OpEventType.MaxOps);
                 }
             }
@@ -352,16 +369,17 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         }
 
         if (failMetric) {
-            this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]:
-                SessionState.LambdaStartFailed });
+            this.sessionStartMetric?.setProperties({
+                [CommonProperties.sessionState]: SessionState.LambdaStartFailed,
+            });
             this.sessionStartMetric?.error("Lambda start failed");
             return;
         }
 
         if (this.verifyRequiredLambdaStarted()) {
             if (this.isNewDocument) {
-                    this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
-                    this.sessionStartMetric?.success("Session started successfully");
+                this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.started });
+                this.sessionStartMetric?.success("Session started successfully");
             } else {
                 this.sessionStartMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.resumed });
                 this.sessionStartMetric?.success("Session resumed successfully");
@@ -646,6 +664,19 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                         }
 
                         this.durableSequenceNumber = dsn;
+
+                        // note: "!this.nackMessages.identifier" is for backwards compat
+                        if (this.serviceConfiguration.deli.summaryNackMessages.enable && this.nackMessages &&
+                            (!this.nackMessages.identifier ||
+                                this.nackMessages.identifier === NackMessagesType.SummaryMaxOps)) {
+                            // Deli is nacking messages due to summary max ops
+                            // Check if this new dsn gets it out of that state
+                            const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+                            if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+                                // stop nacking future messages
+                                this.nackMessages = undefined;
+                            }
+                        }
 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
                             // since the dsn updated, ops were reliably stored
