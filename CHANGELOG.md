@@ -1,5 +1,40 @@
 # Change Log
 
+## 7.0.4
+
+* test: SharedTree Summary Size Tests
+  * Associated pull request: [33165](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33165)
+  * Commit: [01e26692d4418e532e1a388b5882a6bddf2c377a](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/01e26692d4418e532e1a388b5882a6bddf2c377a)
+* test: Properly clean up summary compatibility tests
+  * Associated pull request: [33504](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33504)
+  * Commit: [bc5178da5c4d4679810242da3757444bfe3f137e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bc5178da5c4d4679810242da3757444bfe3f137e)
+* build: update package patch versions
+  * Associated pull request: [33491](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33491)
+  * Commit: [ed83a6cb18eec564b6fa119c43c245a9192fc114](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ed83a6cb18eec564b6fa119c43c245a9192fc114)
+* merge: `releases/2021.08.2` into `master`
+  * Commit: [9edf8815f305ef1bc2af408310ec6fb385dab8ff](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/9edf8815f305ef1bc2af408310ec6fb385dab8ff)
+* remove: BREAKING CHANGE: Restore Commit 0659d0a5: Merged PR 33323: remove: BREAKING CHANGE: remove SharedTreeEditor
+  * Associated pull request: [33446](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33446)
+  * Commit: [b83bee605f187386fd75b09dbb5f9f8c75f43a1f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b83bee605f187386fd75b09dbb5f9f8c75f43a1f)
+* fix: adds space in script to fix test invocation
+  * Associated pull request: [33366](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33366)
+  * Commit: [65c26e9a116e0d44b2daf2cc5d668da6aca7e8f0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/65c26e9a116e0d44b2daf2cc5d668da6aca7e8f0)
+* remove: BREAKING CHANGE: remove SharedTreeEditor
+  * Associated pull request: [33323](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33323)
+  * Commit: [0659d0a53df69954e2cae6431f3268991bcd8049](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0659d0a53df69954e2cae6431f3268991bcd8049)
+* fix: Prevent invalid out-of-order-undo error
+  * Associated pull request: [33320](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33320)
+  * Commit: [d4a4b99ba0fabcbe7c1b50b82a5cd1d8e6600bac](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d4a4b99ba0fabcbe7c1b50b82a5cd1d8e6600bac)
+* merge: release/2021.08.2 into master
+  * Associated pull request: [33344](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33344)
+  * Commit: [4d7894c294087006d914e0e5bb3d03f7ed8cda36](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/4d7894c294087006d914e0e5bb3d03f7ed8cda36)
+* build: Run npm update to update dependencies
+  * Associated pull request: [33245](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33245)
+  * Commit: [92b8739c506927199968d01d067d2742b7ef1de0](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/92b8739c506927199968d01d067d2742b7ef1de0)
+* tools: Move mocha and karma configurations into repository-tools, and stop using config packages from language-tools
+  * Associated pull request: [33209](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33209)
+  * Commit: [5149278ae972c027ad80726fa3f5b0102db05ce2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/5149278ae972c027ad80726fa3f5b0102db05ce2)
+
 ## 4.0.1
 
 * merge: 'releases/2021.08.1' to 'releases/2021.08.2'
