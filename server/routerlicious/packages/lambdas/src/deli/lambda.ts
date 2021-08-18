@@ -413,7 +413,14 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             this.sessionMetric?.error("No service summary before lambda close");
         } else if (closeType === LambdaCloseType.ActivityTimeout) {
             this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-            this.sessionMetric?.success("Session terminated due to inactivity");
+
+            if (this.nackMessages?.identifier === NackMessagesType.SummaryMaxOps) {
+                this.sessionMetric?.error(
+                    "Session terminated due to inactivity while exceeding max ops since last summary");
+            } else {
+                this.sessionMetric?.success("Session terminated due to inactivity");
+            }
+
         } else {
             this.sessionMetric?.error("Unknown session end state");
         }
