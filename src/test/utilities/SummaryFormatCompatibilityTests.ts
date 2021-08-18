@@ -332,27 +332,35 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				const firstVersion = sortedVersions[0];
 				sortedVersions.forEach((version, index) => {
 					if (index !== 0) {
-						it(`version ${firstVersion} and version ${version} summaries produce identical trees`, () => {
+						it(`version ${firstVersion} and version ${version} summaries produce identical trees`, async () => {
 							// Load the first summary into the expected tree.
 							const firstSerializedSummary = assertNotUndefined(summaryByVersion.get(firstVersion));
 							const firstSummary = deserialize(firstSerializedSummary, testSerializer);
 							expectedTree.loadSummary(firstSummary);
 
+							// Wait for the ops to to be submitted and processed across the containers.
+							await testObjectProvider.ensureSynchronized();
+
 							// Create a tree that loads the current summary version.
-							const { tree } = setUpTestSharedTree();
+							const { tree, containerRuntimeFactory } = setUpTestSharedTree();
 							const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
 							const summary = deserialize(serializedSummary, testSerializer);
 							tree.loadSummary(summary);
+
+							containerRuntimeFactory.processAllMessages();
 
 							expect(tree.equals(expectedTree)).to.be.true;
 						});
 					}
 
 					// Test that the current format version can be loaded and produce the correct change node tree.
-					it(`version ${version} produces the correct change node`, () => {
+					it(`version ${version} produces the correct change node`, async () => {
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
 						const summary = deserialize(serializedSummary, testSerializer);
 						expectedTree.loadSummary(summary);
+
+						// Wait for the ops to to be submitted and processed across the containers.
+						await testObjectProvider.ensureSynchronized();
 
 						const newChangeNode = expectedTree.currentView.getChangeNodeTree();
 						expect(newChangeNode).to.deep.equal(changeNode);
@@ -388,7 +396,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 									writeSummaryFormat: supportedWriteVersion,
 								});
 
-								// Load the first summary file (the one with the oldest version)
+								// Load the summary to be read
 								const serializedSummary = assertNotUndefined(summaryByVersion.get(readVersion));
 								const summary = deserialize(serializedSummary, testSerializer);
 
@@ -413,6 +421,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								);
 
 								expect(newSummary).to.deep.equal(expectedSummary);
+								testObjectProvider.reset();
 							});
 						}
 					}
