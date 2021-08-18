@@ -36,7 +36,8 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
+        Promise<string | null>,
     epochTracker: EpochTracker,
     requestSocketToken: boolean,
     guestDisplayName?: string,

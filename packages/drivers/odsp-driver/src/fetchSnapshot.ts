@@ -75,7 +75,8 @@ export async function fetchSnapshot(
 
 export async function fetchSnapshotWithRedeem(
     odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    storageTokenFetcher: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
+        Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     snapshotDownloader: (
@@ -130,7 +131,8 @@ export async function fetchSnapshotWithRedeem(
 
 async function redeemSharingLink(
     odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    storageTokenFetcher: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
+        Promise<string | null>,
     logger: ITelemetryLogger,
 ) {
     return PerformanceEvent.timedExecAsync(
@@ -152,7 +154,8 @@ async function redeemSharingLink(
 
 async function fetchLatestSnapshotCore(
     odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    storageTokenFetcher: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
+        Promise<string | null>,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     snapshotDownloader: (
@@ -176,7 +179,7 @@ async function fetchLatestSnapshotCore(
                 errorType: "access denied",
             }, tokenFetchOptions.previousError);
         }
-        const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest");
+        const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
         let controller: AbortController | undefined;

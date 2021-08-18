@@ -51,7 +51,8 @@ export class OdspSummaryUploadManager {
 
     constructor(
         private readonly snapshotUrl: string,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
+            Promise<string | null>,
         private readonly logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
     ) {
