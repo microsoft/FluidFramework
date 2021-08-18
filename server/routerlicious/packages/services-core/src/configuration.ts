@@ -123,7 +123,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     enableTraces: true,
-    enableLambdaMetrics: true,
+    enableLambdaMetrics: false,
     enableLumberMetrics: true,
     summary: {
         idleTime: 5000,
