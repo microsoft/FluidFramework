@@ -11,7 +11,7 @@ This article will explain:
 
 - How to create and load containers.
 - The APIs to interact with them.
-- The  container lifecycle.
+- The container lifecycle.
 
 ## Creating & loading
 
