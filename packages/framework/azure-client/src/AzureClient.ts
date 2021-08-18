@@ -5,43 +5,43 @@
 
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
-    ContainerSchema,
-    DOProviderContainerRuntimeFactory,
-    FluidContainer,
-    RootDataObject,
-} from "@fluid-experimental/fluid-framework";
-import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import {
+    ContainerSchema,
+    DOProviderContainerRuntimeFactory,
+    FluidContainer,
+    RootDataObject,
+} from "fluid-framework";
 
 import {
-    FrsConnectionConfig,
-    FrsContainerConfig,
-    FrsContainerServices,
-    FrsResources,
+    AzureConnectionConfig,
+    AzureContainerConfig,
+    AzureContainerServices,
+    AzureResources,
 } from "./interfaces";
-import { FrsAudience } from "./FrsAudience";
-import { FrsUrlResolver } from "./FrsUrlResolver";
+import { AzureAudience } from "./AzureAudience";
+import { AzureUrlResolver } from "./AzureUrlResolver";
 
 /**
- * FrsClient provides the ability to have a Fluid object backed by the FRS service or, when running with
- * local tenantId, have it be backed by a Tinylicious local service instance
+ * AzureClient provides the ability to have a Fluid object backed by the Azure Relay Service or,
+ * when running with local tenantId, have it be backed by a Tinylicious local service instance
  */
-export class FrsClient {
+export class AzureClient {
     public readonly documentServiceFactory: IDocumentServiceFactory;
 
-    constructor(private readonly connectionConfig: FrsConnectionConfig) {
+    constructor(private readonly connectionConfig: AzureConnectionConfig) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.connectionConfig.tokenProvider,
         );
     }
 
     public async createContainer(
-        containerConfig: FrsContainerConfig,
+        containerConfig: AzureContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FrsResources> {
+    ): Promise<AzureResources> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
@@ -52,9 +52,9 @@ export class FrsClient {
     }
 
     public async getContainer(
-        containerConfig: FrsContainerConfig,
+        containerConfig: AzureContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<FrsResources> {
+    ): Promise<AzureResources> {
         const loader = this.createLoader(containerConfig, containerSchema);
         const container = await loader.resolve({ url: containerConfig.id });
         return this.getFluidContainerAndServices(container);
@@ -62,24 +62,24 @@ export class FrsClient {
 
     private async getFluidContainerAndServices(
         container: Container,
-    ): Promise<FrsResources> {
+    ): Promise<AzureResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices: FrsContainerServices = this.getContainerServices(container);
-        const frsResources: FrsResources = { fluidContainer, containerServices };
-        return frsResources;
+        const containerServices: AzureContainerServices = this.getContainerServices(container);
+        const azureResources: AzureResources = { fluidContainer, containerServices };
+        return azureResources;
     }
 
     private getContainerServices(
         container: Container,
-    ): FrsContainerServices {
+    ): AzureContainerServices {
         return {
-            audience: new FrsAudience(container),
+            audience: new AzureAudience(container),
         };
     }
 
     private createLoader(
-        containerConfig: FrsContainerConfig,
+        containerConfig: AzureContainerConfig,
         containerSchema: ContainerSchema,
     ): Loader {
         const runtimeFactory = new DOProviderContainerRuntimeFactory(
@@ -87,7 +87,7 @@ export class FrsClient {
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
-        const urlResolver = new FrsUrlResolver(
+        const urlResolver = new AzureUrlResolver(
             this.connectionConfig.tenantId,
             this.connectionConfig.orderer,
             this.connectionConfig.storage,

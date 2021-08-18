@@ -152,7 +152,7 @@
             "HostUtils": {
                 "dev": true,
                 "packages": [
-                    "@fluid-experimental/frs-client",
+                    "@fluidframework/azure-client",
                     "@fluid-experimental/get-container",
                     "@fluidframework/tinylicious-client"
                 ],
@@ -183,9 +183,9 @@
             "Framework": {
                 "packages": [
                     "@fluid-internal/client-api",
-                    "@fluid-experimental/fluid-framework",
                     "@fluid-experimental/data-objects",
-                    "@fluid-experimental/fluid-static"
+                    "fluid-framework",
+                    "@fluidframework/fluid-static"
                 ],
                 "dirs": [
                     "experimental/framework/",

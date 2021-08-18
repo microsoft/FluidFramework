@@ -1,24 +1,22 @@
-# @fluid-experimental/frs-client
+# @fluidframework/azure-client
 
-The frs-client package provides a simple and powerful way to consume collaborative Fluid data with the Frs service.
+The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service (FRS).
 
-This package is marked as experimental and currently under development. The API surface is currently under going drastic breaking changes with no guarantees on compatibility.
+## Using azure-client
 
-## Using frs-client
-
-The frs-client package has a `FrsClient` class that allows you to interact with Fluid.
+The azure-client package has a `AzureClient` class that allows you to interact with Fluid.
 
 ```typescript
-import { FrsClient } from "@fluid-experimental/frs-client";
+import { AzureClient } from "@fluidframework/azure-client";
 ```
 
-## Instantiating FrsClient
+## Instantiating AzureClient
 
-Fluid requires a backing service to enable collaborative communication. The `FrsClient` supports both instantiating against a deployed FRS service instance for production scenarios, as well as against a local, in-memory service instance, known as Tinylicious, for development purposes.
+Fluid requires a backing service to enable collaborative communication. The `AzureClient` supports both instantiating against a deployed FRS service instance for production scenarios, as well as against a local, in-memory service instance, known as Tinylicious, for development purposes.
 
-NOTE: You can use one instance of the `FrsClient` to create/fetch multiple containers from the same FRS service instance.
+NOTE: You can use one instance of the `AzureClient` to create/fetch multiple containers from the same FRS service instance.
 
-In the example below we will walk through both connecting to a a live FRS service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against Tinylicious. We make use of `FrsAzFunctionTokenProvider` for token generation while running against a live FRS instance and `InsecureTokenProvider` to authenticate a given user for access to the service locally. The `FrsAzFunctionTokenProvider` is an implemention that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
+In the example below we will walk through both connecting to a a live FRS service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against Tinylicious. We make use of `AzureFunctionTokenProvider` for token generation while running against a live FRS instance and `InsecureTokenProvider` to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implemention that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
 
 ### Backed Locally
 
@@ -30,30 +28,30 @@ npx tinylicous
 Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our Tinylicous instance is running at.
 
 ```typescript
-import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
+import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
-const config: FrsConnectionConfig = {
+const config: AzureConnectionConfig = {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
-const frsClient = new FrsClient(config);
+const azureClient = new AzureClient(config);
 ```
 
 ### Backed by a Live FRS Instance
-When running against a live FRS instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetFrsToken` along with the current user object to `FrsAzFunctionTokenProvider`. Later on, in `FrsAzFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
+When running against a live FRS instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the FRS onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetFrsToken` along with the current user object to `AzureFunctionTokenProvider`. Later on, in `AzureFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
-import { FrsClient, FrsConnectionConfig } from "@fluid-experimental/frs-client";
+import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
-const config: FrsConnectionConfig = {
+const config: AzureConnectionConfig = {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new FrsAzFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
+    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user",userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 };
-const frsClient = new FrsClient(config);
+const azureClient = new AzureClient(config);
 ```
 
 ## Fluid Containers
@@ -64,17 +62,17 @@ Containers are created and identified by unique IDs. Management and storage of t
 
 ## Using Fluid Containers
 
-Using the `FrsClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
+Using the `AzureClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
 
 ```typescript
-import { FrsClient } from "@fluid-experimental/frs-client";
+import { AzureClient } from "@fluidframework/azure-client";
 
-const frsClient = new FrsClient(config);
-await frsClient.createContainer( { id: "_unique-id_" }, /* schema */);
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, /* schema */);
+const azureClient = new AzureClient(config);
+await azureClient.createContainer( { id: "_unique-id_" }, /* schema */);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, /* schema */);
 ```
 
-NOTE: When using the `FrsClient` with tenant ID as "local", all containers that have been created will be deleted when the instance of the Tinylicious service (not client) that was run from the terminal window is closed. However, any containers created when running against the FRS service itself will be persisted. Container IDs can NOT be reused between Tinylicious and FRS to fetch back the same container.
+NOTE: When using the `AzureClient` with tenant ID as "local", all containers that have been created will be deleted when the instance of the Tinylicious service (not client) that was run from the terminal window is closed. However, any containers created when running against the FRS service itself will be persisted. Container IDs can NOT be reused between Tinylicious and FRS to fetch back the same container.
 
 ## Defining Fluid Containers
 
@@ -90,9 +88,9 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const frsClient = new FrsClient(config);
-await frsClient.createContainer({ id: "_unique-id_" }, schema);
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const azureClient = new AzureClient(config);
+await azureClient.createContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
 ## Using initial objects
@@ -112,7 +110,7 @@ const schema = {
 }
 
 // Fetch back the container that had been created earlier with the same ID and schema
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 
 // Get our list of initial objects that we had defined in the schema. initialObjects here will have the same signature
 const initialObjects = fluidContainer.initialObjects;
@@ -138,7 +136,7 @@ const schema = {
     dynamicObjectTypes: [ KeyValueDataObject ],
 }
 
-const { fluidContainer, containerServices } = await frsClient.getContainer({ id: "_unique-id_" }, schema);
+const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 const map1 = container.initialObjects.map1;
 
 const newPair = await container.create(KeyValueDataObject);

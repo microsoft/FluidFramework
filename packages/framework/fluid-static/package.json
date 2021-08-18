@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-experimental/fluid-static",
+  "name": "@fluidframework/fluid-static",
   "version": "0.46.0",
   "description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
   "homepage": "https://fluidframework.com",

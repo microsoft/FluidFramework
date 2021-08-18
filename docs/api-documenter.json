@@ -3,7 +3,7 @@
   "newlineKind": "lf",
   "uriRoot": "/docs/apis",
   "onlyPackagesStartingWith": [
-    "@fluid-experimental/fluid-framework",
+    "fluid-framework",
     "@fluid-experimental/task-manager",
     "@fluidframework/core-interfaces",
     "@fluidframework/common-definitions",

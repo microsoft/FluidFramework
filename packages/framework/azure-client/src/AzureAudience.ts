@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ServiceAudience } from "@fluid-experimental/fluid-framework";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IFrsAudience, FrsMember } from "./interfaces";
+import { ServiceAudience } from "fluid-framework";
+import { IAzureAudience, AzureMember } from "./interfaces";
 
-export class FrsAudience extends ServiceAudience<FrsMember> implements IFrsAudience {
-  protected createServiceMember(audienceMember: IClient): FrsMember {
+export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
+  protected createServiceMember(audienceMember: IClient): AzureMember {
     return {
       userId: audienceMember.user.id,
       userName: (audienceMember.user as any).name,

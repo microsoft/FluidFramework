@@ -51,7 +51,7 @@ export type OdspTokenConfig = {
 
 export interface IOdspTokenManagerCacheKey {
     readonly isPush: boolean;
-    readonly server: string;
+    readonly userOrServer: string;
 }
 
 const isValidToken = (token: string) => {
@@ -66,7 +66,7 @@ const isValidToken = (token: string) => {
 };
 
 const cacheKeyToString = (key: IOdspTokenManagerCacheKey) => {
-    return `${key.server}${key.isPush ? "[Push]" : ""}`;
+    return `${key.userOrServer}${key.isPush ? "[Push]" : ""}`;
 };
 
 export class OdspTokenManager {
@@ -86,7 +86,7 @@ export class OdspTokenManager {
     private async updateTokensCacheWithoutLock(key: IOdspTokenManagerCacheKey, value: IOdspTokens) {
         debug(`${cacheKeyToString(key)}: Saving tokens`);
         const memoryCache = key.isPush ? this.pushCache : this.storageCache;
-        memoryCache.set(key.server, value);
+        memoryCache.set(key.userOrServer, value);
         await this.tokenCache?.save(key, value);
     }
 
@@ -128,7 +128,7 @@ export class OdspTokenManager {
         cacheKey: IOdspTokenManagerCacheKey,
     ) {
         const memoryCache = cacheKey.isPush ? this.pushCache : this.storageCache;
-        const memoryToken = memoryCache.get(cacheKey.server);
+        const memoryToken = memoryCache.get(cacheKey.userOrServer);
         if (memoryToken) {
             debug(`${cacheKeyToString(cacheKey)}: Token found in memory `);
             return memoryToken;
@@ -136,9 +136,18 @@ export class OdspTokenManager {
         const fileToken = await this.tokenCache?.get(cacheKey);
         if (fileToken) {
             debug(`${cacheKeyToString(cacheKey)}: Token found in file`);
-            memoryCache.set(cacheKey.server, fileToken);
+            memoryCache.set(cacheKey.userOrServer, fileToken);
             return fileToken;
         }
+    }
+
+    private static getCacheKey(
+        isPush: boolean,
+        tokenConfig: OdspTokenConfig,
+        server: string,
+    ): IOdspTokenManagerCacheKey {
+        // If we are using password, we should cache the token per user instead of per server
+        return { isPush, userOrServer: tokenConfig.type === "password" ? tokenConfig.username : server };
     }
 
     private async getTokens(
@@ -164,7 +173,7 @@ export class OdspTokenManager {
         };
         if (!forceReauth && !forceRefresh) {
             // check and return if it exists without lock
-            const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
+            const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
             const tokensFromCache = await this.getTokenFromCache(cacheKey);
             if (tokensFromCache) {
                 if (isValidToken(tokensFromCache.accessToken)) {
@@ -191,7 +200,7 @@ export class OdspTokenManager {
         forceReauth,
     ): Promise<IOdspTokens> {
         const scope = isPush ? pushScope : getOdspScope(server);
-        const cacheKey: IOdspTokenManagerCacheKey = { isPush, server };
+        const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
         let tokens: IOdspTokens | undefined;
         if (!forceReauth) {
             // check the cache again under the lock (if it is there)
@@ -331,7 +340,7 @@ async function loadAndPatchRC() {
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
     async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
         const rc = await loadAndPatchRC();
-        return rc.tokens?.data[key.server]?.[key.isPush ? "push" : "storage"];
+        return rc.tokens?.data[key.userOrServer]?.[key.isPush ? "push" : "storage"];
     },
     async save(key: IOdspTokenManagerCacheKey, tokens: IOdspTokens): Promise<void> {
         const rc = await loadAndPatchRC();
@@ -341,12 +350,12 @@ export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens
                 data: {},
             };
         }
-        let prevTokens = rc.tokens.data[key.server];
+        let prevTokens = rc.tokens.data[key.userOrServer];
         if (!prevTokens) {
             prevTokens = {};
-            rc.tokens.data[key.server] = prevTokens;
+            rc.tokens.data[key.userOrServer] = prevTokens;
         }
-        prevTokens[key.isPush ? "push" :  "storage"] = tokens;
+        prevTokens[key.isPush ? "push" : "storage"] = tokens;
         return saveRC(rc);
     },
     async lock<T>(callback: () => Promise<T>): Promise<T> {

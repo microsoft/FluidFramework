@@ -10,8 +10,9 @@ import {
     ITenantManager,
     MongoManager,
     IThrottler,
+    ICache,
 } from "@fluidframework/server-services-core";
-import * as bodyParser from "body-parser";
+import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -40,6 +41,7 @@ export function create(
     config: Provider,
     tenantManager: ITenantManager,
     throttler: IThrottler,
+    singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     mongoManager: MongoManager,
@@ -75,8 +77,8 @@ export function create(
     }
 
     app.use(cookieParser());
-    app.use(bodyParser.json({ limit: requestSize }));
-    app.use(bodyParser.urlencoded({ limit: requestSize, extended: false }));
+    app.use(json({ limit: requestSize }));
+    app.use(urlencoded({ limit: requestSize, extended: false }));
 
     app.use(bindCorrelationId());
 
@@ -85,6 +87,7 @@ export function create(
         config,
         tenantManager,
         throttler,
+        singleUseTokenCache,
         mongoManager,
         storage,
         producer,
