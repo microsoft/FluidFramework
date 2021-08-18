@@ -46,6 +46,10 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     // (undocumented)
     protected earlyOpHandler: (documentId: string, msgs: ISequencedDocumentMessage[]) => void;
     // (undocumented)
+    protected earlySignalHandler: (msg: ISignalMessage) => void;
+    // (undocumented)
+    static readonly eventsAlwaysForwarded: string[];
+    // (undocumented)
     static readonly eventsToForward: string[];
     get existing(): boolean;
     // (undocumented)
@@ -61,6 +65,8 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     get mode(): ConnectionMode;
     // (undocumented)
     protected readonly queuedMessages: ISequencedDocumentMessage[];
+    // (undocumented)
+    protected readonly queuedSignals: ISignalMessage[];
     get serviceConfiguration(): IClientConfiguration;
     // (undocumented)
     protected readonly socket: SocketIOClient.Socket;

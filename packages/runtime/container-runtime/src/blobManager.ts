@@ -6,7 +6,7 @@
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { AttachmentTreeEntry } from "@fluidframework/protocol-base";
-import { ISnapshotTree, ITree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ITree, ITreeEntry } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred } from "@fluidframework/common-utils";
@@ -75,7 +75,7 @@ export class BlobManager {
     }
 
     private hasBlob(id: string): boolean {
-        return this.blobIds.has(id) || this.detachedBlobIds.has(id);
+        return this.blobIds.has(id) || this.detachedBlobIds.has(id) || !!this.redirectTable?.has(id);
     }
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
@@ -145,19 +145,31 @@ export class BlobManager {
      * of the tree since the both the r11s and SPO drivers replace the
      * attachment types returned in snapshot() with blobs.
      */
-    public load(blobsTree?: ISnapshotTree): void {
+    public load(blobsTree?: ISnapshotTree, redirectTable?: [string, string][]): void {
+        const detached = this.runtime.attachState === AttachState.Detached;
         let count = 0;
         if (blobsTree) {
             const values = Object.values(blobsTree.blobs);
             count = values.length;
-            values.map((entry) => this.blobIds.add(entry));
+            values.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
         }
-        this.logger.sendTelemetryEvent({ eventName: "ExternalBlobsInSnapshot", count });
+        this.logger.sendTelemetryEvent({ eventName: "AttachmentBlobsLoaded", count });
+        if (redirectTable) {
+            this.redirectTable = new Map(redirectTable);
+            this.logger.sendTelemetryEvent({ eventName: "BlobRedirectTableLoaded", count: redirectTable.length });
+        }
     }
 
-    public snapshot(): ITree {
-        const entries = [...this.blobIds].map((id) => new AttachmentTreeEntry(id, id));
-        return { entries };
+    public snapshot(): { ids: ITree, table?: string } {
+        // If we have a redirect table it means the container is about to transition to "Attaching" state, so we need
+        // to return an actual snapshot containing all the real storage IDs we know about.
+        const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
+        const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
+        const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
+        return {
+            ids: { entries },
+            table: this.redirectTable ? JSON.stringify(Array.from(this.redirectTable.entries())) : undefined,
+        };
     }
 
     public setRedirectTable(table: Map<string, string>) {

@@ -566,7 +566,7 @@ export class Client {
                 throw new LoggingError(
                     "RangeOutOfBounds",
                     {
-                        UsageError: true,
+                        usageError: true,
                         end,
                         invalidPositions: invalidPositions.toString(),
                         length,

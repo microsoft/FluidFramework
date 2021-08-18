@@ -64,15 +64,6 @@ export interface IRuntime extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string);
 
     /**
-     * @deprecated in 0.14 async stop()
-     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
-     *
-     * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
-     * on creation will no longer be active
-     */
-    stop(): Promise<{snapshot?: never, state?: never}>;
-
-    /**
      * Processes the given op (message)
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);

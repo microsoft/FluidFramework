@@ -18,6 +18,8 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // (undocumented)
     enableRedeemFallback?: boolean;
+    fetchBinarySnapshotFormat?: boolean;
+    isolateSocketCache?: boolean;
     // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;

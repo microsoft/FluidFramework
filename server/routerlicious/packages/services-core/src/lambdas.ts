@@ -12,10 +12,14 @@ import { IQueuedMessage } from "./queue";
  * Reasons why a lambda is closing
  */
 export enum LambdaCloseType {
-    Stop,
-    ActivityTimeout,
-    Rebalance,
-    Error,
+    Stop = "Stop",
+    ActivityTimeout = "ActivityTimeout",
+    Rebalance = "Rebalance",
+    Error = "Error",
+}
+
+export enum LambdaName {
+    Scribe = "Scribe",
 }
 
 export interface ILogger {

@@ -25,7 +25,6 @@ import {
     IProxyLoaderFactory,
     LoaderHeader,
 } from "@fluidframework/container-definitions";
-import { performance } from "@fluidframework/common-utils";
 import { ChildLogger, DebugLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IDocumentServiceFactory,
@@ -41,7 +40,6 @@ import {
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
 import { Container } from "./container";
-import { debug } from "./debug";
 import { IParsedUrl, parseUrl } from "./utils";
 
 function canUseCache(request: IRequest): boolean {
@@ -268,14 +266,6 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
     getBlobIds(): string[];
  };
 
- /**
- * To be included in the `IClientDetails.environment` value for the `IRequest` header
- * if the client must be able to create a container at load when an existing container is not available.
- *
- * @deprecated - avoid using this flow, this key is only for temporarily supporting a legacy scenario.
- */
-export const LegacyCreateOnLoadEnvironmentKey = "enable-legacy-create-on-load";
-
 /**
  * Manages Fluid resource loading
  */
@@ -330,8 +320,6 @@ export class Loader implements IHostLoader {
     public get IFluidRouter(): IFluidRouter { return this; }
 
     public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container> {
-        debug(`Container creating in detached state: ${performance.now()} `);
-
         const container = await Container.createDetached(
             this,
             codeDetails,
@@ -351,8 +339,6 @@ export class Loader implements IHostLoader {
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<Container> {
-        debug(`Container creating in detached state: ${performance.now()} `);
-
         return Container.rehydrateDetachedFromSnapshot(this, snapshot);
     }
 
@@ -483,7 +469,6 @@ export class Loader implements IHostLoader {
         request.headers[LoaderHeader.version] = parsed.version ?? request.headers[LoaderHeader.version];
 
         const canCache = this.canCacheForRequest(request.headers);
-        debug(`${canCache} ${request.headers[LoaderHeader.version]}`);
 
         return {
             canCache,
@@ -504,10 +489,6 @@ export class Loader implements IHostLoader {
                 resolvedUrl: resolved,
                 version: request.headers?.[LoaderHeader.version] ?? undefined,
                 loadMode: request.headers?.[LoaderHeader.loadMode],
-                createOnLoad: request.headers
-                    ?.[LoaderHeader.clientDetails]
-                    ?.environment
-                    ?.includes(LegacyCreateOnLoadEnvironmentKey),
             },
             pendingLocalState,
         );

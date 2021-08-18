@@ -8,6 +8,7 @@ import {
     ITaggedTelemetryPropertyType,
     ITelemetryProperties,
 } from "@fluidframework/common-definitions";
+import { v4 as uuid } from "uuid";
 import {
     IFluidErrorBase,
     isFluidError,
@@ -60,9 +61,13 @@ export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean
 /** type guard for ILoggingError interface */
 export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
 
-/** Copy props from source onto target, overwriting any keys that are already set on target */
-function copyProps(target: unknown, source: ITelemetryProperties) {
-    Object.assign(target, source);
+/** Copy props from source onto target, but do not overwrite an existing prop that matches */
+function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {
+    for (const key of Object.keys(source)) {
+        if (target[key] === undefined) {
+            target[key] = source[key];
+        }
+    }
 }
 
 /** Metadata to annotate an error object when annotating or normalizing it */
@@ -82,29 +87,26 @@ class SimpleFluidError implements IFluidErrorBase {
     readonly message: string;
     readonly stack?: string;
     readonly name?: string;
+    readonly errorInstanceId: string;
 
-    constructor(errorProps: Omit<IFluidErrorBase, "getTelemetryProperties" | "addTelemetryProperties">) {
+    constructor(
+        errorProps: Omit<IFluidErrorBase,
+            "getTelemetryProperties" |
+            "addTelemetryProperties" |
+            "errorInstanceId">,
+    ) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
+        this.errorInstanceId = uuid();
+
+        this.addTelemetryProperties(errorProps);
     }
 
     getTelemetryProperties(): ITelemetryProperties {
-        const props: ITelemetryProperties = {
-            ...this.telemetryProps,
-            errorType: this.errorType,
-            fluidErrorCode: this.fluidErrorCode,
-            message: this.message,
-        };
-        if (this.name !== undefined) {
-            props.name = this.name;
-        }
-        if (this.stack !== undefined) {
-            props.stack = this.stack;
-        }
-        return props;
+        return this.telemetryProps;
     }
 
     addTelemetryProperties(props: ITelemetryProperties) {
@@ -155,7 +157,7 @@ export function normalizeError(
 
     fluidError.addTelemetryProperties({
         ...annotations.props,
-        untrustedOrigin: true, // This will let us filter to errors not originated by our own code
+        untrustedOrigin: 1, // This will let us filter to errors not originated by our own code
     });
 
     if (typeof(error) !== "object") {
@@ -223,7 +225,9 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
  *
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
-export class LoggingError extends Error implements ILoggingError {
+export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
+    readonly errorInstanceId = uuid();
+
     /**
      * Create a new LoggingError
      * @param message - Error message to use for Error base class
@@ -257,13 +261,11 @@ export class LoggingError extends Error implements ILoggingError {
      */
     public getTelemetryProperties(): ITelemetryProperties {
         const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-        // Include non-enumerable props inherited from Error that would not be returned by getValidTelemetryProps
-        // But if any were overwritten (e.g. with a tagged property), then use the result from getValidTelemetryProps.
-        // Not including the 'name' property because if not overridden it's always "Error"
+        // Include non-enumerable props inherited from Error that are not returned by getValidTelemetryProps
         return  {
+            ...taggableProps,
             stack: this.stack,
             message: this.message,
-            ...taggableProps,
         };
     }
 }

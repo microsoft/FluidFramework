@@ -6,6 +6,7 @@
 import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
 import { IProtocolState, ISummaryTree, ICommittedProposal } from "@fluidframework/protocol-definitions";
 import { IGitCache } from "@fluidframework/server-services-client";
+import { LambdaName } from "./lambdas";
 import { INackMessagesControlMessageContents } from "./messages";
 
 export interface IDocumentDetails {
@@ -71,6 +72,9 @@ export interface IDeliState {
 
     // Nack messages state
     nackMessages: INackMessagesControlMessageContents | undefined;
+
+    // List of successfully started lambdas at session start
+    successfullyStartedLambdas: LambdaName[];
 }
 
 // TODO: We should probably rename this to IScribeState

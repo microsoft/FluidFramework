@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { getSummaryForDatastores } from "../dataStores";
-import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summaryFormat";
+import { ReadContainerRuntimeMetadata, nonDataStorePaths } from "../summaryFormat";
 
 describe("Runtime", () => {
     describe("Container Runtime", () => {
         describe("getSummaryForDatastores", () => {
-            const enabledMetadata: IContainerRuntimeMetadata = { summaryFormatVersion: 1 };
-            const disabledMetadata: IContainerRuntimeMetadata = {
+            const enabledMetadata: ReadContainerRuntimeMetadata = { summaryFormatVersion: 1 };
+            const disabledMetadata: ReadContainerRuntimeMetadata = {
                 summaryFormatVersion: 1,
                 disableIsolatedChannels: true,
             };
