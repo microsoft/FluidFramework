@@ -115,8 +115,7 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore) {
  * @param buffer - Buffer to serialize.
  */
 function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore) {
-    for (const node of nodeCore.nodes) {
-        const child = node.value;
+    for (const child of nodeCore.nodes) {
         if (child instanceof NodeCore) {
             // For a tree node start and end with ListStart and end marker codes.
             buffer.write(MarkerCodes.ListStart);

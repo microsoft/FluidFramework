@@ -61,9 +61,8 @@ function readAndValidateHeaderSection(node: NodeCore): ISnapshotHeader {
 function readDictionarySection(node: NodeCore) {
     const dictionary = new Array<string>();
     for (const childNode of node) {
-        assertBlobCoreInstance(
-            childNode.value, childNode.startIndex, childNode.endIndex, "Mapping should be of type BlobCore");
-        dictionary.push(childNode.value.toString());
+        assertBlobCoreInstance(childNode, "Mapping should be of type BlobCore");
+        dictionary.push(childNode.toString());
     }
     return dictionary;
 }
@@ -76,13 +75,11 @@ function readDictionarySection(node: NodeCore) {
 function readBlobSection(node: NodeCore, dictionary: string[]) {
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (const [idIndexNode, blobNode] of node.iteratePairs()) {
-        assertNumberInstance(
-            idIndexNode.value, idIndexNode.startIndex, idIndexNode.endIndex, "Blob index should be a number");
-        assertBlobCoreInstance(
-            blobNode.value, blobNode.startIndex, blobNode.endIndex, "Blob content should be of type blob");
-        const blobId = dictionary[idIndexNode.value];
+        assertNumberInstance(idIndexNode, "Blob index should be a number");
+        assertBlobCoreInstance(blobNode, "Blob content should be of type blob");
+        const blobId = dictionary[idIndexNode];
         assert(blobId !== undefined, 0x214 /* "blob id should be present" */);
-        blobs.set(blobId, blobNode.value.arrayBuffer);
+        blobs.set(blobId, blobNode.arrayBuffer);
     }
     return blobs;
 }
@@ -111,17 +108,15 @@ function readTreeSection(treeNode: NodeCore, dictionary: string[]) {
         trees: {},
     };
     for (const [pathIndexNode, childNode] of treeNode.iteratePairs()) {
-        assertNumberInstance(
-            pathIndexNode.value, pathIndexNode.startIndex, pathIndexNode.endIndex, "Tree index should be a number");
-        const path = dictionary[pathIndexNode.value];
+        assertNumberInstance(pathIndexNode, "Tree index should be a number");
+        const path = dictionary[pathIndexNode];
         assert(path !== undefined, 0x216 /* "Path should not be undefined" */);
 
-        if (childNode.value instanceof NodeCore) {
-            tree.trees[path] = readTreeSection(childNode.value, dictionary);
+        if (childNode instanceof NodeCore) {
+            tree.trees[path] = readTreeSection(childNode, dictionary);
         } else {
-            assertNumberInstance(
-                childNode.value, childNode.startIndex, childNode.endIndex, "Should be number to look in dictionary");
-            const id = dictionary[childNode.value];
+            assertNumberInstance(childNode, "Should be number to look in dictionary");
+            const id = dictionary[childNode];
             assert(id !== undefined, 0x218 /* "Id is out of range" */);
             tree.blobs[path] = id;
         }

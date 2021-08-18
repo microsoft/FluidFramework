@@ -78,11 +78,11 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
     const propSet = new Set(props);
     const res: Record<string, NodeTypes> = {};
     for (const [keyNode, valueNode] of node.iteratePairs()) {
-        assertBlobCoreInstance(keyNode.value, keyNode.startIndex, keyNode.endIndex);
-        const keyStr = keyNode.value.toString();
+        assertBlobCoreInstance(keyNode);
+        const keyStr = keyNode.toString();
         assert(propSet.has(keyStr), 0x229 /* "Property should exist" */);
         propSet.delete(keyStr);
-        res[keyStr] = valueNode.value;
+        res[keyStr] = valueNode;
     }
     assert(propSet.size === 0, 0x22a /* "All properties should exist" */);
     return res;
@@ -201,18 +201,12 @@ export const addNumberProperty = (node: NodeCore, a: string, b: number) => { nod
  */
 export type NodeTypes = NodeCore | BlobCore | number;
 
-export interface INodeCoreChild {
-    value: NodeTypes,
-    startIndex?: number,
-    endIndex?: number,
-}
-
 /**
  * Node - node in the tree (non-leaf element of the tree)
  */
 export class NodeCore {
-    // It is array of array of node, its startIndex and endIndex in the buffer.
-    private readonly children: INodeCoreChild[] = [];
+    // It is an array of nodes.
+    private readonly children: NodeTypes[] = [];
     public get nodes() {
         return this.children;
     }
@@ -233,38 +227,38 @@ export class NodeCore {
 
     public getString(index: number): string {
         const node = this.children[index];
-        assertBlobCoreInstance(node.value, node.startIndex, node.endIndex);
-        return node.value.toString();
+        assertBlobCoreInstance(node);
+        return node.toString();
     }
 
     public getBlob(index: number): BlobCore {
         const node = this.children[index];
-        assertBlobCoreInstance(node.value, node.startIndex, node.endIndex);
-        return node.value;
+        assertBlobCoreInstance(node);
+        return node;
     }
 
     public getNode(index: number): NodeCore
     {
         const node = this.children[index];
-        assertNodeCoreInstance(node.value, node.startIndex, node.endIndex);
-        return node.value;
+        assertNodeCoreInstance(node);
+        return node;
     }
 
     public getNumber(index: number): number
     {
         const node = this.children[index];
-        assertNumberInstance(node.value, node.startIndex, node.endIndex);
-        return node.value;
+        assertNumberInstance(node);
+        return node;
     }
 
     public addNode(): NodeCore {
         const node = new NodeCore();
-        this.children.push({ value: node });
+        this.children.push(node);
         return node;
     }
 
     public addBlob(blob: Uint8Array, useUtf8Code: boolean = false) {
-        this.children.push({ value: new BlobDeepCopy(blob, useUtf8Code) });
+        this.children.push(new BlobDeepCopy(blob, useUtf8Code));
     }
 
     public addString(payload: string) {
@@ -274,7 +268,7 @@ export class NodeCore {
     public addNumber(payload: number | undefined) {
         assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
         assert(payload !== undefined && payload >= 0, 0x232 /* "Payload should not be negative" */);
-        this.children.push({ value: payload });
+        this.children.push(payload);
     }
 
     /**
@@ -283,7 +277,6 @@ export class NodeCore {
      */
     protected load(buffer: ReadBuffer) {
         for (;!buffer.eof;) {
-            const startIndex = buffer.pos;
             let childValue: NodeTypes | undefined;
             const code = buffer.read();
             switch (code) {
@@ -323,10 +316,10 @@ export class NodeCore {
                 case MarkerCodes.ListEnd:
                     return;
                 default:
-                    throw new Error(`Invalid code: ${code}, index: ${startIndex}`);
+                    throw new Error(`Invalid code: ${code}`);
             }
-            assert(childValue !== undefined, `Child Value should be defined: startIndex: ${startIndex}`);
-            this.children.push({ value: childValue, startIndex, endIndex: buffer.pos - 1});
+            assert(childValue !== undefined, "Child Value should be defined");
+            this.children.push(childValue);
         }
     }
 }
@@ -346,44 +339,36 @@ export class TreeBuilder extends NodeCore {
 
 export function assertBlobCoreInstance(
     node: NodeTypes,
-    startIndex: number | undefined,
-    endIndex: number | undefined,
     message?: string,
 ): asserts node is BlobCore {
     if (node instanceof BlobCore) {
         return;
     }
-    throwBufferParseException(node, startIndex, endIndex, "BlobCore", message);
+    throwBufferParseException(node, "BlobCore", message);
 }
 
 export function assertNodeCoreInstance(
     node: NodeTypes,
-    startIndex: number | undefined,
-    endIndex: number | undefined,
     message?: string,
 ): asserts node is NodeCore {
     if (node instanceof NodeCore) {
         return;
     }
-    throwBufferParseException(node, startIndex, endIndex, "NodeCore", message);
+    throwBufferParseException(node, "NodeCore", message);
 }
 
 export function assertNumberInstance(
     node: NodeTypes,
-    startIndex: number | undefined,
-    endIndex: number | undefined,
     message?: string,
 ): asserts node is number {
     if (typeof node === "number") {
         return;
     }
-    throwBufferParseException(node, startIndex, endIndex, "Number", message);
+    throwBufferParseException(node, "Number", message);
 }
 
 function throwBufferParseException(
     node: NodeTypes,
-    startIndex: number | undefined,
-    endIndex: number | undefined,
     expectedNodeType: NodeType,
     message?: string,
 ): never {
@@ -394,8 +379,6 @@ function throwBufferParseException(
         undefined,
         undefined,
         {
-            startIndex,
-            endIndex,
             nodeType: getNodeType(node),
             expectedNodeType,
         });
