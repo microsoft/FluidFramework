@@ -25,6 +25,7 @@ import {
     TokenFetchOptions,
     IEntry,
     HostStoragePolicy,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -72,8 +73,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
-        getStorageToken: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
-            Promise<string | null>,
+        getStorageToken: InstrumentedStorageTokenFetcher,
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
@@ -123,8 +123,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     private constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
-            Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,

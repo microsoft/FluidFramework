@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IOdspUrlParts, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { InstrumentedStorageTokenFetcher, IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
@@ -36,8 +36,7 @@ export async function fetchJoinSession(
     path: string,
     method: string,
     logger: ITelemetryLogger,
-    getStorageToken: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
-        Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     epochTracker: EpochTracker,
     requestSocketToken: boolean,
     guestDisplayName?: string,

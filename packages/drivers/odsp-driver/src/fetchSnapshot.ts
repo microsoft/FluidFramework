@@ -12,8 +12,8 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspResolvedUrl,
     ISnapshotOptions,
-    TokenFetchOptions,
     OdspErrorType,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
@@ -75,8 +75,7 @@ export async function fetchSnapshot(
 
 export async function fetchSnapshotWithRedeem(
     odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
-        Promise<string | null>,
+    storageTokenFetcher: InstrumentedStorageTokenFetcher,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     snapshotDownloader: (
@@ -131,8 +130,7 @@ export async function fetchSnapshotWithRedeem(
 
 async function redeemSharingLink(
     odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
-        Promise<string | null>,
+    storageTokenFetcher: InstrumentedStorageTokenFetcher,
     logger: ITelemetryLogger,
 ) {
     return PerformanceEvent.timedExecAsync(
@@ -154,8 +152,7 @@ async function redeemSharingLink(
 
 async function fetchLatestSnapshotCore(
     odspResolvedUrl: IOdspResolvedUrl,
-    storageTokenFetcher: (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) =>
-        Promise<string | null>,
+    storageTokenFetcher: InstrumentedStorageTokenFetcher,
     snapshotOptions: ISnapshotOptions | undefined,
     logger: ITelemetryLogger,
     snapshotDownloader: (

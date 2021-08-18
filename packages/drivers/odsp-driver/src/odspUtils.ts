@@ -28,6 +28,7 @@ import {
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion } from "./packageVersion";
@@ -248,7 +249,7 @@ export function toInstrumentedOdspTokenFetcher(
     resolvedUrl: IOdspResolvedUrl,
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
     throwOnNullToken: boolean,
-): (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null> {
+): InstrumentedStorageTokenFetcher {
     return async (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry: boolean = false) => {
         // Telemetry note: if options.refresh is true, there is a potential perf issue:
         // Host should optimize and provide non-expired tokens on all critical paths.
@@ -274,7 +275,7 @@ export function toInstrumentedOdspTokenFetcher(
                 // Note that most of the hosts do not report if result is comming from cache or not,
                 // so we can't rely on that here. But always record if specified explicitly for cases such as
                 // calling trees/latest during load.
-                if (event.duration >= 32 || alwaysRecordTokenFetchTelemetry) {
+                if (alwaysRecordTokenFetchTelemetry || event.duration >= 32) {
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
                 }
                 if (token === null && throwOnNullToken) {
