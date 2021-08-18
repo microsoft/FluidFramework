@@ -420,7 +420,6 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
             } else {
                 this.sessionMetric?.success("Session terminated due to inactivity");
             }
-
         } else {
             this.sessionMetric?.error("Unknown session end state");
         }
