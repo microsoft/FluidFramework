@@ -46,8 +46,8 @@ generally fall into two broad categories: *optimistic* and *consensus-based*.
 
 {{% callout tip "See also" %}}
 
-* [Fluid Framework architecture]({{< relref "architecture" >}})
-* [Fluid service]({{< relref "service" >}})
+* [Fluid Framework architecture]({{< relref "architecture.md" >}})
+* [Fluid service]({{< relref "service.md" >}})
 
 {{% /callout %}}
 
@@ -103,7 +103,7 @@ const myMap = SharedMap.create(this.runtime);
 ```
 
 You must pass in an `IFluidDataStoreRuntime` that the DDS will be managed by. We'll cover the runtime in more detail in
-the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
+the [Encapsulating data with DataObject]({{< relref "dataobject-aqueduct.md" >}}) section.
 
 ### Storing a DDS within another DDS
 
@@ -125,7 +125,7 @@ myMap.set("counter", myCounter.handle);
 ```
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
-see [Fluid handles](../advanced/handles.md) in the Advanced section.
+see [Fluid handles]({{< relref "handles.md" >}}).
 
 ## Events
 
@@ -202,7 +202,7 @@ You likely have more than one shape in your data model, so you could create a Sh
 store the SharedMaps representing each shape within that SharedMap.
 
 To learn more about how you use DDSes to create more complex Fluid objects, see the [Encapsulating data with
-DataObject](./dataobject-aqueduct.md) section.
+DataObject]({{< relref "dataobject-aqueduct.md" >}}) section.
 
 ### Key-value data
 
