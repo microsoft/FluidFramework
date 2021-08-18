@@ -111,6 +111,7 @@ import { BlobManager } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
+    blobRedirectTableBlobName,
     chunksBlobName,
     electedSummarizerBlobName,
     getGCVersion,
@@ -577,6 +578,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<ReadContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
+        const blobRedirectTable = await tryFetchBlob<[string, string][]>(blobRedirectTableBlobName);
         const loadExisting = existing === true || context.existing === true;
 
         // Verify summary runtime sequence number matches protocol sequence number.
@@ -613,7 +615,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             logger,
             loadExisting,
             requestHandler,
-            storage);
+            storage,
+            blobRedirectTable);
 
         return runtime;
     }
@@ -784,6 +787,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         existing: boolean,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
+        blobRedirectTable?: [string, string][],
     ) {
         super();
 
@@ -869,7 +873,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             this.logger,
         );
-        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
+        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName], blobRedirectTable);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -1200,13 +1204,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
         addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 
-        const snapshot = this.blobManager.snapshot();
+        const { ids, table } = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (snapshot.entries.length !== 0) {
-            const blobsTree = convertToSummaryTree(snapshot, false);
+        if (ids.entries.length !== 0) {
+            const blobsTree = convertToSummaryTree(ids, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
+        }
+
+        if (table) {
+            addBlobToSummary(summaryTree, blobRedirectTableBlobName, table);
         }
     }
 
