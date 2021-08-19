@@ -25,7 +25,7 @@ import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(10000);
 
-describe("Tests for Epoch Tracker", () => {
+describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
     const itemId = "itemId";
