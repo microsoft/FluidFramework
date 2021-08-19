@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import compareVersions from "compare-versions";
+import { compare } from "semver";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
@@ -148,7 +148,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
     beforeEach(async function() {
         provider = getTestObjectProvider();
-        if (compareVersions(provider.driver.version, "0.46.0") === -1) {
+        if (compare(provider.driver.version, "0.46.0") === -1) {
             this.skip();
         }
         const documentId = createDocumentId();
