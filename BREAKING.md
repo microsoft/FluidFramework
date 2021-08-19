@@ -5,7 +5,6 @@
 - [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
 - [@fluid-experimental/fluid-static package name changed](#fluid-experimentalfluid-static-package-name-changed)
 - [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
-- [FlushMode default changed for ContainerRuntime](#FlushMode-default-changed-for-ContainerRuntime)
 
 ### `@fluid-experimental/fluid-framework` package name changed
 The `@fluid-experimental/fluid-framework` package has been renamed to now be `fluid-framework`. The scope has been removed.
@@ -35,9 +34,6 @@ The `@fluid-experimental/fluid-static` package has been renamed to now be `@flui
 `FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
 - `FlushMode.Manual` to `FlushMode.TurnBased`
 - `FlushMode.Automatic` to `FlushMode.Immediate`
-
-### `FlushMode` default changed for `ContainerRuntime`
-Previously, `ContainerRuntime` had the default flush mode as `FlushMode.Immediate` (formerly `FlushMode.Automatic`). This default has been changed to `FlushMode.TurnBased` (formerly `FlushMode.Manual`). These changes extend the default batch granularity as the scope of a batch used to be a single op.
 
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
