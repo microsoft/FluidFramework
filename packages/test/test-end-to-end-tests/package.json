@@ -98,6 +98,7 @@
     "@fluidframework/test-utils": "^0.46.0",
     "@fluidframework/test-version-utils": "^0.46.0",
     "@fluidframework/undo-redo": "^0.46.0",
+    "compare-versions": "^3.6.0",
     "cross-env": "^7.0.2",
     "mocha": "^8.4.0",
     "start-server-and-test": "^1.11.7",
