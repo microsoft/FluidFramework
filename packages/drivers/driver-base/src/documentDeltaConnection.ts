@@ -25,6 +25,9 @@ import {
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
+// Local storage key to disable the BatchManager
+const batchManagerDisabledKey = "FluidDisableBatchManager";
+
 /**
  * Represents a connection to a stream of delta updates
  */
@@ -133,7 +136,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = this.disabledBatchManagerFeatureGate();
+        this.isBatchManagerDisabled = this.disabledBatchManagerFeatureGate;
     }
 
     /**
@@ -264,11 +267,11 @@ export class DocumentDeltaConnection
         }
     }
 
-    private disabledBatchManagerFeatureGate() {
+    private get disabledBatchManagerFeatureGate() {
         try {
             return localStorage !== undefined
                 && typeof localStorage === "object"
-                && localStorage.disabledBatchManager === "1";
+                && localStorage.getItem(batchManagerDisabledKey) === "1";
         } catch (e) { }
         return false;
     }
