@@ -72,8 +72,13 @@ variables:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 - group: container-registry-info
-- name: buildContainerName
-  value: build/${{ parameters.containerName }}
+- ${{ if eq(variables.testBuild, true) }}:
+  - name: buildContainerName
+    value: test/${{ parameters.containerName }}
+- ${{ if eq(variables.testBuild, false) }}:
+  - name: buildContainerName
+    value: build/${{ parameters.containerName }}
+
 - name: baseContainerTag
   value: base:$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, false) }}:
