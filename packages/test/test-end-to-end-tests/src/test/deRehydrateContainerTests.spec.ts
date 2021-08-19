@@ -148,7 +148,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
     beforeEach(async function() {
         provider = getTestObjectProvider();
-        if (compare(provider.driver.version, "0.46.0") === -1 && provider.driver.type !== "odsp") {
+        if (compare(provider.driver.version, "0.46.0") === -1
+            && (provider.driver.type === "routerlicious" || provider.driver.type === "tinylicious")) {
             this.skip();
         }
         const documentId = createDocumentId();
