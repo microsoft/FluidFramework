@@ -37,7 +37,7 @@ steps:
 
 - task: DownloadPipelineArtifact@2
   displayName: 'Download NOTICE'
-  condition: succeeded()
+  continueOnError: ${{ parameters.requireNotice }}
   inputs:
     artifact: NOTICE.txt
     path: ${{ parameters.buildDirectory }}

@@ -235,7 +235,7 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack/scoped'
 
         - task: PublishBuildArtifacts@1
           displayName: Publish Artifact - pack
