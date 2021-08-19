@@ -7,7 +7,6 @@
 import { ContainerSchema } from 'fluid-framework';
 import { FluidContainer } from 'fluid-framework';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IMember } from 'fluid-framework';
 import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
@@ -28,13 +27,9 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 
 // @public
 export class AzureClient {
-    constructor(connectionConfig: AzureConnectionConfig);
-    // (undocumented)
-    createContainer(containerConfig: AzureContainerConfig, containerSchema: ContainerSchema): Promise<AzureResources>;
-    // (undocumented)
-    readonly documentServiceFactory: IDocumentServiceFactory;
-    // (undocumented)
-    getContainer(containerConfig: AzureContainerConfig, containerSchema: ContainerSchema): Promise<AzureResources>;
+    constructor(connectionConfig: AzureConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
+    createContainer(containerSchema: ContainerSchema): Promise<AzureResources>;
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<AzureResources>;
     }
 
 // @public (undocumented)
@@ -47,14 +42,6 @@ export interface AzureConnectionConfig {
     tenantId: "local" | string;
     // (undocumented)
     tokenProvider: ITokenProvider;
-}
-
-// @public (undocumented)
-export interface AzureContainerConfig {
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    logger?: ITelemetryBaseLogger;
 }
 
 // @public
@@ -89,7 +76,7 @@ export interface AzureResources {
 
 // @public (undocumented)
 export class AzureUrlResolver implements IUrlResolver {
-    constructor(tenantId: string, orderer: string, storage: string, documentId: string, tokenProvider: ITokenProvider);
+    constructor(tenantId: string, orderer: string, storage: string, tokenProvider: ITokenProvider);
     // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)

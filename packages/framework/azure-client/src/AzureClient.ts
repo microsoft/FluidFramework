@@ -63,7 +63,7 @@ export class AzureClient {
         // until container ID changes are settled in lower layers.
         const id = uuid();
         await container.attach({ url: id });
-        return this.getFluidContainerAndServices(container);
+        return this.getFluidContainerAndServices(id, container);
     }
 
     /**
@@ -78,15 +78,16 @@ export class AzureClient {
     ): Promise<AzureResources> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
-        return this.getFluidContainerAndServices(container);
+        return this.getFluidContainerAndServices(id, container);
     }
 
     // #region private
     private async getFluidContainerAndServices(
+        id: string,
         container: Container,
     ): Promise<AzureResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
+        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject);
         const containerServices: AzureContainerServices = this.getContainerServices(container);
         const azureResources: AzureResources = { fluidContainer, containerServices };
         return azureResources;

@@ -29,6 +29,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     private readonly disposedHandler = () => this.emit("disposed");
 
     public constructor(
+        public readonly id: string,
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
     ) {
@@ -36,10 +37,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
-    }
-
-    public get id() {
-        return this.container.id;
     }
 
     public get disposed() {
