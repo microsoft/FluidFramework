@@ -24,9 +24,9 @@ import { RateLimiter } from "@fluidframework/driver-utils";
 import { throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
     IOdspResolvedUrl,
-    TokenFetchOptions,
     ISnapshotOptions,
     OdspErrorType,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -215,7 +215,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
