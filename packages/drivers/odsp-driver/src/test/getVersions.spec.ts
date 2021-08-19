@@ -3,21 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import * as api from "@fluidframework/protocol-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     IOdspResolvedUrl,
-    IFileEntry,
+    ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
+import { IVersionedValueWithEpoch,
+    persistedCacheValueVersion,
+    IOdspSnapshot,
+    HostStoragePolicyInternal,
+} from "../contracts";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
 import { INewFileInfo } from "../odspUtils";
+import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { createNewFluidFile } from "../createFile";
-import { mockFetchOk } from "./mockFetch";
+import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache(10000);
 
@@ -37,38 +41,29 @@ describe("Tests for Epoch Tracker", () => {
         filePath,
         filename: "filename",
     };
-    const documentAttributes: api.IDocumentAttributes = {
-        branch: "",
-        minimumSequenceNumber: 0,
-        sequenceNumber: 0,
-        term: 1,
+
+    const hostPolicy: HostStoragePolicyInternal = {
+        summarizerClient: false,
+        fetchBinarySnapshotFormat: false,
+        concurrentSnapshotFetch: true,
     };
 
-    const createSummary = () => {
-        const summary: api.ISummaryTree = {
-            type: api.SummaryType.Tree,
-            tree: {},
-        };
-        summary.tree[".app"] = {
-            type: api.SummaryType.Tree,
-            tree: {
-                attributes: {
-                    type: api.SummaryType.Blob,
-                    content: "blobContent",
-                },
-            },
-        };
-        summary.tree[".protocol"] = {
-            type: api.SummaryType.Tree,
-            tree: {
-                attributes: {
-                    type: api.SummaryType.Blob,
-                    content: JSON.stringify(documentAttributes),
-                },
-            },
-        };
-        return summary;
+    const resolver = new OdspDriverUrlResolver();
+    const nonPersistentCache = new NonPersistentCache();
+    const logger = new TelemetryNullLogger();
+    const odspUrl = createOdspUrl({... newFileParams, itemId, dataStorePath: "/"});
+
+    const odspSnapshot: IOdspSnapshot = {
+        id: "id",
+        trees: [{
+            entries:[ { path:"path", type:"tree" } ],
+            id: "id",
+            sequenceNumber: 1,
+        }],
     };
+
+    const value: IVersionedValueWithEpoch =
+        {value: "val", fluidEpoch: "epoch1", version: persistedCacheValueVersion };
 
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
@@ -86,55 +81,132 @@ describe("Tests for Epoch Tracker", () => {
             new TelemetryNullLogger());
     });
 
-    it("test", async () => {
-        const fileEntry: IFileEntry = {
-            docId: hashedDocumentId,
-            resolvedUrl,
+    it("cache fetch throws and network fetch succeeds", async () => {
+        localCache.get = async () => {
+            throw new Error("hello");
         };
-        const resolver = new OdspDriverUrlResolver();
-        const request = resolver.createCreateNewRequest("https://www.localhost.xxx", driveId, "path", "fileName");
-        const resolved = await resolver.resolve(request);
-        const nonPersistentCache = new NonPersistentCache();
-        const logger = new TelemetryNullLogger();
-        ensureFluidResolvedUrl(resolved);
 
-        // let odspResolvedUrl = getOdspResolvedUrl(resolved);
-        const odspResolvedUrl = await mockFetchOk(
-            async () =>createNewFluidFile(
-                async (_options) => "token",
-                newFileParams,
-                new TelemetryNullLogger(),
-                createSummary(),
-                epochTracker,
-                fileEntry,
-                true,
-            ) ,
-            { itemId: "itemId1", id: "Summary handle"},
-            { "x-fluid-epoch": "epoch1" },
-            );
+        const resolved = await resolver.resolve({ url: odspUrl });
         const service = new OdspDocumentStorageService(
-            odspResolvedUrl,
+            resolved,
             async (_options) => "token",
             logger,
             true,
             { ...nonPersistentCache, persistedCache: epochTracker},
-            { summarizerClient: false, fetchBinarySnapshotFormat: false, concurrentSnapshotFetch: true},
+            hostPolicy,
             epochTracker,
-        );
-        const expectedResponse: any = {
-            context: "http://sp.devinstall/_api/v2.1/$metadata#",
-            sequenceNumber: 1,
-            sha: "shaxxshaxx",
-            itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
-            driveId,
-            itemId,
-            id : "fakeSummaryHandle",
-        };
-        const v = await mockFetchOk(
+            async () => { return {}; },
+            );
+
+        const version = await mockFetchSingle(
             async () => service.getVersions(null,1),
-            expectedResponse,
-            { "x-fluid-epoch": "epoch2" },
+            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
         );
-        console.log(v);
+        console.log(version);
+    });
+
+    it("cache fetch succeeds and network fetch succeeds", async () => {
+        const resolved = await resolver.resolve({ url: odspUrl });
+
+        const service = new OdspDocumentStorageService(
+            resolved,
+            async (_options) => "token",
+            logger,
+            true,
+            { ...nonPersistentCache, persistedCache: epochTracker},
+            hostPolicy,
+            epochTracker,
+            async () => { return {}; },
+        );
+
+        const cacheEntry: ICacheEntry = {
+            key:"",
+            type: "snapshot",
+            file: { docId: hashedDocumentId, resolvedUrl } };
+        await localCache.put(cacheEntry, value);
+
+        const version = await mockFetchSingle(
+            async () => service.getVersions(null,1),
+            async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
+        );
+        console.log(version);
+    });
+
+    it("cache fetch throws and network fetch throws", async () => {
+        localCache.get = async () => {
+            throw new Error("hello");
+        };
+
+        const resolved = await resolver.resolve({ url: odspUrl });
+
+        const service = new OdspDocumentStorageService(
+            resolved,
+            async (_options) => "token",
+            logger,
+            true,
+            { ...nonPersistentCache, persistedCache: epochTracker},
+            hostPolicy,
+            epochTracker,
+            async () => { return {}; },
+        );
+
+        try { await mockFetchSingle(
+            async () => service.getVersions(null,1),
+            notFound,
+        );
+        } catch (error) {
+            assert.strictEqual(error.message, "Error 404 (undefined)", "incorrect error message");
+        }
+    });
+
+    it("cache fetch succeeds and network fetch throws", async () => {
+        const resolved = await resolver.resolve({ url: odspUrl });
+
+        const service = new OdspDocumentStorageService(
+            resolved,
+            async (_options) => "token",
+            logger,
+            true,
+            { ...nonPersistentCache, persistedCache: epochTracker},
+            hostPolicy,
+            epochTracker,
+            async () => { return {}; },
+        );
+
+        const cacheEntry: ICacheEntry = {
+            key:"",
+            type: "snapshot",
+            file: { docId: hashedDocumentId, resolvedUrl } };
+        await localCache.put(cacheEntry, value);
+
+        const version = await mockFetchSingle(
+            async () => service.getVersions(null,1),
+            notFound,
+        );
+        console.log(version);
+    });
+
+    it("empty cache and network fetch throws", async () => {
+        const resolved = await resolver.resolve({ url: odspUrl });
+
+        const service = new OdspDocumentStorageService(
+            resolved,
+            async (_options) => "token",
+            logger,
+            true,
+            { ...nonPersistentCache, persistedCache: epochTracker},
+            hostPolicy,
+            epochTracker,
+            async () => { return {}; },
+        );
+
+        try {
+            await mockFetchSingle(
+            async () => service.getVersions(null,1),
+            notFound,
+            );
+        } catch (error) {
+            assert.strictEqual(error.message, "Error 404 (undefined)", "incorrect error message");
+        }
     });
 });
