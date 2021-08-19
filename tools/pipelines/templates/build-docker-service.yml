@@ -197,6 +197,7 @@ stages:
       - template: include-generate-notice-steps.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
+          requireNotice: ${{ eq(variables.releaseImage, true) }}
 
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
