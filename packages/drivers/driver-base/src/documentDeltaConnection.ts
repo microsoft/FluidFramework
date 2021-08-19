@@ -255,7 +255,7 @@ export class DocumentDeltaConnection
         return this.details.initialClients;
     }
 
-    protected emitMessages(type: string, messages: IDocumentMessage[]) {
+    protected emitMessages(type: string, messages: IDocumentMessage[][]) {
         // Although the implementation here disconnects the socket and does not reuse it, other subclasses
         // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
         // on the still-live socket.
@@ -266,16 +266,16 @@ export class DocumentDeltaConnection
 
     private disabledBatchManagerFeatureGate() {
         try {
-            return typeof localStorage === "object"
-                && localStorage !== null
+            return localStorage !== undefined
+                && typeof localStorage === "object"
                 && localStorage.disabledBatchManager === "1";
         } catch (e) { }
         return false;
     }
 
-    private submitCore(type: string, messages: IDocumentMessage[]) {
+    protected submitCore(type: string, messages: IDocumentMessage[]) {
         if (this.isBatchManagerDisabled) {
-            this.emitMessages(type, messages);
+            this.emitMessages(type, [messages]);
         } else {
             this.submitManager.add(type, messages);
         }
