@@ -62,6 +62,15 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
           super(socket, documentId, new TelemetryNullLogger());
     }
 
+    private submitCore(type: string, messages: IDocumentMessage[]) {
+        if (this.isBatchManagerDisabled) {
+            this.emitMessages(type, messages);
+        } else {
+            this.submitManager.add(type, messages);
+            this.submitManager.drain();
+        }
+    }
+
     /**
      * Submits a new delta operation to the server
      */
