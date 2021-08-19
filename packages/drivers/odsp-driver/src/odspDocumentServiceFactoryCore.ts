@@ -23,6 +23,7 @@ import {
     HostStoragePolicy,
     IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
+import { v4 as uuid } from "uuid";
 import {
     LocalPersistentCache,
     NonPersistentCache,
@@ -46,6 +47,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     public readonly protocolName = "fluid-odsp:";
 
     private readonly nonPersistentCache = new NonPersistentCache();
+    private readonly socketReferenceKeyPrefix?: string;
 
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
@@ -124,6 +126,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         protected persistedCache: IPersistedCache = new LocalPersistentCache(),
         private readonly hostPolicy: HostStoragePolicy = {},
     ) {
+        if (this.hostPolicy.isolateSocketCache === true) {
+            // create the key to separate the socket reuse cache
+            this.socketReferenceKeyPrefix = uuid();
+        }
     }
 
     public async createDocumentService(
@@ -170,6 +176,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             cacheAndTracker.cache,
             this.hostPolicy,
             cacheAndTracker.epochTracker,
+            this.socketReferenceKeyPrefix,
         );
     }
 }

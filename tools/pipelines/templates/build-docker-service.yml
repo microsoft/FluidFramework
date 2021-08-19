@@ -72,8 +72,12 @@ variables:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
 - group: container-registry-info
-- name: buildContainerName
-  value: build/${{ parameters.containerName }}
+- ${{ if eq(variables.testBuild, true) }}:
+  - name: buildContainerName
+    value: test/${{ parameters.containerName }}
+- ${{ if eq(variables.testBuild, false) }}:
+  - name: buildContainerName
+    value: build/${{ parameters.containerName }}
 - name: baseContainerTag
   value: base:$(containerTagSuffix)
 - ${{ if eq(variables.pushImage, false) }}:
@@ -197,6 +201,7 @@ stages:
       - template: include-generate-notice-steps.yml
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
+          requireNotice: ${{ eq(variables.releaseImage, true) }}
 
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
@@ -234,7 +239,7 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) npx lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
         - task: PublishBuildArtifacts@1
           displayName: Publish Artifact - pack

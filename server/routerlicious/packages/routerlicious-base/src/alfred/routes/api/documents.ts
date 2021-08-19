@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentStorage, IThrottler, ITenantManager } from "@fluidframework/server-services-core";
+import { IDocumentStorage, IThrottler, ITenantManager, ICache } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
     throttle,
@@ -21,6 +21,7 @@ export function create(
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
     throttler: IThrottler,
+    singleUseTokenCache: ICache,
     config: Provider,
     tenantManager: ITenantManager): Router {
     const router: Router = Router();
@@ -52,7 +53,11 @@ export function create(
      */
     router.post(
         "/:tenantId",
-        verifyStorageToken(tenantManager, config, false),
+        verifyStorageToken(tenantManager, config, {
+            requireDocumentId: false,
+            ensureSingleUseToken: true,
+            singleUseTokenCache,
+        }),
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
             // Tenant and document
