@@ -14,6 +14,7 @@ import {
     requestOps,
     streamObserver,
 } from "@fluidframework/driver-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
@@ -22,6 +23,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
 export class OdspDeltaStorageService {
+    private readonly deltaRequestIdSet = new Set();
     constructor(
         private readonly deltaFeedUrl: string,
         private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
@@ -35,6 +37,7 @@ export class OdspDeltaStorageService {
         to: number,
         telemetryProps: ITelemetryProperties,
     ): Promise<IDeltasFetchResult> {
+        const id = `${from}-${to}`;
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls
@@ -42,11 +45,13 @@ export class OdspDeltaStorageService {
             const storageToken = await this.getStorageToken(options, "DeltaStorage");
 
             const formBoundary = uuid();
-            const SPResponseGuid = uuid();
+            const SPResponseGuid = this.deltaRequestIdSet.has(id) ? uuid() : undefined;
             let postBody = `--${formBoundary}\r\n`;
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
-            postBody += `SPResponseGuid: ${SPResponseGuid}\r\n`;
+            if (SPResponseGuid) {
+                postBody += `SPResponseGuid: ${SPResponseGuid}\r\n`;
+            }
 
             postBody += `_post: 1\r\n`;
             postBody += `\r\n--${formBoundary}--`;
@@ -62,37 +67,42 @@ export class OdspDeltaStorageService {
             const abort = new AbortController();
             setTimeout(() => abort.abort(), 30000);
 
-            const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
-                baseUrl,
-                {
-                    headers,
-                    body: postBody,
-                    method: "POST",
-                    signal: abort.signal,
+            const messages = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                {   eventName: "OpsFetch",
+                    SPResponseGuid,
+                    headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    attempts: options.refresh ? 2 : 1,
+                    from,
+                    to,
+                    ...telemetryProps,
                 },
-                "ops",
-            );
-            const deltaStorageResponse = response.content;
-            let messages: ISequencedDocumentMessage[];
-            if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
-                messages = (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map((operation) => operation.op);
-            } else {
-                messages = deltaStorageResponse.value as ISequencedDocumentMessage[];
-            }
-
-            this.logger.sendPerformanceEvent({
-                eventName: "OpsFetch",
-                headers: Object.keys(headers).length !== 0 ? true : undefined,
-                length: messages.length,
-                duration: response.duration, // this duration for single attempt!
-                SPResponseGuid,
-                ...response.commonSpoHeaders,
-                attempts: options.refresh ? 2 : 1,
-                from,
-                to,
-                ...telemetryProps,
-            });
-
+                async (event: PerformanceEvent) => {
+                    const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
+                        baseUrl,
+                        {
+                            headers,
+                            body: postBody,
+                            method: "POST",
+                            signal: abort.signal,
+                        },
+                        "ops",
+                    );
+                    const deltaStorageResponse = response.content;
+                    let ops: ISequencedDocumentMessage[];
+                    if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
+                        ops = (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
+                            (operation) => operation.op);
+                    } else {
+                        ops = deltaStorageResponse.value as ISequencedDocumentMessage[];
+                    }
+                    event.end({
+                        length: ops.length,
+                        ...response.commonSpoHeaders,
+                    });
+                    return ops;
+                });
+            this.deltaRequestIdSet.add(id);
             // It is assumed that server always returns all the ops that it has in the range that was requested.
             // This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
             return { messages, partialResult: false };
