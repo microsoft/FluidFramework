@@ -276,6 +276,8 @@ interface IRuntimeMessageMetadata {
 const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
+// Local storage key to set the default flush mode to TurnBased
+const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -705,7 +707,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode = FlushMode.TurnBased;
+    private _flushMode = this.defaultFlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -760,6 +762,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
+
+    private get defaultFlushMode(): FlushMode {
+        return getLocalStorageFeatureGate(turnBasedFlushModeKey) === true ? FlushMode.TurnBased : FlushMode.Immediate;
+    }
 
     // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
     private get gcEnabled(): boolean {
