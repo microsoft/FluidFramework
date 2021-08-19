@@ -54,7 +54,7 @@ export class OdspDeltaStorageService {
             let postBody = `--${formBoundary}\r\n`;
             postBody += `Authorization: Bearer ${storageToken}\r\n`;
             postBody += `X-HTTP-Method-Override: GET\r\n`;
-            if (SPResponseGuid) {
+            if (SPResponseGuid !== undefined) {
                 postBody += `SPResponseGuid: ${SPResponseGuid}\r\n`;
             }
 
