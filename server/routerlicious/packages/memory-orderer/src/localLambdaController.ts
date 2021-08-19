@@ -13,7 +13,7 @@ export type LocalLambdaControllerState = "created" | "starting" | "started" | "c
 /**
  * Controls lambda startups and subscriptions for localOrderer
  */
-export class LocalLambdaController extends EventEmitter implements IKafkaSubscriber {
+export class LocalLambdaController<T = ILocalOrdererSetup> extends EventEmitter implements IKafkaSubscriber {
     public lambda: IPartitionLambda | undefined;
 
     private _state: LocalLambdaControllerState = "created";
@@ -21,9 +21,9 @@ export class LocalLambdaController extends EventEmitter implements IKafkaSubscri
 
     constructor(
         private readonly kafaka: LocalKafka,
-        private readonly setup: ILocalOrdererSetup,
+        private readonly setup: T,
         public readonly context: IContext,
-        private readonly starter: (setup: ILocalOrdererSetup, context: IContext) => Promise<IPartitionLambda>) {
+        private readonly starter: (setup: T, context: IContext) => Promise<IPartitionLambda>) {
         super();
         this.kafaka.subscribe(this);
     }

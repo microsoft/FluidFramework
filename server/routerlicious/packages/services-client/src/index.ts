@@ -11,6 +11,7 @@ export * from "./historian";
 export * from "./interfaces";
 export * from "./wholeSummaryUploadManager";
 export * from "./promiseTimeout";
+export * from "./restLessClient";
 export * from "./restWrapper";
 export * from "./scopes";
 export * from "./storage";

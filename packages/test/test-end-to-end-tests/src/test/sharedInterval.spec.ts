@@ -226,18 +226,17 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
     });
 
-    let dataObject: ITestFluidObject & IFluidLoadable;
-    const flush = () => (dataObject.context.containerRuntime as IContainerRuntime).flush();
-
     describe("one client", () => {
         const stringId = "stringKey";
 
         let sharedString: SharedString;
         let intervals: IntervalCollection<SequenceInterval>;
         let intervalView;
+        let dataObject: ITestFluidObject & IFluidLoadable;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
-            flush(); // Make sure all ops have been sent before asserting
+            // Make sure all ops have been sent before actually asserting
+            (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervalView, expected);
         };
 
@@ -260,11 +259,9 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
         it("replace all is included", async () => {
             sharedString.insertText(3, ".");
             intervals.add(0, 3, IntervalType.SlideOnRemove);
-            flush();
             assertIntervals([{ start: 0, end: 3 }]);
 
             sharedString.replaceText(0, 3, `xxx`);
-            flush();
             assertIntervals([{ start: 0, end: 3 }]);
         });
 

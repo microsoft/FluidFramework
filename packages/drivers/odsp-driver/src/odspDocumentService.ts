@@ -68,6 +68,7 @@ export class OdspDocumentService implements IDocumentService {
      * @param cache - This caches response for joinSession.
      * @param hostPolicy - This host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by returned service instance.
+     * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
@@ -78,6 +79,7 @@ export class OdspDocumentService implements IDocumentService {
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
+        socketReferenceKeyPrefix?: string,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             getOdspResolvedUrl(resolvedUrl),
@@ -88,6 +90,7 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             hostPolicy,
             epochTracker,
+            socketReferenceKeyPrefix,
         );
     }
 
@@ -113,10 +116,11 @@ export class OdspDocumentService implements IDocumentService {
      * @param logger - a logger that can capture performance and diagnostic information
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
-     * @param hostPolicy - This host constructed policy which customizes service behavior.
+     * @param hostPolicy - host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by this service instance.
+     * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
      */
-    constructor(
+    private constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
@@ -125,6 +129,7 @@ export class OdspDocumentService implements IDocumentService {
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
+        private readonly socketReferenceKeyPrefix?: string,
     ) {
         this._policies = {
             // load in storage-only mode if a file version is specified
@@ -334,6 +339,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             60000,
             this.epochTracker,
+            this.socketReferenceKeyPrefix,
         );
         const duration = performance.now() - startTime;
         // This event happens rather often, so it adds up to cost of telemetry.
