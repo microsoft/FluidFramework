@@ -23,6 +23,11 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
  * Provides access to the underlying delta storage on the server for sharepoint driver.
  */
 export class OdspDeltaStorageService {
+    // This set is used to record the id for the request. The id is formed using the from/to of the ops fetch request.
+    // We don't want to put SPResponse guid in all ops fetch requests as it overrides the SPRequestGuid on server and
+    // then the server cannot determine the farm/time on which the request is executed. So for now we only want to
+    // use SpResponseGuid for requests that we think are retried requests. So if a request is made for same ops range
+    // then we put the SPResponseGuid in the fetch request.
     private readonly deltaRequestIdSet = new Set();
     constructor(
         private readonly deltaFeedUrl: string,
