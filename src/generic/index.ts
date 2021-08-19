@@ -7,7 +7,9 @@
 
 export {
 	EditCommittedHandler,
+	SequencedEditAppliedHandler,
 	EditCommittedEventArguments,
+	SequencedEditAppliedEventArguments,
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,
@@ -15,6 +17,7 @@ export {
 	SharedTreeFactoryOptions,
 	SharedTreeSummaryWriteFormat,
 	SharedTreeSummaryReadFormat,
+	SharedTreeChangeType,
 } from './GenericSharedTree';
 export {
 	Edit,

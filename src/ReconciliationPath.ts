@@ -10,6 +10,7 @@ import { TreeView, TransactionView } from './TreeView';
  * change is actually applied.
  * The path only contains edits that were successfully applied.
  * This path is always empty for a change that has no concurrent edits.
+ * @public
  */
 export interface ReconciliationPath<TChange> {
 	/**
@@ -25,6 +26,7 @@ export interface ReconciliationPath<TChange> {
 
 /**
  * An edit in the `ReconciliationPath`.
+ * @public
  */
 export interface ReconciliationEdit<TChange> {
 	/**
@@ -48,6 +50,7 @@ export interface ReconciliationEdit<TChange> {
 
 /**
  * A change in the `ReconciliationPath`.
+ * @public
  */
 export interface ReconciliationChange<TChange> {
 	/**

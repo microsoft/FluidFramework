@@ -34,6 +34,7 @@ import {
 	getSummaryStatistics,
 	readFormatVersion,
 } from '../SummaryBackCompatibility';
+import { ReconciliationPath } from '../ReconciliationPath';
 import {
 	Edit,
 	SharedTreeOpType,
@@ -75,6 +76,15 @@ export enum SharedTreeEvent {
 	 * Passed the EditId of the committed edit, i.e. supports callbacks of type {@link EditCommittedHandler}.
 	 */
 	EditCommitted = 'committedEdit',
+	/**
+	 * A sequenced edit has been applied.
+	 * This includes local edits though the callback is only invoked once the sequenced version is received.
+	 * For edits that were local (see {@link SequencedEditAppliedEventArguments.wasLocal}, this callback will only be called once.
+	 * For non-local edits, it may be called multiple times: the number of calls and when they occur depends on caching and is an
+	 * implementation detail.
+	 * Supports callbacks of type {@link SequencedEditAppliedHandler}.
+	 */
+	SequencedEditApplied = 'sequencedEditApplied',
 }
 
 /**
@@ -153,16 +163,46 @@ export interface EditCommittedEventArguments<TSharedTree> {
 }
 
 /**
+ * The arguments included when the {@link SharedTreeEvent.SequencedEditApplied} SharedTreeEvent is emitted.
+ * @public
+ */
+export interface SequencedEditAppliedEventArguments<TSharedTree> {
+	/** The ID of the edit committed. */
+	readonly edit: Edit<SharedTreeChangeType<TSharedTree>>;
+	/** Whether or not this was a local edit. */
+	readonly wasLocal: boolean;
+	/** The tree the edit was applied to. */
+	readonly tree: TSharedTree;
+	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
+	readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
+}
+
+/**
+ * Helper for extracting the change type from a {@link GenericSharedTree} type.
+ * @public
+ */
+export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<infer TChange> ? TChange : never;
+
+/**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
+ * @public
  */
 export interface ISharedTreeEvents<TSharedTree> extends ISharedObjectEvents {
 	(event: 'committedEdit', listener: EditCommittedHandler<TSharedTree>);
+	(event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler<TSharedTree>);
 }
 
 /**
  * Expected type for a handler of the `EditCommitted` event.
+ * @public
  */
 export type EditCommittedHandler<TSharedTree> = (args: EditCommittedEventArguments<TSharedTree>) => void;
+
+/**
+ * Expected type for a handler of the {@link SharedTreeEvent.SequencedEditApplied} event.
+ * @public
+ */
+export type SequencedEditAppliedHandler<TSharedTree> = (args: SequencedEditAppliedEventArguments<TSharedTree>) => void;
 
 const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
 
@@ -185,7 +225,7 @@ export interface SharedTreeFactoryOptions {
  * A distributed tree.
  * @public
  */
-export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
+export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange>>> {
 	/**
 	 * The log of completed edits for this SharedTree.
 	 */
@@ -217,13 +257,25 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		this.emit(GenericSharedTree.eventFromEditResult(editResult), editId);
 	};
 
-	private readonly processSequencedEditResult = ({ wasLocal, result }: SequencedEditResult<TChange>): void => {
+	private readonly processSequencedEditResult = ({
+		edit,
+		wasLocal,
+		result,
+		reconciliationPath,
+	}: SequencedEditResult<TChange>): void => {
 		if (wasLocal && result.status !== EditStatus.Applied) {
 			this.logger.send({
 				category: 'generic',
 				eventName: result.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
 			});
 		}
+		const eventArguments: SequencedEditAppliedEventArguments<GenericSharedTree<TChange>> = {
+			edit,
+			wasLocal,
+			tree: this,
+			reconciliationPath,
+		};
+		this.emit(SharedTreeEvent.SequencedEditApplied, eventArguments);
 	};
 
 	/**

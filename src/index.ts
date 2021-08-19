@@ -65,6 +65,9 @@ export {
 export {
 	EditCommittedHandler,
 	EditCommittedEventArguments,
+	SequencedEditAppliedHandler,
+	SequencedEditAppliedEventArguments,
+	SharedTreeChangeType,
 	ISharedTreeEvents,
 	GenericSharedTree,
 	SharedTreeEvent,

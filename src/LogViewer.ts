@@ -622,7 +622,8 @@ export class CachingLogViewer<TChange> implements LogViewer {
 
 	/**
 	 * @param sequenceNumber - The server-assigned sequenced number assigned to the edit of interest.
-	 * @returns Edit result information for the edit with the given sequence number. Undefined if no such edit is known.
+	 * @returns Edit result information for the edit with the given sequence number or the nearest sequenced edit before that.
+	 * Undefined if no sequenced edit occurred at or prior to the given sequenceNumber.
 	 */
 	public getEditResultFromSequenceNumber(sequenceNumber: number): EditingResultWithId<TChange> | undefined {
 		const earliestSequenced = this.earliestSequencedEditInSession();

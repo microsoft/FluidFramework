@@ -245,7 +245,7 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
 }
 
 // @public
-export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<TChange>> {
+export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange>>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (view: RevisionView) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
@@ -349,6 +349,8 @@ export function isDetachedSequenceId(node: BuildNode): node is DetachedSequenceI
 export interface ISharedTreeEvents<TSharedTree> extends ISharedObjectEvents {
     // (undocumented)
     (event: 'committedEdit', listener: EditCommittedHandler<TSharedTree>): any;
+    // (undocumented)
+    (event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler<TSharedTree>): any;
 }
 
 // @public
@@ -461,6 +463,17 @@ export class RevisionView extends TreeView {
 export function saveUploadedEditChunkContents<TChange>(editLog: OrderedEditSet<TChange>): Promise<UploadedEditChunkContents<TChange>[]>;
 
 // @public
+export interface SequencedEditAppliedEventArguments<TSharedTree> {
+    readonly edit: Edit<SharedTreeChangeType<TSharedTree>>;
+    readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
+    readonly tree: TSharedTree;
+    readonly wasLocal: boolean;
+}
+
+// @public
+export type SequencedEditAppliedHandler<TSharedTree> = (args: SequencedEditAppliedEventArguments<TSharedTree>) => void;
+
+// @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[];
 
 // @public
@@ -484,6 +497,9 @@ export class SharedTree extends GenericSharedTree<Change> {
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 // @public
+export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<infer TChange> ? TChange : never;
+
+// @public
 export enum SharedTreeDiagnosticEvent {
     AppliedEdit = "appliedEdit",
     CatchUpBlobUploaded = "uploadedCatchUpBlob",
@@ -495,7 +511,8 @@ export enum SharedTreeDiagnosticEvent {
 
 // @public
 export enum SharedTreeEvent {
-    EditCommitted = "committedEdit"
+    EditCommitted = "committedEdit",
+    SequencedEditApplied = "sequencedEditApplied"
 }
 
 // @public

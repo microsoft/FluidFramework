@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { assertArrayOfOne, assertNotUndefined, isSharedTreeEvent } from '../../Common';
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
+import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import {
 	BuildNode,
 	ChangeNode,
@@ -17,6 +17,8 @@ import {
 	serialize,
 	newEdit,
 	EditStatus,
+	EditCommittedEventArguments,
+	SequencedEditAppliedEventArguments,
 } from '../../generic';
 import { Change, ChangeType, Delete, Insert, StablePlace, StableRange, SharedTree, Move } from '../../default-edits';
 import { CachingLogViewer } from '../../LogViewer';
@@ -995,6 +997,85 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				containerRuntimeFactory.processAllMessages();
 				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 				expect(events.length).equals(0);
+			});
+		});
+
+		describe('Events', () => {
+			it('fires an event when an edit is committed', () => {
+				const { tree } = setUpTestSharedTree({
+					initialTree: simpleTestTree,
+				});
+
+				let eventCount = 0;
+				let editIdFromEvent: EditId | undefined;
+				tree.on(SharedTreeEvent.EditCommitted, (args: EditCommittedEventArguments<TSharedTree>) => {
+					expect(args.local).true;
+					expect(args.tree).equals(tree);
+					editIdFromEvent = args.editId;
+					eventCount += 1;
+				});
+
+				// Invalid change
+				const invalidEditId = tree.applyEdit(
+					...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode()))
+				);
+				expect(editIdFromEvent).equals(invalidEditId);
+				expect(eventCount).equals(1);
+
+				// Valid change
+				const validEditId = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				expect(editIdFromEvent).equals(validEditId);
+				expect(eventCount).equals(2);
+			});
+
+			it('fires an event when a sequenced edit is applied', async () => {
+				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+					initialTree: simpleTestTree,
+					allowInvalid: true,
+					localMode: false,
+				});
+				const { tree: secondTree } = setUpTestSharedTree({
+					containerRuntimeFactory,
+					id: 'secondTestSharedTree',
+					localMode: false,
+				});
+
+				containerRuntimeFactory.processAllMessages();
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+
+				const eventArgs: SequencedEditAppliedEventArguments<TSharedTree>[] = [];
+				tree.on(SharedTreeEvent.SequencedEditApplied, (args: SequencedEditAppliedEventArguments<TSharedTree>) =>
+					eventArgs.push(args)
+				);
+
+				// Invalid change
+				const invalidEditId = tree.applyEdit(
+					...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode()))
+				);
+				containerRuntimeFactory.processAllMessages();
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+
+				expect(eventArgs.length).equals(1);
+				expect(eventArgs[0].edit.id).equals(invalidEditId);
+				expect(eventArgs[0].wasLocal).equals(true);
+				expect(eventArgs[0].reconciliationPath.length).equals(0);
+
+				// Valid change
+				const validEdit1Id = secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+
+				// Valid change
+				const validEdit2Id = tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+				containerRuntimeFactory.processAllMessages();
+				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+
+				expect(eventArgs.length).equals(3);
+				expect(eventArgs[1].edit.id).equals(validEdit1Id);
+				expect(eventArgs[1].wasLocal).equals(false);
+				expect(eventArgs[1].reconciliationPath.length).equals(0);
+
+				expect(eventArgs[2].edit.id).equals(validEdit2Id);
+				expect(eventArgs[2].wasLocal).equals(true);
+				expect(eventArgs[2].reconciliationPath.length).equals(1);
 			});
 		});
 	});
