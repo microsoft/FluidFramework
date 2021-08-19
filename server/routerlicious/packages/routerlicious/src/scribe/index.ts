@@ -26,6 +26,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
     const sendTopic = config.get("lambdas:deli:topic");
     const kafkaClientId = config.get("scribe:kafkaClientId");
     const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
@@ -77,7 +78,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         false,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaSslCACertFilePath);
 
     return new ScribeLambdaFactory(
         mongoManager,
