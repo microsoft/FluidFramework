@@ -76,7 +76,8 @@ export class DocumentService implements api.IDocumentService {
             this.documentId,
             gitManager,
             this.logger,
-            documentStorageServicePolicies);
+            documentStorageServicePolicies,
+            this.driverPolicies);
         return this.documentStorageService;
     }
 
