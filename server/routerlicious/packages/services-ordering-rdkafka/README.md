@@ -60,6 +60,7 @@ If you wish to enable SSL for Kafka, please follow these instructions:
             KAFKA_SECURITY_INTER_BROKER_PROTOCOL: "SSL"
         volumes:
             - ./certs:/certs
+        restart: always
     ```
 
 3. Update `docker-compose.dev.yml` under `FluidFramework/server/routerlicious` to use volume mapping and copy the `certs` folder to the different Docker services. Please note that `...` below means that the other volume mapping rules have been omitted.

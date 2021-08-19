@@ -46,10 +46,21 @@ export abstract class RdkafkaBase extends EventEmitter {
 
         // In RdKafka, we can check what features are enabled using kafka.features. If "ssl" is listed,
         // it means RdKafka has been built with support for SSL.
+        // To build node-rdkafka with SSL support, make sure OpenSSL libraries are available in the
+        // environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
+        // as usual will automatically include SSL support.
         const rdKafkaHasSSLEnabled =
             kafka.features.filter((feature) => feature.toLowerCase().indexOf("ssl") >= 0).length > 0;
 
-        if (rdKafkaHasSSLEnabled && options?.sslCACertFilePath) {
+        if (options?.sslCACertFilePath) {
+            // If the use of SSL is desired, but rdkafka has not been built with SSL support,
+            // throw an error making that clear to the user.
+            if (!rdKafkaHasSSLEnabled) {
+                throw new Error(
+                    "Attempted to configure SSL, but rdkafka has not been built to support it. " +
+                    "Please make sure OpenSSL is available and build rdkafka again.");
+            }
+
             this.sslOptions = {
                 "security.protocol": "ssl",
                 "ssl.ca.location": options?.sslCACertFilePath,
