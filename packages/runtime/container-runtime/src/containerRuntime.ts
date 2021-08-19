@@ -764,7 +764,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public readonly disableIsolatedChannels: boolean;
 
     private get defaultFlushMode(): FlushMode {
-        return getLocalStorageFeatureGate(turnBasedFlushModeKey) === true ? FlushMode.TurnBased : FlushMode.Immediate;
+        return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
     }
 
     // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
