@@ -67,8 +67,8 @@ export class AzureClient {
     }
 
     /**
-     * Acesses the existing container given its unique ID in the Azure Relay Service.
-     * @param id - Unique ID of the container in FRS.
+     * Acesses the existing container given its unique ID in the Azure Fluid Relay service.
+     * @param id - Unique ID of the container in Azure Fluid Relay service
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
      */
