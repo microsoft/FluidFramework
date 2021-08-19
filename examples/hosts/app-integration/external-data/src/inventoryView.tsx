@@ -11,10 +11,11 @@ import { IInventoryItem, IInventoryList } from "./inventoryList";
 
 export interface IInventoryItemViewProps {
     inventoryItem: IInventoryItem;
+    disabled?: boolean;
 }
 
 export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInventoryItemViewProps) => {
-    const { inventoryItem } = props;
+    const { inventoryItem, disabled } = props;
 
     // eslint-disable-next-line no-null/no-null
     const quantityRef = useRef<HTMLInputElement>(null);
@@ -42,12 +43,14 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
             <CollaborativeInput
                 sharedString={ inventoryItem.name }
                 style={{ width: "200px" }}
+                disabled={ disabled }
             ></CollaborativeInput>
             <input
                 ref={ quantityRef }
                 onInput={ inputHandler }
                 type="number"
                 style={{ width: "50px" }}
+                disabled={ disabled }
             ></input>
         </div>
     );
@@ -55,10 +58,11 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
 
 export interface IInventoryListViewProps {
     inventoryList: IInventoryList;
+    disabled?: boolean;
 }
 
 export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInventoryListViewProps) => {
-    const { inventoryList } = props;
+    const { inventoryList, disabled } = props;
 
     const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(inventoryList.getItems());
     useEffect(() => {
@@ -75,7 +79,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (props: IInv
     }, [inventoryList]);
 
     const inventoryItemViews = inventoryItems.map((inventoryItem) => (
-        <InventoryItemView key={ inventoryItem.id } inventoryItem={ inventoryItem } />
+        <InventoryItemView key={ inventoryItem.id } inventoryItem={ inventoryItem } disabled={ disabled } />
     ));
 
     return (

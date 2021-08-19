@@ -10,7 +10,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { AppView } from "./appView";
-import { InventoryListContainerRuntimeFactory } from "./containerCode";
+import { containerKillBitId, InventoryListContainerRuntimeFactory } from "./containerCode";
+import { IContainerKillBit } from "./containerKillBit";
 import { extractStringData, fetchData, applyStringData, writeData } from "./dataHelpers";
 import { IInventoryList } from "./inventoryList";
 
@@ -44,6 +45,21 @@ async function getInventoryListFromContainer(container: Container): Promise<IInv
     return response.value as IInventoryList;
 }
 
+async function getContainerKillBitFromContainer(container: Container): Promise<IContainerKillBit> {
+    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
+    const url = containerKillBitId;
+    const response = await container.request({ url });
+
+    // Verify the response to make sure we got what we expected.
+    if (response.status !== 200 || response.mimeType !== "fluid/object") {
+        throw new Error(`Unable to retrieve data object at URL: "${url}"`);
+    } else if (response.value === undefined) {
+        throw new Error(`Empty response from URL: "${url}"`);
+    }
+
+    return response.value as IContainerKillBit;
+}
+
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
@@ -59,15 +75,18 @@ async function start(): Promise<void> {
     let fetchedData: string | undefined;
     let container: Container;
     let inventoryList: IInventoryList;
+    let containerKillBit: IContainerKillBit;
 
     if (createNew) {
         fetchedData = await fetchData();
         container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
         inventoryList = await getInventoryListFromContainer(container);
+        containerKillBit = await getContainerKillBitFromContainer(container);
         await applyStringData(inventoryList, fetchedData);
         await container.attach({ url: documentId });
     } else {
         container = await loader.resolve({ url: documentId });
+        containerKillBit = await getContainerKillBitFromContainer(container);
         inventoryList = await getInventoryListFromContainer(container);
     }
 
@@ -94,6 +113,7 @@ async function start(): Promise<void> {
             importedStringData={ fetchedData }
             inventoryList={ inventoryList }
             writeToExternalStorage={ writeToExternalStorage }
+            containerKillBit={ containerKillBit }
         />,
         div,
     );

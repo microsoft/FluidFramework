@@ -16,6 +16,7 @@ const deadKey = "dead";
 
 export interface IContainerKillBit extends EventEmitter {
     dead: boolean;
+    setDead(): void;
     markedForDestruction: boolean;
     markForDestruction(): void;
     volunteerForDestruction(): Promise<void>;
@@ -33,6 +34,10 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
 
     public get dead() {
         return this.root.get(deadKey) as boolean;
+    }
+
+    public setDead() {
+        this.root.set(deadKey, true);
     }
 
     public get markedForDestruction() {

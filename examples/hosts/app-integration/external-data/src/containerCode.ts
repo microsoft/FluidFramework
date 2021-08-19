@@ -13,8 +13,8 @@ import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { ContainerKillBitInstantiationFactory } from "./containerKillBit";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
-const inventoryListId = "default-inventory-list";
-const containerKillBitId = "container-kill-bit";
+export const inventoryListId = "default-inventory-list";
+export const containerKillBitId = "container-kill-bit";
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
