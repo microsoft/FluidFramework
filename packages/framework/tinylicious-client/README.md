@@ -8,7 +8,7 @@ Tinylicious service.
 The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
 
 ```javascript
-import TinyliciousClient from "@fluidframework/tinylicious-client";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 ```
 
 ## Instantiating TinyliciousClient
@@ -20,7 +20,7 @@ In the example below we are connecting to a locally running instance of our Tiny
 filling out the optional `port` parameter in `TinyliciousConnectionConfig`.
 
 ```javascript
-import TinyliciousClient, { TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
+import { TinyliciousClient, TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
 
 const config: TinyliciousConnectionConfig = { port: 7070 };
 const tinyliciousClient = new TinyliciousClient(config);
@@ -33,19 +33,6 @@ Fluid Service and contains an independent collection of collaborative objects.
 
 Containers are created and identified by unique ids. Management and storage of these ideas are the responsibility of
 the developer.
-
-## Using Fluid Containers
-
-Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to
-be connected to a server containers need to be created and retrieved asynchronously.
-
-```javascript
-import TinyliciousClient from "@fluidframework/tinylicious-client";
-
-const tinyliciousClient = new TinyliciousClient(config);
-await tinyliciousClient.createContainer(schema);
-const { fluidContainer, containerServices } = await tinyliciousClient.getContainer("_unique-id_", schema);
-```
 
 ## Defining Fluid Containers
 
@@ -63,7 +50,18 @@ const schema = {
     dynamicObjectTypes: [ /*...*/ ],
 }
 const tinyliciousClient = new TinyliciousClient();
-await tinyliciousClient.createContainer(schema);
+const { fluidContainer, containerServices } = await tinyliciousClient.createContainer(schema);
+```
+
+## Using Fluid Containers
+
+Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to
+be connected to a server containers need to be created and retrieved asynchronously.
+
+```javascript
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+
+const tinyliciousClient = new TinyliciousClient(config);
 const { fluidContainer, containerServices } = await tinyliciousClient.getContainer("_unique-id_", schema);
 ```
 
@@ -99,11 +97,11 @@ LoadableObjects can also be created dynamically during runtime. Dynamic object t
 `dynamicObjectTypes` property of the ContainerSchema.
 
 The Container has a `create` method that will create a new instance of the provided type. This instance will be local
-to the user until attached to another LoadableObject. Dynamic objects created this way should be stored in
-initialObjects, which are attached when the Container is created. When storing a LoadableObject you must store a
-reference to the object and not the object itself. To do this use the `handle` property on the LoadableObject.
+to the user until attached to another loadable object. Dynamic objects created this way should be stored in
+initialObjects, which are attached when the Container is created. When storing a loadable object you must store a
+reference to the object and not the object itself. To do this use the `handle` property on the loadable object.
 
-Dynamic objects are loaded on-demand to optimize for data virtualization. To get the LoadableObject, first get the
+Dynamic objects are loaded on-demand to optimize for data virtualization. To get the loadable object, first get the
 stored handle then resolve that handle.
 
 ```javascript

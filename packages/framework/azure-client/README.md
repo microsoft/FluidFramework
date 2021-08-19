@@ -84,24 +84,6 @@ Fluid Service and contains a collection of collaborative objects.
 
 Containers are created and identified by unique IDs. Management and storage of these IDs are the responsibility of the developer.
 
-## Using Fluid Containers
-
-Using the `AzureClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to
-a server, containers need to be created and retrieved asynchronously.
-
-```typescript
-import { AzureClient } from "@fluidframework/azure-client";
-
-const azureClient = new AzureClient(config);
-await azureClient.createContainer(schema);
-const { fluidContainer, containerServices } = await azureClient.getContainer("_unique-id_", schema);
-```
-
-NOTE: When using the `AzureClient` with tenant ID as "local", all containers that have been created will be deleted when
-the instance of the Tinylicious service (not client) that was run from the terminal window is closed. However, any
-containers created when running against the FRS service itself will be persisted. Container IDs can NOT be reused
-between Tinylicious and FRS to fetch back the same container.
-
 ## Defining Fluid Containers
 
 Fluid Containers are defined by a schema. The schema includes initial properties of the Container as well as what
@@ -118,9 +100,25 @@ const schema = {
     dynamicObjectTypes: [ /*...*/ ],
 }
 const azureClient = new AzureClient(config);
-await azureClient.createContainer(schema);
+const { fluidContainer, containerServices } = await azureClient.createContainer(schema);
+```
+
+## Using Fluid Containers
+
+Using the `AzureClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to
+a server, containers need to be created and retrieved asynchronously.
+
+```typescript
+import { AzureClient } from "@fluidframework/azure-client";
+
+const azureClient = new AzureClient(config);
 const { fluidContainer, containerServices } = await azureClient.getContainer("_unique-id_", schema);
 ```
+
+NOTE: When using the `AzureClient` with tenant ID as "local", all containers that have been created will be deleted when
+the instance of the Tinylicious service (not client) that was run from the terminal window is closed. However, any
+containers created when running against the FRS service itself will be persisted. Container IDs can NOT be reused
+between Tinylicious and FRS to fetch back the same container.
 
 ## Using initial objects
 
