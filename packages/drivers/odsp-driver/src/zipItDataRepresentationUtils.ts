@@ -78,7 +78,7 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
     const propSet = new Set(props);
     const res: Record<string, NodeTypes> = {};
     for (const [keyNode, valueNode] of node.iteratePairs()) {
-        assertBlobCoreInstance(keyNode);
+        assertBlobCoreInstance(keyNode, "keynode should be a blob");
         const keyStr = keyNode.toString();
         assert(propSet.has(keyStr), 0x229 /* "Property should exist" */);
         propSet.delete(keyStr);
@@ -227,27 +227,27 @@ export class NodeCore {
 
     public getString(index: number): string {
         const node = this.children[index];
-        assertBlobCoreInstance(node);
+        assertBlobCoreInstance(node, "getString should return stringblob");
         return node.toString();
     }
 
     public getBlob(index: number): BlobCore {
         const node = this.children[index];
-        assertBlobCoreInstance(node);
+        assertBlobCoreInstance(node, "getBlob should return a blob");
         return node;
     }
 
     public getNode(index: number): NodeCore
     {
         const node = this.children[index];
-        assertNodeCoreInstance(node);
+        assertNodeCoreInstance(node, "getNode should return a node");
         return node;
     }
 
     public getNumber(index: number): number
     {
         const node = this.children[index];
-        assertNumberInstance(node);
+        assertNumberInstance(node, "getNumber should return a number");
         return node;
     }
 
@@ -339,7 +339,7 @@ export class TreeBuilder extends NodeCore {
 
 export function assertBlobCoreInstance(
     node: NodeTypes,
-    message?: string,
+    message: string,
 ): asserts node is BlobCore {
     if (node instanceof BlobCore) {
         return;
@@ -349,7 +349,7 @@ export function assertBlobCoreInstance(
 
 export function assertNodeCoreInstance(
     node: NodeTypes,
-    message?: string,
+    message: string,
 ): asserts node is NodeCore {
     if (node instanceof NodeCore) {
         return;
@@ -359,7 +359,7 @@ export function assertNodeCoreInstance(
 
 export function assertNumberInstance(
     node: NodeTypes,
-    message?: string,
+    message: string,
 ): asserts node is number {
     if (typeof node === "number") {
         return;
@@ -370,7 +370,7 @@ export function assertNumberInstance(
 function throwBufferParseException(
     node: NodeTypes,
     expectedNodeType: NodeType,
-    message?: string,
+    message: string,
 ): never {
     const error = createOdspNetworkError(
         `BufferParsingException: ${message}`,

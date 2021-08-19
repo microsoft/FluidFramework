@@ -147,12 +147,12 @@ describe("Tree Representation tests", () => {
 
     it("blob instance test", async () => {
         const blobNode = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
-        assertBlobCoreInstance(blobNode);
+        assertBlobCoreInstance(blobNode, "should be a blob");
 
         let success = true;
         const nonBlobNode: NodeTypes = 5;
         try {
-            assertBlobCoreInstance(nonBlobNode);
+            assertBlobCoreInstance(nonBlobNode, "should be a blob");
         } catch (err) {
             success = false;
         }
@@ -161,12 +161,12 @@ describe("Tree Representation tests", () => {
 
     it("node instance test", async () => {
         const node = new NodeCore();
-        assertNodeCoreInstance(node);
+        assertNodeCoreInstance(node, "should be a node");
 
         let success = true;
         const nonNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
         try {
-            assertNodeCoreInstance(nonNode);
+            assertNodeCoreInstance(nonNode, "should be a node");
         } catch (err) {
             success = false;
         }
@@ -175,12 +175,12 @@ describe("Tree Representation tests", () => {
 
     it("number instance test", async () => {
         const numNode = 5;
-        assertNumberInstance(numNode);
+        assertNumberInstance(numNode, "should be a number");
 
         let success = true;
         const nonNumberNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
         try {
-            assertNumberInstance(nonNumberNode);
+            assertNumberInstance(nonNumberNode, "should be a number");
         } catch (err) {
             success = false;
         }
