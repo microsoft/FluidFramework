@@ -148,6 +148,11 @@ export function createOdspNetworkError(
         case fluidEpochMismatchError:
             error = new NonRetryableError(errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
+        case 412:
+            // "Precondition Failed" error - happens when uploadSummaryWithContext uses wrong parent.
+            // Resubmitting same payload is not going to help, so this is non-recoverable failure!
+            error = new NonRetryableError(errorMessage, DriverErrorType.genericNetworkError, { statusCode });
+            break;
         case 413:
             error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
             break;
@@ -183,6 +188,7 @@ export function createOdspNetworkError(
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
             error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
+            break;
     }
     enrichOdspError(error, response, responseText, props);
     return error;
