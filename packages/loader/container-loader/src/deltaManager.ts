@@ -374,7 +374,10 @@ export class DeltaManager
         // We don't have to wait for ack for topmost NoOps. So subtract those.
         return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
     }
-
+    /**
+     * Returns set of props that can be logged in telemetry that provide some insights / statistics
+     * about current or last connection (if there is no connection at the moment)
+    */
     public connectionProps(): ITelemetryProperties {
         if (this.connection !== undefined) {
             return {
@@ -383,7 +386,7 @@ export class DeltaManager
             };
         } else {
             return {
-                // Report how many ops this client sent in just disconnected session
+                // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
         }
