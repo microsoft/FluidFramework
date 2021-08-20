@@ -1415,7 +1415,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public flush(): void {
-        assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
+        assert(this._orderSequentiallyCalls === 0,
+            0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
         if (!this.deltaSender) {
             return;
