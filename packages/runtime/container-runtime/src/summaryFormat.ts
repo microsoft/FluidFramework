@@ -109,7 +109,6 @@ export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
-export const blobRedirectTableBlobName = ".blobRedirectTable";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function rootHasIsolatedChannels(metadata: ReadContainerRuntimeMetadata): boolean {
