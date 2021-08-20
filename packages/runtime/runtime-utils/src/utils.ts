@@ -5,7 +5,6 @@
 
 import { ISerializedHandle } from "@fluidframework/core-interfaces";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 export const isSerializedHandle = (value: any): value is ISerializedHandle =>
     value?.type === "__fluid_handle__";
