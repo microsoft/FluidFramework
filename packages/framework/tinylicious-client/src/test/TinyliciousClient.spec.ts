@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { SharedMap, SharedDirectory, ContainerSchema } from "fluid-framework";
 import { DiceRoller } from "@fluid-example/diceroller";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
     TinyliciousClient,
     TinyliciousConnectionConfig,
@@ -94,6 +95,17 @@ describe("TinyliciousClient", () => {
             () => true,
             "TinyliciousClient cannot create container and services successfully",
         );
+    });
+
+    it("Create detached container", async () => {
+        const {fluidContainer} = await tinyliciousClient.createDetachedContainer(schema);
+        assert.strictEqual(fluidContainer.attachState, AttachState.Detached, "Container should be detached");
+    });
+
+    it("Attach detached container", async () => {
+        const {fluidContainer} = await tinyliciousClient.createDetachedContainer(schema);
+        await fluidContainer.attach();
+        assert.strictEqual(fluidContainer.attachState, AttachState.Attached, "Container should be attached");
     });
 
     /**

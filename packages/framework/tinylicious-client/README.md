@@ -47,6 +47,27 @@ const tinyliciousClient = new TinyliciousClient();
 const { fluidContainer, containerServices } = await tinyliciousClient.createContainer(schema);
 ```
 
+### Detached Fluid Containers
+
+A detached container is helpful when the initial objects need to be seeded with default data before the application starts. Since the container is not yet attached to the client, no ops will be recorded and the first user to load the container will start with that initial snapshot.
+
+Creating a detached Fluid Container follows the same flow as the pre-attached container, minus an attach step that needs to be performed before loading the application.
+
+```javascript
+const schema = {
+    name: "my-container",
+    initialObjects: {
+        /* ... */
+    },
+    dynamicObjectTypes: [ /*...*/ ],
+}
+const tinyliciousClient = new TinyliciousClient();
+const { fluidContainer, containerServices } = await tinyliciousClient.createDetachedContainer(schema);
+
+// Perform `set` methods on the DDSes in fluidContainer.initialObjects
+fluidContainer.attach();
+```
+
 ## Using Fluid Containers
 
 Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
