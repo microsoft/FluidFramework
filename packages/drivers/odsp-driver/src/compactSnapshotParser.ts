@@ -134,7 +134,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
 
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
-    assert(root.length === 5, "5 sections should be there");
+    assert(root.length === 5, 0x249 /* "5 sections should be there" */);
 
     const header = readAndValidateHeaderSection(root.getNode(0));
 
