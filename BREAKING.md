@@ -1,3 +1,11 @@
+## 0.47 Breaking changes
+- [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
+
+### `FlushMode` enum values renamed
+`FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
+- `FlushMode.Manual` to `FlushMode.TurnBased`
+- `FlushMode.Automatic` to `FlushMode.Immediate`
+
 ## 0.46 Breaking changes
 - [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
 - [FrsClient has been renamed to AzureClient and moved out of experimental state](#FrsClient-has-been-renamed-to-AzureClient-and-moved-out-of-experimental-state)
@@ -5,7 +13,6 @@
 - [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
 - [@fluid-experimental/fluid-static package name changed](#fluid-experimentalfluid-static-package-name-changed)
 - [TinyliciousClient and AzureClient container API changed](#tinyliciousclient-and-azureclient-container-api-changed)
-- [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
 
 ### `@fluid-experimental/fluid-framework` package name changed
 The `@fluid-experimental/fluid-framework` package has been renamed to now be `fluid-framework`. The scope has been removed.
@@ -47,11 +54,6 @@ const containerId = fluidContainer.id;
 // Access the existing container
 const { fluidContainer, containerServices }= await client.getContainer(containerId, containerSchema);
 ```
-
-### `FlushMode` enum values renamed
-`FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
-- `FlushMode.Manual` to `FlushMode.TurnBased`
-- `FlushMode.Automatic` to `FlushMode.Immediate`
 
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
