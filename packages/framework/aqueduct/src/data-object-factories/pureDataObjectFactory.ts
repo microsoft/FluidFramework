@@ -27,7 +27,6 @@ import {
     FluidObjectSymbolProvider,
     DependencyContainer,
 } from "@fluidframework/synthesize";
-import { isContextExisting } from "@fluidframework/runtime-utils";
 
 import {
     IDataObjectProps,

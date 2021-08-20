@@ -27,15 +27,3 @@ export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
     const attrib = await readAndParseBlob<IDocumentAttributes>(attributesHash);
     return attrib.sequenceNumber;
 }
-
-/**
- * @deprecated #6346
- *
- * Backwards compatible way of deciding whether we're instantiating new or from an existing
- * context. To be removed after `existing` is a required parameter in
- * IFluidDataStoreFactory.instantiateDataStore
- */
-export const isContextExisting = (context: IFluidDataStoreContext, existing?: boolean): boolean =>
-    existing === undefined
-        ? context.existing === true
-        : existing;

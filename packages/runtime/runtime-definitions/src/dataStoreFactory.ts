@@ -31,5 +31,5 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
      * @param context - Context for the data store.
      * @param existing - If instantiating from an existing file.
      */
-    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<IFluidDataStoreChannel>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
 }
