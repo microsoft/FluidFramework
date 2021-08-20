@@ -318,7 +318,7 @@ export class NodeCore {
                 default:
                     throw new Error(`Invalid code: ${code}`);
             }
-            assert(childValue !== undefined, "Child Value should be defined");
+            assert(childValue !== undefined, 0x24a /* "Child Value should be defined" */);
             this.children.push(childValue);
         }
     }

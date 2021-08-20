@@ -71,7 +71,7 @@ export class DocumentDeltaConnection
     }
 
     public get disposed() {
-        assert(this._disposed || this.socket.connected, "Socket is closed, but connection is not!");
+        assert(this._disposed || this.socket.connected, 0x244 /* "Socket is closed, but connection is not!" */);
         return this._disposed;
     }
     /**
@@ -116,7 +116,7 @@ export class DocumentDeltaConnection
 
             // Some events are already forwarded - see this.addTrackedListener() calls in initialize().
             if (DocumentDeltaConnection.eventsAlwaysForwarded.includes(event)) {
-                assert(this.trackedListeners.has(event), "tracked listener");
+                assert(this.trackedListeners.has(event), 0x245 /* "tracked listener" */);
                 return;
             }
 
@@ -420,7 +420,7 @@ export class DocumentDeltaConnection
             }, timeout + 2000);
         });
 
-        assert(!this.disposed, "checking consistency of socket & _disposed flags");
+        assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
     }
 
     protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -441,8 +441,8 @@ export class DocumentDeltaConnection
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
-        assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event), "Use addTrackedListener instead");
-        assert(!DocumentDeltaConnection.eventsToForward.includes(event), "should not subscribe to forwarded events");
+        assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event), 0x247 /* "Use addTrackedListener instead" */);
+        assert(!DocumentDeltaConnection.eventsToForward.includes(event), 0x248 /* "should not subscribe to forwarded events" */);
         this.socket.on(event, listener);
         assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
         this.connectionListeners.set(event, listener);
