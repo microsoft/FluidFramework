@@ -68,6 +68,10 @@ parameters:
   type: string
   default:
 
+- name: nonScopedPackages
+  type: object
+  default: []
+
 - name: publishOverride
   type: string
 
@@ -90,6 +94,7 @@ variables:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+      nonScopedPackages: ${{ parameters.nonScopedPackages }}
 
 stages:
   # Install / Build / Test Stage
@@ -133,12 +138,16 @@ stages:
                 Test=${{ parameters.taskTest }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
+              
+              Publish Parameters:
+                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
+                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
 
                 release=$(release)"
 
@@ -262,13 +271,27 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
+                mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
+                if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
+                  mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
+                fi
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 else
                   npm pack --unsafe-perm
-                  mv -t $(Build.ArtifactStagingDirectory)/pack/ ./*.tgz
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
+
+          - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+            - ${{ each parameter in parameters.nonScopedPackages }}:
+              - task: Bash@3
+                displayName: Move Non-Scoped Package ${{parameter}}
+                inputs:
+                  targetType: 'inline'
+                  workingDirectory: ${{ parameters.buildDirectory }}
+                  script: |
+                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack
@@ -365,3 +388,4 @@ stages:
       parameters:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
+        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}

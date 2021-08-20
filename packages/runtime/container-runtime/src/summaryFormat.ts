@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse, readAndParseFromBlobs } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
@@ -74,17 +74,27 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
+export type GCVersion = number;
 export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
-    readonly gcFeature?: number;
+    readonly gcFeature?: GCVersion;
+    /** The last sequence number at the time of the summary; same as the summary op reference sequence number. */
+    readonly sequenceNumber?: number;
 }
 
+export type ReadContainerRuntimeMetadata = undefined | IContainerRuntimeMetadata;
+
+export type WriteContainerRuntimeMetadata = IContainerRuntimeMetadata
+    & Required<Pick<IContainerRuntimeMetadata, "sequenceNumber">>;
+
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getMetadataFormatVersion(metadata: IContainerRuntimeMetadata | undefined): number {
+export function getMetadataFormatVersion(metadata: ReadContainerRuntimeMetadata): number {
     /**
+     * Version 2+: Introduces runtime sequence number for data verification.
+     *
      * Version 1+: Introduces .metadata blob and .channels trees for isolation of
      * data store trees from container-level objects.
      * Also introduces enableGC option stored in the summary.
@@ -101,13 +111,13 @@ export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function rootHasIsolatedChannels(metadata: IContainerRuntimeMetadata | undefined): boolean {
+export function rootHasIsolatedChannels(metadata: ReadContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
-export function gcFeature(
-    metadata: IContainerRuntimeMetadata | undefined,
-): Required<IContainerRuntimeMetadata>["gcFeature"] {
+export function getGCVersion(
+    metadata: ReadContainerRuntimeMetadata,
+): GCVersion {
     if (!metadata) {
         // Force to 0/disallowed in prior versions
         return 0;
@@ -157,12 +167,8 @@ export async function getFluidDataStoreAttributes(
     storage: IDocumentStorageService,
     snapshot: ISnapshotTree,
 ): Promise<ReadFluidDataStoreAttributes> {
-    // Note: storage can be undefined in special case while detached.
-    const attributes = storage !== undefined
-        ? await readAndParse<ReadFluidDataStoreAttributes>(
-            storage, snapshot.blobs[dataStoreAttributesBlobName])
-        : readAndParseFromBlobs<ReadFluidDataStoreAttributes>(
-            snapshot.blobs, snapshot.blobs[dataStoreAttributesBlobName]);
+    const attributes = await readAndParse<ReadFluidDataStoreAttributes>(
+        storage, snapshot.blobs[dataStoreAttributesBlobName]);
     // Use the snapshotFormatVersion to determine how the pkg is encoded in the snapshot.
     // For snapshotFormatVersion = "0.1" (1) or above, pkg is jsonified, otherwise it is just a string.
     // However the feature of loading a detached container from snapshot, is added when the

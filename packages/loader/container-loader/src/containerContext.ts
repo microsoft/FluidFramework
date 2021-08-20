@@ -86,7 +86,16 @@ export class ContainerContext implements IContainerContext {
         return context;
     }
 
-    public readonly logger: ITelemetryLogger;
+    public readonly taggedLogger: ITelemetryLogger;
+
+    /**
+     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
+     * details.
+    */
+    /** @deprecated See IContainerContext for more details. */
+    public get logger(): ITelemetryLogger {
+        return this.taggedLogger;
+    }
 
     public get id(): string {
         return this.container.id;
@@ -172,7 +181,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
-        this.logger = container.subLogger;
+        this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
@@ -301,7 +310,7 @@ export class ContainerContext implements IContainerContext {
 
     private async loadCodeModule(codeDetails: IFluidCodeDetails) {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
         );

@@ -52,7 +52,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
 
 // @public (undocumented)
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
-    protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, blobCutOffSize?: number | undefined);
+    protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, packingLevel: number, blobCutOffSize?: number | undefined);
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
@@ -86,7 +86,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     // (undocumented)
     protected virtualBlobs: Map<string, ArrayBufferLike>;
     // (undocumented)
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean): BlobAggregationStorage;
+    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
     // (undocumented)
     write(root: ITree, parents: string[], message: string, ref: string): Promise<IVersion>;
 }
@@ -113,7 +113,7 @@ export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolS
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
 // @public (undocumented)
-export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): GenericNetworkError | ThrottlingError;
+export function createGenericNetworkError(errorMessage: string, canRetry: boolean, retryAfterMs?: number, props?: ITelemetryProperties): ThrottlingError | GenericNetworkError;
 
 // @public (undocumented)
 export const createWriteError: (errorMessage: string) => NonRetryableError<DriverErrorType.writeError>;
@@ -247,6 +247,8 @@ export class ParallelRequests<T> {
     // (undocumented)
     cancel(): void;
     // (undocumented)
+    get canceled(): boolean;
+    // (undocumented)
     run(concurrency: number): Promise<void>;
     }
 
@@ -295,7 +297,7 @@ export class RateLimiter {
 // @public
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
-// @public
+// @public @deprecated (undocumented)
 export function readAndParseFromBlobs<T>(blobs: {
     [index: string]: string;
 }, id: string): T;

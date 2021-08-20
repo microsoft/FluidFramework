@@ -13,7 +13,7 @@ import {
     IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { wrapError } from "@fluidframework/container-utils";
+import { wrapErrorAndLog } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
@@ -24,15 +24,16 @@ import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
-    SubmitSummaryResult,
     ISubmitSummaryOptions,
     ISummarizer,
     ISummarizerInternalsProvider,
+    ISummarizerOptions,
     ISummarizerRuntime,
     ISummarizingWarning,
-    OnDemandSummarizeResult,
+    SubmitSummaryResult,
     SummarizerStopReason,
 } from "./summarizerTypes";
+import { SummarizeHeuristicData } from "./summarizerHeuristics";
 
 const summarizingError = "summarizingError";
 
@@ -44,9 +45,9 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
         super(errorMessage);
     }
 
-    static wrap(error: any, logged: boolean = false) {
+    static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
         const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
-        return wrapError<SummarizingWarning>(error, newErrorFn);
+        return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
     }
 }
 
@@ -91,11 +92,11 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
-    public async run(onBehalfOf: string): Promise<void> {
+    public async run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
         try {
-            await this.runCore(onBehalfOf);
+            await this.runCore(onBehalfOf, options);
         } catch (error) {
-            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */));
+            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */, this.logger));
             throw error;
         } finally {
             // Cleanup after running
@@ -144,7 +145,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return create404Response(request);
     }
 
-    private async runCore(onBehalfOf: string): Promise<void> {
+    private async runCore(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
         this.onBehalfOfClientId = onBehalfOf;
 
         const startResult = await this.runCoordinator.waitStart();
@@ -199,17 +200,20 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection.createWatcher(startResult.clientId),
             this.configurationGetter(),
             this /* Pick<ISummarizerInternalsProvider, "submitSummary"> */,
-            this.runtime.deltaManager.lastSequenceNumber,
-            { /** Initial summary attempt */
-                refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-                summaryTime: Date.now(),
-            } as const,
+            new SummarizeHeuristicData(
+                this.runtime.deltaManager.lastSequenceNumber,
+                { /** summary attempt baseline for heuristics */
+                    refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+                    summaryTime: Date.now(),
+                } as const,
+            ),
             (description: string) => {
                 if (!this._disposed) {
                     this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
                 }
             },
             this.summaryCollection,
+            options,
         );
         this.runningSummarizer = runningSummarizer;
 
@@ -267,15 +271,19 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return result;
     }
 
-    public summarizeOnDemand(
-        reason: string,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
-    ): OnDemandSummarizeResult {
+    public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
         if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
             throw Error("Summarizer is not running or already disposed.");
         }
-        return this.runningSummarizer.summarizeOnDemand(reason, options);
-    }
+        return this.runningSummarizer.summarizeOnDemand(...args);
+    };
+
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        if (this._disposed || this.runningSummarizer === undefined || this.runningSummarizer.disposed) {
+            throw Error("Summarizer is not running or already disposed.");
+        }
+        return this.runningSummarizer.enqueueSummarize(...args);
+    };
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;

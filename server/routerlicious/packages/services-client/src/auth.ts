@@ -68,7 +68,7 @@ export function generateToken(
     // Current time in seconds
     const now = Math.round((new Date()).getTime() / 1000);
 
-    const claims: ITokenClaims = {
+    const claims: ITokenClaims & { jti: string } = {
         documentId,
         scopes,
         tenantId,
@@ -76,6 +76,7 @@ export function generateToken(
         iat: now,
         exp: now + lifetime,
         ver,
+        jti: uuid(),
     };
 
     const utf8Key = { utf8: key };

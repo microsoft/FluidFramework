@@ -106,6 +106,10 @@ export class Lumber<T extends string = LumberEventName> {
         this.emit(message, logLevel, false, exception);
     }
 
+    public isCompleted(): boolean {
+        return this._completed;
+    }
+
     private emit(
         message: string,
         logLevel: LogLevel,

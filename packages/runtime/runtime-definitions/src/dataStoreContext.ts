@@ -33,8 +33,8 @@ import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garb
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
-    IChannelSummarizeResult,
     ISummarizerNodeWithGC,
+    ISummaryTreeWithStats,
     SummarizeInternalFn,
 } from "./summary";
 
@@ -166,7 +166,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): IChannelSummarizeResult;
+    getAttachSummary(): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -184,7 +184,7 @@ export interface IFluidDataStoreChannel extends
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
@@ -236,7 +236,6 @@ export interface IFluidDataStoreContext extends
     IEventProvider<IFluidDataStoreContextEvents>,
     Partial<IProvideFluidDataStoreRegistry>,
     IProvideFluidHandleContext {
-    readonly documentId: string;
     readonly id: string;
     /**
      * A data store created by a client, is a local data store for that client. Also, when a detached container loads
@@ -252,7 +251,7 @@ export interface IFluidDataStoreContext extends
      */
     readonly packagePath: readonly string[];
     /**
-     * TODO: should remove after detachedNew is in place
+     * @deprecated #6346
      */
     readonly existing: boolean;
     readonly options: ILoaderOptions;

@@ -1,3 +1,78 @@
+## 0.46 Breaking changes
+- [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
+- [FrsClient has been renamed to AzureClient and moved out of experimental state](#FrsClient-has-been-renamed-to-AzureClient-and-moved-out-of-experimental-state)
+- [documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext](#documentId-removed-from-IFluidDataStoreRuntime-and-IFluidDataStoreContext)
+- [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
+- [@fluid-experimental/fluid-static package name changed](#fluid-experimentalfluid-static-package-name-changed)
+
+### `@fluid-experimental/fluid-framework` package name changed
+The `@fluid-experimental/fluid-framework` package has been renamed to now be `fluid-framework`. The scope has been removed.
+
+### FrsClient has been renamed to AzureClient and moved out of experimental state
+The `@fluid-experimental/frs-client` package for connecting with the Azure Fluid Relay service has been renamed to now be `@fluidframework/azure-client`. This also comes with the following name changes for the exported classes and interfaces from the package:
+- `FrsClient` -> `AzureClient`
+- `FrsAudience` -> `AzureAudience`
+- `IFrsAudience` -> `IAzureAudience`
+- `FrsMember` -> `AzureMember`
+- `FrsConnectionConfig` -> `AzureConnectionConfig`
+- `FrsContainerConfig` -> `AzureContainerConfig`
+- `FrsResources` -> `AzureResources`
+- `FrsAzFunctionTokenProvider` -> `AzureFunctionTokenProvider`
+- `FrsUrlResolver` -> `AzureUrlResolver`
+
+### documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext
+- `documentId` property is removed from IFluidDataStoreRuntime and IFluidDataStoreContext. It is a document level concept and is no longer exposed from data store level.
+
+### `@fluid-experimental/tinylicious-client` package name changed
+The `@fluid-experimental/tinylicious-client` package has been renamed to now be `@fluidframework/tinylicious-client`.
+
+### `@fluid-experimental/fluid-static` package name changed
+The `@fluid-experimental/fluid-static` package has been renamed to now be `@fluidframework/fluid-static`.
+
+## 0.45 Breaking changes
+- [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)
+- [Property removed from IFluidDataStoreRuntime](#Property-removed-from-IFluidDataStoreRuntime)
+- [Changes to client-api Document](#changes-to-client-api-Document)
+- [Changes to PureDataObject](#changes-to-PureDataObject)
+- [Changes to DataObject](#changes-to-DataObject)
+- [Changes to PureDataObjectFactory](#changes-to-PureDataObjectFactory)
+- [webpack-fluid-loader package name changed](#webpack-fluid-loader-package-name-changed)
+- [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
+- [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
+- [getHashedDocumentId is now async](#gethasheddocumentid-is-now-async)
+
+### Changes to local testing in insecure environments and associated bundle size increase
+Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.
+
+### Property removed from IFluidDataStoreRuntime
+- the `existing` property from `IFluidDataStoreRuntime` (and `FluidDataStoreRuntime`) has been removed. There is no need for this property in the class, as the flag can be supplied as a parameter to `FluidDataStoreRuntime.load` or to the constructor of `FluidDataStoreRuntime`. The `IFluidDataStoreFactory.instantiateDataStore` function has an `existing` parameter which can be supplied to the `FluidDataStoreRuntime` when the latter is created.
+
+### Changes to client-api Document
+- The `existing` property from the `Document` class in `@fluid-internal/client-api` has been removed. It can be assumed that the property would have always been `true`.
+
+### Changes to PureDataObject
+- The `initializeInternal` and the `finishInitialization` functions have a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to DataObject
+- The `initializeInternal` function has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### Changes to PureDataObjectFactory
+- The `createDataObject` in `PureDataObjectFactory` has a mandatory `existing` parameter to differentiate creating vs loading.
+
+### `webpack-fluid-loader` package name changed
+The `webpack-fluid-loader` utility was previously available from a package named `@fluidframework/webpack-fluid-loader`.  However, since it is a tool and should not be used in production, it is now available under the tools scope `@fluid-tools/webpack-fluid-loader`.
+
+### Loggers without tag support now deprecated in ContainerContext
+The `logger` property of `ContainerContext` has been marked deprecated. Loggers passed to ContainerContext will need to support tagged events.
+
+### Creating new containers with Container.load is no longer supported
+- See [Creating new containers with Container.load has been deprecated](#Creating-new-containers-with-Containerload-has-been-deprecated)
+- The `createOnLoad` flag to inside `IContainerLoadOptions` has been removed.
+- `LegacyCreateOnLoadEnvironmentKey` from `@fluidframework/container-loader` has been removed.
+
+### getHashedDocumentId is now async
+`@fluidframework/odsp-driver`'s `getHashedDocumentId` function is now async to take advantage of shared hashing functionality.  It drops its dependency on the `sha.js` package as a result, which contributed ~37KB to the parsed size of the `odsp-driver` bundle.
+
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
 - [attach() should only be called once](#attach-should-only-be-called-once)

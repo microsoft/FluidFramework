@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestEngine1, TestEngine2, TestLumberjack } from "./lumberjackCommonTestUtils";
+import { TestEngine1, TestEngine2, TestLumberjack } from "../lumberjackCommonTestUtils";
 import { LumberEventName } from "../lumberEventNames";
 import assert from "assert";
 

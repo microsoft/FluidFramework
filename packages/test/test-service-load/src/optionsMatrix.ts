@@ -44,11 +44,13 @@ export function generateRuntimeOptions(seed: number) {
         summaryConfigOverrides: [undefined],
         maxOpsSinceLastSummary: numberCases,
         summarizerClientElection: booleanCases,
+        summarizerOptions: [undefined],
     };
 
     const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
         gcOptions: [undefined, ...generatePairwiseOptions(gcOptionsMatrix, seed)],
         summaryOptions: [undefined, ...generatePairwiseOptions(summaryOptionsMatrix, seed)],
+        loadSequenceNumberVerification: [undefined],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(runtimeOptionsMatrix, seed);

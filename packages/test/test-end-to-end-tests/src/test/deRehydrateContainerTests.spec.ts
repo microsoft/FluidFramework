@@ -142,12 +142,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     const getSnapshotTreeFromSerializedSnapshot = (
         container: Container,
     ) => {
-        const { snapshotTree, blobs } =
-            getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
-        return {
-            snapshotTree,
-            blobs,
-        };
+        return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
     };
 
     beforeEach(async () => {
@@ -165,7 +160,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const { snapshotTree, blobs } = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
@@ -180,7 +175,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check blobs contents for protocolAttributes
             const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
-            assert(blobs.get(protocolAttributesBlobId) !== undefined, "Blobs should contain attributes blob");
+            assert(snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !== undefined,
+                "Blobs should contain attributes blob");
             // Check for default dataStore
             const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
             const datastoreAttributes = assertBlobContents<{ pkg: string }>(defaultDatastore, ".component");
@@ -190,14 +186,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Dehydrated container snapshot 2 times with changes in between", async () => {
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
-            const res1 = getSnapshotTreeFromSerializedSnapshot(container);
-            const snapshotTree1 = res1.snapshotTree;
+            const snapshotTree1 = getSnapshotTreeFromSerializedSnapshot(container);
             // Create a channel
             const channel = defaultDataStore.runtime.createChannel("test1",
                 "https://graph.microsoft.com/types/map") as SharedMap;
             channel.bindToContext();
-            const res2 = getSnapshotTreeFromSerializedSnapshot(container);
-            const snapshotTree2: ISnapshotTree = res2.snapshotTree;
+            const snapshotTree2 = getSnapshotTreeFromSerializedSnapshot(container);
 
             assert.strictEqual(JSON.stringify(Object.keys(snapshotTree1.trees)),
                 JSON.stringify(Object.keys(snapshotTree2.trees)),
@@ -230,7 +224,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const rootOfDataStore1 = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
             rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");
@@ -347,8 +341,19 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const sharedStringBefore = await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
             const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
             sharedStringBefore.insertText(0, "Hello");
-            intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
-            intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+            let interval0 = intervalsBefore.add(0, 0, IntervalType.SlideOnRemove);
+            let interval1 = intervalsBefore.add(0, 1, IntervalType.SlideOnRemove);
+            let id0;
+            let id1;
+
+            if (typeof(intervalsBefore.change) === "function") {
+                id0 = interval0.getIntervalId();
+                id1 = interval1.getIntervalId();
+                assert.strictEqual(typeof(id0), "string");
+                assert.strictEqual(typeof(id1), "string");
+                intervalsBefore.change(id0, 2, 3);
+                intervalsBefore.change(id1, 0, 3);
+            }
 
             const snapshotTree = container.serialize();
 
@@ -362,14 +367,29 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
                 JSON.stringify(sharedStringAfter.summarize()),
                 JSON.stringify(sharedStringBefore.summarize()),
                 "Summaries of shared string should match and contents should be same!!");
+            if (typeof(intervalsBefore.change) === "function" &&
+                typeof(intervalsAfter.change) === "function") {
+                interval0 = intervalsAfter.getIntervalById(id0);
+                assert.notStrictEqual(interval0, undefined);
+                assert.strictEqual(interval0.start.getOffset(), 2);
+                assert.strictEqual(interval0.end.getOffset(), 3);
+
+                interval1 = intervalsAfter.getIntervalById(id1);
+                assert.notStrictEqual(interval1, undefined);
+                assert.strictEqual(interval1.start.getOffset(), 0);
+                assert.strictEqual(interval1.end.getOffset(), 3);
+            }
             for (const interval of intervalsBefore) {
                 if (typeof(interval.getIntervalId) === "function") {
                     const id = interval.getIntervalId();
-                    assert.notStrictEqual(id ?? intervalsAfter.getIntervalById(id as unknown as string), undefined,
-                                        "Interval not present after rehydration");
-                    intervalsAfter.removeIntervalById(id as unknown as string);
-                    assert.strictEqual(intervalsAfter.getIntervalById(id as unknown as string), undefined,
-                                        "Interval not deleted");
+                    assert.strictEqual(typeof(id), "string");
+                    if (id) {
+                        assert.notStrictEqual(intervalsAfter.getIntervalById(id), undefined,
+                            "Interval not present after rehydration");
+                        intervalsAfter.removeIntervalById(id);
+                        assert.strictEqual(intervalsAfter.getIntervalById(id), undefined,
+                            "Interval not deleted");
+                    }
                 }
                 else {
                     intervalsAfter.delete(interval.start.getOffset(), interval.end.getOffset());
@@ -622,7 +642,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Create another not bounded dataStore
             await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-            const { snapshotTree } = getSnapshotTreeFromSerializedSnapshot(container);
+            const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
             assertDatastoreTree(snapshotTree, "default");

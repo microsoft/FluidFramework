@@ -14,28 +14,31 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFileEntry, IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import {
+    IFileEntry,
+    InstrumentedStorageTokenFetcher,
+    IOdspResolvedUrl,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     IOdspSummaryTree,
     OdspSummaryTreeValue,
     OdspSummaryTreeEntry,
     ICreateFileResponse,
     IOdspSummaryPayload,
-    IOdspSnapshot,
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
-    ISnapshotCacheValue,
     getOrigin,
+    ISnapshotContents,
 } from "./odspUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToIOdspSnapshot } from "./createNewUtils";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -47,7 +50,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree | undefined,
@@ -79,23 +82,18 @@ export async function createNewFluidFile(
     fileEntry.resolvedUrl = odspResolvedUrl;
 
     if (createNewSummary !== undefined && createNewCaching) {
-        assert(summaryHandle !== undefined, "Summary handle is undefined");
+        assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
         // converting summary and getting sequence number
-        const snapshot: IOdspSnapshot = convertCreateNewSummaryTreeToIOdspSnapshot(createNewSummary, summaryHandle);
-        const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-        const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
-        const sequenceNumber = documentAttributes.sequenceNumber;
-
+        const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
         // caching the converted summary
-        const value: ISnapshotCacheValue = { snapshot, sequenceNumber };
-        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), value);
+        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
 
     return odspResolvedUrl;
 }
 
 export async function createNewEmptyFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     epochTracker: EpochTracker,
@@ -141,7 +139,7 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function createNewFluidFileFromSummary(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,

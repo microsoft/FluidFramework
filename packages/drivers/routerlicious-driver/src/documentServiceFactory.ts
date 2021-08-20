@@ -23,11 +23,14 @@ import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
     maxConcurrentStorageRequests: 100,
     maxConcurrentOrdererRequests: 100,
+    aggregateBlobsSmallerThanBytes: undefined,
+    enableWholeSummaryUpload: false,
 };
 
 /**
@@ -54,7 +57,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(resolvedUrl);
-        assert(!!createNewSummary, "create empty file not supported");
+        assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
         const parsedUrl = parse(resolvedUrl.url);
         if (!parsedUrl.pathname) {
@@ -79,17 +82,24 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             rateLimiter,
             resolvedUrl.endpoints.ordererUrl,
         );
-        await ordererRestWrapper.post(
+        const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
                 id,
-                summary: appSummary,
+                summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             },
         );
+        parsedUrl.pathname = parsedUrl.pathname.split("/").slice(0, -1).concat([documentId]).join("/");
 
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(
+            {
+                ...resolvedUrl,
+                url: parsedUrl.href,
+                id: documentId,
+            },
+            logger);
     }
 
     /**
@@ -114,7 +124,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         }
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        const [, tenantId, documentId] = parsedUrl.pathname!.split("/");
+        const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
             throw new Error(
                 `Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`);

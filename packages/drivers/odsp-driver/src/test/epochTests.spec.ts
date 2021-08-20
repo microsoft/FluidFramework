@@ -25,8 +25,13 @@ describe("Tests for Epoch Tracker", () => {
     const itemId = "itemId";
     let epochTracker: EpochTracker;
     let localCache: LocalPersistentCache;
-    const hashedDocumentId = getHashedDocumentId(driveId, itemId);
+    let hashedDocumentId: string;
     const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+
+    before(async () => {
+        hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+    });
+
     beforeEach(() => {
         localCache = createUtLocalCache();
         // use null logger here as we expect errors

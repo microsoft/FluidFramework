@@ -8,7 +8,7 @@ import Sinon from "sinon";
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
 import { LumberType } from "../resources";
-import { TestEngine1, TestSchemaValidator } from "./lumberjackCommonTestUtils"
+import { TestEngine1, TestSchemaValidator } from "../lumberjackCommonTestUtils"
 
 
 describe("Lumber", () => {

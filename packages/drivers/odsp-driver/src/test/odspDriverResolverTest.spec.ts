@@ -205,7 +205,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -231,7 +231,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -257,7 +257,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
 
@@ -295,7 +295,7 @@ describe("Odsp Driver Resolver", () => {
         assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
         assert.strictEqual(resolvedUrl.itemId, itemId, "Item id should be equal");
-        assert.strictEqual(resolvedUrl.hashedDocumentId, getHashedDocumentId(driveId, itemId),
+        assert.strictEqual(resolvedUrl.hashedDocumentId, await getHashedDocumentId(driveId, itemId),
             "Doc id should be present");
         assert.notStrictEqual(resolvedUrl.endpoints.snapshotStorageUrl, "", "Snapshot url should be present");
         assert.strictEqual(resolvedUrl.fileVersion, fileVersion, "FileVersion should be equal");

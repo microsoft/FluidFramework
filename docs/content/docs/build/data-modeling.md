@@ -30,11 +30,11 @@ const schema = {
     }
 }
 
-const { container, containerServices } = await client.createContainer(/*service config*/, schema);
+const { fluidContainer, containerServices } = await client.createContainer(/*service config*/, schema);
 
-const initialObjects = container.initialObjects;
-const map = container.initialObjects.customMap;
-const cell = container.initialObjects["custom-cell"];
+const initialObjects = fluidContainer.initialObjects;
+const map = fluidContainer.initialObjects.customMap;
+const cell = fluidContainer.initialObjects["custom-cell"];
 ```
 
 ## Dynamic objects
@@ -53,10 +53,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell, SharedMap ],
 }
 
-const { container, containerServices } = await client.getContainer(/*service config*/, schema);
+const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
 
-const newCell = await container.create(SharedCell); // Create a new SharedCell
-const newMap = await container.create(SharedMap); // Create a new SharedMap
+const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
+const newMap = await fluidContainer.create(SharedMap); // Create a new SharedMap
 ```
 
 ### Using handles to store and retrieve Fluid objects
@@ -78,10 +78,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell ],
 }
 
-const { container, containerServices } = await client.getContainer(/*service config*/, schema);
-const map = container.initialObjects.map;
+const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const map = fluidContainer.initialObjects.map;
 
-const newCell = await container.create(SharedCell); // Create a new SharedCell
+const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
 map.set("cell-id", newCell.handle); // Attach the new SharedCell
 
 // ...
@@ -110,3 +110,43 @@ map.on("valueChanged", (changed) => {
 Dynamic objects are more difficult to work with than `initialObjects`, but are especially important for large data sets where portions of the data are virtualized. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded. Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
 An example where this is useful is building a collaborative storyboarding application. In this scenario you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board you can load them on demand as the user accesses them, instead of having to load them all in memory at once.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers-runtime.md" >}}
+
+<!-- Packages -->
+
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+
+<!-- Sequence methods -->
+
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

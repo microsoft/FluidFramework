@@ -1,4 +1,6 @@
 distributed-data-structures:
+# - "@fluid-experimental/property-dds"
+- "@fluid-experimental/task-manager"
 - "@fluidframework/cell"
 - "@fluidframework/counter"
 - "@fluidframework/ink"
@@ -13,7 +15,7 @@ distributed-data-structures:
     url: "/docs/apis/sequence/sharedstring/"
 - "@fluid-experimental/task-manager"
 libraries:
-- "@fluid-experimental/fluid-framework"
+- "fluid-framework"
 - "@fluidframework/aqueduct"
 definitions:
 - "@fluidframework/common-definitions"
