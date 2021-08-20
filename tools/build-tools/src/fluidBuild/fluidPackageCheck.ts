@@ -261,7 +261,12 @@ export class FluidPackageCheck {
             let concurrentBuildCompile = true;
 
             const buildPrefix = pkg.getScript("build:genver") ? "npm run build:genver && " : "";
-            const buildSuffix = (pkg.getScript("build:docs") && pkg.name.startsWith("@fluidframework")) ? " && npm run build:docs" : "";
+
+            // if build:docs script exist, we require it in to be called in the build script for @fluidframework packages
+            // otherwise, it is optional
+            const buildSuffix = (pkg.getScript("build:docs")
+                && (pkg.name.startsWith("@fluidframework") || pkg.getScript("build")?.endsWith(" && npm run build:docs"))) ?
+                " && npm run build:docs" : "";
             // tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
             if (pkg.getScript("tsc")) {
                 if (pkg.getScript("build:commonjs")) {
@@ -540,7 +545,7 @@ export class FluidPackageCheck {
                 }
 
                 const types: string[] | undefined = configJson.compilerOptions.types;
-                if (types && types.includes("mocha")) {
+                if (types && types.includes("mocha") && !pkg.name.startsWith("@fluid-tools/")) {
                     this.logWarn(pkg, "tsc config for main src shouldn't depend on mocha", fix);
                     if (fix) {
                         const newTypes = types.filter((v) => v !== "mocha");

@@ -11,7 +11,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "echo \"Skipping @fluidframework/merge-tree; see https://github.com/microsoft/FluidFramework/issues/2543\"",

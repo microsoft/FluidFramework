@@ -11,7 +11,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
