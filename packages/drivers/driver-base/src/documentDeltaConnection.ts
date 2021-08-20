@@ -441,8 +441,10 @@ export class DocumentDeltaConnection
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
-        assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event), 0x247 /* "Use addTrackedListener instead" */);
-        assert(!DocumentDeltaConnection.eventsToForward.includes(event), 0x248 /* "should not subscribe to forwarded events" */);
+        assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event),
+            0x247 /* "Use addTrackedListener instead" */);
+        assert(!DocumentDeltaConnection.eventsToForward.includes(event),
+            0x248 /* "should not subscribe to forwarded events" */);
         this.socket.on(event, listener);
         assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
         this.connectionListeners.set(event, listener);
