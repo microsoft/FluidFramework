@@ -151,14 +151,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<O, S, E>, O, S, E
      *
      * @param context - data store context used to load a data store runtime
      */
-    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const { runtime } = await createDataObject(
             this.ctor,
             context,
             this.sharedObjectRegistry,
             this.optionalProviders,
             this.runtimeClass,
-            isContextExisting(context, existing));
+            existing);
 
         return runtime;
     }

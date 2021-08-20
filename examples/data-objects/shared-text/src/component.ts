@@ -35,7 +35,6 @@ import {
     SharedString,
 } from "@fluidframework/sequence";
 import {
-    isContextExisting,
     RequestParser,
     create404Response,
 } from "@fluidframework/runtime-utils";
@@ -277,14 +276,13 @@ class TaskScheduler {
     }
 }
 
-export function instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+export function instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
     const runtimeClass = mixinRequestHandler(
         async (request: IRequest) => {
             const router = await routerP;
             return router.request(request);
         });
 
-    const backCompatExisting = isContextExisting(context, existing);
     const runtime = new runtimeClass(
         context,
         new Map([
@@ -294,9 +292,9 @@ export function instantiateDataStore(context: IFluidDataStoreContext, existing?:
             SharedObjectSequence.getFactory(),
             SharedNumberSequence.getFactory(),
         ].map((factory) => [factory.type, factory])),
-        backCompatExisting,
+        existing,
     );
-    const routerP = SharedTextRunner.load(runtime, context, backCompatExisting);
+    const routerP = SharedTextRunner.load(runtime, context, existing);
 
     return runtime;
 }
