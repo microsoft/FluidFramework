@@ -375,6 +375,20 @@ export class DeltaManager
         return this.clientSequenceNumberObserved < (this.clientSequenceNumber - this.trailingNoopCount);
     }
 
+    public connectionProps(): ITelemetryProperties {
+        if (this.connection !== undefined) {
+            return {
+                sequenceNumber: this.lastSequenceNumber,
+                connectionMode: this.connectionMode,
+            };
+        } else {
+            return {
+                // Report how many ops this client sent in just disconnected session
+                sentOps: this.clientSequenceNumber,
+            };
+        }
+    }
+
     /**
      * Enables or disables automatic reconnecting.
      * Will throw an error if reconnectMode set to Never.
