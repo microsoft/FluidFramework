@@ -91,7 +91,7 @@ export class BlobManager {
 
     public async getBlob(blobId: string): Promise<IFluidHandle<ArrayBufferLike>> {
         const storageId = this.redirectTable?.get(blobId) ?? blobId;
-        assert(this.hasBlob(blobId), 0x11f /* "requesting unknown blobs" */);
+        assert(this.hasBlob(storageId), 0x11f /* "requesting unknown blobs" */);
 
         return new BlobHandle(
             `${BlobManager.basePath}/${storageId}`,
@@ -176,7 +176,7 @@ export class BlobManager {
      * of the tree since the both the r11s and SPO drivers replace the
      * attachment types returned in snapshot() with blobs.
      */
-    public load(snapshot: IBlobManagerLoadInfo): void {
+    private load(snapshot: IBlobManagerLoadInfo): void {
         if (snapshot.ids) {
             const detached = this.runtime.attachState === AttachState.Detached;
             snapshot.ids.map((entry) => detached ? this.detachedBlobIds.add(entry) : this.blobIds.add(entry));
@@ -197,11 +197,11 @@ export class BlobManager {
         const attachingOrAttached = !!this.redirectTable || this.runtime.attachState !== AttachState.Detached;
         const blobIds = attachingOrAttached ? this.blobIds : this.detachedBlobIds;
         const entries: ITreeEntry[] = [...blobIds].map((id) => new AttachmentTreeEntry(id, id));
-        if (this.redirectTable) {
-            const tableEntry = new BlobTreeEntry(
+        if (this.redirectTable && this.redirectTable.size > 0) {
+            entries.push(new BlobTreeEntry(
                 BlobManager.redirectTableBlobName,
-                JSON.stringify(Array.from(this.redirectTable.entries())));
-            entries.push(tableEntry);
+                JSON.stringify(Array.from(this.redirectTable.entries()))),
+            );
         }
         return { entries };
     }

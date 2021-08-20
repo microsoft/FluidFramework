@@ -1597,6 +1597,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.setAttachState(attachState);
     }
 
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
     public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
         if (blobRedirectTable) {
             this.blobManager.setRedirectTable(blobRedirectTable);

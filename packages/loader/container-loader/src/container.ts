@@ -34,6 +34,7 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
+    DataProcessingError,
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
@@ -51,6 +52,7 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     runWithRetry,
+    canRetryOnError,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -922,8 +924,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
         } catch(error) {
-            this.close(error);
-            throw error;
+            // we should retry upon any retriable errors, so we shouldn't see them here
+            assert(!canRetryOnError(error), "retriable error thrown from attach()");
+
+            // add resolved URL on error object so that host has the ability to find this document and delete it
+            const newError = DataProcessingError.wrapIfUnrecognized(
+                error, "errorWhileUploadingBlobsWhileAttaching", undefined);
+            const resolvedUrl = this.resolvedUrl;
+            if (resolvedUrl) {
+                ensureFluidResolvedUrl(resolvedUrl);
+                newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
+            }
+            this.close(newError);
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw newError;
         }
     }
 
