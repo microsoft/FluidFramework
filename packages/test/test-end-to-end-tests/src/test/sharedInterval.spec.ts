@@ -27,7 +27,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 const assertIntervalsHelper = (
     sharedString: SharedString,
-    intervalView,
+    intervalView: IntervalCollection<SequenceInterval>,
     expected: readonly { start: number; end: number }[],
 ) => {
     const actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
@@ -53,21 +53,11 @@ const assertIntervalsHelper = (
 };
 
 function testIntervalOperations(intervalCollection: IntervalCollection<SequenceInterval>) {
-    if (!intervalCollection[Symbol.iterator] || typeof(intervalCollection.removeIntervalById) !== "function") {
-        // Check for prior version that doesn't support iteration
-        return;
-    }
-
     const intervalArray: SequenceInterval[] = [];
     let interval: SequenceInterval;
     let id;
 
     intervalArray[0] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
-    if (typeof(intervalArray[0]?.getIntervalId) !== "function") {
-        intervalCollection.delete(0, 0);
-        return;
-    }
-
     intervalArray[1] = intervalCollection.add(0, 0, IntervalType.SlideOnRemove);
     assert.notStrictEqual(intervalArray[0], intervalArray[1], "Unique intervals not added");
 
@@ -181,42 +171,29 @@ function testIntervalOperations(intervalCollection: IntervalCollection<SequenceI
     }
     assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
 
-    if (typeof(intervalArray[0]?.getIntervalId) === "function") {
-        id = intervalArray[0].getIntervalId();
-        assert.notStrictEqual(id, undefined, "Unique Id should have been assigned");
-        if (id !== undefined) {
-            interval = intervalCollection.getIntervalById(id);
-            assert.strictEqual(interval, intervalArray[0]);
-            interval = intervalCollection.removeIntervalById(id);
-            assert.strictEqual(interval, intervalArray[0]);
-            interval = intervalCollection.getIntervalById(id);
-            assert.strictEqual(interval, undefined);
-            interval = intervalCollection.removeIntervalById(id);
-            assert.strictEqual(interval, undefined);
-        }
+    id = intervalArray[0].getIntervalId();
+    interval = intervalCollection.getIntervalById(id);
+    assert.strictEqual(interval, intervalArray[0]);
+    interval = intervalCollection.removeIntervalById(id);
+    assert.strictEqual(interval, intervalArray[0]);
+    interval = intervalCollection.getIntervalById(id);
+    assert.strictEqual(interval, undefined);
+    interval = intervalCollection.removeIntervalById(id);
+    assert.strictEqual(interval, undefined);
 
-        id = intervalArray[intervalArray.length - 1].getIntervalId();
-        assert.notStrictEqual(id, undefined, "Unique Id should have been assigned");
-        if (id !== undefined) {
-            interval = intervalCollection.getIntervalById(id);
-            assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
-            interval = intervalCollection.removeIntervalById(id);
-            assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
-            interval = intervalCollection.getIntervalById(id);
-            assert.strictEqual(interval, undefined);
-            interval = intervalCollection.removeIntervalById(id);
-            assert.strictEqual(interval, undefined);
-        }
-    }
+    id = intervalArray[intervalArray.length - 1].getIntervalId();
+    interval = intervalCollection.getIntervalById(id);
+    assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
+    interval = intervalCollection.removeIntervalById(id);
+    assert.strictEqual(interval, intervalArray[intervalArray.length - 1]);
+    interval = intervalCollection.getIntervalById(id);
+    assert.strictEqual(interval, undefined);
+    interval = intervalCollection.removeIntervalById(id);
+    assert.strictEqual(interval, undefined);
 
     for (interval of intervalArray) {
-        id = typeof(interval.getIntervalId) === "function" ? interval.getIntervalId() : undefined;
-        if (id !== undefined) {
-            intervalCollection.removeIntervalById(id);
-        }
-        else {
-            intervalCollection.delete(interval.start.getOffset(), interval.end.getOffset());
-        }
+        id = interval.getIntervalId();
+        intervalCollection.removeIntervalById(id);
     }
 }
 describeFullCompat("SharedInterval", (getTestObjectProvider) => {
@@ -229,10 +206,9 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
         let sharedString: SharedString;
         let intervals: IntervalCollection<SequenceInterval>;
-        let intervalView;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
-            assertIntervalsHelper(sharedString, intervalView, expected);
+            assertIntervalsHelper(sharedString, intervals, expected);
         };
 
         beforeEach(async () => {
@@ -247,7 +223,6 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             sharedString.insertText(0, "012");
 
             intervals = sharedString.getIntervalCollection("intervals");
-            intervalView = await intervals.getView();
             testIntervalOperations(intervals);
         });
 
@@ -365,9 +340,8 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
             sharedString1.insertText(0, "0123456789");
             const intervals1 = sharedString1.getIntervalCollection("intervals");
-            const intervalView1 = await intervals1.getView();
             intervals1.add(1, 7, IntervalType.SlideOnRemove);
-            assertIntervalsHelper(sharedString1, intervalView1, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
 
             // Load the Container that was created by the first client.
             const container2 = await provider.loadTestContainer(testContainerConfig);
@@ -377,17 +351,16 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = sharedString2.getIntervalCollection("intervals");
-            const intervalView2 = await intervals2.getView();
-            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
             sharedString2.removeRange(4, 5);
-            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 6 }]);
+            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 6 }]);
 
             sharedString2.insertText(4, "x");
-            assertIntervalsHelper(sharedString2, intervalView2, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString2, intervals2, [{ start: 1, end: 7 }]);
 
             await provider.ensureSynchronized();
-            assertIntervalsHelper(sharedString1, intervalView1, [{ start: 1, end: 7 }]);
+            assertIntervalsHelper(sharedString1, intervals1, [{ start: 1, end: 7 }]);
         });
 
         it("multi-client interval ops", async () => {
@@ -427,71 +400,51 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-            if (typeof(intervals2.removeIntervalById) === "function") {
-                const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
-                    if (typeof(a.getIntervalId) === "function") {
-                         assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
-                    }
-                };
-                let i: number;
-                let result;
-                let tempArray: SequenceInterval[] = [];
-                let iterator = intervals2.CreateForwardIteratorWithStartPosition(1);
-                tempArray[0] = intervalArray[3];
-                tempArray[1] = intervalArray[4];
-                tempArray[2] = intervalArray[5];
-                for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-                    checkIdEquals(result.value, tempArray[i], "Mismatch in forward iteration with start position");
-                }
-                assert.strictEqual(i, tempArray.length, "Interval omitted from forward iteration with start position");
-
-                iterator = intervals2.CreateBackwardIteratorWithStartPosition(0);
-                tempArray = [];
-                tempArray[0] = intervalArray[2];
-                tempArray[1] = intervalArray[1];
-                tempArray[2] = intervalArray[0];
-                for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-                    checkIdEquals(result.value, tempArray[i], "Mismatch in backward iteration with start position");
-                }
-                assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with start position");
-
-                iterator = intervals2.CreateBackwardIteratorWithEndPosition(1);
-                tempArray = [];
-                tempArray[0] = intervalArray[7];
-                tempArray[1] = intervalArray[4];
-                tempArray[2] = intervalArray[1];
-                for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
-                    checkIdEquals(result.value, tempArray[i], "Mismatch in backward iteration with end position");
-                }
-                assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
-
-                i = 0;
-                for (interval of intervals2) {
-                    checkIdEquals(interval, intervalArray[i], "Mismatch in for...of iteration of collection");
-                    i++;
-                }
-                assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
+            const checkIdEquals = (a: SequenceInterval, b: SequenceInterval, s: string) => {
+                assert.strictEqual(a.getIntervalId(), b.getIntervalId(), s);
+            };
+            let i: number;
+            let result;
+            let tempArray: SequenceInterval[] = [];
+            let iterator = intervals2.CreateForwardIteratorWithStartPosition(1);
+            tempArray[0] = intervalArray[3];
+            tempArray[1] = intervalArray[4];
+            tempArray[2] = intervalArray[5];
+            for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+                checkIdEquals(result.value, tempArray[i], "Mismatch in forward iteration with start position");
             }
+            assert.strictEqual(i, tempArray.length, "Interval omitted from forward iteration with start position");
 
-            if (typeof(intervalArray[0]?.getIntervalId) === "function" &&
-                typeof(intervals2.removeIntervalById) === "function") {
-                for (interval of intervalArray) {
-                    const id = interval.getIntervalId();
-                    if (id !== undefined) {
-                        intervals2.removeIntervalById(id);
-                    }
-                }
+            iterator = intervals2.CreateBackwardIteratorWithStartPosition(0);
+            tempArray = [];
+            tempArray[0] = intervalArray[2];
+            tempArray[1] = intervalArray[1];
+            tempArray[2] = intervalArray[0];
+            for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+                checkIdEquals(result.value, tempArray[i], "Mismatch in backward iteration with start position");
             }
-            else {
-                intervals2.delete(0,0);
-                intervals2.delete(0,1);
-                intervals2.delete(0,2);
-                intervals2.delete(1,0);
-                intervals2.delete(1,1);
-                intervals2.delete(1,2);
-                intervals2.delete(2,0);
-                intervals2.delete(2,1);
-                intervals2.delete(2,2);
+            assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with start position");
+
+            iterator = intervals2.CreateBackwardIteratorWithEndPosition(1);
+            tempArray = [];
+            tempArray[0] = intervalArray[7];
+            tempArray[1] = intervalArray[4];
+            tempArray[2] = intervalArray[1];
+            for (i = 0, result = iterator.next(); !result.done; i++, result = iterator.next()) {
+                checkIdEquals(result.value, tempArray[i], "Mismatch in backward iteration with end position");
+            }
+            assert.strictEqual(i, tempArray.length, "Interval omitted from backward iteration with end position");
+
+            i = 0;
+            for (interval of intervals2) {
+                checkIdEquals(interval, intervalArray[i], "Mismatch in for...of iteration of collection");
+                i++;
+            }
+            assert.strictEqual(i, intervalArray.length, "Interval omitted from for...of iteration");
+
+            for (interval of intervalArray) {
+                const id = interval.getIntervalId();
+                intervals2.removeIntervalById(id as string);
             }
 
             await provider.ensureSynchronized();
@@ -531,219 +484,203 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
             const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
             const intervals2 = sharedString2.getIntervalCollection("intervals");
 
-            if (typeof(intervals1.getIntervalById) !== "function") {
-                return;
-            }
-
             // Conflicting adds
             interval1 = intervals1.add(0, 0, IntervalType.SlideOnRemove);
-            if (typeof(interval1?.getIntervalId) !== "function") {
-                intervals1.delete(0, 0);
+            id1 = interval1.getIntervalId();
+            interval2 = intervals2.add(0, 0, IntervalType.SlideOnRemove);
+            id2 = interval2.getIntervalId();
+
+            await provider.ensureSynchronized();
+
+            assert.notStrictEqual(intervals1.getIntervalById(id2), undefined, "Interval not added to collection 1");
+            assert.notStrictEqual(intervals1.getIntervalById(id2), interval1, "Unique interval not added");
+            assert.notStrictEqual(intervals2.getIntervalById(id1), undefined, "Interval not added to collection 2");
+            assert.notStrictEqual(intervals2.getIntervalById(id1), interval2, "Unique interval not added");
+
+            // Conflicting removes
+            interval1 = intervals1.removeIntervalById(id2);
+            assert.notStrictEqual(interval1, undefined, "Interval not removed by id");
+            interval2 = intervals2.removeIntervalById(id1);
+            assert.notStrictEqual(interval2, undefined, "Interval not removed by id");
+
+            await provider.ensureSynchronized();
+
+            assert.strictEqual(
+                intervals1.getIntervalById(id1), undefined, "Interval not removed from other client");
+            assert.strictEqual(
+                intervals2.getIntervalById(id2), undefined, "Interval not removed from other client");
+
+            // Conflicting removes + add
+            interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+            id1 = interval1.getIntervalId();
+            interval2 = intervals2.add(1, 1, IntervalType.SlideOnRemove);
+            id2 = interval2.getIntervalId();
+
+            await provider.ensureSynchronized();
+
+            intervals2.removeIntervalById(id1);
+            intervals1.removeIntervalById(id2);
+            interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
+            id1 = interval1.getIntervalId();
+
+            await provider.ensureSynchronized();
+
+            assert.strictEqual(interval1, intervals1.getIntervalById(id1), "Interval missing from collection 1");
+            for (const interval of intervals1) {
+                assert.strictEqual(interval, interval1, "Oddball interval found in client 1");
             }
-            else {
-                id1 = interval1.getIntervalId();
-                interval2 = intervals2.add(0, 0, IntervalType.SlideOnRemove);
-                id2 = interval2.getIntervalId();
+
+            interval2 = intervals2.getIntervalById(id1);
+            assert.notStrictEqual(interval2, undefined, "Interval missing from collection 2");
+            for (const interval of intervals2) {
+                assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
+            }
+
+            if (typeof(intervals1.change) === "function" &&
+                typeof(intervals2.change) === "function") {
+                // Conflicting changes
+                intervals1.change(id1, 1, 2);
+                intervals2.change(id1, 2, 1);
 
                 await provider.ensureSynchronized();
 
-                assert.notStrictEqual(intervals1.getIntervalById(id2), undefined, "Interval not added to collection 1");
-                assert.notStrictEqual(intervals1.getIntervalById(id2), interval1, "Unique interval not added");
-                assert.notStrictEqual(intervals2.getIntervalById(id1), undefined, "Interval not added to collection 2");
-                assert.notStrictEqual(intervals2.getIntervalById(id1), interval2, "Unique interval not added");
-
-                // Conflicting removes
-                interval1 = intervals1.removeIntervalById(id2);
-                assert.notStrictEqual(interval1, undefined, "Interval not removed by id");
-                interval2 = intervals2.removeIntervalById(id1);
-                assert.notStrictEqual(interval2, undefined, "Interval not removed by id");
-
-                await provider.ensureSynchronized();
-
-                assert.strictEqual(
-                    intervals1.getIntervalById(id1), undefined, "Interval not removed from other client");
-                assert.strictEqual(
-                    intervals2.getIntervalById(id2), undefined, "Interval not removed from other client");
-
-                // Conflicting removes + add
-                interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
-                id1 = interval1.getIntervalId();
-                interval2 = intervals2.add(1, 1, IntervalType.SlideOnRemove);
-                id2 = interval2.getIntervalId();
-
-                await provider.ensureSynchronized();
-
-                intervals2.removeIntervalById(id1);
-                intervals1.removeIntervalById(id2);
-                interval1 = intervals1.add(1, 1, IntervalType.SlideOnRemove);
-                id1 = interval1.getIntervalId();
-
-                await provider.ensureSynchronized();
-
-                assert.strictEqual(interval1, intervals1.getIntervalById(id1), "Interval missing from collection 1");
-                for (const interval of intervals1) {
-                    assert.strictEqual(interval, interval1, "Oddball interval found in client 1");
+                assert.strictEqual(interval1?.getIntervalId(), id1);
+                assert.strictEqual(interval2?.getIntervalId(), id1);
+                for (interval1 of intervals1) {
+                    const id: string = interval1.getIntervalId() as string;
+                    assert.strictEqual(interval1.start.getOffset(),
+                                       intervals2.getIntervalById(id)?.start.getOffset(),
+                                       "Conflicting changes");
+                    assert.strictEqual(interval1.end.getOffset(),
+                                       intervals2.getIntervalById(id)?.end.getOffset(),
+                                       "Conflicting changes");
                 }
+                for (interval2 of intervals2) {
+                    const id: string = interval2.getIntervalId() as string;
+                    assert.strictEqual(interval2.start.getOffset(),
+                                       intervals1.getIntervalById(id)?.start.getOffset(),
+                                       "Conflicting changes");
+                    assert.strictEqual(interval2.end.getOffset(),
+                                       intervals1.getIntervalById(id)?.end.getOffset(),
+                                       "Conflicting changes");
+                }
+
+                intervals1.change(id1, 4, 4);
+                await provider.opProcessingController.processOutgoing();
+                intervals2.change(id1, 2, undefined);
+                await provider.ensureSynchronized();
+
+                interval1 = intervals1.getIntervalById(id1);
+                assert.strictEqual(interval1.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval1.end.getOffset(), 4, "Conflicting transparent change");
 
                 interval2 = intervals2.getIntervalById(id1);
-                assert.notStrictEqual(interval2, undefined, "Interval missing from collection 2");
-                for (const interval of intervals2) {
-                    assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
-                }
+                assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval2.end.getOffset(), 4, "Conflicting transparent change");
 
-                if (typeof(intervals1.change) === "function" &&
-                    typeof(intervals2.change) === "function") {
-                    // Conflicting changes
-                    intervals1.change(id1, 1, 2);
-                    intervals2.change(id1, 2, 1);
-
-                    await provider.ensureSynchronized();
-
-                    assert.strictEqual(interval1?.getIntervalId(), id1);
-                    assert.strictEqual(interval2?.getIntervalId(), id1);
-                    for (interval1 of intervals1) {
-                        const id = interval1.getIntervalId();
-                        if (id) {
-                            if (interval1.start.getOffset() !== intervals2.getIntervalById(id)?.start.getOffset()) {
-                                assert.fail();
-                            }
-                            assert.strictEqual(interval1.start.getOffset(),
-                                               intervals2.getIntervalById(id)?.start.getOffset(),
-                                               "Conflicting changes");
-                            assert.strictEqual(interval1.end.getOffset(),
-                                               intervals2.getIntervalById(id)?.end.getOffset(),
-                                               "Conflicting changes");
-                        }
-                    }
-                    for (interval2 of intervals2) {
-                        const id = interval2.getIntervalId();
-                        if (id) {
-                            assert.strictEqual(interval2.start.getOffset(),
-                                               intervals1.getIntervalById(id)?.start.getOffset(),
-                                               "Conflicting changes");
-                            assert.strictEqual(interval2.end.getOffset(),
-                                               intervals1.getIntervalById(id)?.end.getOffset(),
-                                               "Conflicting changes");
-                        }
-                    }
-
-                    intervals1.change(id1, 4, 4);
-                    await provider.opProcessingController.processOutgoing();
-                    intervals2.change(id1, 2, undefined);
-                    await provider.ensureSynchronized();
-
-                    interval1 = intervals1.getIntervalById(id1);
-                    assert.strictEqual(interval1.start.getOffset(), 2, "Conflicting transparent change");
-                    assert.strictEqual(interval1.end.getOffset(), 4, "Conflicting transparent change");
-
-                    interval2 = intervals2.getIntervalById(id1);
-                    assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
-                    assert.strictEqual(interval2.end.getOffset(), 4, "Conflicting transparent change");
-
-                    intervals1.change(id1, undefined, 3);
-                    await provider.opProcessingController.processOutgoing();
-                    intervals2.change(id1, undefined, 2);
-
-                    await provider.ensureSynchronized();
-
-                    interval1 = intervals1.getIntervalById(id1);
-                    assert.strictEqual(interval1.start.getOffset(), 2, "Conflicting transparent change");
-                    assert.strictEqual(interval1.end.getOffset(), 2, "Conflicting transparent change");
-
-                    interval2 = intervals2.getIntervalById(id1);
-                    assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
-                    assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
-                }
-
-                if (typeof(intervals1.changeProperties) === "function" &&
-                    typeof(intervals2.changeProperties) === "function") {
-                    const assertPropertyChangedArg = (p: any, v: any, m: string) => {
-                        // Check expected values of args passed to the propertyChanged event only if IntervalCollection
-                        // is a TypedEventEmitter. (This is not true of earlier versions,
-                        // which will not capture the values.)
-                        if (intervals1 instanceof TypedEventEmitter && intervals2 instanceof TypedEventEmitter) {
-                            assert.strictEqual(p, v, m);
-                        }
-                    };
-                    let deltaArgs1: PropertySet = {};
-                    let deltaArgs2: PropertySet = {};
-                    intervals1.on("propertyChanged", (interval: SequenceInterval, propertyDeltas: PropertySet) => {
-                        deltaArgs1 = propertyDeltas;
-                    });
-                    intervals2.on("propertyChanged", (interval: SequenceInterval, propertyDeltas: PropertySet) => {
-                        deltaArgs2 = propertyDeltas;
-                    });
-                    intervals1.changeProperties(id1, { prop1: "prop1" });
-                    // eslint-disable-next-line no-null/no-null
-                    assertPropertyChangedArg(deltaArgs1.prop1, null, "Mismatch in property-changed event arg 1");
-                    await provider.opProcessingController.processOutgoing();
-                    intervals2.changeProperties(id1, { prop2: "prop2" });
-                    // eslint-disable-next-line no-null/no-null
-                    assertPropertyChangedArg(deltaArgs2.prop2, null, "Mismatch in property-changed event arg 2");
-
-                    await provider.ensureSynchronized();
-                    // eslint-disable-next-line no-null/no-null
-                    assertPropertyChangedArg(deltaArgs1.prop2, null, "Mismatch in property-changed event arg 3");
-                    // eslint-disable-next-line no-null/no-null
-                    assertPropertyChangedArg(deltaArgs2.prop1, null, "Mismatch in property-changed event arg 4");
-
-                    interval1 = intervals1.getIntervalById(id1);
-                    assert.strictEqual(interval1.properties.prop1, "prop1", "Mismatch in changed properties 1");
-                    assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 2");
-                    interval2 = intervals2.getIntervalById(id1);
-                    assert.strictEqual(interval2.properties.prop1, "prop1", "Mismatch in changed properties 3");
-                    assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 4");
-
-                    intervals1.changeProperties(id1, { prop1: "no" });
-                    assertPropertyChangedArg(deltaArgs1.prop1, "prop1", "Mismatch in property-changed event arg 5");
-                    await provider.opProcessingController.processOutgoing();
-                    intervals2.changeProperties(id1, { prop1: "yes" });
-                    assertPropertyChangedArg(deltaArgs2.prop1, "prop1", "Mismatch in property-changed event arg 6");
-
-                    await provider.ensureSynchronized();
-                    assertPropertyChangedArg(deltaArgs1.prop1, "no", "Mismatch in property-changed event arg 7");
-                    assertPropertyChangedArg(Object.hasOwnProperty.call(deltaArgs2, "prop1"), false,
-                        "Mismatch in property-changed event arg 8");
-
-                    assert.strictEqual(interval1.properties.prop1, "yes", "Mismatch in changed properties 5");
-                    assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 6");
-                    assert.strictEqual(interval2.properties.prop1, "yes", "Mismatch in changed properties 7");
-                    assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 8");
-
-                    intervals1.changeProperties(id1, { prop1: "maybe" });
-                    assertPropertyChangedArg(deltaArgs1.prop1, "yes", "Mismatch in property-changed event arg 9");
-                    await provider.opProcessingController.processOutgoing();
-                    // eslint-disable-next-line no-null/no-null
-                    intervals2.changeProperties(id1, { prop1: null });
-                    assertPropertyChangedArg(deltaArgs2.prop1, "yes", "Mismatch in property-changed event arg 10");
-
-                    await provider.ensureSynchronized();
-
-                    assertPropertyChangedArg(deltaArgs1.prop1, "maybe", "Mismatch in property-changed event arg 11");
-                    assertPropertyChangedArg(Object.hasOwnProperty.call(deltaArgs2, "prop1"), false,
-                        "Mismatch in property-changed event arg 12");
-
-                    assert.strictEqual(Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"), false,
-                        "Property not deleted 1");
-                    assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 9");
-                    assert.strictEqual(Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"), false,
-                        "Property not deleted 2");
-                    assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 10");
-                }
-
-                // Conflicting removes
-                intervals1.removeIntervalById(id1);
-                intervals2.removeIntervalById(id1);
+                intervals1.change(id1, undefined, 3);
+                await provider.opProcessingController.processOutgoing();
+                intervals2.change(id1, undefined, 2);
 
                 await provider.ensureSynchronized();
 
-                for (interval1 of intervals1) {
-                    assert.fail("Interval not removed from collection 1");
-                }
+                interval1 = intervals1.getIntervalById(id1);
+                assert.strictEqual(interval1.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval1.end.getOffset(), 2, "Conflicting transparent change");
 
-                for (interval2 of intervals2) {
-                    assert.fail("Interval not removed from collection 2");
-                }
+                interval2 = intervals2.getIntervalById(id1);
+                assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
+                assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
+            }
+
+            if (typeof(intervals1.changeProperties) === "function" &&
+                typeof(intervals2.changeProperties) === "function") {
+                const assertPropertyChangedArg = (p: any, v: any, m: string) => {
+                    // Check expected values of args passed to the propertyChanged event only if IntervalCollection
+                    // is a TypedEventEmitter. (This is not true of earlier versions,
+                    // which will not capture the values.)
+                    if (intervals1 instanceof TypedEventEmitter && intervals2 instanceof TypedEventEmitter) {
+                        assert.strictEqual(p, v, m);
+                    }
+                };
+                let deltaArgs1: PropertySet = {};
+                let deltaArgs2: PropertySet = {};
+                intervals1.on("propertyChanged", (interval: SequenceInterval, propertyDeltas: PropertySet) => {
+                    deltaArgs1 = propertyDeltas;
+                });
+                intervals2.on("propertyChanged", (interval: SequenceInterval, propertyDeltas: PropertySet) => {
+                    deltaArgs2 = propertyDeltas;
+                });
+                intervals1.changeProperties(id1, { prop1: "prop1" });
+                // eslint-disable-next-line no-null/no-null
+                assertPropertyChangedArg(deltaArgs1.prop1, null, "Mismatch in property-changed event arg 1");
+                await provider.opProcessingController.processOutgoing();
+                intervals2.changeProperties(id1, { prop2: "prop2" });
+                // eslint-disable-next-line no-null/no-null
+                assertPropertyChangedArg(deltaArgs2.prop2, null, "Mismatch in property-changed event arg 2");
+
+                await provider.ensureSynchronized();
+                // eslint-disable-next-line no-null/no-null
+                assertPropertyChangedArg(deltaArgs1.prop2, null, "Mismatch in property-changed event arg 3");
+                // eslint-disable-next-line no-null/no-null
+                assertPropertyChangedArg(deltaArgs2.prop1, null, "Mismatch in property-changed event arg 4");
+
+                interval1 = intervals1.getIntervalById(id1);
+                assert.strictEqual(interval1.properties.prop1, "prop1", "Mismatch in changed properties 1");
+                assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 2");
+                interval2 = intervals2.getIntervalById(id1);
+                assert.strictEqual(interval2.properties.prop1, "prop1", "Mismatch in changed properties 3");
+                assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 4");
+
+                intervals1.changeProperties(id1, { prop1: "no" });
+                assertPropertyChangedArg(deltaArgs1.prop1, "prop1", "Mismatch in property-changed event arg 5");
+                await provider.opProcessingController.processOutgoing();
+                intervals2.changeProperties(id1, { prop1: "yes" });
+                assertPropertyChangedArg(deltaArgs2.prop1, "prop1", "Mismatch in property-changed event arg 6");
+
+                await provider.ensureSynchronized();
+                assertPropertyChangedArg(deltaArgs1.prop1, "no", "Mismatch in property-changed event arg 7");
+                assertPropertyChangedArg(Object.hasOwnProperty.call(deltaArgs2, "prop1"), false,
+                    "Mismatch in property-changed event arg 8");
+
+                assert.strictEqual(interval1.properties.prop1, "yes", "Mismatch in changed properties 5");
+                assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 6");
+                assert.strictEqual(interval2.properties.prop1, "yes", "Mismatch in changed properties 7");
+                assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 8");
+
+                intervals1.changeProperties(id1, { prop1: "maybe" });
+                assertPropertyChangedArg(deltaArgs1.prop1, "yes", "Mismatch in property-changed event arg 9");
+                await provider.opProcessingController.processOutgoing();
+                // eslint-disable-next-line no-null/no-null
+                intervals2.changeProperties(id1, { prop1: null });
+                assertPropertyChangedArg(deltaArgs2.prop1, "yes", "Mismatch in property-changed event arg 10");
+
+                await provider.ensureSynchronized();
+
+                assertPropertyChangedArg(deltaArgs1.prop1, "maybe", "Mismatch in property-changed event arg 11");
+                assertPropertyChangedArg(Object.hasOwnProperty.call(deltaArgs2, "prop1"), false,
+                    "Mismatch in property-changed event arg 12");
+
+                assert.strictEqual(Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"), false,
+                    "Property not deleted 1");
+                assert.strictEqual(interval1.properties.prop2, "prop2", "Mismatch in changed properties 9");
+                assert.strictEqual(Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"), false,
+                    "Property not deleted 2");
+                assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 10");
+            }
+
+            // Conflicting removes
+            intervals1.removeIntervalById(id1);
+            intervals2.removeIntervalById(id1);
+
+            await provider.ensureSynchronized();
+
+            for (interval1 of intervals1) {
+                assert.fail("Interval not removed from collection 1");
+            }
+
+            for (interval2 of intervals2) {
+                assert.fail("Interval not removed from collection 2");
             }
         });
     });
