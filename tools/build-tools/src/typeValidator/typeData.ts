@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { Node, Project } from "ts-morph";
 import * as fs from "fs";
 import { getPackageDetails, PackageVersion } from "./packageJson";

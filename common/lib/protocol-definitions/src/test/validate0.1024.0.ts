@@ -1,7 +1,7 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import * as old from "protocol-definitions-0.1024.0";
 import * as current from "../index";

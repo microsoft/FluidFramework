@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { VersionedTypeData } from "./typeData";
 import * as fs from "fs";
 
@@ -9,9 +14,9 @@ export function generateTests(versionedData: VersionedTypeData, packageDir: stri
         if(oldVersion !== versionedData.pkg.noPatchString){
             const testString: string[]=[
 `/*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import * as old from "${versionedData.pkg.name.substr((versionedData.pkg.name.indexOf("/") ?? -1)+1)}-${oldVersion}";
 import * as current from "../index";
