@@ -69,6 +69,21 @@ export class TinyliciousClient {
         return this.getFluidContainerAndServices(id, container);
     }
 
+     /**
+     * Creates a new detached container instance in Tinylicious server.
+     * @param containerSchema - Container schema for the new container.
+     * @returns New detached container instance along with associated services.
+     */
+      public async createDetachedContainer(
+        containerSchema: ContainerSchema,
+    ): Promise<TinyliciousResources> {
+        // temporarily we'll generate the new container ID here
+        // until container ID changes are settled in lower layers.
+        const id = uuid();
+        const container = await this.getContainerCore(id, containerSchema, true, true);
+        return this.getFluidContainerAndServices(id, container);
+    }
+
     /**
      * Acesses the existing container given its unique ID in the tinylicious server.
      * @param id - Unique ID of the container.
@@ -107,6 +122,7 @@ export class TinyliciousClient {
         id: string,
         containerSchema: ContainerSchema,
         createNew?: boolean,
+        detached?: boolean,
     ): Promise<Container> {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
@@ -131,7 +147,9 @@ export class TinyliciousClient {
                 package: "no-dynamic-package",
                 config: {},
             });
-            await container.attach({ url: id });
+            if (detached !== true) {
+                await container.attach({ url: id });
+            }
         } else {
             // Request must be appropriate and parseable by resolver.
             container = await loader.resolve({ url: id });
