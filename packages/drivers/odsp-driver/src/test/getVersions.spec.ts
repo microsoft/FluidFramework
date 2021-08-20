@@ -10,13 +10,14 @@ import {
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
-import { IVersionedValueWithEpoch,
-    persistedCacheValueVersion,
+import {
     IOdspSnapshot,
     HostStoragePolicyInternal,
+    IVersionedValueWithEpoch,
+    persistedCacheValueVersion,
 } from "../contracts";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo } from "../odspUtils";
+import { INewFileInfo, ISnapshotContents } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -65,8 +66,22 @@ describe("Tests for snapshot fetch", () => {
         }],
     };
 
+    const content: ISnapshotContents = {
+        snapshotTree: {
+            id: "id",
+            blobs: {},
+            commits: {},
+            trees: {},
+        },
+        blobs: new Map(),
+        ops: [],
+        sequenceNumber: 0,
+    };
+
     const value: IVersionedValueWithEpoch =
-        {value: "val", fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+    {value: content, fluidEpoch: "epoch1", version: persistedCacheValueVersion };
+
+    const expectedVersion = [{ id: "id", treeId: undefined!}];
 
     before(async () => {
         hashedDocumentId = await getHashedDocumentId(driveId, itemId);
@@ -108,7 +123,7 @@ describe("Tests for snapshot fetch", () => {
             async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
         );
 
-        assert.deepStrictEqual(version, [{ id: "id", treeId: undefined!}], "incorrect version");
+        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
     });
 
     it("cache fetch succeeds and network fetch succeeds", async () => {
@@ -122,7 +137,7 @@ describe("Tests for snapshot fetch", () => {
             async () => service.getVersions(null,1),
             async () => createResponse({ "x-fluid-epoch": "epoch1" }, odspSnapshot, 200),
         );
-        assert.deepStrictEqual(version, [], "incorrect version");
+        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
     });
 
     it("cache fetch throws and network fetch throws", async () => {
@@ -157,7 +172,7 @@ describe("Tests for snapshot fetch", () => {
             // 404 response expected so network fetch throws
             notFound,
         );
-        assert.deepStrictEqual(version, [], "incorrect version");
+        assert.deepStrictEqual(version, expectedVersion, "incorrect version");
     });
 
     it("empty cache and network fetch throws", async () => {
