@@ -16,11 +16,13 @@ export interface IGarbageCollectionData {
 }
 
 /**
- * Represents the format of the GC details that is stored in the summary for each node.
+ * Represents the format of the GC details that is stored in the summary for each data store node.
  */
 export interface IGarbageCollectionSummaryDetails {
     /** A list of routes to Fluid objects that are used in this node. */
     usedRoutes?: string[];
     /** The GC data of this node. */
     gcData?: IGarbageCollectionData;
+    /** If this node is unreferenced, the time when it was marked as such. */
+    unrefTimestamp?: number;
 }

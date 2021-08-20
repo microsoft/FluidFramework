@@ -77,6 +77,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return this._usedRoutes;
     }
 
+    // If this node is marked as unreferenced, the time when it marked as such.
+    private _unreferencedTimestamp: number | undefined;
+    public get unreferencedTimestamp(): number | undefined {
+        return this._unreferencedTimestamp;
+    }
+
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
 
@@ -141,6 +147,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (gcDetailsInInitialSummary.gcData !== undefined) {
             this._gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
+        this._unreferencedTimestamp = gcDetailsInInitialSummary.unrefTimestamp;
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
@@ -357,10 +364,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
     }
 
-    public updateUsedRoutes(usedRoutes: string[]) {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
         // are in the same order.
         this._usedRoutes = usedRoutes.sort();
+
+        // If this node is referenced, clear unreferencedTimestamp, if any.
+        // If this node is not referenced and unreferencedTimestamp is undefined, it just became unreferenced. Update
+        // unreferencedTimestamp to the gcTimestamp.
+        if (this.isReferenced()) {
+            this._unreferencedTimestamp = undefined;
+        } else if (this._unreferencedTimestamp === undefined) {
+            this._unreferencedTimestamp = gcTimestamp;
+        }
 
         // If GC is not disabled and we are tracking a summary, update the work-in-progress used routes so that it can
         // be tracked for this summary.
