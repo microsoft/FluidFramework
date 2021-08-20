@@ -55,7 +55,8 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     public async insertMany(values: T[], ordered: boolean): Promise<void> {
-        await this.collection.insertMany(values, { ordered: false });
+        throw new Error(`Error inserting many`);
+        // await this.collection.insertMany(values, { ordered: false });
     }
 
     public async createIndex(index: any, unique: boolean): Promise<void> {
