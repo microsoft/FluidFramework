@@ -23,127 +23,43 @@ stages:
   dependsOn: build
   displayName: Publish Internal Test Packages
   condition: and(succeeded(), eq(variables['testBuild'], true))
-  variables:
-  - name: environment
-    value: test-package-build-feed
   jobs:
-  - deployment: publish_${{ replace(variables.environment, '-', '_') }}
-    displayName: Publish ${{ variables.environment }}
-    pool: ${{ parameters.pool }}
-    environment: ${{ variables.environment }}
-    workspace:
-      clean: all
-    variables:
-      version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
-      isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
-    strategy:
-      runOnce:
-          deploy:
-            steps:
-            - download: current
-              artifact: pack
-            - task: UseNode@1
-              displayName: Use Node 12.x
-              inputs:
-                version: 12.x
-            - template: include-publish-npm-package-steps.yml
-              parameters:
-                namespace: ${{ parameters.namespace }}
-                feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-                official: false
-                artifactPath: scoped
-            - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
-              - template: include-publish-npm-package-steps.yml
-                parameters:
-                  namespace: false
-                  feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-                  official: false
-                  artifactPath: non-scoped
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+      official: false
+      environment: test-package-build-feed
+      pool: ${{ parameters.pool }}
+      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 - stage: publish_npm_internal
   dependsOn: build
   displayName: Publish Internal Packages
   condition: and(succeeded(), eq(variables['testBuild'], false))
-  variables:
-    - name: environment
-      value: package-build-feed
   jobs:
-  - deployment: publish_${{ replace(variables.environment, '-', '_') }}
-    displayName: Publish ${{ variables.environment }}
-    pool: ${{ parameters.pool }}
-    environment: ${{ variables.environment }}
-    workspace:
-      clean: all
-    variables:
-      version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
-      isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
-    strategy:
-      runOnce:
-          deploy:
-            steps:
-            - download: current
-              artifact: pack
-            - task: UseNode@1
-              displayName: Use Node 12.x
-              inputs:
-                version: 12.x
-            - template: include-publish-npm-package-steps.yml
-              parameters:
-                namespace: ${{ parameters.namespace }}
-                feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-                official: false
-                artifactPath: scoped
-            - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
-              - template: include-publish-npm-package-steps.yml
-                parameters:
-                  namespace: false
-                  feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-                  official: false
-                  artifactPath: non-scoped
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      official: false
+      environment: package-build-feed
+      pool: ${{ parameters.pool }}
+      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 - stage: publish_npm_official
   dependsOn: build
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
-  variables:
-  - name: environment
-    value: package-npmjs-feed
   jobs:
-  - deployment: publish_${{ replace(variables.environment, '-', '_') }}
-    displayName: Publish ${{ variables.environment }}
-    pool: ${{ parameters.pool }}
-    environment: ${{ variables.environment }}
-    workspace:
-      clean: all
-    variables:
-      version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
-      isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
-    strategy:
-      runOnce:
-          deploy:
-            steps:
-            - download: current
-              artifact: pack
-            - task: UseNode@1
-              displayName: Use Node 12.x
-              inputs:
-                version: 12.x
-            - template: include-publish-npm-package-steps.yml
-              parameters:
-                namespace: ${{ parameters.namespace }}
-                feedName: https://registry.npmjs.org
-                customEndPoint: npmjs
-                official: true
-                publishFlags: --access public
-                tagName: ${{ parameters.tagName }}
-                artifactPath: scoped
-            - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
-              - template: include-publish-npm-package-steps.yml
-                parameters:
-                  namespace: false
-                  feedName: https://registry.npmjs.org
-                  customEndPoint: npmjs
-                  official: true
-                  publishFlags: --access public
-                  tagName: ${{ parameters.tagName }}
-                  artifactPath: non-scoped
+  - template: include-publish-npm-package-deployment.yml
+    parameters:
+      namespace: ${{ parameters.namespace }}
+      feedName: https://registry.npmjs.org
+      official: true
+      environment: package-npmjs-feed
+      pool: ${{ parameters.pool }}
+      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
+      customEndPoint: npmjs
+      publishFlags: --access public
+      tagName: ${{ parameters.tagName }}

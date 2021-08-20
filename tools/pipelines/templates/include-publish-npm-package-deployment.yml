@@ -1,0 +1,77 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package-deployment
+
+parameters:
+- name: namespace
+  type: boolean
+
+- name: official
+  type: boolean
+
+- name: feedName
+  type: string
+
+- name: environment
+  type: string
+
+- name: publishNonScopedPackages
+  type: boolean
+  default: false
+
+- name: pool
+  type: object
+  default: Lite
+
+- name: publishFlags
+  type: string
+  default:
+
+- name: customEndPoint
+  type: string
+  default:
+
+- name: tagName
+  type: string
+  default:
+
+jobs:
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }}
+  pool: ${{ parameters.pool }}
+  environment: ${{ parameters.environment }}
+  workspace:
+    clean: all
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
+  strategy:
+    runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: pack
+          - task: UseNode@1
+            displayName: Use Node 12.x
+            inputs:
+              version: 12.x
+          - template: include-publish-npm-package-steps.yml
+            parameters:
+              namespace: ${{ parameters.namespace }}
+              artifactPath: scoped
+              feedName: ${{ parameters.feedName }}
+              customEndPoint: ${{ parameters.customEndPoint }}
+              official: ${{ parameters.official }}
+              publishFlags: ${{ parameters.publishFlags }}
+              tagName: ${{ parameters.tagName }}
+          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
+            - template: include-publish-npm-package-steps.yml
+              parameters:
+                namespace: false
+                artifactPath: non-scoped
+                feedName: ${{ parameters.feedName }}
+                official: ${{ parameters.official }}
+                customEndPoint: ${{ parameters.customEndPoint }}
+                publishFlags: ${{ parameters.publishFlags }}
+                tagName: ${{ parameters.tagName }}
