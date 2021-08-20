@@ -16,13 +16,12 @@ export class AzureUrlResolver implements IUrlResolver {
         private readonly tenantId: string,
         private readonly orderer: string,
         private readonly storage: string,
-        private readonly documentId: string,
         private readonly tokenProvider: ITokenProvider,
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const containerId = request.url.split("/")[0];
-        const token = (await this.tokenProvider.fetchOrdererToken(this.tenantId, this.documentId)).jwt;
+        const token = (await this.tokenProvider.fetchOrdererToken(this.tenantId, containerId)).jwt;
         const documentUrl = `${this.orderer}/${this.tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
