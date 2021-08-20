@@ -4,9 +4,10 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
+import { assert, Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils";
 import {
     IAckNackSummaryResult,
     ISummarizeOptions,
@@ -97,14 +98,17 @@ const summarizeErrors = {
      * summarize attempt.
      */
     summaryNack: "Server rejected summary via summaryNack op",
+
+    disconnect: "Summary cancelled due to summarizer or main client disconnect",
 } as const;
 
 export class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
     public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
-    public fail(message: string, error: any) {
-        const result = { success: false, message, data: undefined, error } as const;
+
+    public fail(message: string, error: any, retryAfterSeconds?: number) {
+        const result = { success: false, message, data: undefined, error, retryAfterSeconds } as const;
         this.summarySubmitted.resolve(result);
         this.summaryOpBroadcasted.resolve(result);
         this.receivedSummaryAckOrNack.resolve(result);
@@ -196,13 +200,29 @@ export class SummaryGenerator {
         // Helper functions to report failures and return.
         const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
         const fail = (
-            message: keyof typeof summarizeErrors,
+            errorReason: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
+            nackRetryAfterSeconds?: number,
         ) => {
-            this.raiseSummarizingError(summarizeErrors[message]);
-            summarizeEvent.cancel({ ...properties, message }, error);
-            resultsBuilder.fail(getFailMessage(message), error);
+            this.raiseSummarizingError(summarizeErrors[errorReason]);
+            // UploadSummary may fail with 429 and retryAfter - respsect that
+            // Summary Nack also can have retryAfter, it's parsed below and comes as a property.
+            let retryAfter = getRetryDelayFromError(error);
+            if (retryAfter !== undefined) {
+                assert(nackRetryAfterSeconds === undefined,
+                    "can't get both nack and summary upload failure - one of them needs to succeed");
+                retryAfter /= 1000; // use seconds
+            }
+
+            // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
+            summarizeEvent.cancel({
+                 ...properties,
+                 reason: errorReason,
+                 // TODO: this will change in future iterations to more solid check
+                 category: error === "disconnect" ? "generic" : "error",
+            }, error);
+            resultsBuilder.fail(getFailMessage(errorReason), error, retryAfter ?? nackRetryAfterSeconds /* seconds */);
         };
 
         // Wait to generate and send summary
@@ -315,10 +335,18 @@ export class SummaryGenerator {
                     message: getFailMessage("summaryNack"),
                     error: undefined,
                 });
+                // Check for retryDelay in summaryNack response.
+                // back-compat: cast needed until dep on protocol-definitions version bump
+                const summaryNack = ackNackOp.type === MessageType.SummaryNack
+                    ? ackNackOp.contents as { message?: string; retryAfter?: number; }
+                    : undefined;
+                const message = (ackNackOp.contents as { message?: string }).message ?? ackNackOp.contents.errorMessage;
+                const retryAfterSeconds = summaryNack?.retryAfter;
                 return fail(
                     "summaryNack",
-                    (ackNackOp.contents as { message?: string }).message ?? ackNackOp.contents.errorMessage,
-                    telemetryProps,
+                    `summaryNack: ${message}`, // error
+                    { ...telemetryProps, nackRetryAfter: retryAfterSeconds },
+                    retryAfterSeconds,
                 );
             }
         } finally {

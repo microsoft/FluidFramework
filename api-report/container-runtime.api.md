@@ -253,6 +253,8 @@ export interface IAckNackSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
+    readonly retryAfterSeconds?: number;
+    // (undocumented)
     readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
 }
 
@@ -260,6 +262,8 @@ export interface IAckNackSummaryResult {
 export interface IBaseSummarizeResult {
     readonly error: any;
     readonly referenceSequenceNumber: number;
+    // (undocumented)
+    readonly retryAfterSeconds?: number;
     // (undocumented)
     readonly stage: "base";
 }

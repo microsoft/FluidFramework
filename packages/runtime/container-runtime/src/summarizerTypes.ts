@@ -119,6 +119,7 @@ export interface IBaseSummarizeResult {
     readonly error: any;
     /** Reference sequence number as of the generate summary attempt. */
     readonly referenceSequenceNumber: number;
+    readonly retryAfterSeconds?: number;
 }
 
 /** Results of submitSummary after generating the summary tree. */
@@ -175,6 +176,7 @@ export interface IBroadcastSummaryResult {
 export interface IAckNackSummaryResult {
     readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
     readonly ackNackDuration: number;
+    readonly retryAfterSeconds?: number;
 }
 
 export type SummarizeResultPart<T> = {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { GenericError } from "@fluidframework/container-utils";
+import { assert, delay, performance } from "@fluidframework/common-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
@@ -19,14 +19,13 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { runWithRetry } from "@fluidframework/driver-utils";
-import { DeltaManager } from "./deltaManager";
+import { canRetryOnError } from "@fluidframework/driver-utils";
+import { Odsp409Error } from "./epochTracker";
 
-export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
+export class RetryCoherencyErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
     private _disposed = false;
     constructor(
         private readonly internalStorageService: IDocumentStorageService,
-        private readonly deltaManager: Pick<DeltaManager, "emitDelayInfo" | "refreshDelayInfo">,
         private readonly logger: ITelemetryLogger,
     ) {
     }
@@ -72,19 +71,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
-        // Not using retry loop here. Couple reasons:
-        // 1. If client lost connectivity, then retry loop will result in uploading stale summary
-        //    by stale summarizer after connectivity comes back. It will cause failures for this client and for
-        //    real (new) summarizer. This problem in particular should be solved in future by supplying abort handle
-        //    on all APIs and caller (ContainerRuntime.submitSummary) aborting call on loss of connectivity
-        // 2. Similar, if we get 429 with retryAfter = 10 minutes, it's likely not the right call to retry summary
-        //    upload in 10 minutes - it's better to keep processing ops and retry later. Though caller needs to take
-        //    retryAfter into account!
-        assert((context.referenceSequenceNumber === 0) === (context.ackHandle === undefined), "");
-        if (context.referenceSequenceNumber !== 0) {
-            return this.internalStorageService.uploadSummaryWithContext(summary, context);
-        }
-
         // Creation flow with attachment blobs - need to do retries!
         return this.runWithRetry(
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
@@ -106,22 +92,42 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    private checkStorageDisposed() {
-        if (this._disposed) {
-            throw new GenericError("storageServiceDisposedCannotRetry", { canRetry: false });
-        }
-        return undefined;
-    }
-
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-        return runWithRetry(
-            api,
-            callName,
-            (id: string) => this.deltaManager.refreshDelayInfo(id),
-            (id: string, delayMs: number, error: any) =>
-                this.deltaManager.emitDelayInfo(id, delayMs, error),
-            this.logger,
-            () => this.checkStorageDisposed(),
-        );
+        let retryAfter = 1000;
+        const start = performance.now();
+        for (let retry = 1; ; retry++) {
+            if (this._disposed) {
+                throw new LoggingError("storageServiceDisposedCannotRetry", { canRetry: false });
+            }
+            try
+            {
+                return await api();
+            } catch (error) {
+                const canRetry = canRetryOnError(error);
+
+                if (error?.[Odsp409Error] !== true) {
+                    throw error;
+                }
+
+                // SPO itself does number of retries internally before returning 409 to client.
+                // That multiplied to 5 suggests need to reconsider current design, as client spends
+                // too much time / bandwidth doing the same thing without any progress.
+                if (retry === 5) {
+                    this.logger.sendErrorEvent({
+                        eventName: "CoherencyErrorTooManyRetries",
+                        callName,
+                        retry,
+                        duration: performance.now() - start, // record total wait time.
+                    });
+                    // Fail hard.
+                    error.canRetry = false;
+                    throw error;
+                }
+
+                assert(canRetry, "can retry");
+                await delay(Math.floor(retryAfter));
+                retryAfter += retryAfter / 4  * (1 + Math.random());
+            }
+        }
     }
 }
