@@ -29,6 +29,7 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 export class AzureClient {
     constructor(connectionConfig: AzureConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
     createContainer(containerSchema: ContainerSchema): Promise<AzureResources>;
+    createDetachedContainer(containerSchema: ContainerSchema): Promise<AzureResources>;
     getContainer(id: string, containerSchema: ContainerSchema): Promise<AzureResources>;
     }
 

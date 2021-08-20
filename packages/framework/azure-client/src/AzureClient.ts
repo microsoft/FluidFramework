@@ -54,17 +54,19 @@ export class AzureClient {
     public async createContainer(
         containerSchema: ContainerSchema,
     ): Promise<AzureResources> {
-        const loader = this.createLoader(containerSchema);
-        const container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
-        // temporarily we'll generate the new container ID here
-        // until container ID changes are settled in lower layers.
-        const id = uuid();
-        await container.attach({ url: id });
-        return this.getFluidContainerAndServices(id, container);
+        return this.createContainerBase(containerSchema, false);
     }
+
+    /**
+     * Creates a new detached container instance in the Azure Relay Service.
+     * @param containerSchema - Container schema for the new container.
+     * @returns New detached container instance along with associated services.
+     */
+        public async createDetachedContainer(
+            containerSchema: ContainerSchema,
+        ): Promise<AzureResources> {
+            return this.createContainerBase(containerSchema, true);
+        }
 
     /**
      * Acesses the existing container given its unique ID in the Azure Fluid Relay service.
@@ -78,6 +80,24 @@ export class AzureClient {
     ): Promise<AzureResources> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
+        return this.getFluidContainerAndServices(id, container);
+    }
+
+    private async createContainerBase(
+        containerSchema: ContainerSchema,
+        detached: boolean,
+    ): Promise<AzureResources> {
+        const loader = this.createLoader(containerSchema);
+        const container = await loader.createDetachedContainer({
+            package: "no-dynamic-package",
+            config: {},
+        });
+        // temporarily we'll generate the new container ID here
+        // until container ID changes are settled in lower layers.
+        const id = uuid();
+        if (!detached) {
+            await container.attach({ url: id });
+        }
         return this.getFluidContainerAndServices(id, container);
     }
 

@@ -6,7 +6,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
+import { IAudience, AttachState } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -39,6 +39,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("disconnected", this.disconnectedHandler);
     }
 
+    public get attachState(): AttachState {
+        return this.container.attachState;
+    }
+
     public get disposed() {
         return this.container.closed;
     }
@@ -63,6 +67,10 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     */
     public get clientId() {
         return this.container.clientId;
+    }
+
+    public async attach() {
+        await this.container.attach({url: this.id});
     }
 
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {

@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { Container } from '@fluidframework/container-loader';
 import { DataObject } from '@fluidframework/aqueduct';
@@ -44,6 +45,10 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 // @public (undocumented)
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     constructor(id: string, container: Container, rootDataObject: RootDataObject);
+    // (undocumented)
+    attach(): Promise<void>;
+    // (undocumented)
+    get attachState(): AttachState;
     // @deprecated (undocumented)
     get audience(): IAudience;
     // @deprecated (undocumented)
