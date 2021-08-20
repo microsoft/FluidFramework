@@ -9,7 +9,6 @@ import {
     IOdspResolvedUrl,
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { IVersion } from "@fluidframework/protocol-definitions";
 import { EpochTracker } from "../epochTracker";
 import { IVersionedValueWithEpoch,
     persistedCacheValueVersion,
@@ -48,6 +47,7 @@ describe("Tests for snapshot fetch", () => {
     const hostPolicy: HostStoragePolicyInternal = {
         summarizerClient: false,
         fetchBinarySnapshotFormat: false,
+        // for testing both network and cache fetch
         concurrentSnapshotFetch: true,
     };
 
@@ -98,6 +98,7 @@ describe("Tests for snapshot fetch", () => {
     });
 
     it("cache fetch throws and network fetch succeeds", async () => {
+        // overwriting get() to make cache fetch throw
         localCache.get = async () => {
             throw new Error("testing");
         };
@@ -125,17 +126,23 @@ describe("Tests for snapshot fetch", () => {
     });
 
     it("cache fetch throws and network fetch throws", async () => {
+        // overwriting get() to make cache fetch throw
         localCache.get = async () => {
             throw new Error("testing");
         };
 
+        let isCaught = false;
         try { await mockFetchSingle(
             async () => service.getVersions(null,1),
+            // 404 response expected so network fetch throws
             notFound,
         );
         } catch (error) {
+            isCaught = true;
             assert.strictEqual(error.message, "Error 404 (undefined)", "incorrect error message");
         }
+        // making sure network fetch did throw and catch block was executed
+        assert(isCaught, "catch block was not executed");
     });
 
     it("cache fetch succeeds and network fetch throws", async () => {
@@ -147,19 +154,25 @@ describe("Tests for snapshot fetch", () => {
 
         const version = await mockFetchSingle(
             async () => service.getVersions(null,1),
+            // 404 response expected so network fetch throws
             notFound,
         );
         assert.deepStrictEqual(version, [], "incorrect version");
     });
 
     it("empty cache and network fetch throws", async () => {
+        let isCaught = false;
         try {
             await mockFetchSingle(
             async () => service.getVersions(null,1),
+            // 404 response expected so network fetch throws
             notFound,
             );
         } catch (error) {
+            isCaught = true;
             assert.strictEqual(error.message, "Error 404 (undefined)", "incorrect error message");
         }
+        // making sure network fetch did throw and catch block was executed
+        assert(isCaught, "catch block was not executed");
     });
 });
