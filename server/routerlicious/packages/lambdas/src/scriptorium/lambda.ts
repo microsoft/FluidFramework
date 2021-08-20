@@ -11,8 +11,9 @@ import {
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
+    runWithRetry,
 } from "@fluidframework/server-services-core";
-import { runWithRetry } from "@fluidframework/server-services-utils";
+import * as winston from "winston";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -100,10 +101,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
             ...message,
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
-        await runWithRetry(
-            async () => {return this.opCollection.insertMany(dbOps, false);},
+        return runWithRetry(
+            async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3,
-            (error) => {return error.code !== 11000;});
+            winston,
+            (error) => error.code !== 11000);
     }
 }

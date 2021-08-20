@@ -10,8 +10,9 @@ import {
     IDocument,
     IScribe,
     ISequencedOperationMessage,
+    runWithRetry,
 } from "@fluidframework/server-services-core";
-import { runWithRetry } from "@fluidframework/server-services-utils";
+import * as winston from "winston";
 import { ICheckpointManager } from "./interfaces";
 
 /**
@@ -48,10 +49,11 @@ export class CheckpointManager implements ICheckpointManager {
             mongoTimestamp: new Date(message.operation.timestamp) }));
         if (dbOps.length > 0) {
             await runWithRetry(
-                async () => {return this.opCollection.insertMany(dbOps, false);},
+                async () => this.opCollection.insertMany(dbOps, false),
                 "writeCheckpointScribe",
                 3,
-                (error) => {return error.code !== 11000;});
+                winston,
+                (error) => error.code !== 11000);
         }
 
         // Write out the full state first that we require
