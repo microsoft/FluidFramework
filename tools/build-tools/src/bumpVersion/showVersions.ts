@@ -37,5 +37,5 @@ export async function showVersions(context: Context, name: string, publishedVers
         versions = depVersions;
     }
 
-    versions.printPublished(name);
+    versions.printPublished(name, context.repo);
 }

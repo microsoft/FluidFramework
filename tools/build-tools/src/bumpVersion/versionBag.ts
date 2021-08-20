@@ -7,6 +7,8 @@ import { Package } from "../common/npmPackage";
 import { fatal, exec, execNoError } from "./utils";
 import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import * as semver from "semver";
+import { FluidRepo } from "../common/fluidRepo";
+import { ToolsPackageGroup } from "./context";
 
 export class VersionBag {
     private versionData: { [key: string]: string } = {};
@@ -204,21 +206,68 @@ export class ReferenceVersionBag extends VersionBag {
         await Promise.all(pending);
     }
 
-    public printRelease() {
-        console.log("Release Versions:");
+    /**
+     * Returns a full list of packages and their reference versions.
+     * Expands client and server mono repo packages. Ignores tools packages as those are not released.
+     */
+    private getFullVersions(repo: FluidRepo): { [key: string]: string } {
+        const pkgVersions: { [key: string]: string } = {};
+        const savePkg = (pkgName: string, pkgVersion: string, pkgGroup: string) => {
+            // Ignore tools packages are those are not released.
+            if (pkgGroup === ToolsPackageGroup) {
+                return;
+            }
+            // Ignore fluid-example and fluid-internal packages as those are not released.
+            if (pkgName.startsWith("@fluid-example") || pkgName.startsWith("@fluid-internal")) {
+                return;
+            }
+            pkgVersions[pkgName] = pkgVersion;
+        };
         for (const [name] of this.repoVersions) {
-            const depVersion = this.get(name) ?? "undefined";
-            const state = this.needRelease(name) ? "(new)" : this.needBump(name) ? "(current)" : "(old)";
-            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${state}`);
+            const pkgVersion = this.get(name) ?? "undefined";
+            if (name === MonoRepoKind[MonoRepoKind.Client]) {
+                const packages = repo.clientMonoRepo.packages;
+                for (const pkg of packages) {
+                    savePkg(pkg.name, pkgVersion, pkg.group);
+                }
+                continue;
+            }
+            
+            if (name === MonoRepoKind[MonoRepoKind.Server]) {
+                const packages = repo.serverMonoRepo?.packages;
+                if (packages !== undefined) {
+                    for (const pkg of packages) {
+                        savePkg(pkg.name, pkgVersion, pkg.group);
+                    }
+                }
+                continue;
+            }
+
+            const pkg = this.fullPackageMap.get(name);
+            if (pkg === undefined) {
+                continue;
+            }
+            savePkg(name, pkgVersion, pkg.group);
         }
-        console.log();
+        return pkgVersions;
     }
 
-    public printPublished(name: string) {
+    public printAndGetRelease(repo: FluidRepo) {
+        const pkgVersions = this.getFullVersions(repo);
+        console.log("Release Versions:");
+        for (const [name, version] of Object.entries(pkgVersions)) {
+            const state = this.needRelease(name) ? "(new)" : this.needBump(name) ? "(current)" : "(old)";
+            console.log(`${name.padStart(50)}: ${version.padStart(10)} ${state}`);
+        }
+        console.log();
+        return pkgVersions;
+    }
+
+    public printPublished(name: string, repo: FluidRepo) {
         console.log(`Current Versions from ${name}:`);
-        for (const [name] of this.repoVersions) {
-            const depVersion = this.get(name) ?? "undefined";
-            console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${depVersion === "undefined" ? "" : this.needRelease(name) ? "(local)" : "(published)"}`);
+        const pkgVersions = this.getFullVersions(repo);
+        for (const [name, version] of Object.entries(pkgVersions)) {
+            console.log(`${name.padStart(50)}: ${version.padStart(10)} ${version === "undefined" ? "" : this.needRelease(name) ? "(local)" : "(published)"}`);
         }
         console.log();
     }

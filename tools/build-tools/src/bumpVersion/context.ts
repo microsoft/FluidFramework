@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import fs from "fs";
 import * as path from "path";
+import os from "os";
 import { VersionBag, ReferenceVersionBag } from "./versionBag";
 import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
@@ -19,6 +21,7 @@ import * as semver from "semver";
 
 export type VersionBumpType = "minor" | "patch";
 export type VersionChangeType = VersionBumpType | semver.SemVer;
+export const ToolsPackageGroup = "tools";
 
 export class Context {
     public readonly repo: FluidRepo;
@@ -50,7 +53,7 @@ export class Context {
         const generatorPackage = this.fullPackageMap.get(this.packageManifest.generatorName);
         if (!generatorPackage) { fatal(`Unable to find ${this.packageManifest.generatorName} package`) };
         this.generatorPackage = generatorPackage;
-        this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"), "tools");
+        this.templatePackage = new Package(path.join(generatorPackage.directory, "app", "templates", "package.json"), ToolsPackageGroup);
     }
 
     private reloadPackageJson() {
@@ -117,7 +120,7 @@ export class Context {
                 // Find the package in the repo
                 const depBuildPackage = this.fullPackageMap.get(dep);
                 // TODO: special casing tools to not be considered for release
-                if (depBuildPackage && depBuildPackage.group !== "tools") {
+                if (depBuildPackage && depBuildPackage.group !== ToolsPackageGroup) {
                     if (ReferenceVersionBag.checkPrivate(pkg, depBuildPackage, dev)) {
                         continue;
                     }
@@ -163,7 +166,9 @@ export class Context {
      */
     public async collectBumpInfo(releaseName: string) {
         const depVersions = await this.collectVersionInfo(releaseName);
-        depVersions.printRelease();
+        const releasedVersions = depVersions.printAndGetRelease(this.repo);
+        const versionsFileName = path.join(os.homedir(), ".bumpVersionRelease.json");
+        fs.writeFileSync(versionsFileName, JSON.stringify(releasedVersions, undefined, 2), { encoding: "utf-8" });
         return depVersions;
     }
 
