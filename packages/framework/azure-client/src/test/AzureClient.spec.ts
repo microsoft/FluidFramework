@@ -31,7 +31,7 @@ describe("AzureClient", () => {
 
     it("Create detached container", async () => {
         const {fluidContainer} = await client.createDetachedContainer(schema);
-        assert.strictEqual(fluidContainer.attachState, AttachedState .Detached, "Container should be detached");
+        assert.strictEqual(fluidContainer.attachState, AttachState.Detached, "Container should be detached");
     });
 
     it("Attach detached container", async () => {
