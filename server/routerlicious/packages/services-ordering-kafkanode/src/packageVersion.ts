@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-services-ordering-kafkanode";
-export const pkgVersion = "0.1029.0";
+export const pkgVersion = "0.1029.1";
