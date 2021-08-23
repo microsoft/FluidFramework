@@ -24,6 +24,7 @@ import {
     SummarizerStopReason,
     ISubmitSummaryOptions,
     SubmitSummaryResult,
+    ICancellable,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -32,7 +33,6 @@ import {
     SummarizeResultBuilder,
     SummaryGenerator,
 } from "./summaryGenerator";
-import { ICancellable } from "./runWhileConnectedCoordinator";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 

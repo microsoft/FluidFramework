@@ -281,12 +281,6 @@ export interface ICancellable {
 }
 
 // @public (undocumented)
-export interface ICancellableController extends ICancellable {
-    // (undocumented)
-    stop(reason: SummarizerStopReason): void;
-}
-
-// @public (undocumented)
 export interface IChunkedOp {
     // (undocumented)
     chunkId: number;
@@ -434,7 +428,6 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
-    // (undocumented)
     readonly cancellable: ICancellable;
     readonly summaryLogger: ITelemetryLogger;
 }
@@ -624,20 +617,6 @@ export class PendingStateManager implements IDisposable {
     replayPendingStates(): void;
 }
 
-// @public
-export class RunWhileConnectedCoordinator implements ICancellableController {
-    constructor(runtime: IConnectableRuntime,
-    onBehalfOfClientId: string, logger: ITelemetryLogger);
-    // (undocumented)
-    get cancelled(): boolean;
-    stop(reason: SummarizerStopReason): void;
-    get waitCancelled(): Promise<void>;
-    waitStart(): Promise<{
-        started: boolean;
-        message: string;
-    } | undefined>;
-}
-
 // @public (undocumented)
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
@@ -674,7 +653,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
-    // (undocumented)
     stop(reason: SummarizerStopReason): void;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
@@ -716,7 +694,9 @@ export type SummarizerStopReason =
  */
  | "parentShouldNotSummarize"
 /** Parent client reported that it is disposed. */
- | "disposed" | "summarizeClientDisconnected";
+ | "disposed"
+/** Summarizer client was disconnected */
+ | "summarizeClientDisconnected";
 
 // @public (undocumented)
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning {

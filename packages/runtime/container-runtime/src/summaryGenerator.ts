@@ -17,9 +17,9 @@ import {
     ISubmitSummaryOptions,
     SubmitSummaryResult,
     SummarizeResultPart,
+    ICancellable,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
-import { ICancellable } from "./runWhileConnectedCoordinator";
 
 export type raceTimerResult<T> =
     { result: "done"; value: T } |

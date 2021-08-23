@@ -111,8 +111,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         }
     }
 
-    // We can differentiate between
-    public stop(reason: SummarizerStopReason) {
+    /**
+     * Stops the summarizer from running.  This will complete
+     * the run promise, and also close the container.
+     * @param reason - reason code for stopping
+     */
+     public stop(reason: SummarizerStopReason) {
         this.runCoordinator?.stop(reason);
     }
 

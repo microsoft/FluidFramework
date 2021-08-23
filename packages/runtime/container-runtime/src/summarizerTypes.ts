@@ -13,13 +13,13 @@ import {
     IFluidRunnable,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { ContainerWarning } from "@fluidframework/container-definitions";
+import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
     ISequencedDocumentMessage,
     ISummaryTree,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { IConnectableRuntime, ICancellable } from "./runWhileConnectedCoordinator";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
@@ -31,6 +31,12 @@ export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 
 export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
+}
+
+/* Similar to AbortSignal, but using promise instead of events */
+export interface ICancellable {
+    readonly cancelled: boolean;
+    readonly waitCancelled: Promise<void>;
 }
 
 export interface ISummarizerInternalsProvider {
@@ -61,6 +67,14 @@ export interface ISummarizingWarning extends ContainerWarning {
     readonly logged: boolean;
 }
 
+export interface IConnectableRuntime {
+    readonly disposed: boolean;
+    readonly connected: boolean;
+    readonly clientId: string | undefined;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    once(event: "connected" | "disconnected", listener: () => void): this;
+}
+
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
     /** clientId of parent (non-summarizing) container that owns summarizer container */
@@ -81,6 +95,7 @@ export interface ISummarizeOptions {
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger,
+    /** Tells when summary process should be cancelled */
     readonly cancellable: ICancellable,
 }
 
@@ -250,7 +265,7 @@ export type SummarizerStopReason =
     | "parentShouldNotSummarize"
     /** Parent client reported that it is disposed. */
     | "disposed"
-    // Summarizer client was disconnected
+    /** Summarizer client was disconnected */
     | "summarizeClientDisconnected";
 
 export interface ISummarizerEvents extends IEvent {

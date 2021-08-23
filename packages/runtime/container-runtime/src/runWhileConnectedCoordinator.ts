@@ -5,30 +5,11 @@
 
 import { Deferred, assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import {
-    IDocumentMessage,
-    ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
-import { SummarizerStopReason } from "./summarizerTypes";
-
-/* Similar to AbortSignal, but using promise instead of events */
-export interface ICancellable {
-    readonly cancelled: boolean;
-    readonly waitCancelled: Promise<void>;
-}
+import { SummarizerStopReason, IConnectableRuntime, ICancellable } from "./summarizerTypes";
 
 /* Similar to AbortController, but using promise instead of events */
-export interface ICancellableController extends ICancellable {
+export interface ICancellableSummarizerController extends ICancellable {
     stop(reason: SummarizerStopReason): void;
-}
-
-export interface IConnectableRuntime {
-    readonly disposed: boolean;
-    readonly connected: boolean;
-    readonly clientId: string | undefined;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    once(event: "connected" | "disconnected", listener: () => void): this;
 }
 
 /**
@@ -36,7 +17,7 @@ export interface IConnectableRuntime {
  * This provides promises that resolve as it starts or stops.  Stopping happens
  * when disconnected or if stop() is called.
  */
-export class RunWhileConnectedCoordinator implements ICancellableController {
+export class RunWhileConnectedCoordinator implements ICancellableSummarizerController {
     private everConnected = false;
     private _cancelled = false;
     private readonly stopDeferred = new Deferred<void>();

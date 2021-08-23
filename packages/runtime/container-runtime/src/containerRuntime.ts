@@ -1740,7 +1740,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Helper function to check whether we should still continue between each async step.
             const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
-                // WARNING: Do not check for loss of connectivity directly! Instead leave it up to
+                // Do not check for loss of connectivity directly! Instead leave it up to
                 // RunWhileConnectedCoordinator to control policy in a single place.
                 // This will allow easier change of design if we chose to. For example, we may chose to allow
                 // summarizer to reconnect in the future.
