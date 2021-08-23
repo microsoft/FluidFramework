@@ -13,7 +13,6 @@ import {
     SequencedOperationType,
     runWithRetry,
 } from "@fluidframework/server-services-core";
-import * as winston from "winston";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -105,7 +104,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
             3,
-            winston,
+            this.context.log,
             (error) => error.code !== 11000);
     }
 }
