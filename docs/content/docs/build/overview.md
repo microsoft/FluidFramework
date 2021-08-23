@@ -54,7 +54,5 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 The Tinylicious service is a local Fluid service. This documentation uses `@fluidframework/tinylicious-client` (or simply `client`). For specifics about each service-specific client implementation see their corresponding documentation.
 
-- `@fluid-experimental/tinylicious-client` -- a client dedicated to the [Tinylicious]({{< relref "Tinylicious" >}})
-  service.
-- `@fluid-experimental/frs-client` -- a client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}). This
-  client can also use Tinylicious for local testing.
+- `@fluidframework/tinylicious-client` -- a client dedicated to the [Tinylicious]({{< relref "Tinylicious" >}}) service.
+- `@fluidframework/azure-client` -- a client for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}). This client can also use Tinylicious for local testing.
