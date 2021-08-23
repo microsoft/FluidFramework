@@ -181,7 +181,7 @@ describe("runWithRetry Tests", () => {
                 voidEmitDelayInfo,
                 logger,
                 () => {
-                    return { retry: false, error: "disposed"};
+                    throw new Error("disposed");
                 },
             ));
             assert.fail("Should not succeed");
