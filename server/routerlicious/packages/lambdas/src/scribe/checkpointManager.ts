@@ -55,7 +55,7 @@ export class CheckpointManager implements ICheckpointManager {
                 3 /* maxRetries */,
                 1000 /* retryAfterMs */,
                 this.context.log,
-                (error) => error.code !== 11000);
+                (error) => error.code === 11000 /* shouldIgnoreError */);
         }
 
         // Write out the full state first that we require

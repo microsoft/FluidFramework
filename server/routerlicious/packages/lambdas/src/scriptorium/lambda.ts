@@ -106,6 +106,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
             this.context.log,
-            (error) => error.code !== 11000);
+            (error) => error.code === 11000 /* shouldIgnoreError */);
     }
 }

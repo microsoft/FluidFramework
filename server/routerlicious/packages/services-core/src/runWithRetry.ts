@@ -12,6 +12,7 @@ export async function runWithRetry<T>(
     maxRetries: number,
     retryAfterMs: number,
     logger?: ILogger,
+    shouldIgnoreError?: (error) => boolean,
     shouldRetry?: (error) => boolean,
 ): Promise<T | undefined> {
     let result: T | undefined;
@@ -23,9 +24,13 @@ export async function runWithRetry<T>(
             success = true;
         } catch (error) {
             logger?.info(`Error running ${callName}: retryCount ${retryCount}, error ${error}`);
-            if (shouldRetry !== undefined && shouldRetry(error) === false) {
-                logger?.info(`Should not retry ${callName}`);
+            if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
+                logger?.info(`Should ignore error for ${callName}`);
                 break;
+            } else if (shouldRetry !== undefined && shouldRetry(error) === false)
+            {
+                logger?.info(`Should not retry ${callName}`);
+                return Promise.reject(error);
             }
             if (retryCount >= maxRetries) {
                 logger?.info(`Error after retrying ${retryCount} times, rejecting`);
