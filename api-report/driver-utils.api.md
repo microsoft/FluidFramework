@@ -15,6 +15,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -162,12 +163,14 @@ export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
-export class GenericNetworkError extends LoggingError implements IDriverErrorBase {
-    constructor(errorMessage: string, canRetry: boolean, props?: ITelemetryProperties);
+export class GenericNetworkError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
+    constructor(fluidErrorCode: string, canRetry: boolean, props?: ITelemetryProperties);
     // (undocumented)
     readonly canRetry: boolean;
     // (undocumented)
     readonly errorType = DriverErrorType.genericNetworkError;
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public

@@ -117,14 +117,6 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 // @public
-export interface IWriteableLoggingError {
-    // (undocumented)
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
-    // (undocumented)
-    getTelemetryProperties(): ITelemetryProperties;
-}
-
-// @public
 export class LoggingError extends Error implements ILoggingError, Pick<IFluidErrorBase, "errorInstanceId"> {
     constructor(message: string, props?: ITelemetryProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryProperties): void;
