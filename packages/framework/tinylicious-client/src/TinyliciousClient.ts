@@ -22,6 +22,12 @@ import {
     RootDataObject,
 } from "fluid-framework";
 import {
+    ContainerSchema,
+    DOProviderContainerRuntimeFactory,
+    FluidContainer,
+    RootDataObject,
+} from "fluid-framework";
+import {
     TinyliciousConnectionConfig,
     TinyliciousContainerServices,
     TinyliciousResources,

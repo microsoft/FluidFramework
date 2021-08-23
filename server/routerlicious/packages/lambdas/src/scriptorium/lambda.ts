@@ -13,6 +13,7 @@ import {
     SequencedOperationType,
     runWithRetry,
 } from "@fluidframework/server-services-core";
+import * as winston from "winston";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();

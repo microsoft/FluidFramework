@@ -13,6 +13,7 @@ import {
     ISequencedOperationMessage,
     runWithRetry,
 } from "@fluidframework/server-services-core";
+import * as winston from "winston";
 import { ICheckpointManager } from "./interfaces";
 
 /**

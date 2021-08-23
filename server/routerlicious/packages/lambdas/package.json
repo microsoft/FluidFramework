@@ -63,7 +63,8 @@
     "nconf": "^0.11.0",
     "semver": "^6.3.0",
     "sha.js": "^2.4.11",
-    "uuid": "^8.3.1"
+    "uuid": "^8.3.1",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
