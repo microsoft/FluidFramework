@@ -9,7 +9,6 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionSummaryDetails } from "@fluidframework/runtime-definitions";
 
 export const gcBlobKey = "gc";
 // A list of runtime blob paths whose contents should be normalized.
@@ -81,7 +80,7 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
         // GC blobs may contain "unrefTimestamp" - The time the corresponding object became unreferenced. This is the
         // timestamp of the last op processed and can differ between clients depending on when GC was run. It will be
         // undefined if no ops were processed before running GC. So, remove it for the purposes of comparing snapshots.
-        const gcDetails = JSON.parse(content) as IGarbageCollectionSummaryDetails;
+        const gcDetails = JSON.parse(content);
         delete gcDetails.unrefTimestamp;
         content = JSON.stringify(gcDetails);
     }
