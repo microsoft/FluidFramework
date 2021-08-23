@@ -9,8 +9,8 @@
   "scripts": {
     "build": "npm run webpack && npm run tsc",
     "start": "npm run start:local -- --open",
-    "start:local": "webpack-dev-server --config webpack.config.js --package package.json --env.mode local",
-    "start:tiny": "webpack-dev-server --config webpack.config.js --package package.json --env.mode tinylicious",
+    "start:local": "webpack-dev-server --config webpack.config.js --env.mode local",
+    "start:tiny": "webpack-dev-server --config webpack.config.js --env.mode tinylicious",
     "test": "jest",
     "tsc": "tsc",
     "webpack": "webpack"

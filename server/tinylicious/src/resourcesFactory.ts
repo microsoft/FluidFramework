@@ -11,7 +11,7 @@ import { MongoDatabaseManager, MongoManager, IResourcesFactory } from "@fluidfra
 import * as utils from "@fluidframework/server-services-utils";
 import * as git from "isomorphic-git";
 import { Provider } from "nconf";
-import socketIo from "socket.io";
+import { Server } from "socket.io";
 
 import winston from "winston";
 import { TinyliciousResources } from "./resources";
@@ -42,7 +42,11 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
             collectionNames.deltas,
             collectionNames.scribeDeltas);
         const storage = new DocumentStorage(databaseManager, tenantManager);
-        const io = socketIo();
+        const io = new Server({
+            // enable compatibility with socket.io v2 clients
+            // https://socket.io/docs/v4/client-installation/
+            allowEIO3: true,
+        });
         const pubsub = new PubSubPublisher(io);
         const webServerFactory = new WebServerFactory(io);
 

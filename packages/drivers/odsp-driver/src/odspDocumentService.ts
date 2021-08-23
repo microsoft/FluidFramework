@@ -25,6 +25,7 @@ import {
     TokenFetchOptions,
     IEntry,
     HostStoragePolicy,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -36,6 +37,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
+import { RetryCoherencyErrorsStorageAdapter } from "./retryCoherencyErrorsStorageAdapter";
 
 // Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
 function gatesBinaryFormatSnapshot() {
@@ -72,7 +74,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
-        getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        getStorageToken: InstrumentedStorageTokenFetcher,
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
@@ -122,7 +124,7 @@ export class OdspDocumentService implements IDocumentService {
      */
     private constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
@@ -184,7 +186,7 @@ export class OdspDocumentService implements IDocumentService {
             );
         }
 
-        return this.storageManager;
+        return new RetryCoherencyErrorsStorageAdapter(this.storageManager, this.logger);
     }
 
     /**
@@ -357,7 +359,7 @@ export class OdspDocumentService implements IDocumentService {
     public dispose(error?: any) {
         // Error might indicate mismatch between client & server knowlege about file
         // (DriverErrorType.fileOverwrittenInStorage).
-        // For exaple, file might have been overwritten in storage without generating new epoch
+        // For example, file might have been overwritten in storage without generating new epoch
         // In such case client cached info is stale and has to be removed.
         if (error !== undefined) {
             this.epochTracker.removeEntries().catch(() => {});
