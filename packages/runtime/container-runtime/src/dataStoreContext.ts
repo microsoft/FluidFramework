@@ -421,6 +421,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
             gcData: this.summarizerNode.gcData,
+            unrefTimestamp: this.summarizerNode.unreferencedTimestamp,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
@@ -855,6 +856,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         const gcDetails: IGarbageCollectionSummaryDetails = {
             usedRoutes: this.summarizerNode.usedRoutes,
             gcData: this.summarizerNode.gcData,
+            unrefTimestamp: this.summarizerNode.unreferencedTimestamp,
         };
         addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
 
