@@ -64,8 +64,7 @@ export enum ContainerErrorType {
     dataCorruptionError = "dataCorruptionError",
     dataProcessingError = "dataProcessingError",
     genericError = "genericError",
-    throttlingError = "throttlingError",
-    usageError = "usageError"
+    throttlingError = "throttlingError"
 }
 
 // @public
@@ -78,7 +77,9 @@ export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     // (undocumented)
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    on(event: "addMember", listener: (clientId: string, details: IClient) => void): this;
+    // (undocumented)
+    on(event: "removeMember", listener: (clientId: string) => void): this;
 }
 
 // @public
@@ -159,7 +160,7 @@ export interface IContainerContext extends IDisposable {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
+    // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly options: ILoaderOptions;
@@ -179,8 +180,6 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly taggedLogger?: ITelemetryBaseLogger;
-    // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
 }
 
@@ -195,7 +194,7 @@ export interface IContainerEvents extends IEvent {
     // (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     // (undocumented)
-    (event: "disconnected" | "attached", listener: () => void): any;
+    (event: "disconnected" | "attaching" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     // (undocumented)
@@ -436,6 +435,11 @@ export interface IRuntime extends IDisposable {
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     snapshot(tagMessage: string, fullTree?: boolean): Promise<ITree | null>;
+    // @deprecated (undocumented)
+    stop(): Promise<{
+        snapshot?: never;
+        state?: never;
+    }>;
 }
 
 // @public (undocumented)
@@ -455,12 +459,6 @@ export interface IThrottlingWarning extends IErrorBase {
     readonly errorType: ContainerErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
-}
-
-// @public
-export interface IUsageError extends IErrorBase {
-    // (undocumented)
-    readonly errorType: ContainerErrorType.usageError;
 }
 
 // @public
