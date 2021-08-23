@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { compare } from "semver";
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
@@ -145,8 +146,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
     };
 
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        if (compare(provider.driver.version, "0.46.0") === -1
+            && (provider.driver.type === "routerlicious" || provider.driver.type === "tinylicious")) {
+            this.skip();
+        }
         const documentId = createDocumentId();
         request = provider.driver.createCreateNewRequest(documentId);
         loader = createTestLoader();

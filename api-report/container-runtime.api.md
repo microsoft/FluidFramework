@@ -689,6 +689,7 @@ export type SummarizeResultPart<T> = {
     data: T | undefined;
     message: string;
     error: any;
+    retryAfterSeconds?: number;
 };
 
 // @public (undocumented)

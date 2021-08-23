@@ -7,11 +7,9 @@
 import { ContainerSchema } from 'fluid-framework';
 import { FluidContainer } from 'fluid-framework';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IMember } from 'fluid-framework';
 import { IServiceAudience } from 'fluid-framework';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { ServiceAudience } from 'fluid-framework';
 
 // @public (undocumented)
@@ -25,16 +23,10 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 
 // @public
 class TinyliciousClient {
-    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig);
-    // (undocumented)
-    createContainer(serviceContainerConfig: TinyliciousContainerConfig, containerSchema: ContainerSchema): Promise<TinyliciousResources>;
-    // (undocumented)
-    readonly documentServiceFactory: IDocumentServiceFactory;
-    // (undocumented)
-    getContainer(serviceContainerConfig: TinyliciousContainerConfig, containerSchema: ContainerSchema): Promise<TinyliciousResources>;
-    // (undocumented)
-    readonly urlResolver: IUrlResolver;
-}
+    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
+    createContainer(containerSchema: ContainerSchema): Promise<TinyliciousResources>;
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<TinyliciousResources>;
+    }
 
 export { TinyliciousClient }
 
@@ -46,14 +38,6 @@ export interface TinyliciousConnectionConfig {
     domain?: string;
     // (undocumented)
     port?: number;
-}
-
-// @public (undocumented)
-export interface TinyliciousContainerConfig {
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    logger?: ITelemetryBaseLogger;
 }
 
 // @public

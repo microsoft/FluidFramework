@@ -4,12 +4,11 @@
  */
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
-    ISummaryNack,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -288,31 +287,29 @@ export class RunningSummarizer implements IDisposable {
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
                 if (delaySeconds > 0) {
-                    this.logger.sendTelemetryEvent({
+                    this.logger.sendPerformanceEvent({
                         eventName: "SummarizeAttemptDelay",
-                        retryAfterSeconds: overrideDelaySeconds, // delay from retryAfter summaryNack response
-                        regularDelaySeconds, // delay from regular attempt retry
+                        duration: delaySeconds,
+                        reason: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
                     });
-                    await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
+                    await delay(delaySeconds * 1000);
                 }
                 const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as const : reason;
                 const result = await this.generator.summarize(attemptReason, options).receivedSummaryAckOrNack;
                 await this.generator.waitSummarizing();
-                if (result.success && result.data.summaryAckNackOp.type === MessageType.SummaryAck) {
-                    // Note: checking for MessageType.SummaryAck is redundant since success is false for nack.
+
+                if (result.success) {
+                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, "not nack");
                     return;
                 }
-                // Check for retryDelay in summaryNack response.
-                // TODO: cast needed until dep on protocol-definitions version bump
-                const summaryNack = result.data?.summaryAckNackOp.type === MessageType.SummaryNack
-                    ? result.data.summaryAckNackOp.contents as ISummaryNack & { message?: string; retryAfter?: number; }
-                    : undefined;
-                if (summaryNack?.retryAfter !== undefined && summaryNack.retryAfter > 0) {
+                // Check for retryDelay that can come from summaryNack or upload summary flow.
+                const retryAfterSeconds = result.retryAfterSeconds;
+                if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
                     if (overrideDelaySeconds !== undefined) {
                         // Retry the same step only once per retryAfter response.
                         attemptPhase++;
                     }
-                    overrideDelaySeconds = summaryNack.retryAfter;
+                    overrideDelaySeconds = retryAfterSeconds;
                 } else {
                     attemptPhase++;
                     overrideDelaySeconds = undefined;

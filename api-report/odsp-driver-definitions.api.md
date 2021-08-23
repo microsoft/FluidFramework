@@ -53,6 +53,9 @@ export interface IFileEntry {
     resolvedUrl: IFluidResolvedUrl;
 }
 
+// @public (undocumented)
+export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
+
 // @public
 export interface IOdspError {
     // (undocumented)

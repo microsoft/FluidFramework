@@ -1669,17 +1669,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const duration = time - this.connectionTransitionTimes[oldState];
 
         let durationFromDisconnected: number | undefined;
-        let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
         let checkpointSequenceNumber: number | undefined;
-        let sequenceNumber: number | undefined;
         let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
-            connectionMode = this._deltaManager.connectionMode;
-            sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
@@ -1687,7 +1683,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This info is of most interest on establishing connection only.
                 checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
                 if (this.deltaManager.hasCheckpointSequenceNumber) {
-                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                    opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
                 }
             }
             if (this.firstConnection) {
@@ -1709,13 +1705,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.connectionStateHandler.pendingClientId,
             clientId: this.clientId,
-            connectionMode,
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
-            sequenceNumber,
+            ...this._deltaManager.connectionProps(),
         });
 
         if (value === ConnectionState.Connected) {
