@@ -146,7 +146,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.logger,
             this.summaryCollection.createWatcher(clientId),
             this.configurationGetter(),
-            this.internalsProvider,
+            this.internalsProvider.submitSummary.bind(this), // submitSummaryCallback
             new SummarizeHeuristicData(
                 this.runtime.deltaManager.lastSequenceNumber,
                 { /** summary attempt baseline for heuristics */

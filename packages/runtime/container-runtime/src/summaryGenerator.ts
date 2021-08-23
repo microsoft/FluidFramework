@@ -14,7 +14,7 @@ import {
     IBroadcastSummaryResult,
     ISummarizeResults,
     ISummarizeHeuristicData,
-    ISummarizerInternalsProvider,
+    ISubmitSummaryOptions,
     SubmitSummaryResult,
     SummarizeResultPart,
 } from "./summarizerTypes";
@@ -152,7 +152,7 @@ export class SummaryGenerator {
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "submitSummary">,
+        private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
@@ -243,7 +243,7 @@ export class SummaryGenerator {
         // Use record type to prevent unexpected value types
         let summaryData: SubmitSummaryResult | undefined;
         try {
-            summaryData = await this.internalsProvider.submitSummary({
+            summaryData = await this.submitSummaryCallback({
                 fullTree,
                 refreshLatestAck,
                 summaryLogger: this.logger,

@@ -130,46 +130,45 @@ describe("Runtime", () => {
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
-                    {
-                        submitSummary: async (options) => {
-                            runCount++;
+                    // submitSummaryCallback
+                    async (options) => {
+                        runCount++;
 
-                            const { fullTree = false, refreshLatestAck = false } = options;
-                            if (fullTree) {
-                                fullTreeRunCount++;
-                            }
-                            if (refreshLatestAck) {
-                                refreshLatestAckRunCount++;
-                            }
+                        const { fullTree = false, refreshLatestAck = false } = options;
+                        if (fullTree) {
+                            fullTreeRunCount++;
+                        }
+                        if (refreshLatestAck) {
+                            refreshLatestAckRunCount++;
+                        }
 
-                            // immediate broadcast
-                            emitBroadcast();
+                        // immediate broadcast
+                        emitBroadcast();
 
-                            if (shouldDeferGenerateSummary) {
-                                deferGenerateSummary = new Deferred<void>();
-                                await deferGenerateSummary.promise;
-                                deferGenerateSummary = undefined;
-                            }
-                            return {
-                                stage: "submit",
-                                referenceSequenceNumber: lastRefSeq,
-                                generateDuration: 0,
-                                uploadDuration: 0,
-                                submitOpDuration: 0,
-                                summaryTree: { type: SummaryType.Tree, tree: {} },
-                                summaryStats: {
-                                    treeNodeCount: 0,
-                                    blobNodeCount: 0,
-                                    handleNodeCount: 0,
-                                    totalBlobSize: 0,
-                                    dataStoreCount: 0,
-                                    summarizedDataStoreCount: 0,
-                                    unreferencedBlobSize: 0,
-                                },
-                                handle: "test-handle",
-                                clientSequenceNumber: lastClientSeq,
-                            } as const;
-                        },
+                        if (shouldDeferGenerateSummary) {
+                            deferGenerateSummary = new Deferred<void>();
+                            await deferGenerateSummary.promise;
+                            deferGenerateSummary = undefined;
+                        }
+                        return {
+                            stage: "submit",
+                            referenceSequenceNumber: lastRefSeq,
+                            generateDuration: 0,
+                            uploadDuration: 0,
+                            submitOpDuration: 0,
+                            summaryTree: { type: SummaryType.Tree, tree: {} },
+                            summaryStats: {
+                                treeNodeCount: 0,
+                                blobNodeCount: 0,
+                                handleNodeCount: 0,
+                                totalBlobSize: 0,
+                                dataStoreCount: 0,
+                                summarizedDataStoreCount: 0,
+                                unreferencedBlobSize: 0,
+                            },
+                            handle: "test-handle",
+                            clientSequenceNumber: lastClientSeq,
+                        } as const;
                     },
                     new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
