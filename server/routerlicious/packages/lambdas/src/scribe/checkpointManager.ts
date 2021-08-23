@@ -7,12 +7,12 @@
 
 import {
     ICollection,
+    IContext,
     IDocument,
     IScribe,
     ISequencedOperationMessage,
     runWithRetry,
 } from "@fluidframework/server-services-core";
-import * as winston from "winston";
 import { ICheckpointManager } from "./interfaces";
 
 /**
@@ -20,6 +20,7 @@ import { ICheckpointManager } from "./interfaces";
  */
 export class CheckpointManager implements ICheckpointManager {
     constructor(
+        protected readonly context: IContext,
          private readonly tenantId: string,
          private readonly documentId: string,
          private readonly documentCollection: ICollection<IDocument>,
@@ -52,7 +53,7 @@ export class CheckpointManager implements ICheckpointManager {
                 async () => this.opCollection.insertMany(dbOps, false),
                 "writeCheckpointScribe",
                 3,
-                winston,
+                this.context.log,
                 (error) => error.code !== 11000);
         }
 
