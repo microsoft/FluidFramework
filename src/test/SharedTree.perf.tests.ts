@@ -8,7 +8,13 @@ import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils'
 import { assert } from '../Common';
 import { Change, SharedTree } from '../default-edits';
 import { EditLog } from '../EditLog';
-import { createStableEdits, setUpTestSharedTree, simpleTestTree } from './utilities/TestUtilities';
+import { runSummaryLoadPerfTests } from './utilities/SummaryLoadPerfTests';
+import {
+	createStableEdits,
+	setUpLocalServerTestSharedTree,
+	setUpTestSharedTree,
+	simpleTestTree,
+} from './utilities/TestUtilities';
 
 describe('SharedTree Perf', () => {
 	let tree: SharedTree | undefined;
@@ -40,4 +46,6 @@ describe('SharedTree Perf', () => {
 			},
 		});
 	}
+
+	runSummaryLoadPerfTests(setUpLocalServerTestSharedTree);
 });

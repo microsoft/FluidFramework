@@ -4,8 +4,7 @@
  */
 
 import * as fs from 'fs';
-import { resolve, join } from 'path';
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 // KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 import { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import {
@@ -17,7 +16,6 @@ import {
 } from '../../default-edits';
 import { EditId } from '../../Identifiers';
 import {
-	ChangeNode,
 	Edit,
 	SharedTreeSummary,
 	SharedTreeSummaryBase,
@@ -31,16 +29,14 @@ import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { EditLog, separateEditAndId } from '../../EditLog';
 import { assertNotUndefined } from '../../Common';
 import {
+	getDocumentFiles,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
+	testDocumentsPathBase,
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
-
-// This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
-// resource path logic to a single place.
-const pathBase = resolve(__dirname, '../../../src/test/documents/');
 
 /**
  * A version/summarizer pair must be specified for a no history write test to be generated.
@@ -142,76 +138,19 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 			testObjectProvider.reset();
 		});
 
-		const documentFolders = fs.readdirSync(pathBase);
+		const documentFolders = fs.readdirSync(testDocumentsPathBase);
 
 		for (const document of documentFolders) {
-			// Cache the contents of the relevant files here to avoid loading more than once.
-			// Map containing summary file contents, keys are summary versions, values have file contents
-			const summaryByVersion = new Map<string, string>();
-			const noHistorySummaryByVersion = new Map<string, string>();
-
-			// Denormalized files are indicated with ending suffixes that describe the type of denormalization.
-			// For each version key, this maps has a mapping from each type to its corresponding file.
-			// This allows us to test multiple types of denormalization on the same document type and version.
-			const denormalizedSummaryByVersion = new Map<string, Map<string, string>>();
-
-			// Map containing denormalized history files by type of denormalization.
-			const denormalizedHistoryByType = new Map<string, string>();
-
-			// Files of uploaded edit blob contents for summaries that support blobs.
-			const blobsByVersion = new Map<string, string>();
-
-			let historyOrUndefined: Edit<Change>[] | undefined;
-			let changeNodeOrUndefined: ChangeNode | undefined;
-
-			const documentFiles = fs.readdirSync(join(pathBase, document));
-			for (const documentFile of documentFiles) {
-				const summaryFileRegex = /^summary-(?<version>\d+\.\d\.\d).json/;
-				const match = summaryFileRegex.exec(documentFile);
-
-				const denormalizedSummaryFileRegex = /summary-(?<version>\d+\.\d\.\d)-(?<type>[a-z-]+[a-z]+).json/;
-				const denormalizedSummaryMatch = denormalizedSummaryFileRegex.exec(documentFile);
-
-				const denormalizedHistoryFileRegex = /history-(?<type>[a-z-]+[a-z]+).json/;
-				const denormalizedHistoryMatch = denormalizedHistoryFileRegex.exec(documentFile);
-
-				const noHistorySummaryFileRegex = /^no-history-summary-(?<version>\d+\.\d\.\d).json/;
-				const noHistoryMatch = noHistorySummaryFileRegex.exec(documentFile);
-
-				const blobFileRegex = /blobs-(?<version>\d+\.\d\.\d).json/;
-				const blobsMatch = blobFileRegex.exec(documentFile);
-
-				const filePath = join(pathBase, document, documentFile);
-				const file = fs.readFileSync(filePath, 'utf8');
-
-				if (match && match.groups) {
-					summaryByVersion.set(match.groups.version, file);
-				} else if (denormalizedSummaryMatch && denormalizedSummaryMatch.groups) {
-					const typesByVersion = denormalizedSummaryByVersion.get(denormalizedSummaryMatch.groups.version);
-					if (typesByVersion !== undefined) {
-						typesByVersion.set(denormalizedSummaryMatch.groups.type, file);
-					} else {
-						denormalizedSummaryByVersion.set(
-							denormalizedSummaryMatch.groups.version,
-							new Map<string, string>().set(denormalizedSummaryMatch.groups.type, file)
-						);
-					}
-				} else if (denormalizedHistoryMatch && denormalizedHistoryMatch.groups) {
-					denormalizedHistoryByType.set(denormalizedHistoryMatch.groups.type, file);
-				} else if (noHistoryMatch && noHistoryMatch.groups) {
-					noHistorySummaryByVersion.set(noHistoryMatch.groups.version, file);
-				} else if (blobsMatch && blobsMatch.groups) {
-					blobsByVersion.set(blobsMatch.groups.version, file);
-				} else if (documentFile === 'history.json') {
-					historyOrUndefined = JSON.parse(file);
-				} else if (documentFile === 'change-node.json') {
-					changeNodeOrUndefined = JSON.parse(file);
-				}
-			}
-
-			const history = assertNotUndefined(historyOrUndefined);
-			const changeNode = assertNotUndefined(changeNodeOrUndefined);
-			const sortedVersions = Array.from(summaryByVersion.keys()).sort(versionComparator);
+			const {
+				summaryByVersion,
+				noHistorySummaryByVersion,
+				denormalizedSummaryByVersion,
+				denormalizedHistoryByType,
+				blobsByVersion,
+				history,
+				changeNode,
+				sortedVersions,
+			} = getDocumentFiles(document);
 
 			describe(`document ${document}`, () => {
 				for (const version of supportedSummaryWriteFormats) {
@@ -479,31 +418,6 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		}
 	});
 }
-
-const versionComparator = (versionA: string, versionB: string): number => {
-	const versionASplit = versionA.split('.');
-	const versionBSplit = versionB.split('.');
-
-	assert(
-		versionASplit.length === versionBSplit.length && versionASplit.length === 3,
-		'Version numbers should follow semantic versioning.'
-	);
-
-	for (let i = 0; i < 3; ++i) {
-		const numberA = parseInt(versionASplit[i], 10);
-		const numberB = parseInt(versionBSplit[i], 10);
-
-		if (numberA > numberB) {
-			return 1;
-		}
-
-		if (numberA < numberB) {
-			return -1;
-		}
-	}
-
-	return 0;
-};
 
 /**
  * Checks that a given summary contains the correct blob contents.
