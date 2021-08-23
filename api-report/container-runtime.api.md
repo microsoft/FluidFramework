@@ -25,6 +25,7 @@ import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
@@ -207,7 +208,7 @@ export interface ContainerRuntimeMessage {
 }
 
 // @public (undocumented)
-export const createSummarizingWarning: (details: string, logged: boolean) => SummarizingWarning;
+export const createSummarizingWarning: (errorCode: string, logged: boolean) => SummarizingWarning;
 
 // @public
 export class DeltaScheduler {
@@ -718,16 +719,18 @@ export type SummarizerStopReason =
  | "disposed";
 
 // @public (undocumented)
-export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
-    constructor(errorMessage: string, logged?: boolean);
+export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
+    constructor(errorMessage: string, fluidErrorCode: string, logged?: boolean);
     // (undocumented)
     readonly canRetry = true;
     // (undocumented)
     readonly errorType = "summarizingError";
     // (undocumented)
+    readonly fluidErrorCode: string;
+    // (undocumented)
     readonly logged: boolean;
     // (undocumented)
-    static wrap(error: any, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
+    static wrap(error: any, errorCode: string, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
 }
 
 // @public

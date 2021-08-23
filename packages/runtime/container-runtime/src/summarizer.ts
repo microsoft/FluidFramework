@@ -100,7 +100,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         try {
             await this.runCore(onBehalfOf, options);
         } catch (error) {
-            this.emit("summarizingError", SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger));
+            this.emit("summarizingError",
+                SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger));
             throw error;
         } finally {
             // Cleanup after running
