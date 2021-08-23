@@ -10,6 +10,8 @@ import { assert } from '../Common';
 import { RevisionView, Side, TreeViewNode } from '../TreeView';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
 import { ChangeNode } from '../generic';
+import { Forest, ForestNode } from '../Forest';
+import { makeTestNode } from './utilities/TestUtilities';
 
 describe('Forest Perf', () => {
 	for (const count of [100, 1_000, 10_000, 100_000]) {
@@ -42,6 +44,58 @@ describe('Forest Perf', () => {
 				rootId = undefined;
 			},
 		});
+
+		let forest: Forest | undefined;
+		let nodes: ForestNode[];
+		benchmark({
+			type,
+			title: `insert ${count} nodes into Forest`,
+			before: () => {
+				forest = Forest.create(true);
+				nodes = [];
+				for (let i = 0; i < count; i++) {
+					nodes.push(makeTestForestNode());
+				}
+			},
+			benchmarkFn: () => {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				forest!.add(nodes);
+			},
+			after: () => {
+				forest = undefined;
+			},
+		});
+
+		let otherForest: Forest | undefined;
+		for (const otherCount of [100, 1_000, 10_000, 100_000]) {
+			benchmark({
+				type,
+				title: `invoke delta on Forest with ${count} nodes against Forest with ${otherCount} nodes`,
+				before: () => {
+					forest = Forest.create(true);
+					otherForest = Forest.create(true);
+					nodes = [];
+					for (let i = 0; i < count; i++) {
+						nodes.push(makeTestForestNode());
+					}
+					forest = forest.add(nodes);
+
+					const otherNodes: ForestNode[] = [];
+					for (let i = 0; i < otherCount; i++) {
+						otherNodes.push(makeTestForestNode());
+					}
+					otherForest = otherForest.add(otherNodes);
+				},
+				benchmarkFn: () => {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					forest!.delta(otherForest!);
+				},
+				after: () => {
+					forest = undefined;
+					otherForest = undefined;
+				},
+			});
+		}
 	}
 });
 
@@ -87,4 +141,8 @@ function buildRandomTree(size: number): [RevisionView, NodeId] {
 		ids.push(id);
 	}
 	return [f.close(), rootId];
+}
+
+function makeTestForestNode(): ForestNode {
+	return { ...makeTestNode(v4() as NodeId), traits: new Map() };
 }
