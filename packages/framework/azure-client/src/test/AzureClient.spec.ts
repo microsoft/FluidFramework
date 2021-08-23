@@ -2,37 +2,44 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 import { SharedMap, ContainerSchema } from "fluid-framework";
-import {
-    AzureContainerConfig,
-} from "..";
 import { createAzureClient } from "./AzureClientFactory";
 
 describe("AzureClient", () => {
     const client = createAzureClient();
-    let documentId: string;
-    beforeEach(() => {
-        documentId = uuid();
-    });
+    const schema: ContainerSchema = {
+        name: "azure-client-test",
+        initialObjects: {
+            map1: SharedMap,
+        },
+    };
 
-    it("can create FRS container successfully", async () => {
-        const containerConfig: AzureContainerConfig = { id: documentId };
-        const schema: ContainerSchema = {
-            name: documentId,
-            initialObjects: {
-                map1: SharedMap,
-            },
-        };
-
-        const containerAndServices  = await client.createContainer(containerConfig, schema);
+    it("can create new FRS container successfully", async () => {
+        const containerAndServicesP = client.createContainer(schema);
 
         await assert.doesNotReject(
-            Promise.resolve(containerAndServices),
+            containerAndServicesP,
             () => true,
             "container cannot be created in FRS",
         );
+
+        const { fluidContainer } = await containerAndServicesP;
+        assert.ok(fluidContainer.id);
+    });
+
+    it("can retrieve existing FRS container successfully", async () => {
+        const { fluidContainer: newContainer } = await client.createContainer(schema);
+        const containerId = newContainer.id;
+
+        const containerAndServicesP = client.getContainer(containerId, schema);
+        await assert.doesNotReject(
+            containerAndServicesP,
+            () => true,
+            "container cannot be retrieved from FRS",
+        );
+
+        const { fluidContainer } = await containerAndServicesP;
+        assert.equal(fluidContainer.id, containerId);
     });
 });

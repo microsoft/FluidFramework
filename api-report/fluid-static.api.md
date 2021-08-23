@@ -43,7 +43,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public (undocumented)
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject);
+    constructor(id: string, container: Container, rootDataObject: RootDataObject);
     // @deprecated (undocumented)
     get audience(): IAudience;
     // @deprecated (undocumented)
@@ -56,6 +56,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    // (undocumented)
+    readonly id: string;
     // (undocumented)
     get initialObjects(): Record<string, IFluidLoadable>;
     }
@@ -78,6 +80,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     dispose(): void;
     // (undocumented)
     readonly disposed: boolean;
+    // (undocumented)
+    readonly id: string;
     // (undocumented)
     readonly initialObjects: LoadableObjectRecord;
 }
