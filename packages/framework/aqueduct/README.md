@@ -247,6 +247,7 @@ type:"text/plain", value:"blue"}`.
 We use custom handlers to build the Container Services pattern.
 
 <!-- Links -->
+[ContainerRuntimeFactoryWithDefaultDataStore]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/containerRuntimeFactories/containerRuntimeFactoryWithDefaultDataStore.ts
 [DataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-objects/dataObject.ts
 [DataObjectFactory]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/dataObjectFactory.ts
 [PureDataObject]: https://github.com/microsoft/FluidFramework/blob/main/packages/framework/aqueduct/src/data-object-factories/pureDataObject.ts
