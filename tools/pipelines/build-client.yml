@@ -22,6 +22,11 @@ parameters:
     - default
     - skip
     - force
+- name: nonScopedPackages
+  displayName: Non-scoped packages to publish
+  type: object
+  default: 
+  - fluid-framework
 
 trigger:
   branches:
@@ -71,6 +76,7 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildDirectory: .
     tagName: client
     poolBuild: Main

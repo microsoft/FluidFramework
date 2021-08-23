@@ -33,18 +33,18 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [FrsAzFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/FrsAzFunctionTokenProvider.ts" >}}) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `FrsAzFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/AzureFunctionTokenProvider.ts" >}}) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new FrsAzFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
     "UserId", userName: "Test User"}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
 };
 
-const client = new FrsClient(config);
+const client = new AzureClient(config);
 ```
 The user object can also hold optional additional user details such as the gender, address, email, etc. For example:
 
@@ -56,13 +56,13 @@ cont userDetails: ICustomUserDetails = {
 
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new FrsAzFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
     "UserId", userName: "Test User", additionalDetails: userDetails}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
 };
 ```
-Your Azure Function will generate the FRS token for the given user that is signed using the tenant's secret key and returned to the client without exposing the secret itself.
+Your Azure Function will generate the token for the given user that is signed using the tenant's secret key and returned to the client without exposing the secret itself.
 
 ## Managing containers
 
@@ -108,11 +108,11 @@ const onAudienceChanged = () => {
         const members = audience.getMembers();
         const self = audience.getMyself();
         const memberStrings: string[] = [];
-        const useFrs = process.env.FLUID_CLIENT === "frs";
+        const useAzure = process.env.FLUID_CLIENT === "azure";
 
-        members.forEach((member: FrsMember<ICustomUserDetails>) => {
+        members.forEach((member: AzureMember<ICustomUserDetails>) => {
             if (member.userId !== self?.userId) {
-                if (useFrs) {
+                if (useAzure) {
                     const memberString = `${member.userName}: {Email: ${member.additionalDetails?.email},
                         Address: ${member.additionalDetails?.address}}`;
                     memberStrings.push(memberString);

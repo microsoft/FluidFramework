@@ -92,7 +92,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
         super(internal);
     }
 
-    public get disposed() {return this._disposed;}
+    public get disposed() { return this._disposed; }
 
     public get clientId() { return this.internal.clientId;}
 

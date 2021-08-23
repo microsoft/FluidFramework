@@ -225,12 +225,13 @@ export async function waitContainerToCatchUp(container: Container) {
 //    aggressive noop sending from client side.
 // 5. Number of ops sent by all clients is proportional to number of "write" clients (every client sends noops),
 //    but number of sequenced noops is a function of time (one op per 2 seconds at most).
+//    We should consider impact to both outbound traffic (might be huge, depends on number of clients) and file size.
 // Please also see Issue #5629 for more discussions.
 //
 // With that, the current algorithm is as follows:
-// 1. Sent noop 250 ms of receiving an op if no ops were sent by this client within this timeframe.
-//    This will ensure that MSN moves forward with reasonable speed. If that results in too many noops, server timeout
-//    of 2000ms should be reconsidered to be increased.
+// 1. Sent noop 2000 ms of receiving an op if no ops were sent by this client within this timeframe.
+//    This will ensure that MSN moves forward with reasonable speed. If that results in too many sequenced noops,
+//    server timeout of 2000ms should be reconsidered to be increased.
 // 2. If there are more than 50 ops received without sending any ops, send noop to keep collab window small.
 //    Note that system ops (including noops themselves) are excluded, so it's 1 noop per 50 real ops.
 export class CollabWindowTracker {
@@ -240,7 +241,7 @@ export class CollabWindowTracker {
     constructor(
         private readonly submit: (type: MessageType, contents: any) => void,
         private readonly activeConnection: () => boolean,
-        NoopTimeFrequency: number = 250,
+        NoopTimeFrequency: number = 2000,
         private readonly NoopCountFrequency: number = 50,
     ) {
         this.timer = new Timer(NoopTimeFrequency, () => {
@@ -1641,17 +1642,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const duration = time - this.connectionTransitionTimes[oldState];
 
         let durationFromDisconnected: number | undefined;
-        let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
         let checkpointSequenceNumber: number | undefined;
-        let sequenceNumber: number | undefined;
         let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
-            connectionMode = this._deltaManager.connectionMode;
-            sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
@@ -1659,7 +1656,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This info is of most interest on establishing connection only.
                 checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
                 if (this.deltaManager.hasCheckpointSequenceNumber) {
-                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                    opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
                 }
             }
             if (this.firstConnection) {
@@ -1681,13 +1678,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.connectionStateHandler.pendingClientId,
             clientId: this.clientId,
-            connectionMode,
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
-            sequenceNumber,
+            ...this._deltaManager.connectionProps(),
         });
 
         if (value === ConnectionState.Connected) {

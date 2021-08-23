@@ -196,9 +196,10 @@ export function wrapErrorAndLog<T extends IFluidErrorBase>(
         ? newError.errorInstanceId
         : undefined;
 
-    logger.sendErrorEvent({
+    logger.sendTelemetryEvent({
         eventName: "WrapError",
         wrappedByErrorInstanceId,
+        category: "generic", // avoids it being an "error" category due to  supplied error
     }, innerError);
 
     return newError;
