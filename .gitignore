@@ -21,3 +21,6 @@ bundleAnalysis
 artifacts
 
 docs/resources/_gen/
+
+# documentation tool artifact
+tsdoc-metadata.json

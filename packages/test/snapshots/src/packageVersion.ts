@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-internal/test-snapshots";
-export const pkgVersion = "0.46.0";
+export const pkgVersion = "0.47.0";
