@@ -408,7 +408,7 @@ describe("Runtime", () => {
                         {
                             eventName: "Running:Summarize_cancel",
                             summaryGenTag: (runCount - 1),
-                            message: "summaryNack",
+                            reason: "summaryNack",
                         },
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
@@ -426,7 +426,7 @@ describe("Runtime", () => {
                         {
                             eventName: "Running:Summarize_cancel",
                             summaryGenTag: (runCount - 1),
-                            message: "summaryNack",
+                            reason: "summaryNack",
                         },
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
@@ -444,7 +444,7 @@ describe("Runtime", () => {
                         {
                             eventName: "Running:Summarize_cancel",
                             summaryGenTag: (runCount - 1),
-                            message: "summaryNack",
+                            reason: "summaryNack",
                         },
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
@@ -487,8 +487,9 @@ describe("Runtime", () => {
                         {
                             eventName: "Running:Summarize_cancel",
                             summaryGenTag: (runCount - 1),
-                            message: "summaryNack",
+                            reason: "summaryNack",
                         },
+                        { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount - 1 },
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
@@ -505,8 +506,9 @@ describe("Runtime", () => {
                         {
                             eventName: "Running:Summarize_cancel",
                             summaryGenTag: (runCount - 1),
-                            message: "summaryNack",
+                            reason: "summaryNack",
                         },
+                        { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount - 1 },
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");

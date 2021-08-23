@@ -4,7 +4,7 @@
  */
 
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
     ISequencedDocumentSystemMessage,
@@ -287,18 +287,12 @@ export class RunningSummarizer implements IDisposable {
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
                 if (delaySeconds > 0) {
-                    if (overrideDelaySeconds !== undefined) {
-                        this.logger.sendErrorEvent({
-                            eventName: "SummarizeAttemptNackDelay",
-                            delay: overrideDelaySeconds,
-                        });
-                    } else {
-                        this.logger.sendPerformanceEvent({
-                            eventName: "SummarizeAttemptDelay",
-                            delay: regularDelaySeconds,
-                        });
-                    }
-                    await new Promise((resolve) => setTimeout(resolve, delaySeconds * 1000));
+                    this.logger.sendPerformanceEvent({
+                        eventName: "SummarizeAttemptDelay",
+                        duration: delaySeconds,
+                        reason: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
+                    });
+                    await delay(delaySeconds * 1000);
                 }
                 const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as const : reason;
                 const result = await this.generator.summarize(attemptReason, options).receivedSummaryAckOrNack;
@@ -309,7 +303,7 @@ export class RunningSummarizer implements IDisposable {
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
-                const retryAfterSeconds = result.data?.retryAfterSeconds;
+                const retryAfterSeconds = result.retryAfterSeconds;
                 if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
                     if (overrideDelaySeconds !== undefined) {
                         // Retry the same step only once per retryAfter response.

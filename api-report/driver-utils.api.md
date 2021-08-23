@@ -180,6 +180,9 @@ export function getQuorumValuesFromProtocolSummary(protocolSummary: ISummaryTree
 export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @public (undocumented)
+export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)

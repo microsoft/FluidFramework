@@ -34,7 +34,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
-    public get disposed() {return this._disposed;}
+    public get disposed() { return this._disposed; }
     public dispose() {
         this._disposed = true;
     }
@@ -80,7 +80,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         // 2. Similar, if we get 429 with retryAfter = 10 minutes, it's likely not the right call to retry summary
         //    upload in 10 minutes - it's better to keep processing ops and retry later. Though caller needs to take
         //    retryAfter into account!
-        assert((context.referenceSequenceNumber === 0) === (context.ackHandle === undefined), "");
+        // But retry loop is required for creation flow (Container.attach)
+        assert((context.referenceSequenceNumber === 0) === (context.ackHandle === undefined),
+            "creation summary has to have seq=0 && handle === undefined");
         if (context.referenceSequenceNumber !== 0) {
             return this.internalStorageService.uploadSummaryWithContext(summary, context);
         }
