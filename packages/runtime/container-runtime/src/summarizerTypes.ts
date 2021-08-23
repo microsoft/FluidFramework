@@ -13,14 +13,13 @@ import {
     IFluidRunnable,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import { ContainerWarning } from "@fluidframework/container-definitions";
 import {
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { IConnectableRuntime, ICancellable } from "./runWhileConnectedCoordinator";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
@@ -64,11 +63,10 @@ export interface ISummarizingWarning extends ContainerWarning {
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "disconnected", listener: () => void): this;
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
@@ -83,6 +81,7 @@ export interface ISummarizeOptions {
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger,
+    readonly cancellable: ICancellable,
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -250,7 +249,9 @@ export type SummarizerStopReason =
      */
     | "parentShouldNotSummarize"
     /** Parent client reported that it is disposed. */
-    | "disposed";
+    | "disposed"
+    // Summarizer client was disconnected
+    | "summarizeClientDisconnected";
 
 export interface ISummarizerEvents extends IEvent {
     /**
@@ -263,7 +264,6 @@ export interface ISummarizer
     extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
     stop(reason?: SummarizerStopReason): void;
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
-    updateOnBehalfOf(onBehalfOf: string): void;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.

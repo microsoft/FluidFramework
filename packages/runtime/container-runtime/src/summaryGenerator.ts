@@ -19,15 +19,28 @@ import {
     SummarizeResultPart,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
+import { ICancellable } from "./runWhileConnectedCoordinator";
+
+export type raceTimerResult<T> =
+    { result: "done"; value: T } |
+    { result: IPromiseTimerResult["timerResult"] } |
+    { result: "disconnect" };
 
 /** Helper function to wait for a promise or PromiseTimer to elapse. */
-export const raceTimer = async <T>(
+export async function raceTimer<T>(
     promise: Promise<T>,
     timer: Promise<IPromiseTimerResult>,
-): Promise<{ result: "done"; value: T } | { result: IPromiseTimerResult["timerResult"] }> => Promise.race([
-    promise.then((value) => ({ result: "done", value } as const)),
-    timer.then(({ timerResult: result }) => ({ result } as const)),
-]);
+    disconnect?: ICancellable,
+): Promise<raceTimerResult<T>> {
+    const promises: Promise<raceTimerResult<T>>[] = [
+        promise.then((value) => ({ result: "done", value } as const)),
+        timer.then(({ timerResult: result }) => ({ result } as const)),
+    ];
+    if (disconnect !== undefined) {
+        promises.push(disconnect.waitCancelled.then(() => ({ result: "disconnect" } as const)));
+    }
+    return Promise.race(promises);
+}
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec
@@ -160,6 +173,7 @@ export class SummaryGenerator {
     public summarize(
         reason: SummarizeReason,
         options: ISummarizeOptions,
+        cancellable: ICancellable,
         resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
         ++this.summarizeCount;
@@ -175,7 +189,7 @@ export class SummaryGenerator {
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = new Deferred<void>();
 
-        this.summarizeCore(reason, options, resultsBuilder).finally(() => {
+        this.summarizeCore(reason, options, resultsBuilder, cancellable).finally(() => {
             this.summarizing?.resolve();
             this.summarizing = undefined;
         }).catch((error) => {
@@ -191,6 +205,7 @@ export class SummaryGenerator {
         reason: SummarizeReason,
         options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
+        cancellable: ICancellable,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;
         const summarizeEvent = PerformanceEvent.start(this.logger, {
@@ -218,8 +233,7 @@ export class SummaryGenerator {
             summarizeEvent.cancel({
                  ...properties,
                  reason: errorReason,
-                 // TODO: this will change in future iterations to more solid check
-                 category: error === "disconnect" ? "generic" : "error",
+                 category: cancellable.cancelled ? "generic" : "error",
             }, error);
             resultsBuilder.fail(getFailMessage(errorReason), error, nackSummaryResult, retryAfterSeconds);
         };
@@ -233,6 +247,7 @@ export class SummaryGenerator {
                 fullTree,
                 refreshLatestAck,
                 summaryLogger: this.logger,
+                cancellable,
             });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
@@ -285,7 +300,10 @@ export class SummaryGenerator {
             const summary = this.summaryWatcher.watchSummary(summaryData.clientSequenceNumber);
 
             // Wait for broadcast
-            const waitBroadcastResult = await raceTimer(summary.waitBroadcast(), pendingTimeoutP);
+            const waitBroadcastResult = await raceTimer(summary.waitBroadcast(), pendingTimeoutP, cancellable);
+            if (waitBroadcastResult.result === "disconnect") {
+                return fail("disconnect");
+            }
             if (waitBroadcastResult.result !== "done") {
                 return fail("summaryOpWaitTimeout");
             }
@@ -306,7 +324,10 @@ export class SummaryGenerator {
             });
 
             // Wait for ack/nack
-            const waitAckNackResult = await raceTimer(summary.waitAckNack(), pendingTimeoutP);
+            const waitAckNackResult = await raceTimer(summary.waitAckNack(), pendingTimeoutP, cancellable);
+            if (waitAckNackResult.result === "disconnect") {
+                return fail("disconnect");
+            }
             if (waitAckNackResult.result !== "done") {
                 return fail("summaryAckWaitTimeout");
             }

@@ -125,7 +125,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
     private readonly handleConnected = (clientId: string) => {
         this.latestClientId = clientId;
-        this.runningSummarizer?.updateOnBehalfOf(clientId);
         this.refreshSummarizer();
     };
 

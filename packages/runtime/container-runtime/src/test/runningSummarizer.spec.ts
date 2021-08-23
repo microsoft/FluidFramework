@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
 import { RunningSummarizer } from "../runningSummarizer";
-import { ISummarizerOptions, SummarizerStopReason } from "../summarizerTypes";
+import { ISummarizerOptions } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
@@ -34,7 +34,6 @@ describe("Runtime", () => {
             let summaryCollection: SummaryCollection;
             let summarizer: RunningSummarizer;
             const summarizerClientId = "test";
-            const onBehalfOfClientId = "behalf";
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
@@ -128,8 +127,6 @@ describe("Runtime", () => {
                 summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
             ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
-                    summarizerClientId,
-                    onBehalfOfClientId,
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
@@ -173,13 +170,17 @@ describe("Runtime", () => {
                                 clientSequenceNumber: lastClientSeq,
                             } as const;
                         },
-                        stop(reason?: SummarizerStopReason) {
-                            stopCall++;
-                        },
                     },
                     new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
                     summaryCollection,
+                    // ICancellable
+                    {
+                        cancelled: false,
+                        waitCancelled: new Promise(() => {}),
+                    },
+                    // stopSummarizerCallback
+                    (reason) => { stopCall++; },
                     summarizerOptions,
                 );
             };

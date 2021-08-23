@@ -7,7 +7,6 @@ import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definition
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
-    ISequencedDocumentSystemMessage,
     ISummaryConfiguration,
     MessageType,
 } from "@fluidframework/protocol-definitions";
@@ -16,7 +15,6 @@ import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
     IEnqueueSummarizeOptions,
     ISummarizeOptions,
-    ISummarizer,
     ISummarizeHeuristicData,
     ISummarizeHeuristicRunner,
     ISummarizerInternalsProvider,
@@ -24,6 +22,7 @@ import {
     OnDemandSummarizeResult,
     IOnDemandSummarizeOptions,
     EnqueueSummarizeResult,
+    SummarizerStopReason,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -32,6 +31,7 @@ import {
     SummarizeResultBuilder,
     SummaryGenerator,
 } from "./summaryGenerator";
+import { ICancellable } from "./runWhileConnectedCoordinator";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
@@ -43,21 +43,18 @@ const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
  */
 export class RunningSummarizer implements IDisposable {
     public static async start(
-        clientId: string,
-        onBehalfOfClientId: string,
         logger: ITelemetryLogger,
         summaryWatcher: IClientSummaryWatcher,
         configuration: ISummaryConfiguration,
-        internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "submitSummary">,
+        internalsProvider: Pick<ISummarizerInternalsProvider, "submitSummary">,
         heuristicData: ISummarizeHeuristicData,
         raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
+        cancellable: ICancellable,
+        stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         options?: Readonly<Partial<ISummarizerOptions>>,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
-            clientId,
-            onBehalfOfClientId,
             logger,
             summaryWatcher,
             configuration,
@@ -65,6 +62,8 @@ export class RunningSummarizer implements IDisposable {
             heuristicData,
             raiseSummarizingError,
             summaryCollection,
+            cancellable,
+            stopSummarizerCallback,
             options);
 
         await summarizer.waitStart();
@@ -92,16 +91,15 @@ export class RunningSummarizer implements IDisposable {
     } | undefined;
 
     private constructor(
-        private readonly clientId: string,
-        private readonly onBehalfOfClientId: string,
         baseLogger: ITelemetryLogger,
         private readonly summaryWatcher: IClientSummaryWatcher,
         private readonly configuration: ISummaryConfiguration,
-        private readonly internalsProvider: Pick<ISummarizer, "stop">
-            & Pick<ISummarizerInternalsProvider, "submitSummary">,
+        private readonly internalsProvider: Pick<ISummarizerInternalsProvider, "submitSummary">,
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryCollection: SummaryCollection,
+        private readonly cancellable: ICancellable,
+        private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
         this.logger = ChildLogger.create(
@@ -177,16 +175,7 @@ export class RunningSummarizer implements IDisposable {
 
     public handleSystemOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
-            case MessageType.ClientLeave: {
-                const leavingClientId = JSON.parse((op as ISequencedDocumentSystemMessage).data) as string;
-                if (leavingClientId === this.clientId || leavingClientId === this.onBehalfOfClientId) {
-                    // Ignore summarizer leave messages, to make sure not to start generating
-                    // a summary as the summarizer is leaving
-                    return;
-                }
-                // Leave ops for any other client fall through to handle normally
-            }
-            // Intentional fallthrough
+            case MessageType.ClientLeave:
             case MessageType.ClientJoin:
             case MessageType.Propose:
             case MessageType.Reject: {
@@ -284,6 +273,10 @@ export class RunningSummarizer implements IDisposable {
             let retryNumber = 0;
             // Note: intentionally incrementing retryNumber in for loop rather than attemptPhase.
             for (let attemptPhase = 0; attemptPhase < attempts.length; retryNumber++) {
+                if (this.cancellable.cancelled) {
+                    return;
+                }
+
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
                 if (delaySeconds > 0) {
@@ -295,7 +288,11 @@ export class RunningSummarizer implements IDisposable {
                     await delay(delaySeconds * 1000);
                 }
                 const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as const : reason;
-                const result = await this.generator.summarize(attemptReason, options).receivedSummaryAckOrNack;
+
+                // Note: no need to account for this.cancellable.waitCancelled here, as
+                // this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
+                const resultSummarize = this.generator.summarize(attemptReason, options, this.cancellable);
+                const result = await resultSummarize.receivedSummaryAckOrNack;
                 await this.generator.waitSummarizing();
 
                 if (result.success) {
@@ -317,7 +314,7 @@ export class RunningSummarizer implements IDisposable {
             }
             // If all attempts failed, close the summarizer container
             this.logger.sendErrorEvent({ eventName: "FailToSummarize" });
-            this.internalsProvider.stop("failToSummarize");
+            this.stopSummarizerCallback("failToSummarize");
         })().finally(() => {
             summarizingLock.resolve();
             this.summarizingLock = undefined;
@@ -348,7 +345,7 @@ export class RunningSummarizer implements IDisposable {
             // Another summary is currently being generated.
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
-        const result = this.generator.summarize(onDemandReason, options);
+        const result = this.generator.summarize(onDemandReason, options, this.cancellable);
         result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
         return result;
     }
@@ -421,7 +418,7 @@ export class RunningSummarizer implements IDisposable {
         const { reason, resultsBuilder, options } = this.enqueuedSummary;
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
-        this.generator.summarize(reason, options, resultsBuilder).receivedSummaryAckOrNack.finally(
+        this.generator.summarize(reason, options, this.cancellable, resultsBuilder).receivedSummaryAckOrNack.finally(
             () => this.checkSummarizeAgain());
         return true;
     }

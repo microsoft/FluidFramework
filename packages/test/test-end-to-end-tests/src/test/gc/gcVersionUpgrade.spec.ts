@@ -186,6 +186,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
             fullTree: false,
             refreshLatestAck: false,
             summaryLogger: logger,
+            cancellable: { cancelled: false, waitCancelled: new Promise(() => {}) },
         });
         return summarySequenceNumber;
     }
