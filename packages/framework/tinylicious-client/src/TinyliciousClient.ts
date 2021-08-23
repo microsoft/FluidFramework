@@ -55,7 +55,7 @@ export class TinyliciousClient {
     }
 
     /**
-     * Creates a new container instance in Tinylicious server.
+     * Creates a new attached container instance in Tinylicious server.
      * @param containerSchema - Container schema for the new container.
      * @returns New container instance along with associated services.
      */
@@ -66,6 +66,7 @@ export class TinyliciousClient {
         // until container ID changes are settled in lower layers.
         const id = uuid();
         const container = await this.getContainerCore(id, containerSchema, true);
+        await container.attach({ url: id });
         return this.getFluidContainerAndServices(id, container);
     }
 
@@ -80,7 +81,7 @@ export class TinyliciousClient {
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
         const id = uuid();
-        const container = await this.getContainerCore(id, containerSchema, true, true);
+        const container = await this.getContainerCore(id, containerSchema, true);
         return this.getFluidContainerAndServices(id, container);
     }
 
@@ -94,7 +95,7 @@ export class TinyliciousClient {
         id: string,
         containerSchema: ContainerSchema,
     ): Promise<TinyliciousResources> {
-        const container = await this.getContainerCore(id, containerSchema);
+        const container = await this.getContainerCore(id, containerSchema, false);
         return this.getFluidContainerAndServices(id, container);
     }
 
@@ -104,7 +105,8 @@ export class TinyliciousClient {
         container: Container,
     ): Promise<TinyliciousResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject);
+        const customAttach = async () => container.attach({url: id});
+        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, customAttach);
         const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
         const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
         return tinyliciousResources;
@@ -121,8 +123,7 @@ export class TinyliciousClient {
     private async getContainerCore(
         id: string,
         containerSchema: ContainerSchema,
-        createNew?: boolean,
-        detached?: boolean,
+        createNew: boolean,
     ): Promise<Container> {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
@@ -147,9 +148,6 @@ export class TinyliciousClient {
                 package: "no-dynamic-package",
                 config: {},
             });
-            if (detached !== true) {
-                await container.attach({ url: id });
-            }
         } else {
             // Request must be appropriate and parseable by resolver.
             container = await loader.resolve({ url: id });

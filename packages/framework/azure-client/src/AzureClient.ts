@@ -95,19 +95,21 @@ export class AzureClient {
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
         const id = uuid();
+        const attach = async () => container.attach({url: id});
         if (!detached) {
-            await container.attach({ url: id });
+            await attach();
         }
-        return this.getFluidContainerAndServices(id, container);
+        return this.getFluidContainerAndServices(id, container, attach);
     }
 
     // #region private
     private async getFluidContainerAndServices(
         id: string,
         container: Container,
+        attach?: () => Promise<void>,
     ): Promise<AzureResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject);
+        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, attach);
         const containerServices: AzureContainerServices = this.getContainerServices(container);
         const azureResources: AzureResources = { fluidContainer, containerServices };
         return azureResources;

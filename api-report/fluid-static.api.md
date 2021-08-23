@@ -44,7 +44,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public (undocumented)
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(id: string, container: Container, rootDataObject: RootDataObject);
+    constructor(id: string, container: Container, rootDataObject: RootDataObject, customAttach?: (() => Promise<void>) | undefined);
     // (undocumented)
     attach(): Promise<void>;
     // (undocumented)
