@@ -73,7 +73,7 @@ async function start(): Promise<void> {
     const createNew = !location.hash;
     if (createNew) {
         // The client will create a new detached container using the schema
-        // A detached container will all our app to modify the container before attaching it to the client
+        // A detached container will enable the app to modify the container before attaching it to the client
         resources = await client.createDetachedContainer(containerSchema);
         // The new container has its own unique ID that can be used to access it in another session
         location.hash = resources.fluidContainer.id;
