@@ -356,7 +356,8 @@ export class LocalOrderer implements IOrderer {
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
-            scribeMessages.map((message) => message.operation));
+            scribeMessages.map((message) => message.operation),
+            null);
     }
 
     private startLambdas() {

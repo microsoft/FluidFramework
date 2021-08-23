@@ -25,9 +25,9 @@ import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda } from "../utils";
+import { NoOpLambda , createSessionMetric } from "../utils";
 import { DeliLambda } from "./lambda";
-import { createSessionMetric } from "./utils";
+
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.
@@ -61,8 +61,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
     public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
         const { documentId, tenantId, leaderEpoch } = config;
-        const sessionMetric = createSessionMetric(tenantId, documentId, false, this.serviceConfiguration);
-        const sessionStartMetric = createSessionMetric(tenantId, documentId, true, this.serviceConfiguration);
+        const sessionMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.SessionResult, this.serviceConfiguration);
+        const sessionStartMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.StartSessionResult, this.serviceConfiguration);
+
         const messageMetaData = {
             documentId,
             tenantId,

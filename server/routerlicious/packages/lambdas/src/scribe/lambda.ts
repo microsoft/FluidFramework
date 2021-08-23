@@ -18,6 +18,7 @@ import {
     ISequencedDocumentAugmentedMessage,
     IProtocolState,
 } from "@fluidframework/protocol-definitions";
+import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -30,6 +31,7 @@ import {
     SequencedOperationType,
     IQueuedMessage,
     IPartitionLambda,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
     BaseTelemetryProperties,
@@ -40,7 +42,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { setQueuedMessageProperties } from "../utils";
+import { setQueuedMessageProperties, createSessionMetric, logCommonSessionEndMetrics } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
 
@@ -85,6 +87,7 @@ export class ScribeLambda implements IPartitionLambda {
         private term: number,
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
+        private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
     ) {
         this.lastOffset = scribe.logOffset;
         this.setStateFromCheckpoint(scribe);
@@ -376,9 +379,30 @@ export class ScribeLambda implements IPartitionLambda {
         lumberJackMetric?.setProperties(scribeState);
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
+        this.logScribeSessionMetrics(closeType);
+
         this.closed = true;
         this.protocolHandler.close();
+    }
+
+    private logScribeSessionMetrics(closeType: LambdaCloseType) {
+        if (this.scribeSessionMetric?.isCompleted()) {
+            this.scribeSessionMetric = createSessionMetric(this.tenantId,
+                this.documentId,
+                LumberEventName.ScribeSessionResult,
+                this.serviceConfiguration,
+            );
+        }
+
+        logCommonSessionEndMetrics(
+            this.context as DocumentContext,
+            closeType,
+            this.scribeSessionMetric,
+            this.sequenceNumber,
+            this.protocolHead,
+            undefined,
+        );
     }
 
     // Advances the protocol state up to 'target' sequence number. Having an exception while running this code
