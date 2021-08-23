@@ -45,7 +45,7 @@ describe("Runtime", () => {
                 maxAckWaitTime: 120000, // 2 min
             };
             let shouldDeferGenerateSummary: boolean = false;
-            let deferGenerateSummary: Deferred<void>;
+            let deferGenerateSummary: Deferred<void> | undefined;
 
             const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 
@@ -151,6 +151,7 @@ describe("Runtime", () => {
                             if (shouldDeferGenerateSummary) {
                                 deferGenerateSummary = new Deferred<void>();
                                 await deferGenerateSummary.promise;
+                                deferGenerateSummary = undefined;
                             }
                             return {
                                 stage: "submit",
@@ -193,6 +194,7 @@ describe("Runtime", () => {
 
             beforeEach(async () => {
                 shouldDeferGenerateSummary = false;
+                deferGenerateSummary = undefined;
                 clock.reset();
                 runCount = 0;
                 stopCall = 0;
@@ -335,6 +337,7 @@ describe("Runtime", () => {
                     // should do first summary fine
                     await emitNextOp(summaryConfig.maxOps);
                     assertRunCounts(1, 0, 0);
+                    assert(deferGenerateSummary !== undefined, "submitSummary was not called");
                     deferGenerateSummary.resolve();
                     await emitAck();
 
@@ -347,13 +350,13 @@ describe("Runtime", () => {
                     await emitNextOp(); // fine
                     await tickAndFlushPromises(1); // next op will exceed maxAckWaitTime from first summary
                     await emitNextOp(); // not fine, nay cancel pending too soon
+                    assert(deferGenerateSummary !== undefined, "submitSummary was not called");
                     deferGenerateSummary.resolve();
 
                     // we should not generate another summary without previous ack
                     await emitNextOp(); // flush finish summarizing
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(2, 0, 0);
-                    deferGenerateSummary.resolve();
                 });
 
                 it("Should summarize one last time before closing >50 ops", async () => {
@@ -379,6 +382,8 @@ describe("Runtime", () => {
 
             describe("Safe Retries", () => {
                 beforeEach(async () => {
+                    shouldDeferGenerateSummary = false;
+                    deferGenerateSummary = undefined;
                     await startRunningSummarizer();
                 });
 
@@ -509,6 +514,34 @@ describe("Runtime", () => {
                             reason: "summaryNack",
                         },
                         { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount - 1 },
+                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
+                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+                });
+
+                it("Should wait on 429 from uploadSummaryWithContext", async () => {
+                    shouldDeferGenerateSummary = true;
+                    await emitNextOp();
+
+                    // too early, should not run yet
+                    await emitNextOp(summaryConfig.maxOps);
+                    assert(deferGenerateSummary !== undefined, "submitSummary was not called");
+                    deferGenerateSummary.reject({ message: "error", retryAfterSeconds: 30 });
+
+                    await flushPromises();
+                    await tickAndFlushPromises(30 * 1000 - 1);
+
+                    assertRunCounts(1, 0, 0, "failed upload");
+                    assert(mockLogger.matchEvents([
+                        { eventName: "Running:Summarize_cancel", summaryGenTag: runCount },
+                        { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount },
+                    ]), "unexpected log sequence");
+
+                    shouldDeferGenerateSummary = false;
+                    await tickAndFlushPromises(1);
+                    assertRunCounts(2, 0, 0, "normal run");
+
+                    assert(mockLogger.matchEvents([
                         { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
                         { eventName: "Running:SummaryOp", summaryGenTag: runCount },
                     ]), "unexpected log sequence");
