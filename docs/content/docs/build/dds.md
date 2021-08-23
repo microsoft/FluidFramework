@@ -37,7 +37,7 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is *last writer wins* (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[DDS documentation]({{< relref "data-structures/overview.md" >}}) for each DDS for more details about the merge
+[documentation for each DDS]({{< relref "data-structures/overview.md" >}}) for more details about the merge
 strategy it uses.
 
 ## Performance characteristics
