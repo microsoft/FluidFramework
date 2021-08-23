@@ -42,7 +42,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
             this.handler.process(message, local, localOpMetadata);
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, message);
+            throw CreateProcessingError(error, "channelDeltaConnectionFailedToProcessMessage", message);
         }
     }
 

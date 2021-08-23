@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import {
@@ -19,13 +20,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeFn,
-    IContextSummarizeResult,
     IFluidDataStoreContext,
     IGarbageCollectionData,
     IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
+    ISummarizeResult,
     ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions";
+import { ChildLogger, TelemetryDataTag, ThresholdCounter } from "@fluidframework/telemetry-utils";
 import {
     attributesBlobKey,
     createServiceEndpoints,
@@ -35,7 +37,6 @@ import {
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ChannelStorageService } from "./channelStorageService";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
-import { debug } from "./debug";
 
 export class RemoteChannelContext implements IChannelContext {
     private isLoaded = false;
@@ -47,6 +48,9 @@ export class RemoteChannelContext implements IChannelContext {
         readonly objectStorage: ChannelStorageService,
     };
     private readonly summarizerNode: ISummarizerNodeWithGC;
+    private readonly subLogger: ITelemetryLogger;
+    private readonly thresholdOpsCounter: ThresholdCounter;
+    private static readonly pendingOpsCountThreshold = 1000;
 
     constructor(
         private readonly runtime: IFluidDataStoreRuntime,
@@ -78,6 +82,12 @@ export class RemoteChannelContext implements IChannelContext {
             thisSummarizeInternal,
             async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
             async () => gcDetailsInInitialSummary(),
+        );
+
+        this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
+        this.thresholdOpsCounter = new ThresholdCounter(
+            RemoteChannelContext.pendingOpsCountThreshold,
+            this.subLogger,
         );
     }
 
@@ -111,8 +121,9 @@ export class RemoteChannelContext implements IChannelContext {
             this.services.deltaConnection.process(message, local, localOpMetadata);
         } else {
             assert(!local, 0x195 /* "Remote channel must not be local when processing op" */);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending!.push(message);
+            assert(this.pending !== undefined, 0x23e /* "pending is undefined" */);
+            this.pending.push(message);
+            this.thresholdOpsCounter.sendIfMultiple("StorePendingOps", this.pending.length);
         }
     }
 
@@ -127,7 +138,7 @@ export class RemoteChannelContext implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummarizeResult> {
         return this.summarizerNode.summarize(fullTree, trackState);
     }
 
@@ -189,10 +200,20 @@ export class RemoteChannelContext implements IChannelContext {
         // Compare snapshot version to collaborative object version
         if (attributes.snapshotFormatVersion !== undefined
             && attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion) {
-            debug(`Snapshot version mismatch. Type: ${attributes.type}, ` +
-                `Snapshot format@pkg version: ${attributes.snapshotFormatVersion}@${attributes.packageVersion}, ` +
-                // eslint-disable-next-line max-len
-                `client format@pkg version: ${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`);
+                this.subLogger.sendTelemetryEvent(
+                    {
+                        eventName: "ChannelAttributesVersionMismatch",
+                        channelType: {value: attributes.type, tag: TelemetryDataTag.PackageData},
+                        channelSnapshotVersion: {
+                            value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                        channelCodeVersion: {
+                            value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
+                            tag: TelemetryDataTag.PackageData,
+                        },
+                    },
+                );
         }
 
         const channel = await factory.load(
@@ -202,10 +223,11 @@ export class RemoteChannelContext implements IChannelContext {
             attributes);
 
         // Send all pending messages to the channel
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        for (const message of this.pending!) {
+        assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
+        for (const message of this.pending) {
             this.services.deltaConnection.process(message, false, undefined /* localOpMetadata */);
         }
+        this.thresholdOpsCounter.send("ProcessPendingOps", this.pending.length);
 
         // Commit changes.
         this.channel = channel;

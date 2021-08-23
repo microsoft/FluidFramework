@@ -91,7 +91,9 @@ export class OdspSummaryUploadManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
-            type: "channel",
+            // no ack handle implies this is initial summary after empty file creation.
+            // send container payload so server will use it without a summary op
+            type: parentHandle === undefined ? "container" : "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {
@@ -99,6 +101,9 @@ export class OdspSummaryUploadManager {
 
             const { url, headers } = getUrlAndHeadersWithAuth(`${this.snapshotUrl}/snapshot`, storageToken);
             headers["Content-Type"] = "application/json";
+            if (parentHandle) {
+                headers["If-Match"] = `fluid:containerid=${parentHandle}`;
+            }
 
             const postBody = JSON.stringify(snapshot);
 

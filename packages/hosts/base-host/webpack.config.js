@@ -17,7 +17,16 @@ function getPlugins() {
       // Also show module that is requiring each duplicate package
       verbose: true,
       // Emit errors instead of warnings
-      emitError: true
+      emitError: true,
+      /**
+       * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
+       * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
+       */
+       exclude: (instance) =>
+       // This is a result of the dynamic import of hashFileNode in hashFileBrowser as a fallback for local testing purposes.  The dynamic chunk pulls in
+       // node-libs-browser -> buffer -> base64-js at a different version from what we use elsewhere.  This dynamic chunk contributes significantly to the
+       // bundle size but should never actually get served in production.
+       instance.name === 'base64-js'
     }),
     // We don't split debug/release builds, so always do bundle analysis
     new BundleAnalyzerPlugin({

@@ -10,6 +10,7 @@ import {
     ISequencedDocumentMessage,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
 export const RawOperationType: string = "RawOperation";
@@ -154,10 +155,14 @@ export enum ControlMessageType {
 
     // Instruction sent to control if deli nacks messages
     NackMessages = "nackMessages",
+
+    // Instruction sent to indicate that the lambda started
+    LambdaStartResult = "lambdaStartResult",
 }
 
 export interface IUpdateDSNControlMessageContents {
     durableSequenceNumber: number;
+    isClientSummary: boolean;
     clearCache: boolean;
 }
 
@@ -177,4 +182,9 @@ export interface INackMessagesControlMessageContents {
      * Controls if system messages should be nacked
      */
     allowSystemMessages?: boolean;
+}
+
+export interface ILambdaStartControlMessageContents {
+    lambdaName: LambdaName;
+    success: boolean;
 }

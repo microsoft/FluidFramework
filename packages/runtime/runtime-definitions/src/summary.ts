@@ -25,22 +25,12 @@ export interface ISummaryTreeWithStats {
     summary: ISummaryTree;
 }
 
-export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    /** The channel's garbage collection data */
-    gcData: IGarbageCollectionData;
-}
-
 export interface ISummarizeResult {
     stats: ISummaryStats;
     summary: SummaryTree;
 }
 
-export interface IContextSummarizeResult extends ISummarizeResult {
-    /** The context's garbage collection data */
-    gcData: IGarbageCollectionData;
-}
-
-export interface ISummarizeInternalResult extends IContextSummarizeResult {
+export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;
     /** Additional path parts between this node's ID and its children's IDs. */
     pathPartsForChildren?: string[];
@@ -172,7 +162,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     /** The garbage collection data of the node. */
     readonly gcData: IGarbageCollectionData | undefined;
 
-    summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
+    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
         summarizeInternalFn: (fullTree: boolean, trackState: boolean) => Promise<ISummarizeInternalResult>,

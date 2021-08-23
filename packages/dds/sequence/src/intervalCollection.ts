@@ -5,7 +5,8 @@
 
 /* eslint-disable no-bitwise */
 
-import { EventEmitter } from "events";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
@@ -23,8 +24,10 @@ export interface ISerializedInterval {
 
 export interface ISerializableInterval extends MergeTree.IInterval {
     properties: MergeTree.PropertySet;
+    propertyManager: MergeTree.PropertiesManager;
     serialize(client: MergeTree.Client);
-    addProperties(props: MergeTree.PropertySet);
+    addProperties(props: MergeTree.PropertySet, collaborating?: boolean, seq?: number):
+        MergeTree.PropertySet | undefined;
     getIntervalId(): string | undefined;
 }
 
@@ -37,6 +40,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 export class Interval implements ISerializableInterval {
     public properties: MergeTree.PropertySet;
     public auxProps: MergeTree.PropertySet[];
+    public propertyManager: MergeTree.PropertiesManager;
     constructor(
         public start: number,
         public end: number,
@@ -133,8 +137,21 @@ export class Interval implements ISerializableInterval {
         return this.properties;
     }
 
-    public addProperties(newProps: MergeTree.PropertySet, op?: MergeTree.ICombiningOp) {
-        this.properties = MergeTree.addProperties(this.properties, newProps, op);
+    public addProperties(
+        newProps: MergeTree.PropertySet,
+        collaborating: boolean = false,
+        seq?: number,
+        op?: MergeTree.ICombiningOp,
+    ): MergeTree.PropertySet | undefined {
+        if (newProps) {
+            if (!this.propertyManager) {
+                this.propertyManager = new MergeTree.PropertiesManager();
+            }
+            if (!this.properties) {
+                this.properties = MergeTree.createMap<any>();
+            }
+            return this.propertyManager.addProperties(this.properties, newProps, op, seq, collaborating);
+        }
     }
 
     public modify(label: string, start: number, end: number) {
@@ -150,6 +167,7 @@ export class Interval implements ISerializableInterval {
 
 export class SequenceInterval implements ISerializableInterval {
     public properties: MergeTree.PropertySet;
+    public propertyManager: MergeTree.PropertiesManager;
     private readonly checkMergeTree: MergeTree.MergeTree;
 
     constructor(
@@ -234,8 +252,19 @@ export class SequenceInterval implements ISerializableInterval {
             this.end.max(b.end), this.intervalType);
     }
 
-    public addProperties(newProps: MergeTree.PropertySet, op?: MergeTree.ICombiningOp) {
-        this.properties = MergeTree.addProperties(this.properties, newProps, op);
+    public addProperties(
+        newProps: MergeTree.PropertySet,
+        collab: boolean = false,
+        seq?: number,
+        op?: MergeTree.ICombiningOp,
+    ): MergeTree.PropertySet | undefined {
+        if (!this.propertyManager) {
+            this.propertyManager = new MergeTree.PropertiesManager();
+        }
+        if (!this.properties) {
+            this.properties = MergeTree.createMap<any>();
+        }
+        return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
     }
 
     public overlapsPos(bstart: number, bend: number) {
@@ -272,7 +301,9 @@ export class SequenceInterval implements ISerializableInterval {
         }
 
         const newInterval = createSequenceInterval(label, startPos, endPos, this.start.getClient(), this.intervalType);
-        newInterval.addProperties(this.properties);
+        if (this.properties) {
+            newInterval.addProperties(this.properties);
+        }
         return newInterval;
     }
 }
@@ -548,9 +579,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         props?: MergeTree.PropertySet) {
         const interval: TInterval = this.createInterval(start, end, intervalType);
         if (interval) {
-            interval.addProperties(props);
-            if (this.label && (this.label.length > 0)) {
-                interval.properties[MergeTree.reservedRangeLabelsKey] = [this.label];
+            if (!interval.properties) {
+                interval.properties = MergeTree.createMap<any>();
+            }
+            if (props) {
+                interval.addProperties(props);
             }
             if (interval.properties[reservedIntervalIdKey] === undefined) {
                 // Create a new ID.
@@ -819,7 +852,14 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     }
 }
 
-export class IntervalCollection<TInterval extends ISerializableInterval> extends EventEmitter {
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+    (event: "addInterval" | "deleteInterval",
+        listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
+    (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: MergeTree.PropertySet) => void);
+}
+
+export class IntervalCollection<TInterval extends ISerializableInterval>
+    extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     private savedSerializedIntervals?: ISerializedInterval[];
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback;
@@ -941,6 +981,33 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
         return interval;
     }
 
+    public changeProperties(id: string, props: MergeTree.PropertySet) {
+        if (!this.attached) {
+            throw new Error("Attach must be called before accessing intervals");
+        }
+        if (typeof(id) !== "string") {
+            throw new Error("Change API requires an ID that is a string");
+        }
+        if (!props) {
+            throw new Error("changeProperties should be called with a property set");
+        }
+
+        const interval = this.getIntervalById(id);
+        if (interval) {
+            // Pass Unassigned as the sequence number to indicate that this is a local op that is waiting for an ack.
+            const deltaProps = interval.addProperties(props, true, MergeTree.UnassignedSequenceNumber);
+            const serializedInterval: ISerializedInterval = interval.serialize(this.client);
+            // Emit a change op that will only change properties. Add the ID to the property bag provided by the caller.
+            serializedInterval.start = undefined;
+            serializedInterval.end = undefined;
+            serializedInterval.properties = props;
+            serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
+            this.emitter.emit("change", undefined, serializedInterval);
+            this.emit("propertyChanged", interval, deltaProps);
+        }
+        this.emit("change", interval, true, undefined);
+    }
+
     public change(id: string, start?: number, end?: number): TInterval | undefined {
         if (!this.attached) {
             throw new Error("Attach must be called before accessing intervals");
@@ -956,6 +1023,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
             const serializedInterval: ISerializedInterval = interval.serialize(this.client);
             serializedInterval.start = start;
             serializedInterval.end = end;
+            // Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
+            serializedInterval.properties =
+                {
+                    [reservedIntervalIdKey]: interval.getIntervalId(),
+                };
             this.emitter.emit("change", undefined, serializedInterval);
             this.addPendingChange(id, serializedInterval);
         }
@@ -1021,12 +1093,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     }
 
     private hasPendingChangeStart(id: string) {
-        const entries = this.pendingChangeStart.get(id);
+        const entries = this.pendingChangeStart?.get(id);
         return entries && entries.length !== 0;
     }
 
     private hasPendingChangeEnd(id: string) {
-        const entries = this.pendingChangeEnd.get(id);
+        const entries = this.pendingChangeEnd?.get(id);
         return entries && entries.length !== 0;
     }
 
@@ -1038,30 +1110,44 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
         if (local) {
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
+            const id: string = serializedInterval.properties[reservedIntervalIdKey];
+            const interval: TInterval = this.getIntervalById(id);
+            if (interval) {
+                // Let the propertyManager prune its pending change-properties set.
+                interval.propertyManager?.ackPendingProperties(
+                    {
+                        type: MergeTree.MergeTreeDeltaType.ANNOTATE,
+                        props: serializedInterval.properties,
+                    });
+            }
         }
         else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
-            let start;
-            let end;
             const id: string = serializedInterval.properties[reservedIntervalIdKey];
-            if (!this.hasPendingChangeStart(id)) {
-                start = serializedInterval.start;
-            }
-            if (!this.hasPendingChangeEnd(id)) {
-                end = serializedInterval.end;
-            }
-            if (start !== undefined || end !== undefined) {
-                // Change ops always have an ID.
-                const interval: TInterval = this.getIntervalById(id);
-                if (interval) {
-                    this.localCollection.changeInterval(interval, start, end);
-                    if (this.onDeserialize) {
-                        this.onDeserialize(interval);
-                    }
+            let interval: TInterval = this.getIntervalById(id);
+            if (interval) {
+                let start: number | undefined;
+                let end: number | undefined;
+                // Track pending start/end independently of one another.
+                if (!this.hasPendingChangeStart(id)) {
+                    start = serializedInterval.start;
                 }
-                this.emit("changeInterval", interval, local, op);
+                if (!this.hasPendingChangeEnd(id)) {
+                    end = serializedInterval.end;
+                }
+                if (start !== undefined || end !== undefined) {
+                    // If changeInterval gives us a new interval, work with that one. Otherwise keep working with
+                    // the one we originally found in the tree.
+                    interval = this.localCollection.changeInterval(interval, start, end) ?? interval;
+                }
+                const deltaProps = interval.addProperties(serializedInterval.properties, true, op.sequenceNumber);
+                if (this.onDeserialize) {
+                    this.onDeserialize(interval);
+                }
+                this.emit("propertyChanged", interval, deltaProps);
             }
+            this.emit("changeInterval", interval, local, op);
         }
     }
 
@@ -1227,11 +1313,5 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
         }
 
         return this.localCollection.nextInterval(pos);
-    }
-
-    public on(
-        event: "addInterval" | "deleteInterval",
-        listener: (interval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) => void): this {
-        return super.on(event, listener);
     }
 }

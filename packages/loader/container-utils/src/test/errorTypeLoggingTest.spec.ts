@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { GenericError, DataCorruptionError, CreateContainerError } from "../error";
+import { GenericError, DataCorruptionError } from "../error";
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {
     // In all tests below, the `stack` prop will be left out of validation because it is difficult to properly
@@ -54,40 +54,6 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 error: "genericError",
             }]));
         });
-
-        it("Send and receive a GenericError using CreateContainerError", () => {
-            const props = {
-                clientId: "clientId",
-                messageClientId: "messageClientId",
-                sequenceNumber: 0,
-                clientSequenceNumber: 0,
-                messageTimestamp: 0,
-            };
-            const testError = new GenericError(
-                "someGenericError",
-                undefined /* error */,
-                props,
-            );
-            // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
-            const wrappedTestError = CreateContainerError(testError);
-            mockLogger.sendErrorEvent({
-                eventName: "containerErrorFromGenericErrorTest",
-                sequenceNumber: 0,
-            }, wrappedTestError);
-
-            assert(mockLogger.matchEvents([{
-                eventName: "containerErrorFromGenericErrorTest",
-                category: "error",
-                message: "someGenericError",
-                errorType: ContainerErrorType.genericError,
-                error: "someGenericError",
-                clientId: "clientId",
-                messageClientId: "messageClientId",
-                sequenceNumber: 0,
-                clientSequenceNumber: 0,
-                messageTimestamp: 0,
-            }]));
-        });
     });
 
     describe("Send and receive DataCorruptionError instances", () => {
@@ -114,6 +80,7 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message1: "message1",
                 message2: "message2",
                 exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
+                dataProcessingError: 1,
             }]));
         });
     });
@@ -129,31 +96,6 @@ describe("Check if the errorType field matches after sending/receiving via Conta
                 message: "genericError",
                 errorType: ContainerErrorType.genericError,
                 error: "genericError",
-            }]));
-        });
-
-        it("Send and receive a DataCorruptionError using CreateContainerError", () => {
-            const childLogger = ChildLogger.create(mockLogger, "errorTypeTestNamespace");
-            // Example dataCorruptionError kicked up by some process:
-            const testError = new DataCorruptionError(
-                "dataCorruptionErrorTest",
-                { exampleExtraTelemetryProp: "exampleExtraTelemetryProp" },
-            );
-            // Equivalent of common scenario where we call container.close(CreateContainerError(some_error)):
-            const wrappedTestError = CreateContainerError(testError);
-            childLogger.sendErrorEvent({
-                eventName: "CloseContainerOnDataCorruptionTest",
-                sequenceNumber: 0,
-            }, wrappedTestError);
-
-            assert(mockLogger.matchEvents([{
-                eventName: "errorTypeTestNamespace:CloseContainerOnDataCorruptionTest",
-                category: "error",
-                message: "dataCorruptionErrorTest",
-                errorType: ContainerErrorType.dataCorruptionError,
-                error: "dataCorruptionErrorTest",
-                exampleExtraTelemetryProp: "exampleExtraTelemetryProp",
-                sequenceNumber: 0,
             }]));
         });
     });

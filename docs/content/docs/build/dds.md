@@ -47,8 +47,8 @@ generally fall into two broad categories: *optimistic* and *consensus-based*.
 
 {{% callout note "See also" %}}
 
-* [Fluid Framework architecture]({{< relref "architecture" >}})
-* [Fluid service]({{< relref "service" >}})
+* [Fluid Framework architecture]({{< relref "architecture.md" >}})
+* [Fluid service]({{< relref "service.md" >}})
 
 {{% /callout %}}
 
@@ -187,7 +187,7 @@ You likely have more than one shape in your data model, so you could create a Sh
 store the SharedMaps representing each shape within that SharedMap.
 
 To learn more about how you use DDSes to create more complex Fluid objects, see the [Encapsulating data with
-DataObject](./dataobject-aqueduct.md) section.
+DataObject]({{< relref "dataobject-aqueduct.md" >}}) section.
 
 ### Key-value data
 

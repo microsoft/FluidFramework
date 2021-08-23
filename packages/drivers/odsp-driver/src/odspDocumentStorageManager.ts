@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
     stringToBuffer,
     bufferToString,
+    delay,
 } from "@fluidframework/common-utils";
 import {
     PerformanceEvent,
@@ -28,11 +30,10 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
-    ISequencedDeltaOpMessage,
     HostStoragePolicyInternal,
     IVersionedValueWithEpoch,
 } from "./contracts";
-import { fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
+import { downloadSnapshot, fetchSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache } from "./odspCache";
 import {
@@ -42,6 +43,7 @@ import {
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
+import { FlushResult } from "./odspDocumentDeltaConnection";
 
 /* eslint-disable max-len */
 
@@ -175,7 +177,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     private readonly attributesBlobHandles: Set<string> = new Set();
 
     private readonly odspSummaryUploadManager: OdspSummaryUploadManager;
-    private _ops: ISequencedDeltaOpMessage[] | undefined;
+    private _ops: api.ISequencedDocumentMessage[] | undefined;
 
     private firstVersionCall = true;
     private _snapshotSequenceNumber: number | undefined;
@@ -198,12 +200,12 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private readonly blobCache = new BlobCache();
 
-    public set ops(ops: ISequencedDeltaOpMessage[] | undefined) {
+    public set ops(ops: api.ISequencedDocumentMessage[] | undefined) {
         assert(this._ops === undefined, 0x0a5 /* "Trying to set ops when they are already set!" */);
         this._ops = ops;
     }
 
-    public get ops(): ISequencedDeltaOpMessage[] | undefined {
+    public get ops(): api.ISequencedDocumentMessage[] | undefined {
         return this._ops;
     }
 
@@ -219,6 +221,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
+        private readonly flushCallback: () => Promise<FlushResult>,
     ) {
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
@@ -456,7 +459,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             let id: string | undefined;
             if (snapshotTree) {
                 id = snapshotTree.id;
-                assert(id !== undefined, "Root tree should contain the id");
+                assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
                 this.setRootTree(id, snapshotTree);
             }
             if (blobs) {
@@ -533,12 +536,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             snapshotOptions.timeout = undefined;
         }
 
-        const snapshotDownloader = async (url: string, fetchOptions: {[index: string]: any}) => {
-            return this.epochTracker.fetchAndParseAsJSON(
-                url,
-                fetchOptions,
-                "treesLatest",
-                true,
+        const snapshotDownloader = async (
+            finalOdspResolvedUrl: IOdspResolvedUrl,
+            storageToken: string,
+            options: ISnapshotOptions | undefined,
+            controller?: AbortController,
+        ) => {
+            return downloadSnapshot(
+                finalOdspResolvedUrl,
+                storageToken,
+                this.logger,
+                options,
+                this.hostPolicy.fetchBinarySnapshotFormat,
+                controller,
+                this.epochTracker,
             );
         };
         const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
@@ -597,6 +608,38 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
     public async uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string> {
         this.checkSnapshotUrl();
 
+        // Enable flushing only if we have single commit summary and this is not the initial summary for an empty file
+        if (".protocol" in summary.tree && context.ackHandle !== undefined) {
+            let retry = 0;
+            for (;;) {
+                const result = await this.flushCallback();
+                const seq = result.lastPersistedSequenceNumber;
+                if (seq !== undefined && seq >= context.referenceSequenceNumber) {
+                    break;
+                }
+
+                retry++;
+                if (retry > 3) {
+                    this.logger.sendErrorEvent({
+                        eventName: "FlushFailure",
+                        ...result,
+                        retry,
+                        referenceSequenceNumber: context.referenceSequenceNumber,
+                    });
+                    break;
+                }
+
+                this.logger.sendPerformanceEvent({
+                    eventName: "FlushExtraCall",
+                    ...result,
+                    retry,
+                    referenceSequenceNumber: context.referenceSequenceNumber,
+                });
+
+                await delay(1000 * (result.retryAfter ?? 1));
+            }
+        }
+
         const id = await PerformanceEvent.timedExecAsync(this.logger,
             { eventName: "uploadSummaryWithContext" },
             async () => this.odspSummaryUploadManager.writeSummaryTree(summary, context));
@@ -651,7 +694,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                 const snapshot = await fetchSnapshot(this.snapshotUrl!, storageToken, id, this.fetchFullSnapshot, this.logger, snapshotDownloader);
                 let treeId = "";
                 if (snapshot.snapshotTree) {
-                    assert(snapshot.snapshotTree.id !== undefined, "Root tree should contain the id!!");
+                    assert(snapshot.snapshotTree.id !== undefined, 0x222 /* "Root tree should contain the id!!" */);
                     treeId = snapshot.snapshotTree.id;
                     this.setRootTree(treeId, snapshot.snapshotTree);
                 }

@@ -38,7 +38,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 export function getApiRoot(origin: string): string;
 
 // @public (undocumented)
-export function getHashedDocumentId(driveId: string, itemId: string): string;
+export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @public
 export function getLocatorFromOdspUrl(url: URL): OdspFluidDataStoreLocator | undefined;
@@ -129,7 +129,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 }
 
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

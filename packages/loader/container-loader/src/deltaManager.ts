@@ -5,7 +5,12 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, IEventProvider } from "@fluidframework/common-definitions";
+import {
+    IDisposable,
+    ITelemetryLogger,
+    IEventProvider,
+    ITelemetryProperties,
+} from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
     IDeltaHandlerStrategy,
@@ -17,7 +22,7 @@ import {
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
-import { TelemetryLogger, safeRaiseEvent, logIfFalse } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
     IDocumentService,
@@ -52,13 +57,14 @@ import {
     waitForConnectedState,
     NonRetryableError,
     DeltaStreamConnectionForbiddenError,
+    GenericNetworkError,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
-    CreateContainerError,
     CreateProcessingError,
     DataCorruptionError,
     wrapError,
+    GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
 
@@ -76,7 +82,7 @@ function getNackReconnectInfo(nackContent: INackContent) {
 const createReconnectError = (prefix: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => createGenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+        (errorMessage: string) => new GenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
     );
 
 export interface IConnectionArgs {
@@ -104,7 +110,10 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
  * Implementation of IDocumentDeltaConnection that does not support submitting
  * or receiving ops. Used in storage-only mode.
  */
-class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
+class NoDeltaStream
+    extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+    implements IDocumentDeltaConnection, IDisposable
+{
     clientId: string = "storage-only client";
     claims: ITokenClaims = {
         scopes: [ScopeType.DocRead],
@@ -132,8 +141,13 @@ class NoDeltaStream extends TypedEventEmitter<IDocumentDeltaConnectionEvents> im
             content: { message: "Cannot submit signal with storage-only connection", code: 403 },
         });
     }
-    close(): void {
-    }
+
+    private _disposed = false;
+    public get disposed() { return this._disposed; }
+    public dispose() { this._disposed = true; }
+
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(): void { this.dispose(); }
 }
 
 /**
@@ -404,6 +418,13 @@ export class DeltaManager
                 // If we switch to readonly while connected, we should disconnect first
                 // See comment in the "readonly" event handler to deltaManager set up by
                 // the ContainerRuntime constructor
+
+                if (this.shouldJoinWrite()) {
+                    // If we have pending changes, then we will never send them - it smells like
+                    // host logic error.
+                    this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
+                }
+
                 reconnect = this.disconnectFromDeltaStream("Force readonly");
             }
             safeRaiseEvent(this, this.logger, "readonly", this.readonly);
@@ -412,6 +433,20 @@ export class DeltaManager
                 this.triggerConnect({ reason: "forceReadonly", mode: "read", fetchOpsFromStorage: false });
             }
         }
+    }
+
+    public triggerConnectionRecovery(reason: string, props: ITelemetryProperties) {
+            assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
+            this.logger.sendErrorEvent({
+                eventName: "ConnectionRecovery",
+                reason,
+                // This directly tells us if fetching ops is in flight, and thus likely the reason of
+                // stalled op processing
+                fetchReason: this.fetchReason,
+                ...props,
+            });
+            this.disconnectFromDeltaStream(reason);
+            this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
     }
 
     private set_readonlyPermissions(readonly: boolean) {
@@ -441,7 +476,7 @@ export class DeltaManager
             });
 
         this._inbound.on("error", (error) => {
-            this.close(CreateProcessingError(error, this.lastMessage));
+            this.close(CreateProcessingError(error, "deltaManagerInboundErrorHandler", this.lastMessage));
         });
 
         // Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
@@ -455,7 +490,7 @@ export class DeltaManager
             });
 
         this._outbound.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(normalizeError(error));
         });
 
         // Inbound signal queue
@@ -470,7 +505,7 @@ export class DeltaManager
         });
 
         this._inboundSignal.on("error", (error) => {
-            this.close(CreateContainerError(error));
+            this.close(normalizeError(error));
         });
 
         // Initially, all queues are created paused.
@@ -549,6 +584,10 @@ export class DeltaManager
      * @param args - The connection arguments
      */
     private triggerConnect(args: IConnectionArgs) {
+        assert(this.connection === undefined, 0x239 /* "called only in disconnected state" */);
+        if (this.reconnectMode !== ReconnectMode.Enabled) {
+            return;
+        }
         this.connectCore(args).catch((err) => {
             // Errors are raised as "error" event and close container.
             // Have a catch-all case in case we missed something
@@ -638,7 +677,7 @@ export class DeltaManager
 
                     // Socket.io error when we connect to wrong socket, or hit some multiplexing bug
                     if (!canRetryOnError(origError)) {
-                        const error = CreateContainerError(origError);
+                        const error = normalizeError(origError);
                         this.close(error);
                         // eslint-disable-next-line @typescript-eslint/no-throw-literal
                         throw error;
@@ -730,7 +769,7 @@ export class DeltaManager
 
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
-            const error = CreateContainerError("Op is sent in read-only document state", {
+            const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {
                 readonly: this.readOnlyInfo.readonly,
                 forcedReadonly: this.readOnlyInfo.forced,
                 readonlyPermissions: this.readOnlyInfo.permissions,
@@ -817,6 +856,22 @@ export class DeltaManager
         let listenerToClear: ((op: ISequencedDocumentMessage) => void) | undefined;
 
         if (to !== undefined) {
+            const lastExpectedOp = to - 1; // make it inclusive!
+
+            // It is possible that due to asynchrony (including await above), required ops were already
+            // received through delta stream. Validate that before moving forward.
+            if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
+                this.logger.sendPerformanceEvent({
+                    reason: this.fetchReason,
+                    eventName: "ExtraStorageCall",
+                    early: true,
+                    from,
+                    to,
+                    ...this.connectionStateProps,
+                });
+                return;
+            }
+
             controller = new AbortController();
 
             assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
@@ -828,14 +883,8 @@ export class DeltaManager
                 // detected gap, this gap can't be filled in later on through websocket).
                 // And in practice that does look like the case. The place where this code gets hit is if we lost
                 // connection and reconnected (likely to another box), and new socket's initial ops contains these ops.
-                if (op.sequenceNumber >= to) {
-                    this.logger.sendPerformanceEvent({
-                        reason: this.fetchReason,
-                        eventName: "ExtraStorageCall",
-                        from,
-                        to,
-                        ...this.connectionStateProps,
-                    });
+                assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
+                if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                     controller.abort();
                     this._inbound.off("push", listener);
                 }
@@ -925,8 +974,12 @@ export class DeltaManager
         if (delayMs > 0 && (timeNow + delayMs > this.timeTillThrottling)) {
             this.timeTillThrottling = timeNow + delayMs;
 
-            const throttlingWarning: IThrottlingWarning =
-                ThrottlingWarning.wrap(error, "Service busy/throttled", delayMs / 1000 /* retryAfterSeconds */);
+            const throttlingWarning: IThrottlingWarning = ThrottlingWarning.wrap(
+                error,
+                "Service busy/throttled",
+                delayMs / 1000 /* retryAfterSeconds */,
+                this.logger,
+            );
             this.emit("throttled", throttlingWarning);
         }
     }
@@ -1004,6 +1057,21 @@ export class DeltaManager
     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
+
+        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
+        const disposable = connection as Partial<IDisposable>;
+        if (disposable.disposed === true) {
+            this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
+            // Note: not checking this.reconnectMode mode here as nobody ever observed this connection, so
+            // none of invariants is broken if reconnect happens.
+            this.triggerConnect({
+                reason: "early connection closure",
+                mode: requestedMode,
+                fetchOpsFromStorage: false,
+            });
+            return;
+        }
+
         this.connection = connection;
 
         // Does information in scopes & mode matches?
@@ -1102,8 +1170,8 @@ export class DeltaManager
                     this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
                 }
             // we do not know the gap, and we will not learn about it if socket is quite - have to ask.
-            } else if (connection.mode !== "write") {
-                this.fetchMissingDeltas("AfterConnection", this.lastQueuedSequenceNumber);
+            } else if (connection.mode === "read") {
+                this.fetchMissingDeltas("AfterReadConnection", this.lastQueuedSequenceNumber);
             }
         } else {
             this.connectionStateProps.connectionInitialOpsFrom = initialMessages[0].sequenceNumber;
@@ -1146,7 +1214,15 @@ export class DeltaManager
         this._outbound.clear();
         this.emit("disconnect", reason);
 
-        connection.close();
+        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.dispose()) in some future.
+        const disposable = connection as Partial<IDisposable>;
+
+        if (disposable.dispose !== undefined) {
+            disposable.dispose();
+        } else {
+            connection.close();
+        }
+
         this.connectionStateProps = {};
 
         return true;
@@ -1476,7 +1552,7 @@ export class DeltaManager
                 cacheOnly);
         } catch (error) {
             this.logger.sendErrorEvent({eventName: "GetDeltas_Exception"}, error);
-            this.close(CreateContainerError(error));
+            this.close(normalizeError(error));
         } finally {
             this.refreshDelayInfo(this.deltaStorageDelayId);
             this.fetchReason = undefined;

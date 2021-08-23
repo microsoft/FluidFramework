@@ -21,6 +21,9 @@ export interface IDeliServerConfiguration {
 
     // Controls how deli should track of certain op events
     opEvent: IDeliOpEventServerConfiguration;
+
+    // Consider service summary status for successful session close
+    checkServiceSummaryStatus: boolean;
 }
 
 export interface IDeliOpEventServerConfiguration {
@@ -108,12 +111,20 @@ export interface IServerConfiguration {
 
     // Enable adding a traces array to operation messages
     enableTraces: boolean;
+
+    // Enable lambda metrics using the Lumber telemetry framework
+    enableLambdaMetrics: boolean;
+
+    // Enable metrics using the Lumber telemetry framework
+    enableLumberMetrics: boolean;
 }
 
 export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     enableTraces: true,
+    enableLambdaMetrics: true,
+    enableLumberMetrics: true,
     summary: {
         idleTime: 5000,
         maxOps: 1000,
@@ -125,6 +136,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
+        checkServiceSummaryStatus: true,
         opEvent: {
             enable: false,
             idleTime: 15 * 1000,

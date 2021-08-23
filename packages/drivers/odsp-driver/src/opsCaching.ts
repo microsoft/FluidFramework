@@ -149,13 +149,15 @@ export class OpsCache {
 
             batchNumber++;
         }
-        if (messages.length > 0) {
+
+        const duration = performance.now() - start;
+        if (messages.length > 0 || duration > 1000) {
             this.logger.sendPerformanceEvent({
                 eventName: "CacheOpsUsed",
                 from,
                 to,
                 length: messages.length,
-                duration: performance.now() - start,
+                duration,
             });
         }
         return messages;
