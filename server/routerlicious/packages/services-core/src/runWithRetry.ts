@@ -10,12 +10,12 @@ export async function runWithRetry<T>(
     api: () => Promise<T>,
     callName: string,
     maxRetries: number,
+    retryAfterMs: number,
     logger?: ILogger,
     shouldRetry?: (error) => boolean,
 ): Promise<T | undefined> {
     let result: T | undefined;
     let retryCount = 0;
-    const retryAfterMs = 1000;
     let success = false;
     do  {
         try {

@@ -103,7 +103,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
         return runWithRetry(
             async () => this.opCollection.insertMany(dbOps, false),
             "insertOpScriptorium",
-            3,
+            3 /* maxRetries */,
+            1000 /* retryAfterMs */,
             this.context.log,
             (error) => error.code !== 11000);
     }

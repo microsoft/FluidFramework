@@ -52,7 +52,8 @@ export class CheckpointManager implements ICheckpointManager {
             await runWithRetry(
                 async () => this.opCollection.insertMany(dbOps, false),
                 "writeCheckpointScribe",
-                3,
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
                 this.context.log,
                 (error) => error.code !== 11000);
         }
