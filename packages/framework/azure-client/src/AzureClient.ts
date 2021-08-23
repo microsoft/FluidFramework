@@ -40,7 +40,7 @@ export class AzureClient {
     constructor(
         private readonly connectionConfig: AzureConnectionConfig,
         private readonly logger?: ITelemetryBaseLogger,
-        ) {
+    ) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.connectionConfig.tokenProvider,
         );
@@ -54,7 +54,9 @@ export class AzureClient {
     public async createContainer(
         containerSchema: ContainerSchema,
     ): Promise<AzureResources> {
-        return this.createContainerBase(containerSchema, false);
+        const { fluidContainer, containerServices } = await this.createNewContainer(containerSchema);
+        await fluidContainer.attach();
+        return { fluidContainer, containerServices };
     }
 
     /**
@@ -62,11 +64,11 @@ export class AzureClient {
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
-        public async createDetachedContainer(
-            containerSchema: ContainerSchema,
-        ): Promise<AzureResources> {
-            return this.createContainerBase(containerSchema, true);
-        }
+    public async createDetachedContainer(
+        containerSchema: ContainerSchema,
+    ): Promise<AzureResources> {
+        return this.createNewContainer(containerSchema);
+    }
 
     /**
      * Acesses the existing container given its unique ID in the Azure Fluid Relay service.
@@ -83,9 +85,8 @@ export class AzureClient {
         return this.getFluidContainerAndServices(id, container);
     }
 
-    private async createContainerBase(
+    private async createNewContainer(
         containerSchema: ContainerSchema,
-        detached: boolean,
     ): Promise<AzureResources> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.createDetachedContainer({
@@ -95,24 +96,22 @@ export class AzureClient {
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
         const id = uuid();
-        const attach = async () => container.attach({url: id});
-        if (!detached) {
-            await attach();
-        }
-        return this.getFluidContainerAndServices(id, container, attach);
+        return this.getFluidContainerAndServices(id, container);
     }
 
     // #region private
     private async getFluidContainerAndServices(
         id: string,
         container: Container,
-        attach?: () => Promise<void>,
     ): Promise<AzureResources> {
+        const attach = async () => {
+            await container.attach({ url: id });
+            return id;
+        };
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, attach);
         const containerServices: AzureContainerServices = this.getContainerServices(container);
-        const azureResources: AzureResources = { fluidContainer, containerServices };
-        return azureResources;
+        return { fluidContainer, containerServices };
     }
 
     private getContainerServices(

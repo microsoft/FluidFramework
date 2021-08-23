@@ -32,7 +32,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         public readonly id: string,
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
-        private readonly customAttach?: () => Promise<void>,
+        private readonly customAttach: () => Promise<string>,
     ) {
         super();
         container.on("connected", this.connectedHandler);
@@ -71,8 +71,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     public async attach() {
-        if (this.attachState === AttachState.Detached && this.customAttach) {
-            await this.customAttach();
+        if (this.attachState === AttachState.Detached) {
+            return this.customAttach();
         }
     }
 

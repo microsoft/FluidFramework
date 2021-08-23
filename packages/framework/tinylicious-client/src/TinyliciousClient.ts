@@ -66,8 +66,9 @@ export class TinyliciousClient {
         // until container ID changes are settled in lower layers.
         const id = uuid();
         const container = await this.getContainerCore(id, containerSchema, true);
-        await container.attach({ url: id });
-        return this.getFluidContainerAndServices(id, container);
+        const { fluidContainer, containerServices } = await this.getFluidContainerAndServices(id, container);
+        await fluidContainer.attach();
+        return { fluidContainer, containerServices};
     }
 
      /**
@@ -105,8 +106,11 @@ export class TinyliciousClient {
         container: Container,
     ): Promise<TinyliciousResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const customAttach = async () => container.attach({url: id});
-        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, customAttach);
+        const attach = async () => {
+            await container.attach({url: id});
+            return id;
+        };
+        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, attach);
         const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
         const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
         return tinyliciousResources;
@@ -140,7 +144,7 @@ export class TinyliciousClient {
 
         let container: Container;
 
-        if (createNew === true) {
+        if (createNew) {
             // We're not actually using the code proposal (our code loader always loads the same module
             // regardless of the proposal), but the Container will only give us a NullRuntime if there's
             // no proposal.  So we'll use a fake proposal.
