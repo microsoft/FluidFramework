@@ -116,7 +116,8 @@ module.exports = {
                 "Microsoft",
                 "npm",
                 "Routerlicious",
-                "Tinylicious"
+                "Tinylicious",
+                "tinylicious.md", // Without this entry, markdownlint incorrectly flags "tinylicious.md" as an improper spelling of "Tinylicious".
             ]
         }
     },
