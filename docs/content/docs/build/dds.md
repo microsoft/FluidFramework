@@ -103,9 +103,8 @@ Distributed data structures can store primitive values like numbers and strings,
 objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called *handles*, which *are*
 serializable.
 
-When storing a DDS within another DDS, you must store its handle, not the DDS itself.
-
-For examples of how to do this, see [Using handles to store and retrieve Fluid objects][handles-example].
+When storing a DDS within another DDS, you must store its handle, not the DDS itself. For examples of how to do this,
+see [Using handles to store and retrieve Fluid objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
 see [Fluid handles]({{< relref "handles.md" >}}).
