@@ -427,8 +427,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 
 // @public
 export interface IRuntime extends IDisposable {
-    // (undocumented)
-    createSummary(): ISummaryTree;
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
     process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
     processSignal(message: any, local: boolean): any;
