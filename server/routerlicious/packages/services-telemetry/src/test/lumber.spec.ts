@@ -174,11 +174,12 @@ describe("Lumber", () => {
     it("Makes sure we can complete Lumber if schema validation succeeds.", () => {
         const successMessage = "SuccessMessage";
         const engine = new TestEngine1();
+        const schemaValidator = new TestSchemaValidator(true);
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
             [engine],
-            new TestSchemaValidator(true)); // Setting this as true to force validation to succeed
+            [schemaValidator]); // Setting this as true to force validation to succeed
 
         assert.strictEqual(lumber.successful, undefined);
 
@@ -193,11 +194,12 @@ describe("Lumber", () => {
     it("Makes sure we cannot complete Lumber if schema validation fails.", () => {
         const successMessage = "SuccessMessage";
         const engine = new TestEngine1();
+        const schemaValidator = new TestSchemaValidator(false);
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
             LumberType.Metric,
             [engine],
-            new TestSchemaValidator(false)); // Setting this as false to force validation to fail
+            [schemaValidator]); // Setting this as false to force validation to fail
 
         assert.strictEqual(lumber.successful, undefined);
 
