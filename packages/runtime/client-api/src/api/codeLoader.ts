@@ -28,7 +28,7 @@ import {
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
-import { create404Response, isContextExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { Document } from "./document";
 
 const rootMapId = "root";
@@ -45,7 +45,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         private readonly dataStoreFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
     { }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const document = await routerP;
@@ -61,7 +61,6 @@ export class Chaincode implements IFluidDataStoreFactory {
             },
             this.dataStoreFactory);
 
-        const backCompatExisting = isContextExisting(context, existing);
         const runtime = new runtimeClass(
             context,
             new Map([
@@ -78,12 +77,12 @@ export class Chaincode implements IFluidDataStoreFactory {
                 sequence.SharedIntervalCollection.getFactory(),
                 SharedMatrix.getFactory(),
             ].map((factory) => [factory.type, factory])),
-            backCompatExisting,
+            existing,
         );
 
         // Initialize core data structures
         let root: map.ISharedMap;
-        if (!backCompatExisting) {
+        if (!existing) {
             root = map.SharedMap.create(runtime, rootMapId);
             root.bindToContext();
 
