@@ -2,6 +2,7 @@
 title: SharedDirectory
 menuPosition: 5
 status: unwritten
+draft: true
 ---
 
 Directory usage guide.
