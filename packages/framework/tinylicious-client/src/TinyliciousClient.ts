@@ -40,7 +40,7 @@ export class TinyliciousClient {
      * @param connectionConfig - Optional. Configuration parameters to override default connection settings.
      * @param logger - Optional. A logger instance to receive diagnostic messages.
      */
-     constructor(
+    constructor(
         serviceConnectionConfig?: TinyliciousConnectionConfig,
         private readonly logger?: ITelemetryBaseLogger,
     ) {
@@ -54,12 +54,12 @@ export class TinyliciousClient {
         );
     }
 
-     /**
+    /**
      * Creates a new detached container instance in Tinylicious server.
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
-      public async createContainer(
+    public async createContainer(
         containerSchema: ContainerSchema,
     ): Promise<TinyliciousResources> {
         // temporarily we'll generate the new container ID here
@@ -75,7 +75,7 @@ export class TinyliciousClient {
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
      */
-     public async getContainer(
+    public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
     ): Promise<TinyliciousResources> {
@@ -90,7 +90,7 @@ export class TinyliciousClient {
     ): Promise<TinyliciousResources> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const attach = async () => {
-            await container.attach({url: id});
+            await container.attach({ url: id });
             return id;
         };
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
