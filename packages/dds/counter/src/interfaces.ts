@@ -5,6 +5,9 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
+/**
+ * @public
+ */
 export interface ISharedCounterEvents extends ISharedObjectEvents {
     /**
      * This event is raised when the counter is incremented or decremented.
@@ -19,6 +22,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 
 /**
  * Shared counter interface
+ * @public
  */
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     /**

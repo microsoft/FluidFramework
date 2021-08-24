@@ -41,6 +41,7 @@ const snapshotFileName = "header";
 
 /**
  * A `SharedCounter` is a shared object which holds a number that can be incremented or decremented.
+ * @public
  *
  * @remarks
  * ### Creation
