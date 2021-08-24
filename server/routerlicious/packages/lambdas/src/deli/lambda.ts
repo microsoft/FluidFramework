@@ -180,7 +180,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
         this.nackMessages = lastCheckpoint.nackMessages;
-        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas;
+        // Null coalescing for backward compatibility
+        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
