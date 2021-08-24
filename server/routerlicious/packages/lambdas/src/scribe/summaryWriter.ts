@@ -242,6 +242,12 @@ export class SummaryWriter implements ISummaryWriter {
             return false;
         }
 
+        if (!op.additionalContent) {
+            // this is an mixed mode edge case that can occur if the "generateServiceSummary" config
+            // was disabled in a previous deployment and is now enabled in the next one
+            return false;
+        }
+
         // Generate a tree of logTail starting from the last protocol state.
         const logTailEntries = await this.generateLogtailEntries(
             currentProtocolHead,
@@ -363,7 +369,7 @@ export class SummaryWriter implements ISummaryWriter {
         protocolEntries: ITreeEntry[],
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[]): Promise<string> {
-        const fullTree: ISummaryTree =  {
+        const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
                 ".protocol": this.createSummaryTreeFromEntry(protocolEntries),
@@ -386,7 +392,7 @@ export class SummaryWriter implements ISummaryWriter {
         parentHandle: string,
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[]): Promise<string> {
-        const fullTree: ISummaryTree =  {
+        const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
                 ".logTail": this.createSummaryTreeFromEntry(logTailEntries),

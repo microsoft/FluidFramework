@@ -780,8 +780,13 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         };
         if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
             const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
-            const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
-            augmentedOutputMessage.additionalContent = checkpointData;
+            if (message.operation.type === MessageType.Summarize ||
+                this.serviceConfiguration.scribe.generateServiceSummary) {
+                // only add additional content if scribe will use this op for generating a summary
+                // NoClient ops are ignored by scribe when generateServiceSummary is disabled
+                const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
+                augmentedOutputMessage.additionalContent = checkpointData;
+            }
             return augmentedOutputMessage;
         } else if (systemContent !== undefined) { // TODO to consolidate the logic here
             const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
