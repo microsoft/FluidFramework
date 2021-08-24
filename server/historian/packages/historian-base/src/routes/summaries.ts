@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IWholeSummaryPayload, IWriteSummaryResponse} from "@fluidframework/server-services-client";
+import { IWholeSummaryPayload, IWholeSummaryTree, IWriteSummaryResponse} from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
 import { Router } from "express";
@@ -26,6 +26,15 @@ export function create(
         throttleIdSuffix: utils.Constants.throttleIdSuffix,
     };
 
+    async function getSummary(
+        tenantId: string,
+        authorization: string,
+        sha: string,
+        useCache: boolean): Promise<IWholeSummaryTree> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        return service.getSummary(sha, useCache);
+    }
+
     async function createSummary(
         tenantId: string,
         authorization: string,
@@ -33,6 +42,19 @@ export function create(
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.createSummary(params);
     }
+
+    router.get("/repos/:ignored?/:tenantId/git/summaries/:sha",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const useCache = !("disableCache" in request.query);
+            const summaryP = getSummary(
+                request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+
+            utils.handleResponse(
+                summaryP,
+                response,
+                useCache);
+    });
 
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
