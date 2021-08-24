@@ -698,7 +698,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
     private readonly summarizerClientElection: SummarizerClientElection;
-    // summaryManager will only be created if this client is permitted to spawn a summarizing client
+    /**
+     * summaryManager will only be created if this client is permitted to spawn a summarizing client
+     * It is created only by interactive client, i.e. summarizer client, as well as non-interactive bots
+     * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
+     */
     private readonly summaryManager: SummaryManager | undefined;
     private readonly summaryCollection: SummaryCollection;
 
@@ -738,6 +742,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
+    /**
+     * Summarizer is responsible for coordinating when to send generate and send summaries.
+     * It is the main entry point for summary work.
+     * It is created only by summarizing container (i.e. one with clientType === "summarizer")
+     */
     private readonly _summarizer?: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
@@ -1063,7 +1072,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         value: this.summarizer,
                     };
                 }
-                assert(false, "ah");
+                return create404Response(request);
             }
             if (this.requestHandler !== undefined) {
                 return this.requestHandler(parser, this);
