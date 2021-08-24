@@ -232,6 +232,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
         describe("Manually flushed batches", () => {
             it("can send and receive multiple batch ops that are manually flushed", async () => {
+                dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 // Send the ops that are to be batched together.
                 dataObject1map1.set("key1", "value1");
                 dataObject1map2.set("key2", "value2");
@@ -254,6 +255,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
             });
 
             it("can send and receive single batch op that is manually flushed", async () => {
+                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
                 dataObject2map1.set("key1", "value1");
                 (dataObject2.context.containerRuntime as IContainerRuntime).flush();
 
@@ -274,6 +276,8 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                  * This test verifies that among other things, the PendingStateManager's algorithm of handling
                  * consecutive batches is correct.
                  */
+
+                dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
                 // Send the ops that are to be batched together.
                 dataObject2map1.set("key1", "value1");
@@ -461,6 +465,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 dataObject1map2.set("key2", "value2");
                 dataObject1map1.set("key3", "value3");
                 dataObject1map2.set("key4", "value4");
+                (dataObject1.context.containerRuntime as IContainerRuntime).flush();
 
                 // Verify that the document is correctly set to dirty.
                 verifyDocumentDirtyState(dataObject1, true);
