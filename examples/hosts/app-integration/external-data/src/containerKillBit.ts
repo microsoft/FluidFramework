@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { TaskManager } from "@fluid-experimental/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { TaskManager } from "@fluid-experimental/task-manager";
 
+const crcKey = "crc";
 const taskManagerKey = "task-manager";
 const markedForDestructionKey = "marked";
 const destroyTaskName = "destroy";
@@ -27,7 +29,16 @@ export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvent
 }
 
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
+    private _crc: ConsensusRegisterCollection<boolean> | undefined;
     private _taskManager: TaskManager | undefined;
+
+    private get crc() {
+        if (this._crc === undefined) {
+            throw new Error("Couldn't retrieve the ConsensusRegisterCollection");
+        }
+        return this._crc;
+    }
+
     private get taskManager() {
         if (this._taskManager === undefined) {
             throw new Error("Couldn't retrieve the TaskManager");
@@ -36,24 +47,24 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public get dead() {
-        return this.root.get(deadKey) as boolean;
+        return this.crc.read(deadKey) as boolean;
     }
 
     public async setDead() {
-        // This should probably use a consensus-type data structure here, to make it easier to validate
+        // Using a consensus-type data structure here, to make it easier to validate
         // that the setDead was ack'd and we can have confidence other clients will agree.
-        this.root.set(deadKey, true);
+        await this.crc.write(deadKey, true);
     }
 
     public get markedForDestruction() {
-        return this.root.get(markedForDestructionKey) as boolean;
+        return this.crc.read(markedForDestructionKey) as boolean;
     }
 
     public async markForDestruction() {
         // This should probably use a quorum-type data structure here.
         // Then, when everyone sees the quorum proposal get approved they can choose to either volunteer
         // or close themselves
-        this.root.set(markedForDestructionKey, true);
+        await this.crc.write(markedForDestructionKey, true);
     }
 
     public async volunteerForDestruction(): Promise<void> {
@@ -65,17 +76,24 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     protected async initializingFirstTime() {
+        const crc = ConsensusRegisterCollection.create(this.runtime);
         const taskManager = TaskManager.create(this.runtime);
+        this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
-        this.root.set(markedForDestructionKey, false);
-        this.root.set(deadKey, false);
+        await Promise.all([
+            crc.write(markedForDestructionKey, false),
+            crc.write(deadKey, false),
+        ]);
     }
 
     protected async hasInitialized() {
-        this.root.on("valueChanged", (changed) => {
-            if (changed.key === markedForDestructionKey) {
+        const crcHandle = this.root.get(crcKey);
+        this._crc = await crcHandle.get();
+
+        this.crc.on("atomicChanged", (key) => {
+            if (key === markedForDestructionKey) {
                 this.emit("markedForDestruction");
-            } else if (changed.key === deadKey) {
+            } else if (key === deadKey) {
                 this.emit("dead");
             }
         });
@@ -95,6 +113,7 @@ export const ContainerKillBitInstantiationFactory =
         "container-kill-bit",
         ContainerKillBit,
         [
+            ConsensusRegisterCollection.getFactory(),
             TaskManager.getFactory(),
         ],
         {},
