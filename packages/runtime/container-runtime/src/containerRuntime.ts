@@ -717,6 +717,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._connected;
     }
 
+    /** clientId of parent (non-summarizing) container that owns summarizer container */
     public get summarizerClientId(): string | undefined {
         return this.summarizerClientElection.electedClientId;
     }
@@ -737,7 +738,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
-    private readonly summarizer: Summarizer;
+    private readonly _summarizer?: Summarizer;
     private readonly deltaSender: IDeltaSender | undefined;
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
@@ -770,6 +771,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // deleted as soon as GC runs.
     public get gcTestMode(): boolean {
         return getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+    }
+
+    private get summarizer(): Summarizer {
+        assert(this._summarizer !== undefined, "This is not summarizing container");
+        return this._summarizer;
     }
 
     private constructor(
@@ -913,18 +919,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         this.summaryCollection.on("default", defaultAction);
 
-        // We always create the summarizer in the case that we are asked to generate summaries. But this may
-        // want to be on demand instead.
-        // Don't use optimizations when generating summaries with a document loaded using snapshots.
-        // This will ensure we correctly convert old documents.
-        this.summarizer = new Summarizer(
-            "/_summarizer",
-            this /* ISummarizerRuntime */,
-            () => this.summaryConfiguration,
-            this /* ISummarizerInternalsProvider */,
-            this.IFluidHandleContext,
-            this.summaryCollection);
-
         const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
         const orderedClientCollection = new OrderedClientCollection(
             orderedClientLogger,
@@ -949,31 +943,37 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        }
-        if (
-            this.runtimeOptions.summaryOptions.generateSummaries !== false
-            && SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
-        ) {
-            // Create the SummaryManager and mark the initial state
-            this.summaryManager = new SummaryManager(
-                this.summarizerClientElection,
-                this, // IConnectedState
-                this.summaryCollection,
-                this.logger,
-                formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
-                new Throttler(
-                    60 * 1000, // 60 sec delay window
-                    30 * 1000, // 30 sec max delay
-                    // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-                    formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-                ),
-                {
-                    initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
-                },
-                this.runtimeOptions.summaryOptions.summarizerOptions,
-            );
-            this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
-            this.summaryManager.start();
+        } else {
+            if (this.context.clientDetails.type === summarizerClientType) {
+                this._summarizer = new Summarizer(
+                    "/_summarizer",
+                    this /* ISummarizerRuntime */,
+                    () => this.summaryConfiguration,
+                    this /* ISummarizerInternalsProvider */,
+                    this.IFluidHandleContext,
+                    this.summaryCollection);
+            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+                // Create the SummaryManager and mark the initial state
+                this.summaryManager = new SummaryManager(
+                    this.summarizerClientElection,
+                    this, // IConnectedState
+                    this.summaryCollection,
+                    this.logger,
+                    formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
+                    new Throttler(
+                        60 * 1000, // 60 sec delay window
+                        30 * 1000, // 30 sec max delay
+                        // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+                        formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+                    ),
+                    {
+                        initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                    },
+                    this.runtimeOptions.summaryOptions.summarizerOptions,
+                );
+                this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+                this.summaryManager.start();
+            }
         }
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
@@ -1024,7 +1024,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
             this.summaryManager.dispose();
         }
-        this.summarizer.dispose();
+        this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
 
@@ -1056,11 +1056,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const id = parser.pathParts[0];
 
             if (id === "_summarizer" && parser.pathParts.length === 1) {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: this.summarizer,
-                };
+                if (this._summarizer !== undefined) {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/object",
+                        value: this.summarizer,
+                    };
+                }
+                assert(false, "ah");
             }
             if (this.requestHandler !== undefined) {
                 return this.requestHandler(parser, this);
