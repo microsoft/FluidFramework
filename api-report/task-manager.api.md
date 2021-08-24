@@ -99,7 +99,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    protected reSubmitCore(): void;
+    protected resubmitCore(): void;
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     }
 

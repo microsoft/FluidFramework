@@ -528,7 +528,7 @@ export class SharedMatrix<T = any>
         this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         switch (content.target) {
             case SnapshotPath.cols:
                 this.submitColMessage(this.cols.regeneratePendingOp(

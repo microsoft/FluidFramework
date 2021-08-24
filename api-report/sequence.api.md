@@ -410,7 +410,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected resubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     // (undocumented)
@@ -561,7 +561,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment> extend
     protected replaceRange(start: number, end: number, segment: MergeTree.ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number;
     // (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected resubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly segmentFromSpec: (spec: MergeTree.IJSONSegment) => MergeTree.ISegment;
     // (undocumented)

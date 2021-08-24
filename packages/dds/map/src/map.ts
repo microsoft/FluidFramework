@@ -351,9 +351,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     protected onDisconnect() {}
 
     /**
-     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.resubmitCore}
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 

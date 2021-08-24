@@ -342,7 +342,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         this.submitLocalMessage(content, localOpMetadata);
     }
 
@@ -448,7 +448,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param localOpMetadata - The local metadata associated with the original message.
      */
     private reSubmit(content: any, localOpMetadata: unknown) {
-        this.reSubmitCore(content, localOpMetadata);
+        this.resubmitCore(content, localOpMetadata);
     }
 
     protected abstract applyStashedOp(content: any): unknown;

@@ -163,7 +163,7 @@ export class SharedIntervalCollection<TInterval extends ISerializableInterval = 
         return tree;
     }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) {
+    protected resubmitCore(content: any, localOpMetadata: unknown) {
         this.intervalMapKernel.trySubmitMessage(content, localOpMetadata);
     }
 

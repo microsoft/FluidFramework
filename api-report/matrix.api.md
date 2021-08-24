@@ -83,7 +83,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     removeRows(rowStart: number, count: number): void;
     // (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected resubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rowCount(): number;
     // (undocumented)

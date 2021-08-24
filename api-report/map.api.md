@@ -176,7 +176,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected resubmitCore(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
     // (undocumented)
@@ -211,7 +211,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // (undocumented)
     protected registerCore(): void;
     // (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    protected resubmitCore(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
     get size(): number;
     // (undocumented)

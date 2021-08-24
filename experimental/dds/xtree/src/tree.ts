@@ -41,7 +41,7 @@ export class SharedXTree extends SharedObject
 
     protected onConnect() {  }
 
-    protected reSubmitCore(content: any, localOpMetadata: unknown) { throw new Error("not implemented"); }
+    protected resubmitCore(content: any, localOpMetadata: unknown) { throw new Error("not implemented"); }
 
     protected onDisconnect() {}
 
