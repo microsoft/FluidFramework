@@ -25,9 +25,8 @@ import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda , createSessionMetric } from "../utils";
+import { NoOpLambda, createSessionMetric } from "../utils";
 import { DeliLambda } from "./lambda";
-
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
 // Epoch should never tick in our current setting. This flag is just for being extra cautious.

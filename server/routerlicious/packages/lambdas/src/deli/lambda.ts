@@ -55,7 +55,7 @@ import {
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
-import { setQueuedMessageProperties ,logCommonSessionEndMetrics, createSessionMetric } from "../utils";
+import { setQueuedMessageProperties, logCommonSessionEndMetrics, createSessionMetric } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
