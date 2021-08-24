@@ -6,6 +6,7 @@
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
+import { TreeEntry } from "@fluidframework/protocol-definitions";
 import {
     IFileSnapshot,
     StaticStorageDocumentServiceFactory,
@@ -13,14 +14,17 @@ import {
 import { compareWithReferenceSnapshot, getNormalizedFileSnapshot, loadContainer } from "@fluid-internal/replay-tool";
 import { SnapshotStorageService } from "./snapshotStorageService";
 
+const metadataBlobName = ".metadata";
+
 /**
  * Validates snapshots in the source directory with corresponding snapshots in the destination directory:
  * - Loads a new container with each snapshot in `srcDir`.
  * - Snapshots the continer and validates that the snapshot matches with the corresponding snapshot in `destDir`.
  * @param srcDir - The directory containing source snapshots that are to be loaded and validated.
  * @param destDir - The directory containing destination snapshots against which the above snaphost are validated.
+ * @param seqToTimestamp - A map of sequence number to timestamp for the messages in this container.
  */
-export async function validateSnapshots(srcDir: string, destDir: string) {
+export async function validateSnapshots(srcDir: string, destDir: string, seqToTimestamp: Map<number, number>) {
     const errors: string[] = [];
     // Error handler that reports errors if any while validation.
     const reportError = (description: string, error?: any) => {
@@ -57,7 +61,7 @@ export async function validateSnapshots(srcDir: string, destDir: string) {
         // validate that snapshot with the destination snapshot.
         const onSnapshotCb =
             (snapshot: IFileSnapshot) => compareWithReferenceSnapshot(
-                getNormalizedFileSnapshot(snapshot),
+                getNormalizedFileSnapshot(addSummaryTimestamp(snapshot, seqToTimestamp)),
                 `${destDir}/${snapshotFileName}`,
                 reportError,
             );
@@ -72,4 +76,24 @@ export async function validateSnapshots(srcDir: string, destDir: string) {
     if (errors.length !== 0) {
         throw new Error(`\nErrors while validating source snapshots in ${srcDir}\n ${errors.join("\n")}`);
     }
+}
+
+/**
+ * Add summary timestamp to the ".metadata" blob of older snapshots that did not have timestamps in summary. The summary
+ * timestamp is the timestamp of the last message processed while generating summary. However, in the back compat tests,
+ * we do not process any messages before summarizing, so the summary timestamp will be undefined. Use the timestamp of
+ * the last message that the summary contains as the summary timestamp.
+ */
+function addSummaryTimestamp(snapshot: IFileSnapshot, seqToTimestamp: Map<number, number>): IFileSnapshot {
+    const treeEntries = snapshot.tree.entries;
+    for (const entry of treeEntries) {
+        if (entry.path === metadataBlobName && entry.type === TreeEntry.Blob) {
+            const metadata = JSON.parse(entry.value.contents);
+            if (metadata.timestamp === undefined) {
+                metadata.timestamp = seqToTimestamp.get(metadata.sequenceNumber);
+            }
+            entry.value.contents = JSON.stringify(metadata);
+        }
+    }
+    return snapshot;
 }

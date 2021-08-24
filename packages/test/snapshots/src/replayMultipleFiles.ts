@@ -8,6 +8,7 @@ import fs from "fs";
 import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { pkgVersion } from "./packageVersion";
 import { validateSnapshots } from "./validateSnapshots";
 
@@ -290,11 +291,21 @@ async function processNodeForNewSnapshots(
  * 4. Loads a document with snapshot in current version. Repeats steps 2 and 3.
  */
 async function processNodeForBackCompat(data: IWorkerArgs) {
+    const messagesFile = `${data.folder}/messages.json`;
+    if (!fs.existsSync(messagesFile)) {
+        throw new Error(`messages.json doesn't exist in ${data.folder}`);
+    }
+
+    // Build a map of sequence number to timestamp for the messages in this document. This will be used to add timestamp
+    // to the generated summary.
+    const messages = JSON.parse(fs.readFileSync(messagesFile).toString("utf-8")) as ISequencedDocumentMessage[];
+    const seqToTimestamp = new Map(messages.map((message) => [message.sequenceNumber, message.timestamp]));
+
     // Snapshots in current format is under "currentSnapshots" directory.
     const currentSnapshotsDir = `${data.folder}/${currentSnapshots}`;
 
     // Validate that we can load snapshot in current format and write it in current snapshot format.
-    await validateSnapshots(currentSnapshotsDir, currentSnapshotsDir);
+    await validateSnapshots(currentSnapshotsDir, currentSnapshotsDir, seqToTimestamp);
 
     // Snapshots in old format are under "srcSnapshots" directory. If we don't have any, there is nothing more to do.
     const srcSnapshotsDir = `${data.folder}/${srcSnapshots}`;
@@ -310,7 +321,7 @@ async function processNodeForBackCompat(data: IWorkerArgs) {
         }
 
         // Validate that we can load snapshot from this older version format and write it in current snapshot format.
-        await validateSnapshots(`${srcSnapshotsDir}/${node.name}`, currentSnapshotsDir);
+        await validateSnapshots(`${srcSnapshotsDir}/${node.name}`, currentSnapshotsDir, seqToTimestamp);
     }
 }
 

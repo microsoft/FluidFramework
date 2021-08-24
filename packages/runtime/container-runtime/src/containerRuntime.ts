@@ -760,6 +760,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
+    /** The timestamp of the base summary this container is loaded from. */
+    private readonly baseSummaryTimestamp: number | undefined;
 
     // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
     private get gcEnabled(): boolean {
@@ -787,6 +789,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
+        this.baseSummaryTimestamp = metadata?.timestamp;
         /**
           * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
           * For existing documents, we get this value from the metadata blob.
@@ -1135,6 +1138,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for now
             sequenceNumber: this.deltaManager.lastSequenceNumber,
+            // The timestamp of the last message processed is used as the summary timestamp. If there are no messages,
+            // nothing has changed from the base summary we loaded from, so use its timestamp.
+            timestamp: this.deltaManager.lastMessage?.timestamp ?? this.baseSummaryTimestamp,
         };
     }
 

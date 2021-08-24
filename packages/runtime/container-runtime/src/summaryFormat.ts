@@ -83,6 +83,8 @@ export interface IContainerRuntimeMetadata {
     readonly gcFeature?: GCVersion;
     /** The last sequence number at the time of the summary; same as the summary op reference sequence number. */
     readonly sequenceNumber?: number;
+    /** The timestamp of when the summary is generated. */
+    readonly timestamp?: number;
 }
 
 export type ReadContainerRuntimeMetadata = undefined | IContainerRuntimeMetadata;
