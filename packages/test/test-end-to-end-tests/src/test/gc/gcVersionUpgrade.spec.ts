@@ -27,7 +27,7 @@ import {
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 
@@ -55,8 +55,7 @@ class ContainerRuntimeFactoryWithGC extends ContainerRuntimeFactoryWithDefaultDa
     }
 }
 
-// REVIEW: enable compat testing?
-describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
+describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",
@@ -107,7 +106,7 @@ describeNoCompat("GC version upgrade", (getTestObjectProvider) => {
         const requestHeader = {
             [LoaderHeader.cache]: false,
             [LoaderHeader.clientDetails]: {
-                capabilities: { interactive: false },
+                capabilities: { interactive: true },
                 type: "summarizer",
             },
             [DriverHeader.summarizingClient]: true,

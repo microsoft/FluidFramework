@@ -19,7 +19,7 @@ import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
@@ -63,8 +63,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-// REVIEW: enable compat testing?
-describeNoCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
+describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",
