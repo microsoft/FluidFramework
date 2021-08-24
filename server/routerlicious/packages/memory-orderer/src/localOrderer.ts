@@ -338,6 +338,7 @@ export class LocalOrderer implements IOrderer {
             false);
         const summaryReader = new SummaryReader(this.documentId, this.gitManager);
         const checkpointManager = new CheckpointManager(
+            context,
             this.tenantId,
             this.documentId,
             documentCollection,
@@ -356,7 +357,8 @@ export class LocalOrderer implements IOrderer {
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
-            scribeMessages.map((message) => message.operation));
+            scribeMessages.map((message) => message.operation),
+            undefined);
     }
 
     private startLambdas() {

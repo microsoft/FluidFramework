@@ -22,9 +22,6 @@ export interface IDeliServerConfiguration {
     // Controls how deli should track of certain op events
     opEvent: IDeliOpEventServerConfiguration;
 
-    // Consider service summary status for successful session close
-    checkServiceSummaryStatus: boolean;
-
     // Controls if ops should be nacked if a summary hasn't been made for a while
     summaryNackMessages: IDeliSummaryNackMessagesServerConfiguration;
 }
@@ -136,7 +133,6 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
-        checkServiceSummaryStatus: true,
         opEvent: {
             enable: false,
             idleTime: 15 * 1000,

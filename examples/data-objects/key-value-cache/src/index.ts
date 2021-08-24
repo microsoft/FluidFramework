@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/request-handler";
 import { defaultFluidObjectRequestHandler, defaultRouteRequestHandler } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
-import { isContextExisting, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 export const IKeyValue: keyof IProvideKeyValue = "IKeyValue";
 
@@ -107,22 +107,21 @@ export class KeyValueFactoryComponent
     private readonly defaultComponentId = "default";
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const backCompatExisting = isContextExisting(context, existing);
         const runtime = new runtimeClass(
             context,
             new Map([
                 SharedMap.getFactory(),
             ].map((factory) => [factory.type, factory])),
-            backCompatExisting,
+            existing,
         );
-        const routerP = KeyValue.load(runtime, context, backCompatExisting);
+        const routerP = KeyValue.load(runtime, context, existing);
 
         return runtime;
     }
