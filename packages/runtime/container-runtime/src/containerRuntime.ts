@@ -107,11 +107,10 @@ import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
-import { BlobManager } from "./blobManager";
+import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
-    blobRedirectTableBlobName,
     chunksBlobName,
     electedSummarizerBlobName,
     getGCVersion,
@@ -578,8 +577,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
         const metadata = await tryFetchBlob<ReadContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
-        const blobRedirectTable = await tryFetchBlob<[string, string][]>(blobRedirectTableBlobName);
         const loadExisting = existing === true || context.existing === true;
+
+        // read snapshot blobs needed for BlobManager to load
+        const blobManagerSnapshot = await BlobManager.load(
+            context.baseSnapshot?.trees[blobsTreeName],
+            async (id) => {
+                // IContainerContext storage api return type still has undefined in 0.39 package version.
+                // So once we release 0.40 container-defn package we can remove this check.
+                assert(storage !== undefined, "storage undefined in attached container");
+                return readAndParse(storage, id);
+            },
+        );
 
         // Verify summary runtime sequence number matches protocol sequence number.
         const runtimeSequenceNumber = metadata?.sequenceNumber;
@@ -614,9 +623,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             containerScope,
             logger,
             loadExisting,
+            blobManagerSnapshot,
             requestHandler,
             storage,
-            blobRedirectTable);
+        );
 
         return runtime;
     }
@@ -785,9 +795,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
         existing: boolean,
+        blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
-        blobRedirectTable?: [string, string][],
     ) {
         super();
 
@@ -866,14 +876,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
-            () => {
-                return this.storage;
-            },
+            blobManagerSnapshot,
+            () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
             this,
             this.logger,
         );
-        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName], blobRedirectTable);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -1204,17 +1212,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const electedSummarizerContent = JSON.stringify(this.summarizerClientElection.serialize());
         addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 
-        const { ids, table } = this.blobManager.snapshot();
+        const snapshot = this.blobManager.snapshot();
 
         // Some storage (like git) doesn't allow empty tree, so we can omit it.
         // and the blob manager can handle the tree not existing when loading
-        if (ids.entries.length !== 0) {
-            const blobsTree = convertToSummaryTree(ids, false);
+        if (snapshot.entries.length !== 0) {
+            const blobsTree = convertToSummaryTree(snapshot, false);
             addTreeToSummary(summaryTree, blobsTreeName, blobsTree);
-        }
-
-        if (table) {
-            addBlobToSummary(summaryTree, blobRedirectTableBlobName, table);
         }
     }
 
@@ -1423,7 +1427,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public flush(): void {
-        assert(this._orderSequentiallyCalls === 0, "Cannot call `flush()` from `orderSequentially`'s callback");
+        assert(this._orderSequentiallyCalls === 0,
+            0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
         if (!this.deltaSender) {
             return;
@@ -1593,6 +1598,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.dataStores.setAttachState(attachState);
     }
 
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
     public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
         if (blobRedirectTable) {
             this.blobManager.setRedirectTable(blobRedirectTable);

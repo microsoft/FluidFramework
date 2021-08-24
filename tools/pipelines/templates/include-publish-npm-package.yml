@@ -10,6 +10,10 @@ parameters:
 - name: tagName
   type: string
 
+- name: publishNonScopedPackages
+  type: boolean
+  default: false
+
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
@@ -22,6 +26,15 @@ stages:
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
       environment: test-package-build-feed
       official: false
+      artifactPath: scoped
+  - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
+    - template: include-publish-npm-package-steps.yml
+      parameters:
+        namespace: false
+        feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+        environment: test-package-build-feed
+        official: false
+        artifactPath: non-scoped
 
 - stage: publish_npm_internal
   dependsOn: build
@@ -34,6 +47,15 @@ stages:
       feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
       environment: package-build-feed
       official: false
+      artifactPath: scoped
+  - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
+    - template: include-publish-npm-package-steps.yml
+      parameters:
+        namespace: false
+        feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+        environment: package-build-feed
+        official: false
+        artifactPath: non-scoped
 
 - stage: publish_npm_official
   dependsOn: build
@@ -49,3 +71,15 @@ stages:
       official: true
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
+      artifactPath: scoped
+  - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
+    - template: include-publish-npm-package-steps.yml
+      parameters:
+        namespace: false
+        feedName: https://registry.npmjs.org
+        environment: package-npmjs-feed
+        customEndPoint: npmjs
+        official: true
+        publishFlags: --access public
+        tagName: ${{ parameters.tagName }}
+        artifactPath: non-scoped

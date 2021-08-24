@@ -157,6 +157,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     connect(args: IConnectionArgs): Promise<IConnectionDetails>;
     get connectionMode(): ConnectionMode;
+    connectionProps(): ITelemetryProperties;
     // (undocumented)
     dispose(): void;
     // (undocumented)
