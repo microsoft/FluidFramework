@@ -75,8 +75,6 @@ async function start(): Promise<void> {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
         resources = await client.createDetachedContainer(containerSchema);
-        // The new container has its own unique ID that can be used to access it in another session
-        location.hash = resources.fluidContainer.id;
     } else {
         const containerId = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier
@@ -113,7 +111,13 @@ async function start(): Promise<void> {
     // If the app is in a `createNew` state, and the container is detached, we attach the container
     // so that any new ops are communicated to the client
     if (createNew && fluidContainer.attachState === AttachState.Detached) {
-        await fluidContainer.attach();
+        const id = await fluidContainer.attach();
+        // The newly attached container is given a unique ID that can be used to access it in another session
+        if (id !== undefined) {
+            location.hash = id;
+        } else {
+            new Error("Container could not attach");
+        }
     }
 
     // Now that the container is attached, our app can render the views and listen for updates
