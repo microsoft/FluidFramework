@@ -16,7 +16,7 @@ import { IThrottler } from "./throttler";
 import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
 
-const defaultInitialDelayMs = 10000;
+const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
 
 export enum SummaryManagerState {
@@ -189,9 +189,13 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         assert(this.runningSummarizer === undefined, "Old summarizer is still working!");
 
-        this.delayBeforeCreatingSummarizer().then(async () => {
+        this.delayBeforeCreatingSummarizer().then(async (isDelayed: boolean) => {
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
-            if (this.getShouldSummarizeState().shouldSummarize === false) {
+            // but only if creation was delayed. If it was not, then we want to ensure we always create
+            // a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
+            // document out of broken state if it has too many ops and ordering service keeps nacking main
+            // container (and thus it goes into cycle of reconnects)
+            if (isDelayed && this.getShouldSummarizeState().shouldSummarize === false) {
                 return;
             }
 
@@ -255,7 +259,12 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private async delayBeforeCreatingSummarizer() {
+    /**
+     * Implements initial delay before creating summarizer
+     * @returns true, if creation is delayed due to heuristics (not many ops to summarize).
+     *          False if summarizer should start immediately due to too many unsummarized ops.
+     */
+    private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
         if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
@@ -283,13 +292,16 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         // summarizer while it finishes its work and moves to exit.
         // It also helps with pure boot scenario (single client) to offset expensive work a bit out from
         // critical boot sequence.
+        let result = false;
         if (this.summaryCollection.opsSinceLastAck < this.opsToBypassInitialDelay) {
+            result = true;
             delayMs = Math.max(delayMs, this.initialDelayMs);
         }
 
         if (delayMs > 0) {
             await delay(delayMs);
         }
+        return result;
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
