@@ -70,8 +70,6 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     protected async hasInitialized() {
-        const taskManagerHandle = this.root.get(taskManagerKey);
-        this._taskManager = await taskManagerHandle.get();
         this.root.on("valueChanged", (changed) => {
             if (changed.key === markedForDestructionKey) {
                 this.emit("markedForDestruction");
@@ -79,6 +77,9 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
                 this.emit("dead");
             }
         });
+
+        const taskManagerHandle = this.root.get(taskManagerKey);
+        this._taskManager = await taskManagerHandle.get();
     }
 }
 

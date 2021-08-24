@@ -29,6 +29,8 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             setDead(containerKillBit.dead);
         };
         containerKillBit.on("dead", deadHandler);
+        // For some reason, I'm seeing the event fire between setting the state initially and adding the listener.
+        deadHandler();
         return () => {
             containerKillBit.off("dead", deadHandler);
         };
@@ -39,6 +41,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             setSessionEnding(containerKillBit.markedForDestruction);
         };
         containerKillBit.on("markedForDestruction", markedForDestructionHandler);
+        markedForDestructionHandler();
         return () => {
             containerKillBit.off("markedForDestruction", markedForDestructionHandler);
         };
