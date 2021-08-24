@@ -9,13 +9,13 @@ import assert from "assert";
 import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
-    IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryNack,
     MessageType,
     ISequencedDocumentAugmentedMessage,
+    ISequencedDocumentSystemMessage,
     IProtocolState,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
@@ -261,7 +261,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 }
                             }
                         } catch (ex) {
-                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. 
+                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}.
                                 Exception: ${inspect(ex)}`;
                             lumberJackMetric?.setProperties({[CommonProperties.clientSummarySuccess]: false});
                             this.context.log?.error(errorMsg);
@@ -322,7 +322,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 );
                             }
                         } catch (ex) {
-                            const errorMsg = `Service summary failure @${operation.sequenceNumber}. 
+                            const errorMsg = `Service summary failure @${operation.sequenceNumber}.
                                 Exception: ${inspect(ex)}`;
                             lumberJackMetric?.setProperties({[CommonProperties.serviceSummarySuccess]: false});
 
@@ -344,7 +344,8 @@ export class ScribeLambda implements IPartitionLambda {
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
-                    const content = value.operation.contents as ISummaryAck;
+                    const operation = value.operation as ISequencedDocumentSystemMessage;
+                    const content: ISummaryAck = operation.data ? JSON.parse(operation.data) : operation.contents;
                     this.lastClientSummaryHead = content.handle;
                     // An external summary writer can only update the protocolHead when the ack is sequenced
                     // back to the stream.
@@ -520,9 +521,10 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     private async sendSummaryAck(contents: ISummaryAck) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents,
+            data: JSON.stringify(contents),
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryAck,
@@ -532,9 +534,10 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     private async sendSummaryNack(contents: ISummaryNack) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents,
+            data: JSON.stringify(contents),
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryNack,
