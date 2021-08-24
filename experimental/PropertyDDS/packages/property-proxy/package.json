@@ -13,10 +13,9 @@
     "index.d.ts"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
-    "build:docs": "",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -41,7 +40,6 @@
     "@babel/preset-env": "^7.2.0",
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@microsoft/api-extractor": "^7.16.1",
     "@types/jest": "22.2.3",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

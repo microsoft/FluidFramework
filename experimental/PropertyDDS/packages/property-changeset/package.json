@@ -14,17 +14,15 @@
     "src/index.d.ts"
   ],
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:compile",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
-    "build:docs": "",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",
-    "lint": "",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
