@@ -91,13 +91,32 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
-        parsedUrl.pathname = parsedUrl.pathname.split("/").slice(0, -1).concat([documentId]).join("/");
+        /**
+         * Assume documentId is at end of url path.
+         * This is true for Routerlicious' and Tinylicious' documentUrl and deltaStorageUrl.
+         * Routerlicious and Tinylicious do not use documentId in storageUrl nor ordererUrl.
+         * TODO: Ideally we would be able to regenerate the resolvedUrl, rather than patching the current one.
+         */
+        const replaceDocumentIdInPath = (urlPath: string): string =>
+            urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
+        parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname);
+        const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
+        if (!deltaStorageUrl) {
+            throw new Error(
+                `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
+        }
+        const parsedDeltaStorageUrl = parse(deltaStorageUrl);
+        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname);
 
         return this.createDocumentService(
             {
                 ...resolvedUrl,
                 url: parsedUrl.href,
                 id: documentId,
+                endpoints: {
+                    ...resolvedUrl.endpoints,
+                    deltaStorageUrl: parsedDeltaStorageUrl.href,
+                },
             },
             logger);
     }
