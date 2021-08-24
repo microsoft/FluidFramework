@@ -25,7 +25,6 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 class TinyliciousClient {
     constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
     createContainer(containerSchema: ContainerSchema): Promise<TinyliciousResources>;
-    createDetachedContainer(containerSchema: ContainerSchema): Promise<TinyliciousResources>;
     getContainer(id: string, containerSchema: ContainerSchema): Promise<TinyliciousResources>;
     }
 

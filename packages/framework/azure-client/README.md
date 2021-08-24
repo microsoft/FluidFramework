@@ -79,29 +79,12 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const azureClient = new AzureClient(config);
+const azureClient = new AzureClient();
 const { fluidContainer, containerServices } = await azureClient.createContainer(schema);
-```
 
-### Detached Fluid Containers
-
-A detached container is helpful when the initial objects need to be seeded with default data before the application starts. Since the container is not yet attached to the client, no ops will be recorded and the first user to load the container will start with that initial snapshot.
-
-Creating a detached Fluid Container follows the same flow as the pre-attached container, minus an attach step that needs to be performed before loading the application.
-
-```javascript
-const schema = {
-    name: "my-container",
-    initialObjects: {
-        /* ... */
-    },
-    dynamicObjectTypes: [ /*...*/ ],
-}
-const tinyliciousClient = new TinyliciousClient();
-const { fluidContainer, containerServices } = await azureClient.createDetachedContainer(schema);
-
-// Perform `set` methods on the DDSes in fluidContainer.initialObjects
-fluidContainer.attach();
+// Set any default data on the container's `initialObjects` before attaching
+// Returned ID can be used to fetch the container via `getContainer` below
+const id = await fluidContainer.attach();
 ```
 
 ## Using Fluid Containers

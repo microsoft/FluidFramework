@@ -44,9 +44,9 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public (undocumented)
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(id: string, container: Container, rootDataObject: RootDataObject, customAttach: () => Promise<string>);
+    constructor(container: Container, rootDataObject: RootDataObject, customAttach: () => Promise<string>);
     // (undocumented)
-    attach(): Promise<string | undefined>;
+    attach(): Promise<string>;
     // (undocumented)
     get attachState(): AttachState;
     // @deprecated (undocumented)
@@ -61,8 +61,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
-    readonly id: string;
     // (undocumented)
     get initialObjects(): Record<string, IFluidLoadable>;
     }
@@ -85,8 +83,6 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     dispose(): void;
     // (undocumented)
     readonly disposed: boolean;
-    // (undocumented)
-    readonly id: string;
     // (undocumented)
     readonly initialObjects: LoadableObjectRecord;
 }

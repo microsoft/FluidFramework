@@ -47,27 +47,22 @@ export class AzureClient {
     }
 
     /**
-     * Creates a new container instance in the Azure Relay Service.
-     * @param containerSchema - Container schema for the new container.
-     * @returns New container instance along with associated services.
-     */
-    public async createContainer(
-        containerSchema: ContainerSchema,
-    ): Promise<AzureResources> {
-        const { fluidContainer, containerServices } = await this.createNewContainer(containerSchema);
-        await fluidContainer.attach();
-        return { fluidContainer, containerServices };
-    }
-
-    /**
      * Creates a new detached container instance in the Azure Relay Service.
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
-    public async createDetachedContainer(
+    public async createContainer(
         containerSchema: ContainerSchema,
     ): Promise<AzureResources> {
-        return this.createNewContainer(containerSchema);
+        const loader = this.createLoader(containerSchema);
+        const container = await loader.createDetachedContainer({
+            package: "no-dynamic-package",
+            config: {},
+        });
+        // temporarily we'll generate the new container ID here
+        // until container ID changes are settled in lower layers.
+        const id = uuid();
+        return this.getFluidContainerAndServices(id, container);
     }
 
     /**
@@ -85,20 +80,6 @@ export class AzureClient {
         return this.getFluidContainerAndServices(id, container);
     }
 
-    private async createNewContainer(
-        containerSchema: ContainerSchema,
-    ): Promise<AzureResources> {
-        const loader = this.createLoader(containerSchema);
-        const container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
-        // temporarily we'll generate the new container ID here
-        // until container ID changes are settled in lower layers.
-        const id = uuid();
-        return this.getFluidContainerAndServices(id, container);
-    }
-
     // #region private
     private async getFluidContainerAndServices(
         id: string,
@@ -109,7 +90,7 @@ export class AzureClient {
             return id;
         };
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, attach);
+        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
         const containerServices: AzureContainerServices = this.getContainerServices(container);
         return { fluidContainer, containerServices };
     }

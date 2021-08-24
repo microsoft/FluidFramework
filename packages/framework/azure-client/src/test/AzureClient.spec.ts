@@ -17,41 +17,54 @@ describe("AzureClient", () => {
     };
 
     it("can create new FRS container successfully", async () => {
-        const containerAndServicesP = client.createContainer(schema);
+        const resources = client.createContainer(schema);
 
         await assert.doesNotReject(
-            containerAndServicesP,
+            resources,
             () => true,
             "container cannot be created in FRS",
         );
 
-        const { fluidContainer } = await containerAndServicesP;
-        assert.ok(fluidContainer.id);
+        const { fluidContainer } = await resources;
+        assert.equal(Object.keys(fluidContainer.initialObjects), Object.keys(schema.initialObjects));
     });
 
-    it("Create detached container", async () => {
-        const {fluidContainer} = await client.createDetachedContainer(schema);
+    it("Created container is detached", async () => {
+        const { fluidContainer } = await client.createContainer(schema);
         assert.strictEqual(fluidContainer.attachState, AttachState.Detached, "Container should be detached");
     });
 
-    it("Attach detached container", async () => {
-        const {fluidContainer} = await client.createDetachedContainer(schema);
-        await fluidContainer.attach();
-        assert.strictEqual(fluidContainer.attachState, AttachState.Attached, "Container should be attached");
+    it("Can attach container", async () => {
+        const {fluidContainer} = await client.createContainer(schema);
+        const containerId = await fluidContainer.attach();
+
+        assert.strictEqual(
+            typeof(containerId) === "string",
+            "Attach did not return a string ID",
+        );
+        assert.strictEqual(
+            fluidContainer.attachState, AttachState.Attached,
+            "Container is not attached after attach is called",
+        );
+        await assert.rejects(
+            fluidContainer.attach(),
+            ()=> true,
+            "Container should not attached twice",
+        );
     });
 
     it("can retrieve existing FRS container successfully", async () => {
         const { fluidContainer: newContainer } = await client.createContainer(schema);
-        const containerId = newContainer.id;
+        const containerId = await newContainer.attach();
 
-        const containerAndServicesP = client.getContainer(containerId, schema);
+        const resources = client.getContainer(containerId, schema);
         await assert.doesNotReject(
-            containerAndServicesP,
+            resources,
             () => true,
             "container cannot be retrieved from FRS",
         );
 
-        const { fluidContainer } = await containerAndServicesP;
-        assert.equal(fluidContainer.id, containerId);
+        const { fluidContainer } = await resources;
+        assert.equal(Object.keys(fluidContainer.initialObjects), Object.keys(schema.initialObjects));
     });
 });

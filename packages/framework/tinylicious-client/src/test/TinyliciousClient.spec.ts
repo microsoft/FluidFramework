@@ -97,15 +97,32 @@ describe("TinyliciousClient", () => {
         );
     });
 
-    it("Create detached container", async () => {
-        const {fluidContainer} = await tinyliciousClient.createDetachedContainer(schema);
-        assert.strictEqual(fluidContainer.attachState, AttachState.Detached, "Container should be detached");
+    it("creates a container with detached state", async () => {
+        const {fluidContainer} = await tinyliciousClient.createContainer(schema);
+        assert.strictEqual(
+            fluidContainer.attachState, AttachState.Detached,
+            "Container should be detached after creation",
+        );
     });
 
-    it("Attach detached container", async () => {
-        const {fluidContainer} = await tinyliciousClient.createDetachedContainer(schema);
-        await fluidContainer.attach();
-        assert.strictEqual(fluidContainer.attachState, AttachState.Attached, "Container should be attached");
+    it("creates a container that can only be attached once", async () => {
+        const {fluidContainer} = await tinyliciousClient.createContainer(schema);
+        const containerId = await fluidContainer.attach();
+
+        assert.strictEqual(
+            typeof(containerId) === "string",
+            "Attach did not return a string ID",
+        );
+        assert.strictEqual(
+            fluidContainer.attachState, AttachState.Attached,
+            "Container is not attached after attach is called",
+        );
+
+        await assert.rejects(
+            fluidContainer.attach(),
+            ()=> true,
+            "Container should not attached twice",
+        );
     });
 
     /**
@@ -122,7 +139,9 @@ describe("TinyliciousClient", () => {
             });
         });
 
-        const containerGet = (await tinyliciousClient.getContainer(containerCreate.id, schema)).fluidContainer;
+        const containerId = await containerCreate.attach();
+
+        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).fluidContainer;
         const map1Create = containerCreate.initialObjects.map1 as SharedMap;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
@@ -142,12 +161,14 @@ describe("TinyliciousClient", () => {
             });
         });
 
+        const containerId = await containerCreate.attach();
+
         const initialObjectsCreate = containerCreate.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
         map1Create.set("new-key", "new-value");
         const valueCreate = await map1Create.get("new-key");
 
-        const containerGet = (await tinyliciousClient.getContainer(containerCreate.id, schema)).fluidContainer;
+        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).fluidContainer;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");

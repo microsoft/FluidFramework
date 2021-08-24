@@ -54,29 +54,12 @@ export class TinyliciousClient {
         );
     }
 
-    /**
-     * Creates a new attached container instance in Tinylicious server.
-     * @param containerSchema - Container schema for the new container.
-     * @returns New container instance along with associated services.
-     */
-     public async createContainer(
-        containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
-        // temporarily we'll generate the new container ID here
-        // until container ID changes are settled in lower layers.
-        const id = uuid();
-        const container = await this.getContainerCore(id, containerSchema, true);
-        const { fluidContainer, containerServices } = await this.getFluidContainerAndServices(id, container);
-        await fluidContainer.attach();
-        return { fluidContainer, containerServices};
-    }
-
      /**
      * Creates a new detached container instance in Tinylicious server.
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
-      public async createDetachedContainer(
+      public async createContainer(
         containerSchema: ContainerSchema,
     ): Promise<TinyliciousResources> {
         // temporarily we'll generate the new container ID here
@@ -110,7 +93,7 @@ export class TinyliciousClient {
             await container.attach({url: id});
             return id;
         };
-        const fluidContainer: FluidContainer = new FluidContainer(id, container, rootDataObject, attach);
+        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
         const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
         const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
         return tinyliciousResources;

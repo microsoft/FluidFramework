@@ -9,7 +9,6 @@ import {
     InsecureTokenProvider,
     AzureResources,
 } from "@fluidframework/azure-client";
-import { AttachState } from "@fluidframework/container-definitions";
 import { generateUser } from "@fluidframework/server-services-client";
 import { SharedMap } from "fluid-framework";
 import { DiceRollerController } from "./controller";
@@ -68,22 +67,30 @@ async function start(): Promise<void> {
 
     const client = new AzureClient(connectionConfig, consoleLogger);
     let resources: AzureResources;
+    let id: string;
 
     // Get or create the document depending if we are running through the create new flow
     const createNew = !location.hash;
     if (createNew) {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
-        resources = await client.createDetachedContainer(containerSchema);
+        resources = await client.createContainer(containerSchema);
+
+        // If the app is in a `createNew` state, and the container is detached, we attach the container
+        // so that all new ops are communicated to the client
+        id = await resources.fluidContainer.attach();
+        // The newly attached container is given a unique ID that can be used to access the container in another session
+        location.hash = id;
     } else {
-        const containerId = location.hash.substring(1);
+        id = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier
-        resources = await client.getContainer(containerId, containerSchema);
+        resources = await client.getContainer(id, containerSchema);
     }
+
+    document.title = id;
 
     // create/get container API returns a combination of the container and associated container services
     const { fluidContainer, containerServices } = resources;
-    document.title = fluidContainer.id;
 
     // We now get the first SharedMap from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
@@ -107,18 +114,6 @@ async function start(): Promise<void> {
     // We create a second view which uses the second controller.
     const div2 = document.createElement("div");
     contentDiv.appendChild(div2);
-
-    // If the app is in a `createNew` state, and the container is detached, we attach the container
-    // so that any new ops are communicated to the client
-    if (createNew && fluidContainer.attachState === AttachState.Detached) {
-        const id = await fluidContainer.attach();
-        // The newly attached container is given a unique ID that can be used to access it in another session
-        if (id !== undefined) {
-            location.hash = id;
-        } else {
-            new Error("Container could not attach");
-        }
-    }
 
     // Now that the container is attached, our app can render the views and listen for updates
     renderDiceRoller(diceRollerController, div1);

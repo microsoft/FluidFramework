@@ -17,7 +17,6 @@ export interface IFluidContainerEvents extends IEvent {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
     readonly disposed: boolean;
-    readonly id: string;
     readonly initialObjects: LoadableObjectRecord;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
@@ -29,7 +28,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     private readonly disposedHandler = () => this.emit("disposed");
 
     public constructor(
-        public readonly id: string,
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
         private readonly customAttach: () => Promise<string>,
@@ -73,6 +71,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     public async attach() {
         if (this.attachState === AttachState.Detached) {
             return this.customAttach();
+        } else {
+            throw new Error("Cannot attach container. Container is not in detached state");
         }
     }
 
