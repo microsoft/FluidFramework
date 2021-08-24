@@ -35,7 +35,9 @@ export interface IProvideSummarizer {
 
 /* Similar to AbortSignal, but using promise instead of events */
 export interface ICancellable {
+    /** Tells if this cancellable token is cancelled */
     readonly cancelled: boolean;
+    /** Promise that gets fulfilled when this cancellable token is cancelled */
     readonly waitCancelled: Promise<void>;
 }
 

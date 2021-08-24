@@ -2072,7 +2072,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         appData?: any,
     ) {
         this.verifyNotClosed();
-        assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
+        assert(this.connected, "Container disconnected when trying to submit system message");
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,

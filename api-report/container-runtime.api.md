@@ -274,9 +274,7 @@ export interface IBroadcastSummaryResult {
 
 // @public (undocumented)
 export interface ICancellable {
-    // (undocumented)
     readonly cancelled: boolean;
-    // (undocumented)
     readonly waitCancelled: Promise<void>;
 }
 
