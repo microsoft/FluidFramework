@@ -707,7 +707,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode = this.defaultFlushMode;
+    private _flushMode = ContainerRuntime.defaultFlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -740,7 +740,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
     private readonly summarizer: Summarizer;
-    private readonly deltaSender: IDeltaSender | undefined;
+    private readonly deltaSender: IDeltaSender;
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
@@ -763,7 +763,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public readonly disableIsolatedChannels: boolean;
 
-    private get defaultFlushMode(): FlushMode {
+    private static get defaultFlushMode(): FlushMode {
         return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
     }
 
