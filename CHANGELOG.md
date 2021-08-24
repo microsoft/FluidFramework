@@ -1,5 +1,20 @@
 # Change Log
 
+## 7.6.0
+
+* build: update package dependencies
+  * Associated pull request: [33677](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33677)
+  * Commit: [231aaf4abca56106e4b7a874188ea3e0698ea78d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/231aaf4abca56106e4b7a874188ea3e0698ea78d)
+* test: Performance of Bulk Insertion in Forest
+  * Associated pull request: [33669](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33669)
+  * Commit: [6202353ec2c0da753d600fa2b45efafc8158f7e6](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6202353ec2c0da753d600fa2b45efafc8158f7e6)
+* test: Perf tests for SharedTree summary load and EditLog sequenced edit processing
+  * Associated pull request: [33627](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33627)
+  * Commit: [05ebade0bfab61570bdedda06a0bff247f6da45c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/05ebade0bfab61570bdedda06a0bff247f6da45c)
+* feat: expose shared tree merge health telemetry
+  * Associated pull request: [33541](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33541)
+  * Commit: [1a237abd374f50d6a058f6e040c872f287611201](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1a237abd374f50d6a058f6e040c872f287611201)
+
 ## 7.0.4
 
 * test: SharedTree Summary Size Tests
