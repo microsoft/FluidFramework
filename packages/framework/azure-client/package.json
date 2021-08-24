@@ -60,7 +60,7 @@
     "mocha": "^8.4.0",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.21640",
+    "tinylicious": "^0.4.34614",
     "typescript": "~4.1.3"
   }
 }
