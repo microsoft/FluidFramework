@@ -40,7 +40,7 @@ right plugins (drivers, handlers, resolvers), the Fluid loader will work for any
 implementation.
 
 The loader mimics existing web protocols. Similar to how the browser requests state and app logic (a website) from a
-web server, a Fluid host uses the loader to request a [Fluid container](./containers-runtime.md) from the Fluid service.
+web server, a Fluid host uses the loader to request a [Fluid container][] from the Fluid service.
 
 ## Fluid host responsibilities
 
@@ -115,3 +115,43 @@ object).
 
 The host is responsible for checking that this response is valid. Did the loader return a 200? Is the mimeType correct?
 As the Fluid Framework expands, we intend to make further use of these responses.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers-runtime.md" >}}
+
+<!-- Packages -->
+
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+
+<!-- Sequence methods -->
+
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
