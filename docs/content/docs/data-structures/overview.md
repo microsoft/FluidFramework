@@ -40,12 +40,11 @@ Below we've enumerated the data structures and described when they may be most u
 
 ## Simple data object
 
-Use the [SharedCell]({{< relref "/docs/apis/cell/sharedcell.md" >}}) DDS when you simply need to wrap a data object,
-whether it is a number, string, or any other data type. You can also use a complex data type, such as an array or
-JavaScript object, in a SharedCell, but the value of a SharedCell can be changed only whole-for-whole; so this is not an
-appropriate choice if the application's clients will be changing subparts of the value, such as specific properties of
-an object or specific items in an array. In the latter scenarios, consider separating the data items with one of the
-key-value DDSes.
+Use the [SharedCell][] DDS when you simply need to wrap a data object, whether it is a number, string, or any other data
+type. You can also use a complex data type, such as an array or JavaScript object, in a SharedCell, but the value of a
+SharedCell can be changed only whole-for-whole; so this is not an appropriate choice if the application's clients will
+be changing subparts of the value, such as specific properties of an object or specific items in an array. In the latter
+scenarios, consider separating the data items with one of the key-value DDSes.
 
 This DDS is optimistic and uses a last-writer-wins merge policy, which means that every change is accepted and all
 clients ultimately get the value set by the most recent change made on any client.
@@ -55,8 +54,8 @@ clients ultimately get the value set by the most recent change made on any clien
 These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although
 the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
-- [SharedMap]({{< relref "/docs/apis/map/sharedmap.md" >}}) -- a basic key-value data structure.
-- [SharedDirectory]({{< relref "/docs/apis/map/shareddirectory.md" >}}) -- a SharedMap with hierarchical paths instead
+- [SharedMap][] -- a basic key-value data structure.
+- [SharedDirectory][] -- a SharedMap with hierarchical paths instead
   of simple keys.
 
 ### Key Value Scenarios
@@ -81,9 +80,9 @@ These DDSes are used for storing sequential data. They are optimistic. Sequence 
 need to insert, or remove, data at a specified position in a list or array. Unlike the key-value data structures,
 sequences have a sequential order and can handle simultaneous inserts from multiple users.
 
-- [SharedNumberSequence]({{< relref "SharedNumberSequence" >}}) -- a sequence of numbers.
-- [SharedObjectSequence]({{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}) -- a sequence of plain objects.
-- [SharedMatrix]({{< relref "SharedMatrix" >}}) -- a data structure to efficiently use two-dimensional tabular data.
+- [SharedNumberSequence][] -- a sequence of numbers.
+- [SharedObjectSequence][] -- a sequence of plain objects.
+- [SharedMatrix][] -- a data structure to efficiently use two-dimensional tabular data.
 
 ### Sequence scenarios
 
@@ -101,7 +100,7 @@ sequences have a sequential order and can handle simultaneous inserts from multi
 
 The SharedString DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
 
-- [SharedString]({{< relref "SharedString" >}}) -- a data structure for handling collaborative text.
+- [SharedString][] -- a data structure for handling collaborative text.
 
 ### String scenarios
 
@@ -109,13 +108,13 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 ## Specialized data structures
 
-- [SharedCounter]({{< relref "SharedCounter" >}}) -- a counter.
+- [SharedCounter][] -- a counter.
 
   The SharedCounter is useful to keep track of increments. While a key-value data structure appears like a good fit, two
   clients simultaneously setting the same key can cause issues. By contrast, clients can increase or decrease the
   SharedCounter value by a specified amount, but they can't set it to a specified value. It is optimistic.
 
-- [Ink]({{< relref "/docs/apis/ink/ink.md" >}}) -- a specialized data structure for ink data.
+- [Ink][] -- a specialized data structure for ink data.
 
   Ink is a form of an append only list. It's intended for capturing ink strokes. It is optimistic.
 
@@ -129,12 +128,10 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [ConsensusQueue]({{< relref "/docs/apis/ordered-collection/consensusqueue.md" >}}) -- An ordered queue of items, but
-  each item is pulled off the queue by only one client. If multiple clients pull, they each get a different item.
-- [ConsensusRegisterCollection]({{< relref "/docs/apis/register-collection/consensusregistercollection.md" >}}) --
-  Stores "registers" (i.e., key-value pairs), but changes are made only when all clients acknowledge the change. Also,
-  it keeps a record of all changes to each register.
-- Quorum -- Allows clients to agree on a proposal. Quorum also contains client information.
+- [ConsensusQueue][] -- An ordered queue of items, but each item is pulled off the queue by only one client. If multiple
+  clients pull, they each get a different item.
+- [ConsensusRegisterCollection][] -- Stores "registers" (i.e., key-value pairs), but changes are made only when all
+  clients acknowledge the change. Also, it keeps a record of all changes to each register.
 
 ### Consensus scenarios
 
@@ -162,3 +159,43 @@ schemas to describe the structure of properties.
 
 A PropertySet is a tree structured data model in which every node of the tree is a property. More documentation on this
 DDS will be available over time.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers-runtime.md" >}}
+
+<!-- Packages -->
+
+[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
+[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
+[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
+[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
+[SharedCounter]: {{< relref "SharedCounter" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
+[SharedMatrix]: {{< relref "SharedMatrix" >}}
+[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
+[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
+[SharedSequence]: {{< relref "SharedSequence" >}}
+[SharedString]: {{< relref "SharedString" >}}
+
+<!-- Sequence methods -->
+
+[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
+[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
+[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

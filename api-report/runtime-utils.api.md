@@ -7,7 +7,6 @@
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -118,9 +117,6 @@ export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRoo
 // @public (undocumented)
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {
 }
-
-// @public @deprecated (undocumented)
-export const isContextExisting: (context: IFluidDataStoreContext, existing?: boolean | undefined) => boolean;
 
 // @public (undocumented)
 export const isSerializedHandle: (value: any) => value is ISerializedHandle;

@@ -94,7 +94,6 @@ const cell = await cellHandle.get(); // Resolve the handle to get the object
 const cell = await map.get("cell-id").get(); // Get and resolve handle
 
 // Listening for new dynamic objects
-
 map.on("valueChanged", (changed) => {
     if (changed.key === "cell-id") {
         const handle = map.get(changed.key);
@@ -104,6 +103,8 @@ map.on("valueChanged", (changed) => {
     }
 }
 ```
+
+For more information about handles see [Handles]({{< relref "handles.md" >}}).
 
 ### When to use dynamic objects
 

@@ -7,9 +7,11 @@
 
 import {
     ICollection,
+    IContext,
     IDocument,
     IScribe,
     ISequencedOperationMessage,
+    runWithRetry,
 } from "@fluidframework/server-services-core";
 import { ICheckpointManager } from "./interfaces";
 
@@ -18,6 +20,7 @@ import { ICheckpointManager } from "./interfaces";
  */
 export class CheckpointManager implements ICheckpointManager {
     constructor(
+        protected readonly context: IContext,
          private readonly tenantId: string,
          private readonly documentId: string,
          private readonly documentCollection: ICollection<IDocument>,
@@ -46,17 +49,13 @@ export class CheckpointManager implements ICheckpointManager {
         const dbOps = pending.map((message) => ({ ...message,
             mongoTimestamp: new Date(message.operation.timestamp) }));
         if (dbOps.length > 0) {
-            await this.opCollection
-                .insertMany(dbOps, false)
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
-                .catch((error) => {
-                    // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                    // All other errors result in a rejected promise.
-                    if (error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
-                    }
-                });
+            await runWithRetry(
+                async () => this.opCollection.insertMany(dbOps, false),
+                "writeCheckpointScribe",
+                3 /* maxRetries */,
+                1000 /* retryAfterMs */,
+                this.context.log,
+                (error) => error.code === 11000 /* shouldIgnoreError */);
         }
 
         // Write out the full state first that we require

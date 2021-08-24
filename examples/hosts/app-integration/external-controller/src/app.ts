@@ -7,6 +7,7 @@ import {
     AzureClient,
     AzureConnectionConfig,
     InsecureTokenProvider,
+    AzureResources,
 } from "@fluidframework/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
 import { SharedMap } from "fluid-framework";
@@ -47,18 +48,10 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
     storage: "http://localhost:7070",
 };
 
-let createNew = false;
-if (location.hash.length === 0) {
-    createNew = true;
-    location.hash = Date.now().toString();
-}
-const containerId = location.hash.substring(1);
-document.title = containerId;
-
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
-export const containerSchema = {
+const containerSchema = {
     name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
@@ -72,12 +65,24 @@ async function start(): Promise<void> {
     // and hook to the Telemetry system
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
-    // Get or create the document depending if we are running through the create new flow
+    const client = new AzureClient(connectionConfig, consoleLogger);
+    let resources: AzureResources;
 
-    const client = new AzureClient(connectionConfig);
-    const { fluidContainer, containerServices } = createNew
-        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
-        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
+    // Get or create the document depending if we are running through the create new flow
+    const createNew = !location.hash;
+    if (createNew) {
+        // The client will create a new container using the schema
+        resources = await client.createContainer(containerSchema);
+        // The new container has its own unique ID that can be used to access it in another session
+        location.hash = resources.fluidContainer.id;
+    } else {
+        const containerId = location.hash.substring(1);
+        // Use the unique container ID to fetch the container created earlier
+        resources = await client.getContainer(containerId, containerSchema);
+    }
+    // create/get container API returns a combination of the container and associated container services
+    const { fluidContainer, containerServices } = resources;
+    document.title = fluidContainer.id;
 
     // We now get the DataObject from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
@@ -108,4 +113,4 @@ async function start(): Promise<void> {
     renderAudience(containerServices.audience, contentDiv);
 }
 
-start().catch((error) => console.error(error));
+start().catch(console.error);
