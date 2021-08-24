@@ -5,7 +5,12 @@
 
 import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
-import { IHistorian, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
+import {
+    IHistorian,
+    IWholeSummaryPayload,
+    IWholeSummaryTree,
+    IWriteSummaryResponse,
+} from "@fluidframework/server-services-client";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { TestDb } from "./testCollection";
@@ -143,6 +148,10 @@ export class TestHistorian implements IHistorian {
     }
 
     public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        throw new Error("Not Supported");
+    }
+
+    public async getSummary(sha: string): Promise<IWholeSummaryTree> {
         throw new Error("Not Supported");
     }
 
