@@ -110,15 +110,28 @@ async function start(): Promise<void> {
         if (!containerKillBit.markedForDestruction) {
             await containerKillBit.markForDestruction();
         }
+
+        if (containerKillBit.dead) {
+            return;
+        }
+
         // After the quorum proposal is accepted, our system doesn't allow further edits to the string
         // So we can immediately get the data out even before taking the lock.
         const stringData = await extractStringData(inventoryList);
+        if (containerKillBit.dead) {
+            return;
+        }
+
         await containerKillBit.volunteerForDestruction();
+        if (containerKillBit.dead) {
+            return;
+        }
+
         await writeData(stringData);
         if (!containerKillBit.haveDestructionTask()) {
             throw new Error("Lost task during write");
         } else {
-            containerKillBit.setDead();
+            await containerKillBit.setDead();
         }
     };
 

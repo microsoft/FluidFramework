@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 // import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TaskManager } from "@fluid-experimental/task-manager";
 
@@ -14,14 +13,17 @@ const markedForDestructionKey = "marked";
 const destroyTaskName = "destroy";
 const deadKey = "dead";
 
-export interface IContainerKillBit extends EventEmitter {
+export interface IContainerKillBitEvents extends IEvent {
+    (event: "markedForDestruction" | "dead", listener: () => void);
+}
+
+export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
     dead: boolean;
-    setDead(): void;
+    setDead(): Promise<void>;
     markedForDestruction: boolean;
     markForDestruction(): Promise<void>;
     volunteerForDestruction(): Promise<void>;
     haveDestructionTask(): boolean;
-    on(event: "markedForDestruction" | "dead", listener: () => void): this;
 }
 
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
@@ -37,9 +39,9 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         return this.root.get(deadKey) as boolean;
     }
 
-    public setDead() {
-        // This might want to use a consensus-type data structure here, to make it easier to validate
-        // that the setDead was ack'd and other clients will be able to agree.
+    public async setDead() {
+        // This should probably use a consensus-type data structure here, to make it easier to validate
+        // that the setDead was ack'd and we can have confidence other clients will agree.
         this.root.set(deadKey, true);
     }
 

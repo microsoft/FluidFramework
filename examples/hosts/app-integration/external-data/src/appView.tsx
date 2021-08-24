@@ -62,11 +62,11 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     }
 
     const endSessionButtonClickHandler = () => {
-        containerKillBit.markForDestruction();
+        containerKillBit.markForDestruction().catch(console.error);
     };
 
     const setDeadButtonClickHandler = () => {
-        containerKillBit.setDead();
+        containerKillBit.setDead().catch(console.error);
     };
 
     const saveButtonClickHandler = () => {
@@ -99,10 +99,10 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             { sessionEnding && <h1>The session is ending...</h1> }
             { importedDataView }
             <InventoryListView inventoryList={ inventoryList } disabled={ sessionEnding } />
-            <button onClick={ saveButtonClickHandler }>Save</button>
             <button onClick={ saveAndEndSession }>Save and End Session</button><br />
-            <button onClick={ endSessionButtonClickHandler }>End collaboration session</button>
-            <button onClick={ setDeadButtonClickHandler }>Set dead</button>
+            <button onClick={ endSessionButtonClickHandler }>1. End collaboration session</button>
+            <button onClick={ saveButtonClickHandler }>2. Save</button>
+            <button onClick={ setDeadButtonClickHandler }>3. Set dead</button>
             <div>Data out:</div>
             <textarea ref={ savedDataRef } rows={ 5 } readOnly></textarea>
         </div>
