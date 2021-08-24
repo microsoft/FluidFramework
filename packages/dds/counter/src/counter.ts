@@ -128,6 +128,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * Create a snapshot for the counter
      *
      * @returns the snapshot of the current state of the counter
+     * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         // Get a serializable form of data
@@ -155,7 +156,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-     */
+     * @internal
+     * */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ICounterSnapshotFormat>(storage, snapshotFileName);
 
@@ -164,14 +166,16 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     * @internal
      */
     protected registerCore() {
     }
 
     /**
-     * Call back on disconnect
+     * Called when the object has disconnected from the delta stream.
+     * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * Process a counter operation
@@ -198,6 +202,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 
     /**
      * Not implemented.
+     * @internal
      */
     protected applyStashedOp() {
         throw new Error("not implemented");

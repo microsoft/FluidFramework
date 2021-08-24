@@ -6,6 +6,7 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
+ * Events sent by SharedCounters.
  * @public
  */
 export interface ISharedCounterEvents extends ISharedObjectEvents {
@@ -21,7 +22,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 }
 
 /**
- * Shared counter interface
+ * SharedCounter interface.
  * @public
  */
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
@@ -33,7 +34,7 @@ export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     /**
      * Increments or decrements the value.  Must only increment or decrement by a whole number value.
      *
-     * @param incrementAmount - a whole number to increment or decrement by
+     * @param incrementAmount - a whole number to increment or decrement by.
      */
     increment(incrementAmount: number): void;
 }
