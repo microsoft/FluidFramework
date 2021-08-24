@@ -243,7 +243,7 @@ export class SummaryWriter implements ISummaryWriter {
         }
 
         if (!op.additionalContent) {
-            // this is an mixed mode edge case that can occur if the "generateServiceSummary" config
+            // this is a mixed mode edge case that can occur if the "generateServiceSummary" config
             // was disabled in a previous deployment and is now enabled in the next one
             return false;
         }
