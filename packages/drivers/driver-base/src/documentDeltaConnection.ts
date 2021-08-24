@@ -136,7 +136,7 @@ export class DocumentDeltaConnection
             }
         });
 
-        this.isBatchManagerDisabled = this.disabledBatchManagerFeatureGate;
+        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
     }
 
     /**
@@ -267,7 +267,7 @@ export class DocumentDeltaConnection
         }
     }
 
-    private get disabledBatchManagerFeatureGate() {
+    private static get disabledBatchManagerFeatureGate() {
         try {
             return localStorage !== undefined
                 && typeof localStorage === "object"
