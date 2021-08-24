@@ -21,7 +21,7 @@ import {
     ITree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IResolvedUrl } from "./urlResolver";
+import { IResolvedUrl, IUrlResolver } from "./urlResolver";
 
 export interface IDeltasFetchResult {
     /**
@@ -58,7 +58,7 @@ export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
 /**
  * Read interface for the Queue
  */
- export interface IStream<T> {
+export interface IStream<T> {
     read(): Promise<IStreamResult<T>>;
 }
 
@@ -73,7 +73,7 @@ export interface IDocumentDeltaStorageService {
      * @param abortSignal - signal that aborts operation
      * @param cachedOnly - return only cached ops, i.e. ops available locally on client.
      */
-     fetchMessages(from: number,
+    fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
@@ -290,16 +290,22 @@ export interface IDocumentServiceFactory {
     /**
      * Returns an instance of IDocumentService
      */
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
 
     /**
-     * Creates a new document with the provided options. Returns the document service.
-     * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
-     * should be posted later, before connecting to ordering service.
+     * Creates a new document with the provided options.
+     * @param request - Request required to create a new document.
+     * @param urlResolver - URL resolver required to resolve document URLs.
+     * @param createNewSummary - Optional. Summary used to create file.
+     * If undefined, an empty file will be created and a summary should be posted later,
+     * before connecting to ordering service.
+     * @param logger - Optional. Telemetry logger.
+     * @returns Returns the document service connected to the delta stream.
      */
     createContainer(
-        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
+        urlResolver: IUrlResolver,
+        createNewSummary?: ISummaryTree,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService>;
 }

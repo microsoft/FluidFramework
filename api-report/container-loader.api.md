@@ -73,7 +73,7 @@ export enum ConnectionState {
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig);
     // (undocumented)
-    attach(request: IRequest): Promise<void>;
+    attach(request: IRequest): Promise<IResolvedUrl>;
     // (undocumented)
     get attachState(): AttachState;
     get audience(): IAudience;

@@ -142,5 +142,6 @@
       }
     },
     "generatorName": "generator-fluid"
-  }
+  },
+  "dependencies": {}
 }

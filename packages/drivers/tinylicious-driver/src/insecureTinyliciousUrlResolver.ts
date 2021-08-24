@@ -9,9 +9,6 @@ import {
     IResolvedUrl,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
-import { KJUR as jsrsasign } from "jsrsasign";
-import { v4 as uuid } from "uuid";
 
 export const defaultTinyliciousPort = 7070;
 export const defaultTinyliciousEndpoint = "http://localhost";
@@ -24,33 +21,36 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     private readonly fluidProtocolEndpoint: string;
+    private readonly tinyliciousEndpoint: string;
     public constructor(
-        private readonly tinyliciousPort = defaultTinyliciousPort,
-        private readonly tinyliciousEndpoint = defaultTinyliciousEndpoint,
+        port = defaultTinyliciousPort,
+        endpoint = defaultTinyliciousEndpoint,
         ) {
+            this.tinyliciousEndpoint = `${endpoint}:${port}`;
             this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
          }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        const url = request.url.replace(`${this.tinyliciousEndpoint}:${this.tinyliciousPort}/`, "");
+        const url = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
         const documentRelativePath = url.slice(documentId.length);
 
-        // eslint-disable-next-line max-len
-        const documentUrl = `${this.fluidProtocolEndpoint}:${this.tinyliciousPort}/tinylicious/${encodedDocId}${documentRelativePath}`;
+        const documentUrl =
+            `${this.fluidProtocolEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
         const deltaStorageUrl =
-            `${this.tinyliciousEndpoint}:${this.tinyliciousPort}/deltas/tinylicious/${encodedDocId}`;
-        const storageUrl = `${this.tinyliciousEndpoint}:${this.tinyliciousPort}/repos/tinylicious`;
+            `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
+        const storageUrl =
+            `${this.tinyliciousEndpoint}/repos/tinylicious`;
 
         const response: IFluidResolvedUrl = {
             endpoints: {
                 deltaStorageUrl,
-                ordererUrl: `${this.tinyliciousEndpoint}:${this.tinyliciousPort}`,
+                ordererUrl: this.tinyliciousEndpoint,
                 storageUrl,
             },
             id: documentId,
-            tokens: { jwt: this.auth(documentId) },
+            tokens: { },
             type: "fluid",
             url: documentUrl,
         };
@@ -59,7 +59,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
     public async getAbsoluteUrl(resolvedUrl: IFluidResolvedUrl, relativeUrl: string): Promise<string> {
         const documentId = decodeURIComponent(
-            resolvedUrl.url.replace(`${this.fluidProtocolEndpoint}:${this.tinyliciousPort}/tinylicious/`, ""),
+            resolvedUrl.url.replace(`${this.fluidProtocolEndpoint}/tinylicious/`, ""),
         );
         /*
          * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by
@@ -68,22 +68,6 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
          * described above.
          */
         return `${documentId}/${relativeUrl}`;
-    }
-
-    private auth(documentId: string) {
-        const claims: ITokenClaims = {
-            documentId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-            tenantId: "tinylicious",
-            user: { id: uuid() },
-            iat: Math.round(new Date().getTime() / 1000),
-            exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
-            ver: "1.0",
-        };
-
-        const utf8Key = { utf8: "12345" };
-        // eslint-disable-next-line no-null/no-null
-        return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
     }
 }
 

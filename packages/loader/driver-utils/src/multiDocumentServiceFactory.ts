@@ -8,6 +8,7 @@ import {
     IDocumentServiceFactory,
     IResolvedUrl,
     IDocumentService,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -58,8 +59,9 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     }
 
     public async createContainer(
-        createNewSummary: ISummaryTree,
         createNewResolvedUrl: IResolvedUrl,
+        urlResolver: IUrlResolver,
+        createNewSummary?: ISummaryTree,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);
@@ -72,6 +74,6 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
         if (factory === undefined) {
             throw new Error("Unknown Fluid protocol");
         }
-        return factory.createContainer(createNewSummary, createNewResolvedUrl, logger);
+        return factory.createContainer(createNewResolvedUrl, urlResolver, createNewSummary, logger);
     }
 }

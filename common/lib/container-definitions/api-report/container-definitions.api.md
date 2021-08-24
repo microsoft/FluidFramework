@@ -115,7 +115,7 @@ export interface IConnectionDetails {
 
 // @public
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
-    attach(request: IRequest): Promise<void>;
+    attach(request: IRequest): Promise<IResolvedUrl>;
     readonly attachState: AttachState;
     close(error?: ICriticalContainerError): void;
     closeAndGetPendingLocalState(): string;

@@ -4,8 +4,11 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import {
+    IFluidResolvedUrl,
+    IResolvedUrl,
+    IUrlResolver,
+} from "@fluidframework/driver-definitions";
 
 // Implementation of a URL resolver to resolve documents stored using the Azure Relay Service
 // based off of the orderer and storage URLs provide. The token provider here can be a
@@ -16,12 +19,10 @@ export class AzureUrlResolver implements IUrlResolver {
         private readonly tenantId: string,
         private readonly orderer: string,
         private readonly storage: string,
-        private readonly tokenProvider: ITokenProvider,
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
         const containerId = request.url.split("/")[0];
-        const token = (await this.tokenProvider.fetchOrdererToken(this.tenantId, containerId)).jwt;
         const documentUrl = `${this.orderer}/${this.tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
@@ -30,11 +31,12 @@ export class AzureUrlResolver implements IUrlResolver {
                 storageUrl: `${this.storage}/repos/${this.tenantId}`,
             },
             id: containerId,
-            tokens: { jwt: token },
+            tokens: {},
             type: "fluid",
             url: documentUrl,
         });
     }
+
     public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         if (resolvedUrl.type !== "fluid") {
             throw Error("Invalid Resolved Url");

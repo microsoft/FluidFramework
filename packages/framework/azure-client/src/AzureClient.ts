@@ -60,6 +60,7 @@ export class AzureClient {
         });
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
+        const documentUrl = await container.attach();
         const id = uuid();
         return this.getFluidContainerAndServices(id, container);
     }
@@ -114,7 +115,6 @@ export class AzureClient {
             this.connectionConfig.tenantId,
             this.connectionConfig.orderer,
             this.connectionConfig.storage,
-            this.connectionConfig.tokenProvider,
         );
         return new Loader({
             urlResolver,

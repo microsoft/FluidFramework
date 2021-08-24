@@ -156,12 +156,14 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>
 
     /**
-     * Attaches the Container to the Container specified by the given Request.
+     * Attaches the Container to a new document created in the document storage.
+     * @param request - Request to be used to create a new container.
+     * @returns - Resolved URL associated with the new document.
      *
-     * TODO - in the case of failure options should give a retry policy. Or some continuation function
+     * TODO: - in the case of failure options should give a retry policy. Or some continuation function
      * that allows attachment to a secondary document.
      */
-    attach(request: IRequest): Promise<void>;
+    attach(request: IRequest): Promise<IResolvedUrl>;
 
     /**
      * Extract the snapshot from the detached container.

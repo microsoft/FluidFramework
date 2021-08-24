@@ -197,7 +197,7 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewResolvedUrl: IResolvedUrl, urlResolver: IUrlResolver, createNewSummary?: ISummaryTree, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)

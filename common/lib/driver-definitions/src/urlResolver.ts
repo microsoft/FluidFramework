@@ -27,14 +27,28 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
     endpoints: { [name: string]: string };
 }
 
+/**
+ * Represents a URL resolver
+ */
 export interface IUrlResolver {
-
-    // Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
-    // the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
-    // or do we split the token access from this?
+    /**
+     * Resolve a container URL given a request.
+     * @param request - Request
+     * @returns - Resolved url
+     *
+     * Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
+     * the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
+     * or do we split the token access from this?
+     */
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 
-    // Creates a url for the created container with any data store path given in the relative url.
+    /**
+     * Creates a url for the created container with any data store path given in the relative url.
+     * @param resolvedUrl - URL
+     * @param relativeUrl - Relative URL
+     * @param codeDetails - Code details
+     * @returns - string
+     */
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,

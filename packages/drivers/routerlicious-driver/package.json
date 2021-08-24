@@ -58,7 +58,7 @@
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/driver-base": "^0.47.0",
-    "@fluidframework/driver-definitions": "^0.39.6",
+    "@fluidframework/driver-definitions": "^0.40.0",
     "@fluidframework/driver-utils": "^0.47.0",
     "@fluidframework/gitresources": "^0.1029.0-0",
     "@fluidframework/protocol-base": "^0.1029.0-0",

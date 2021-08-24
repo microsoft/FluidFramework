@@ -299,7 +299,7 @@ export class Loader implements IHostLoader {
     }
 
     constructor(loaderProps: ILoaderProps) {
-        const scope = { ...loaderProps.scope };
+        const scope: any = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader !== false) {
             scope.ILoader = this;
         }

@@ -823,7 +823,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return JSON.stringify(combinedSummary);
     }
 
-    public async attach(request: IRequest): Promise<void> {
+    public async attach(request: IRequest): Promise<IResolvedUrl> {
         if (!this.loaded) {
             throw new UsageError("containerMustBeLoadedBeforeAttaching");
         }
@@ -861,13 +861,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
 
             // Actually go and create the resolved document
-            const createNewResolvedUrl = await this.urlResolver.resolve(request);
-            ensureFluidResolvedUrl(createNewResolvedUrl);
             if (this.service === undefined) {
+                const createNewResolvedUrl = await this.urlResolver.resolve(request);
+                ensureFluidResolvedUrl(createNewResolvedUrl);
                 this.service = await runWithRetry(
                     async () => this.serviceFactory.createContainer(
-                        summary,
                         createNewResolvedUrl,
+                        this.urlResolver,
+                        summary,
                         this.subLogger,
                     ),
                     "containerAttach",
@@ -877,6 +878,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logger,
                 );
             }
+
             const resolvedUrl = this.service.resolvedUrl;
             ensureFluidResolvedUrl(resolvedUrl);
             this._resolvedUrl = resolvedUrl;
@@ -923,6 +925,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (!this.closed) {
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
+            return resolvedUrl;
         } catch(error) {
             // we should retry upon any retriable errors, so we shouldn't see them here
             assert(!canRetryOnError(error), "retriable error thrown from attach()");

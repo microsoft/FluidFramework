@@ -138,7 +138,7 @@ export interface IDocumentService {
 
 // @public (undocumented)
 export interface IDocumentServiceFactory {
-    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewResolvedUrl: IResolvedUrl, urlResolver: IUrlResolver, createNewSummary?: ISummaryTree, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     protocolName: string;
 }
@@ -262,11 +262,9 @@ export interface IThrottlingWarning extends IDriverErrorBase {
     readonly retryAfterSeconds: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IUrlResolver {
-    // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, codeDetails?: IFluidCodeDetails): Promise<string>;
-    // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
