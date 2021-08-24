@@ -30,7 +30,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     public constructor(
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
-        private readonly attach: () => Promise<string>,
+        private readonly attachCallback: () => Promise<string>,
     ) {
         super();
         container.on("connected", this.connectedHandler);
@@ -70,7 +70,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
     public async attach() {
         if (this.attachState === AttachState.Detached) {
-            return this.attach();
+            return this.attachCallback();
         } else {
             throw new Error("Cannot attach container. Container is not in detached state");
         }
