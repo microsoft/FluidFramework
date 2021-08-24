@@ -131,6 +131,11 @@ export class Lumberjack {
         const defaultStackTracePreparer = Error.prepareStackTrace;
         try {
             Error.prepareStackTrace = (_, structuredStackTrace) => {
+                // Since we have a static log() and an instance log(), we should discard the first entry
+                // in the call stack in case the static log() called the singleton's instance log()
+                if (structuredStackTrace[0].getFileName() === __filename) {
+                    structuredStackTrace.shift();
+                }
                 const caller = structuredStackTrace[0];
                 const fileName = caller.getFileName() ?? "FilenameNotAvailable";
                 const functionName = caller.getFunctionName() ?? caller.getMethodName() ?? "FunctionNameNotAvailable";
