@@ -9,6 +9,7 @@
     "@fluidframework/core-interfaces",
     "@fluidframework/common-definitions",
     "@fluidframework/container-definitions",
+    "@fluidframework/datastore-definitions",
     "@fluidframework/driver-definitions",
     "@fluidframework/protocol-base",
     "@fluidframework/protocol-definitions",
@@ -16,6 +17,7 @@
     "@fluidframework/counter",
     "@fluidframework/map",
     "@fluidframework/sequence",
+    "@fluidframework/shared-object-base",
     "@fluidframework/aqueduct"
   ]
 }
