@@ -131,7 +131,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        console.debug(resolvedUrl);
         ensureFluidResolvedUrl(resolvedUrl);
 
         const fluidResolvedUrl = resolvedUrl;
