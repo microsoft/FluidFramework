@@ -59,10 +59,10 @@ export function create(
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const commitP = createSummary(request.params.tenantId, request.get("Authorization"), request.body);
+            const summaryP = createSummary(request.params.tenantId, request.get("Authorization"), request.body);
 
             utils.handleResponse(
-                commitP,
+                summaryP,
                 response,
                 false,
                 201);
