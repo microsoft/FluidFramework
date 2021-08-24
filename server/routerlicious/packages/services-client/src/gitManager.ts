@@ -9,7 +9,7 @@ import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import { ICreateRefParamsExternal, IPatchRefParamsExternal, IGitManager, IHistorian } from "./storage";
-import { IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { IWholeSummaryPayload, IWholeSummaryTree, IWriteSummaryResponse } from "./storageContracts";
 
 export class GitManager implements IGitManager {
     private readonly blobCache = new Map<string, resources.IBlob>();
@@ -143,6 +143,10 @@ export class GitManager implements IGitManager {
 
     public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         return this.historian.createSummary(summary);
+    }
+
+    public async getSummary(sha: string): Promise<IWholeSummaryTree> {
+        return this.historian.getSummary(sha);
     }
 
     public async getRef(ref: string): Promise<resources.IRef> {
