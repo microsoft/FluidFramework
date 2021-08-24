@@ -7,7 +7,7 @@ editor: tylerbutler
 
 The audience is the collection of users connected to a container.  When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the Tinylicious Fluid service is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the [Tinylicious]({{< relref "tinylicious.md" >}}) Fluid service is used.
 
 ## Working with the audience
 

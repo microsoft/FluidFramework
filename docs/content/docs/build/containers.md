@@ -24,7 +24,7 @@ Your code must define a schema that represents the structure of the data within 
 - Some initial Fluid objects that are created as soon as the container is, and are immediately and always available to all connected clients.
 - The types of Fluid objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
 
-The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling](./data-modeling.md).
+The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
 
 This example schema defines two initial objects, `layout` and `text`, and declares the distributed data structures (DDSes) `SharedCell` and `SharedString` as Fluid object types that can be created at runtime.
 
@@ -44,7 +44,7 @@ const schema = {
 Containers are created from the service-specific client's `createContainer` function. Your code must provide a configuration that is specific to the service and a schema object that defines the container schema. About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience](./audience.md#working-with-the-audience).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript {hl_lines=[10]}
 const schema = {
@@ -150,7 +150,7 @@ When creating and loading a container, it can be tempting to have a consistent c
 
 However, we generally recommend that creating and loading containers be separated. This provides a cleaner separation of responsibilities within the code itself. Also, in typical use-cases, a user will create a new container through some UI action that results in a redirect to another page whose sole responsibility is to load a container. All subsequent users will load the container by navigating directly to that page.
 
-The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process. For an example of a simple scenario in which it makes sense to combine the flows, see the [Tutorial: Create a Fluid Framework application with React](../start/react-tutorial.md).
+The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process. For an example of a simple scenario in which it makes sense to combine the flows, see the [Tutorial: Create a Fluid Framework application with React]({{< relref "react-tutorial.md" >}}).
 
 ### Multi-container example
 

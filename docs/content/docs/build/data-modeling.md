@@ -6,12 +6,12 @@ editor: tylerbutler
 ---
 
 Fluid offers flexible ways to model your collaborative data. Your application can declaratively define a set of Fluid objects
-that are immediately and always available to all clients; or, for more complex scenarios, your application can create Fluid objects at runtime only when a user takes a particular path  through the application.
+that are immediately and always available to all clients; or, for more complex scenarios, your application can create Fluid objects at runtime only when a user takes a particular path through the application.
 
 ## Defining initial objects
 
 The most straightforward way to use Fluid is by defining **initial objects** that are created when the
-[Fluid container](./containers.md) is created, and exist for the lifetime of the container. Initial objects serve as a base
+[Fluid container][] is created, and exist for the lifetime of the container. Initial objects serve as a base
 foundation for a Fluid *schema* -- a definition of the shape of the data.
 
 Initial objects are always *connected* -- that is, they are connected to the Fluid service and are fully distributed.
@@ -25,7 +25,7 @@ The example below creates a new container with a `SharedMap` and a `SharedCell` 
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 - The placeholder `/*service config*/` stands for a service-specific configuration object.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience](./audience.md#working-with-the-audience).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript
 const schema = {

@@ -7,7 +7,7 @@ editor: tylerbutler
 
 {{< callout note >}}
 
-This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works](../../_index.md#how-fluid-works).
+This article assumes that you are familiar with the concept of *operation* in the Fluid Framework. See [How Fluid works]({{< relref "docs/_index.md#how-fluid-works" >}}).
 
 {{< /callout >}}
 
@@ -53,7 +53,7 @@ There are two primary libraries you'll use when building with Fluid. The basic F
 
 ### The Fluid Framework library
 
-The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the  built-in Fluid objects. The library is in the package `@fluid-experimental/fluid-framework`.
+The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the  built-in Fluid objects. The library is in the package `fluid-framework`.
 
 ### Service-specific client libraries
 
@@ -61,7 +61,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 For specifics about each service-specific client implementation see their corresponding documentation.
 
-- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluid-experimental/tinylicious-client`.
-- The client library for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) is in the package `@fluid-experimental/frs-client`.
+- The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package `@fluidframework/tinylicious-client`.
+- The client library for the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) is in the package `@fluidframework/azure-client`.
 
 For more information see [Packages]({{< relref "packages.md" >}}).

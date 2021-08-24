@@ -131,7 +131,7 @@ myMap.set("counter", myCounter.handle);
 ```
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
-see [Fluid handles](../deep/handles.md) in the Advanced section.
+see [Fluid handles]({{< relref "handles.md" >}}) in the Advanced section.
 
 ## Events
 
@@ -191,7 +191,7 @@ editing the data at the same time, then the one who made the most recent change 
 other user.
 
 Imagine that a user "A" is collaborating with a colleague, and the user changes the shape's width while the colleague "B" changes the
-shape's height. This will generate two operations: a `set` operation for A, and another `set` operation for B. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's merge behavior is LWW. Since we're storing the shape as an object, both `set` operations *set the whole object*.
+shape's height. This will generate two operations: a `set` operation for user A's change, and another `set` operation for user B's change. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's merge behavior is LWW. Since we're storing the shape as an object, both `set` operations *set the whole object*.
 
 This results in someone's changes being "lost" from a user's perspective. This may be perfectly fine for your needs.
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
