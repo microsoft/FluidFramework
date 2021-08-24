@@ -16,6 +16,8 @@ Delta:4`;
 
 export const writeData = async (data: string) => {
     // Write to persisted storage
+    console.log("Wrote data:");
+    console.log(data);
 };
 
 function parseStringData(stringData: string) {

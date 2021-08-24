@@ -15,11 +15,18 @@ export interface IAppViewProps {
     importedStringData: string | undefined;
     // Normally this is probably a Promise<void>.  Returns a string here for demo purposes only.
     writeToExternalStorage: () => Promise<string>;
+    saveAndEndSession: () => Promise<void>;
     containerKillBit: IContainerKillBit;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const { inventoryList, importedStringData, writeToExternalStorage, containerKillBit } = props;
+    const {
+        inventoryList,
+        importedStringData,
+        writeToExternalStorage,
+        containerKillBit,
+        saveAndEndSession,
+    } = props;
 
     const [dead, setDead] = useState<boolean>(containerKillBit.dead);
     const [sessionEnding, setSessionEnding] = useState<boolean>(containerKillBit.markedForDestruction);
@@ -92,9 +99,10 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             { sessionEnding && <h1>The session is ending...</h1> }
             { importedDataView }
             <InventoryListView inventoryList={ inventoryList } disabled={ sessionEnding } />
+            <button onClick={ saveButtonClickHandler }>Save</button>
+            <button onClick={ saveAndEndSession }>Save and End Session</button><br />
             <button onClick={ endSessionButtonClickHandler }>End collaboration session</button>
             <button onClick={ setDeadButtonClickHandler }>Set dead</button>
-            <button onClick={ saveButtonClickHandler }>Save</button>
             <div>Data out:</div>
             <textarea ref={ savedDataRef } rows={ 5 } readOnly></textarea>
         </div>

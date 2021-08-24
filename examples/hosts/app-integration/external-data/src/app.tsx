@@ -106,6 +106,22 @@ async function start(): Promise<void> {
         return stringData;
     };
 
+    const saveAndEndSession = async () => {
+        if (!containerKillBit.markedForDestruction) {
+            await containerKillBit.markForDestruction();
+        }
+        // After the quorum proposal is accepted, our system doesn't allow further edits to the string
+        // So we can immediately get the data out even before taking the lock.
+        const stringData = await extractStringData(inventoryList);
+        await containerKillBit.volunteerForDestruction();
+        await writeData(stringData);
+        if (!containerKillBit.haveDestructionTask()) {
+            throw new Error("Lost task during write");
+        } else {
+            containerKillBit.setDead();
+        }
+    };
+
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
     const div = document.getElementById("content") as HTMLDivElement;
     ReactDOM.render(
@@ -114,6 +130,7 @@ async function start(): Promise<void> {
             inventoryList={ inventoryList }
             writeToExternalStorage={ writeToExternalStorage }
             containerKillBit={ containerKillBit }
+            saveAndEndSession={ saveAndEndSession }
         />,
         div,
     );

@@ -18,8 +18,9 @@ export interface IContainerKillBit extends EventEmitter {
     dead: boolean;
     setDead(): void;
     markedForDestruction: boolean;
-    markForDestruction(): void;
+    markForDestruction(): Promise<void>;
     volunteerForDestruction(): Promise<void>;
+    haveDestructionTask(): boolean;
     on(event: "markedForDestruction" | "dead", listener: () => void): this;
 }
 
@@ -37,6 +38,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public setDead() {
+        // This might want to use a consensus-type data structure here, to make it easier to validate
+        // that the setDead was ack'd and other clients will be able to agree.
         this.root.set(deadKey, true);
     }
 
@@ -44,22 +47,19 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         return this.root.get(markedForDestructionKey) as boolean;
     }
 
-    public markForDestruction() {
-        // consider using a quorum-type data structure here?
+    public async markForDestruction() {
+        // This should probably use a quorum-type data structure here.
         // Then, when everyone sees the quorum proposal get approved they can choose to either volunteer
         // or close themselves
         this.root.set(markedForDestructionKey, true);
     }
 
     public async volunteerForDestruction(): Promise<void> {
-        await this.taskManager.lockTask(destroyTaskName);
-        // do destroy task
-        // Only trust that we succeeded as expected if we still have the lock after completing the destruction
-        if (this.taskManager.haveTaskLock(destroyTaskName)) {
-            this.root.set(deadKey, true);
-        } else {
-            throw new Error("Lost task during destruction");
-        }
+        return this.taskManager.lockTask(destroyTaskName);
+    }
+
+    public haveDestructionTask(): boolean {
+        return this.taskManager.haveTaskLock(destroyTaskName);
     }
 
     protected async initializingFirstTime() {
