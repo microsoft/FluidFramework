@@ -58,4 +58,8 @@ export class TestContext extends EventEmitter implements IContext {
         this.waits.push({ deferred, value });
         return deferred.promise;
     }
+
+    public getContextError() {
+        return;
+    }
 }

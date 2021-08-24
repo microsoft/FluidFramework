@@ -27,7 +27,8 @@ import {
 } from "@fluidframework/server-services-core";
 import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
-import { NoOpLambda } from "../utils";
+import { LumberEventName } from "@fluidframework/server-services-telemetry";
+import { NoOpLambda, createSessionMetric } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
@@ -76,6 +77,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             tenantId,
         };
 
+        const scribeSessionMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.ScribeSessionResult, this.serviceConfiguration);
+
         try {
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
             gitManager = tenant.gitManager;
@@ -99,6 +103,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         } catch (error) {
             context.log?.error(`Scribe lambda creation failed. Exception: ${inspect(error)}`);
             await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+            scribeSessionMetric?.error("Scribe lambda creation failed", error);
+
             throw error;
         }
 
@@ -135,10 +141,13 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         let expectedSequenceNumber = lastCheckpoint.protocolState.sequenceNumber + 1;
         for (const message of opsSinceLastSummary) {
             if (message.sequenceNumber !== expectedSequenceNumber) {
-                await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
-                throw new Error(`Invalid message sequence from checkpoint/summary.`
+                const error = new Error(`Invalid message sequence from checkpoint/summary.`
                     + `Current message @${message.sequenceNumber}.`
                     + `Expected message @${expectedSequenceNumber}`);
+                scribeSessionMetric?.error("Invalid message sequence from checkpoint/summary", error);
+                await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+
+                throw error;
             }
             ++expectedSequenceNumber;
         }
@@ -171,7 +180,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
-            opMessages);
+            opMessages,
+            scribeSessionMetric);
 
         await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});
         return scribeLambda;
