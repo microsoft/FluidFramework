@@ -221,24 +221,25 @@ export class RunningSummarizer implements IDisposable {
         if (this.disposed) {
             return;
         }
-        this.disposeEnqueuedSummary();
-        if (this.stopping) {
-            await Promise.all([
-                this.summarizingLock,
-                this.generator.waitSummarizing(),
-            ]);
-            return;
+
+        if (!this.stopping) {
+            this.stopping = true;
+
+            this.disposeEnqueuedSummary();
+
+            // This will try to run lastSummary if needed.
+            if (this.heuristicRunner?.shouldRunLastSummary()) {
+                this.trySummarize("lastSummary");
+            }
         }
-        this.stopping = true;
-        if (this.heuristicRunner?.runOnClose()) {
-            // This resolves when the current pending summary gets an ack or fails.
-            // We wait for the result in case a safe summary is needed, and to get
-            // better telemetry.
-            await Promise.all([
-                this.summarizingLock,
-                this.generator.waitSummarizing(),
-            ]);
-        }
+
+        // This resolves when the current pending summary gets an ack or fails.
+        // We wait for the result in case a safe summary is needed, and to get
+        // better telemetry.
+        await Promise.all([
+            this.summarizingLock,
+            this.generator.waitSummarizing(),
+        ]);
     }
 
     private async waitStart() {

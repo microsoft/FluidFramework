@@ -232,14 +232,6 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
     | "failToSummarize"
-    /**
-     * Summarizer client detected that its parent is no longer elected the summarizer.
-     * Normally, the parent client would realize it is disconnected first and call stop
-     * giving a "parentNotConnected" stop reason. If the summarizer client attempts to
-     * generate a summary and realizes at that moment that the parent is not elected,
-     * only then will it stop itself with this message.
-     */
-    | "parentNoLongerSummarizer"
     /** Parent client reported that it is no longer connected. */
     | "parentNotConnected"
     /**
@@ -249,8 +241,10 @@ export type SummarizerStopReason =
      * tries to stop its spawned summarizer client.
      */
     | "parentShouldNotSummarize"
-    /** Parent client reported that it is disposed. */
-    | "disposed";
+    /** summarizer client disconnected */
+    | "summarizeClientDisconnected"
+    /* running summarizer threw an exception */
+    | "summarizerException";
 
 export interface ISummarizerEvents extends IEvent {
     /**
@@ -337,7 +331,7 @@ export interface ISummarizeHeuristicRunner {
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
-    runOnClose(): boolean;
+    shouldRunLastSummary(): boolean;
 
     /** Disposes of resources */
     dispose(): void;

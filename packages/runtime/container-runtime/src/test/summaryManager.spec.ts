@@ -196,7 +196,7 @@ describe("Summary Manager", () => {
     });
 
     it("Should become summarizer if elected, then connected; stop summarizer after unelected", async () => {
-        createSummaryManager({ opsToBypassInitialDelay: 0 });
+        createSummaryManager({ opsToBypassInitialDelay: 0, initialDelayMs: 0 });
         assertState(SummaryManagerState.Off, "should start off");
         clientElection.electClient(thisClientId);
         await flushPromises();
@@ -278,7 +278,15 @@ describe("Summary Manager", () => {
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
 
-        it("Should bypass initial delay if enough ops pass later", async () => {
+        // This test attempts to validate a case where summarizer client does not wait
+        // initial delay if there are enough unsummarized ops.
+        // The way it was implemented (and tested here) is that it only worked if given
+        // client was selected to be a summarizer in the past, then got disconnected and later
+        // again was elected a summarizer and at that moment we had enough ops to cut short wait.
+        // If we want to cut short such wait, we should do it properly by listening for incoming ops
+        // and cut wait short based on op count when an a single op triggers overflow, i.e.
+        // make it work in main scenario, not a some corner case that does not matter.
+        it.skip("Should bypass initial delay if enough ops pass later", async () => {
             summaryCollection.opsSinceLastAck = 500; // 500 < 1000, so do not bypass yet
             createSummaryManager({
                 initialDelayMs: 2000,

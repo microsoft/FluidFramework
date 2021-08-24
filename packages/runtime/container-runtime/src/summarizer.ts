@@ -5,7 +5,6 @@
 
 import { EventEmitter } from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { Deferred } from "@fluidframework/common-utils";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IRequest,
@@ -70,8 +69,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private runningSummarizer?: RunningSummarizer;
     private systemOpListener?: (op: ISequencedDocumentMessage) => void;
     private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
-    private stopped = false;
-    private readonly stopDeferred = new Deferred<void>();
     private _disposed: boolean = false;
 
     private readonly innerHandle: IFluidHandle<this>;
@@ -115,19 +112,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * the run promise, and also close the container.
      * @param reason - reason code for stopping
      */
-    public stop(reason?: SummarizerStopReason) {
-        if (this.stopped) {
-            // already stopping
-            return;
+    public stop(reason: SummarizerStopReason) {
+        if (this.runningSummarizer !== undefined) {
+            // This will allow running summarizer close cleanly and run lastSummary if needed.
+            // Only after it's over, abort the rest of the process.
+            this.runningSummarizer.waitStop().finally(() => this.runCoordinator?.stop(reason));
+        } else {
+            this.runCoordinator?.stop(reason);
         }
-        this.stopped = true;
-
-        this.logger.sendTelemetryEvent({
-            eventName: "StoppingSummarizer",
-            onBehalfOf: this.onBehalfOfClientId,
-            reason,
-        });
-        this.stopDeferred.resolve();
     }
 
     public updateOnBehalfOf(onBehalfOf: string): void {
@@ -220,11 +212,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         // Handle summary acks
         this.handleSummaryAcks().catch((error) => {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
-
-            // Raise error to parent container.
-            this.emit("summarizingError", createSummarizingWarning("Summarizer: HandleSummaryAckFatalError", true));
-
-            this.stop();
         });
 
         // Listen for ops
@@ -234,10 +221,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
         this.runtime.on("batchEnd", this.opListener);
 
-        await Promise.race([
-            this.runCoordinator.waitStopped(),
-            this.stopDeferred.promise,
-        ]);
+        await this.runCoordinator.waitStopped();
     }
 
     /**
@@ -261,14 +245,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     /** Implementation of SummarizerInternalsProvider.submitSummary */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-        const result = this.internalsProvider.submitSummary(options);
-
-        if (this.onBehalfOfClientId !== this.runtime.summarizerClientId
-            && this.runtime.clientId !== this.runtime.summarizerClientId) {
-            // We are no longer the summarizer; a different client is, so we should stop ourself
-            this.stop("parentNoLongerSummarizer");
-        }
-        return result;
+        return this.internalsProvider.submitSummary(options);
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
