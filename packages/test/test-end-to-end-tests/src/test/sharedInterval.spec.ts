@@ -202,7 +202,6 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
-
     describe("one client", () => {
         const stringId = "stringKey";
 
