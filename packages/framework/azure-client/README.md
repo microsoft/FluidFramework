@@ -79,7 +79,7 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const azureClient = new AzureClient();
+const azureClient = new AzureClient(config);
 const { fluidContainer, containerServices } = await azureClient.createContainer(schema);
 
 // Set any default data on the container's `initialObjects` before attaching
