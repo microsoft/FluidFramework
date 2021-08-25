@@ -24,7 +24,6 @@ import {
 import {
     TinyliciousConnectionConfig,
     TinyliciousContainerServices,
-    TinyliciousResources,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
@@ -61,7 +60,7 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
+    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
         const id = uuid();
@@ -78,7 +77,7 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
+    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
         const container = await this.getContainerCore(id, containerSchema, false);
         return this.getFluidContainerAndServices(id, container);
     }
@@ -87,16 +86,15 @@ export class TinyliciousClient {
     private async getFluidContainerAndServices(
         id: string,
         container: Container,
-    ): Promise<TinyliciousResources> {
+    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const attach = async () => {
             await container.attach({ url: id });
             return id;
         };
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
-        const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
-        const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
-        return tinyliciousResources;
+        const services: TinyliciousContainerServices = this.getContainerServices(container);
+        return { container: fluidContainer, services };
     }
 
     private getContainerServices(
