@@ -33,7 +33,7 @@
     "start:reauth": "node ./dist/nodeStressTest.js --profile mini --browserAuth",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc:run",
-    "test:realsvc": "npm run test:realsvc:tinylicious",
+    "test:realsvc": "echo No test for this package",
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
     "test:realsvc:run": "mocha dist/test --no-timeouts",
     "test:realsvc:tinylicious": "cross-env fluid__test__driver=tinylicious start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
