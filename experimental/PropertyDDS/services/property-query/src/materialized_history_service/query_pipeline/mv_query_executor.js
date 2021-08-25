@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 const AsyncContext = require('../../server/utils/async_context');
-const SimpleQueryExecution = require('./simple_query_execution');
-const MultipleQueriesExecution = require('./multiple_queries_execution');
+const { SimpleQueryExecution, MultipleQueriesExecution } = require('@fluid-experimental/property-query');
 
 /**
  * Executes the query for a get MV

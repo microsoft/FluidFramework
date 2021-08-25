@@ -7,7 +7,7 @@
  */
 
 const getPublicIp = require('./utils/get_public_ip');
-const ModuleLogger = require('./utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const logger = ModuleLogger.getLogger('HFDM.MaterializedHistoryService.Discovery');
 const settings = require('./utils/server_settings');
 

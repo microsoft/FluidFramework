@@ -4,7 +4,7 @@
  */
 let HfdmRedisClient = require('./hfdm_redis_client');
 const deploy = require('./deploy');
-const ModuleLogger = require('../utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 let logger = ModuleLogger.getLogger('HFDM.Redis.HfdmRedisClient');
 let fs = require('fs');
 let path = require('path');

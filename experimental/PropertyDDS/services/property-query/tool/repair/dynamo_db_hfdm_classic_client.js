@@ -7,7 +7,7 @@ const { PropertyGraphManager, Table, CredentialRotation } = require('hfdm-dynamo
 const BigStoreUtils = require('hfdm-bigstore').Utils;
 const BinaryStore = require('hfdm-dynamodb-store').BinaryStore;
 const { PluginManager } = require('hfdm-plugin-manager');
-const ModuleLogger = require('../../src/server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const AWS = require('aws-sdk');
 
 const settings = require('../../src/server/utils/server_settings');

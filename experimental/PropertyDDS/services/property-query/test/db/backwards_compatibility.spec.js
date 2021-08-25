@@ -8,12 +8,8 @@ const _ = require('lodash');
 const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
 const PluginManager = require('../../src/plugins/PluginManager');
 const settings = require('../../src/server/utils/server_settings');
-const BackendFactory = require('../../src/materialized_history_service/storage_backends/backend_factory');
-const StorageManager = require('../../src/materialized_history_service/storage_backends/storage_manager');
-const SerializerFactory = require('../../src/materialized_history_service/serialization/factory');
-const BranchWriteQueue = require('../../src/server/branch_write_queue');
-const NodeDependencyManager = require('../../src/materialized_history_service/node_dependency_manager');
-const MaterializedHistoryService = require('../../src/materialized_history_service/materialized_history_service');
+const { BackendFactory, StorageManager, BranchWriteQueue,
+     NodeDependencyManager, MaterializedHistoryService } = require('@fluid-experimental/property-query');
 const getExpressApp = require('../utils/get_express_app');
 
 describe('Backwards compatibility tests', () => {

@@ -4,7 +4,7 @@
  */
 const _ = require('lodash');
 const Chronometer = require('@fluid-experimental/property-common').Chronometer;
-const ModuleLogger = require('../../../server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query');
 const PromiseUtils = require('./promise_utils');
 const logger = ModuleLogger.getLogger('HFDM.Utils.RetryTask');
 

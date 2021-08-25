@@ -11,7 +11,7 @@
   const DeferredPromise = require('@fluid-experimental/property-common').DeferredPromise;
   const EventEmitter = require('events').EventEmitter;
   const HttpStatus = require('http-status-codes');
-  const ModuleLogger = require('../utils/module_logger');
+  const { ModuleLogger } = require('@fluid-experimental/property-query');
   const Redis = require('ioredis');
   const util = require('util');
 

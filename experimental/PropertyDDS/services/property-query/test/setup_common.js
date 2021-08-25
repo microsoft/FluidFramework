@@ -11,7 +11,7 @@ const chaiAsPromised = require('chai-as-promised');
 const ddbEndpoint = require('hfdm-private-tools').getDDBEndpoint();
 const s3Endpoint = require('hfdm-private-tools').getS3Endpoint();
 const redisConfig = require('hfdm-private-tools').getRedisConfig();*/
-const ModuleLogger = require('../src/server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 
 global.targets = {};
 //global.targets.ddbEndpoint = ddbEndpoint;

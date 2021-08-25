@@ -4,7 +4,7 @@
  */
 const HttpStatus = require('http-status-codes');
 const sanitize = require('sanitize');
-const ModuleLogger = require('./module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const BasicAuthController = require('./basic_auth_controller');
 const LoggerSanitizer = require('./logger_sanitizer');
 

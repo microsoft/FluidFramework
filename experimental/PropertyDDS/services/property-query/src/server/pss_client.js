@@ -10,7 +10,7 @@ const { promisify } = require('util');
 const _ = require('lodash');
 const settings = require('./utils/server_settings');
 
-const ModuleLogger = require('./utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const logger = ModuleLogger.getLogger('HFDM.MaterializedHistoryService.PSSClient');
 
 const MAX_RETRIES = 3;

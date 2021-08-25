@@ -9,7 +9,7 @@ const async = require('async');
 const AWS = require('aws-sdk');
 const credsRotation = require('./credential_rotation');
 const DeferredPromise = require('@fluid-experimental/property-common').DeferredPromise;
-const ModuleLogger = require('../../../server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query');
 const MetricsRetryTask = require(path.join(__dirname, 'metrics_retry_task'));
 
 const logger = ModuleLogger.getLogger('HFDM.PropertyGraphStore.DynamoDB.PagedQuery');

@@ -8,12 +8,9 @@ const sandbox = sinon.createSandbox();
 const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
 
 const BranchesController = require('../../src/server/controllers/branches_controller');
-const MaterializedHistoryService = require('../../src/materialized_history_service/materialized_history_service');
+const { MaterializedHistoryService, StorageManager, BranchWriteQueue, NodeDependencyManager } = require('@fluid-experimental/property-query');
 const DynamoDBBackend = require('../../src/materialized_history_service/storage_backends/dynamodb');
-const StorageManager = require('../../src/materialized_history_service/storage_backends/storage_manager');
 const PSSClient = require('../../src/server/pss_client');
-const BranchWriteQueue = require('../../src/server/branch_write_queue');
-const NodeDependencyManager = require('../../src/materialized_history_service/node_dependency_manager');
 
 describe('Read repair', () => {
 

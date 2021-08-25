@@ -10,7 +10,7 @@
   const request = require('request');
   const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
   const secretsRedactor = require('./secrets_redactor');
-  const ModuleLogger = require('./module_logger');
+  const { ModuleLogger } = require('@fluid-experimental/property-query');
   const logger = ModuleLogger.getLogger('HFDM.Utils.RequestUtils');
 
   const RequestUtils = {};

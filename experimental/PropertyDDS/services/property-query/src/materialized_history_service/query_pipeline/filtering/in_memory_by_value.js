@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 const YIELD_EVERY_N = 1000;
-const ComparatorFactory = require('../comparator');
 const PropertyUtils = require('@fluid-experimental/property-changeset').Utils;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const OperationError = require('@fluid-experimental/property-common').OperationError;
-const ScanTraversalUtils = require('../scan_traversal_utils');
+const { ScanTraversalUtils, ComparatorFactory } = require('@fluid-experimental/property-query');
 const HTTPStatus = require('http-status');
 const _ = require('lodash');
 

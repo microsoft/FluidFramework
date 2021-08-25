@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable max-len */
-const ModuleLogger = require('../../../server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const logger = ModuleLogger.getLogger('HFDM.PropertyGraphStore.DynamoDB');
 
 let exported = {};

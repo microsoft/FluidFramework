@@ -7,7 +7,6 @@
  */
 
 const _ = require('lodash');
-const BackendFactory = require('../materialized_history_service/storage_backends/backend_factory');
 const BaseServer = require('./utils/base_server');
 const BranchAssignations = require('./redis_client/redis_branch_assignations_mh');
 //const PSSBranchAssignations = require('hfdm-redis-client').RedisBranchAssignations;
@@ -15,17 +14,14 @@ const BranchesController = require('./controllers/branches_controller');
 const Discovery = require('./discovery');
 const LoadManager = require('./load_manager');
 const PSSClient = require('./pss_client');
-const MaterializedHistoryService = require('../materialized_history_service/materialized_history_service');
-const ModuleLogger = require('./utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const RequestSignatureValidator = require('./utils/request_signature_validator');
-const SerializationFactory = require('../materialized_history_service/serialization/factory');
-const NodeDependencyManager = require('../materialized_history_service/node_dependency_manager');
+const { SerializationFactory, NodeDependencyManager, MaterializedHistoryService,
+     BackendFactory, BranchWriteQueue, StorageManager } = require('@fluid-experimental/property-query');
 const BranchTracker = require('./branch_tracker');
-const BranchWriteQueue = require('./branch_write_queue');
 const logger = ModuleLogger.getLogger('HFDM.MaterializedHistoryService.Server');
 const settings = require('./utils/server_settings');
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
-const StorageManager = require('../materialized_history_service/storage_backends/storage_manager');
 const MetricsController = require('./controllers/metrics_controller');
 
 /**

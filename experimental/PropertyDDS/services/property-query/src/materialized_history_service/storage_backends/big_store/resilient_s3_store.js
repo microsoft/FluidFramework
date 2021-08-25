@@ -7,12 +7,11 @@
 'use strict';
 
 const _ = require('lodash');
-const path = require('path');
 const Promise = require('bluebird');
 
 const BigStore = require('./big_store');
 const S3Store = require('./s3_store');
-const ModuleLogger = require('../../../server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query');
 const StoreLocation = require('./store_location');
 const Chronometer = require('@fluid-experimental/property-common').Chronometer;
 

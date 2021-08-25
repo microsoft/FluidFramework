@@ -9,10 +9,9 @@ const sandbox = sinon.createSandbox();
 const BranchAssignations = require('../../src/server/redis_client/redis_branch_assignations_mh');
 const LoadManager = require('../../src/server/load_manager');
 const BranchTracker = require('../../src/server/branch_tracker');
-const BranchWriteQueue = require('../../src/server/branch_write_queue');
 const settings = require('../../src/server/utils/server_settings');
 const EventEmitter = require('events');
-const StorageManager = require('../../src/materialized_history_service/storage_backends/storage_manager');
+const { StorageManager, BranchWriteQueue }  = require('@fluid-experimental/property-query');
 
 describe('Load shedding', () => {
 

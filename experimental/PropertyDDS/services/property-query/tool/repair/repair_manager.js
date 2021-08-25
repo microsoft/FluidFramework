@@ -6,7 +6,7 @@ const _ = require('lodash');
 const asyncQueue = require('async/queue');
 const { OperationError } = require('@fluid-experimental/property-common');
 const HTTPStatus = require('http-status');
-const ModuleLogger = require('../../src/server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const logger = ModuleLogger.getLogger('HFDM.Query.Tool.RepairManager');
 // Uncomment to get meaningful output from this tool
 // logger.setLevel('TRACE');

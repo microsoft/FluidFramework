@@ -9,7 +9,7 @@
 (function() {
   var _ = require('lodash');
   var HttpStatus = require('http-status-codes');
-  var ModuleLogger = require('./module_logger');
+  var { ModuleLogger } = require('@fluid-experimental/property-query');
 
   var OperationError = require('@fluid-experimental/property-common').OperationError;
   var HTTPError = require('@fluid-experimental/property-common').HTTPError;

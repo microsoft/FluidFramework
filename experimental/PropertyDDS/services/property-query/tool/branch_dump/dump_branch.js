@@ -5,7 +5,7 @@
 const fs = require('fs');
 const yargs = require('yargs');
 const path = require('path');
-const ModuleLogger = require('../../src/server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
 
 const PluginManager = require('../../src/plugins/PluginManager');

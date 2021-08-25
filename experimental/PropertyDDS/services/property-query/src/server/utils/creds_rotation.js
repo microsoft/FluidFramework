@@ -4,7 +4,7 @@
  */
 const AWS = require('aws-sdk');
 const HttpStatus = require('http-status-codes');
-const ModuleLogger = require('./module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 const OperationError = require('@fluid-experimental/property-common').OperationError;
 const logger = ModuleLogger.getLogger('HFDM.ServerUtils.CredsRotation');
 

@@ -12,14 +12,9 @@ const getPort = require('get-port');
 const PluginManager = require('../../src/plugins/PluginManager');
 
 const sinon = require('sinon');
-const MaterializedHistoryService = require('../../src/materialized_history_service/materialized_history_service');
+const { MaterializedHistoryService, BackendFactory, SerializerFactory, BranchWriteQueue, StorageManager } = require('@fluid-experimental/property-query');
 const settings = require('../../src/server/utils/server_settings');
-const BackendFactory = require('../../src/materialized_history_service/storage_backends/backend_factory');
-const NodeDependencyManager = require('../../src/materialized_history_service/node_dependency_manager');
-const BranchWriteQueue = require('../../src/server/branch_write_queue');
-const SerializerFactory = require('../../src/materialized_history_service/serialization/factory');
 const PSSClient = require('../../src/server/pss_client');
-const StorageManager = require('../../src/materialized_history_service/storage_backends/storage_manager');
 const getExpressApp = require('../utils/get_express_app');
 
 describe('Branch deletion integration test', function() {

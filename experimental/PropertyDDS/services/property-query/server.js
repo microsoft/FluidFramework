@@ -4,7 +4,7 @@
  */
 const qs = require('qs');
 const path = require('path');
-const ModuleLogger = require('./src/server/utils/module_logger');;
+const { ModuleLogger } = require('@fluid-experimental/property-query');;
 const PluginManager = require('./src/plugins/PluginManager');
 
 const settings = require('./src/server/utils/server_settings');

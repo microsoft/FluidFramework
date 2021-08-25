@@ -22,7 +22,7 @@
   var rmfr = require('rmfr');
 
   var DeferredPromise = require('@fluid-experimental/property-common').DeferredPromise;
-  var ModuleLogger = require('../../../server/utils/module_logger');
+  var { ModuleLogger }= require('@fluid-experimental/property-query');
   var PromiseUtils = require('../dynamodb_store/promise_utils');
   var JsonUtils = require('../dynamodb_store/json_utils');
   var StoreLocation = require('./store_location');

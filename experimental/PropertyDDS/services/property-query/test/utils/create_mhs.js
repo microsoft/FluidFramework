@@ -6,13 +6,8 @@ const path = require('path');
 const PluginManager = require('../../src/plugins/PluginManager');
 //const { Settings } = require('hfdm-settings');
 
-const MaterializedHistoryService = require('../../src/materialized_history_service/materialized_history_service');
-const BackendFactory = require('../../src/materialized_history_service/storage_backends/backend_factory');
-const NodeDependencyManager = require('../../src/materialized_history_service/node_dependency_manager');
-const BranchWriteQueue = require('../../src/server/branch_write_queue');
+const { MaterializedHistoryService, BackendFactory, NodeDependencyManager, SerializerFactory, BranchWriteQueue, StorageManager } = require('@fluid-experimental/property-query');
 const PSSClient = require('../../src/server/pss_client');
-const SerializerFactory = require('../../src/materialized_history_service/serialization/factory');
-const StorageManager = require('../../src/materialized_history_service/storage_backends/storage_manager');
 const getExpressApp = require('./get_express_app');
 const Settings = require('../../src/server/utils/settings');
 

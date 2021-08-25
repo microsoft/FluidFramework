@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 const _ = require('lodash');
-const path = require('path');
 const DynamoDBClient = require('./dynamodb_client');
 const settings = require('../../../server/utils/server_settings');
-const ModuleLogger = require('../../../server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query');
 const logger = ModuleLogger.getLogger('HFDM.PropertyGraphStore.DynamoDB');
 const DeferredPromise = require('@fluid-experimental/property-common').DeferredPromise;
 

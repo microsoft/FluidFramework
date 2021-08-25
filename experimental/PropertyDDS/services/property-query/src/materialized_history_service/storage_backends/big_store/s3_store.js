@@ -22,7 +22,7 @@
   var DeferredPromise = require('@fluid-experimental/property-common').DeferredPromise;
   var HttpStatus = require('http-status-codes');
   var JsonUtils = require('../dynamodb_store/json_utils');
-  var ModuleLogger = require('../../../server/utils/module_logger');
+  var { ModuleLogger } = require('@fluid-experimental/property-query');
   var Chronometer = require('@fluid-experimental/property-common').Chronometer;
   var StoreLocation = require('./store_location');
   var credsRotation = require('../../../server/utils/creds_rotation');

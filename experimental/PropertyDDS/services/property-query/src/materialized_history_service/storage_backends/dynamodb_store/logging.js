@@ -5,7 +5,6 @@
 const _ = require('lodash');
 var chalk = require('chalk');
 const style = require('ansi-styles');
-const ModuleLogger = require('../../../server/utils/module_logger');
 
 /**
  * The maximum length of the changeSet field in a log message.

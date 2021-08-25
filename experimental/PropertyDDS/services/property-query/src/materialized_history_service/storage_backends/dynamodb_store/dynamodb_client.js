@@ -20,7 +20,7 @@ const MetricsRetryTask = require('./metrics_retry_task');
 const monotonicDate = require('./monotonic_date');
 
 
-const ModuleLogger = require('../../../server/utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query');
 const logger = ModuleLogger.getLogger('HFDM.PropertyGraphStore.DynamoDB');
 
 const PluginManager = require('../../../plugins/PluginManager');

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 const _ = require('lodash');
-const ModuleLogger = require('./utils/module_logger');
+const { ModuleLogger } = require('@fluid-experimental/property-query')
 let logger = ModuleLogger.getLogger('HFDM.MaterializedHistoryServer.LoadManager');
 
 const MILLIS = 1e3;
