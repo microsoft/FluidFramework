@@ -48,22 +48,24 @@ async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const client = new TinyliciousClient();
     let resources: TinyliciousResources;
+    let containerId: string;
 
     // Get or create the document depending if we are running through the create new flow
     const createNew = !location.hash;
     if (createNew) {
         // The client will create a new container using the schema
         resources = await client.createContainer(containerSchema);
+        containerId = await resources.fluidContainer.attach();
         // The new container has its own unique ID that can be used to access it in another session
-        location.hash = resources.fluidContainer.id;
+        location.hash = containerId;
     } else {
-        const containerId = location.hash.substring(1);
+        containerId = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier
         resources = await client.getContainer(containerId, containerSchema);
     }
     // create/get container API returns a combination of the container and associated container services
     const { fluidContainer, containerServices } = resources;
-    document.title = fluidContainer.id;
+    document.title = containerId;
 
     // Render page focus information for audience members
     const contentDiv = document.getElementById("content") as HTMLDivElement;

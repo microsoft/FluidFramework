@@ -81,6 +81,10 @@ const schema = {
 }
 const azureClient = new AzureClient(config);
 const { fluidContainer, containerServices } = await azureClient.createContainer(schema);
+
+// Set any default data on the container's `initialObjects` before attaching
+// Returned ID can be used to fetch the container via `getContainer` below
+const id = await fluidContainer.attach();
 ```
 
 ## Using Fluid Containers

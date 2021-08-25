@@ -45,8 +45,11 @@ const schema = {
 }
 const tinyliciousClient = new TinyliciousClient();
 const { fluidContainer, containerServices } = await tinyliciousClient.createContainer(schema);
-```
 
+// Set any default data on the container's `initialObjects` before attaching
+// Returned ID can be used to fetch the container via `getContainer` below
+const id = await fluidContainer.attach();
+```
 ## Using Fluid Containers
 
 Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
