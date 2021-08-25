@@ -206,7 +206,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     constructor(
         private readonly _containerRuntime: ContainerRuntime,
         public readonly id: string,
-        public readonly existing: boolean,
+        private readonly existing: boolean,
         public readonly storage: IDocumentStorageService,
         public readonly scope: IFluidObject,
         createSummarizerNode: CreateChildSummarizerNodeFn,

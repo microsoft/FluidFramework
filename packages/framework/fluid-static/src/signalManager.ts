@@ -198,7 +198,7 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
 export class SignalManager extends DataObject<{}, undefined, IErrorEvent> implements EventEmitter, ISignaler {
     private _manager: Signaler | undefined;
     private get manager(): Signaler {
-        assert(this._manager !== undefined, "internal signaler should be defined");
+        assert(this._manager !== undefined, 0x24b /* "internal signaler should be defined" */);
         return this._manager;
     }
 

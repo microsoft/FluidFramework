@@ -34,6 +34,7 @@ import {
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
+    DataProcessingError,
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
@@ -51,6 +52,7 @@ import {
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
     runWithRetry,
+    canRetryOnError,
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
@@ -858,9 +860,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.context.notifyAttaching();
             }
 
+            // Actually go and create the resolved document
             const createNewResolvedUrl = await this.urlResolver.resolve(request);
             ensureFluidResolvedUrl(createNewResolvedUrl);
-            // Actually go and create the resolved document
             if (this.service === undefined) {
                 this.service = await runWithRetry(
                     async () => this.serviceFactory.createContainer(
@@ -880,11 +882,26 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this._resolvedUrl = resolvedUrl;
             await this.connectStorageService();
 
-            // upload blobs here (NYI)
-
-            // post summary here
             if (hasAttachmentBlobs) {
-                const appSummary: ISummaryTree = this.context.createSummary();
+                // upload blobs to storage
+                assert(!!this.loader.services.detachedBlobStorage, "assertion for type narrowing");
+
+                // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
+                // support blob handles that only know about the local IDs
+                const redirectTable = new Map<string, string>();
+                // if new blobs are added while uploading, upload them too
+                while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
+                    const newIds = this.loader.services.detachedBlobStorage.getBlobIds().filter(
+                        (id) => !redirectTable.has(id));
+                    for (const id of newIds) {
+                        const blob = await this.loader.services.detachedBlobStorage.readBlob(id);
+                        const response = await this.storageService.createBlob(blob);
+                        redirectTable.set(id, response.id);
+                    }
+                }
+
+                // take summary and upload
+                const appSummary: ISummaryTree = this.context.createSummary(redirectTable);
                 const protocolSummary = this.captureProtocolSummary();
                 summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
@@ -896,8 +913,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     ackHandle: undefined,
                     proposalHandle: undefined,
                 });
-
-                assert(!hasAttachmentBlobs, 0x206 /* "attaching container with blobs is not yet implemented" */);
             }
 
             this._attachState = AttachState.Attached;
@@ -909,8 +924,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this.resumeInternal({ fetchOpsFromStorage: false, reason: "createDetached" });
             }
         } catch(error) {
-            this.close(error);
-            throw error;
+            // we should retry upon any retriable errors, so we shouldn't see them here
+            assert(!canRetryOnError(error), "retriable error thrown from attach()");
+
+            // add resolved URL on error object so that host has the ability to find this document and delete it
+            const newError = DataProcessingError.wrapIfUnrecognized(
+                error, "errorWhileUploadingBlobsWhileAttaching", undefined);
+            const resolvedUrl = this.resolvedUrl;
+            if (resolvedUrl) {
+                ensureFluidResolvedUrl(resolvedUrl);
+                newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
+            }
+            this.close(newError);
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw newError;
         }
     }
 
@@ -1642,17 +1669,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const duration = time - this.connectionTransitionTimes[oldState];
 
         let durationFromDisconnected: number | undefined;
-        let connectionMode: string | undefined;
         let connectionInitiationReason: string | undefined;
         let autoReconnect: ReconnectMode | undefined;
         let checkpointSequenceNumber: number | undefined;
-        let sequenceNumber: number | undefined;
         let opsBehind: number | undefined;
         if (value === ConnectionState.Disconnected) {
             autoReconnect = this._deltaManager.reconnectMode;
         } else {
-            connectionMode = this._deltaManager.connectionMode;
-            sequenceNumber = this.deltaManager.lastSequenceNumber;
             if (value === ConnectionState.Connected) {
                 durationFromDisconnected = time - this.connectionTransitionTimes[ConnectionState.Disconnected];
                 durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
@@ -1660,7 +1683,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // This info is of most interest on establishing connection only.
                 checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
                 if (this.deltaManager.hasCheckpointSequenceNumber) {
-                    opsBehind = checkpointSequenceNumber - sequenceNumber;
+                    opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
                 }
             }
             if (this.firstConnection) {
@@ -1682,13 +1705,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             socketDocumentId: this._deltaManager.socketDocumentId,
             pendingClientId: this.connectionStateHandler.pendingClientId,
             clientId: this.clientId,
-            connectionMode,
             autoReconnect,
             opsBehind,
             online: OnlineStatus[isOnline()],
             lastVisible: this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
             checkpointSequenceNumber,
-            sequenceNumber,
+            ...this._deltaManager.connectionProps(),
         });
 
         if (value === ConnectionState.Connected) {

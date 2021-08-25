@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer, bufferToString } from "@fluidframework/common-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -29,10 +28,14 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
-    private readonly blobs = new Map<number, ArrayBufferLike>();
+    public readonly blobs = new Map<number, ArrayBufferLike>();
     private blobCount = 0;
 
     public get size() { return this.blobCount; }
+
+    public getBlobIds(): string[] {
+        return Array.from(this.blobs.keys()).map((id) => id.toString());
+    }
 
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         this.blobs.set(++this.blobCount, content);
@@ -212,7 +215,8 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("works in detached container", async function() {
-        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        const detachedBlobStorage = new MockDetachedBlobStorage();
+        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
         const text = "this is some example text";
@@ -223,13 +227,20 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         dataStore._root.set("my blob", blobHandle);
         assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
 
-        // make sure we are still detached
-        assert.strictEqual(container.attachState, AttachState.Detached);
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+        }
+        await attachP;
 
-        await assert.rejects(
-            container.attach(provider.driver.createCreateNewRequest(provider.documentId)),
-            /(0x206)|(0x202)|(0x204)/,
-        );
+        // make sure we're getting the blob from actual storage
+        detachedBlobStorage.blobs.clear();
+
+        // old handle still works
+        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+        // new handle works
+        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
     });
 
     it("serialize/rehydrate container with blobs", async function() {
@@ -246,6 +257,30 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
         const snapshot = container.serialize();
         const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+        const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
+        assert.strictEqual(text, bufferToString(await (await dataStore2._root.wait("my blob")).get(), "utf-8"));
+    });
+
+    it("redirect table snapshot", async function() {
+        const detachedBlobStorage = new MockDetachedBlobStorage();
+        const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+
+        dataStore._root.set("my blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+        dataStore._root.set("my same blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+        dataStore._root.set("my other blob", await dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8")));
+
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+        }
+        await attachP;
+
+        const container2 = await provider.loadTestContainer(testContainerConfig);
         const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
         assert.strictEqual(text, bufferToString(await (await dataStore2._root.wait("my blob")).get(), "utf-8"));
     });

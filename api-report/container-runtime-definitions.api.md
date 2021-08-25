@@ -70,7 +70,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void): any;
     // (undocumented)
-    (event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved", listener: () => void): any;
+    (event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)

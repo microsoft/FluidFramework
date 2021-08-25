@@ -236,11 +236,16 @@ export function configureWebSocketServices(
                 return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
+            const connectedTimestamp = Date.now();
+
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
+
+            // back-compat: remove cast to any once new definition of IClient comes through.
+            (messageClient as any).timestamp = connectedTimestamp;
 
             // Cache the scopes.
             scopeMap.set(clientId, messageClient.scopes);
@@ -255,8 +260,8 @@ export function configureWebSocketServices(
                 return Promise.reject({
                     code: 400,
                     message: `Unsupported client protocol. ` +
-                    `Server: ${protocolVersions}. ` +
-                    `Client: ${JSON.stringify(connectVersions)}`,
+                        `Server: ${protocolVersions}. ` +
+                        `Client: ${JSON.stringify(connectVersions)}`,
                 });
             }
 
@@ -368,6 +373,9 @@ export function configureWebSocketServices(
                     version,
                 };
             }
+
+            // back-compat: remove cast to any once new definition of IConnected comes through.
+            (connectedMessage as any).timestamp = connectedTimestamp;
 
             return {
                 connection: connectedMessage,

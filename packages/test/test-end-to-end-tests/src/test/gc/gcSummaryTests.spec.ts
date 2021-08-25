@@ -14,7 +14,7 @@ import { Container } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
@@ -27,8 +27,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-// REVIEW: enable compat testing?
-describeNoCompat("Garbage Collection", (getTestObjectProvider) => {
+describeFullCompat("Garbage Collection", (getTestObjectProvider) => {
     // If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
     // deleted after each GC run.
     const tests = (deleteUnreferencedContent: boolean = false) => {
