@@ -57,14 +57,6 @@ export interface TinyliciousMember extends IMember {
     userName: string;
 }
 
-// @public (undocumented)
-export interface TinyliciousResources {
-    // (undocumented)
-    containerServices: TinyliciousContainerServices;
-    // (undocumented)
-    fluidContainer: FluidContainer;
-}
-
 
 // (No @packageDocumentation comment for this package)
 

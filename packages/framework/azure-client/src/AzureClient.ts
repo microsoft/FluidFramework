@@ -20,7 +20,6 @@ import {
 import {
     AzureConnectionConfig,
     AzureContainerServices,
-    AzureResources,
 } from "./interfaces";
 import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver } from "./AzureUrlResolver";
@@ -53,7 +52,7 @@ export class AzureClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<AzureResources> {
+    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
@@ -74,7 +73,7 @@ export class AzureClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<AzureResources> {
+    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         return this.getFluidContainerAndServices(id, container);
@@ -84,15 +83,15 @@ export class AzureClient {
     private async getFluidContainerAndServices(
         id: string,
         container: Container,
-    ): Promise<AzureResources> {
+    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
         const attach = async () => {
             await container.attach({ url: id });
             return id;
         };
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
-        const containerServices: AzureContainerServices = this.getContainerServices(container);
-        return { fluidContainer, containerServices };
+        const services: AzureContainerServices = this.getContainerServices(container);
+        return { container: fluidContainer, services };
     }
 
     private getContainerServices(
