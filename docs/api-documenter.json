@@ -14,11 +14,7 @@
     "@fluidframework/protocol-definitions",
     "@fluidframework/cell",
     "@fluidframework/counter",
-    "@fluidframework/ink",
     "@fluidframework/map",
-    "@fluidframework/matrix",
-    "@fluidframework/ordered-collection",
-    "@fluidframework/register-collection",
     "@fluidframework/sequence",
     "@fluidframework/aqueduct"
   ]
