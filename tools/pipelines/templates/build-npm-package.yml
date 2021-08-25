@@ -260,7 +260,7 @@ stages:
               testResultsFiles: '**/*junit-report.xml'
               searchFolder: ${{ parameters.buildDirectory }}/nyc
               mergeTestResults: false
-            condition: always()
+            condition: succeededOrFailed()
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
