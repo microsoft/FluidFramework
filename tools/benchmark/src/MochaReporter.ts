@@ -43,7 +43,6 @@ function getName(name: string): string {
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 module.exports = class {
     public constructor(runner: Runner, options?: ReporterOptions) {
-        reporters.Base.call(this, runner, options);
         const benchmarkReporter = new BenchmarkReporter(options?.reportDir);
         const data: Map<Test, BenchmarkData> = new Map();
         runner
