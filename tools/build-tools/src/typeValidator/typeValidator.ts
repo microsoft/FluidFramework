@@ -12,11 +12,11 @@ import { getPackageDetails } from "./packageJson";
  */
 program
     .option("-d|--packageDir <dir>","The root directory of the package")
-    .option('-q|--quiet', 'Quiet mode')
+    .option('-v|--verbose', 'Verbose logging mode')
     .parse(process.argv);
 
 function writeOutLine(output: string) {
-    if (!program.quiet) {
+    if (program.verbose) {
         console.log(output);
     }
 }
