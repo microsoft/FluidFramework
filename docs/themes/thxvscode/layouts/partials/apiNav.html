@@ -117,9 +117,9 @@
                             {{ end }}
                             <li {{ if $isCurrentPage }}class="active" {{ end }}>
                                 <a href="{{$targetPage.RelPermalink}}"
-                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }} "
+                                    {{ if $isCurrentPage }}aria-label='Current Page: {{ (default (path.Base $targetPage.RelPermalink) ($targetPage.Param "unscopedPackageName")) | humanize | title }}'
                                     {{ end }}>
-                                    {{ (path.Base $targetPage.RelPermalink) | humanize | title }} </a>
+                                    {{ (default (path.Base $targetPage.RelPermalink) ($targetPage.Param "unscopedPackageName")) | humanize | title }}</a>
                             </li>
                         {{- end }}
                     {{- end }}
@@ -179,7 +179,7 @@
                         {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink }}
                     {{ end }}
                     <option value="{{$targetPage.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>
-                        {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
+                        {{ (default (path.Base $targetPage.RelPermalink) ($targetPage.Param "unscopedPackageName")) | humanize | title }}
                     </option>
                 <!-- {{- end }} -->
             {{ end }}

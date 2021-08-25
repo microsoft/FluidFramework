@@ -2,6 +2,7 @@
   "outputTarget": "markdown",
   "newlineKind": "lf",
   "uriRoot": "/docs/apis",
+  "outputFileNameSuffix": "-api",
   "onlyPackagesStartingWith": [
     "fluid-framework",
     "@fluid-experimental/task-manager",
