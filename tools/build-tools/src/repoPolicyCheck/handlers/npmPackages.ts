@@ -99,8 +99,9 @@ export const handlers: Handler[] = [
 
             const validationResults = PJV.validate(jsonStr, 'npm', { warnings: false, recommendations: false });
 
-            // special handling for the end-to-end tests package since it uses non-standard version values.
-            if (file.includes("end-to-end-tests") && !validationResults.valid) {
+            // special handling for packages that use non-standard version values.
+            // e.g. "npm:package@version"
+            if (!validationResults.valid) {
                 validationResults.errors = validationResults.errors.filter(
                     (error: string) => {
                         return !error.startsWith("Invalid version range for dependency");
