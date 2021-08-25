@@ -309,16 +309,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    readonly gcData: IGarbageCollectionData | undefined;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)
     summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
-    readonly unreferencedTimestamp: number | undefined;
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
-    readonly usedRoutes: string[];
 }
 
 // @public (undocumented)

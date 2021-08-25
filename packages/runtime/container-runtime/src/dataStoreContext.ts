@@ -418,12 +418,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
-        const gcDetails: IGarbageCollectionSummaryDetails = {
-            usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: this.summarizerNode.gcData,
-            unrefTimestamp: this.summarizerNode.unreferencedTimestamp,
-        };
-        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
 
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
         // size in the summary stats with the blobs size of this data store.
@@ -853,12 +848,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
         // Add GC details to the summary.
-        const gcDetails: IGarbageCollectionSummaryDetails = {
-            usedRoutes: this.summarizerNode.usedRoutes,
-            gcData: this.summarizerNode.gcData,
-            unrefTimestamp: this.summarizerNode.unreferencedTimestamp,
-        };
-        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(gcDetails));
+        addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
 
         // Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
         const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
