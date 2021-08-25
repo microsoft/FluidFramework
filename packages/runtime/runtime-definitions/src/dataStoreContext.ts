@@ -212,7 +212,7 @@ export interface IFluidDataStoreChannel extends
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    reSubmit(type: string, content: any, localOpMetadata: unknown);
+    resubmit(type: string, content: any, localOpMetadata: unknown);
 
     applyStashedOp(content: any): Promise<unknown>;
 }

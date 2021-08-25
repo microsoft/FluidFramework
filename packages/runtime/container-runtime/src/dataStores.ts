@@ -251,7 +251,7 @@ export class DataStores implements IDisposable {
         const envelope = content as IEnvelope;
         const context = this.contexts.get(envelope.address);
         assert(!!context, 0x160 /* "There should be a store context for the op" */);
-        context.reSubmit(envelope.contents, localOpMetadata);
+        context.resubmit(envelope.contents, localOpMetadata);
     }
 
     public async applyStashedOp(content: any): Promise<unknown> {

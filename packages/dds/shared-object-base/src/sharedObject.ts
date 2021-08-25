@@ -388,8 +388,8 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
             setConnectionState: (connected: boolean) => {
                 this.setConnectionState(connected);
             },
-            reSubmit: (content: any, localOpMetadata: unknown) => {
-                this.reSubmit(content, localOpMetadata);
+            resubmit: (content: any, localOpMetadata: unknown) => {
+                this.resubmit(content, localOpMetadata);
             },
             applyStashedOp: (content: any): unknown => {
                 return this.applyStashedOp(content);
@@ -447,7 +447,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
      * @param content - The content of the original message.
      * @param localOpMetadata - The local metadata associated with the original message.
      */
-    private reSubmit(content: any, localOpMetadata: unknown) {
+    private resubmit(content: any, localOpMetadata: unknown) {
         this.resubmitCore(content, localOpMetadata);
     }
 

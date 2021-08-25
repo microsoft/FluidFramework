@@ -430,7 +430,7 @@ export class PendingStateManager implements IDisposable {
         const savedFlushMode = this.containerRuntime.flushMode;
 
         // Process exactly `pendingStatesCount` items in the queue as it represents the number of states that were
-        // pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
+        // pending when we connected. This is important because the `resubmitFn` might add more items in the queue
         // which must not be replayed.
         while (pendingStatesCount > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -438,7 +438,7 @@ export class PendingStateManager implements IDisposable {
             switch (pendingState.type) {
                 case "message":
                     {
-                        this.containerRuntime.reSubmitFn(
+                        this.containerRuntime.resubmitFn(
                             pendingState.messageType,
                             pendingState.content,
                             pendingState.localOpMetadata,

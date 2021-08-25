@@ -34,7 +34,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
             // Update the clientId in FluidDataStoreRuntime.
             this.dataStoreRuntime.clientId = this.clientId;
             // On reconnection, ask the DDSes to resubmit pending messages.
-            this.reSubmitMessages();
+            this.resubmitMessages();
         } else {
             const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
             // On disconnection, clear any outstanding messages for this client because it will be resent.
@@ -65,12 +65,12 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
         return -1;
     }
 
-    private reSubmitMessages() {
+    private resubmitMessages() {
         let messageCount = this.pendingMessages.length;
         while (messageCount > 0) {
             const pendingMessage: IMockContainerRuntimePendingMessage = this.pendingMessages.shift();
             this.deltaConnections.forEach((dc) => {
-                dc.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
+                dc.resubmit(pendingMessage.content, pendingMessage.localOpMetadata);
             });
             messageCount--;
         }

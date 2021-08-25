@@ -612,10 +612,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
 
-    public reSubmit(contents: any, localOpMetadata: unknown) {
+    public resubmit(contents: any, localOpMetadata: unknown) {
         assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
         const innerContents = contents as FluidDataStoreMessage;
-        this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+        this.channel.resubmit(innerContents.type, innerContents.content, localOpMetadata);
     }
 
     public async applyStashedOp(contents: any): Promise<unknown> {
