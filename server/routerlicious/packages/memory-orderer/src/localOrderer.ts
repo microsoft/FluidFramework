@@ -338,6 +338,7 @@ export class LocalOrderer implements IOrderer {
             false);
         const summaryReader = new SummaryReader(this.documentId, this.gitManager);
         const checkpointManager = new CheckpointManager(
+            context,
             this.tenantId,
             this.documentId,
             documentCollection,

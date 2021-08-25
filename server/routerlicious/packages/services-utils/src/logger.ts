@@ -8,6 +8,8 @@ import * as winston from "winston";
 import nconf from "nconf";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
+import { ILumberjackEngine, ILumberjackSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 
 export interface IWinstonConfig {
     colorize: boolean;
@@ -66,4 +68,17 @@ export function configureLogging(configOrPath: nconf.Provider | string) {
         const name = this.namespace;
         args[0] = `${name} ${args[0]}`;
     };
+
+    const genevaConfig = config.get("lumberjack");
+    const engineList =
+        genevaConfig && genevaConfig.engineList ?
+        genevaConfig.engineList as ILumberjackEngine[] :
+        [new WinstonLumberjackEngine()];
+
+    const schemaValidatorList =
+        genevaConfig && genevaConfig.schemaValidator ?
+        genevaConfig.schemaValidator as ILumberjackSchemaValidator[] :
+        undefined;
+
+    Lumberjack.setup(engineList, schemaValidatorList);
 }

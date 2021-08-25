@@ -65,7 +65,7 @@ export class Lumber<T extends string = LumberEventName> {
         public readonly eventName: T,
         public readonly type: LumberType,
         private readonly _engineList: ILumberjackEngine[],
-        private readonly _schemaValidator?: ILumberjackSchemaValidator,
+        private readonly _schemaValidators?: ILumberjackSchemaValidator[],
         properties?: Map<string, any> | Record<string, any>) {
             if (properties) {
                 this.setProperties(properties);
@@ -124,14 +124,16 @@ export class Lumber<T extends string = LumberEventName> {
             return;
         }
 
-        if (this._schemaValidator) {
-            const validation = this._schemaValidator.validate(this.properties);
-            if (!validation.validationPassed) {
-                handleError(
-                    LumberEventName.LumberjackSchemaValidationFailure,
-                    `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}.\
-                    [eventName: ${this.eventName}][id: ${this.id}]`,
-                    this._engineList);
+        if (this._schemaValidators) {
+            for (const schemaValidator of this._schemaValidators) {
+                const validation = schemaValidator.validate(this.properties);
+                if (!validation.validationPassed) {
+                    handleError(
+                        LumberEventName.LumberjackSchemaValidationFailure,
+                        `Schema validation failed for props: ${validation.validationFailedForProperties.toString()}.\
+                        [eventName: ${this.eventName}][id: ${this.id}]`,
+                        this._engineList);
+                }
             }
         }
 

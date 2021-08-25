@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { LazyPromise } from "@fluidframework/common-utils";
-import { isContextExisting, requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
@@ -49,7 +49,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
     public async instantiateDataStore(
         context: IFluidDataStoreContext,
-        existing?: boolean,
+        existing: boolean,
     ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
@@ -57,13 +57,12 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
                 return router.request(request);
             });
 
-        const backCompatExisting = isContextExisting(context, existing);
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, backCompatExisting);
+        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, existing);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
         // depending of if a new store is being created or an existing store
         // is being loaded.
-        const instance = this.instantiate(context, runtime, backCompatExisting);
+        const instance = this.instantiate(context, runtime, existing);
 
         return runtime;
     }

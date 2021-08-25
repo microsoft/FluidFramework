@@ -5,7 +5,6 @@
 
 /* eslint-disable no-null/no-null */
 
-import { EventEmitter } from "events";
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
@@ -55,6 +54,8 @@ import {
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
 import { setQueuedMessageProperties, logCommonSessionEndMetrics, createSessionMetric } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
@@ -100,7 +101,13 @@ export enum OpEventType {
     MaxTime,
 }
 
-export class DeliLambda extends EventEmitter implements IPartitionLambda {
+export interface IDeliLambdaEvents extends IEvent {
+    (event: "opEvent",
+        listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
+    (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+}
+
+export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
     private sequenceNumber: number;
     private durableSequenceNumber: number;
 
@@ -180,7 +187,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
         this.nackMessages = lastCheckpoint.nackMessages;
-        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas;
+        // Null coalescing for backward compatibility
+        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
@@ -677,6 +685,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                                 this.nackMessages = undefined;
                             }
                         }
+
+                        this.emit("updatedDurableSequenceNumber", dsn);
 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
                             // since the dsn updated, ops were reliably stored

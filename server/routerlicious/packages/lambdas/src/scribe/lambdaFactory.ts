@@ -161,6 +161,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.messageCollection,
             this.enableWholeSummaryUpload);
         const checkpointManager = new CheckpointManager(
+            context,
             tenantId,
             documentId,
             this.documentCollection,
