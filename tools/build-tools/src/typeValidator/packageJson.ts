@@ -5,32 +5,48 @@
 
 import * as fs from "fs";
 
-export type PackageVersion ={
+export type PackageDetails ={
     readonly name: string;
-    readonly major: number;
-    readonly minor: number;
-    readonly patch: string;
-    readonly noPatchString: string;
+    readonly version: string;
+    readonly majorVersion: number;
+    readonly minorVersion: number;
+    readonly patchVersion: string;
+    readonly oldVersions: readonly string[];
 }
 
-export function getPackageDetails(packageDir: string): PackageVersion {
+interface PackageJson{
+    name:string,
+    version: string,
+    devDependencies: Record<string, string>;
+}
+
+export function getPackageDetails(packageDir: string): PackageDetails {
 
     const packagePath = `${packageDir}/package.json`;
     if(!fs.existsSync(packagePath)){
         throw new Error(`Package json does not exist: ${packagePath}`)
     }
 
-    const pkgJson = JSON.parse(fs.readFileSync(packagePath).toString());
-    const rawVersion: string = pkgJson.version;
-    const versionParts = rawVersion.split(".",3);
-    const major = Number.parseInt(versionParts[0]);
-    const minor = Number.parseInt(versionParts[1]);
+    const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
+
+    const versionParts = pkgJson.version.split(".",3);
+    const majorVersion = Number.parseInt(versionParts[0]);
+    const minorVersion = Number.parseInt(versionParts[1]);
+
+    const oldVersions: string[] =[];
+    for(const depName of Object.keys(pkgJson.devDependencies)){
+        if(depName.startsWith(pkgJson.name)){
+            oldVersions.push(depName);
+        }
+    }
+
 
     return {
         name: pkgJson.name,
-        major,
-        minor,
-        patch: versionParts[2],
-        noPatchString: `${major}.${minor}.0`,
+        version: pkgJson.version,
+        majorVersion,
+        minorVersion,
+        patchVersion: versionParts[2],
+        oldVersions
     }
 }

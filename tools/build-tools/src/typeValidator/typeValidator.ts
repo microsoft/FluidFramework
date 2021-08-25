@@ -4,8 +4,8 @@
  */
 
 import program from "commander";
-import { refreshVersionedTypeData} from "./typeData";
 import { generateTests } from "./testGeneration";
+import { getPackageDetails } from "./packageJson";
 
 /**
  * argument parsing
@@ -22,7 +22,8 @@ function writeOutLine(output: string) {
 }
 
 writeOutLine("Loading and Refresh existing type data");
-const typeData = refreshVersionedTypeData(program.packageDir);
+
+const packageData = getPackageDetails(program.packageDir);
 
 writeOutLine("Generating Tests");
-generateTests(typeData, program.packageDir)
+generateTests(packageData, program.packageDir)

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as old from "protocol-definitions-0.1024.0";
+import * as old from "@fluidframework/protocol-definitions-0.1024.0";
 import * as current from "../index";
 
 declare function get_old_ConnectionMode(): old.ConnectionMode;

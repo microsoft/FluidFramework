@@ -5,7 +5,12 @@
 
 import { Node, Project } from "ts-morph";
 import * as fs from "fs";
-import { getPackageDetails, PackageVersion } from "./packageJson";
+import { getPackageDetails, PackageDetails } from "./packageJson";
+
+export interface PackageAndTypeData{
+    packageDetails: PackageDetails;
+    typeData: TypeData[];
+}
 
 export interface TypeData{
     readonly name: string;
@@ -71,16 +76,23 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
 }
 
 
-function generateTypeDataForProject(packageDir: string): TypeData[] {
+export function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): PackageAndTypeData {
 
-    const tsconfigPath = `${packageDir}/tsconfig.json`;
-    if(!fs.existsSync(tsconfigPath)){
-        throw new Error(`Tsconfig json does not exist: ${tsconfigPath}`)
+    const basePath = dependencyName === undefined
+        ? packageDir
+        : `${packageDir}/node_modules/${dependencyName}`;
+
+    const tsConfigPath =`${basePath}/tsconfig.json`
+
+    if(!fs.existsSync(tsConfigPath)){
+        throw new Error(`Tsconfig json does not exist: ${tsConfigPath}`)
     }
+
+    const packageDetails = getPackageDetails(basePath);
 
     const project = new Project({
         skipFileDependencyResolution: true,
-        tsConfigFilePath: tsconfigPath,
+        tsConfigFilePath: tsConfigPath,
     });
 
     const file = project.getSourceFile("index.ts")
@@ -95,33 +107,8 @@ function generateTypeDataForProject(packageDir: string): TypeData[] {
             typeData.push(...getNodeTypeData(dec));
         }
     }
-    return typeData;
-}
-
-export interface VersionedTypeData{
-    readonly pkg: PackageVersion;
-    readonly typeData: Record<string, TypeData[]>;
-}
-
-export function refreshVersionedTypeData(packageDir:string): VersionedTypeData {
-
-    let typeData: Record<string, TypeData[]> = {};
-
-    const typeDataPath = `${packageDir}/typeData.json`;
-    if(fs.existsSync(typeDataPath)){
-        const rawVersionedTypeData = fs.readFileSync(typeDataPath);
-        typeData = JSON.parse(rawVersionedTypeData.toString());
-    }
-
-    const currentTypeData = generateTypeDataForProject(packageDir);
-
-    const pkg = getPackageDetails(packageDir);
-
-    typeData[pkg.noPatchString] = currentTypeData;
-    fs.writeFileSync(typeDataPath, JSON.stringify(typeData,undefined,2));
-
     return {
-        pkg,
+        packageDetails,
         typeData,
     };
 }
