@@ -21,7 +21,6 @@
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc",
     "test:realsvc": "npm run test:realsvc:local && echo 'Skipped: npm run test:realsvc:tinylicious (Issue #6006)'",
     "test:realsvc:local": "cross-env fluid__test__driver=local npm run test:realsvc:run",
@@ -32,9 +31,6 @@
     "test:realsvc:routerlicious": "cross-env fluid__test__driver=routerlicious FLUID_TEST_TIMEOUT=5000  npm run test:realsvc:run",
     "test:realsvc:routerlicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:routerlicious",
     "test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
-    "test:realsvc:tinylicious": "cross-env fluid__test__driver=tinylicious start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
-    "test:realsvc:tinylicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:tinylicious",
-    "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
@@ -101,8 +97,6 @@
     "cross-env": "^7.0.2",
     "mocha": "^8.4.0",
     "semver": "^7.3.4",
-    "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.34614",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
