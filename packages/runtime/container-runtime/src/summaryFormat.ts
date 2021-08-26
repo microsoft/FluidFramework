@@ -99,30 +99,17 @@ export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage,
  * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
  * added to the metadata blob in summary.
  */
-export function extractSummaryMetadataMessage(
+export const extractSummaryMetadataMessage = (
     message?: ISequencedDocumentMessage,
-): ISummaryMetadataMessage | undefined {
-    if (message === undefined) {
-        return undefined;
-    }
-
-    const metadataMessage: Partial<ISummaryMetadataMessage> = {};
-    for (const key of Object.keys(message)) {
-        const value = message[key];
-        switch (key) {
-            case "clientId":
-            case "sequenceNumber":
-            case "minimumSequenceNumber":
-            case "clientSequenceNumber":
-            case "referenceSequenceNumber":
-            case "type":
-            case "timestamp":
-                metadataMessage[key] = value;
-            default:
-        }
-    }
-    return metadataMessage as ISummaryMetadataMessage;
-}
+): ISummaryMetadataMessage | undefined => message === undefined ? undefined : {
+    clientId: message.clientId,
+    clientSequenceNumber: message.clientSequenceNumber,
+    minimumSequenceNumber: message.minimumSequenceNumber,
+    referenceSequenceNumber: message.referenceSequenceNumber,
+    sequenceNumber: message.sequenceNumber,
+    timestamp: message.timestamp,
+    type: message.type,
+};
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
