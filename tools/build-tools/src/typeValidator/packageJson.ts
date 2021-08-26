@@ -18,6 +18,7 @@ interface PackageJson{
     name:string,
     version: string,
     devDependencies: Record<string, string>;
+    typeValidationVersion: string,
 }
 
 export function getPackageDetails(packageDir: string): PackageDetails {
@@ -28,6 +29,15 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     }
 
     const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
+
+    if(pkgJson.version !== pkgJson.typeValidationVersion){
+        if(pkgJson.typeValidationVersion !== undefined){
+            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidationVersion}`] =
+                `npm:${pkgJson.name}@${pkgJson.typeValidationVersion}`;
+        }
+        pkgJson.typeValidationVersion = pkgJson.version;
+        fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
+    }
 
     const versionParts = pkgJson.version.split(".",3);
     const majorVersion = Number.parseInt(versionParts[0]);
