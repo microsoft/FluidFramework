@@ -88,12 +88,12 @@ export interface IContainerRuntimeMetadata {
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
 export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage,
     | "clientId"
-    | "sequenceNumber"
-    | "minimumSequenceNumber"
     | "clientSequenceNumber"
+    | "minimumSequenceNumber"
     | "referenceSequenceNumber"
-    | "type"
-    | "timestamp">;
+    | "sequenceNumber"
+    | "timestamp"
+    | "type">;
 
 /**
  * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
