@@ -35,7 +35,7 @@ describe("AzureClient", () => {
     });
 
     it("Can attach container", async () => {
-        const {container} = await client.createContainer(schema);
+        const { container } = await client.createContainer(schema);
         const containerId = await container.attach();
 
         assert.strictEqual(
