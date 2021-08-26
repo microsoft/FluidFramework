@@ -70,11 +70,21 @@ function getDeepSortedObject(obj: any): any {
 }
 
 /**
- * Function that sorts a blob's content. If the content is an object or an array, deep sorts them.
- * @returns the sorted blob content.
+ * Function that normalizes a blob's content. If the content is an object or an array, deep sorts them.
+ * Special handling for certain runtime blobs, such as the "gc" blob.
+ * @returns the normalized blob content.
  */
-function getSortedBlobContent(content: string): string {
-    let sortedContent = content;
+function getNormalizedBlobContent(blobContent: string, blobName: string): string {
+    let content = blobContent;
+    if (blobName === gcBlobKey) {
+        // GC blobs may contain "unrefTimestamp" - The time the corresponding object became unreferenced. This is the
+        // timestamp of the last op processed and can differ between clients depending on when GC was run. It will be
+        // undefined if no ops were processed before running GC. So, remove it for the purposes of comparing snapshots.
+        const gcDetails = JSON.parse(content);
+        delete gcDetails.unrefTimestamp;
+        content = JSON.stringify(gcDetails);
+    }
+
     // Deep sort the content if it's parseable.
     try {
         let contentObj = JSON.parse(content);
@@ -83,9 +93,9 @@ function getSortedBlobContent(content: string): string {
         } else if (contentObj instanceof Object) {
             contentObj = getDeepSortedObject(contentObj);
         }
-        sortedContent = JSON.stringify(contentObj);
+        content = JSON.stringify(contentObj);
     } catch {}
-    return sortedContent;
+    return content;
 }
 
 /**
@@ -109,7 +119,7 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
                 let contents = entry.value.contents;
                 // If this blob has to be normalized, parse and sort the blob contents first.
                 if (blobsToNormalize.includes(entry.path)) {
-                    contents = getSortedBlobContent(contents);
+                    contents = getNormalizedBlobContent(contents, entry.path);
                 }
                 normalizedEntries.push(new BlobTreeEntry(entry.path, contents));
                 break;

@@ -1656,7 +1656,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // Remove this node's route ("/") and notify data stores of routes that are used in it.
                 const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(usedRoutes);
+                const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(
+                    usedRoutes,
+                    // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+                    // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
+                    // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
+                    this.deltaManager.lastMessage?.timestamp,
+                );
 
                 // Update stats to be reported in the peformance event.
                 gcStats.deletedNodes = deletedNodeIds.length;
