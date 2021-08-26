@@ -1154,10 +1154,10 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
                         // deal with [ 'inherits' ] or 'inherits'
                         if (templateOrConstructor.inherits instanceof Array &&
                             templateOrConstructor.inherits.length > 0) {
-                            for (var i = 0; i < templateOrConstructor.inherits.length; i++) {
-                                if (templateOrConstructor.inherits[i] !== 'Enum') {
+                            for (const inherits of templateOrConstructor.inherits) {
+                                if (inherits !== 'Enum') {
                                     this._createFromPropertyDeclaration({
-                                        typeid: templateOrConstructor.inherits[i],
+                                        typeid: inherits,
                                         context: 'single'
                                     }, parent, in_scope, in_filteringOptions);
                                 }
@@ -1639,12 +1639,12 @@ PropertyFactory.prototype._getAllParentsForTemplateInternal = function (in_typei
         // We have to distinguish the cases where the parents are either specified as a single string or an array
         var parents = _.isArray(template.inherits) ? template.inherits : [template.inherits];
 
-        for (var i = 0; i < parents.length; i++) {
+        for (const parent of parents) {
             // Mark it as parent
-            out_parents[parents[i]] = true;
+            out_parents[parent] = true;
 
             // Continue recursively
-            this._getAllParentsForTemplateInternal(parents[i], out_parents, undefined, in_scope);
+            this._getAllParentsForTemplateInternal(parent, out_parents, undefined, in_scope);
         }
     }
 };
@@ -1699,9 +1699,9 @@ PropertyFactory.prototype._reregister = function (in_template) {
 
     // Remove the typeid from the constructor cache
     var registeredConstructors = _.keys(this._typedPropertyConstructorCache);
-    for (var i = 0; i < registeredConstructors.length; i++) {
-        if (registeredConstructors[i].substr(0, typeid.length) === typeid) {
-            delete this._typedPropertyConstructorCache[registeredConstructors[i]];
+    for (const registeredConstructor of registeredConstructors) {
+        if (registeredConstructor.substr(0, typeid.length) === typeid) {
+            delete this._typedPropertyConstructorCache[registeredConstructor];
         }
     }
 
@@ -1789,9 +1789,7 @@ var _pushTemplateRequestTask = function (in_typeid) {
             }
 
             // Launch new requests for those dependencies
-            for (var d = 0; d < unknownDependencies.length; d++) {
-                var typeid = unknownDependencies[d];
-
+            for (const typeid of unknownDependencies) {
                 if (that.missingDependencies[typeid] === undefined) {
                     that.missingDependencies[typeid] = { requested: false };
                     if (that.templateRequestsResults.errors[typeid] === undefined) {
@@ -1865,8 +1863,7 @@ PropertyFactory.prototype.resolveSchemas = function () {
     this._localPrimitivePropertiesAndTemplates.iterate(function (key, type) {
         if (PropertyTemplate.isTemplate(type)) {
             var unknownDeps = _extractUnknownDependencies.call(that, type);
-            for (var d = 0; d < unknownDeps.length; d++) {
-                var dep = unknownDeps[d];
+            for (const dep of unknownDeps) {
                 if (that.missingDependencies[dep] === undefined) {
                     that.missingDependencies[dep] = { requested: false };
                 }
@@ -1878,8 +1875,7 @@ PropertyFactory.prototype.resolveSchemas = function () {
 
     // 1. Iterate over missing dependencies. Create pending request entries. Set status to pending.
     // Push template retrieve task to the queue for unresolved typeids (missing dependencies)
-    for (var i = 0; i < typeids.length; i++) {
-        var typeid = typeids[i];
+    for (const typeid of typeids) {
         if (that.templateRequestsResults.errors[typeid] === undefined) {
             that.templateRequestsResults.errors[typeid] = {};
         }
