@@ -11,3 +11,4 @@ export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
 export * from "./summarizerTypes";
 export * from "./summaryCollection";
+export { extractSummaryMetadataMessage } from "./summaryFormat";

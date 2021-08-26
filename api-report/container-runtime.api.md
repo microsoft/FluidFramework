@@ -231,6 +231,11 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly overridden?: undefined;
 };
 
+// Warning: (ae-forgotten-export) The symbol "ISummaryMetadataMessage" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function extractSummaryMetadataMessage(message?: ISequencedDocumentMessage): ISummaryMetadataMessage | undefined;
+
 // @public (undocumented)
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries);

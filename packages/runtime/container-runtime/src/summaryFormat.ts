@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
@@ -77,23 +77,55 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 export type GCVersion = number;
 export interface IContainerRuntimeMetadata {
     readonly summaryFormatVersion: 1;
+    /** The last message processed at the time of summary. Only primitive propertiy types are added to the summary. */
+    readonly message: ISummaryMetadataMessage | undefined;
     /** True if channels are not isolated in .channels subtrees, otherwise isolated. */
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
-    /** The last sequence number at the time of the summary; same as the summary op reference sequence number. */
-    readonly sequenceNumber?: number;
-    /** The timestamp of when the summary is generated. */
-    readonly timestamp?: number;
 }
 
-export type ReadContainerRuntimeMetadata = undefined | IContainerRuntimeMetadata;
+/** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
+export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage,
+    | "clientId"
+    | "sequenceNumber"
+    | "minimumSequenceNumber"
+    | "clientSequenceNumber"
+    | "referenceSequenceNumber"
+    | "type"
+    | "timestamp">;
 
-export type WriteContainerRuntimeMetadata = IContainerRuntimeMetadata
-    & Required<Pick<IContainerRuntimeMetadata, "sequenceNumber">>;
+/**
+ * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
+ * added to the metadata blob in summary.
+ */
+export function extractSummaryMetadataMessage(
+    message?: ISequencedDocumentMessage,
+): ISummaryMetadataMessage | undefined {
+    if (message === undefined) {
+        return undefined;
+    }
+
+    const metadataMessage: Partial<ISummaryMetadataMessage> = {};
+    for (const key of Object.keys(message)) {
+        const value = message[key];
+        switch (key) {
+            case "clientId":
+            case "sequenceNumber":
+            case "minimumSequenceNumber":
+            case "clientSequenceNumber":
+            case "referenceSequenceNumber":
+            case "type":
+            case "timestamp":
+                metadataMessage[key] = value;
+            default:
+        }
+    }
+    return metadataMessage as ISummaryMetadataMessage;
+}
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getMetadataFormatVersion(metadata: ReadContainerRuntimeMetadata): number {
+export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
     /**
      * Version 2+: Introduces runtime sequence number for data verification.
      *
@@ -113,13 +145,11 @@ export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function rootHasIsolatedChannels(metadata: ReadContainerRuntimeMetadata): boolean {
+export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
     return !!metadata && !metadata.disableIsolatedChannels;
 }
 
-export function getGCVersion(
-    metadata: ReadContainerRuntimeMetadata,
-): GCVersion {
+export function getGCVersion(metadata?: IContainerRuntimeMetadata): GCVersion {
     if (!metadata) {
         // Force to 0/disallowed in prior versions
         return 0;

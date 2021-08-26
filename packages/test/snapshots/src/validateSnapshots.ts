@@ -5,8 +5,10 @@
 
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
+import { Container } from "@fluidframework/container-loader";
+import { extractSummaryMetadataMessage } from "@fluidframework/container-runtime";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
-import { TreeEntry } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import {
     IFileSnapshot,
     StaticStorageDocumentServiceFactory,
@@ -22,9 +24,13 @@ const metadataBlobName = ".metadata";
  * - Snapshots the continer and validates that the snapshot matches with the corresponding snapshot in `destDir`.
  * @param srcDir - The directory containing source snapshots that are to be loaded and validated.
  * @param destDir - The directory containing destination snapshots against which the above snaphost are validated.
- * @param seqToTimestamp - A map of sequence number to timestamp for the messages in this container.
+ * @param seqToMessage - A map of sequence number to message for the messages in this document.
  */
-export async function validateSnapshots(srcDir: string, destDir: string, seqToTimestamp: Map<number, number>) {
+export async function validateSnapshots(
+    srcDir: string,
+    destDir: string,
+    seqToMessage: Map<number, ISequencedDocumentMessage>,
+) {
     const errors: string[] = [];
     // Error handler that reports errors if any while validation.
     const reportError = (description: string, error?: any) => {
@@ -57,16 +63,19 @@ export async function validateSnapshots(srcDir: string, destDir: string, seqToTi
 
         const snapshotFileName = file.name.split(".")[0];
         const srcContent = fs.readFileSync(`${srcDir}/${file.name}`, "utf-8");
+        // eslint-disable-next-line prefer-const
+        let container: Container;
         // This function will be called by the storage service when the container is snapshotted. When that happens,
         // validate that snapshot with the destination snapshot.
         const onSnapshotCb =
             (snapshot: IFileSnapshot) => compareWithReferenceSnapshot(
-                getNormalizedFileSnapshot(addSummaryTimestamp(snapshot, seqToTimestamp)),
+                getNormalizedFileSnapshot(
+                    addSummaryMessage(snapshot, seqToMessage, container.deltaManager.lastSequenceNumber)),
                 `${destDir}/${snapshotFileName}`,
                 reportError,
             );
         const storage = new SnapshotStorageService(JSON.parse(srcContent) as IFileSnapshot, onSnapshotCb);
-        const container = await loadContainer(
+        container = await loadContainer(
             new StaticStorageDocumentServiceFactory(storage),
             FileStorageDocumentName,
         );
@@ -79,18 +88,21 @@ export async function validateSnapshots(srcDir: string, destDir: string, seqToTi
 }
 
 /**
- * Add summary timestamp to the ".metadata" blob of older snapshots that did not have timestamps in summary. The summary
- * timestamp is the timestamp of the last message processed while generating summary. However, in the back compat tests,
- * we do not process any messages before summarizing, so the summary timestamp will be undefined. Use the timestamp of
- * the last message that the summary contains as the summary timestamp.
+ * Add summary messgage to the "metadata" blob of older snapshots. This is the last message processed when generating
+ * summary. In the back compat tests, we do not process any messages before summarizing, so the summary message will be
+ * undefined. Add the message corresponding to the sequence number at the time of summary.
  */
-function addSummaryTimestamp(snapshot: IFileSnapshot, seqToTimestamp: Map<number, number>): IFileSnapshot {
+function addSummaryMessage(
+    snapshot: IFileSnapshot,
+    seqToMessage: Map<number, ISequencedDocumentMessage>,
+    summaryMessageSequenceNumber: number,
+): IFileSnapshot {
     const treeEntries = snapshot.tree.entries;
     for (const entry of treeEntries) {
         if (entry.path === metadataBlobName && entry.type === TreeEntry.Blob) {
             const metadata = JSON.parse(entry.value.contents);
-            if (metadata.timestamp === undefined) {
-                metadata.timestamp = seqToTimestamp.get(metadata.sequenceNumber);
+            if (metadata.message === undefined) {
+                metadata.message = extractSummaryMetadataMessage(seqToMessage.get(summaryMessageSequenceNumber));
             }
             entry.value.contents = JSON.stringify(metadata);
         }
