@@ -98,7 +98,7 @@ describe("TinyliciousClient", () => {
     });
 
     it("creates a container with detached state", async () => {
-        const {container} = await tinyliciousClient.createContainer(schema);
+        const { container } = await tinyliciousClient.createContainer(schema);
         assert.strictEqual(
             container.attachState, AttachState.Detached,
             "Container should be detached after creation",
