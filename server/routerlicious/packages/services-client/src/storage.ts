@@ -69,7 +69,7 @@ export interface IGitService {
     createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
     getTree(sha: string, recursive: boolean): Promise<git.ITree>;
     createSummary(summary: storage.IWholeSummaryPayload): Promise<storage.IWriteSummaryResponse>;
-    getSummary(sha: string): Promise<storage.IWholeSummaryTree>;
+    getSummary(sha: string): Promise<storage.IWholeFlatSummary>;
 }
 
 /**
@@ -104,7 +104,7 @@ export interface IGitManager {
     upsertRef(branch: string, commitSha: string): Promise<git.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<git.ICommit>;
     createSummary(summary: storage.IWholeSummaryPayload): Promise<storage.IWriteSummaryResponse>;
-    getSummary(sha: string): Promise<storage.IWholeSummaryTree>;
+    getSummary(sha: string): Promise<storage.IWholeFlatSummary>;
 }
 
 /**
