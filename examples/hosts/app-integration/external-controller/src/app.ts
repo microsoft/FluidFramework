@@ -7,10 +7,13 @@ import {
     AzureClient,
     AzureConnectionConfig,
     InsecureTokenProvider,
-    AzureResources,
+    AzureContainerServices,
 } from "@fluidframework/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
-import { SharedMap } from "fluid-framework";
+import {
+    FluidContainer,
+    SharedMap,
+} from "fluid-framework";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
@@ -66,7 +69,8 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     const client = new AzureClient(connectionConfig, consoleLogger);
-    let resources: AzureResources;
+    let container: FluidContainer;
+    let services: AzureContainerServices;
     let id: string;
 
     // Get or create the document depending if we are running through the create new flow
@@ -74,26 +78,23 @@ async function start(): Promise<void> {
     if (createNew) {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
-        resources = await client.createContainer(containerSchema);
+        ({container, services} = await client.createContainer(containerSchema));
 
         // If the app is in a `createNew` state, and the container is detached, we attach the container
         // so that all new ops are communicated to the client
-        id = await resources.fluidContainer.attach();
+        id = await container.attach();
         // The newly attached container is given a unique ID that can be used to access the container in another session
         location.hash = id;
     } else {
         id = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier
-        resources = await client.getContainer(id, containerSchema);
+        ({container, services} = await client.getContainer(id, containerSchema));
     }
 
     document.title = id;
 
-    // create/get container API returns a combination of the container and associated container services
-    const { fluidContainer, containerServices } = resources;
-
     // We now get the first SharedMap from the container
-    const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1 as SharedMap;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(sharedMap1);
@@ -105,7 +106,7 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div1);
 
     // We now get the second SharedMap from the container
-    const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
+    const sharedMap2 = container.initialObjects.map2 as SharedMap;
 
     // Our controller manipulates the data object (model).
     const diceRollerController2 = new DiceRollerController(sharedMap2);
@@ -120,7 +121,7 @@ async function start(): Promise<void> {
     renderDiceRoller(diceRollerController2, div2);
 
     // Render the audience information for the members currently in the session
-    renderAudience(containerServices.audience, contentDiv);
+    renderAudience(services.audience, contentDiv);
 }
 
 start().catch(console.error);
