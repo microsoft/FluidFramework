@@ -21,6 +21,15 @@ interface PackageJson{
     typeValidationVersion: string,
 }
 
+function createSortedObject<T>(obj:Record<string,T>): Record<string,T>{
+    const sortedKeys = Object.keys(obj).sort();
+    const sortedDeps: Record<string,T> ={};
+    for(const key of sortedKeys){
+        sortedDeps[key] = obj[key];
+    }
+    return sortedDeps;
+}
+
 export function getPackageDetails(packageDir: string): PackageDetails {
 
     const packagePath = `${packageDir}/package.json`;
@@ -34,6 +43,8 @@ export function getPackageDetails(packageDir: string): PackageDetails {
         if(pkgJson.typeValidationVersion !== undefined){
             pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidationVersion}`] =
                 `npm:${pkgJson.name}@${pkgJson.typeValidationVersion}`;
+
+            pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
         }
         pkgJson.typeValidationVersion = pkgJson.version;
         fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
@@ -43,13 +54,8 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     const majorVersion = Number.parseInt(versionParts[0]);
     const minorVersion = Number.parseInt(versionParts[1]);
 
-    const oldVersions: string[] =[];
-    for(const depName of Object.keys(pkgJson.devDependencies)){
-        if(depName.startsWith(pkgJson.name)){
-            oldVersions.push(depName);
-        }
-    }
-
+    const oldVersions: string[] =
+        Object.keys(pkgJson.devDependencies).filter((k)=>k.startsWith(pkgJson.name));
 
     return {
         name: pkgJson.name,

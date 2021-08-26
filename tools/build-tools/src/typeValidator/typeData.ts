@@ -14,12 +14,11 @@ export interface PackageAndTypeData{
 
 export interface TypeData{
     readonly name: string;
-    readonly kind: string,
-    readonly isDeprecated: boolean;
-    readonly isPrivate: boolean;
+    readonly deprecated: boolean;
+    readonly internal: boolean;
 }
 
-function hasTag(node: Node, tagName: "deprecated" | "private"){
+function hasDocTag(node: Node, tagName: "deprecated" | "internal"){
     if(Node.isJSDocableNode(node)) {
         for(const doc of node.getJsDocs()){
             for(const tag of doc.getTags()){
@@ -34,6 +33,15 @@ function hasTag(node: Node, tagName: "deprecated" | "private"){
 
 function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
 
+    /*
+        handles namespaces e.g.
+        export namespace foo{
+            export type first: "first";
+            export type second: "second";
+        }
+        this will prefix foo and generate two type data:
+        foo.first and foo.second
+    */
     if (Node.isNamespaceDeclaration(node)){
         const typeData: TypeData[]=[];
         for(const s of node.getStatements()){
@@ -42,7 +50,11 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         return typeData;
     }
 
-
+    /*
+        handles variable statements: const foo:number=0, bar:number = 0;
+        this just grabs the declarations: foo:number=0 and bar:number
+        which we can make type data from
+    */
     if(Node.isVariableStatement(node)){
         const typeData: TypeData[]=[];
         for(const dec of node.getDeclarations()){
@@ -51,23 +63,24 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         return typeData
     }
 
-    const isDeprecated =hasTag(node, "deprecated");
-    const isPrivate =hasTag(node, "private");
-    const kind = node.getKindName();
     if(Node.isClassDeclaration(node)
-    || Node.isEnumDeclaration(node)
-    || Node.isInterfaceDeclaration(node)
-    || Node.isFunctionDeclaration(node)
-    || Node.isTypeAliasDeclaration(node)
-    || Node.isVariableDeclaration(node)){
+        || Node.isEnumDeclaration(node)
+        || Node.isInterfaceDeclaration(node)
+        || Node.isFunctionDeclaration(node)
+        || Node.isTypeAliasDeclaration(node)
+        || Node.isVariableDeclaration(node)){
 
-        const name = namespacePrefix !== undefined ? `${namespacePrefix}.${node.getName()}` : node.getName()!;
+        const name = namespacePrefix !== undefined
+            ? `${namespacePrefix}.${node.getName()}`
+            : node.getName()!;
+
+        const deprecated = hasDocTag(node, "deprecated");
+        const internal = hasDocTag(node, "internal");
 
         return [{
             name,
-            kind,
-            isDeprecated,
-            isPrivate,
+            deprecated,
+            internal,
         }];
     }
 
@@ -102,8 +115,8 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     const typeData: TypeData[]=[];
 
     const exportedDeclarations = file.getExportedDeclarations();
-    for(const declaration of exportedDeclarations){
-        for(const dec of declaration[1]){
+    for(const declarations of exportedDeclarations.values()){
+        for(const dec of declarations){
             typeData.push(...getNodeTypeData(dec));
         }
     }

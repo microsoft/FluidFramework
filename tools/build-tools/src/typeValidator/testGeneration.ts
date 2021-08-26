@@ -27,7 +27,7 @@ import * as current from "../index";
         for(const type of currentTypeData.typeData){
             const typeString = type.name.replace(".","");
             // no need to test new types
-            if(!type.isPrivate && oldTypes.some((t)=>t.name.replace(".","") == typeString)){
+            if(!type.internal && oldTypes.some((t)=>t.name.replace(".","") == typeString)){
                 const oldType = `old.${type.name}`
                 const currentType = `current.${type.name}`
 
