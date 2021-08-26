@@ -85,18 +85,18 @@ PropertyTemplate.prototype.hasNestedConstants = function () {
 };
 
 /**
- * internal function to recursivly traverse a property template and create dictionaries for found inline enums
- * @param {{}} in_currentPropertyLevel the current level in the template hierarchie
+ * internal function to recursively traverse a property template and create dictionaries for found inline enums
+ * @param {{}} in_currentPropertyLevel the current level in the template hierarchy
  */
 PropertyTemplate.prototype._digestNestedInlineEnumProperties = function (in_currentPropertyLevel) {
     if (in_currentPropertyLevel.properties) {
-        for (var i = 0; i < in_currentPropertyLevel.properties.length; i++) {
-            if (in_currentPropertyLevel.properties[i].typeid === 'Enum') {
-                var dictionary = this._parseEnums(in_currentPropertyLevel.properties[i].properties);
-                in_currentPropertyLevel.properties[i]._enumDictionary = dictionary;
-            } else if (in_currentPropertyLevel.properties[i].properties) {
+        for (const currentLevelProperty of in_currentPropertyLevel.properties) {
+            if (currentLevelProperty.typeid === 'Enum') {
+                var dictionary = this._parseEnums(currentLevelProperty.properties);
+                currentLevelProperty._enumDictionary = dictionary;
+            } else if (currentLevelProperty.properties) {
                 // call self
-                this._digestNestedInlineEnumProperties(in_currentPropertyLevel.properties[i]);
+                this._digestNestedInlineEnumProperties(currentLevelProperty);
             }
         }
     }
@@ -114,9 +114,8 @@ PropertyTemplate.prototype._parseEnums = function (in_enumProperties) {
     if (in_enumProperties.length !== 0) {
         minValue = in_enumProperties[0].value;
     }
-    for (var i = 0; i < in_enumProperties.length; i++) {
-        var enumEntry = in_enumProperties[i];
-        var value = enumEntry.value;
+    for (const enumEntry of in_enumProperties) {
+        const value = enumEntry.value;
         ConsoleUtils.assert(enumEntry.id, MSG.ENUM_TYPEID_MISSING);
         ConsoleUtils.assert(!_.isNaN(enumEntry.value), MSG.ENUM_VALUE_NOT_NUMBER + value);
         enumDictionary.enumEntriesById[enumEntry.id] = { value: value, annotation: enumEntry.annotation };
@@ -341,30 +340,28 @@ PropertyTemplate.extractDependencies = function (template) {
 
     if (template.inherits) {
         var inherits = (typeof template.inherits === 'string') ? [template.inherits] : template.inherits;
-        for (var i = 0; i < inherits.length; i++) {
-            var elem = TypeIdHelper.extractTypeId(inherits[i]);
+        for (const parentType of inherits) {
+            var elem = TypeIdHelper.extractTypeId(parentType);
             dependencies[elem] = true;
         }
     }
 
     if (template.properties) {
         var properties = template.properties;
-        for (var i = 0; i < properties.length; i++) {
-            var property = properties[i];
+        for (const property of properties) {
             if (PropertyTemplate.isTemplate(property)) {
-                var typeid = TypeIdHelper.extractTypeId(property.typeid);
+                const typeid = TypeIdHelper.extractTypeId(property.typeid);
                 dependencies[typeid] = true;
 
                 if (property.typedValue) {
-                    for (var t = 0; t < property.typedValue.length; t++) {
-                        var typedValue = property.typedValue[t];
-                        dependencies[typedValue.typeid] = true;
+                    for (const typedVal of property.typedValue) {
+                        dependencies[typedVal.typeid] = true;
                     }
                 }
             } else if (property.properties) {
                 var deps = PropertyTemplate.extractDependencies(property);
-                for (var j = 0; j < deps.length; j++) {
-                    var typeid = TypeIdHelper.extractTypeId(deps[j]);
+                for (const dep of deps) {
+                    const typeid = TypeIdHelper.extractTypeId(dep);
                     dependencies[typeid] = true;
                 }
             }
@@ -373,15 +370,14 @@ PropertyTemplate.extractDependencies = function (template) {
 
     if (template.constants) {
         var constants = template.constants;
-        for (var i = 0; i < constants.length; i++) {
-            var constant = constants[i];
+        for (const constant of constants) {
             if (PropertyTemplate.isTemplate(constant)) {
-                var typeid = TypeIdHelper.extractTypeId(constant.typeid);
+                const typeid = TypeIdHelper.extractTypeId(constant.typeid);
                 dependencies[typeid] = true;
             } else if (constant.context === 'map' && constant.contextKeyType === 'typeid' && constant.value) {
                 var keys = Object.keys(constant.value);
-                for (var k = 0; k < keys.length; k++) {
-                    var typeid = TypeIdHelper.extractTypeId(keys[k]);
+                for (const key of keys) {
+                    const typeid = TypeIdHelper.extractTypeId(key);
                     dependencies[typeid] = true;
                 }
             }
@@ -391,9 +387,8 @@ PropertyTemplate.extractDependencies = function (template) {
             if (constant.typedValue) {
                 // for arrays
                 if (_.isArray(constant.typedValue)) {
-                    for (var t = 0; t < constant.typedValue.length; t++) {
-                        var typedValue = constant.typedValue[t];
-                        dependencies[typedValue.typeid] = true;
+                    for (const typedVal of constant.typedValue) {
+                        dependencies[typedVal.typeid] = true;
                     }
                     // for singles
                 } else if (constant.typedValue.typeid) {
@@ -401,8 +396,8 @@ PropertyTemplate.extractDependencies = function (template) {
                     // for maps
                 } else {
                     var keys = Object.keys(constant.typedValue);
-                    for (var k = 0; k < keys.length; k++) {
-                        var typeid = constant.typedValue[keys[k]].typeid;
+                    for (const key of keys) {
+                        const typeid = constant.typedValue[key].typeid;
                         if (typeid) {
                             dependencies[typeid] = true;
                         }
