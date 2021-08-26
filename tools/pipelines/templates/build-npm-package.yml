@@ -138,7 +138,7 @@ stages:
                 Test=${{ parameters.taskTest }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
-              
+
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
@@ -244,11 +244,22 @@ stages:
                 command: 'custom'
                 workingDir: ${{ parameters.buildDirectory }}
                 customCommand: 'run ci:test:coverage'
+            # Some webpacked file using externals introduce file name with quotes in them
+            # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+            # A quick fix to patch the file with sed
+            - task: Bash@3
+              displayNAme: Patch Coverage Results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
+                script: |
+                  sed -e 's/\(filename=\".*[\\/]external \)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+              condition: succeededOrFailed()
             - task: PublishCodeCoverageResults@1
               displayName: Publish Code Coverage
               inputs:
                 codeCoverageTool: Cobertura
-                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage.xml
+                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
               condition: succeededOrFailed()
 
@@ -283,7 +294,7 @@ stages:
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
 
-          - ${{ if eq(variables.publishNonScopedPackages, true) }}:  
+          - ${{ if eq(variables.publishNonScopedPackages, true) }}:
             - ${{ each parameter in parameters.nonScopedPackages }}:
               - task: Bash@3
                 displayName: Move Non-Scoped Package ${{parameter}}
