@@ -3,10 +3,7 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
-Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of
-connecting your [Fluid container][] to the service while keeping the container object itself service-agnostic. You can
-use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `AzureClient` in your own application.
 
@@ -49,6 +46,7 @@ const config = {
 
 const client = new AzureClient(config);
 ```
+
 The user object can also hold optional additional user details such as the gender, address, email, etc. For example:
 
 ```javascript
@@ -65,6 +63,7 @@ const config = {
     storage: "https://myStorageUrl",
 };
 ```
+
 Your Azure Function will generate the token for the given user that is signed using the tenant's secret key and returned to the client without exposing the secret itself.
 
 ## Managing containers

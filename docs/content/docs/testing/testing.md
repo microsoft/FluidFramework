@@ -14,11 +14,13 @@ This document will explain how to use these tools to get started with writing au
 Automation against Tinylicious is useful for scenarios such as merge validation which want to be unaffected by service interruptions.  Your automation should be responsible for starting a local instance of Tinylicious along with terminating it once tests have completed.  This example uses the [`start-server-and-test` package](https://github.com/bahmutov/start-server-and-test) to do this.  You can substitute other libraries or implementations.
 
 First install the packages or add them to your dependencies then install:
+
 ```bash
 npm install tinylicious start-server-and-test mocha
 ```
 
 Once installed, you can use the following npm scripts:
+
 ```json
 "scripts": {
     ...
@@ -62,6 +64,7 @@ These values for `tenantId`, `orderer`, and `storage` correspond to those for Ti
 This example combines the concepts from this document to show how you can write one test suite that runs against both Tinylicious or Azure Fluid Relay.
 
 First you need to create a client that can adapt to the test scenario.  This example uses an environment variable to determine which service to target and for the tenant key.  The target service variable can be set as part of the test script, while secrets can be set by individual users or provided by your CI pipeline.
+
 ```typescript
 function createAzureClient(): AzureClient {
     const useAzure = process.env.FLUID_CLIENT === "azure";
@@ -84,6 +87,7 @@ function createAzureClient(): AzureClient {
 ```
 
 Your test can then call this function to create a client object without concerning itself about the underlying service.  This [mocha](https://mochajs.org/) test example creates the service client before running any tests, and uses the [uuid](https://github.com/uuidjs/uuid) package to generate a random `documentId` for each test.  You can substitute other libraries or implementations.  There is a single test that uses the service client to create a container which passes as long as no errors are thrown.
+
 ```typescript
 import { v4 as uuid } from "uuid";
 
@@ -109,6 +113,7 @@ describe("ClientTest", () => {
 ```
 
 You can then use the following npm scripts:
+
 ```json
 "scripts": {
     ...
