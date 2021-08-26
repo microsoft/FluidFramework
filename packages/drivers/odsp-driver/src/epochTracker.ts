@@ -24,6 +24,7 @@ import {
     IPersistedFileCache,
  } from "./odspCache";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
+import { handleReadOnlyServerState } from "./handleReadonlyServerState";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -143,9 +144,11 @@ export class EpochTracker implements IPersistedFileCache {
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         let epochFromResponse: string | undefined;
         try {
-            const response = await this.rateLimiter.schedule(
+            const response = await handleReadOnlyServerState(async () => this.rateLimiter.schedule(
                 async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
-            );
+            ),
+            this.logger,
+            fetchType);
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
@@ -177,9 +180,11 @@ export class EpochTracker implements IPersistedFileCache {
         const request = this.addEpochInRequest(url, fetchOptions, addInBody);
         let epochFromResponse: string | undefined;
         try {
-            const response = await this.rateLimiter.schedule(
+            const response = await handleReadOnlyServerState(async () => this.rateLimiter.schedule(
                 async () => fetchArray(request.url, request.fetchOptions),
-            );
+            ),
+            this.logger,
+            fetchType);
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             return response;
