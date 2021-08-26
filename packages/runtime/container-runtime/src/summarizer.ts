@@ -13,7 +13,7 @@ import {
     IFluidHandleContext,
     IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { wrapError } from "@fluidframework/container-utils";
+import { wrapErrorAndLog } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     ISummaryConfiguration,
@@ -45,9 +45,9 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
         super(errorMessage);
     }
 
-    static wrap(error: any, logged: boolean = false) {
+    static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
         const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
-        return wrapError<SummarizingWarning>(error, newErrorFn);
+        return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
     }
 }
 
@@ -96,7 +96,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         try {
             await this.runCore(onBehalfOf, options);
         } catch (error) {
-            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */));
+            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */, this.logger));
             throw error;
         } finally {
             // Cleanup after running

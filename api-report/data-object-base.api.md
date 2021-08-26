@@ -63,7 +63,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
     // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<FluidDataStoreRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
     // (undocumented)
     readonly ISharedObjectRegistry: ISharedObjectRegistry;
     // (undocumented)

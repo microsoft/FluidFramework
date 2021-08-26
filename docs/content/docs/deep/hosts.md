@@ -40,7 +40,7 @@ right plugins (drivers, handlers, resolvers), the Fluid loader will work for any
 implementation.
 
 The loader mimics existing web protocols. Similar to how the browser requests state and app logic (a website) from a
-web server, a Fluid host uses the loader to request a [Fluid container](./containers-runtime.md) from the Fluid service.
+web server, a Fluid host uses the loader to request a [Fluid container][] from the Fluid service.
 
 ## Fluid host responsibilities
 
@@ -115,3 +115,30 @@ object).
 
 The host is responsible for checking that this response is valid. Did the loader return a 200? Is the mimeType correct?
 As the Fluid Framework expands, we intend to make further use of these responses.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "data-structures/ink.md" >}}
+[PureDataObject]: {{< relref "apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "apis/aqueduct/puredataobjectfactory.md" >}}
+[SharedCell]: {{< relref "data-structures/cell.md" >}}
+[SharedCounter]: {{< relref "data-structures/counter.md" >}}
+[SharedDirectory]: {{< relref "data-structures/directory.md" >}}
+[SharedMap]: {{< relref "data-structures/map.md" >}}
+[SharedMatrix]: {{< relref "data-structures/matrix.md" >}}
+[SharedNumberSequence]: {{< relref "data-structures/sequences.md" >}}
+[SharedObjectSequence]: {{< relref "data-structures/sequences.md" >}}
+[SharedSequence]: {{< relref "data-structures/sequences.md" >}}
+[SharedString]: {{< relref "data-structures/string.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

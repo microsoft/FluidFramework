@@ -10,7 +10,6 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IChannelSummarizeResult } from '@fluidframework/runtime-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
@@ -19,6 +18,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 
@@ -28,7 +28,7 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
     connect(services: IChannelServices): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     isAttached(): boolean;
-    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
+    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 }
 
 // @public (undocumented)
@@ -89,7 +89,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected get serializer(): IFluidSerializer;
     protected abstract snapshotCore(serializer: IFluidSerializer): ITree;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
-    summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult;
+    summarize(fullTree?: boolean, trackState?: boolean): ISummaryTreeWithStats;
 }
 
 // @public

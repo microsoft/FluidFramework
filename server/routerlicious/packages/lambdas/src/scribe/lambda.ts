@@ -9,31 +9,29 @@ import assert from "assert";
 import { inspect } from "util";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
-    IDocumentMessage,
     IDocumentSystemMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryNack,
     MessageType,
     ISequencedDocumentAugmentedMessage,
+    ISequencedDocumentSystemMessage,
     IProtocolState,
-    ScopeType,
 } from "@fluidframework/protocol-definitions";
+import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
     ControlMessageType,
     extractBoxcar,
     IContext,
     IControlMessage,
     IProducer,
-    IRawOperationMessage,
     IScribe,
     ISequencedOperationMessage,
     IServiceConfiguration,
-    RawOperationType,
     SequencedOperationType,
     IQueuedMessage,
     IPartitionLambda,
-    INackMessagesControlMessageContents,
+    LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
     BaseTelemetryProperties,
@@ -44,9 +42,9 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { setQueuedMessageProperties } from "../utils";
+import { setQueuedMessageProperties, createSessionMetric, logCommonSessionEndMetrics } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
-import { initializeProtocol } from "./utils";
+import { initializeProtocol, sendToDeli } from "./utils";
 
 export class ScribeLambda implements IPartitionLambda {
     // Value of the last processed Kafka offset
@@ -89,6 +87,7 @@ export class ScribeLambda implements IPartitionLambda {
         private term: number,
         private protocolHead: number,
         messages: ISequencedDocumentMessage[],
+        private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
     ) {
         this.lastOffset = scribe.logOffset;
         this.setStateFromCheckpoint(scribe);
@@ -96,7 +95,7 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     public async handler(message: IQueuedMessage) {
-        const lumberJackMetric = this.serviceConfiguration.enableLumberTelemetryFramework ?
+        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
             Lumberjack.newLumberMetric(LumberEventName.ScribeHandler) : undefined;
 
         if (lumberJackMetric) {
@@ -137,7 +136,7 @@ export class ScribeLambda implements IPartitionLambda {
                         }
                         this.term = lastSummary.term;
                         const lastScribe = JSON.parse(lastSummary.scribe) as IScribe;
-                        await this.updateProtocolHead(lastSummary.protocolHead);
+                        this.updateProtocolHead(lastSummary.protocolHead);
                         this.protocolHandler = initializeProtocol(lastScribe.protocolState, this.term);
                         this.setStateFromCheckpoint(lastScribe);
                         this.pendingMessages = new Deque<ISequencedDocumentMessage>(
@@ -233,9 +232,9 @@ export class ScribeLambda implements IPartitionLambda {
                                 // Otherwise send a nack and revert the protocol state back to pre summary state.
                                 if (summaryResponse.status) {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
-                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, false);
-                                    await this.updateProtocolHead(this.protocolHandler.sequenceNumber);
-                                    lumberJackMetric?.setProperties({[CommonProperties.clientSummarySuccess]: true});
+                                    await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
+                                    this.updateProtocolHead(this.protocolHandler.sequenceNumber);
+                                    lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: true });
                                     this.context.log?.info(
                                         `Client summary success @${value.operation.sequenceNumber}`,
                                         {
@@ -248,7 +247,7 @@ export class ScribeLambda implements IPartitionLambda {
                                 } else {
                                     const nackMessage = summaryResponse.message as ISummaryNack;
                                     await this.sendSummaryNack(nackMessage);
-                                    lumberJackMetric?.setProperties({[CommonProperties.clientSummarySuccess]: false});
+                                    lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: false });
                                     this.context.log?.error(
                                         `Client summary failure @${value.operation.sequenceNumber}. `
                                         + `Error: ${nackMessage.errorMessage}`,
@@ -263,9 +262,9 @@ export class ScribeLambda implements IPartitionLambda {
                                 }
                             }
                         } catch (ex) {
-                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. 
+                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}.
                                 Exception: ${inspect(ex)}`;
-                            lumberJackMetric?.setProperties({[CommonProperties.clientSummarySuccess]: false});
+                            lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: false });
                             this.context.log?.error(errorMsg);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage specific error and move forward
@@ -310,8 +309,9 @@ export class ScribeLambda implements IPartitionLambda {
                                 }
                                 await this.sendSummaryConfirmationMessage(
                                     operation.sequenceNumber,
+                                    false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
-                                lumberJackMetric?.setProperties({[CommonProperties.serviceSummarySuccess]: true});
+                                lumberJackMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: true });
                                 this.context.log?.info(
                                     `Service summary success @${operation.sequenceNumber}`,
                                     {
@@ -323,9 +323,9 @@ export class ScribeLambda implements IPartitionLambda {
                                 );
                             }
                         } catch (ex) {
-                            const errorMsg = `Service summary failure @${operation.sequenceNumber}. 
+                            const errorMsg = `Service summary failure @${operation.sequenceNumber}.
                                 Exception: ${inspect(ex)}`;
-                            lumberJackMetric?.setProperties({[CommonProperties.serviceSummarySuccess]: false});
+                            lumberJackMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: false });
 
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
@@ -345,27 +345,14 @@ export class ScribeLambda implements IPartitionLambda {
                         }
                     }
                 } else if (value.operation.type === MessageType.SummaryAck) {
-                    const content = value.operation.contents as ISummaryAck;
+                    const operation = value.operation as ISequencedDocumentSystemMessage;
+                    const content: ISummaryAck = operation.data ? JSON.parse(operation.data) : operation.contents;
                     this.lastClientSummaryHead = content.handle;
                     // An external summary writer can only update the protocolHead when the ack is sequenced
                     // back to the stream.
                     if (this.summaryWriter.isExternal) {
-                        await this.updateProtocolHead(content.summaryProposal.summarySequenceNumber);
+                        this.updateProtocolHead(content.summaryProposal.summarySequenceNumber);
                     }
-                }
-
-                // check to see if this exact sequence number causes us to hit the max ops since last summary nack limit
-                if (this.serviceConfiguration.scribe.nackMessages.enable &&
-                    this.serviceConfiguration.scribe.nackMessages.maxOps === this.sequenceNumber - this.protocolHead) {
-                    lumberJackMetric?.setProperties({[CommonProperties.maxOpsSinceLastSummary]: true});
-
-                    // this op brings us over the limit
-                    // tell deli to start nacking non-system ops and ops that are submitted by non-summarizers
-                    await this.sendNackMessage({
-                        content: this.serviceConfiguration.scribe.nackMessages.nackContent,
-                        allowSystemMessages: true,
-                        allowedScopes: [ScopeType.SummaryWrite],
-                    });
                 }
             }
         }
@@ -379,8 +366,7 @@ export class ScribeLambda implements IPartitionLambda {
 
         if (lumberJackMetric) {
             this.setScribeStateMetrics(checkpoint, lumberJackMetric);
-            lumberJackMetric.success(`Message processed successfully 
-                at seq no ${checkpoint.sequenceNumber}`);
+            lumberJackMetric.success(`Message processed successfully at seq no ${checkpoint.sequenceNumber}`);
         }
     }
 
@@ -394,9 +380,30 @@ export class ScribeLambda implements IPartitionLambda {
         lumberJackMetric?.setProperties(scribeState);
     }
 
-    public close() {
+    public close(closeType: LambdaCloseType) {
+        this.logScribeSessionMetrics(closeType);
+
         this.closed = true;
         this.protocolHandler.close();
+    }
+
+    private logScribeSessionMetrics(closeType: LambdaCloseType) {
+        if (this.scribeSessionMetric?.isCompleted()) {
+            this.scribeSessionMetric = createSessionMetric(this.tenantId,
+                this.documentId,
+                LumberEventName.ScribeSessionResult,
+                this.serviceConfiguration,
+            );
+        }
+
+        logCommonSessionEndMetrics(
+            this.context as DocumentContext,
+            closeType,
+            this.scribeSessionMetric,
+            this.sequenceNumber,
+            this.protocolHead,
+            undefined,
+        );
     }
 
     // Advances the protocol state up to 'target' sequence number. Having an exception while running this code
@@ -503,57 +510,47 @@ export class ScribeLambda implements IPartitionLambda {
      * This method updates the protocol head to the new summary sequence number
      * @param protocolHead The sequence number of the new summary
      */
-    private async updateProtocolHead(protocolHead: number) {
-        if (this.serviceConfiguration.scribe.nackMessages.enable) {
-            const opsSincePreviousSummary = this.sequenceNumber - this.protocolHead;
-            if (opsSincePreviousSummary >= this.serviceConfiguration.scribe.nackMessages.maxOps) {
-                // we were over the limit, so we must have been nacking messages
-
-                // verify this new summary will get out us of this state
-                const opsSinceNewSummary = this.sequenceNumber - protocolHead;
-                if (opsSinceNewSummary < this.serviceConfiguration.scribe.nackMessages.maxOps) {
-                    // tell deli to stop nacking future messages
-                    await this.sendNackMessage(undefined);
-                }
-            }
-        }
-
+    private updateProtocolHead(protocolHead: number) {
         this.protocolHead = protocolHead;
     }
 
     private async sendSummaryAck(contents: ISummaryAck) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents,
+            data: JSON.stringify(contents),
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryAck,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private async sendSummaryNack(contents: ISummaryNack) {
-        const operation: IDocumentMessage = {
+        const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents,
+            data: JSON.stringify(contents),
             referenceSequenceNumber: -1,
             traces: this.serviceConfiguration.enableTraces ? [] : undefined,
             type: MessageType.SummaryNack,
         };
 
-        return this.sendToDeli(operation);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     // Sends a confirmation back to deli as a signal to update its DSN. Note that 'durableSequenceNumber (dsn)'
     // runs ahead of last summary sequence number (protocolHead). The purpose of dsn is to inform deli about permanent
     // storage so that it can hydrate its state after a failure. The client's are still reponsible for fetching ops
     // from protocolHead to dsn.
-    private async sendSummaryConfirmationMessage(durableSequenceNumber: number, clearCache: boolean) {
+    private async sendSummaryConfirmationMessage(durableSequenceNumber: number,
+        isClientSummary: boolean, clearCache: boolean) {
         const controlMessage: IControlMessage = {
             type: ControlMessageType.UpdateDSN,
             contents: {
                 durableSequenceNumber,
+                isClientSummary,
                 clearCache,
             },
         };
@@ -567,46 +564,7 @@ export class ScribeLambda implements IPartitionLambda {
             type: MessageType.Control,
         };
 
-        return this.sendToDeli(operation);
-    }
-
-    private async sendNackMessage(contents: INackMessagesControlMessageContents | undefined) {
-        const controlMessage: IControlMessage = {
-            type: ControlMessageType.NackMessages,
-            contents,
-        };
-
-        const operation: IDocumentSystemMessage = {
-            clientSequenceNumber: -1,
-            contents: null,
-            data: JSON.stringify(controlMessage),
-            referenceSequenceNumber: -1,
-            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
-            type: MessageType.Control,
-        };
-
-        return this.sendToDeli(operation);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    private sendToDeli(operation: IDocumentMessage | IDocumentSystemMessage): Promise<any> {
-        const message: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-
-        if (!this.producer) {
-            throw new Error("Invalid producer");
-        }
-
-        return this.producer.send(
-            [message],
-            this.tenantId,
-            this.documentId);
+        return sendToDeli(this.tenantId, this.documentId, this.producer, operation);
     }
 
     private setStateFromCheckpoint(scribe: IScribe) {

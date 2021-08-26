@@ -31,7 +31,7 @@ export const createTestContainerRuntimeFactory = (containerRuntimeCtor: typeof C
 
             // Test detached creation
             const root2Context = runtime.createDetachedRootDataStore([this.type], "default2");
-            const root2Runtime = await this.dataStoreFactory.instantiateDataStore(root2Context);
+            const root2Runtime = await this.dataStoreFactory.instantiateDataStore(root2Context, /* existing */ false);
             await root2Context.attachRuntime(this.dataStoreFactory, root2Runtime);
         }
 

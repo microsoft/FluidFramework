@@ -8,7 +8,8 @@
  * https://microsoft.sharepoint-df.com/:w:/t/ODSPFileStore/ER06b64K_XdDjEyAKl-UT60BJiId39SCVkYSyo_2pvH9gQ?e=KYQ0c5
 */
 
-import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { assert, IsoBuffer, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { createOdspNetworkError, fetchIncorrectResponse } from "@fluidframework/odsp-doclib-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 
 /**
@@ -76,12 +77,12 @@ export const integerBytesToCodeMap = {
 export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
     const propSet = new Set(props);
     const res: Record<string, NodeTypes> = {};
-    for (const [key, value] of node.iteratePairs()) {
-        assert(key instanceof BlobCore, 0x228 /* "Prop name should be a blob" */);
-        const keyStr = key.toString();
+    for (const [keyNode, valueNode] of node.iteratePairs()) {
+        assertBlobCoreInstance(keyNode, "keynode should be a blob");
+        const keyStr = keyNode.toString();
         assert(propSet.has(keyStr), 0x229 /* "Property should exist" */);
         propSet.delete(keyStr);
-        res[keyStr] = value;
+        res[keyStr] = valueNode;
     }
     assert(propSet.size === 0, 0x22a /* "All properties should exist" */);
     return res;
@@ -119,8 +120,7 @@ export function iterate<T>(obj: {[Symbol.iterator]: () => IterableIterator<T>}) 
 export abstract class BlobCore {
     public abstract get buffer(): Uint8Array;
     public get arrayBuffer(): ArrayBufferLike {
-        const uint8Array = this.buffer;
-        return uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+        return Uint8ArrayToArrayBuffer(this.buffer);
     }
 
     /**
@@ -205,6 +205,7 @@ export type NodeTypes = NodeCore | BlobCore | number;
  * Node - node in the tree (non-leaf element of the tree)
  */
 export class NodeCore {
+    // It is an array of nodes.
     private readonly children: NodeTypes[] = [];
     public get nodes() {
         return this.children;
@@ -224,31 +225,29 @@ export class NodeCore {
     // Mostly for internal tools. Please use getString / getBlob / getNode API
     public get(index: number) { return this.children[index]; }
 
-    public getString(index: number)
-    {
+    public getString(index: number): string {
         const node = this.children[index];
-        assert(node instanceof BlobCore, 0x22d /* "Type of node does not match" */);
+        assertBlobCoreInstance(node, "getString should return stringblob");
         return node.toString();
     }
 
-    public getBlob(index: number)
-    {
+    public getBlob(index: number): BlobCore {
         const node = this.children[index];
-        assert(node instanceof BlobCore, 0x22e /* "Type of node does not match" */);
+        assertBlobCoreInstance(node, "getBlob should return a blob");
         return node;
     }
 
-    public getNode(index: number)
+    public getNode(index: number): NodeCore
     {
         const node = this.children[index];
-        assert(node instanceof NodeCore, 0x22f /* "Type of node does not match" */);
+        assertNodeCoreInstance(node, "getNode should return a node");
         return node;
     }
 
     public getNumber(index: number): number
     {
         const node = this.children[index];
-        assert(typeof node === "number", 0x230 /* "Type of node does not match" */);
+        assertNumberInstance(node, "getNumber should return a number");
         return node;
     }
 
@@ -278,12 +277,12 @@ export class NodeCore {
      */
     protected load(buffer: ReadBuffer) {
         for (;!buffer.eof;) {
+            let childValue: NodeTypes | undefined;
             const code = buffer.read();
             switch (code) {
                 case MarkerCodes.ListStart: {
-                    const node = new NodeCore();
-                    this.children.push(node);
-                    node.load(buffer);
+                    childValue = new NodeCore();
+                    childValue.load(buffer);
                     break;
                 }
 
@@ -297,14 +296,13 @@ export class NodeCore {
                 case MarkerCodes.BinarySingle32:
                 case MarkerCodes.BinarySingle64:
                 {
-                    const blob = BlobShallowCopy.read(buffer, codeToBytesMap[code]);
-                    this.children.push(blob);
+                    childValue = BlobShallowCopy.read(buffer, codeToBytesMap[code]);
                     break;
                 }
                 // If integer is 0.
                 case MarkerCodes.Int0:
                 {
-                    this.children.push(0);
+                    childValue = 0;
                     break;
                 }
                 case MarkerCodes.UInt8:
@@ -312,15 +310,16 @@ export class NodeCore {
                 case MarkerCodes.UInt32:
                 case MarkerCodes.UInt64:
                 {
-                    const blob = buffer.read(codeToBytesMap[code]);
-                    this.children.push(blob);
+                    childValue = buffer.read(codeToBytesMap[code]);
                     break;
                 }
                 case MarkerCodes.ListEnd:
                     return;
                 default:
-                    throw new Error(`Invalid code ${code}`);
+                    throw new Error(`Invalid code: ${code}`);
             }
+            assert(childValue !== undefined, 0x24a /* "Child Value should be defined" */);
+            this.children.push(childValue);
         }
     }
 }
@@ -337,3 +336,64 @@ export class TreeBuilder extends NodeCore {
         return builder;
     }
 }
+
+export function assertBlobCoreInstance(
+    node: NodeTypes,
+    message: string,
+): asserts node is BlobCore {
+    if (node instanceof BlobCore) {
+        return;
+    }
+    throwBufferParseException(node, "BlobCore", message);
+}
+
+export function assertNodeCoreInstance(
+    node: NodeTypes,
+    message: string,
+): asserts node is NodeCore {
+    if (node instanceof NodeCore) {
+        return;
+    }
+    throwBufferParseException(node, "NodeCore", message);
+}
+
+export function assertNumberInstance(
+    node: NodeTypes,
+    message: string,
+): asserts node is number {
+    if (typeof node === "number") {
+        return;
+    }
+    throwBufferParseException(node, "Number", message);
+}
+
+function throwBufferParseException(
+    node: NodeTypes,
+    expectedNodeType: NodeType,
+    message: string,
+): never {
+    const error = createOdspNetworkError(
+        `BufferParsingException: ${message}`,
+        fetchIncorrectResponse,
+        undefined,
+        undefined,
+        undefined,
+        {
+            nodeType: getNodeType(node),
+            expectedNodeType,
+        });
+    throw error;
+}
+
+function getNodeType(value: NodeTypes): NodeType {
+    if (typeof value === "number") {
+        return "Number";
+    } else if(value instanceof BlobCore) {
+        return "BlobCore";
+    } else if (value instanceof NodeCore) {
+        return "NodeCore";
+    }
+    return "UnknownType";
+}
+
+type NodeType = "Number" | "BlobCore" | "NodeCore" | "UnknownType";

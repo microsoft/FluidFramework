@@ -16,4 +16,9 @@ export enum LumberEventName {
     // Lambdas
     DeliHandler = "DeliHandler",
     ScribeHandler = "ScribeHandler",
+
+    // Miscellaneous
+    SessionResult = "SessionResult",
+    StartSessionResult = "StartSessionResult",
+    ScribeSessionResult = "ScribeSessionResult",
 }

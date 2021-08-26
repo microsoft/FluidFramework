@@ -32,7 +32,6 @@ import {
     IMatrixWriter,
 } from "@tiny-calc/nano";
 import { MergeTreeDeltaType, IMergeTreeOp, SegmentGroup, ISegment } from "@fluidframework/merge-tree";
-import { debug } from "./debug";
 import { MatrixOp } from "./ops";
 import { PermutationVector, PermutationSegment } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
@@ -570,9 +569,7 @@ export class SharedMatrix<T = any>
         }
     }
 
-    protected onDisconnect() {
-        debug(`${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}

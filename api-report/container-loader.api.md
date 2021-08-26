@@ -157,6 +157,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     connect(args: IConnectionArgs): Promise<IConnectionDetails>;
     get connectionMode(): ConnectionMode;
+    connectionProps(): ITelemetryProperties;
     // (undocumented)
     dispose(): void;
     // (undocumented)
@@ -262,6 +263,7 @@ export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 // @public
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
+    getBlobIds(): string[];
 };
 
 // @public

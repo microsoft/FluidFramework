@@ -38,7 +38,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     Run the following command to install the libraries.
 
     ```dotnetcli
-    npm install @fluid-experimental/frs-client @fluid-experimental/fluid-framework
+    npm install @fluidframework/azure-client fluid-framework
     ```
 
 ## Code the project
@@ -61,8 +61,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import React from "react";
-    import { FrsClient, InsecureTokenProvider } from "@fluid-experimental/frs-client";;
-    import { SharedMap } from "@fluid-experimental/fluid-framework";
+    import { AzureClient, InsecureTokenProvider } from "@fluidframework/azure-client";;
+    import { SharedMap } from "fluid-framework";
     ```
 
 ### Create a container ID helper function
@@ -85,7 +85,7 @@ const getContainerId = () => {
 };
 ```
 
-### Configure the `FrsClient`
+### Configure the `AzureClient`
 
 Add the following constant below the helper function. This object configures the Azure Fluid Relay service client to
 connect with a Fluid service that runs on localhost. Note that in a production application, you would use a real security token
@@ -93,7 +93,7 @@ service to protect access to the Azure Fluid Relay service (see [Authentication 
 `InsecureTokenProvider`.
 
 ```js
-const frsClientConfig = {
+const azureClientConfig = {
     tenantId: "local",
     tokenProvider: new InsecureTokenProvider("anyValue", { id: "userId" }),
     orderer: "http://localhost:7070",
@@ -103,7 +103,7 @@ const frsClientConfig = {
 
 ### Move Fluid data to the view
 
-1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the `FrsClient` configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the `AzureClient` configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
 
     ```js
     const getFluidData = async () => {
@@ -118,7 +118,7 @@ const frsClientConfig = {
 
     ```js
     const { containerId, isNew } = getContainerId();
-    const frsClient = new FrsClient(frsClientConfig);
+    const azureClient = new AzureClient(azureClientConfig);
     const containerSchema = {
         name: 'fluid-react-tutorial-container',
         initialObjects: { sharedTimestamp: SharedMap }
@@ -129,8 +129,8 @@ const frsClientConfig = {
 
     ```js
     const { fluidContainer } = isNew
-        ? await frsClient.createContainer({id: containerId}, containerSchema)
-        : await frsClient.getContainer({id: containerId}, containerSchema);
+        ? await azureClient.createContainer({id: containerId}, containerSchema)
+        : await azureClient.getContainer({id: containerId}, containerSchema);
     ```
 
 1. Replace `TODO 3` with the following code.
@@ -263,37 +263,24 @@ When you make changes to the code the project will automatically rebuild and the
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "apis/aqueduct/dataobject.md" >}}
+[DataObjectFactory]: {{< relref "apis/aqueduct/dataobjectfactory.md" >}}
+[Ink]: {{< relref "data-structures/ink.md" >}}
+[PureDataObject]: {{< relref "apis/aqueduct/puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "apis/aqueduct/puredataobjectfactory.md" >}}
+[SharedCell]: {{< relref "data-structures/cell.md" >}}
+[SharedCounter]: {{< relref "data-structures/counter.md" >}}
+[SharedDirectory]: {{< relref "data-structures/directory.md" >}}
+[SharedMap]: {{< relref "data-structures/map.md" >}}
+[SharedMatrix]: {{< relref "data-structures/matrix.md" >}}
+[SharedNumberSequence]: {{< relref "data-structures/sequences.md" >}}
+[SharedObjectSequence]: {{< relref "data-structures/sequences.md" >}}
+[SharedSequence]: {{< relref "data-structures/sequences.md" >}}
+[SharedString]: {{< relref "data-structures/string.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -14,7 +14,11 @@ import { getGitType } from "@fluidframework/protocol-base";
 import { SummaryType, ISummaryTree, ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFileEntry, IOdspResolvedUrl, TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import {
+    IFileEntry,
+    InstrumentedStorageTokenFetcher,
+    IOdspResolvedUrl,
+} from "@fluidframework/odsp-driver-definitions";
 import {
     IOdspSummaryTree,
     OdspSummaryTreeValue,
@@ -46,7 +50,7 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree | undefined,
@@ -89,14 +93,13 @@ export async function createNewFluidFile(
 }
 
 export async function createNewEmptyFluidFile(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     epochTracker: EpochTracker,
 ): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    // add .tmp to filename, the app is responsible for removing this once a summary is posted.
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
+    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}`);
     const initialUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
         }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
@@ -135,7 +138,7 @@ export async function createNewEmptyFluidFile(
 }
 
 export async function createNewFluidFileFromSummary(
-    getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+    getStorageToken: InstrumentedStorageTokenFetcher,
     newFileInfo: INewFileInfo,
     logger: ITelemetryLogger,
     createNewSummary: ISummaryTree,

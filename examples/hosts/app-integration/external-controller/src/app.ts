@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedMap } from "@fluid-experimental/fluid-framework";
 import {
-    FrsAzFunctionTokenProvider,
-    FrsClient,
-    FrsConnectionConfig,
+    AzureFunctionTokenProvider,
+    AzureClient,
+    AzureConnectionConfig,
     InsecureTokenProvider,
-} from "@fluid-experimental/frs-client";
+    AzureResources,
+} from "@fluidframework/azure-client";
 import { generateUser } from "@fluidframework/server-services-client";
+import { SharedMap } from "fluid-framework";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
@@ -25,19 +26,19 @@ const userDetails: ICustomUserDetails = {
 };
 
 // Define the server we will be using and initialize Fluid
-const useFrs = process.env.FLUID_CLIENT === "frs";
+const useAzure = process.env.FLUID_CLIENT === "azure";
 
 const user = generateUser() as any;
 
-const frsAzUser = {
+const azureUser = {
     userId: user.id,
     userName: user.name,
     additionalDetails: userDetails,
 };
 
-const connectionConfig: FrsConnectionConfig = useFrs ? {
+const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "",
-    tokenProvider: new FrsAzFunctionTokenProvider("", frsAzUser),
+    tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",
     storage: "",
 } : {
@@ -47,18 +48,10 @@ const connectionConfig: FrsConnectionConfig = useFrs ? {
     storage: "http://localhost:7070",
 };
 
-let createNew = false;
-if (location.hash.length === 0) {
-    createNew = true;
-    location.hash = Date.now().toString();
-}
-const containerId = location.hash.substring(1);
-document.title = containerId;
-
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
-export const containerSchema = {
+const containerSchema = {
     name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
@@ -72,40 +65,62 @@ async function start(): Promise<void> {
     // and hook to the Telemetry system
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
+    const client = new AzureClient(connectionConfig, consoleLogger);
+    let resources: AzureResources;
+    let id: string;
+
     // Get or create the document depending if we are running through the create new flow
+    const createNew = !location.hash;
+    if (createNew) {
+        // The client will create a new detached container using the schema
+        // A detached container will enable the app to modify the container before attaching it to the client
+        resources = await client.createContainer(containerSchema);
 
-    const client = new FrsClient(connectionConfig);
-    const { fluidContainer, containerServices } = createNew
-        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
-        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
+        // If the app is in a `createNew` state, and the container is detached, we attach the container
+        // so that all new ops are communicated to the client
+        id = await resources.fluidContainer.attach();
+        // The newly attached container is given a unique ID that can be used to access the container in another session
+        location.hash = id;
+    } else {
+        id = location.hash.substring(1);
+        // Use the unique container ID to fetch the container created earlier
+        resources = await client.getContainer(id, containerSchema);
+    }
 
-    // We now get the DataObject from the container
+    document.title = id;
+
+    // create/get container API returns a combination of the container and associated container services
+    const { fluidContainer, containerServices } = resources;
+
+    // We now get the first SharedMap from the container
     const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(sharedMap1);
     await diceRollerController.initialize(createNew);
 
-    // We render a view which uses the controller.
+    // We create a view which uses the controller.
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     const div1 = document.createElement("div");
     contentDiv.appendChild(div1);
-    renderDiceRoller(diceRollerController, div1);
 
-    // We now get the SharedMap from the container
+    // We now get the second SharedMap from the container
     const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
 
     // Our controller manipulates the data object (model).
     const diceRollerController2 = new DiceRollerController(sharedMap2);
     await diceRollerController2.initialize(createNew);
 
+    // We create a second view which uses the second controller.
     const div2 = document.createElement("div");
     contentDiv.appendChild(div2);
-    // We render a view which uses the controller.
+
+    // Now that the container is attached, our app can render the views and listen for updates
+    renderDiceRoller(diceRollerController, div1);
     renderDiceRoller(diceRollerController2, div2);
 
     // Render the audience information for the members currently in the session
     renderAudience(containerServices.audience, contentDiv);
 }
 
-start().catch((error) => console.error(error));
+start().catch(console.error);

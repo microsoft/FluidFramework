@@ -8,7 +8,7 @@ import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/com
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
-import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IOdspSummaryPayload,
@@ -51,7 +51,7 @@ export class OdspSummaryUploadManager {
 
     constructor(
         private readonly snapshotUrl: string,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
     ) {
@@ -91,7 +91,9 @@ export class OdspSummaryUploadManager {
             entries: snapshotTree.entries!,
             message: "app",
             sequenceNumber: referenceSequenceNumber,
-            type: "channel",
+            // no ack handle implies this is initial summary after empty file creation.
+            // send container payload so server will use it without a summary op
+            type: parentHandle === undefined ? "container" : "channel",
         };
 
         return getWithRetryForTokenRefresh(async (options) => {

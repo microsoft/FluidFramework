@@ -32,7 +32,7 @@ export interface IOdspTokenManagerCacheKey {
     // (undocumented)
     readonly isPush: boolean;
     // (undocumented)
-    readonly server: string;
+    readonly userOrServer: string;
 }
 
 // @public (undocumented)

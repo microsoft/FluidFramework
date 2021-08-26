@@ -80,6 +80,7 @@ export class AlfredResources implements core.IResources {
         public restThrottler: core.IThrottler,
         public socketConnectThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
+        public singleUseTokenCache: core.ICache,
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
@@ -108,6 +109,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
         const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
         const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+        const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+
         const producer = services.createProducer(
             kafkaLibrary,
             kafkaEndpoint,
@@ -116,13 +119,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             false,
             kafkaProducerPollIntervalMs,
             kafkaNumberOfPartitions,
-            kafkaReplicationFactor);
+            kafkaReplicationFactor,
+            kafkaSslCACertFilePath);
 
         const redisConfig = config.get("redis");
         const webSocketLibrary = config.get("alfred:webSocketLib");
         const authEndpoint = config.get("auth:endpoint");
 
-        // Redis connection for client manager.
+        // Redis connection for client manager and single-use JWTs.
         const redisConfig2 = config.get("redis2");
         const redisOptions2: Redis.RedisOptions = {
             host: redisConfig2.host,
@@ -141,6 +145,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
         const redisClient = new Redis(redisOptions2);
         const clientManager = new services.ClientManager(redisClient, redisParams2);
+
+        const redisClientForJwtCache = new Redis(redisOptions2);
+        const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
@@ -261,7 +268,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             deltasCollectionName,
             scribeCollectionName);
 
-        const storage = new services.DocumentStorage(databaseManager, tenantManager);
+        const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+        const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         const address = `${await utils.getHostIp()}:4000`;
@@ -309,6 +317,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             restThrottler,
             socketConnectThrottler,
             socketSubmitOpThrottler,
+            redisJwtCache,
             storage,
             appTenants,
             mongoManager,
@@ -329,6 +338,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.restThrottler,
             resources.socketConnectThrottler,
             resources.socketSubmitOpThrottler,
+            resources.singleUseTokenCache,
             resources.storage,
             resources.clientManager,
             resources.appTenants,

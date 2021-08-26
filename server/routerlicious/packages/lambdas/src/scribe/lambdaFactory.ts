@@ -6,10 +6,14 @@
 /* eslint-disable no-null/no-null */
 
 import { EventEmitter } from "events";
+import { inspect } from "util";
 import {
+    ControlMessageType,
     ICollection,
     IContext,
+    IControlMessage,
     IDocument,
+    ILambdaStartControlMessageContents,
     IPartitionLambda,
     IPartitionLambdaConfig,
     IPartitionLambdaFactory,
@@ -18,14 +22,19 @@ import {
     ISequencedOperationMessage,
     IServiceConfiguration,
     ITenantManager,
+    LambdaName,
     MongoManager,
 } from "@fluidframework/server-services-core";
-import { NoOpLambda } from "../utils";
+import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IGitManager } from "@fluidframework/server-services-client";
+import { LumberEventName } from "@fluidframework/server-services-telemetry";
+import { NoOpLambda, createSessionMetric } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { initializeProtocol } from "./utils";
+import { initializeProtocol, sendToDeli } from "./utils";
+import { ILatestSummaryState } from "./interfaces";
 
 const DefaultScribe: IScribe = {
     lastClientSummaryHead: undefined,
@@ -49,38 +58,55 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly producer: IProducer,
         private readonly tenantManager: ITenantManager,
         private readonly serviceConfiguration: IServiceConfiguration,
+        private readonly enableWholeSummaryUpload: boolean,
     ) {
         super();
     }
 
     public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
+        let document: IDocument;
+        let gitManager: IGitManager;
+        let lastCheckpoint: IScribe;
+        let summaryReader: SummaryReader;
+        let latestSummary: ILatestSummaryState;
+        let opMessages: ISequencedDocumentMessage[];
+
         const { tenantId, documentId } = config;
-
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
-
-        const summaryReader = new SummaryReader(documentId, gitManager);
-        const [latestSummary, document] = await Promise.all([
-            summaryReader.readLastSummary(),
-            this.documentCollection.findOne({ documentId, tenantId }),
-        ]);
-
         const messageMetaData = {
             documentId,
             tenantId,
         };
-        // If the document doesn't exist then we trivially accept every message
-        if (!document) {
-            context.log?.info(`Creating NoOpLambda due to missing`, { messageMetaData });
-            return new NoOpLambda(context);
+
+        const scribeSessionMetric = createSessionMetric(tenantId, documentId,
+            LumberEventName.ScribeSessionResult, this.serviceConfiguration);
+
+        try {
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+            gitManager = tenant.gitManager;
+
+            summaryReader = new SummaryReader(documentId, gitManager);
+            [latestSummary, document] = await Promise.all([
+                summaryReader.readLastSummary(),
+                this.documentCollection.findOne({ documentId, tenantId }),
+            ]);
+
+            // If the document doesn't exist then we trivially accept every message
+            if (!document) {
+                context.log?.info(`Creating NoOpLambda due to missing`, { messageMetaData });
+                return new NoOpLambda(context);
+            }
+
+            // Fetch pending ops from scribeDeltas collection
+            const dbMessages =
+                await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
+            opMessages = dbMessages.map((message) => message.operation);
+        } catch (error) {
+            context.log?.error(`Scribe lambda creation failed. Exception: ${inspect(error)}`);
+            await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+            scribeSessionMetric?.error("Scribe lambda creation failed", error);
+
+            throw error;
         }
-
-        // Fetch pending ops from scribeDeltas collection
-        const dbMessages =
-            await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
-        let opMessages = dbMessages.map((message) => message.operation);
-
-        let lastCheckpoint: IScribe;
 
         // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
@@ -115,23 +141,33 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         let expectedSequenceNumber = lastCheckpoint.protocolState.sequenceNumber + 1;
         for (const message of opsSinceLastSummary) {
             if (message.sequenceNumber !== expectedSequenceNumber) {
-                throw new Error(`Invalid message sequence from checkpoint/summary.`
+                const error = new Error(`Invalid message sequence from checkpoint/summary.`
                     + `Current message @${message.sequenceNumber}.`
                     + `Expected message @${expectedSequenceNumber}`);
+                scribeSessionMetric?.error("Invalid message sequence from checkpoint/summary", error);
+                await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: false});
+
+                throw error;
             }
             ++expectedSequenceNumber;
         }
 
         const protocolHandler = initializeProtocol(lastCheckpoint.protocolState, latestSummary.term);
 
-        const summaryWriter = new SummaryWriter(tenantId, documentId, gitManager, this.messageCollection);
+        const summaryWriter = new SummaryWriter(
+            tenantId,
+            documentId,
+            gitManager,
+            this.messageCollection,
+            this.enableWholeSummaryUpload);
         const checkpointManager = new CheckpointManager(
+            context,
             tenantId,
             documentId,
             this.documentCollection,
             this.messageCollection);
 
-        return new ScribeLambda(
+        const scribeLambda = new ScribeLambda(
             context,
             document.tenantId,
             document.documentId,
@@ -145,10 +181,35 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
-            opMessages);
+            opMessages,
+            scribeSessionMetric);
+
+        await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});
+        return scribeLambda;
     }
 
     public async dispose(): Promise<void> {
         await this.mongoManager.close();
+    }
+
+    private async sendLambdaStartResult(
+        tenantId: string,
+        documentId: string,
+        contents: ILambdaStartControlMessageContents | undefined) {
+        const controlMessage: IControlMessage = {
+            type: ControlMessageType.LambdaStartResult,
+            contents,
+        };
+
+        const operation: IDocumentSystemMessage = {
+            clientSequenceNumber: -1,
+            contents: null,
+            data: JSON.stringify(controlMessage),
+            referenceSequenceNumber: -1,
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
+            type: MessageType.Control,
+        };
+
+        return sendToDeli(tenantId, documentId, this.producer, operation);
     }
 }

@@ -62,8 +62,8 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 
 // @public
 export enum FlushMode {
-    Automatic = 0,
-    Manual = 1
+    Immediate = 0,
+    TurnBased = 1
 }
 
 // @public (undocumented)
@@ -74,11 +74,6 @@ export interface IAttachMessage {
     id: string;
     snapshot: ITree;
     type: string;
-}
-
-// @public (undocumented)
-export interface IChannelSummarizeResult extends ISummaryTreeWithStats {
-    gcData: IGarbageCollectionData;
 }
 
 // @public
@@ -112,11 +107,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
 }
 
-// @public (undocumented)
-export interface IContextSummarizeResult extends ISummarizeResult {
-    gcData: IGarbageCollectionData;
-}
-
 // @public
 export interface IEnvelope {
     address: string;
@@ -129,7 +119,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     applyStashedOp(content: any): Promise<unknown>;
     readonly attachState: AttachState;
     bindToContext(): void;
-    getAttachSummary(): IChannelSummarizeResult;
+    getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
@@ -137,8 +127,8 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
-    updateUsedRoutes(usedRoutes: string[]): void;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public
@@ -159,10 +149,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    readonly documentId: string;
-    // @deprecated (undocumented)
-    readonly existing: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     // (undocumented)
@@ -206,7 +192,7 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @public
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
-    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<IFluidDataStoreChannel>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
 
@@ -229,6 +215,7 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionSummaryDetails {
     gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 
@@ -265,7 +252,7 @@ export interface ISignalEnvelope {
 }
 
 // @public (undocumented)
-export interface ISummarizeInternalResult extends IContextSummarizeResult {
+export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
@@ -320,15 +307,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    readonly gcData: IGarbageCollectionData | undefined;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)
-    summarize(fullTree: boolean, trackState?: boolean): Promise<IContextSummarizeResult>;
-    updateUsedRoutes(usedRoutes: string[]): void;
-    readonly usedRoutes: string[];
+    summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public (undocumented)
