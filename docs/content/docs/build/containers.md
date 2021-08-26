@@ -137,7 +137,7 @@ For more information about dynamic object creation see [Data modeling](data-mode
 
 ### Create/load separation
 
-When creating and loading a container, it can be tempting to have a consistent code path for both creation and loading. However, it is generally recommended to separate the two flows. This provides a cleaner separation of responsibilities within the code itself. Also, in typical use-cases, a user will create a new container through some UI action that results in a redirect to another page whose sole responsibility is to load a container. All subsequent users will load the container by navigating directly to that page.
+When creating and loading a container, it can be tempting to have a consistent code path for both creation and loading. However, it is generally recommended to separate the two flows. This provides a cleaner separation of responsibilities within the code itself. Also, in typical use-cases, a user will create a new container through some UI action that results in a redirect to another page whose sole responsibility it is to load a container. All subsequent users will load the container by navigating directly to that page.
 
 The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process.
 
