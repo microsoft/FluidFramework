@@ -40,6 +40,7 @@ export function convertSummaryTreeToWholeSummaryTree(
 
         let id: string | undefined;
         let value: WholeSummaryTreeValue | undefined;
+        let unreferenced: true | undefined;
 
         const currentPath = path === "" ? key : `${path}/${key}`;
         switch (summaryObject.type) {
@@ -49,6 +50,7 @@ export function convertSummaryTreeToWholeSummaryTree(
                     summaryObject,
                     currentPath);
                 value = result;
+                unreferenced = summaryObject.unreferenced || undefined;
                 break;
             }
             case SummaryType.Blob: {
@@ -99,6 +101,7 @@ export function convertSummaryTreeToWholeSummaryTree(
             assert(id === undefined, 0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */);
             entry = {
                 value,
+                unreferenced,
                 ...baseEntry,
             };
         } else if (id) {
