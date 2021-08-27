@@ -32,9 +32,4 @@ export interface IRouterliciousDriverPolicies {
      * Default: false
      */
     enableWholeSummaryUpload: boolean;
-    /**
-     * Enable downloading entire summary tree as a IWholeSummaryTree from storage.
-     * Default: false
-     */
-    enableWholeSummaryDownload: boolean;
 }
