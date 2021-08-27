@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IWholeSummaryPayload, IWholeSummaryTree, IWriteSummaryResponse} from "@fluidframework/server-services-client";
+import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse} from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
 import { Router } from "express";
@@ -30,7 +30,7 @@ export function create(
         tenantId: string,
         authorization: string,
         sha: string,
-        useCache: boolean): Promise<IWholeSummaryTree> {
+        useCache: boolean): Promise<IWholeFlatSummary> {
         const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getSummary(sha, useCache);
     }

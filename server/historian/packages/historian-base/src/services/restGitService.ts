@@ -15,7 +15,7 @@ import {
     IWriteSummaryResponse,
     BasicRestWrapper,
     RestWrapper,
-    IWholeSummaryTree,
+    IWholeFlatSummary,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
@@ -178,10 +178,10 @@ export class RestGitService {
         return summaryResponse;
     }
 
-    public async getSummary(sha: string, useCache: boolean): Promise<IWholeSummaryTree> {
+    public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
         return this.resolve(
             `${sha}:summary`,
-            async () => this.get<IWholeSummaryTree>(
+            async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
             useCache);
     }
