@@ -43,15 +43,15 @@ import {
  */
 export enum FlushMode {
     /**
-     * In automatic flush mode the runtime will immediately send all operations to the driver layer.
+     * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
      */
-    Automatic,
+    Immediate,
 
     /**
-     * When in manual flush mode the runtime will buffer operations in the current turn and send them as a single
+     * When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
      * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
      */
-    Manual,
+    TurnBased,
 }
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
@@ -153,7 +153,7 @@ export interface IFluidDataStoreChannel extends
     readonly id: string;
 
     /**
-     * Indicates the attachment state of the data store to a host service.
+     * Indicates the attachment state of the channel to a host service.
      */
     readonly attachState: AttachState;
 
@@ -179,7 +179,7 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
-     * Generates a summary for the data store.
+     * Generates a summary for the channel.
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
@@ -195,8 +195,11 @@ export interface IFluidDataStoreChannel extends
 
     /**
      * After GC has run, called to notify this channel of routes that are used in it.
+     * @param usedRoutes - The routes that are used in this channel.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
+     * as part of this GC run, this should be used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -250,10 +253,6 @@ export interface IFluidDataStoreContext extends
      * The package path of the data store as per the package factory.
      */
     readonly packagePath: readonly string[];
-    /**
-     * @deprecated #6346
-     */
-    readonly existing: boolean;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;

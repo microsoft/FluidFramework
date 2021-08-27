@@ -19,7 +19,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
-    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -90,10 +89,6 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                     mockDs.connectToStorage = async () => {
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
-                        (mockstorage as any).policies = {
-                            ...realStorage.policies,
-                            caching: LoaderCachingPolicy.NoCaching,
-                        };
                         mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
                             const blobObj = await readAndParse<any>(realStorage, id);

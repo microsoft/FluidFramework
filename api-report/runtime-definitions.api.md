@@ -62,8 +62,8 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 
 // @public
 export enum FlushMode {
-    Automatic = 0,
-    Manual = 1
+    Immediate = 0,
+    TurnBased = 1
 }
 
 // @public (undocumented)
@@ -128,7 +128,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public
@@ -149,8 +149,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    readonly existing: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     // (undocumented)
@@ -194,7 +192,7 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @public
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
-    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<IFluidDataStoreChannel>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
 
@@ -217,6 +215,7 @@ export interface IGarbageCollectionData {
 // @public
 export interface IGarbageCollectionSummaryDetails {
     gcData?: IGarbageCollectionData;
+    unrefTimestamp?: number;
     usedRoutes?: string[];
 }
 
@@ -308,15 +307,14 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    readonly gcData: IGarbageCollectionData | undefined;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
     isReferenced(): boolean;
     // (undocumented)
     summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
-    updateUsedRoutes(usedRoutes: string[]): void;
-    readonly usedRoutes: string[];
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 }
 
 // @public (undocumented)

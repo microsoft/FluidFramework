@@ -58,7 +58,7 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
 
     /**
      * When we create the dice roller for the first time (with respect to the document's lifetime), we need to
-     * initialize its value.  This should only be called once over the document's lifetime.
+     * initialize its value. This should only be called once over the document's lifetime.
      */
     private initializeFirstTime(): void {
         this.props.set(diceValueKey, 1);

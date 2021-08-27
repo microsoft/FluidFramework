@@ -449,7 +449,7 @@ export class FluidPackageCheck {
                 "dist/test",
             ];
         if (!existsSync(filename)) {
-            this.logWarn(pkg, `.npmignore not exist`, fix);
+            this.logWarn(pkg, `.npmignore does not exist`, fix);
             if (fix) {
                 await writeFileAsync(filename, expected.join("\n"), "utf8");
             }

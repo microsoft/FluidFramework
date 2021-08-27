@@ -250,7 +250,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<FluidDataStoreRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
     // (undocumented)
     readonly type: string;
 }

@@ -118,7 +118,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     submitSignal(type: string, content: any): void;
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     waitAttached(): Promise<void>;

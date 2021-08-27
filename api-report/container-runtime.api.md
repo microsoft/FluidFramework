@@ -92,8 +92,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
-    // (undocumented)
-    createSummary(): ISummaryTree;
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly disableIsolatedChannels: boolean;

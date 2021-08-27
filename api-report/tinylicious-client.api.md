@@ -24,8 +24,14 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 // @public
 class TinyliciousClient {
     constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<TinyliciousResources>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<TinyliciousResources>;
+    createContainer(containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: TinyliciousContainerServices;
+    }>;
     }
 
 export { TinyliciousClient }
@@ -49,14 +55,6 @@ export interface TinyliciousContainerServices {
 export interface TinyliciousMember extends IMember {
     // (undocumented)
     userName: string;
-}
-
-// @public (undocumented)
-export interface TinyliciousResources {
-    // (undocumented)
-    containerServices: TinyliciousContainerServices;
-    // (undocumented)
-    fluidContainer: FluidContainer;
 }
 
 
