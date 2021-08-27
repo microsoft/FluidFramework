@@ -191,7 +191,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
-    // (undocumented)
     get summarizerClientId(): string | undefined;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
