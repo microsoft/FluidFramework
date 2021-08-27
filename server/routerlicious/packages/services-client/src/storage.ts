@@ -114,10 +114,12 @@ export interface ISummaryUploadManager {
      * @param summaryTree Summary tree to write to storage
      * @param parentHandle Parent summary acked handle (if available from summary ack)
      * @param summaryType type of summary being uploaded
+     * @param sequenceNumber reference sequence number of the summary
      * @returns Id of created tree as a string.
      */
     writeSummaryTree(
         summaryTree: api.ISummaryTree,
         parentHandle: string,
-        summaryType: IWholeSummaryPayloadType): Promise<string>;
+        summaryType: IWholeSummaryPayloadType,
+        sequenceNumber: number): Promise<string>;
 }

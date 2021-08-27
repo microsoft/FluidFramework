@@ -31,8 +31,9 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
         summaryTree: ISummaryTree,
         parentHandle: string | undefined,
         summaryType: IWholeSummaryPayloadType,
+        sequenceNumber: number,
     ): Promise<string> {
-        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType);
+        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType, sequenceNumber);
         if (!id) {
             throw new Error(`Failed to write summary tree`);
         }
@@ -43,6 +44,7 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
         parentHandle: string | undefined,
         tree: ISummaryTree,
         type: IWholeSummaryPayloadType,
+        sequenceNumber: number,
     ): Promise<string> {
         const snapshotTree = await this.convertSummaryToSnapshotTree(
             parentHandle,
@@ -52,7 +54,7 @@ import { IGitManager, ISummaryUploadManager } from "./storage";
         const snapshotPayload: IWholeSummaryPayload = {
             entries: snapshotTree.entries,
             message: undefined,
-            sequenceNumber: undefined,
+            sequenceNumber,
             type,
         };
 
