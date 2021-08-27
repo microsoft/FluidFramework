@@ -283,7 +283,7 @@ export class RunningSummarizer implements IDisposable {
             let overrideDelaySeconds: number | undefined;
             let retryNumber = 0;
             // Note: intentionally incrementing retryNumber in for loop rather than attemptPhase.
-            for (let attemptPhase = 0; attemptPhase < attempts.length; retryNumber++) {
+            for (let attemptPhase = 0; attemptPhase < attempts.length;) {
                 const summarizeProps: ITelemetryProperties = {
                     summarizeReason,
                     summarizeRetry: retryNumber,
@@ -309,16 +309,13 @@ export class RunningSummarizer implements IDisposable {
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
-                const retryAfterSeconds = result.retryAfterSeconds;
-                if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
-                    if (overrideDelaySeconds !== undefined) {
-                        // Retry the same step only once per retryAfter response.
-                        attemptPhase++;
-                    }
-                    overrideDelaySeconds = retryAfterSeconds;
-                } else {
+                // Retry the same step only once per retryAfter response.
+                overrideDelaySeconds = result.retryAfterSeconds;
+                if (overrideDelaySeconds === undefined || retryNumber !== 0) {
                     attemptPhase++;
-                    overrideDelaySeconds = undefined;
+                    retryNumber = 0;
+                } else {
+                    retryNumber++;
                 }
             }
             // If all attempts failed, close the summarizer container
