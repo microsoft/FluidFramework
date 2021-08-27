@@ -9,11 +9,11 @@ import {
     InsecureTokenProvider,
     AzureContainerServices,
 } from "@fluidframework/azure-client";
-import { generateUser } from "@fluidframework/server-services-client";
 import {
     FluidContainer,
     SharedMap,
 } from "fluid-framework";
+import { v4 as uuid } from "uuid";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
@@ -31,7 +31,10 @@ const userDetails: ICustomUserDetails = {
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
-const user = generateUser() as any;
+const user = {
+    id: uuid(),
+    name: uuid(),
+};
 
 const azureUser = {
     userId: user.id,

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IDirectoryValueChanged } from "fluid-framework";
+import { IValueChanged } from "fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -32,8 +32,8 @@ const diceValueKey = "diceValue";
 interface DiceRollerControllerProps {
     get: (key: string) => any;
     set: (key: string, value: any) => void;
-    on(event: "changed" | "valueChanged", listener: (args: IDirectoryValueChanged) => void): this;
-    off(event: "changed" | "valueChanged", listener: (args: IDirectoryValueChanged) => void): this;
+    on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
+    off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
 }
 
 /**
@@ -42,12 +42,6 @@ interface DiceRollerControllerProps {
 export class DiceRollerController extends EventEmitter implements IDiceRollerController {
     constructor(private readonly props: DiceRollerControllerProps) {
         super();
-        this.props.on("changed", (changed) => {
-            if (changed.key === diceValueKey) {
-                // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-                this.emit("diceRolled");
-            }
-        });
         this.props.on("valueChanged", (changed) => {
             if (changed.key === diceValueKey) {
                 // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
@@ -76,11 +70,9 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
             const resolveIfKeySet = () => {
                 if (this.props.get(diceValueKey) !== undefined) {
                     resolve();
-                    this.props.off("changed", resolveIfKeySet);
                     this.props.off("valueChanged", resolveIfKeySet);
                 }
             };
-            this.props.on("changed", resolveIfKeySet);
             this.props.on("valueChanged", resolveIfKeySet);
         });
     }
