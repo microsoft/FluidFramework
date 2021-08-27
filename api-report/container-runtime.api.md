@@ -579,6 +579,9 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
+// @public
+export const neverCancelledToken: ICancellable;
+
 // @public (undocumented)
 export type OnDemandSummarizeResult = (ISummarizeResults & {
     readonly alreadyRunning?: undefined;
@@ -632,8 +635,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection);
-    // (undocumented)
-    get cancelled(): boolean;
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
@@ -681,10 +682,8 @@ export type SummarizerStopReason =
  * tries to stop its spawned summarizer client.
  */
  | "parentShouldNotSummarize"
-/** Parent client reported that it is disposed. */
- | "disposed"
 /** Summarizer client was disconnected */
- | "summarizeClientDisconnected";
+ | "summarizeClientDisconnected" | "summarizerException";
 
 // @public (undocumented)
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning {

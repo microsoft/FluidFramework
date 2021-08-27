@@ -13,6 +13,15 @@ export interface ICancellableSummarizerController extends ICancellable {
 }
 
 /**
+ * Can be useful in testing as well as in places where caller does not use cancellation.
+ * This object implements ICancellable interface but cancellation is never leveraged.
+ */
+export const neverCancelledToken: ICancellable = {
+    cancelled: false,
+    waitCancelled: new Promise(() => {}),
+};
+
+/**
  * Helper class to coordinate something that needs to run only while connected.
  * This provides promises that resolve as it starts or stops.  Stopping happens
  * when disconnected or if stop() is called.

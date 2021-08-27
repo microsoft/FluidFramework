@@ -16,6 +16,7 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { neverCancelledToken } from  "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { ISummarizerOptions } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
@@ -173,11 +174,7 @@ describe("Runtime", () => {
                     new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
                     summaryCollection,
-                    // ICancellable
-                    {
-                        cancelled: false,
-                        waitCancelled: new Promise(() => {}),
-                    },
+                    neverCancelledToken,
                     // stopSummarizerCallback
                     (reason) => { stopCall++; },
                     summarizerOptions,

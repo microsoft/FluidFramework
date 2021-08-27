@@ -73,7 +73,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
 
-    public get cancelled() { return this.runCoordinator?.cancelled ?? true; }
+    private get cancelled() { return this.runCoordinator?.cancelled ?? true; }
 
     constructor(
         url: string,
@@ -97,6 +97,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     public async run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
         try {
             await this.runCore(onBehalfOf, options);
+            assert(this.cancelled, "should be cancelled by now");
         } catch (error) {
             this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */, this.logger));
             throw error;
