@@ -165,7 +165,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 }
             },
             this.summaryCollection,
-            runCoordinator /* cancellable */,
+            runCoordinator /* cancellationToken */,
             (reason) => runCoordinator.stop(reason),
             options,
         );

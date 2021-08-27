@@ -271,7 +271,7 @@ export interface IBroadcastSummaryResult {
 }
 
 // @public (undocumented)
-export interface ICancellable {
+export interface ICancellationToken {
     readonly cancelled: boolean;
     readonly waitCancelled: Promise<void>;
 }
@@ -424,7 +424,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
-    readonly cancellable: ICancellable;
+    readonly cancellationToken: ICancellationToken;
     readonly summaryLogger: ITelemetryLogger;
 }
 
@@ -580,7 +580,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 }
 
 // @public
-export const neverCancelledToken: ICancellable;
+export const neverCancelledToken: ICancellationToken;
 
 // @public (undocumented)
 export type OnDemandSummarizeResult = (ISummarizeResults & {

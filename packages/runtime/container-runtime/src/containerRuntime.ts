@@ -1788,7 +1788,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // summarizer to reconnect in the future.
                 // Also checking for cancellation is a must as summary process may be abandoned for other reasons,
                 // like loss of connectivity for main (interactive) client.
-                if (options.cancellable.cancelled) {
+                if (options.cancellationToken.cancelled) {
                     return { continue: false, error: "disconnected" };
                 }
                 // That said, we rely on submitSystemMessage() that today only works in connected state.

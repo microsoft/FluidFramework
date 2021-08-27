@@ -169,7 +169,7 @@ export class Timer implements ITimer {
 }
 
 export interface IPromiseTimerResult {
-    timerResult: "timeout" | "cancel";
+    timerResult: "timeout" | "timerCancelled";
 }
 
 /**

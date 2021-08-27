@@ -24,7 +24,7 @@ import {
     SummarizerStopReason,
     ISubmitSummaryOptions,
     SubmitSummaryResult,
-    ICancellable,
+    ICancellationToken,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -51,7 +51,7 @@ export class RunningSummarizer implements IDisposable {
         heuristicData: ISummarizeHeuristicData,
         raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
-        cancellable: ICancellable,
+        cancellationToken: ICancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         options?: Readonly<Partial<ISummarizerOptions>>,
     ): Promise<RunningSummarizer> {
@@ -63,7 +63,7 @@ export class RunningSummarizer implements IDisposable {
             heuristicData,
             raiseSummarizingError,
             summaryCollection,
-            cancellable,
+            cancellationToken,
             stopSummarizerCallback,
             options);
 
@@ -99,7 +99,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryCollection: SummaryCollection,
-        private readonly cancellable: ICancellable,
+        private readonly cancellationToken: ICancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
@@ -275,7 +275,7 @@ export class RunningSummarizer implements IDisposable {
             let retryNumber = 0;
             // Note: intentionally incrementing retryNumber in for loop rather than attemptPhase.
             for (let attemptPhase = 0; attemptPhase < attempts.length; retryNumber++) {
-                if (this.cancellable.cancelled) {
+                if (this.cancellationToken.cancelled) {
                     return;
                 }
 
@@ -291,9 +291,9 @@ export class RunningSummarizer implements IDisposable {
                 }
                 const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as const : reason;
 
-                // Note: no need to account for this.cancellable.waitCancelled here, as
+                // Note: no need to account for this.cancellationToken.waitCancelled here, as
                 // this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
-                const resultSummarize = this.generator.summarize(attemptReason, options, this.cancellable);
+                const resultSummarize = this.generator.summarize(attemptReason, options, this.cancellationToken);
                 const result = await resultSummarize.receivedSummaryAckOrNack;
                 await this.generator.waitSummarizing();
 
@@ -347,7 +347,7 @@ export class RunningSummarizer implements IDisposable {
             // Another summary is currently being generated.
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
-        const result = this.generator.summarize(onDemandReason, options, this.cancellable);
+        const result = this.generator.summarize(onDemandReason, options, this.cancellationToken);
         result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
         return result;
     }
@@ -420,7 +420,8 @@ export class RunningSummarizer implements IDisposable {
         const { reason, resultsBuilder, options } = this.enqueuedSummary;
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
-        this.generator.summarize(reason, options, this.cancellable, resultsBuilder).receivedSummaryAckOrNack.finally(
+        this.generator.summarize(reason, options, this.cancellationToken, resultsBuilder)
+            .receivedSummaryAckOrNack.finally(
             () => this.checkSummarizeAgain());
         return true;
     }

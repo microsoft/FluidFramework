@@ -186,7 +186,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             fullTree: false,
             refreshLatestAck: false,
             summaryLogger: logger,
-            cancellable: neverCancelledToken,
+            cancellationToken: neverCancelledToken,
         });
         return summarySequenceNumber;
     }

@@ -34,7 +34,7 @@ export interface IProvideSummarizer {
 }
 
 /* Similar to AbortSignal, but using promise instead of events */
-export interface ICancellable {
+export interface ICancellationToken {
     /** Tells if this cancellable token is cancelled */
     readonly cancelled: boolean;
     /** Promise that gets fulfilled when this cancellable token is cancelled */
@@ -98,7 +98,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger,
     /** Tells when summary process should be cancelled */
-    readonly cancellable: ICancellable,
+    readonly cancellationToken: ICancellationToken,
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {

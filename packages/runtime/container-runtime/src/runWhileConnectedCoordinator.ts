@@ -5,18 +5,18 @@
 
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { SummarizerStopReason, IConnectableRuntime, ICancellable } from "./summarizerTypes";
+import { SummarizerStopReason, IConnectableRuntime, ICancellationToken } from "./summarizerTypes";
 
 /* Similar to AbortController, but using promise instead of events */
-export interface ICancellableSummarizerController extends ICancellable {
+export interface ICancellableSummarizerController extends ICancellationToken {
     stop(reason: SummarizerStopReason): void;
 }
 
 /**
  * Can be useful in testing as well as in places where caller does not use cancellation.
- * This object implements ICancellable interface but cancellation is never leveraged.
+ * This object implements ICancellationToken interface but cancellation is never leveraged.
  */
-export const neverCancelledToken: ICancellable = {
+export const neverCancelledToken: ICancellationToken = {
     cancelled: false,
     waitCancelled: new Promise(() => {}),
 };

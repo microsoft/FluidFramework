@@ -131,7 +131,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             fullTree: true,
             refreshLatestAck: false,
             summaryLogger: logger,
-            cancellable: neverCancelledToken,
+            cancellationToken: neverCancelledToken,
         });
         return summarySequenceNumber;
     }
