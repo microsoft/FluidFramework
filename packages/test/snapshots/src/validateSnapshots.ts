@@ -6,7 +6,6 @@
 import fs from "fs";
 import { assert } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
-import { extractSummaryMetadataMessage } from "@fluidframework/container-runtime";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import {
@@ -102,7 +101,18 @@ function addSummaryMessage(
         if (entry.path === metadataBlobName && entry.type === TreeEntry.Blob) {
             const metadata = JSON.parse(entry.value.contents);
             if (metadata.message === undefined) {
-                metadata.message = extractSummaryMetadataMessage(seqToMessage.get(summaryMessageSequenceNumber));
+                const referenceMessage = seqToMessage.get(summaryMessageSequenceNumber);
+                // Copy over fields from the message as per the properties in ISummaryMetadataMessage. If the test fail
+                // because ISummaryMetadataMessage changed, update the fields being copied here.
+                metadata.message = {
+                    clientId: referenceMessage.clientId,
+                    clientSequenceNumber: referenceMessage.clientSequenceNumber,
+                    minimumSequenceNumber: referenceMessage.minimumSequenceNumber,
+                    referenceSequenceNumber: referenceMessage.referenceSequenceNumber,
+                    sequenceNumber: referenceMessage.sequenceNumber,
+                    timestamp: referenceMessage.timestamp,
+                    type: referenceMessage.type,
+                };
             }
             entry.value.contents = JSON.stringify(metadata);
         }

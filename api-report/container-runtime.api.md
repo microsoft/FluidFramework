@@ -231,9 +231,6 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly overridden?: undefined;
 };
 
-// @public
-export const extractSummaryMetadataMessage: (message?: ISequencedDocumentMessage | undefined) => ISummaryMetadataMessage | undefined;
-
 // @public (undocumented)
 export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     constructor(namedEntries: NamedFluidDataStoreRegistryEntries);
@@ -559,9 +556,6 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     // (undocumented)
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
-
-// @public
-export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "minimumSequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "type" | "timestamp">;
 
 // @public
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
