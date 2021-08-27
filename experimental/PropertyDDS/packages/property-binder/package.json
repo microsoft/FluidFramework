@@ -15,12 +15,15 @@
     "index.d.ts"
   ],
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "npm run build:compile",
     "postbuild": "npm run gen:tscdef",
-    "build:compile": "npm run tsc",
+    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+    "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "doc": "cross-var appfw-typedoc $npm_package_name",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",

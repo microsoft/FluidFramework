@@ -43,7 +43,7 @@
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/routerlicious-driver": "^0.47.0",
     "@fluidframework/runtime-utils": "^0.47.0",
-    "@fluidframework/server-services-client": "^0.1029.0-0",
+    "@fluidframework/server-services-client": "^0.1030.0-0",
     "@fluidframework/test-runtime-utils": "^0.47.0",
     "axios": "^0.21.1",
     "fluid-framework": "^0.47.0",
@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
@@ -60,7 +61,7 @@
     "mocha": "^8.4.0",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.21640",
+    "tinylicious": "^0.4.34614",
     "typescript": "~4.1.3"
   }
 }

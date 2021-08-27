@@ -107,7 +107,7 @@ import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
-import { BlobManager } from "./blobManager";
+import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     blobsTreeName,
@@ -276,6 +276,8 @@ interface IRuntimeMessageMetadata {
 const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
+// Local storage key to set the default flush mode to TurnBased
+const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
     switch (message.type) {
@@ -579,6 +581,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
 
+        // read snapshot blobs needed for BlobManager to load
+        const blobManagerSnapshot = await BlobManager.load(
+            context.baseSnapshot?.trees[blobsTreeName],
+            async (id) => {
+                // IContainerContext storage api return type still has undefined in 0.39 package version.
+                // So once we release 0.40 container-defn package we can remove this check.
+                assert(storage !== undefined, "storage undefined in attached container");
+                return readAndParse(storage, id);
+            },
+        );
+
         // Verify summary runtime sequence number matches protocol sequence number.
         const runtimeSequenceNumber = metadata?.sequenceNumber;
         if (runtimeSequenceNumber !== undefined) {
@@ -612,8 +625,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             containerScope,
             logger,
             loadExisting,
+            blobManagerSnapshot,
             requestHandler,
-            storage);
+            storage,
+        );
 
         return runtime;
     }
@@ -698,14 +713,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
     private readonly _logger: ITelemetryLogger;
     private readonly summarizerClientElection: SummarizerClientElection;
-    // summaryManager will only be created if this client is permitted to spawn a summarizing client
+    /**
+     * summaryManager will only be created if this client is permitted to spawn a summarizing client
+     * It is created only by interactive client, i.e. summarizer client, as well as non-interactive bots
+     * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
+     */
     private readonly summaryManager: SummaryManager | undefined;
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode = FlushMode.Automatic;
+    private _flushMode = ContainerRuntime.defaultFlushMode;
     private needsFlush = false;
     private flushTrigger = false;
 
@@ -717,6 +736,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._connected;
     }
 
+    /** clientId of parent (non-summarizing) container that owns summarizer container */
     public get summarizerClientId(): string | undefined {
         return this.summarizerClientElection.electedClientId;
     }
@@ -737,8 +757,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private dirtyContainer = false;
     private emitDirtyDocumentEvent = true;
-    private readonly summarizer: Summarizer;
-    private readonly deltaSender: IDeltaSender | undefined;
+    /**
+     * Summarizer is responsible for coordinating when to send generate and send summaries.
+     * It is the main entry point for summary work.
+     * It is created only by summarizing container (i.e. one with clientType === "summarizer")
+     */
+    private readonly _summarizer?: Summarizer;
+    private readonly deltaSender: IDeltaSender;
     private readonly scheduleManager: ScheduleManager;
     private readonly blobManager: BlobManager;
     private readonly pendingStateManager: PendingStateManager;
@@ -761,6 +786,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public readonly disableIsolatedChannels: boolean;
 
+    private static get defaultFlushMode(): FlushMode {
+        return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
+    }
+
     // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
     private get gcEnabled(): boolean {
         return this.summaryGCVersion > 0;
@@ -770,6 +799,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // deleted as soon as GC runs.
     public get gcTestMode(): boolean {
         return getLocalStorageFeatureGate(gcTestModeKey) ?? this.runtimeOptions.gcOptions?.runGCInTestMode === true;
+    }
+
+    private get summarizer(): Summarizer {
+        assert(this._summarizer !== undefined, "This is not summarizing container");
+        return this._summarizer;
     }
 
     private constructor(
@@ -782,6 +816,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly containerScope: IFluidObject,
         public readonly logger: ITelemetryLogger,
         existing: boolean,
+        blobManagerSnapshot: IBlobManagerLoadInfo,
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private _storage?: IDocumentStorageService,
     ) {
@@ -862,14 +897,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.blobManager = new BlobManager(
             this.IFluidHandleContext,
-            () => {
-                return this.storage;
-            },
+            blobManagerSnapshot,
+            () => this.storage,
             (blobId) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
             this,
             this.logger,
         );
-        this.blobManager.load(context.baseSnapshot?.trees[blobsTreeName]);
 
         this.scheduleManager = new ScheduleManager(
             context.deltaManager,
@@ -913,18 +946,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         };
         this.summaryCollection.on("default", defaultAction);
 
-        // We always create the summarizer in the case that we are asked to generate summaries. But this may
-        // want to be on demand instead.
-        // Don't use optimizations when generating summaries with a document loaded using snapshots.
-        // This will ensure we correctly convert old documents.
-        this.summarizer = new Summarizer(
-            "/_summarizer",
-            this /* ISummarizerRuntime */,
-            () => this.summaryConfiguration,
-            this /* ISummarizerInternalsProvider */,
-            this.IFluidHandleContext,
-            this.summaryCollection);
-
         const orderedClientLogger = ChildLogger.create(this.logger, "OrderedClientElection");
         const orderedClientCollection = new OrderedClientCollection(
             orderedClientLogger,
@@ -949,31 +970,37 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
-        }
-        if (
-            this.runtimeOptions.summaryOptions.generateSummaries !== false
-            && SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
-        ) {
-            // Create the SummaryManager and mark the initial state
-            this.summaryManager = new SummaryManager(
-                this.summarizerClientElection,
-                this, // IConnectedState
-                this.summaryCollection,
-                this.logger,
-                formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
-                new Throttler(
-                    60 * 1000, // 60 sec delay window
-                    30 * 1000, // 30 sec max delay
-                    // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
-                    formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-                ),
-                {
-                    initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
-                },
-                this.runtimeOptions.summaryOptions.summarizerOptions,
-            );
-            this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
-            this.summaryManager.start();
+        } else {
+            if (this.context.clientDetails.type === summarizerClientType) {
+                this._summarizer = new Summarizer(
+                    "/_summarizer",
+                    this /* ISummarizerRuntime */,
+                    () => this.summaryConfiguration,
+                    this /* ISummarizerInternalsProvider */,
+                    this.IFluidHandleContext,
+                    this.summaryCollection);
+            } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
+                // Create the SummaryManager and mark the initial state
+                this.summaryManager = new SummaryManager(
+                    this.summarizerClientElection,
+                    this, // IConnectedState
+                    this.summaryCollection,
+                    this.logger,
+                    formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
+                    new Throttler(
+                        60 * 1000, // 60 sec delay window
+                        30 * 1000, // 30 sec max delay
+                        // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
+                        formExponentialFn({ coefficient: 20, initialDelay: 0 }),
+                    ),
+                    {
+                        initialDelayMs: this.runtimeOptions.summaryOptions.initialSummarizerDelayMs,
+                    },
+                    this.runtimeOptions.summaryOptions.summarizerOptions,
+                );
+                this.summaryManager.on("summarizerWarning", this.raiseContainerWarning);
+                this.summaryManager.start();
+            }
         }
 
         this.deltaManager.on("readonly", (readonly: boolean) => {
@@ -1024,7 +1051,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
             this.summaryManager.dispose();
         }
-        this.summarizer.dispose();
+        this._summarizer?.dispose();
         this.dataStores.dispose();
         this.pendingStateManager.dispose();
 
@@ -1056,11 +1083,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const id = parser.pathParts[0];
 
             if (id === "_summarizer" && parser.pathParts.length === 1) {
-                return {
-                    status: 200,
-                    mimeType: "fluid/object",
-                    value: this.summarizer,
-                };
+                if (this._summarizer !== undefined) {
+                    return {
+                        status: 200,
+                        mimeType: "fluid/object",
+                        value: this.summarizer,
+                    };
+                }
+                return create404Response(request);
             }
             if (this.requestHandler !== undefined) {
                 return this.requestHandler(parser, this);
@@ -1397,14 +1427,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // If switching to manual mode add a warning trace indicating the underlying loader does not support
-        // this feature yet. Can remove in 0.9.
-        if (!this.deltaSender && mode === FlushMode.Manual) {
-            return;
-        }
-
-        // Flush any pending batches if switching back to automatic
-        if (mode === FlushMode.Automatic) {
+        // Flush any pending batches if switching to immediate
+        if (mode === FlushMode.Immediate) {
             this.flush();
         }
 
@@ -1438,18 +1462,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
-        // If flush mode is already manual we are either
+        // If flush mode is already TurnBased we are either
         // nested in another orderSequentially, or
         // the app is flushing manually, in which
         // case this invocation doesn't own
         // flushing.
-        if (this.flushMode === FlushMode.Manual) {
+        if (this.flushMode === FlushMode.TurnBased) {
             this.trackOrderSequentiallyCalls(callback);
             return;
         }
 
         const savedFlushMode = this.flushMode;
-        this.setFlushMode(FlushMode.Manual);
+        this.setFlushMode(FlushMode.TurnBased);
 
         try {
             this.trackOrderSequentiallyCalls(callback);
@@ -1581,11 +1605,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         } else {
             assert(this.attachState === AttachState.Attached,
                 0x12e /* "Container Context should already be in attached state" */);
+            this.emit("attached");
         }
         this.dataStores.setAttachState(attachState);
     }
 
-    public createSummary(): ISummaryTree {
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
+    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+        if (blobRedirectTable) {
+            this.blobManager.setRedirectTable(blobRedirectTable);
+        }
+
         const summarizeResult = this.dataStores.createSummary();
         if (!this.disableIsolatedChannels) {
             // Wrap data store summaries in .channels subtree.
@@ -1632,7 +1668,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
                 // Remove this node's route ("/") and notify data stores of routes that are used in it.
                 const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(usedRoutes);
+                const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(
+                    usedRoutes,
+                    // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+                    // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
+                    // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
+                    this.deltaManager.lastMessage?.timestamp,
+                );
 
                 // Update stats to be reported in the peformance event.
                 gcStats.deletedNodes = deletedNodeIds.length;
@@ -1968,8 +2010,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
-            // If in manual flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.Manual && !this.needsFlush) {
+            // If in TurnBased flush mode we will trigger a flush at the next turn break
+            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
                 opMetadataInternal = {
                     ...opMetadata,
                     batch: true,
@@ -1993,7 +2035,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 clientSequenceNumber = this.submitRuntimeMessage(
                     type,
                     content,
-                    /* batch: */ this._flushMode === FlushMode.Manual,
+                    /* batch: */ this._flushMode === FlushMode.TurnBased,
                     opMetadataInternal);
             } else {
                 clientSequenceNumber = this.submitChunkedMessage(type, serializedContent, maxOpSize);
@@ -2044,7 +2086,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.Manual && this.needsFlush;
+        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
         if (middleOfBatch) {
             this._logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }

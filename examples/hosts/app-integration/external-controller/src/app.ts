@@ -7,10 +7,13 @@ import {
     AzureClient,
     AzureConnectionConfig,
     InsecureTokenProvider,
-    AzureResources,
+    AzureContainerServices,
 } from "@fluidframework/azure-client";
-import { generateUser } from "@fluidframework/server-services-client";
-import { SharedMap } from "fluid-framework";
+import {
+    FluidContainer,
+    SharedMap,
+} from "fluid-framework";
+import { v4 as uuid } from "uuid";
 import { DiceRollerController } from "./controller";
 import { ConsoleLogger } from "./ConsoleLogger";
 import { renderAudience, renderDiceRoller } from "./view";
@@ -28,7 +31,10 @@ const userDetails: ICustomUserDetails = {
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
-const user = generateUser() as any;
+const user = {
+    id: uuid(),
+    name: uuid(),
+};
 
 const azureUser = {
     userId: user.id,
@@ -66,51 +72,59 @@ async function start(): Promise<void> {
     const consoleLogger: ConsoleLogger = new ConsoleLogger();
 
     const client = new AzureClient(connectionConfig, consoleLogger);
-    let resources: AzureResources;
+    let container: FluidContainer;
+    let services: AzureContainerServices;
+    let id: string;
 
     // Get or create the document depending if we are running through the create new flow
     const createNew = !location.hash;
     if (createNew) {
-        // The client will create a new container using the schema
-        resources = await client.createContainer(containerSchema);
-        // The new container has its own unique ID that can be used to access it in another session
-        location.hash = resources.fluidContainer.id;
-    } else {
-        const containerId = location.hash.substring(1);
-        // Use the unique container ID to fetch the container created earlier
-        resources = await client.getContainer(containerId, containerSchema);
-    }
-    // create/get container API returns a combination of the container and associated container services
-    const { fluidContainer, containerServices } = resources;
-    document.title = fluidContainer.id;
+        // The client will create a new detached container using the schema
+        // A detached container will enable the app to modify the container before attaching it to the client
+        ({container, services} = await client.createContainer(containerSchema));
 
-    // We now get the DataObject from the container
-    const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
+        // If the app is in a `createNew` state, and the container is detached, we attach the container
+        // so that all new ops are communicated to the client
+        id = await container.attach();
+        // The newly attached container is given a unique ID that can be used to access the container in another session
+        location.hash = id;
+    } else {
+        id = location.hash.substring(1);
+        // Use the unique container ID to fetch the container created earlier
+        ({container, services} = await client.getContainer(id, containerSchema));
+    }
+
+    document.title = id;
+
+    // We now get the first SharedMap from the container
+    const sharedMap1 = container.initialObjects.map1 as SharedMap;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(sharedMap1);
     await diceRollerController.initialize(createNew);
 
-    // We render a view which uses the controller.
+    // We create a view which uses the controller.
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     const div1 = document.createElement("div");
     contentDiv.appendChild(div1);
-    renderDiceRoller(diceRollerController, div1);
 
-    // We now get the SharedMap from the container
-    const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
+    // We now get the second SharedMap from the container
+    const sharedMap2 = container.initialObjects.map2 as SharedMap;
 
     // Our controller manipulates the data object (model).
     const diceRollerController2 = new DiceRollerController(sharedMap2);
     await diceRollerController2.initialize(createNew);
 
+    // We create a second view which uses the second controller.
     const div2 = document.createElement("div");
     contentDiv.appendChild(div2);
-    // We render a view which uses the controller.
+
+    // Now that the container is attached, our app can render the views and listen for updates
+    renderDiceRoller(diceRollerController, div1);
     renderDiceRoller(diceRollerController2, div2);
 
     // Render the audience information for the members currently in the session
-    renderAudience(containerServices.audience, contentDiv);
+    renderAudience(services.audience, contentDiv);
 }
 
 start().catch(console.error);

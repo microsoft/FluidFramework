@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { SharedMap, SharedDirectory, ContainerSchema } from "fluid-framework";
 import { DiceRoller } from "@fluid-example/diceroller";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
     TinyliciousClient,
     TinyliciousConnectionConfig,
@@ -96,6 +97,34 @@ describe("TinyliciousClient", () => {
         );
     });
 
+    it("creates a container with detached state", async () => {
+        const { container } = await tinyliciousClient.createContainer(schema);
+        assert.strictEqual(
+            container.attachState, AttachState.Detached,
+            "Container should be detached after creation",
+        );
+    });
+
+    it("creates a container that can only be attached once", async () => {
+        const {container} = await tinyliciousClient.createContainer(schema);
+        const containerId = await container.attach();
+
+        assert.strictEqual(
+            typeof(containerId) === "string",
+            "Attach did not return a string ID",
+        );
+        assert.strictEqual(
+            container.attachState, AttachState.Attached,
+            "Container is not attached after attach is called",
+        );
+
+        await assert.rejects(
+            container.attach(),
+            ()=> true,
+            "Container should not attached twice",
+        );
+    });
+
     /**
      * Scenario: Given the container already exists, test that TinyliciousClient can get the existing container
      * when provided with valid ContainerConfig and ContainerSchema.
@@ -103,14 +132,16 @@ describe("TinyliciousClient", () => {
      * Expected behavior: containerCreate should have the identical SharedMap ID as containerGet.
      */
     it("can get a container successfully", async () => {
-        const containerCreate = (await tinyliciousClient.createContainer(schema)).fluidContainer;
+        const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
             });
         });
 
-        const containerGet = (await tinyliciousClient.getContainer(containerCreate.id, schema)).fluidContainer;
+        const containerId = await containerCreate.attach();
+
+        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
         const map1Create = containerCreate.initialObjects.map1 as SharedMap;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         assert.strictEqual(map1Get.id, map1Create.id, "Error getting a container");
@@ -123,19 +154,21 @@ describe("TinyliciousClient", () => {
      * each other after value is changed.
      */
     it("can change initialObjects value", async () => {
-        const containerCreate = (await tinyliciousClient.createContainer(schema)).fluidContainer;
+        const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
             });
         });
 
+        const containerId = await containerCreate.attach();
+
         const initialObjectsCreate = containerCreate.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
         map1Create.set("new-key", "new-value");
         const valueCreate = await map1Create.get("new-key");
 
-        const containerGet = (await tinyliciousClient.getContainer(containerCreate.id, schema)).fluidContainer;
+        const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't connect with initial objects");
@@ -158,7 +191,7 @@ describe("TinyliciousClient", () => {
             dynamicObjectTypes: [SharedDirectory],
         };
 
-        const container = (await tinyliciousClient.createContainer(dynamicSchema)).fluidContainer;
+        const container = (await tinyliciousClient.createContainer(dynamicSchema)).container;
 
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
@@ -189,7 +222,7 @@ describe("TinyliciousClient", () => {
             dynamicObjectTypes: [DiceRoller],
         };
 
-        const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).fluidContainer;
+        const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).container;
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();

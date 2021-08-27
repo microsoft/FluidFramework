@@ -28,8 +28,14 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(connectionConfig: AzureConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<AzureResources>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<AzureResources>;
+    createContainer(containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: AzureContainerServices;
+    }>;
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: AzureContainerServices;
+    }>;
     }
 
 // @public (undocumented)
@@ -64,14 +70,6 @@ export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
     // (undocumented)
     userName: string;
-}
-
-// @public (undocumented)
-export interface AzureResources {
-    // (undocumented)
-    containerServices: AzureContainerServices;
-    // (undocumented)
-    fluidContainer: FluidContainer;
 }
 
 // @public (undocumented)

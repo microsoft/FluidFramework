@@ -6,7 +6,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
+import { IAudience, AttachState } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -17,7 +17,6 @@ export interface IFluidContainerEvents extends IEvent {
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
     readonly disposed: boolean;
-    readonly id: string;
     readonly initialObjects: LoadableObjectRecord;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
@@ -29,14 +28,18 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     private readonly disposedHandler = () => this.emit("disposed");
 
     public constructor(
-        public readonly id: string,
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
+        private readonly attachCallback: () => Promise<string>,
     ) {
         super();
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
+    }
+
+    public get attachState(): AttachState {
+        return this.container.attachState;
     }
 
     public get disposed() {
@@ -63,6 +66,14 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     */
     public get clientId() {
         return this.container.clientId;
+    }
+
+    public async attach() {
+        if (this.attachState === AttachState.Detached) {
+            return this.attachCallback();
+        } else {
+            throw new Error("Cannot attach container. Container is not in detached state");
+        }
     }
 
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {

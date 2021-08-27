@@ -92,8 +92,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
-    // (undocumented)
-    createSummary(): ISummaryTree;
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     readonly disableIsolatedChannels: boolean;
@@ -192,7 +191,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
-    // (undocumented)
     get summarizerClientId(): string | undefined;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -458,7 +456,7 @@ export interface ISummarizeHeuristicData {
 export interface ISummarizeHeuristicRunner {
     dispose(): void;
     run(): void;
-    runOnClose(): boolean;
+    shouldRunLastSummary(): boolean;
 }
 
 // @public
@@ -632,7 +630,7 @@ export class PendingStateManager implements IDisposable {
 // @public
 export class RunWhileConnectedCoordinator {
     constructor(runtime: IConnectableRuntime);
-    stop(): void;
+    stop(reason?: SummarizerStopReason): void;
     waitStart(): Promise<IStartedResult | INotStartedResult>;
     waitStopped(): Promise<void>;
 }
@@ -671,7 +669,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
-    stop(reason?: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
@@ -697,14 +695,6 @@ export type SummarizeResultPart<T> = {
 export type SummarizerStopReason =
 /** Summarizer client failed to summarize in all 3 consecutive attempts. */
 "failToSummarize"
-/**
- * Summarizer client detected that its parent is no longer elected the summarizer.
- * Normally, the parent client would realize it is disconnected first and call stop
- * giving a "parentNotConnected" stop reason. If the summarizer client attempts to
- * generate a summary and realizes at that moment that the parent is not elected,
- * only then will it stop itself with this message.
- */
- | "parentNoLongerSummarizer"
 /** Parent client reported that it is no longer connected. */
  | "parentNotConnected"
 /**
@@ -714,8 +704,8 @@ export type SummarizerStopReason =
  * tries to stop its spawned summarizer client.
  */
  | "parentShouldNotSummarize"
-/** Parent client reported that it is disposed. */
- | "disposed";
+/** summarizer client disconnected */
+ | "summarizeClientDisconnected" | "summarizerException";
 
 // @public (undocumented)
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning {

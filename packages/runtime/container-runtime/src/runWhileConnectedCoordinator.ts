@@ -4,6 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
+import { SummarizerStopReason } from "./summarizerTypes";
 
 /**
  * Start result indicating that the start was successful.
@@ -89,7 +90,7 @@ export class RunWhileConnectedCoordinator {
     /**
      * Stops running.
      */
-    public stop(): void {
+    public stop(reason?: SummarizerStopReason): void {
         this.stopDeferred.resolve();
     }
 }
