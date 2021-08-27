@@ -286,6 +286,7 @@ describe("Summary Manager", () => {
         // If we want to cut short such wait, we should do it properly by listening for incoming ops
         // and cut wait short based on op count when an a single op triggers overflow, i.e.
         // make it work in main scenario, not a some corner case that does not matter.
+        // Issue #7273 tracks making appropriate product and test change and re-enable the test.
         it.skip("Should bypass initial delay if enough ops pass later", async () => {
             summaryCollection.opsSinceLastAck = 500; // 500 < 1000, so do not bypass yet
             createSummaryManager({
