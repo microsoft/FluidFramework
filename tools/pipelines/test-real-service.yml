@@ -80,15 +80,34 @@ stages:
           displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
           continueOnError: true
           env:
-            fluid__webpack__bearerSecret: $(fluid-webpack-bearerSecret)
-            fluid__webpack__fluidHost: $(fluid-webpack-fluidHost)
-            fluid__webpack__tenantId: $(fluid-webpack-tenantId)
-            fluid__webpack__tenantSecret: $(fluid-webpack-tenantSecret)
+            fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           inputs:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:routerlicious:report'
+
+  # end-to-end tests routerlicious
+  - stage:
+    displayName: e2e - routerlicious
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Lite
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testSteps:
+        - task: Npm@1
+          displayName: '[end-to-end tests] npm run test:realsvc:frs:report'
+          continueOnError: true
+          env:
+            fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
+            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+            customCommand: 'run test:realsvc:frs:report'
 
   # end-to-end tests odsp
   - stage:

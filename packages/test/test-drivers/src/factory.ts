@@ -55,6 +55,7 @@ export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => an
 
 export interface FluidTestDriverConfig {
     odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>,
+    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>,
 }
 
 export async function createFluidTestDriver(
@@ -66,13 +67,15 @@ export async function createFluidTestDriver(
         case "local":
             return new LocalServerTestDriver(api.LocalDriverApi);
 
+        case "t9s":
         case "tinylicious":
             setKeepAlive(api.RouterliciousDriverApi);
             return new TinyliciousTestDriver(api.RouterliciousDriverApi);
 
+        case "r11s":
         case "routerlicious":
             setKeepAlive(api.RouterliciousDriverApi);
-            return RouterliciousTestDriver.createFromEnv(api.RouterliciousDriverApi);
+            return RouterliciousTestDriver.createFromEnv(config?.r11s, api.RouterliciousDriverApi);
 
         case "odsp":
             return OdspTestDriver.createFromEnv(config?.odsp, api.OdspDriverApi);
