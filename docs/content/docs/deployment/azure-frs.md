@@ -36,7 +36,7 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [AzureFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/AzureFunctionTokenProvider.ts" >}}) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
@@ -183,17 +183,13 @@ fetched back user details for the members in your collaborative session!
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[Ink]: {{< relref "ink.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
-[SharedCell]: {{< relref "cell.md" >}}
 [SharedCounter]: {{< relref "counter.md" >}}
-[SharedDirectory]: {{< relref "directory.md" >}}
 [SharedMap]: {{< relref "map.md" >}}
-[SharedMatrix]: {{< relref "matrix.md" >}}
-[SharedNumberSequence]: {{< relref "sequence.md" >}}
-[SharedObjectSequence]: {{< relref "sequence.md" >}}
-[SharedSequence]: {{< relref "sequence.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
