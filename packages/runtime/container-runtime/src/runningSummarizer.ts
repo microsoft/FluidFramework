@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
@@ -254,7 +254,7 @@ export class RunningSummarizer implements IDisposable {
     }
 
     /** Heuristics summarize attempt. */
-    private trySummarize(reason: SummarizeReason): void {
+    private trySummarize(summarizeReason: SummarizeReason): void {
         if (this.summarizingLock !== undefined || this.generator.isSummarizing()) {
             // Indicate that heuristics tried to summarize, and check immediately
             // after completion if heuristics still indicate we should summarize.
@@ -272,12 +272,23 @@ export class RunningSummarizer implements IDisposable {
                 { refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
             ];
             let overrideDelaySeconds: number | undefined;
-            let retryNumber = 0;
+            let totalRetries = 0;
+            let retriesPerPhase = 0;
             // Note: intentionally incrementing retryNumber in for loop rather than attemptPhase.
-            for (let attemptPhase = 0; attemptPhase < attempts.length; retryNumber++) {
+            for (let attemptPhase = 0; attemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
                     return;
                 }
+
+                totalRetries++;
+                retriesPerPhase++;
+
+                const summarizeProps: ITelemetryProperties = {
+                    summarizeReason,
+                    summarizeTotalRetries: totalRetries,
+                    summarizeRetriesPerPhase: retriesPerPhase,
+                    summarizeAttemptPhase: attemptPhase,
+                };
 
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
                 const delaySeconds = overrideDelaySeconds ?? regularDelaySeconds;
@@ -286,15 +297,15 @@ export class RunningSummarizer implements IDisposable {
                         eventName: "SummarizeAttemptDelay",
                         duration: delaySeconds,
                         reason: overrideDelaySeconds !== undefined ? "nack with retryAfter" : undefined,
+                        ...summarizeProps,
                     });
                     await delay(delaySeconds * 1000);
                 }
-                const attemptReason = retryNumber > 0 ? `retry${retryNumber}` as const : reason;
-
                 // Note: no need to account for this.cancellationToken.waitCancelled here, as
                 // this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
-                const resultSummarize = this.generator.summarize(attemptReason, options, this.cancellationToken);
+                const resultSummarize = this.generator.summarize(summarizeProps, options, this.cancellationToken);
                 const result = await resultSummarize.receivedSummaryAckOrNack;
+
                 await this.generator.waitSummarizing();
 
                 if (result.success) {
@@ -302,20 +313,15 @@ export class RunningSummarizer implements IDisposable {
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
-                const retryAfterSeconds = result.retryAfterSeconds;
-                if (retryAfterSeconds !== undefined && retryAfterSeconds > 0) {
-                    if (overrideDelaySeconds !== undefined) {
-                        // Retry the same step only once per retryAfter response.
-                        attemptPhase++;
-                    }
-                    overrideDelaySeconds = retryAfterSeconds;
-                } else {
+                // Retry the same step only once per retryAfter response.
+                overrideDelaySeconds = result.retryAfterSeconds;
+                if (overrideDelaySeconds === undefined || retriesPerPhase > 1) {
                     attemptPhase++;
-                    overrideDelaySeconds = undefined;
+                    retriesPerPhase = 0;
                 }
             }
             // If all attempts failed, close the summarizer container
-            this.logger.sendErrorEvent({ eventName: "FailToSummarize" });
+            this.logger.sendErrorEvent({ eventName: "FailToSummarize", summarizeReason });
             this.stopSummarizerCallback("failToSummarize");
         })().finally(() => {
             summarizingLock.resolve();
@@ -336,7 +342,6 @@ export class RunningSummarizer implements IDisposable {
             failBuilder.fail("RunningSummarizer stopped or disposed", undefined);
             return failBuilder.build();
         }
-        const onDemandReason = `onDemand;${reason}` as const;
         // Check for concurrent summary attempts. If one is found,
         // return a promise that caller can await before trying again.
         if (this.summarizingLock !== undefined) {
@@ -347,7 +352,10 @@ export class RunningSummarizer implements IDisposable {
             // Another summary is currently being generated.
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
-        const result = this.generator.summarize(onDemandReason, options, this.cancellationToken);
+        const result = this.generator.summarize(
+            { summarizeReason: `onDemand/${reason}` },
+            options,
+            this.cancellationToken);
         result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
         return result;
     }
@@ -420,9 +428,12 @@ export class RunningSummarizer implements IDisposable {
         const { reason, resultsBuilder, options } = this.enqueuedSummary;
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
-        this.generator.summarize(reason, options, this.cancellationToken, resultsBuilder)
-            .receivedSummaryAckOrNack.finally(
-            () => this.checkSummarizeAgain());
+        this.generator.summarize(
+            { summarizeReason: `enqueuedSummary/${reason}` },
+            options,
+            this.cancellationToken,
+            resultsBuilder)
+        .receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
         return true;
     }
 

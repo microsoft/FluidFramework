@@ -6,20 +6,20 @@
 module.exports = {
   globals: {
     'ts-jest': {
-      tsconfig: '<rootDir>/test/tsconfig.test.json'
+      tsconfig: '<rootDir>/src/test/tsconfig.json'
     }
   },
   preset: "ts-jest",
 
   // The glob patterns Jest uses to detect test files
   testMatch: [
-    "/**/test/data_binder/*.spec.js"
+    "/**/dist/test/*.spec.js"
   ],
 
   testEnvironment: "jsdom",
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-  testPathIgnorePatterns: ['/node_modules/', 'dist'],
+  testPathIgnorePatterns: ['/node_modules/'],
 
   // A map from regular expressions to paths to transformers
   transform: {

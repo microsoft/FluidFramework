@@ -12,6 +12,7 @@ import {
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
+    ITaggedTelemetryPropertyType,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
@@ -31,8 +32,10 @@ import {
     UserData = "UserData",
 }
 
+export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+
 export interface ITelemetryLoggerPropertyBag {
-    [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
+    [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 export interface ITelemetryLoggerPropertyBags{
     all?: ITelemetryLoggerPropertyBag,
