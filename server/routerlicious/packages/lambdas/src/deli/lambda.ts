@@ -5,7 +5,6 @@
 
 /* eslint-disable no-null/no-null */
 
-import { EventEmitter } from "events";
 import { isServiceMessageType } from "@fluidframework/protocol-base";
 import {
     ISequencedDocumentAugmentedMessage,
@@ -54,11 +53,13 @@ import {
     BaseTelemetryProperties,
     SessionState,
 } from "@fluidframework/server-services-telemetry";
-import { setQueuedMessageProperties } from "../utils";
+import { DocumentContext } from "@fluidframework/server-lambdas-driver";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IEvent } from "@fluidframework/common-definitions";
+import { setQueuedMessageProperties, logCommonSessionEndMetrics, createSessionMetric } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
-import { createSessionMetric } from "./utils";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -100,7 +101,13 @@ export enum OpEventType {
     MaxTime,
 }
 
-export class DeliLambda extends EventEmitter implements IPartitionLambda {
+export interface IDeliLambdaEvents extends IEvent {
+    (event: "opEvent",
+        listener: (type: OpEventType, sequenceNumber: number, sequencedMessagesSinceLastOpEvent: number) => void);
+    (event: "updatedDurableSequenceNumber", listener: (durableSequenceNumber: number) => void);
+}
+
+export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements IPartitionLambda {
     private sequenceNumber: number;
     private durableSequenceNumber: number;
 
@@ -180,7 +187,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
         this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
         this.logOffset = lastCheckpoint.logOffset;
         this.nackMessages = lastCheckpoint.nackMessages;
-        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas;
+        // Null coalescing for backward compatibility
+        this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
@@ -364,8 +372,12 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     private logSessionStartMetrics(failMetric: boolean = false) {
         if (this.sessionStartMetric?.isCompleted()) {
-            this.sessionStartMetric = createSessionMetric(this.tenantId, this.documentId,
-                true, this.serviceConfiguration);
+            this.sessionStartMetric = createSessionMetric(
+                this.tenantId,
+                this.documentId,
+                LumberEventName.StartSessionResult,
+                this.serviceConfiguration,
+            );
         }
 
         if (failMetric) {
@@ -395,34 +407,24 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
 
     private logSessionEndMetrics(closeType: LambdaCloseType) {
         if (this.sessionMetric?.isCompleted()) {
-            this.sessionMetric = createSessionMetric(this.tenantId, this.documentId, false, this.serviceConfiguration);
+            this.sessionMetric = createSessionMetric(
+                this.tenantId,
+                this.documentId,
+                LumberEventName.SessionResult,
+                this.serviceConfiguration,
+            );
         }
 
-        this.sessionMetric?.setProperties({ [CommonProperties.sessionEndReason]: closeType });
-        this.sessionMetric?.setProperties({ [CommonProperties.sequenceNumber]: this.sequenceNumber });
-        this.sessionMetric?.setProperties({ [CommonProperties.lastSummarySequenceNumber]: this.durableSequenceNumber });
+        this.sessionMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: this.serviceSummaryGenerated });
 
-        if (closeType === LambdaCloseType.Error) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-            this.sessionMetric?.error("Session terminated due to error");
-        } else if (!closeType || closeType === LambdaCloseType.Stop || closeType === LambdaCloseType.Rebalance) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
-            this.sessionMetric?.success("Session paused");
-        } else if (this.serviceConfiguration.deli.checkServiceSummaryStatus && !this.serviceSummaryGenerated) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-            this.sessionMetric?.error("No service summary before lambda close");
-        } else if (closeType === LambdaCloseType.ActivityTimeout) {
-            this.sessionMetric?.setProperties({ [CommonProperties.sessionState]: SessionState.end });
-
-            if (this.nackMessages?.identifier === NackMessagesType.SummaryMaxOps) {
-                this.sessionMetric?.error(
-                    "Session terminated due to inactivity while exceeding max ops since last summary");
-            } else {
-                this.sessionMetric?.success("Session terminated due to inactivity");
-            }
-        } else {
-            this.sessionMetric?.error("Unknown session end state");
-        }
+        logCommonSessionEndMetrics(
+            this.context as DocumentContext,
+            closeType,
+            this.sessionMetric,
+            this.sequenceNumber,
+            this.durableSequenceNumber,
+            this.nackMessages?.identifier,
+        );
     }
 
     private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
@@ -683,6 +685,8 @@ export class DeliLambda extends EventEmitter implements IPartitionLambda {
                                 this.nackMessages = undefined;
                             }
                         }
+
+                        this.emit("updatedDurableSequenceNumber", dsn);
 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
                             // since the dsn updated, ops were reliably stored

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IntervalType, LocalReference, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
@@ -206,8 +207,11 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
         let sharedString: SharedString;
         let intervals: IntervalCollection<SequenceInterval>;
+        let dataObject: ITestFluidObject & IFluidLoadable;
 
         const assertIntervals = (expected: readonly { start: number; end: number }[]) => {
+            // Make sure all ops have been sent before actually asserting
+            (dataObject.context.containerRuntime as IContainerRuntime).flush();
             assertIntervalsHelper(sharedString, intervals, expected);
         };
 
@@ -218,7 +222,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 registry,
             };
             const container = await provider.makeTestContainer(testContainerConfig);
-            const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+            dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
             sharedString = await dataObject.getSharedObject<SharedString>(stringId);
             sharedString.insertText(0, "012");
 

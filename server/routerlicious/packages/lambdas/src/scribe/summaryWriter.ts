@@ -253,12 +253,11 @@ export class SummaryWriter implements ISummaryWriter {
             op.additionalContent,
             JSON.stringify(checkpoint));
 
-        // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
-        const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
-
         if (this.enableWholeSummaryUpload) {
-            await this.createWholeServiceSummary(lastCommit.sha, logTailEntries, serviceProtocolEntries);
+            await this.createWholeServiceSummary(existingRef.object.sha, logTailEntries, serviceProtocolEntries);
         } else {
+            // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
+            const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
             const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
                 this.summaryStorage.createTree({ entries: logTailEntries }),
                 this.summaryStorage.createTree({ entries: serviceProtocolEntries }),

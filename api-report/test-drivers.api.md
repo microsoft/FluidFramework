@@ -140,6 +140,7 @@ export class OdspTestDriver implements ITestDriver {
 // @public (undocumented)
 export const RouterliciousDriverApi: {
     version: string;
+    modulePath: string;
     RouterliciousDocumentServiceFactory: typeof RouterliciousDocumentServiceFactory;
 };
 

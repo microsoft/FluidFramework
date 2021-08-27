@@ -50,7 +50,6 @@
     "@fluidframework/server-services-client": "^0.1030.0",
     "@fluidframework/server-services-core": "^0.1030.0",
     "@fluidframework/server-services-shared": "^0.1030.0",
-    "@fluidframework/server-services-telemetry": "^0.1030.0",
     "@fluidframework/server-services-utils": "^0.1030.0",
     "commander": "^2.17.1",
     "express": "^4.16.3",

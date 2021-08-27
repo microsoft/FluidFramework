@@ -16,7 +16,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 /**
@@ -33,8 +33,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-// REVIEW: enable compat testing?
-describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
+describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,

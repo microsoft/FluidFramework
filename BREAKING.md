@@ -1,3 +1,19 @@
+## 0.47 Breaking changes
+- [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
+- [Changes to IFluidDataStoreFactory](#Changes-to-IFluidDataStoreFactory)
+- [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
+
+### Property removed from IFluidDataStoreContext
+- the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
+
+### Changes to IFluidDataStoreFactory
+- The `existing` parameter from the `instantiateDataStore` function is now mandatory to differentiate creating vs loading.
+
+### `FlushMode` enum values renamed
+`FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
+- `FlushMode.Manual` to `FlushMode.TurnBased`
+- `FlushMode.Automatic` to `FlushMode.Immediate`
+
 ## 0.46 Breaking changes
 - [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
 - [FrsClient has been renamed to AzureClient and moved out of experimental state](#FrsClient-has-been-renamed-to-AzureClient-and-moved-out-of-experimental-state)

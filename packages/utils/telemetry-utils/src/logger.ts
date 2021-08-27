@@ -127,6 +127,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
+
+        // Will include Nan & Infinity, but probably we do not care
+        if (typeof newEvent.duration === "number") {
+            newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
+        }
+
         this.send(newEvent);
     }
 
@@ -147,19 +153,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-        const perfEvent: ITelemetryBaseEvent = {
+        const perfEvent: ITelemetryGenericEvent = {
             ...event,
             category: event.category ? event.category : "performance",
         };
-        if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(perfEvent, error, false);
-        }
 
-        if (event.duration) {
-            perfEvent.duration = TelemetryLogger.formatTick(event.duration);
-        }
-
-        this.send(perfEvent);
+        this.sendTelemetryEvent(perfEvent, error);
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {

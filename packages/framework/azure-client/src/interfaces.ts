@@ -5,7 +5,6 @@
 
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import {
-    FluidContainer,
     IMember,
     IServiceAudience,
 } from "fluid-framework";
@@ -39,11 +38,6 @@ export interface AzureContainerServices {
 export interface AzureMember<T = any> extends IMember {
     userName: string;
     additionalDetails?: T;
-}
-
-export interface AzureResources {
-    fluidContainer: FluidContainer;
-    containerServices: AzureContainerServices;
 }
 
 export type IAzureAudience = IServiceAudience<AzureMember>;

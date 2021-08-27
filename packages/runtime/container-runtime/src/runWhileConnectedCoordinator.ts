@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred, assert } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { SummarizerStopReason, IConnectableRuntime, ICancellable } from "./summarizerTypes";
 
