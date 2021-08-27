@@ -186,8 +186,7 @@ export function createOdspNetworkError(
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
-            const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
-            error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
+            error = createGenericNetworkError(errorMessage, true, retryAfterSeconds, { statusCode });
             break;
     }
     enrichOdspError(error, response, responseText, props);

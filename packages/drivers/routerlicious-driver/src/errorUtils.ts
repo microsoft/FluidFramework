@@ -49,7 +49,7 @@ export type R11sError = DriverError | IR11sError;
 export function createR11sNetworkError(
     errorMessage: string,
     statusCode?: number,
-    retryAfterMs?: number,
+    retryAfterSeconds?: number,
 ): R11sError {
     switch (statusCode) {
         case undefined:
@@ -65,24 +65,24 @@ export function createR11sNetworkError(
                 errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
         case 429:
             return createGenericNetworkError(
-                errorMessage, true, retryAfterMs, { statusCode });
+                errorMessage, true, retryAfterSeconds, { statusCode });
         case 500:
             return new GenericNetworkError(errorMessage, true, { statusCode });
         default:
             return createGenericNetworkError(
-                errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
+                errorMessage, retryAfterSeconds !== undefined, retryAfterSeconds, { statusCode });
     }
 }
 
 export function throwR11sNetworkError(
     errorMessage: string,
     statusCode?: number,
-    retryAfterMs?: number,
+    retryAfterSeconds?: number,
 ): never {
     const networkError = createR11sNetworkError(
         errorMessage,
         statusCode,
-        retryAfterMs);
+        retryAfterSeconds);
 
     // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;

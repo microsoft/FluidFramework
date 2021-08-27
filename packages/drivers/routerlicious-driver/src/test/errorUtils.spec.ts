@@ -34,7 +34,7 @@ describe("ErrorUtils", () => {
         });
         it("creates retriable error on 429 with retry-after", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, 429, 5000);
+            const error = createR11sNetworkError(message, 429, 5);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
             assert.strictEqual((error as IThrottlingWarning).retryAfterSeconds, 5);
@@ -59,7 +59,7 @@ describe("ErrorUtils", () => {
         });
         it("creates retriable error on anything else with retryAfter", () => {
             const message = "test error";
-            const error = createR11sNetworkError(message, 400, 100000);
+            const error = createR11sNetworkError(message, 400, 100);
             assert.strictEqual(error.errorType, DriverErrorType.throttlingError);
             assert.strictEqual(error.canRetry, true);
             assert.strictEqual((error as any).retryAfterSeconds, 100);
@@ -105,7 +105,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 429 with retry-after", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 429, 5000);
+                throwR11sNetworkError(message, 429, 5);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
@@ -142,7 +142,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on anything else with retryAfter", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, 400, 200000);
+                throwR11sNetworkError(message, 400, 200);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
