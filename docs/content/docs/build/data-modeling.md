@@ -126,11 +126,12 @@ An example where this is useful is building a collaborative storyboarding applic
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
-[SharedCounter]: {{< relref "counter.md" >}}
-[SharedMap]: {{< relref "map.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

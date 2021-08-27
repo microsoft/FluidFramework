@@ -70,7 +70,7 @@ These behavioral guarantees cannot be implemented in an optimistic way. The cost
 part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
 for behavioral guarantees.
 
-Examples of consensus-based DDSes in Fluid Framework include [ConsensusRegisterCollection][] and [ConsensusQueue][].
+An example of a consensus-based DDS in Fluid Framework is the [TaskManager]][].
 
 #### Why consensus-based DDSes are useful
 
@@ -192,8 +192,6 @@ DataObject]({{< relref "dataobject-aqueduct.md" >}}) section.
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 * [SharedMap][] -- a basic key-value distributed data structure.
-* [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
-* [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
 
 ### Sequences
 
@@ -201,13 +199,11 @@ These DDSes are used for storing sequential data. They are all optimistic.
 
 * [SharedNumberSequence][] -- a distributed sequence of numbers.
 * [SharedObjectSequence][] -- a distributed sequence of objects.
-* [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
 
 ### Specialized data structures
 
 * [SharedCounter][] -- a distributed counter.
 * [SharedString][] -- a specialized data structure for handling collaborative text.
-* [Ink][] -- a specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
@@ -223,11 +219,12 @@ These DDSes are used for storing sequential data. They are all optimistic.
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
-[SharedCounter]: {{< relref "counter.md" >}}
-[SharedMap]: {{< relref "map.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
