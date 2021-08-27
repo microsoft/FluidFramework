@@ -122,6 +122,6 @@ export interface ISummaryUploadManager {
     writeSummaryTree(
         summaryTree: api.ISummaryTree,
         parentHandle: string,
-        summaryType: IWholeSummaryPayloadType,
+        summaryType: storage.IWholeSummaryPayloadType,
         sequenceNumber: number): Promise<string>;
 }
