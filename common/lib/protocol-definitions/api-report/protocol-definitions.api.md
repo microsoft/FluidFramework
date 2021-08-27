@@ -330,6 +330,8 @@ export interface ISequencedDocumentMessage {
     // (undocumented)
     contents: any;
     // (undocumented)
+    expHash1: string;
+    // (undocumented)
     metadata?: any;
     // (undocumented)
     minimumSequenceNumber: number;
