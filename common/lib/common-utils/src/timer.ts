@@ -215,7 +215,7 @@ export class PromiseTimer implements IPromiseTimer {
     public clear() {
         this.timer.clear();
         if (this.deferred) {
-            this.deferred.resolve({ timerResult: "cancel" });
+            this.deferred.resolve({ timerResult: "timerCancelled" });
             this.deferred = undefined;
         }
     }
