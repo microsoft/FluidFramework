@@ -88,7 +88,7 @@ export type RouteOptions =
 
 function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
     if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
+        const dataStoreFactory = (fluidModule.fluidExport as any).IFluidDataStoreFactory;
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
@@ -102,7 +102,7 @@ function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule:
             fluidExport: {
                 IRuntimeFactory: runtimeFactory,
                 IFluidDataStoreFactory: dataStoreFactory,
-            },
+            } as any,
         };
     }
     return fluidModule;

@@ -44,9 +44,9 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public (undocumented)
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject, attachCallback: () => Promise<string>);
+    constructor(container: Container, rootDataObject: RootDataObject);
     // (undocumented)
-    attach(): Promise<string>;
+    attach(): Promise<void>;
     // (undocumented)
     get attachState(): AttachState;
     // @deprecated (undocumented)

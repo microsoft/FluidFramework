@@ -8,6 +8,7 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
@@ -50,8 +51,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     private readonly socketReferenceKeyPrefix?: string;
 
     public async createContainer(
-        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
+        urlResolver: IUrlResolver,
+        createNewSummary?: ISummaryTree,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
         ensureFluidResolvedUrl(createNewResolvedUrl);

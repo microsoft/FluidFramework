@@ -10,6 +10,7 @@ import {
     IDocumentServiceFactory,
     IDocumentServicePolicies,
     IResolvedUrl,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
@@ -41,13 +42,14 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
         private readonly innerDocumentService?: IDocumentService) { }
 
     public async createContainer(
-        createNewSummary: ISummaryTree | undefined,
-        resolvedUrl: IResolvedUrl,
+        createNewResolvedUrl: IResolvedUrl,
+        urlResolver: IUrlResolver,
+        createNewSummary?: ISummaryTree,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        ensureFluidResolvedUrl(resolvedUrl);
+        ensureFluidResolvedUrl(createNewResolvedUrl);
         assert(!!createNewSummary, 0x202 /* "create empty file not supported" */);
-        const pathName = new URL(resolvedUrl.url).pathname;
+        const pathName = new URL(createNewResolvedUrl.url).pathname;
         const pathArr = pathName.split("/");
         const tenantId = pathArr[pathArr.length - 2];
         const id = pathArr[pathArr.length - 1];
@@ -72,7 +74,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             documentAttributes.term ?? 1,
             quorumValues,
         );
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(createNewResolvedUrl, logger);
     }
 
     /**

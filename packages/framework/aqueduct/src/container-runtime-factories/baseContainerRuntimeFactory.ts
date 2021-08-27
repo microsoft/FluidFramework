@@ -65,7 +65,7 @@ export class BaseContainerRuntimeFactory
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
+        const parentDependencyContainer = (context.scope as any).IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
             dc.register(entry.type, entry.provider);

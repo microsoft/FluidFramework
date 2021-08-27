@@ -5,6 +5,7 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
+    DriverHeader,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -25,12 +26,23 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     public constructor(
         port = defaultTinyliciousPort,
         endpoint = defaultTinyliciousEndpoint,
-        ) {
-            this.tinyliciousEndpoint = `${endpoint}:${port}`;
-            this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
-         }
+    ) {
+        this.tinyliciousEndpoint = `${endpoint}:${port}`;
+        this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
+    }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        if (request.headers && request.headers[DriverHeader.createNew]) {
+            return {
+                endpoints: {
+                    ordererUrl: this.tinyliciousEndpoint,
+                },
+                id: "/",
+                tokens: {},
+                type: "fluid",
+                url: `${this.fluidProtocolEndpoint}/tinylicious`,
+            };
+        }
         const url = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);
@@ -50,7 +62,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
                 storageUrl,
             },
             id: documentId,
-            tokens: { },
+            tokens: {},
             type: "fluid",
             url: documentUrl,
         };
@@ -68,6 +80,10 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
          * described above.
          */
         return `${documentId}/${relativeUrl}`;
+    }
+
+    public createNewContainerRequest(): IRequest {
+        return { url: "/", headers: { [DriverHeader.createNew]: true } };
     }
 }
 

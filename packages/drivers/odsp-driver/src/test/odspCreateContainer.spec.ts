@@ -69,8 +69,9 @@ describe("Odsp Create Container Test", () => {
         summary: ISummaryTree,
         resolved: IOdspResolvedUrl,
     ): Promise<IDocumentService> => odspDocumentServiceFactory.createContainer(
-        summary,
         resolved,
+        resolver,
+        summary,
         new TelemetryUTLogger());
 
     beforeEach(() => {
@@ -83,7 +84,9 @@ describe("Odsp Create Container Test", () => {
         const docID = await getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true);
         const docService = await mockFetchOk(
-            async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
+            async () => odspDocumentServiceFactory.createContainer(
+                resolved, resolver, summary, new TelemetryUTLogger(),
+            ),
             expectedResponse,
             { "x-fluid-epoch": "epoch1" },
         );
