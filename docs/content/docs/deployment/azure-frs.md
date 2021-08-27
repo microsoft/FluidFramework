@@ -36,7 +36,7 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
