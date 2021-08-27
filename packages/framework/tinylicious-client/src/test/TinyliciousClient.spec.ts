@@ -15,7 +15,6 @@ import {
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
     const schema: ContainerSchema = {
-        name: "tinylicious-client-test",
         initialObjects: {
             map1: SharedMap,
         },
@@ -184,7 +183,6 @@ describe("TinyliciousClient", () => {
      */
     it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
         const dynamicSchema: ContainerSchema = {
-            name: "dynamic-schema-test",
             initialObjects: {
                 map1: SharedMap,
             },
@@ -215,7 +213,6 @@ describe("TinyliciousClient", () => {
      */
     it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
         const dynamicSchema: ContainerSchema = {
-            name: "dynamic-schema-test",
             initialObjects: {
                 map1: SharedMap,
             },
