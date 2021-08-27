@@ -36,7 +36,6 @@
   "dependencies": {
     "@fluidframework/azure-client": "^0.47.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.39.8",
     "fluid-framework": "^0.47.0",
     "uuid": "^8.3.1"
   },
