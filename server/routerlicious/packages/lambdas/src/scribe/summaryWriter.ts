@@ -432,8 +432,8 @@ export class SummaryWriter implements ISummaryWriter {
                     summaryObject = {
                         type: SummaryType.Blob,
                         content: treeEntry.value.encoding === "base64" ?
-                                fromBase64ToUtf8(treeEntry.value.contents) :
-                                treeEntry.value.contents,
+                                 fromBase64ToUtf8(treeEntry.value.contents) :
+                                 treeEntry.value.contents,
                     };
                     break;
                 }
