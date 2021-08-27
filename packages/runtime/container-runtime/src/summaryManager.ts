@@ -184,18 +184,18 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     };
 
     private startSummarization() {
-        assert(this.state === SummaryManagerState.Off, "expected: off");
+        assert(this.state === SummaryManagerState.Off, "Expected: off");
         this.state = SummaryManagerState.Starting;
 
         assert(this.runningSummarizer === undefined, "Old summarizer is still working!");
 
-        this.delayBeforeCreatingSummarizer().then(async (isDelayed: boolean) => {
+        this.delayBeforeCreatingSummarizer().then(async (startWithInitialDelay: boolean) => {
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             // but only if creation was delayed. If it was not, then we want to ensure we always create
             // a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
             // document out of broken state if it has too many ops and ordering service keeps nacking main
             // container (and thus it goes into cycle of reconnects)
-            if (isDelayed && this.getShouldSummarizeState().shouldSummarize === false) {
+            if (startWithInitialDelay && this.getShouldSummarizeState().shouldSummarize === false) {
                 return;
             }
 
@@ -268,7 +268,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
         if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
-            // we can't create a summarizer for some reason; raise error on container
             this.emit(
                 "summarizerWarning",
                 createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false),
@@ -286,22 +285,24 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         });
 
         // This delay helps ensure that last summarizer that might be left from previous client
-        // has enough time to complete its summary and thus new summarizer not conflict with previous one.
+        // has enough time to complete its last summary and thus new summarizer not conflict with previous one.
+        // If, however, there are too many unsummarized ops, try to resolve it as quickly as possible, with
+        // understanding that we may see nacks because of such quick action.
         // A better design would be for summarizer election logic to always select current summarizer as
         // summarizing client (i.e. clientType === "summarizer" can be elected) to ensure that nobody else can
         // summarizer while it finishes its work and moves to exit.
         // It also helps with pure boot scenario (single client) to offset expensive work a bit out from
         // critical boot sequence.
-        let result = false;
+        let startWithInitialDelay = false;
         if (this.summaryCollection.opsSinceLastAck < this.opsToBypassInitialDelay) {
-            result = true;
+            startWithInitialDelay = true;
             delayMs = Math.max(delayMs, this.initialDelayMs);
         }
 
         if (delayMs > 0) {
             await delay(delayMs);
         }
-        return result;
+        return startWithInitialDelay;
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
