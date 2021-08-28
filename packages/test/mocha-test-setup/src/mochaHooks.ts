@@ -20,11 +20,8 @@ class TestLogger implements ITelemetryBufferedLogger {
     async flush() {
         return this.parentLogger.flush();
     }
-    setTestName(title: string | undefined) {
-        this.testName = title;
-    }
     constructor(private readonly parentLogger: ITelemetryBufferedLogger,
-        private testName?: string) {}
+        private readonly testName?: string) {}
 }
 const nullLogger: ITelemetryBufferedLogger = {
     send: () => {},
@@ -34,11 +31,13 @@ const nullLogger: ITelemetryBufferedLogger = {
 const log = console.log;
 const error = console.log;
 const warn = console.warn;
-let testLogger: TestLogger;
+let testLogger: ITelemetryBufferedLogger;
+let originalLogger: ITelemetryBufferedLogger;
 export const mochaHooks = {
     beforeAll() {
-        const parentLogger = _global.getTestLogger?.() ?? nullLogger;
-        testLogger = new TestLogger(parentLogger);
+        originalLogger = _global.getTestLogger?.() ?? nullLogger;
+        // Initialize the test logger with the original looger
+        testLogger = originalLogger;
         _global.getTestLogger = () => testLogger;
     },
     beforeEach() {
@@ -48,13 +47,16 @@ export const mochaHooks = {
             console.error = () => { };
             console.warn = () => { };
         }
+        // Set the test logger during test to include the test title
         const context = this as any as Context;
-        testLogger.setTestName(context.currentTest?.fullTitle());
+        testLogger = new TestLogger(originalLogger, context.currentTest?.fullTitle());
     },
     afterEach() {
         console.log = log;
         console.error = error;
         console.warn = warn;
-        testLogger.setTestName(undefined);
+
+        // Reset back to the original logger after the test
+        testLogger = originalLogger;
     },
 };
