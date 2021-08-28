@@ -87,9 +87,9 @@ stages:
             workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
             customCommand: 'run test:realsvc:routerlicious:report'
 
-  # end-to-end tests routerlicious
+  # end-to-end tests frs
   - stage:
-    displayName: e2e - routerlicious
+    displayName: e2e - frs
     dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
