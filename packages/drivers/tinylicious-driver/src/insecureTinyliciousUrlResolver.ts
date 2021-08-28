@@ -32,12 +32,12 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers && request.headers[DriverHeader.createNew]) {
+        if (request.headers && !!request.headers[DriverHeader.createNew]) {
             return {
                 endpoints: {
                     ordererUrl: this.tinyliciousEndpoint,
                 },
-                id: "/",
+                id: "",
                 tokens: {},
                 type: "fluid",
                 url: `${this.fluidProtocolEndpoint}/tinylicious`,
@@ -81,18 +81,14 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
          */
         return `${documentId}/${relativeUrl}`;
     }
-
-    public createNewContainerRequest(): IRequest {
-        return { url: "/", headers: { [DriverHeader.createNew]: true } };
-    }
 }
 
 export const createTinyliciousCreateNewRequest =
-    (documentId: string): IRequest => (
+    (documentId?: string): IRequest => (
         {
-            url: documentId,
+            url: documentId ?? "",
             headers: {
-                createNew: true,
+                [DriverHeader.createNew]: true,
             },
         }
     );

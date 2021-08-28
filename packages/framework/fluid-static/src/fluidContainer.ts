@@ -68,11 +68,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     public async attach(): Promise<string> {
-        if (this.attachState !== AttachState.Detached) {
-            throw new Error("Cannot attach container. Container is not in detached state");
-        }
-        // no-op by default
-        return "";
+        throw new Error("Cannot attach container. Container is not in detached state");
     }
 
     public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
