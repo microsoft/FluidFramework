@@ -173,11 +173,8 @@ const options = {
         ],
         requiresArg: true,
     },
-    r11sService: {
-        choices: [
-            "frs",
-            "r11s",
-        ],
+    r11sEndpointName: {
+        type: "string",
     },
 };
 
@@ -195,7 +192,7 @@ nconf.argv({
         "fluid__test__compatKind",
         "fluid__test__compatVersion",
         "fluid__test__driver",
-        "fluid__test__r11sService",
+        "fluid__test__r11sEndpointName",
     ],
     parseValues: true,
 }).defaults(
@@ -212,14 +209,14 @@ nconf.argv({
 const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
 const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
 const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
-const r11sService = nconf.get("fluid:test:r11sService") as string ?? "r11s";
+const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string ?? "r11s";
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
 // Number arrays needs quote so that single element array can be interpret as array.
 process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
-process.env.fluid__test__r11sService = r11sService;
+process.env.fluid__test__r11sEndpointName = r11sEndpointName;
 
 let configList: CompatConfig[] = [];
 if (!compatVersions || compatVersions.length === 0) {
@@ -264,7 +261,7 @@ function describeCompat(
                             type: driver,
                             version: config.driver,
                             config: {
-                                r11s: { service: r11sService },
+                                r11s: { r11sEndpointName: r11sEndpointName },
                             },
                         },
                         config.containerRuntime,

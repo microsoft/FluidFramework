@@ -49,34 +49,34 @@ function getLegacyConfigFromEnv() {
     return getConfig(fluidHost, tenantId, tenantSecret);
 }
 
-function getServiceConfigFromEnv(serviceName: string) {
-    const configStr = process.env[`fluid__test__driver__${serviceName}`];
-    if (serviceName === "r11s" && configStr === undefined) {
+function getEndpointConfigFromEnv(r11sEndpointName: string) {
+    const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
+    if (r11sEndpointName === "r11s" && configStr === undefined) {
         // Allow legacy setting from fluid__webpack__ for r11s for now
         return getLegacyConfigFromEnv();
     }
-    assert(configStr, `Missing config for ${serviceName}`);
+    assert(configStr, `Missing config for ${r11sEndpointName}`);
     const config = JSON.parse(configStr);
     return getConfig(config.host, config.tenantId, config.tenantSecret);
 }
 
-function getConfigFromEnv(serviceName?: string) {
-    if (serviceName === undefined) {
+function getConfigFromEnv(r11sEndpointName?: string) {
+    if (r11sEndpointName === undefined) {
         const fluidHost = process.env.fluid__webpack__fluidHost;
         if (fluidHost === undefined) {
             // default to get it with the per service env for r11s
-            return getServiceConfigFromEnv("r11s");
+            return getEndpointConfigFromEnv("r11s");
         }
         return fluidHost.includes("localhost") ? dockerConfig : getLegacyConfigFromEnv();
     }
-    return serviceName === "docker" ? dockerConfig : getServiceConfigFromEnv(serviceName);
+    return r11sEndpointName === "docker" ? dockerConfig : getEndpointConfigFromEnv(r11sEndpointName);
 }
 
 export class RouterliciousTestDriver implements ITestDriver {
-    public static createFromEnv(config?: { service?: string },
+    public static createFromEnv(config?: { r11sEndpointName?: string },
         api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
-        const { serviceEndpoint, tenantId, tenantSecret } = getConfigFromEnv(config?.service);
+        const { serviceEndpoint, tenantId, tenantSecret } = getConfigFromEnv(config?.r11sEndpointName);
         return new RouterliciousTestDriver(
             tenantId,
             tenantSecret,

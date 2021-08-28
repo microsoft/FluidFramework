@@ -160,7 +160,7 @@ export class RouterliciousTestDriver implements ITestDriver {
     createDocumentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
     static createFromEnv(config?: {
-        service?: string;
+        r11sEndpointName?: string;
     }, api?: RouterliciousDriverApiType): RouterliciousTestDriver;
     // (undocumented)
     createUrlResolver(): InsecureUrlResolver;

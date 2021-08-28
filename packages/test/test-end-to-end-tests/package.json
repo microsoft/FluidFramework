@@ -24,7 +24,7 @@
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
     "test": "npm run test:realsvc",
     "test:realsvc": "npm run test:realsvc:local && echo 'Skipped: npm run test:realsvc:tinylicious (Issue #6006)'",
-    "test:realsvc:frs": "cross-env fluid__test__driver=r11s fluid__test__r11sService=frs FLUID_TEST_TIMEOUT=5000 npm run test:realsvc:run",
+    "test:realsvc:frs": "cross-env fluid__test__driver=r11s fluid__test__r11sEndpointName=frs FLUID_TEST_TIMEOUT=5000 npm run test:realsvc:run",
     "test:realsvc:frs:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:frs",
     "test:realsvc:local": "cross-env fluid__test__driver=local npm run test:realsvc:run",
     "test:realsvc:local:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:local",
