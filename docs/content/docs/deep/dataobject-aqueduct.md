@@ -3,6 +3,7 @@ title: Encapsulating data with DataObject
 menuPosition: 7
 aliases:
   - "/docs/concepts/dataobject-aqueduct/"
+draft: true
 ---
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. We'll now discuss

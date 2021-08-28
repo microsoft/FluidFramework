@@ -184,9 +184,6 @@ etc. With this data model, users can change individual properties of the shape w
 You likely have more than one shape in your data model, so you could create a SharedMap to store all your shapes, then
 store the SharedMaps representing each shape within that SharedMap.
 
-To learn more about how you use DDSes to create more complex Fluid objects, see the [Encapsulating data with
-DataObject]({{< relref "dataobject-aqueduct.md" >}}) section.
-
 ### Key-value data
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
