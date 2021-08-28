@@ -261,7 +261,7 @@ function describeCompat(
                             type: driver,
                             version: config.driver,
                             config: {
-                                r11s: { r11sEndpointName: r11sEndpointName },
+                                r11s: { r11sEndpointName },
                             },
                         },
                         config.containerRuntime,
