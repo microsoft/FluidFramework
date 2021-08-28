@@ -25,7 +25,7 @@ export interface ITestDriver {
 }
 
 // @public (undocumented)
-export type TestDriverTypes = "tinylicious" | "routerlicious" | "odsp" | "local";
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 
 // (No @packageDocumentation comment for this package)
