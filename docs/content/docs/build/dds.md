@@ -48,7 +48,6 @@ generally fall into two broad categories: *optimistic* and *consensus-based*.
 {{% callout note "See also" %}}
 
 * [Fluid Framework architecture]({{< relref "architecture.md" >}})
-* [Fluid service]({{< relref "service.md" >}})
 
 {{% /callout %}}
 
