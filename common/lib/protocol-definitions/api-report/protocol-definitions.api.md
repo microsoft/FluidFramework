@@ -329,8 +329,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
-    // (undocumented)
-    expHash1: string;
+    // @alpha
+    expHash1?: string;
     // (undocumented)
     metadata?: any;
     // (undocumented)

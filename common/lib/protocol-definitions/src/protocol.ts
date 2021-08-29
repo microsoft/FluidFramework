@@ -164,8 +164,11 @@ export interface ISequencedDocumentMessage {
     // Timestamp when the server ticketed the message
     timestamp: number;
 
-    // Experimental field for storing the rolling hash at sequence number
-    expHash1: string;
+    /**
+     * Experimental field for storing the rolling hash at sequence number.
+     * @alpha
+     */
+    expHash1?: string;
 }
 
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
