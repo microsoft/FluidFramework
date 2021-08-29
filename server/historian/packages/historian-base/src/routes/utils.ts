@@ -66,7 +66,6 @@ export async function createGitService(
     const decoded = jwt.decode(token) as ITokenClaims;
      const service = new RestGitService(
          details.storage,
-
          writeToExternalStorage,
          tenantId,
          decoded.documentId,
