@@ -14,11 +14,12 @@ import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
 export function create(
-    store: nconf.Provider,
+    config: nconf.Provider,
     tenantService: ITenantService,
     cache: ICache,
     throttler: IThrottler,
-    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
+    asyncLocalStorage?: AsyncLocalStorage<string>,
+    cacheEnabled: boolean = true): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -30,7 +31,13 @@ export function create(
         tenantId: string,
         authorization: string,
         params: git.ICreateTreeParams): Promise<git.ITree> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage,
+            cacheEnabled);
         return service.createTree(params);
     }
 
@@ -40,7 +47,13 @@ export function create(
         sha: string,
         recursive: boolean,
         useCache: boolean): Promise<git.ITree> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        const service = await utils.createGitService(
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage,
+            cacheEnabled);
         return service.getTree(sha, recursive, useCache);
     }
 

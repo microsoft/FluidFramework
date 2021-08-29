@@ -24,6 +24,8 @@ export function handleResponse<T>(
         (result) => {
             if (cache) {
                 response.setHeader("Cache-Control", "public, max-age=31536000");
+            } else {
+                response.setHeader("Cache-Control", "no-store, max-age=0");
             }
 
             response.status(status).json(result);
@@ -39,6 +41,7 @@ export async function createGitService(
     tenantService: ITenantService,
     cache: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>,
+    cacheEnabled: boolean = true,
 ): Promise<RestGitService> {
     let token: string;
     if (authorization) {
@@ -68,7 +71,8 @@ export async function createGitService(
          writeToExternalStorage,
          tenantId,
          decoded.documentId,
-         asyncLocalStorage);
+         asyncLocalStorage,
+         cacheEnabled);
 
     return service;
 }

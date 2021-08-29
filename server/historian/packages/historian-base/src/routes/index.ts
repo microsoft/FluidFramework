@@ -38,24 +38,25 @@ export interface IRoutes {
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function create(
-    store: nconf.Provider,
+    config: nconf.Provider,
     tenantService: ITenantService,
     cache: ICache,
     throttler: IThrottler,
     asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
+    const cacheEnabled = config.get("restGitService:cacheEnabled") as boolean | undefined;
     return {
         git: {
-            blobs: blobs.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            commits: commits.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            refs: refs.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            tags: tags.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            trees: trees.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            blobs: blobs.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            commits: commits.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            refs: refs.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            tags: tags.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            trees: trees.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
         },
         repository: {
-            commits: repositoryCommits.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            contents: contents.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            headers: headers.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            commits: repositoryCommits.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            contents: contents.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            headers: headers.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
         },
-        summaries: summaries.create(store, tenantService, cache, throttler, asyncLocalStorage),
+        summaries: summaries.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
     };
 }

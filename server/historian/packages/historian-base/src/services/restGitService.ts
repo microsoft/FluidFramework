@@ -54,7 +54,8 @@ export class RestGitService {
         private readonly writeToExternalStorage: boolean,
         private readonly tenantId: string,
         private readonly documentId: string,
-        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+        private readonly cacheEnabled: boolean = true) {
         const defaultHeaders: OutgoingHttpHeaders = {
             "User-Agent": userAgent,
             "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
@@ -363,7 +364,7 @@ export class RestGitService {
     }
 
     private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
-        if (useCache) {
+        if (this.cacheEnabled && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
