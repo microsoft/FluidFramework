@@ -21,24 +21,29 @@ class TestLogger implements ITelemetryBufferedLogger {
         return this.parentLogger.flush();
     }
     constructor(private readonly parentLogger: ITelemetryBufferedLogger,
-        private readonly testName?: string) {}
+        private readonly testName?: string) { }
 }
 const nullLogger: ITelemetryBufferedLogger = {
-    send: () => {},
-    flush: async () => {},
+    send: () => { },
+    flush: async () => { },
 };
 
 const log = console.log;
 const error = console.log;
 const warn = console.warn;
-let testLogger: ITelemetryBufferedLogger;
+let currentTestLogger: ITelemetryBufferedLogger | undefined;
+let currentTestName: string | undefined;
 let originalLogger: ITelemetryBufferedLogger;
 export const mochaHooks = {
     beforeAll() {
         originalLogger = _global.getTestLogger?.() ?? nullLogger;
-        // Initialize the test logger with the original looger
-        testLogger = originalLogger;
-        _global.getTestLogger = () => testLogger;
+        _global.getTestLogger = () => {
+            // If it hasn't been created yet, create a test logger that will log the test name on demand
+            if (!currentTestLogger && currentTestName !== undefined) {
+                currentTestLogger = new TestLogger(originalLogger, currentTestName);
+            }
+            return currentTestLogger ?? originalLogger;
+        };
     },
     beforeEach() {
         // Suppress console.log if not verbose mode
@@ -47,16 +52,18 @@ export const mochaHooks = {
             console.error = () => { };
             console.warn = () => { };
         }
-        // Set the test logger during test to include the test title
+        // save the test name can and clear the previous logger (if afterEach didn't get ran and it got left behind)
         const context = this as any as Context;
-        testLogger = new TestLogger(originalLogger, context.currentTest?.fullTitle());
+        currentTestName = context.currentTest?.fullTitle();
+        currentTestLogger = undefined;
     },
     afterEach() {
         console.log = log;
         console.error = error;
         console.warn = warn;
 
-        // Reset back to the original logger after the test
-        testLogger = originalLogger;
+        // clear the test logger and test name after each test
+        currentTestLogger = undefined;
+        currentTestName = undefined;
     },
 };
