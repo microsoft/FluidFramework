@@ -40,23 +40,22 @@ export interface IRoutes {
 export function create(
     config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
-    const cacheEnabled = config.get("restGitService:cacheEnabled") as boolean | undefined;
     return {
         git: {
-            blobs: blobs.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
-            commits: commits.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
-            refs: refs.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
-            tags: tags.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
-            trees: trees.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            blobs: blobs.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            commits: commits.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            refs: refs.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            tags: tags.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            trees: trees.create(config, tenantService, throttler, cache, asyncLocalStorage),
         },
         repository: {
-            commits: repositoryCommits.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
-            contents: contents.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
-            headers: headers.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+            commits: repositoryCommits.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            contents: contents.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            headers: headers.create(config, tenantService, throttler, cache, asyncLocalStorage),
         },
-        summaries: summaries.create(config, tenantService, cache, throttler, asyncLocalStorage, cacheEnabled),
+        summaries: summaries.create(config, tenantService, throttler, cache, asyncLocalStorage),
     };
 }

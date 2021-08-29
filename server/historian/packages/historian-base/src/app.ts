@@ -29,8 +29,8 @@ const stream = split().on("data", (message) => {
 export function create(
     config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>) {
     // Express app configuration
     const app: express.Express = express();
@@ -63,7 +63,7 @@ export function create(
     app.use(cors());
     app.use(bindCorrelationId(asyncLocalStorage));
 
-    const apiRoutes = routes.create(config, tenantService, cache, throttler, asyncLocalStorage);
+    const apiRoutes = routes.create(config, tenantService, throttler, cache, asyncLocalStorage);
     app.use(apiRoutes.git.blobs);
     app.use(apiRoutes.git.refs);
     app.use(apiRoutes.git.tags);

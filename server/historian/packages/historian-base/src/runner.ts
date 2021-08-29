@@ -20,8 +20,8 @@ export class HistorianRunner implements IRunner {
         private readonly config: Provider,
         private readonly port: string | number,
         private readonly riddler: ITenantService,
-        private readonly cache: ICache,
         private readonly throttler: IThrottler,
+        private readonly cache?: ICache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
     }
 
@@ -29,7 +29,7 @@ export class HistorianRunner implements IRunner {
     public start(): Promise<void> {
         this.runningDeferred = new Deferred<void>();
         // Create the historian app
-        const historian = app.create(this.config, this.riddler, this.cache, this.throttler, this.asyncLocalStorage);
+        const historian = app.create(this.config, this.riddler, this.throttler, this.cache, this.asyncLocalStorage);
         historian.set("port", this.port);
 
         this.server = this.serverFactory.create(historian);

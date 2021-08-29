@@ -50,12 +50,11 @@ export class RestGitService {
 
     constructor(
         private readonly storage: ITenantStorage,
-        private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
         private readonly tenantId: string,
         private readonly documentId: string,
-        private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-        private readonly cacheEnabled: boolean = true) {
+        private readonly cache?: ICache,
+        private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         const defaultHeaders: OutgoingHttpHeaders = {
             "User-Agent": userAgent,
             "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
@@ -357,14 +356,16 @@ export class RestGitService {
      * Caches the given key/value pair. Will log any errors with the cache.
      */
     private setCache<T>(key: string, value: T) {
-        // Attempt to cache to Redis - log any errors but don't fail
-        this.cache.set(key, value).catch((error) => {
-            winston.error(`Error caching ${key} to redis`, error);
-        });
+        if (this.cache) {
+            // Attempt to cache to Redis - log any errors but don't fail
+            this.cache.set(key, value).catch((error) => {
+                winston.error(`Error caching ${key} to redis`, error);
+            });
+        }
     }
 
     private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
-        if (this.cacheEnabled && useCache) {
+        if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);

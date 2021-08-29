@@ -16,10 +16,9 @@ import * as utils from "../utils";
 export function create(
     config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
-    asyncLocalStorage?: AsyncLocalStorage<string>,
-    cacheEnabled: boolean = true): Router {
+    cache?: ICache,
+    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -31,13 +30,7 @@ export function create(
         tenantId: string,
         authorization: string,
         body: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
-        const service = await utils.createGitService(
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage,
-            cacheEnabled);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.createBlob(body);
     }
 
@@ -46,13 +39,7 @@ export function create(
         authorization: string,
         sha: string,
         useCache: boolean): Promise<git.IBlob> {
-        const service = await utils.createGitService(
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage,
-            cacheEnabled);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getBlob(sha, useCache);
     }
 

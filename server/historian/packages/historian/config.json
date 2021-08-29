@@ -27,6 +27,6 @@
         "minThrottleIntervalInMs": 1000000
     },
     "restGitService": {
-        "cacheEnabled": true
+        "disableGitCache": false
     }
 }

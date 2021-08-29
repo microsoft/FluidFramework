@@ -15,10 +15,9 @@ import * as utils from "../utils";
 export function create(
     config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
-    asyncLocalStorage?: AsyncLocalStorage<string>,
-    cacheEnabled: boolean = true): Router {
+    cache?: ICache,
+    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -31,13 +30,7 @@ export function create(
         authorization: string,
         path: string,
         ref: string): Promise<any> {
-        const service = await utils.createGitService(
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage,
-            cacheEnabled);
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
         return service.getContent(path, ref);
     }
 

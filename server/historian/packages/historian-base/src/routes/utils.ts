@@ -39,9 +39,8 @@ export async function createGitService(
     tenantId: string,
     authorization: string,
     tenantService: ITenantService,
-    cache: ICache,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>,
-    cacheEnabled: boolean = true,
 ): Promise<RestGitService> {
     let token: string;
     if (authorization) {
@@ -67,12 +66,12 @@ export async function createGitService(
     const decoded = jwt.decode(token) as ITokenClaims;
      const service = new RestGitService(
          details.storage,
-         cache,
+
          writeToExternalStorage,
          tenantId,
          decoded.documentId,
-         asyncLocalStorage,
-         cacheEnabled);
+         cache,
+         asyncLocalStorage);
 
     return service;
 }
