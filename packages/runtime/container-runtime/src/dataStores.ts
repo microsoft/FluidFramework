@@ -50,7 +50,7 @@ import {
     createAttributesBlob,
     LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
-import { nonDataStorePaths, ReadContainerRuntimeMetadata, rootHasIsolatedChannels } from "./summaryFormat";
+import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
@@ -520,7 +520,7 @@ export class DataStores implements IDisposable {
 
 export function getSummaryForDatastores(
     snapshot: ISnapshotTree | undefined,
-    metadata: ReadContainerRuntimeMetadata,
+    metadata?: IContainerRuntimeMetadata,
 ): ISnapshotTree | undefined {
     if (!snapshot) {
         return undefined;
