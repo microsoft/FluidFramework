@@ -87,7 +87,6 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
     /**
      * Starts and waits for a promise which resolves when connected.
      * The promise will also resolve if stopped either externally or by disconnect.
-     * The return value indicates whether the start is successful or not.
      */
     public async waitStart() {
         if (!this.runtime.connected && !this.everConnected) {
