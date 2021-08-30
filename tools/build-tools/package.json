@@ -16,7 +16,7 @@
     "fluid-layer-check": "bin/fluid-layer-check",
     "fluid-repo-policy-check": "bin/fluid-repo-policy-check",
     "fluid-run-bundle-analyses": "bin/fluid-run-bundle-analyses",
-    "fluid-type-validator": "bin/typeValidator.ts"
+    "fluid-type-validator": "bin/fluid-type-validator"
   },
   "scripts": {
     "build": "tsc -b",
