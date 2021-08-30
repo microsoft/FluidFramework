@@ -96,6 +96,6 @@ export function errorObjectFromSocketError(socketError: IR11sSocketError, handle
     return createR11sNetworkError(
         message,
         socketError.code,
-        socketError.retryAfterMs,
+        socketError.retryAfterMs === undefined ? undefined : socketError.retryAfterMs * 1000,
     );
 }
