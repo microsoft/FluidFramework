@@ -57,7 +57,13 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
         return this.stopDeferred.promise;
     }
 
-    public constructor(private readonly runtime: IConnectableRuntime) {
+    public static async create(runtime: IConnectableRuntime) {
+        const obj = new RunWhileConnectedCoordinator(runtime);
+        await obj.waitStart();
+        return obj;
+    }
+
+    protected constructor(private readonly runtime: IConnectableRuntime) {
         // Try to determine if the runtime has ever been connected
         if (this.runtime.connected) {
             this.everConnected = true;

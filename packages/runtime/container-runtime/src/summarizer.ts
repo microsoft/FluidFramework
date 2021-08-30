@@ -132,8 +132,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
         });
 
-        const runCoordinator = new RunWhileConnectedCoordinator(this.runtime);
-        await runCoordinator.waitStart();
+        const runCoordinator = await RunWhileConnectedCoordinator.create(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.
         const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
