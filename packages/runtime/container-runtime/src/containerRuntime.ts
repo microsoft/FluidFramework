@@ -1782,10 +1782,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Helper function to check whether we should still continue between each async step.
             const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
-                // If summarizer loses connection it will never reconnect
-                if (!this.connected) {
+                // Do not check for loss of connectivity directly! Instead leave it up to
+                // RunWhileConnectedCoordinator to control policy in a single place.
+                // This will allow easier change of design if we chose to. For example, we may chose to allow
+                // summarizer to reconnect in the future.
+                // Also checking for cancellation is a must as summary process may be abandoned for other reasons,
+                // like loss of connectivity for main (interactive) client.
+                if (options.cancellationToken.cancelled) {
                     return { continue: false, error: "disconnected" };
                 }
+                // That said, we rely on submitSystemMessage() that today only works in connected state.
+                // So if we fail here, it either means that RunWhileConnectedCoordinator does not work correctly,
+                // OR that design changed and we need to remove this check and fix submitSystemMessage.
+                assert(this.connected, "connected");
+
                 // Ensure that lastSequenceNumber has not changed after pausing.
                 // We need the summary op's reference sequence number to match our summary sequence number,
                 // otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
@@ -2101,7 +2111,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any) {
+        appData?: any,
+    ) {
+        this.verifyNotClosed();
+        assert(this.connected, "Container disconnected when trying to submit system message");
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,

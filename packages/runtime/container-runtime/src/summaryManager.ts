@@ -223,8 +223,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
-            // Follow-up: requires PR #7230 completion to enable this assert:
-            // assert(summarizer.cancelled, "should be cancelled by now");
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
             this.emit("summarizerWarning", error);
