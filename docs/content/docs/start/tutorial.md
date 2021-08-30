@@ -7,18 +7,16 @@ aliases:
   - "/start/tutorial/"
 ---
 
-In this walkthrough, you'll learn about using the Fluid Framework by building a simple [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application. To get started, go
-through the [Quick Start]({{< relref "./quick-start.md" >}}) guide.
+In this walkthrough, you'll learn about using the Fluid Framework by building a simple [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application. To get started, go through the [Quick Start]({{< relref "./quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.12142020.js" >}}
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
-1. Write the view
-2. Create a Fluid Container
-3. Connect view to Fluid data
-4. Modify Fluid data on dice roll
+1. Application setup
+2. Container creation
+3. Connect view with Fluid data
 
 
 
@@ -43,7 +41,6 @@ const root = document.getElementById("root")
 ```
 
 ## Container creation
-
 
 Fluid collaboration happens in containers, which have unique identifiers (like a document filename) that must be created before other users can load them. Since creation and loading of containers both happen in the client our application needs to be capable of handling both paths.
 
@@ -80,11 +77,11 @@ const loadExistingDice = async (id) => {
 
 ```
 
-## Starting the app
+### Switching between loading and creating
 
-Since our application can be in one of two states, creating, or loading from an `ID`, we can simulate those states by storying the container `id` in the URL hash. If the URL has a hash the app will load that existing container, otherwise the app creates a new container and sets the returned `id` as the hash.
+Since the application can be in one of two states, creating, or loading from an `id`, the app simulate those states by storing the container `id` in the URL hash. If the URL has a hash, the app will load that existing container, otherwise the app creates a new container and sets the returned `id` as the hash.
 
-Again, these are all async methods, so the `start` function needs to be created and then called, catching any errors that are returned.
+Both load and create methods are async, so the `start` function needs to be created and then called, catching any errors that are returned.
 
 ```js
 
@@ -102,11 +99,13 @@ start().catch((error) => console.error(error));
 
 ## Defining the Dice view
 
-Fluid is framework agnostic and works well with React, Vue, Angular and web components. This example will use nothing more than standard HTML/DOM methods, but you can see this full demo, and examples of other frameworks in our [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld/tree/main/src/view).
+Fluid is framework agnostic and works well with React, Vue, Angular and web components. This example will use nothing more than standard HTML/DOM methods, but visit the [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld/tree/main/src/view) to see this view written in other frameworks. 
 
 ### Start with a static view
 
-This view, given an HTML element to attach to, creates a working dice roller that displays a random dice value each time the "Roll" button is clicked. Note that demo code ommits the styles for brevity.
+In this tutorial we will start with a dice roller that works without Fluid locally, and then show how to add collaboration by changing a few key pieces. 
+
+This `renderDiceRoller`, given an HTML element to attach to, creates a working dice roller that displays a random dice value each time the "Roll" button is clicked. Note that demo code ommits the styles for brevity.
 
 ```js
 function renderDiceRoller(elem, diceMap) {
@@ -128,7 +127,7 @@ function renderDiceRoller(elem, diceMap) {
 
 ### Modifying Fluid data
 
-The first thing we want to do is change the `rollButton` to set the `value` key of the `diceMap`, instead of updating the local state directly. Pushing local state out to Fluid state is a common pattern because the view should react to local and remote changed in the same flow.
+The first thing to change is what happens when the user clicks the `rollButton`. Instead of having the button update the state directly, the button updates the `value` key on the passed in `diceMap`. This creates a new op on the client which will be communicated with all of the other collaborators. Pushing local state out to Fluid state is a common pattern because the view should react to local and remote changes in the same way.
 
 ```js
     rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6));
@@ -137,11 +136,11 @@ The first thing we want to do is change the `rollButton` to set the `value` key 
 
 ### Relying on Fluid data
 
-Secondly, the `updateDice` function will no longer take in any arbitrary value. Now, the only way to update the dice value is to modify the `value` key on the `diceMap` data structure.
+Secondly, the `updateDice` function will no longer take in an arbitrary value. The app can no longer directly modify the local dice value. 
 
 ```js
     const updateDice = () => {
-        const value = fluid.get("value");
+        const value = diceMap.get("value");
         dice.textContent = String.fromCodePoint(0x2680 + value);
     };
     updateDice();
@@ -149,7 +148,7 @@ Secondly, the `updateDice` function will no longer take in any arbitrary value. 
 
 ### Listening for Fluid changes
 
-Fluid data needs to be fetched each time that the value changes. The app can listening for changes on any DDS, and call an update method each time that the event fires. Below `updateDice` is being called each time the `valueChanged` event fires on the `SharedMap`.
+The value returned from `diceMap.get("value")` is only a snapshot in time. To keep the data up to date as it changes an event listener is set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is fired. Visit each DDSes docs to see a list of events and the values passed to those events. 
 
 ```js
     diceMap.on("valueChanged", () => updateDice());
