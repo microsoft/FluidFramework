@@ -45,6 +45,8 @@ export interface DriverApiType {
 export interface FluidTestDriverConfig {
     // (undocumented)
     odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
+    // (undocumented)
+    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
 // @public (undocumented)
@@ -140,6 +142,7 @@ export class OdspTestDriver implements ITestDriver {
 // @public (undocumented)
 export const RouterliciousDriverApi: {
     version: string;
+    modulePath: string;
     RouterliciousDocumentServiceFactory: typeof RouterliciousDocumentServiceFactory;
 };
 
@@ -148,7 +151,7 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
-    constructor(bearerSecret: string, tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api?: RouterliciousDriverApiType);
+    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api?: RouterliciousDriverApiType);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
@@ -156,7 +159,9 @@ export class RouterliciousTestDriver implements ITestDriver {
     // (undocumented)
     createDocumentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
-    static createFromEnv(api?: RouterliciousDriverApiType): RouterliciousTestDriver;
+    static createFromEnv(config?: {
+        r11sEndpointName?: string;
+    }, api?: RouterliciousDriverApiType): RouterliciousTestDriver;
     // (undocumented)
     createUrlResolver(): InsecureUrlResolver;
     // (undocumented)

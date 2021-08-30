@@ -6,7 +6,7 @@
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import {
     IAckNackSummaryResult,
@@ -158,7 +158,7 @@ export class SummaryGenerator {
      * fullTree to generate tree without any summary handles even if unchanged
      */
     public summarize(
-        reason: SummarizeReason,
+        summarizeProps: ITelemetryProperties,
         options: ISummarizeOptions,
         resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
@@ -166,7 +166,7 @@ export class SummaryGenerator {
 
         if (this.summarizing !== undefined) {
             // We do not expect this case. Log the error and let it try again anyway.
-            this.logger.sendErrorEvent({ eventName: "ConcurrentSummarizeAttempt", reason });
+            this.logger.sendErrorEvent({ eventName: "ConcurrentSummarizeAttempt", ...summarizeProps });
             resultsBuilder.fail("ConcurrentSummarizeAttempt", undefined);
             return resultsBuilder.build();
         }
@@ -175,12 +175,12 @@ export class SummaryGenerator {
         // mark that we are currently summarizing to prevent concurrent summarizing
         this.summarizing = new Deferred<void>();
 
-        this.summarizeCore(reason, options, resultsBuilder).finally(() => {
+        this.summarizeCore(summarizeProps, options, resultsBuilder).finally(() => {
             this.summarizing?.resolve();
             this.summarizing = undefined;
         }).catch((error) => {
             const message = "UnexpectedSummarizeError";
-            this.logger.sendErrorEvent({ eventName: message }, error);
+            this.logger.sendErrorEvent({ eventName: message, ...summarizeProps }, error);
             resultsBuilder.fail(message, error);
         });
 
@@ -188,14 +188,14 @@ export class SummaryGenerator {
     }
 
     private async summarizeCore(
-        reason: SummarizeReason,
+        summarizeProps: ITelemetryProperties,
         options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;
-        const summarizeEvent = PerformanceEvent.start(this.logger, {
+        const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });
+        const summarizeEvent = PerformanceEvent.start(logger, {
             eventName: "Summarize",
-            reason,
             refreshLatestAck,
             fullTree,
             timeSinceLastAttempt: Date.now() - this.heuristicData.lastAttempt.summaryTime,
@@ -232,7 +232,7 @@ export class SummaryGenerator {
             summaryData = await this.internalsProvider.submitSummary({
                 fullTree,
                 refreshLatestAck,
-                summaryLogger: this.logger,
+                summaryLogger: logger,
             });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.
@@ -267,7 +267,7 @@ export class SummaryGenerator {
                 }
             }
 
-            this.logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
+            logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
             if (summaryData.stage !== "submit") {
                 return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
             }
@@ -297,7 +297,7 @@ export class SummaryGenerator {
                 data: { summarizeOp, broadcastDuration },
             });
             this.heuristicData.lastAttempt.summarySequenceNumber = summarizeOp.sequenceNumber;
-            this.logger.sendTelemetryEvent({
+            logger.sendTelemetryEvent({
                 eventName: "SummaryOp",
                 timeWaiting: broadcastDuration,
                 refSequenceNumber: summarizeOp.referenceSequenceNumber,

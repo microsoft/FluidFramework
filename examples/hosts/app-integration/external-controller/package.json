@@ -36,13 +36,8 @@
   "dependencies": {
     "@fluidframework/azure-client": "^0.47.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.39.8",
-    "@fluidframework/server-services-client": "^0.1029.0-0",
-    "css-loader": "^1.0.0",
     "fluid-framework": "^0.47.0",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2",
-    "style-loader": "^1.0.0"
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluid-experimental/get-container": "^0.47.0",

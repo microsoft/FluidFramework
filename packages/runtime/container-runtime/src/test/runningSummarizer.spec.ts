@@ -953,7 +953,7 @@ describe("Runtime", () => {
                     // Now emit ack
                     await emitAck();
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:Summarize_end", summaryGenTag: runCount, reason: "maxOps" },
+                        { eventName: "Running:Summarize_end", summaryGenTag: runCount, summarizeReason: "maxOps" },
                     ]), "unexpected log sequence 3");
                 });
             });

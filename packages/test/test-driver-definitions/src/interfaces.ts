@@ -6,7 +6,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
-export type TestDriverTypes = "tinylicious" | "routerlicious" | "odsp" | "local";
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 export interface ITestDriver{
     /**
