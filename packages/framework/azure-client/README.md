@@ -73,7 +73,6 @@ See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) fo
 
 ```typescript
 const schema = {
-    name: "my-container",
     initialObjects: {
         /* ... */
     },
@@ -110,7 +109,6 @@ The most common way to use Fluid is through initial collaborative objects that a
 // Define the keys and types of the initial list of collaborative objects.
 // Here, we are using a SharedMap DDS on key "map1" and a SharedString on key "text1".
 const schema = {
-    name: "my-container",
     initialObjects: {
         map1: SharedMap,
         text1: SharedString,
@@ -137,7 +135,6 @@ Dynamic objects are loaded on-demand to optimize for data virtualization. To get
 
 ```typescript
 const schema = {
-    name: "my-container",
     initialObjects: {
         map1: SharedMap,
     },

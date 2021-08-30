@@ -37,7 +37,7 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is *last writer wins* (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[documentation for each DDS]({{< relref "data-structures/overview.md" >}}) for more details about the merge
+[documentation for each DDS]({{< relref "/docs/data-structures/overview.md" >}}) for more details about the merge
 strategy it uses.
 
 ## Performance characteristics
@@ -58,8 +58,7 @@ Optimistic DDSes are capable of applying Fluid operations before they are sequen
 changes are said to be applied *optimistically*, hence the name *optimistic DDSes*. The DDSes also apply remote
 operations as they are made in a consistent way.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], [SharedMatrix][], and
-[SharedString][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], and [SharedString][].
 
 ### Consensus-based data structures
 
@@ -71,7 +70,7 @@ These behavioral guarantees cannot be implemented in an optimistic way. The cost
 part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
 for behavioral guarantees.
 
-Examples of consensus-based DDSes in Fluid Framework include [ConsensusRegisterCollection][] and [ConsensusQueue][].
+An example of a consensus-based DDS in Fluid Framework is the [TaskManager]][].
 
 #### Why consensus-based DDSes are useful
 
@@ -193,8 +192,6 @@ DataObject]({{< relref "dataobject-aqueduct.md" >}}) section.
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 * [SharedMap][] -- a basic key-value distributed data structure.
-* [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
-* [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
 
 ### Sequences
 
@@ -202,13 +199,11 @@ These DDSes are used for storing sequential data. They are all optimistic.
 
 * [SharedNumberSequence][] -- a distributed sequence of numbers.
 * [SharedObjectSequence][] -- a distributed sequence of objects.
-* [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
 
 ### Specialized data structures
 
 * [SharedCounter][] -- a distributed counter.
 * [SharedString][] -- a specialized data structure for handling collaborative text.
-* [Ink][] -- a specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
@@ -219,20 +214,17 @@ These DDSes are used for storing sequential data. They are all optimistic.
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "data-structures/ink.md" >}}
-[PureDataObject]: {{< relref "apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "apis/aqueduct/puredataobjectfactory.md" >}}
-[SharedCell]: {{< relref "data-structures/cell.md" >}}
-[SharedCounter]: {{< relref "data-structures/counter.md" >}}
-[SharedDirectory]: {{< relref "data-structures/directory.md" >}}
-[SharedMap]: {{< relref "data-structures/map.md" >}}
-[SharedMatrix]: {{< relref "data-structures/matrix.md" >}}
-[SharedNumberSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedObjectSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedString]: {{< relref "data-structures/string.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
