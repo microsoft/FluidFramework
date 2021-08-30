@@ -143,9 +143,6 @@ export class SummarizeResultBuilder {
  * This class generates and tracks a summary attempt.
  */
 export class SummaryGenerator {
-    private summarizing: Deferred<void> | undefined;
-    public isSummarizing() { return this.summarizing !== undefined; }
-    public async waitSummarizing() { await this.summarizing?.promise; }
     private summarizeCount = 0;
     public getSummarizeCount() { return this.summarizeCount; }
     private readonly summarizeTimer: Timer;
@@ -178,21 +175,8 @@ export class SummaryGenerator {
     ): ISummarizeResults {
         ++this.summarizeCount;
 
-        if (this.summarizing !== undefined) {
-            // We do not expect this case. Log the error and let it try again anyway.
-            this.logger.sendErrorEvent({ eventName: "ConcurrentSummarizeAttempt", ...summarizeProps });
-            resultsBuilder.fail("ConcurrentSummarizeAttempt", undefined);
-            return resultsBuilder.build();
-        }
-
-        // GenerateSummary could take some time
-        // mark that we are currently summarizing to prevent concurrent summarizing
-        this.summarizing = new Deferred<void>();
-
-        this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken).finally(() => {
-            this.summarizing?.resolve();
-            this.summarizing = undefined;
-        }).catch((error) => {
+        this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken)
+        .catch((error) => {
             const message = "UnexpectedSummarizeError";
             this.logger.sendErrorEvent({ eventName: message, ...summarizeProps }, error);
             resultsBuilder.fail(message, error);
@@ -234,6 +218,7 @@ export class SummaryGenerator {
                  ...properties,
                  reason: errorReason,
                  category: cancellationToken.cancelled ? "generic" : "error",
+                 retryAfterSeconds,
             }, error);
             resultsBuilder.fail(getFailMessage(errorReason), error, nackSummaryResult, retryAfterSeconds);
         };
