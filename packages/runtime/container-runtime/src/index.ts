@@ -10,4 +10,4 @@ export * from "./pendingStateManager";
 export * from "./summarizer";
 export * from "./summarizerTypes";
 export * from "./summaryCollection";
-export { neverCancelledToken } from "./runWhileConnectedCoordinator";
+export { neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";

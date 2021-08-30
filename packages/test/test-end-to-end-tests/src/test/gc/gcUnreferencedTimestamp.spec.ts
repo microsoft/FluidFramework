@@ -12,7 +12,7 @@ import {
     IAckedSummary,
     IContainerRuntimeOptions,
     SummaryCollection,
-    neverCancelledToken,
+    neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
@@ -131,7 +131,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             fullTree: true,
             refreshLatestAck: false,
             summaryLogger: logger,
-            cancellationToken: neverCancelledToken,
+            cancellationToken: neverCancelledSummaryToken,
         });
         return summarySequenceNumber;
     }

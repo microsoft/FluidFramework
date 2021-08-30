@@ -583,7 +583,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 }
 
 // @public
-export const neverCancelledToken: ISummaryCancellationToken;
+export const neverCancelledSummaryToken: ISummaryCancellationToken;
 
 // @public (undocumented)
 export type OnDemandSummarizeResult = (ISummarizeResults & {
