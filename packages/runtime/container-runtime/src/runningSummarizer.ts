@@ -90,6 +90,7 @@ export class RunningSummarizer implements IDisposable {
         options: ISummarizeOptions;
         readonly resultsBuilder: SummarizeResultBuilder;
     } | undefined;
+    private summarizeCount = 0;
 
     private constructor(
         private readonly clientId: string,
@@ -105,7 +106,7 @@ export class RunningSummarizer implements IDisposable {
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
         this.logger = ChildLogger.create(
-            baseLogger, "Running", { all: { summaryGenTag: () => this.generator.getSummarizeCount() } });
+            baseLogger, "Running", { all: { summaryGenTag: () => this.summarizeCount } });
 
         if (!disableHeuristics) {
             this.heuristicRunner = new SummarizeHeuristicRunner(
@@ -274,6 +275,8 @@ export class RunningSummarizer implements IDisposable {
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
 
+        this.summarizeCount++;
+
         (async () => {
             const attempts = [
                 { refreshLatestAck: false, fullTree: false },
@@ -291,8 +294,8 @@ export class RunningSummarizer implements IDisposable {
                 const summarizeProps: ITelemetryProperties = {
                     summarizeReason,
                     summarizeTotalRetries: totalRetries,
-                    summarizeRetriesPerPhase: retriesPerPhase,
-                    summarizeAttemptPhase: attemptPhase,
+                    summarizeRetryPerPhase: retriesPerPhase,
+                    summarizeAttemptPhase: attemptPhase + 1, // make everything 1-based
                 };
 
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
@@ -353,6 +356,7 @@ export class RunningSummarizer implements IDisposable {
             // Another summary is currently being generated.
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
+        this.summarizeCount++;
         const result = this.generator.summarize({ summarizeReason: `onDemand/${reason}` }, options);
         result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
         return result;
@@ -426,6 +430,7 @@ export class RunningSummarizer implements IDisposable {
         const { reason, resultsBuilder, options } = this.enqueuedSummary;
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
+        this.summarizeCount++;
         this.generator.summarize(
             { summarizeReason: `enqueuedSummary/${reason}` },
             options,
