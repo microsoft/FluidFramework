@@ -25,6 +25,7 @@ import {
     ISubmitSummaryOptions,
     SubmitSummaryResult,
     ISummaryCancellationToken,
+    ISummarizeResults,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -258,7 +259,14 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    private async lockedAction<T>(action: () => Promise<T>) {
+    /**
+     * Runs single summary action that prevents any other concurrent actions.
+     * Assumes that caller checked upfront for lack of concurrent action (this.summarizingLock)
+     * before calling this API. I.e. caller is responsible for either erroring out or waiting on this promise.
+     * @param action - action to perform.
+     * @returns - result of action.
+     */
+    private async lockedSummaryAction<T>(action: () => Promise<T>) {
         assert (this.summarizingLock === undefined, "Caller is responsible for checking lock");
 
         const summarizingLock = new Deferred<void>();
@@ -271,13 +279,21 @@ export class RunningSummarizer implements IDisposable {
         });
     }
 
+    /**
+     * Runs single summarize attempt
+     * @param summarizeProps - props to log with each telemetry event associated with this attempt
+     * @param options - summary options
+     * @param cancellationToken - cancellation token to use to be able to cancel this summary, if needed
+     * @param resultsBuilder - optional, result builder to use.
+     * @returns ISummarizeResult - result of running a summary.
+     */
     private trySummarizeOnce(
         summarizeProps: ITelemetryProperties,
         options: ISummarizeOptions,
         cancellationToken = this.cancellationToken,
-        resultsBuilder = new SummarizeResultBuilder())
+        resultsBuilder = new SummarizeResultBuilder()): ISummarizeResults
     {
-        this.lockedAction(async () => {
+        this.lockedSummaryAction(async () => {
             const summarizeResult = this.generator.summarize(
                 summarizeProps,
                 options,
@@ -307,7 +323,7 @@ export class RunningSummarizer implements IDisposable {
             return;
         }
 
-        this.lockedAction(async () => {
+        this.lockedSummaryAction(async () => {
             const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
                 { refreshLatestAck: false, fullTree: false },
                 { refreshLatestAck: true, fullTree: false },
