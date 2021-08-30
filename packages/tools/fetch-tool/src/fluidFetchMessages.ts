@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert} from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
 } from "@fluidframework/driver-definitions";
@@ -30,8 +30,9 @@ function filenameFromIndex(index: number): string {
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
-    files?: string[]) {
-    let lastSeq = 0;
+    files?: string[],
+    sequenceNumber: number = 0) {
+    let lastSeq = sequenceNumber;
 
     // If we have local save, read ops from there first
     if (files !== undefined) {
@@ -66,6 +67,28 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
+    const teststream = deltaStorage.fetchMessages(
+        lastSeq + 1,
+        lastSeq + 2);
+
+    let statusCode;
+    let innerMostErrorCode;
+    let response;
+
+    try {
+        await teststream.read();
+    } catch (error) {
+        statusCode = error.getTelemetryProperties().statusCode;
+        innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
+        if (statusCode === 410 && innerMostErrorCode === "fluidDeltaDataNotAvailable") {
+            response = JSON.parse(error.getTelemetryProperties().response);
+        } else {
+            throw error;
+        }
+        console.log(response);
+        const seq = response.error.firstAvailableDelta;
+        lastSeq = seq - 1;
+    }
     const stream = deltaStorage.fetchMessages(
         lastSeq + 1, // inclusive left
         undefined, // to

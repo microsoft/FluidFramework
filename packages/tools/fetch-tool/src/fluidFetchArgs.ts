@@ -11,6 +11,7 @@ export let dumpMessageStats = false;
 export let dumpSnapshotStats = false;
 export let dumpSnapshotTrees = false;
 export let dumpSnapshotVersions = false;
+export let overWrite = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 export let paramUnpackAggregatedBlobs = true;
@@ -72,6 +73,10 @@ export function parseArguments() {
         switch (arg) {
             case "--dump:rawmessage":
                 dumpMessages = true;
+                break;
+            case "--dump:rawmessage:overwrite":
+                dumpMessages = true;
+                overWrite = true;
                 break;
             case "--stat:message":
                 dumpMessageStats = true;

@@ -483,12 +483,13 @@ function processOp(
         if (runtimeMessage.type === ContainerMessageType.Attach) {
             const attachMessage = runtimeMessage.contents as IAttachMessage;
             processDataStoreAttachOp(attachMessage, dataType);
-        } else {
+        } else if (runtimeMessage.type !== ContainerMessageType.BlobAttach) {
             let envelop = runtimeMessage.contents as IEnvelope;
             // TODO: Legacy?
             if (envelop && typeof envelop === "string") {
                 envelop = JSON.parse(envelop);
             }
+            console.log(envelop);
             const innerContent = envelop.contents as {
                 content: any;
                 type: string;
