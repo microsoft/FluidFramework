@@ -10,15 +10,15 @@ In this scenario, we assume the data in the primary data store will be temporari
 
 ## Getting data into the container
 
-The application developer is responsible for connecting to the external data store from their client-side web application, finding the appropriate data, and marshalling the data into a new Fluid container. We recommend creating the container in a detached state, inserting the external data into new Fluid objects, and then attaching the container - to avoid the situation where another user opens the container and the seed data is not yet present. For more information on using detached containers, see {working with detached containers page}.
+The application developer is responsible for connecting to the external data store from their client-side web application, finding the appropriate data, and marshalling the data into a new Fluid container. We recommend creating the container in a detached state, inserting the external data into new Fluid objects, and then attaching the container. This avoids the situation where another user opens the container and the seed data is not yet present.
 
 ## Locking the source data
 
-Keeping data in sync between a Fluid container and an external data store is beyond the scope of this discussion. If the contents of the Fluid container are going to be written back to the original data store, the developer should take some precaution to ensure that users aren’t writing to the original data store while the data is also being edited in the Fluid container.
+Keeping data in sync between a Fluid container and an external data store is beyond the scope of this discussion. If the contents of the Fluid container are going to be written back to the original data store, the developer should take some precaution to ensure that users aren't writing to the original data store while the data is also being edited in the Fluid container.
 
 ## Data permissions
 
-The user that initiates the transfer of the data into the Fluid container would need to have permissions to read the source data and set whatever locking mechanism is used to keep other users from editing the source data while it resides in the Fluid container. The other users in the collaboration experience do not need to have access to the original data store – this enables developers to delegate editing of specific data elements. Because the data transfer is all managed on the client, only users with access to the original data store should have the option to save changes back to the source. The developer is responsible for managing the user experience of the “save” action, including which clients have the option to save updates back to the source of truth.
+The user that initiates the transfer of the data into the Fluid container would need to have permissions to read the source data and set whatever locking mechanism is used to keep other users from editing the source data while it resides in the Fluid container. The other users in the collaboration experience do not need to have access to the original data store. This enables developers to delegate editing of specific data elements. Because the data transfer is all managed on the client, only users with access to the original data store should have the option to save changes back to the source. The developer is responsible for managing the user experience of the "save" action, including which clients have the option to save updates back to the source of truth.
 
 ## Container/session state and writing data back to the external data source
 
@@ -26,6 +26,6 @@ One of the more challenging aspects of this scenario is knowing the current stat
 
 When the data saving logic runs client-side, it makes sense to have this logic run in the context of a single user, operating against the local data that this user is seeing. If the other clients in the session haven’t agreed to stop sending operations, the data is still subject to change after the “saving client” writes the data to the source of truth data store.
 
-There is currently no built-in functionality in the Fluid Framework to limit a client’s ability to edit a container. We recommend that developers create a data structure in the container that clients can use to manage editability of the container, probably controlled by user actions in the developer’s application.
+There is no built-in functionality in the Fluid Framework to limit a client’s ability to edit a container. We recommend that developers create a data structure in the container that clients can use to manage editability of the container, probably controlled by user actions in the developer's application.
 
 Developers are responsible for managing the writing of data back to the original data store, including the frequency of writes, unlocking the original data store, managing the situation where users don’t trigger the write action from the application as expected, etc.
