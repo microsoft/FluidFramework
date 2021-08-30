@@ -41,6 +41,7 @@ const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
  * Until disposed, the instance of RunningSummarizer can assume that it is
  * in a state of running, meaning it is connected and initialized.  It keeps
  * track of summaries that it is generating as they are broadcast and acked/nacked.
+ * This object is created and controlled by Summarizer object.
  */
 export class RunningSummarizer implements IDisposable {
     public static async start(

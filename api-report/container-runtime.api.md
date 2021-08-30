@@ -686,7 +686,7 @@ export type SummarizerStopReason =
  */
  | "parentShouldNotSummarize"
 /** Summarizer client was disconnected */
- | "summarizeClientDisconnected" | "summarizerException";
+ | "summarizerClientDisconnected" | "summarizerException";
 
 // @public (undocumented)
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
