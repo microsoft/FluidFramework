@@ -15,179 +15,146 @@ through the [Quick Start]({{< relref "./quick-start.md" >}}) guide.
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
-1. Write the view.
-1. Define the interface the model will expose.
-1. Write the model using the Fluid Framework.
-1. Include the model in a container.
-1. Connect the container to the service for collaboration.
-1. Connect the model instance to the view for rendering.
+1. Write the view
+2. Create a Fluid Container
+3. Connect view to Fluid data
+4. Modify Fluid data on dice roll
 
 
-## Write the view
 
-In this app, you render the view without any UI libraries such as React, Vue, or Angular. Use [TypeScript](https://www.typescriptlang.org/) and HTML/DOM methods. However, Fluid is impartial to how you write your view, so you could use your favorite view framework instead.
 
-Since you haven't created your model yet, hardcode a "1" and log to the console when the button is clicked.
+## Application setup
 
-```ts
-export function renderDiceRoller(div: HTMLDivElement) {
-    const wrapperDiv = document.createElement("div");
-    wrapperDiv.style.textAlign = "center";
-    div.append(wrapperDiv);
-    const diceCharDiv = document.createElement("div");
-    diceCharDiv.style.fontSize = "200px";
+To create a Fluid application that connects to the [Azure Fluid Relay service]({{< relref "../../deployment/azure-frs.md" >}}), start by creating a new instance of the Fluid Azure Client. The client is responsible for creating and loading containers as well as communicating changes between all of the collaborators. Learn more about configuring the [Azure FRS Client]({{< relref "../../deployment/azure-frs.md" >}}).
+
+The containers our app creates require a configuration which defines the set of initial Distributed Data Structures that will be attached to the returned container. View our full list of [Distributed Data Structures]({{< relref "../../data-structures/overview.md" >}})
+
+Lastly, `root` defines the HTML element that the Dice will render on.
+
+```js
+
+const client = new AzureClient(localConfig);
+
+const containerConfig = {
+      initialObjects: { diceMap: SharedMap }
+  };
+
+const root = document.getElementById("root")
+```
+
+## Container creation
+
+
+Fluid collaboration happens in containers, which have unique identifiers (like a document filename) that must be created before other users can load them. Since creation and loading of containers both happen in the client our application needs to be capable of handling both paths.
+
+### Create a new dice flow
+
+The first path in the application needs to include the creation of a container, and return an `id` associated with that container. In the `createNewDice` function below the app creates a container with the `containerConfig` defined above. This configuration assures that `initialObjects` will include a `diceMap` key containing a fully connected `SharedMap` DDS.
+
+At this point the application can set up default values for any newly created dice. To enable collaboration, sending and recieving ops to and from the client, the container must first call `attach()` which returns the `id` the app can later use to retrieve this container.
+
+Now that our app has a connected container and default data, the dice roller view is ready to render.
+
+```js
+const createNewDice = async () => {
+    const { container } = await client.createContainer(containerConfig);
+    // Set default data
+    container.initialObjects.diceMap.set("value", 1);
+    // Attach container to service and return assigned ID
+    id = container.attach();
+    // load the dice roller
+    renderDiceRoller(root, container.initialObjects.diceMap);
+    return id;
+  }
+```
+### Loading an existing dice flow
+
+The second path in the application is much more straight forward. The default data is already set, the container is already attached, and the `id` is passed into the function, rather than returned.
+
+```js
+
+const loadExistingDice = async (id) => {
+  const { container } = await client.getContainer(id, containerConfig);
+  renderDiceRoller(root, container.initialObjects.diceMap);
+}
+
+```
+
+## Starting the app
+
+Since our application can be in one of two states, creating, or loading from an `ID`, we can simulate those states by storying the container `id` in the URL hash. If the URL has a hash the app will load that existing container, otherwise the app creates a new container and sets the returned `id` as the hash.
+
+Again, these are all async methods, so the `start` function needs to be created and then called, catching any errors that are returned.
+
+```js
+
+async function start() {
+  if (location.hash) {
+    await loadExistingDice(location.hash.substring[1])
+  } else {
+    const id = await createNewDice();
+    location.hash = id;
+  }
+}
+start().catch((error) => console.error(error));
+
+```
+
+## Defining the Dice view
+
+Fluid is framework agnostic and works well with React, Vue, Angular and web components. This example will use nothing more than standard HTML/DOM methods, but you can see this full demo, and examples of other frameworks in our [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld/tree/main/src/view).
+
+### Start with a static view
+
+This view, given an HTML element to attach to, creates a working dice roller that displays a random dice value each time the "Roll" button is clicked. Note that demo code ommits the styles for brevity.
+
+```js
+function renderDiceRoller(elem, diceMap) {
+    const dice = document.createElement("div");
+
     const rollButton = document.createElement("button");
-    rollButton.style.fontSize = "50px";
     rollButton.textContent = "Roll";
+    rollButton.onclick = () => updateDice(Math.floor(Math.random() * 6));
+    
+    elem.append(dice, rollButton);
 
-    rollButton.addEventListener("click", () => { console.log("Roll!"); });
-    wrapperDiv.append(diceCharDiv, rollButton);
-
-    const updateDiceChar = () => {
-        const diceValue = 1;
+    const updateDice = (value) => {
         // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
-        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceValue);
-        diceCharDiv.style.color = `hsl(${diceValue * 60}, 70%, 50%)`;
+        dice.textContent = String.fromCodePoint(0x2680 + value);
     };
-    updateDiceChar();
+    updateDice(1);
 }
 ```
 
-## Define the model interface
+### Modifying Fluid data
 
-To clarify what your model needs to support, start by defining its public interface.
+The first thing we want to do is change the `rollButton` to set the `value` key of the `diceMap`, instead of updating the local state directly. Pushing local state out to Fluid state is a common pattern because the view should react to local and remote changed in the same flow.
 
-```ts
-export interface IDiceRoller extends EventEmitter {
-    readonly value: number;
-    roll: () => void;
-    on(event: "diceRolled", listener: () => void): this;
-}
+```js
+    rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6));
 ```
 
-As you might expect, you have the ability to read its value and command it to roll. However, you also need to declare an event `"diceRolled"` in your interface. Fire this event whenever the die is rolled (using [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)).
 
-This event is particularly important because you're building a collaborative experience. It's how each client will observe that other clients have rolled the die remotely, so they know to update with the new value.
+### Relying on Fluid data
 
-## Implement the model
+Secondly, the `updateDice` function will no longer take in any arbitrary value. Now, the only way to update the dice value is to modify the `value` key on the `diceMap` data structure.
 
-Up to this point, you've used TypeScript. To implement the model for your collaborative DiceRoller, you'll now use features from the Fluid Framework.
-
-The Fluid Framework provides a class called **[DataObject][]** which you can extend to build your model. You'll use a few features from DataObject, but first take a look at the following code:
-
-```ts
-export class DiceRoller extends DataObject implements IDiceRoller {
-    protected async initializingFirstTime() {
-        this.root.set(diceValueKey, 1);
-    }
-
-    protected async hasInitialized() {
-        this.root.on("valueChanged", (changed: IValueChanged) => {
-            if (changed.key === diceValueKey) {
-                this.emit("diceRolled");
-            }
-        });
-    }
-
-    public get value() {
-        return this.root.get(diceValueKey);
-    }
-
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.root.set(diceValueKey, rollValue);
+```js
+    const updateDice = () => {
+        const value = fluid.get("value");
+        dice.textContent = String.fromCodePoint(0x2680 + value);
     };
-}
+    updateDice();
 ```
 
-Since the models you create will be persisted over time as users load and close the app, DataObject provides lifecycle methods to control the first-time creation and subsequent loading of your model.
+### Listening for Fluid changes
 
-- `initializingFirstTime()` runs when a client creates the DiceRoller for the first time. It does not run when additional clients connect to the application. Use this to provide an initial value for the die.
+Fluid data needs to be fetched each time that the value changes. The app can listening for changes on any DDS, and call an update method each time that the event fires. Below `updateDice` is being called each time the `valueChanged` event fires on the `SharedMap`.
 
-- `hasInitialized()` runs when clients load the DiceRoller. Use this to hook up our event listeners to respond to data changes made in other clients.
-
-DataObject also provides a `root` **distributed data structure (DDS)**. DDSes are collaborative data structures that you use like local data structures, but as each client modifies the data, all other clients will see the changes. This `root` DDS is a [SharedDirectory][] which stores key/value pairs and works very similarly to a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like `set()` and `get()`. However, it also fires a `"valueChanged"` event so you can observe changes to the data coming in from other users.
-
-To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since you used the DataObject class, you also use the [DataObjectFactory][] which pairs with it. You need to provide it with a unique name ("dice-roller" in this case) and the class constructor. The third and fourth parameters provide additional options that are not used in this example.
-
-```ts
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-    "dice-roller",
-    DiceRoller,
-    [],
-    {},
-);
+```js
+    diceMap.on("valueChanged", () => updateDice());
 ```
 
-And that's it -- your DiceRoller model is done!
-
-## Define the container contents
-
-In your app, you only need a single instance of this single model for your single die. However, in more complex scenarios you might have multiple model types with many model instances. The code you'll write to specify the type and number of data objects your application uses is the **container code**.
-
-Since you only need a single die, the Fluid Framework provides a class called [ContainerRuntimeFactoryWithDefaultDataStore][] that you use as your container code. Give it two arguments: the type of the model factory that you want a single instance of, and the list of model types that your container code needs (in this case, just the single model type). This list is called the **container registry**.
-
-```ts
-export const DiceRollerContainerRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-    DiceRollerInstantiationFactory,
-    new Map([
-        DiceRollerInstantiationFactory.registryEntry,
-    ]),
-);
-```
-
-Now you've defined all the pieces and it's just time to put them all together!
-
-## Connect container to service for collaboration
-
-To orchestrate the collaboration, you need to connect to a service to send and receive the updates to the data. To do this, connect a [Fluid container][] object to the service and load your container code into it.
-
-For now, run on a local test service called Tinylicious, and to make it easier to connect to this service we've provided a helper function `getTinyliciousContainer()`. The helper function takes a unique ID to identify your **document** (the collection of data used by your app), the container code, and a flag to indicate whether you want to create a new document or load an existing one. Use any app logic you'd like to generate the ID and determine whether to create a new document. In the [example repository](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts), we use the timestamp and URL hash as just one way of doing it.
-
-```ts
-const container =
-    await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
-```
-
-This will look a little different when moving to a production service, but you'll still ultimately get a reference to a `Container` object running your code and connect to a service.
-
-After you've connected the `Container` object, your container code will have already run to create an instance of your model. Because you used a `ContainerRuntimeFactoryWithDefaultDataStore` to build your container code, you can also use a helper function Fluid provides called `getDefaultObjectFromContainer` to get a reference to the model instance.
-
-```ts
-const diceRoller: IDiceRoller = await getDefaultObjectFromContainer<IDiceRoller>(container);
-```
-
-## Connect the model instance to view for rendering
-
-Now that you have a model instance, wire it to our view! Update the function to take an `IDiceRoller`, connect your button to the `roll()` method, listen to the `"diceRolled"` event to detect value changes, and read that value from the model.
-
-```ts
-export function renderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement) {
-    const wrapperDiv = document.createElement("div");
-    wrapperDiv.style.textAlign = "center";
-    div.append(wrapperDiv);
-    const diceCharDiv = document.createElement("div");
-    diceCharDiv.style.fontSize = "200px";
-    const rollButton = document.createElement("button");
-    rollButton.style.fontSize = "50px";
-    rollButton.textContent = "Roll";
-
-    // Call the roll method to modify the shared data when the button is clicked.
-    rollButton.addEventListener("click", diceRoller.roll);
-    wrapperDiv.append(diceCharDiv, rollButton);
-
-    // Get the current value of the shared data to update the view whenever it changes.
-    const updateDiceChar = () => {
-        // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
-        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceRoller.value);
-        diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;
-    };
-    updateDiceChar();
-
-    // Use the diceRolled event to trigger the re-render whenever the value changes.
-    diceRoller.on("diceRolled", updateDiceChar);
-}
-```
 
 ## Run the app
 
