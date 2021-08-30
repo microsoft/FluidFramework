@@ -19,7 +19,6 @@ import { FocusTracker } from "./FocusTracker";
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
 const containerSchema: ContainerSchema = {
-    name: "focus-tracker-container",
     initialObjects: {
         /* [id]: DataObject */
         signalManager: SignalManager,

@@ -78,7 +78,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private readonly initialDelayMs: number;
     private latestClientId: string | undefined;
     private state = SummaryManagerState.Off;
-    private runningSummarizer?: ISummarizer;
+    private summarizer?: ISummarizer;
     private _disposed = false;
 
     public get disposed() {
@@ -187,7 +187,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         assert(this.state === SummaryManagerState.Off, "Expected: off");
         this.state = SummaryManagerState.Starting;
 
-        assert(this.runningSummarizer === undefined, "Old summarizer is still working!");
+        assert(this.summarizer === undefined, "Old summarizer is still working!");
 
         this.delayBeforeCreatingSummarizer().then(async (startWithInitialDelay: boolean) => {
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
@@ -213,7 +213,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
             summarizer.on("summarizingError",
                 (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
-            this.runningSummarizer = summarizer;
+            this.summarizer = summarizer;
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const clientId = this.latestClientId!;
@@ -223,8 +223,6 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
-            // Follow-up: requires PR #7230 completion to enable this assert:
-            // assert(summarizer.cancelled, "should be cancelled by now");
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
             this.emit("summarizerWarning", error);
@@ -237,7 +235,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             assert(this.state !== SummaryManagerState.Off, "Expected: Not Off");
             this.state = SummaryManagerState.Off;
 
-            this.runningSummarizer = undefined;
+            this.summarizer = undefined;
 
             if (this.getShouldSummarizeState().shouldSummarize) {
                 this.startSummarization();
@@ -249,10 +247,10 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         assert(this.state === SummaryManagerState.Running, "Expected: Running");
         this.state = SummaryManagerState.Stopping;
 
-        if (this.runningSummarizer !== undefined) {
+        if (this.summarizer !== undefined) {
             // Stopping the running summarizer client should trigger a change
             // in states when the running summarizer closes
-            this.runningSummarizer.stop(reason);
+            this.summarizer.stop(reason);
         } else {
             // Should not be possible to hit this case
             this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer", reason });
@@ -307,19 +305,19 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        if (this.runningSummarizer === undefined) {
+        if (this.summarizer === undefined) {
             throw Error("No running summarizer client");
             // TODO: could spawn a summarizer client temporarily.
         }
-        return this.runningSummarizer.summarizeOnDemand(...args);
+        return this.summarizer.summarizeOnDemand(...args);
     };
 
     public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
-        if (this.runningSummarizer === undefined) {
+        if (this.summarizer === undefined) {
             throw Error("No running summarizer client");
             // TODO: could spawn a summarizer client temporarily.
         }
-        return this.runningSummarizer.enqueueSummarize(...args);
+        return this.summarizer.enqueueSummarize(...args);
     };
 
     public dispose() {

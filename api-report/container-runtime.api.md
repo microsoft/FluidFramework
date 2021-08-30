@@ -270,6 +270,12 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
+// @public
+export interface ICancellationToken<T> {
+    readonly cancelled: boolean;
+    readonly waitCancelled: Promise<T>;
+}
+
 // @public (undocumented)
 export interface IChunkedOp {
     // (undocumented)
@@ -297,9 +303,11 @@ export interface IConnectableRuntime {
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
-    on(event: "disconnected", listener: () => void): this;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    once(event: "connected", listener: () => void): this;
+    readonly disposed: boolean;
+    // (undocumented)
+    once(event: "connected" | "disconnected", listener: () => void): this;
 }
 
 // @public
@@ -349,14 +357,6 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly stage: "generate";
     readonly summaryStats: IGeneratedSummaryStats;
     readonly summaryTree: ISummaryTree;
-}
-
-// @public
-export interface INotStartedResult {
-    // (undocumented)
-    message: "DisconnectedBeforeRun" | "NeverConnectedBeforeRun";
-    // (undocumented)
-    started: false;
 }
 
 // @public (undocumented)
@@ -415,14 +415,6 @@ export interface IProvideSummarizer {
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
-export interface IStartedResult {
-    // (undocumented)
-    clientId: string;
-    // (undocumented)
-    started: true;
-}
-
-// @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
     // (undocumented)
@@ -432,6 +424,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
+    readonly cancellationToken: ISummaryCancellationToken;
     readonly summaryLogger: ITelemetryLogger;
 }
 
@@ -474,10 +467,8 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRo
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     // (undocumented)
-    stop(reason?: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
-    // (undocumented)
-    updateOnBehalfOf(onBehalfOf: string): void;
 }
 
 // @public (undocumented)
@@ -508,16 +499,11 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
     // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     // (undocumented)
-    on(event: "disconnected", listener: () => void): this;
-    // (undocumented)
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    // (undocumented)
     readonly summarizerClientId: string | undefined;
 }
 
@@ -548,6 +534,9 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
     // (undocumented)
     type: MessageType.SummaryAck;
 }
+
+// @public (undocumented)
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 // @public (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -593,6 +582,9 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
+// @public
+export const neverCancelledSummaryToken: ISummaryCancellationToken;
+
 // @public (undocumented)
 export type OnDemandSummarizeResult = (ISummarizeResults & {
     readonly alreadyRunning?: undefined;
@@ -627,14 +619,6 @@ export class PendingStateManager implements IDisposable {
     replayPendingStates(): void;
 }
 
-// @public
-export class RunWhileConnectedCoordinator {
-    constructor(runtime: IConnectableRuntime);
-    stop(reason?: SummarizerStopReason): void;
-    waitStart(): Promise<IStartedResult | INotStartedResult>;
-    waitStopped(): Promise<void>;
-}
-
 // @public (undocumented)
 export class ScheduleManager {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, emitter: EventEmitter, logger: ITelemetryLogger);
@@ -651,7 +635,9 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 
 // @public
 export class Summarizer extends EventEmitter implements ISummarizer {
-    constructor(url: string, runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration, internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection);
+    constructor(url: string,
+    runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection);
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
@@ -662,22 +648,17 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get IFluidRouter(): this;
     // (undocumented)
-    get IFluidRunnable(): this;
-    // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     stop(reason: SummarizerStopReason): void;
-    submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     // (undocumented)
     readonly summaryCollection: SummaryCollection;
-    // (undocumented)
-    updateOnBehalfOf(onBehalfOf: string): void;
-}
+    }
 
 // @public (undocumented)
 export type SummarizeResultPart<T> = {
@@ -704,8 +685,8 @@ export type SummarizerStopReason =
  * tries to stop its spawned summarizer client.
  */
  | "parentShouldNotSummarize"
-/** summarizer client disconnected */
- | "summarizeClientDisconnected" | "summarizerException";
+/** Summarizer client was disconnected */
+ | "summarizerClientDisconnected" | "summarizerException";
 
 // @public (undocumented)
 export class SummarizingWarning extends LoggingError implements ISummarizingWarning {

@@ -16,8 +16,9 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { neverCancelledSummaryToken } from  "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
-import { ISummarizerOptions, SummarizerStopReason } from "../summarizerTypes";
+import { ISummarizerOptions } from "../summarizerTypes";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
 
@@ -34,7 +35,6 @@ describe("Runtime", () => {
             let summaryCollection: SummaryCollection;
             let summarizer: RunningSummarizer;
             const summarizerClientId = "test";
-            const onBehalfOfClientId = "behalf";
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
@@ -128,58 +128,55 @@ describe("Runtime", () => {
                 summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
             ): Promise<void> => {
                 summarizer = await RunningSummarizer.start(
-                    summarizerClientId,
-                    onBehalfOfClientId,
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
                     summaryConfig,
-                    {
-                        submitSummary: async (options) => {
-                            runCount++;
+                    // submitSummaryCallback
+                    async (options) => {
+                        runCount++;
 
-                            const { fullTree = false, refreshLatestAck = false } = options;
-                            if (fullTree) {
-                                fullTreeRunCount++;
-                            }
-                            if (refreshLatestAck) {
-                                refreshLatestAckRunCount++;
-                            }
+                        const { fullTree = false, refreshLatestAck = false } = options;
+                        if (fullTree) {
+                            fullTreeRunCount++;
+                        }
+                        if (refreshLatestAck) {
+                            refreshLatestAckRunCount++;
+                        }
 
-                            // immediate broadcast
-                            emitBroadcast();
+                        // immediate broadcast
+                        emitBroadcast();
 
-                            if (shouldDeferGenerateSummary) {
-                                deferGenerateSummary = new Deferred<void>();
-                                await deferGenerateSummary.promise;
-                                deferGenerateSummary = undefined;
-                            }
-                            return {
-                                stage: "submit",
-                                referenceSequenceNumber: lastRefSeq,
-                                generateDuration: 0,
-                                uploadDuration: 0,
-                                submitOpDuration: 0,
-                                summaryTree: { type: SummaryType.Tree, tree: {} },
-                                summaryStats: {
-                                    treeNodeCount: 0,
-                                    blobNodeCount: 0,
-                                    handleNodeCount: 0,
-                                    totalBlobSize: 0,
-                                    dataStoreCount: 0,
-                                    summarizedDataStoreCount: 0,
-                                    unreferencedBlobSize: 0,
-                                },
-                                handle: "test-handle",
-                                clientSequenceNumber: lastClientSeq,
-                            } as const;
-                        },
-                        stop(reason?: SummarizerStopReason) {
-                            stopCall++;
-                        },
+                        if (shouldDeferGenerateSummary) {
+                            deferGenerateSummary = new Deferred<void>();
+                            await deferGenerateSummary.promise;
+                            deferGenerateSummary = undefined;
+                        }
+                        return {
+                            stage: "submit",
+                            referenceSequenceNumber: lastRefSeq,
+                            generateDuration: 0,
+                            uploadDuration: 0,
+                            submitOpDuration: 0,
+                            summaryTree: { type: SummaryType.Tree, tree: {} },
+                            summaryStats: {
+                                treeNodeCount: 0,
+                                blobNodeCount: 0,
+                                handleNodeCount: 0,
+                                totalBlobSize: 0,
+                                dataStoreCount: 0,
+                                summarizedDataStoreCount: 0,
+                                unreferencedBlobSize: 0,
+                            },
+                            handle: "test-handle",
+                            clientSequenceNumber: lastClientSeq,
+                        } as const;
                     },
                     new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
                     () => { },
                     summaryCollection,
+                    neverCancelledSummaryToken,
+                    // stopSummarizerCallback
+                    (reason) => { stopCall++; },
                     summarizerOptions,
                 );
             };
@@ -361,7 +358,7 @@ describe("Runtime", () => {
 
                 it("Should summarize one last time before closing >50 ops", async () => {
                     await emitNextOp(51); // hard-coded to 50 for now
-                    const stopP = summarizer.waitStop();
+                    const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
                     await stopP;
@@ -371,7 +368,7 @@ describe("Runtime", () => {
 
                 it("Should not summarize one last time before closing <=50 ops", async () => {
                     await emitNextOp(50); // hard-coded to 50 for now
-                    const stopP = summarizer.waitStop();
+                    const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
                     await stopP;
@@ -658,7 +655,7 @@ describe("Runtime", () => {
                 });
 
                 it("Should fail an on-demand summary if stopping", async () => {
-                    summarizer.waitStop().catch(() => {});
+                    summarizer.waitStop(true).catch(() => {});
                     const [refreshLatestAck, fullTree] = [true, true];
                     const result1 = summarizer.summarizeOnDemand({ reason: "test1" });
                     const result2 = summarizer.summarizeOnDemand({ reason: "test2", refreshLatestAck });
@@ -871,7 +868,7 @@ describe("Runtime", () => {
                 });
 
                 it("Should fail an enqueue summarize attempt if stopping", async () => {
-                    summarizer.waitStop().catch(() => {});
+                    summarizer.waitStop(true).catch(() => {});
                     const result1 = summarizer.enqueueSummarize({ reason: "test1" });
                     assert(result1.alreadyEnqueued === undefined, "should not be already enqueued");
                     const result2 = summarizer.enqueueSummarize({ reason: "test2", afterSequenceNumber: 123 });
@@ -953,7 +950,7 @@ describe("Runtime", () => {
                     // Now emit ack
                     await emitAck();
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:Summarize_end", summaryGenTag: runCount, reason: "maxOps" },
+                        { eventName: "Running:Summarize_end", summaryGenTag: runCount, summarizeReason: "maxOps" },
                     ]), "unexpected log sequence 3");
                 });
             });
@@ -980,7 +977,7 @@ describe("Runtime", () => {
                     await startRunningSummarizer({ disableHeuristics: true });
 
                     await emitNextOp(51); // hard-coded to 50 for now
-                    const stopP = summarizer.waitStop();
+                    const stopP = summarizer.waitStop(true);
                     await flushPromises();
                     await emitAck();
                     await stopP;

@@ -16,7 +16,7 @@
  */
 
 import _ from 'underscore';
-import { DataBinder } from '../../src/data_binder/data_binder';
+import { DataBinder } from '../data_binder/data_binder';
 import { MockSharedPropertyTree } from './mock_shared_property_tree';
 import {
   registerTestTemplates, ParentTemplate, ReferenceParentTemplate,
@@ -30,8 +30,8 @@ import {
   InheritedChildDataBinding
 } from './testDataBindings';
 import { catchConsoleErrors } from './catch_console_errors';
-import { RESOLVE_NO_LEAFS } from '../../src/internal/constants';
-import { unregisterAllOnPathListeners } from '../../src/data_binder/internal_utils';
+import { RESOLVE_NO_LEAFS } from '../internal/constants';
+import { unregisterAllOnPathListeners } from '../data_binder/internal_utils';
 
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 

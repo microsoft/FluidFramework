@@ -10,7 +10,6 @@ import { createAzureClient } from "./AzureClientFactory";
 describe("AzureClient", () => {
     const client = createAzureClient();
     const schema: ContainerSchema = {
-        name: "azure-client-test",
         initialObjects: {
             map1: SharedMap,
         },

@@ -37,7 +37,6 @@ See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) fo
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         /* ... */
     },
@@ -71,7 +70,6 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         map1: SharedMap,
         text1: SharedString,
@@ -95,7 +93,6 @@ Dynamic objects are loaded on-demand to optimize for data virtualization. To get
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         map1: SharedMap,
     },

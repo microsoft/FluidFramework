@@ -11,39 +11,12 @@ import {
 } from "@fluidframework/aqueduct";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
-    // Maintains a list of clients in the audience.
-    public audienceClientList: Set<string> = new Set();
-
     public get _root() {
         return this.root;
-    }
-
-    public get _runtime() {
-        return this.runtime;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-
-    protected async hasInitialized() {
-        this.runtime.getAudience().on("addMember", (clientId: string) => {
-            this.audienceClientList.add(clientId);
-        });
-
-        this.runtime.getAudience().on("removeMember", (clientId: string) => {
-            this.audienceClientList.delete(clientId);
-        });
-
-        const members = this.runtime.getAudience().getMembers();
-        for (const [clientId] of members) {
-            this.audienceClientList.add(clientId);
-        }
     }
 }
 
@@ -62,7 +35,7 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
         undefined,
         undefined,
         // Disable summaries so the summarizer client doesn't interfere with the audience
-        flattenRuntimeOptions({ summaryOptions: { generateSummaries: false }}),
+        { summaryOptions: { generateSummaries: false }},
     );
 
     const createContainer = async (): Promise<Container> => await provider.createContainer(runtimeFactory) as Container;
@@ -74,46 +47,74 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
         }
     }
 
+    /** Function to wait for a client with the given clientId to be added to the audience of the given container. */
+    async function waitForClientAdd(container: Container, clientId: string, errorMsg: string) {
+        if (container.audience.getMember(clientId) === undefined) {
+            return timeoutPromise((resolve) => {
+                const listener = (newClientId: string) => {
+                    if (newClientId === clientId) {
+                        container.audience.off("addMember", listener);
+                        resolve();
+                    }
+                };
+                container.audience.on("addMember", (newClientId: string) => listener(newClientId));
+            },
+            // Wait for 2 seconds to get the client in audience. This wait is needed for a client to get added to its
+            // own audience and 2 seconds should be enough time. It it takes longer than this, we might need to
+            // reevaluate our assumptions around audience.
+            // Also see - https://github.com/microsoft/FluidFramework/issues/7275.
+            { durationMs: 2000, errorMsg });
+        }
+    }
+
+    /** Function to wait for a client with the given clientId to be remove from the audience of the given container. */
+    async function waitForClientRemove(container: Container, clientId: string, errorMsg: string) {
+        if (container.audience.getMember(clientId) !== undefined) {
+            return timeoutPromise((resolve) => {
+                const listener = (newClientId: string) => {
+                    if (newClientId === clientId) {
+                        container.audience.off("removeMember", listener);
+                        resolve();
+                    }
+                };
+                container.audience.on("removeMember", (newClientId: string) => listener(newClientId));
+            },
+            { durationMs: 2000, errorMsg });
+        }
+    }
+
     beforeEach(async () => {
         provider = getTestObjectProvider();
     });
 
+    /**
+     * These tests wait for a client to get connected and then wait for them to be added to the audience. Ideally,
+     * by the time a client moves to connected state, its audience should have itself and all previous clients.
+     * This is tracked here - https://github.com/microsoft/FluidFramework/issues/7275. Once this is fixed, the tests
+     * should be updated as per the new expectations.
+     */
     it("should add clients in audience as expected", async () => {
         // Create a client - client1 and wait for it to be connected.
         const client1Container = await createContainer();
-        const client1DataStore = await requestFluidObject<TestDataObject>(client1Container, "default");
         await ensureContainerConnected(client1Container);
 
-        // Validate that client1 is in its own audience.
+        // Validate that client1 is added to its own audience.
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
-        assert(
-            client1DataStore.audienceClientList.has(client1Container.clientId),
-            "client1's audience does not have client1",
-        );
+        await waitForClientAdd(client1Container, client1Container.clientId, "client1's audience doesn't have self");
 
         // Load a second client - client2 and wait for it to be connected.
         const client2Container = await loadContainer();
-        const client2DataStore = await requestFluidObject<TestDataObject>(client2Container, "default");
         await ensureContainerConnected(client2Container);
 
-        // Validate that client2 is in its own audience.
+        // Validate that client2 is added to its own audience.
         assert(client2Container.clientId !== undefined, "client2 does not have clientId");
-        assert(
-            client2DataStore.audienceClientList.has(client2Container.clientId),
-            "client2's audience does not have client2",
-        );
+        await waitForClientAdd(client2Container, client2Container.clientId, "client2's audience doesn't have self");
 
-        // Validate that client1 is in client2's audience.
-        assert(
-            client2DataStore.audienceClientList.has(client1Container.clientId),
-            "client2's audience does not have client1",
-        );
+        // Validate that client2 is added to client1's audience.
+        await waitForClientAdd(client1Container, client2Container.clientId, "client1's audience doesn't have client2");
 
-        // Validate that client2 is in client1's audience.
-        assert(
-            client1DataStore.audienceClientList.has(client2Container.clientId),
-            "Client1's audience does not have client2",
-        );
+        // Validate that client1 is added to client2's audience.
+        await waitForClientAdd(client2Container, client1Container.clientId, "client2's audience doesn't have client1");
     });
 
     it("should add clients in audience as expected in write mode", async () => {
@@ -137,63 +138,36 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
         assert(client2Container.clientId !== undefined, "client2 does not have clientId");
 
-        // Validate that client1 is in its own audience.
-        assert(
-            client1DataStore.audienceClientList.has(client1Container.clientId),
-            "client1's audience does not have client1",
-        );
+        // Validate that both the clients are added to client1's audience.
+        await waitForClientAdd(client1Container, client1Container.clientId, "client1's audience doesn't have self");
+        await waitForClientAdd(client1Container, client2Container.clientId, "client1's audience doesn't have client2");
 
-        // Validate that client2 is in its own audience.
-        assert(
-            client2DataStore.audienceClientList.has(client2Container.clientId),
-            "client2's audience does not have client2",
-        );
-
-        // Validate that client1 is in client2's audience.
-        assert(
-            client2DataStore.audienceClientList.has(client1Container.clientId),
-            "client2's audience does not have client1",
-        );
-
-        // Validate that client2 is in client1's audience.
-        assert(
-            client1DataStore.audienceClientList.has(client2Container.clientId),
-            "Client1's audience does not have client2",
-        );
+        // Validate that both the clients are added to client2's audience.
+        await waitForClientAdd(client2Container, client1Container.clientId, "client2's audience doesn't have client1");
+        await waitForClientAdd(client2Container, client2Container.clientId, "client2's audience doesn't have self");
     });
 
     it("should remove clients in audience as expected", async () => {
         // Create a client - client1 and wait for it to be connected.
         const client1Container = await createContainer();
-        const client1DataStore = await requestFluidObject<TestDataObject>(client1Container, "default");
         await ensureContainerConnected(client1Container);
 
         // Load a second client - client2 and wait for it to be connected.
         const client2Container = await loadContainer();
-        const client2DataStore = await requestFluidObject<TestDataObject>(client2Container, "default");
         await ensureContainerConnected(client2Container);
 
         assert(client1Container.clientId !== undefined, "client1 does not have clientId");
         assert(client2Container.clientId !== undefined, "client2 does not have clientId");
 
         // Validate that client2 is in both client's audiences.
-        assert(
-            client2DataStore.audienceClientList.has(client2Container.clientId),
-            "client2's audience does not have client2",
-        );
-        assert(
-            client1DataStore.audienceClientList.has(client2Container.clientId),
-            "Client1's audience does not have client2",
-        );
+        await waitForClientAdd(client1Container, client2Container.clientId, "client1's audience doesn't have client2");
+        await waitForClientAdd(client2Container, client2Container.clientId, "client2's audience doesn't have self");
 
         // Close client2. It should be removed from the audience.
         client2Container.close();
         await provider.ensureSynchronized();
 
         // Validate that client2 is removed from client1's audience.
-        assert(
-            !client1DataStore.audienceClientList.has(client2Container.clientId),
-            "Client1's audience should not have client2",
-        );
+        await waitForClientRemove(client1Container, client2Container.clientId, "client2's audience should be removed");
     });
 });

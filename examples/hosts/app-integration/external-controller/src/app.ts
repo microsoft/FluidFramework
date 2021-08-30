@@ -58,7 +58,6 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
 const containerSchema = {
-    name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
         map1: SharedMap,

@@ -18,7 +18,7 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
@@ -77,7 +77,7 @@ export class DocumentService implements api.IDocumentService {
 export class DocumentStorageService extends DocumentStorageServiceProxy {
     constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies);
     // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null>;
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
     readonly id: string;
     // (undocumented)
