@@ -11,6 +11,8 @@ const path = require("path");
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
 
     const testDriver = process.env.fluid__test__driver ? process.env.fluid__test__driver : "local";
+    const r11sEndpointName = process.env.fluid__test__r11sEndpointName;
+    const testVariant = (testDriver === "r11s" || testDriver === "routerlicious") && (r11sEndpointName !== "r11s")? `r11s-${r11sEndpointName}` : testDriver;
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
@@ -53,8 +55,8 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
         config["reporter"] = `xunit`;
         config["reporter-options"] = [
             // give the report file a unique name based on driver config
-            `output=${packageDir}/nyc/${testDriver}-junit-report.xml`,
-            `suiteName=${packageJson.name} - ${testDriver}`
+            `output=${packageDir}/nyc/${testVariant}-junit-report.xml`,
+            `suiteName=${packageJson.name} - ${testVariant}`
         ];
     }
     return config;
