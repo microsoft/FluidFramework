@@ -17,7 +17,7 @@ import {
     ISubmitSummaryOptions,
     SubmitSummaryResult,
     SummarizeResultPart,
-    ICancellationToken,
+    ISummaryCancellationToken,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -30,7 +30,7 @@ export type raceTimerResult<T> =
 export async function raceTimer<T>(
     promise: Promise<T>,
     timer: Promise<IPromiseTimerResult>,
-    cancellationToken?: ICancellationToken,
+    cancellationToken?: ISummaryCancellationToken,
 ): Promise<raceTimerResult<T>> {
     const promises: Promise<raceTimerResult<T>>[] = [
         promise.then((value) => ({ result: "done", value } as const)),
@@ -173,7 +173,7 @@ export class SummaryGenerator {
     public summarize(
         summarizeProps: ITelemetryProperties,
         options: ISummarizeOptions,
-        cancellationToken: ICancellationToken,
+        cancellationToken: ISummaryCancellationToken,
         resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
         ++this.summarizeCount;
@@ -205,7 +205,7 @@ export class SummaryGenerator {
         summarizeProps: ITelemetryProperties,
         options: ISummarizeOptions,
         resultsBuilder: SummarizeResultBuilder,
-        cancellationToken: ICancellationToken,
+        cancellationToken: ISummaryCancellationToken,
     ): Promise<void> {
         const { refreshLatestAck, fullTree } = options;
         const logger = ChildLogger.create(this.logger, undefined, { all: summarizeProps });

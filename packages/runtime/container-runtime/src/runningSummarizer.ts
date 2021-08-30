@@ -24,7 +24,7 @@ import {
     SummarizerStopReason,
     ISubmitSummaryOptions,
     SubmitSummaryResult,
-    ICancellationToken,
+    ISummaryCancellationToken,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -51,7 +51,7 @@ export class RunningSummarizer implements IDisposable {
         heuristicData: ISummarizeHeuristicData,
         raiseSummarizingError: (description: string) => void,
         summaryCollection: SummaryCollection,
-        cancellationToken: ICancellationToken,
+        cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         options?: Readonly<Partial<ISummarizerOptions>>,
     ): Promise<RunningSummarizer> {
@@ -99,7 +99,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly raiseSummarizingError: (description: string) => void,
         private readonly summaryCollection: SummaryCollection,
-        private readonly cancellationToken: ICancellationToken,
+        private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
@@ -207,25 +207,33 @@ export class RunningSummarizer implements IDisposable {
         }
     }
 
-    public async waitStop(): Promise<void> {
-        if (this.disposed) {
+    public async waitStop(allowLastSummary: boolean): Promise<void> {
+        if (this.stopping) {
             return;
         }
 
-        if (!this.stopping) {
-            this.stopping = true;
+        this.stopping = true;
 
-            this.disposeEnqueuedSummary();
+        this.disposeEnqueuedSummary();
 
-            // This will try to run lastSummary if needed.
-            if (this.heuristicRunner?.shouldRunLastSummary()) {
-                this.trySummarize("lastSummary");
+        // This will try to run lastSummary if needed.
+        if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary()) {
+            if (this.summarizingLock === undefined) {
+                // Note: trySummarizeOnce() expects to be called when lock is not taken.
+                this.generator.summarize(
+                    // summarizeProps
+                    { summarizeReason: "lastSummary" },
+                    // ISummarizeOptions, using defaults: { refreshLatestAck: false, fullTree: false }
+                    {},
+                    this.cancellationToken);
             }
         }
 
+        // Note that trySummarizeOnce() call above returns right away, without waiting.
+        // So we need to wait for its completion, otherwise it would be destroyed right away.
+        // That said, if summary lock was taken upfront, this wait might wait on  multiple retries to
+        // submit summary. We should reconsider this flow and make summarizer move to exit faster.
         // This resolves when the current pending summary gets an ack or fails.
-        // We wait for the result in case a safe summary is needed, and to get
-        // better telemetry.
         await Promise.all([
             this.summarizingLock,
             this.generator.waitSummarizing(),

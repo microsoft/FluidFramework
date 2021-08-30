@@ -270,10 +270,10 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
-// @public (undocumented)
-export interface ICancellationToken {
+// @public
+export interface ICancellationToken<T> {
     readonly cancelled: boolean;
-    readonly waitCancelled: Promise<void>;
+    readonly waitCancelled: Promise<T>;
 }
 
 // @public (undocumented)
@@ -424,7 +424,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 
 // @public (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
-    readonly cancellationToken: ICancellationToken;
+    readonly cancellationToken: ISummaryCancellationToken;
     readonly summaryLogger: ITelemetryLogger;
 }
 
@@ -467,7 +467,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRo
     // (undocumented)
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
     // (undocumented)
-    stop(reason?: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
 }
 
@@ -536,6 +536,9 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 }
 
 // @public (undocumented)
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
+
+// @public (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
     // (undocumented)
     (event: OpActionEventName, listener: OpActionEventListener): any;
@@ -580,7 +583,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 }
 
 // @public
-export const neverCancelledToken: ICancellationToken;
+export const neverCancelledToken: ISummaryCancellationToken;
 
 // @public (undocumented)
 export type OnDemandSummarizeResult = (ISummarizeResults & {

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
 import {
@@ -69,11 +69,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     private _disposed: boolean = false;
 
     private readonly innerHandle: IFluidHandle<this>;
-    private runCoordinator?: RunWhileConnectedCoordinator;
 
     public get handle(): IFluidHandle<this> { return this.innerHandle; }
-
-    private get cancelled() { return this.runCoordinator?.cancelled ?? true; }
+    private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
     constructor(
         url: string,
@@ -97,18 +95,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     public async run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
         try {
             await this.runCore(onBehalfOf, options);
-            assert(this.cancelled, "should be cancelled by now");
         } catch (error) {
-            this.emit("summarizingError", SummarizingWarning.wrap(error, false /* logged */, this.logger));
-            throw error;
+            this.stop("summarizerException");
+            throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
         } finally {
-            // Cleanup after running
-            if (this.runtime.connected && this.runningSummarizer) {
-                await this.runningSummarizer.waitStop();
-            }
-            this.runCoordinator = undefined;
-            this.runtime.closeFn();
             this.dispose();
+            this.runtime.closeFn();
         }
     }
 
@@ -118,7 +110,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * @param reason - reason code for stopping
      */
      public stop(reason: SummarizerStopReason) {
-        this.runCoordinator?.stop(reason);
+        this.stopDeferred.resolve(reason);
     }
 
     public async request(request: IRequest): Promise<IResponse> {
@@ -133,8 +125,26 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
     private async runCore(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
-        const runCoordinator = new RunWhileConnectedCoordinator(this.runtime, onBehalfOf, this.logger);
+        // Initialize values and first ack (time is not exact)
+        this.logger.sendTelemetryEvent({
+            eventName: "RunningSummarizer",
+            onBehalfOf,
+            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
+        });
+
+        const runCoordinator = new RunWhileConnectedCoordinator(this.runtime);
         await runCoordinator.waitStart();
+
+        // Wait for either external signal to cancel, or loss of connectivity.
+        const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
+        void stopP.then((reason) => {
+            this.logger.sendTelemetryEvent({
+                eventName: "StoppingSummarizer",
+                onBehalfOf,
+                reason,
+            });
+        });
+
         if (runCoordinator.cancelled) {
             return;
         }
@@ -144,8 +154,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         if (clientId === undefined) {
             throw Error("clientId should be defined if connected.");
         }
-
-        this.runCoordinator = runCoordinator;
 
         const runningSummarizer = await RunningSummarizer.start(
             this.logger,
@@ -166,7 +174,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             },
             this.summaryCollection,
             runCoordinator /* cancellationToken */,
-            (reason) => runCoordinator.stop(reason),
+            (reason) => runCoordinator.stop(reason), /* stopSummarizerCallback */
             options,
         );
         this.runningSummarizer = runningSummarizer;
@@ -184,7 +192,30 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
         this.runtime.on("batchEnd", this.opListener);
 
-        await runCoordinator.waitCancelled;
+        // Wait for either external signal to cancel, or loss of connectivity.
+        const stopReason = await stopP;
+
+        // There are two possible approaches here:
+        // 1. Propagate cancellation from this.stopDeferred to runCoordinator. This will ensure that we move to the exit
+        //    faster, including breaking out of the RunningSummarizer.trySummarize() faster.
+        //    We could create new coordinator and pass it to waitStop() -> trySummarizeOnce("lastSummary") flow.
+        //    The con of this approach is that we might cancel active summary, and lastSummary will fail because it
+        //    did not wait for ack/nack from previous summary. Plus we disregard any 429 kind of info from service
+        //    that way (i.e. trySummarize() loop might have been waiting for 5 min because storage told us so).
+        //    In general, it's more wasted resources.
+        // 2. We can not do it and make waitStop() do last summary only if there was no active summary. This ensures
+        //    that client behaves properly (from server POV) and we do not waste resources. But, it may mean we wait
+        //    substantially longer for trySummarize() retries to play out and thus this summary loop may run into
+        //    conflict with new summarizer client starting on different client.
+        // As of now, #2 is implemented. It's more forward looking, as issue #7279 suggests changing design for new
+        // summarizer client to not be created until current summarizer fully moves to exit, and that would reduce
+        // cons of #2 substantially.
+
+        // Cleanup after running
+        await runningSummarizer.waitStop(!runCoordinator.cancelled /* allowLastSummary */);
+
+        // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
+        runCoordinator.stop(stopReason);
     }
 
     /**
@@ -194,8 +225,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * Called by ContainerRuntime when it is disposed, as well as at the end the run().
      */
     public dispose() {
-        // If there is session running, make sure it is aborted
-        assert(this.cancelled, "cancelled");
+        // Given that the call can come from own ContainerRuntime, ensure that we stop all the processes.
+        this.stop("summarizeClientDisconnected");
 
         this._disposed = true;
         if (this.runningSummarizer) {

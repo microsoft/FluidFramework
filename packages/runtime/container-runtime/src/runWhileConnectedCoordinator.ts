@@ -4,19 +4,18 @@
  */
 
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { SummarizerStopReason, IConnectableRuntime, ICancellationToken } from "./summarizerTypes";
+import { SummarizerStopReason, IConnectableRuntime, ISummaryCancellationToken } from "./summarizerTypes";
 
 /* Similar to AbortController, but using promise instead of events */
-export interface ICancellableSummarizerController extends ICancellationToken {
+export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     stop(reason: SummarizerStopReason): void;
 }
 
 /**
  * Can be useful in testing as well as in places where caller does not use cancellation.
- * This object implements ICancellationToken interface but cancellation is never leveraged.
+ * This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
  */
-export const neverCancelledToken: ICancellationToken = {
+export const neverCancelledToken: ISummaryCancellationToken = {
     cancelled: false,
     waitCancelled: new Promise(() => {}),
 };
@@ -29,7 +28,7 @@ export const neverCancelledToken: ICancellationToken = {
 export class RunWhileConnectedCoordinator implements ICancellableSummarizerController {
     private everConnected = false;
     private _cancelled = false;
-    private readonly stopDeferred = new Deferred<void>();
+    private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
     public get cancelled() {
         if (!this._cancelled) {
@@ -54,15 +53,11 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
     /**
      * Returns a promise that resolves once stopped either externally or by disconnect.
      */
-     public get waitCancelled(): Promise<void> {
+     public get waitCancelled(): Promise<SummarizerStopReason> {
         return this.stopDeferred.promise;
     }
 
-    public constructor(
-        private readonly runtime: IConnectableRuntime,
-        /** clientId of parent (non-summarizing) container that owns summarizer container */
-        private readonly onBehalfOfClientId: string,
-        private readonly logger: ITelemetryLogger) {
+    public constructor(private readonly runtime: IConnectableRuntime) {
         // Try to determine if the runtime has ever been connected
         if (this.runtime.connected) {
             this.everConnected = true;
@@ -87,13 +82,6 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
             }
             this.stop("summarizeClientDisconnected");
         });
-
-        // Initialize values and first ack (time is not exact)
-        this.logger.sendTelemetryEvent({
-            eventName: "RunningSummarizer",
-            onBehalfOfClientId,
-            initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
-        });
     }
 
     /**
@@ -102,14 +90,10 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
      * The return value indicates whether the start is successful or not.
      */
     public async waitStart() {
-        if (!this.runtime.connected) {
-            if (this.everConnected) {
-                // We will not try to reconnect, so we are done running
-                return { started: false, message: "DisconnectedBeforeRun" };
-            }
+        if (!this.runtime.connected && !this.everConnected) {
             const waitConnected = new Promise<void>((resolve) =>
                 this.runtime.once("connected", resolve));
-            await Promise.race([waitConnected, this.waitCancelled]);
+            return Promise.race([waitConnected, this.waitCancelled]);
         }
     }
 
@@ -119,13 +103,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
     public stop(reason: SummarizerStopReason): void {
         if (!this._cancelled) {
             this._cancelled = true;
-            this.logger.sendTelemetryEvent({
-                eventName: "StoppingSummarizer",
-                onBehalfOf: this.onBehalfOfClientId,
-                reason,
-            });
-
-            this.stopDeferred.resolve();
+            this.stopDeferred.resolve(reason);
         }
     }
 }

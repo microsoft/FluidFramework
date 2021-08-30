@@ -33,13 +33,22 @@ export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
 
-/* Similar to AbortSignal, but using promise instead of events */
-export interface ICancellationToken {
+/**
+ * Similar to AbortSignal, but using promise instead of events
+ * @param T - cancellation reason type
+ */
+export interface ICancellationToken<T> {
     /** Tells if this cancellable token is cancelled */
     readonly cancelled: boolean;
-    /** Promise that gets fulfilled when this cancellable token is cancelled */
-    readonly waitCancelled: Promise<void>;
+    /**
+     * Promise that gets fulfilled when this cancellable token is cancelled
+     * @returns reason of cancellation
+     */
+    readonly waitCancelled: Promise<T>;
 }
+
+/* Similar to AbortSignal, but using promise instead of events */
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
@@ -98,7 +107,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger,
     /** Tells when summary process should be cancelled */
-    readonly cancellationToken: ICancellationToken,
+    readonly cancellationToken: ISummaryCancellationToken,
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -270,7 +279,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
-    stop(reason?: SummarizerStopReason): void;
+    stop(reason: SummarizerStopReason): void;
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
 
     /**
