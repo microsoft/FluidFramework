@@ -225,7 +225,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      */
     public dispose() {
         // Given that the call can come from own ContainerRuntime, ensure that we stop all the processes.
-        this.stop("summarizeClientDisconnected");
+        this.stop("summarizerClientDisconnected");
 
         this._disposed = true;
         if (this.runningSummarizer) {
