@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Runner, Suite, Test, reporters } from "mocha";
+import { Runner, Suite, Test } from "mocha";
 import { benchmarkTypes, isChildProcess, performanceTestSuiteTag, ReporterOptions } from "./Configuration";
 import { BenchmarkData, BenchmarkReporter, failedData } from "./Reporter";
 import { red } from "./ReporterUtilities";
