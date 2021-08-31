@@ -56,8 +56,25 @@ export const mochaHooks = {
         const context = this as any as Context;
         currentTestName = context.currentTest?.fullTitle();
         currentTestLogger = undefined;
+
+        // send event on test start
+        originalLogger.send({
+            category: "generic",
+            eventName: "fluid:telemetry:Test_start",
+            testName: currentTestName,
+        });
     },
     afterEach() {
+        // send event on test end
+        const context = this as any as Context;
+        originalLogger.send({
+            category: "generic",
+            eventName: "fluid:telemetry:Test_end",
+            testName: currentTestName,
+            state: context.currentTest?.state,
+            duration: context.currentTest?.duration,
+        });
+
         console.log = log;
         console.error = error;
         console.warn = warn;
