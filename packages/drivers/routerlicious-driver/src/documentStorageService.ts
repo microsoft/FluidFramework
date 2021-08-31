@@ -149,7 +149,7 @@ class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel", 0),
         );
         return summaryHandle;
     }
@@ -300,7 +300,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel", 0),
         );
         return summaryHandle;
     }
