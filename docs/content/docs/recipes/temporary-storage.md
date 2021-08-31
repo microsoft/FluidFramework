@@ -3,7 +3,7 @@ title: Using Fluid for temporary storage
 menuPosition: 3
 ---
 
-Some developers may wish to use the Fluid container for temporary storage only, choosing to use another data store for the long-term storage of the data after the collaboration period has passed -- or not storing the data at all, as it may have no usefulness beyond the collaboration period.
+Some developers may wish to use the Fluid container for temporary storage only, choosing to use another data store for the long-term storage of the data after the collaboration period has passed; or choosing to not store the data at all, as it may have no usefulness beyond the collaboration period.
 
 In this scenario, we assume the data in the primary data store will be temporarily copied to a Fluid container so that it can participate in a real-time collaboration experience for some period of time, and that it will not be edited in the original location while it's in the Fluid container. All the business logic described here is assumed to be executed on the client in the context of the current user.
 
