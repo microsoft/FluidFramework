@@ -13,7 +13,7 @@ The following image shows the same four clients one second after the **click** b
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview](../overview.md) and that you have completed the [QuickStart](./quick-start.md). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
 
 {{< /callout >}}
 
