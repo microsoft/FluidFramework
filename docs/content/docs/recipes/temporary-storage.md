@@ -19,7 +19,7 @@ Keeping data in sync between a Fluid container and an external data store is bey
 
 ## Data permissions
 
-The user that initiates the transfer of the data into the Fluid container would need to have permissions to read the source data and set whatever locking mechanism is used to keep other users from editing the source data while it resides in the Fluid container. The other users in the collaboration experience do not need to have access to the original data store. This enables developers to delegate editing of specific data elements. Because the data transfer is all managed on the client, only users with access to the original data store should have the option to save changes back to the source. The developer is responsible for managing the user experience of the "save" action, including which clients have the option to save updates back to the source of truth.
+The user that initiates the transfer of the data into the Fluid container would need to have permissions to read the source data and set whatever locking mechanism is used to keep other users from editing the source data while it resides in the Fluid container. The other users in the collaboration experience do not need to have access to the original data store. This enables developers to delegate editing of specific data elements. Because the data transfer is all managed on the client, only users with access to the original data store should have the option to save changes back to the source. The developer is responsible for managing the user experience of the "save" action, including which clients have the option to save updates back to the original data store.
 
 ## Container/session state and writing data back to the external data source
 
