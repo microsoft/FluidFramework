@@ -20,11 +20,10 @@
 - `FlushMode.Automatic` to `FlushMode.Immediate`
 
 ### `name` removed from ContainerSchema
-The `name` property on the ContainerSchema was used for multi-container scenarios but has not materialized to be a useful schema property. The feedback has been negative to neutral.
+The `name` property on the ContainerSchema was used for multi-container scenarios but has not materialized to be a useful schema property. The feedback has been negative to neutral and the goal is to remove it before it becomes formalized. Support for multi-container scenarios, if any is required, will be addressed as a future change.
 
 ### Anonymous return types for container calls in client packages
 `createContainer` and `getContainer` in `@fluidframework/azure-client` and `@fluidframework/tinylicious-client` will no longer return typed objects but instead will return an anonymous types. This provide the flexibility that comes with tuple deconstruction with the strong typing of property names.
-
 
 ```javascript
 // `@fluidframework/azure-client`
