@@ -19,6 +19,7 @@ In the DiceRoller app, users are shown a die with a button to roll it. When the 
 3. Write the dice view.
 4. Connect the view to Fluid data.
 
+The first two steps can be viewed in the DiceRoller's [app.ts](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts), while the last two are done in [jsView.ts](https://github.com/microsoft/FluidHelloWorld/blob/main/src/view/jsView.ts).
 
 ## Set up the application
 
@@ -29,9 +30,6 @@ The app creates Fluid containers using a configuration that defines a set of *in
 Lastly, `root` defines the HTML element that the Dice will render on.
 
 ```js
-import { AzureClient } from "@fluidframework/azure-client";
-import { SharedMap } from "fluid-framework";
-
 const client = new AzureClient(localConfig);
 
 const containerConfig = {
