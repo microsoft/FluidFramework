@@ -66,7 +66,7 @@ function getSharepointServerRelativePathFromURL(url: URL) {
     return decodeURI(sitePath);
 }
 
-async function fluidFetchMain() {
+export async function fluidFetchMain() {
     if (!paramURL) {
         return;
     }
