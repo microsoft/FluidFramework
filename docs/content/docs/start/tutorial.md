@@ -59,7 +59,7 @@ const createNewDice = async () => {
     // Attach container to service and return assigned ID
     const id = container.attach();
     // load the dice roller
-    renderDiceRoller(root, container.initialObjects.diceMap);
+    renderDiceRoller(container.initialObjects.diceMap, root);
     return id;
   }
 ```
@@ -70,7 +70,7 @@ Loading a container is more straightforward than creating a new one. When loadin
 ```js
 const loadExistingDice = async (id) => {
   const { container } = await client.getContainer(id, containerConfig);
-  renderDiceRoller(root, container.initialObjects.diceMap);
+  renderDiceRoller(container.initialObjects.diceMap, root);
 }
 
 ```
@@ -106,7 +106,7 @@ It is simplest to create the view using local data without Fluid, then add Fluid
 This `renderDiceRoller` function, given an HTML element to attach to, creates a working dice roller that displays a random dice value each time the "Roll" button is clicked. Note that the included code snippets omit the styles for brevity.
 
 ```js
-function renderDiceRoller(elem, diceMap) {
+function renderDiceRoller(diceMap, elem) {
     const dice = document.createElement("div");
 
     const rollButton = document.createElement("button");
