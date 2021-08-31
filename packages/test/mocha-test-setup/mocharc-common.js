@@ -12,7 +12,8 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
 
     const testDriver = process.env.fluid__test__driver ? process.env.fluid__test__driver : "local";
     const r11sEndpointName = process.env.fluid__test__r11sEndpointName;
-    const testVariant = (testDriver === "r11s" || testDriver === "routerlicious") && (r11sEndpointName !== "r11s")? `r11s-${r11sEndpointName}` : testDriver;
+    const testVariant = (testDriver === "r11s" || testDriver === "routerlicious")
+        && (r11sEndpointName !== undefined && r11sEndpointName !== "r11s") ? `r11s-${r11sEndpointName}` : testDriver;
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
