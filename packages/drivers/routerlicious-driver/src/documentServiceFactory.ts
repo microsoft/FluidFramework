@@ -23,7 +23,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
-import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
+import { parseFluidUrl, replaceDocumentIdInPath, stringifyAsFluidUrl } from "./urlUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -97,13 +97,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             throw new Error(
                 `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
         }
-        const parsedDeltaStorageUrl = parseFluidUrl(deltaStorageUrl);
+        const parsedDeltaStorageUrl = new URL(deltaStorageUrl);
         parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
 
         return this.createDocumentService(
             {
                 ...resolvedUrl,
-                url: parsedUrl.toString(),
+                url: stringifyAsFluidUrl(parsedUrl),
                 id: documentId,
                 endpoints: {
                     ...resolvedUrl.endpoints,
