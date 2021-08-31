@@ -7,12 +7,12 @@ aliases:
   - "/start/tutorial/"
 ---
 
-In this walkthrough, you'll learn about using the Fluid Framework by building a simple [DiceRoller](https://github.com/microsoft/FluidHelloWorld) application. To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
+In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at [https://github.com/microsoft/FluidHelloWorld](https://github.com/microsoft/FluidHelloWorld). To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.12142020.js" >}}
 
-In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
+In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, the Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
 1. Set up the application.
 2. Create a Fluid container.
@@ -45,9 +45,9 @@ Fluid data is stored within containers, and these containers need to be created 
 
 ### Create a new container
 
-The create path of the application starts with calling `createContainer` and passing in the `containerConfig` defining which DDSes will be retuned on the `container`.
+The create path of the application starts with calling `createContainer` and passing in a schema defining which shared objects will be available on the new `container`.
 
-After setting some default values on the `diceMap`, the function attaches the `container`, allowing ops to be sent to and from the `client`, and returns the assigned `id` that will be used in the load path.
+After setting some default values on the `diceMap`, the container is attached by calling the `attach` function. Attaching allows changes to be sent to and from the client, and returns the assigned container id that will be used in the load path.
 
 Now that the app has a connected container and default data, the dice roller view is ready to render.
 
@@ -65,7 +65,7 @@ const createNewDice = async () => {
 ```
 ### Loading an existing container
 
-Loading a container is more straightforward than creating a new one. When loading, the container already contains data, and is already attached, so those steps are irrelevant. You need only to pass the `id` of the container you wish to load in the `getContainer()` function.
+Loading a container is more straightforward than creating a new one. When loading, the container already contains data, and is already attached, so those steps are irrelevant. You need only to pass the `id` of the container you wish to load in the `getContainer()` function along with the same schema used when creating the container.
 
 ```js
 const loadExistingDice = async (id) => {
@@ -77,7 +77,7 @@ const loadExistingDice = async (id) => {
 
 ### Switching between loading and creating
 
-The application supports both creating a new container and loading an existing container using its `id`. To control which state the app is in, it stores the container `id` in the URL hash. If the URL has a hash, the app will load that existing container, otherwise the app creates a new container, attaches it, and sets the returned `id` as the hash.
+The application supports both creating a new container and loading an existing container using its `id`. To control which state the app is in, it stores the container id in the URL hash. If the URL has a hash, the app will load that existing container, otherwise the app creates a new container, attaches it, and sets the returned `id` as the hash.
 
 Because both the `getContainer` and `createContainer` methods are async, the `start` function needs to be created and then called, catching any errors that are returned.
 
@@ -97,13 +97,13 @@ start().catch((error) => console.error(error));
 
 ## Write the dice view
 
-Fluid is view framework agnostic and works well with React, Vue, Angular and web components. This example will use nothing more than standard HTML/DOM methods, but you can see examples of other frameworks, as well as this example in full, in our [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld).
+The Fluid Framework is view framework agnostic and works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see this example, as well as examples of the previously mentioned frameworks, in our [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld).
 
 ### Start with a static view
 
 It is simplest to create the view using local data without Fluid, then add Fluid by changing some key pieces of the app. This tutorial uses this approach.
 
-This `renderDiceRoller` function, given an HTML element to attach to, creates a working dice roller that displays a random dice value each time the "Roll" button is clicked. Note that the included code snippets omit the styles for brevity.
+The `renderDiceRoller` function below takes an HTML element to attach to, and displays a working dice roller with a random dice value each time the "Roll" button is clicked. Note that the included code snippets omit the styles for brevity.
 
 ```js
 function renderDiceRoller(diceMap, elem) {
@@ -127,9 +127,9 @@ function renderDiceRoller(diceMap, elem) {
 
 ### Modifying Fluid data
 
-To begin using Fluid in the application, the first thing to change is what happens when the user clicks the `rollButton`. Instead updating the local state directly, the button updates the number stored in the `value` key of the passed in `diceMap`. This change will be distributed to all clients and cause a `valueChanged` event to be sent. The event handler is then used to trigger an update of the view.
+To begin using Fluid in the application, the first thing to change is what happens when the user clicks the `rollButton`. Instead of updating the local state directly, the button updates the number stored in the `value` key of the passed in `diceMap`. Because the `diceMap` is a Fluid `SharedMap`, changes will be distributed to all clients. Any changes to the `diceMap` will cause a `valueChanged` event to be emitted, and an event handler can trigger an update of the view.
 
-Pushing local state out to Fluid data is a common pattern because the view should react to local and remote changes in the same way.
+Pushing local state out to Fluid shared objects is a common pattern that allows the view to react the same way for both local and remote changes.
 
 ```js
     rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6));
