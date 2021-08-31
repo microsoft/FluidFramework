@@ -85,7 +85,6 @@ async function* loadAllSequencedMessages(
         } else {
             throw error;
         }
-        console.log(response);
         const seq = response.error.firstAvailableDelta;
         lastSeq = seq - 1;
     }

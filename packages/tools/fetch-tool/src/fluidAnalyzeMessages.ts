@@ -489,7 +489,6 @@ function processOp(
             if (envelop && typeof envelop === "string") {
                 envelop = JSON.parse(envelop);
             }
-            console.log(envelop);
             const innerContent = envelop.contents as {
                 content: any;
                 type: string;
