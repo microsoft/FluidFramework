@@ -70,6 +70,10 @@ describe("Summary Manager", () => {
         public async setSummarizer(): Promise<Summarizer> {
             this.notImplemented();
         }
+        public get cancelled() {
+            // Approximation, as ideally it should become cancelled immediately after stop() call
+            return this.state !== "running";
+        }
         public stop(reason?: string): void {
             this.stopDeferred.resolve(reason);
         }
@@ -81,9 +85,6 @@ describe("Summary Manager", () => {
                 this.runDeferred.promise,
             ]);
             this.state = "stopped";
-        }
-        public updateOnBehalfOf(onBehalfOf: string): void {
-            this.onBehalfOf = onBehalfOf;
         }
 
         public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = () => this.notImplemented();

@@ -113,12 +113,13 @@ import {
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
+    extractSummaryMetadataMessage,
     getGCVersion,
     GCVersion,
-    ReadContainerRuntimeMetadata,
+    IContainerRuntimeMetadata,
+    ISummaryMetadataMessage,
     metadataBlobName,
     wrapSummaryInChannelsTree,
-    WriteContainerRuntimeMetadata,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
@@ -577,7 +578,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
-        const metadata = await tryFetchBlob<ReadContainerRuntimeMetadata>(metadataBlobName);
+        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
 
@@ -593,7 +594,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         );
 
         // Verify summary runtime sequence number matches protocol sequence number.
-        const runtimeSequenceNumber = metadata?.sequenceNumber;
+        const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
         if (runtimeSequenceNumber !== undefined) {
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
@@ -785,6 +786,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
+    /** The message in the metadata of the base summary this container is loaded from. */
+    private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
 
     private static get defaultFlushMode(): FlushMode {
         return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
@@ -809,7 +812,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
-        metadata: ReadContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
@@ -822,6 +825,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
+        this.baseSummaryMessage = metadata?.message;
         /**
           * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
           * For existing documents, we get this value from the metadata blob.
@@ -1159,12 +1163,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return !this.disableIsolatedChannels || this.gcEnabled;
     }
 
-    private formMetadata(): WriteContainerRuntimeMetadata {
+    private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
             gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for now
-            sequenceNumber: this.deltaManager.lastSequenceNumber,
+            // The last message processed at the time of summary. If there are no messages, nothing has changed from
+            // the base summary we loaded from. So, use the message from its metadata blob.
+            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
         };
     }
 
@@ -1782,10 +1788,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Helper function to check whether we should still continue between each async step.
             const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
-                // If summarizer loses connection it will never reconnect
-                if (!this.connected) {
+                // Do not check for loss of connectivity directly! Instead leave it up to
+                // RunWhileConnectedCoordinator to control policy in a single place.
+                // This will allow easier change of design if we chose to. For example, we may chose to allow
+                // summarizer to reconnect in the future.
+                // Also checking for cancellation is a must as summary process may be abandoned for other reasons,
+                // like loss of connectivity for main (interactive) client.
+                if (options.cancellationToken.cancelled) {
                     return { continue: false, error: "disconnected" };
                 }
+                // That said, we rely on submitSystemMessage() that today only works in connected state.
+                // So if we fail here, it either means that RunWhileConnectedCoordinator does not work correctly,
+                // OR that design changed and we need to remove this check and fix submitSystemMessage.
+                assert(this.connected, "connected");
+
                 // Ensure that lastSequenceNumber has not changed after pausing.
                 // We need the summary op's reference sequence number to match our summary sequence number,
                 // otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
@@ -2101,7 +2117,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any) {
+        appData?: any,
+    ) {
+        this.verifyNotClosed();
+        assert(this.connected, "Container disconnected when trying to submit system message");
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
@@ -2222,7 +2241,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
-            const metadata = await readAndParse<ReadContainerRuntimeMetadata>(this.storage, metadataBlobId);
+            const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
             this.summaryGCVersion = getGCVersion(metadata);
         }
     }

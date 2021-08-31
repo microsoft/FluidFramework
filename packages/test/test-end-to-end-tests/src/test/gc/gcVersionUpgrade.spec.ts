@@ -18,6 +18,7 @@ import {
     IAckedSummary,
     IContainerRuntimeOptions,
     SummaryCollection,
+    neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
@@ -185,6 +186,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             fullTree: false,
             refreshLatestAck: false,
             summaryLogger: logger,
+            cancellationToken: neverCancelledSummaryToken,
         });
         return summarySequenceNumber;
     }
