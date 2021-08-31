@@ -81,7 +81,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@fluidframework/server-local-server": "^0.1030.0",
     "@fluidframework/server-test-utils": "^0.1030.0",
     "@types/bytes": "^3.0.0",

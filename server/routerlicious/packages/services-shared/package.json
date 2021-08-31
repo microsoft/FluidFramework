@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@types/debug": "^4.1.5",
     "@types/formidable": "1.2.3",
     "@types/ioredis": "^4.22.0",

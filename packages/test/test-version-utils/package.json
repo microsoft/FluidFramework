@@ -78,7 +78,7 @@
     "@fluidframework/datastore": "^0.47.0",
     "@fluidframework/driver-base": "^0.47.0",
     "@fluidframework/driver-utils": "^0.47.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@fluidframework/local-driver": "^0.47.0",
     "@fluidframework/merge-tree": "^0.47.0",
     "@fluidframework/odsp-doclib-utils": "^0.47.0",

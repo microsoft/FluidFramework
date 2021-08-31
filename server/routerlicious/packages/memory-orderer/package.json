@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@types/mocha": "^8.2.2",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",

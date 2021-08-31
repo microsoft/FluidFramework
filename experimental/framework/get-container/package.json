@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",

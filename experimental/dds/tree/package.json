@@ -47,7 +47,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/container-loader": "^0.47.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@fluidframework/mocha-test-setup": "^0.47.0",
     "@fluidframework/runtime-definitions": "^0.47.0",
     "@fluidframework/runtime-utils": "^0.47.0",

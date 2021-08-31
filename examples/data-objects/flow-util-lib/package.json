@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@fluidframework/mocha-test-setup": "^0.47.0",
     "@types/benchmark": "^2.1.0",
     "@types/mocha": "^8.2.2",

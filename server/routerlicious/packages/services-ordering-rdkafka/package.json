@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@fluidframework/server-test-utils": "^0.1030.0",
     "@types/amqplib": "^0.5.17",
     "@types/debug": "^4.1.5",
