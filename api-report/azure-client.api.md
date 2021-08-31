@@ -59,7 +59,7 @@ export interface AzureContainerServices {
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
-    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
@@ -74,12 +74,15 @@ export interface AzureMember<T = any> extends IMember {
 
 // @public (undocumented)
 export class AzureUrlResolver implements IUrlResolver {
-    constructor(tenantId: string, orderer: string, storage: string, tokenProvider: ITokenProvider);
+    constructor(tenantId: string, orderer: string, storage: string);
     // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IFluidResolvedUrl>;
     }
+
+// @public (undocumented)
+export const createAzureCreateNewRequest: () => IRequest;
 
 // @public (undocumented)
 export type IAzureAudience = IServiceAudience<AzureMember>;

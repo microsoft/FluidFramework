@@ -32,7 +32,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers && !!request.headers[DriverHeader.createNew]) {
+        if (request.headers && request.headers[DriverHeader.createNew] === true) {
             return {
                 endpoints: {
                     ordererUrl: this.tinyliciousEndpoint,

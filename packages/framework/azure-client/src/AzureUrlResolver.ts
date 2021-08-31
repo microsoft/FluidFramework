@@ -5,6 +5,7 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
+    DriverHeader,
     IFluidResolvedUrl,
     IResolvedUrl,
     IUrlResolver,
@@ -22,12 +23,23 @@ export class AzureUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
+        if (request.headers && request.headers[DriverHeader.createNew] === true) {
+            return {
+                endpoints: {
+                    ordererUrl: this.orderer,
+                },
+                id: "",
+                tokens: {},
+                type: "fluid",
+                url: `${this.orderer}/${this.tenantId}`,
+            };
+        }
         const containerId = request.url.split("/")[0];
         const documentUrl = `${this.orderer}/${this.tenantId}/${containerId}`;
         return Promise.resolve({
             endpoints: {
                 deltaStorageUrl: `${this.orderer}/deltas/${this.tenantId}/${containerId}`,
-                ordererUrl: `${this.orderer}`,
+                ordererUrl: this.orderer,
                 storageUrl: `${this.storage}/repos/${this.tenantId}`,
             },
             id: containerId,
@@ -44,3 +56,12 @@ export class AzureUrlResolver implements IUrlResolver {
         return `${resolvedUrl.url}/${relativeUrl}`;
     }
 }
+
+export const createAzureCreateNewRequest = (): IRequest => (
+    {
+        url: "",
+        headers: {
+            [DriverHeader.createNew]: true,
+        },
+    }
+);
