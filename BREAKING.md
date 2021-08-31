@@ -6,7 +6,7 @@
 - [Anonymous return types for container calls in client packages](#Anonymous-return-types-for-container-calls-in-client-packages)
 - [createContainer and getContainer response objects properties renamed](#createContainer-and-getContainer-response-objects-properties-renamed)
 - [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
-- [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach()-and-not-exposed-on-the-container)
+- [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
 
 ### Property removed from IFluidDataStoreContext
 - the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
