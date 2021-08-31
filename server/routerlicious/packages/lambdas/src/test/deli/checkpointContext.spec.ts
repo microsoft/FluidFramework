@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { defaultHash } from "@fluidframework/server-services-client";
 import * as testUtils from "@fluidframework/server-test-utils";
 import { CheckpointContext } from "../../deli/checkpointContext";
 import { createDeliCheckpointManagerFromCollection, ICheckpointParams } from "../../deli/checkpointManager";
@@ -29,7 +30,7 @@ describe("Routerlicious", () => {
                         clients: undefined,
                         durableSequenceNumber: 0,
                         epoch: 0,
-                        expHash1: "00000000",
+                        expHash1: defaultHash,
                         logOffset,
                         sequenceNumber,
                         term: 1,

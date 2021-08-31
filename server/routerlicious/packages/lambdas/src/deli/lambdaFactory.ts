@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -38,7 +38,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         clients: undefined,
         durableSequenceNumber: 0,
         epoch,
-        expHash1: "00000000",
+        expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,

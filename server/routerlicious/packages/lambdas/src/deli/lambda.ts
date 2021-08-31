@@ -18,7 +18,7 @@ import {
     NackErrorType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize, getNextHash } from "@fluidframework/server-services-client";
+import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -182,7 +182,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Initialize counting context
         this.sequenceNumber = lastCheckpoint.sequenceNumber;
-        this.lastHash = lastCheckpoint.expHash1 ?? "00000000";
+        this.lastHash = lastCheckpoint.expHash1 ?? defaultHash;
         this.term = lastCheckpoint.term;
         this.epoch = lastCheckpoint.epoch;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
