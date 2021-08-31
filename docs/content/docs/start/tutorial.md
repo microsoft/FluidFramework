@@ -14,10 +14,10 @@ In this walkthrough, you'll learn about using the Fluid Framework by building a 
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
-1. Set up the application
-2. Create a Fluid Container
-3. Write the dice view
-4. Connect view to Fluid data
+1. Set up the application.
+2. Create a Fluid container.
+3. Write the dice view.
+4. Connect the view to Fluid data.
 
 
 ## Set up the application
@@ -41,7 +41,7 @@ const containerConfig = {
 const root = document.getElementById("root")
 ```
 
-## Create a Fluid Container
+## Create a Fluid container
 
 Fluid data is stored within containers, and these containers need to be created before other users can load them. Since creation and loading of containers both happen in the browser, a Fluid application needs to be capable of handling both paths.
 
@@ -97,7 +97,7 @@ start().catch((error) => console.error(error));
 
 ```
 
-## Defining the Dice view
+## Write the dice view
 
 Fluid is view framework agnostic and works well with React, Vue, Angular and web components. This example will use nothing more than standard HTML/DOM methods, but you can see examples of other frameworks, as well as this example in full, in our [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld).
 
@@ -124,6 +124,8 @@ function renderDiceRoller(elem, diceMap) {
     updateDice(1);
 }
 ```
+
+## Connect the view to Fluid data
 
 ### Modifying Fluid data
 
