@@ -43,7 +43,7 @@ const root = document.getElementById("root")
 
 ## Create a Fluid Container
 
-Fluid collaboration happens in containers, which have unique identifiers (like a document filename) that must be created before other users can load them. Since creation and loading of containers both happen in the client our application needs to be capable of handling both paths.
+Fluid data is stored within containers, and these containers need to be created before other users can load them. Since creation and loading of containers both happen in the browser, a Fluid application needs to be capable of handling both paths.
 
 ### Create a new container
 
