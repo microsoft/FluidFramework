@@ -142,8 +142,8 @@ The next change that needs to be made is to change the `updateDice` function so 
 
 ```js
     const updateDice = () => {
-        const value = diceMap.get("value");
-        dice.textContent = String.fromCodePoint(0x2680 + value);
+        const diceValue = diceMap.get("value");
+        dice.textContent = String.fromCodePoint(0x2680 + diceValue);
     };
     updateDice();
 ```
@@ -153,7 +153,7 @@ The next change that needs to be made is to change the `updateDice` function so 
 The values returned from `diceMap` are only a snapshot in time. To keep the data up to date as it changes an event handler must be set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent. See the documentation for individual DDSes to get a list of events fired and the values passed to those events.
 
 ```js
-    diceMap.on("valueChanged", () => updateDice());
+    diceMap.on("valueChanged", updateDice);
 ```
 
 
