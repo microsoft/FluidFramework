@@ -41,5 +41,8 @@ data:
             "maxRequestBurst": {{ .Values.historian.throttling.maxRequestBurst }},
             "minCooldownIntervalInMs": {{ .Values.historian.throttling.minCooldownIntervalInMs }},
             "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }}
+        },
+        "restGitService": {
+            "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }},
         }
     }

@@ -15,12 +15,11 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryTree,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
@@ -33,6 +32,23 @@ export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
+
+/**
+ * Similar to AbortSignal, but using promise instead of events
+ * @param T - cancellation reason type
+ */
+export interface ICancellationToken<T> {
+    /** Tells if this cancellable token is cancelled */
+    readonly cancelled: boolean;
+    /**
+     * Promise that gets fulfilled when this cancellable token is cancelled
+     * @returns reason of cancellation
+     */
+    readonly waitCancelled: Promise<T>;
+}
+
+/* Similar to AbortSignal, but using promise instead of events */
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
@@ -62,13 +78,20 @@ export interface ISummarizingWarning extends ContainerWarning {
     readonly logged: boolean;
 }
 
+export interface IConnectableRuntime {
+    readonly disposed: boolean;
+    readonly connected: boolean;
+    readonly clientId: string | undefined;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    once(event: "connected" | "disconnected", listener: () => void): this;
+}
+
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "disconnected", listener: () => void): this;
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
@@ -83,6 +106,8 @@ export interface ISummarizeOptions {
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
     readonly summaryLogger: ITelemetryLogger,
+    /** Tells when summary process should be cancelled */
+    readonly cancellationToken: ISummaryCancellationToken,
 }
 
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
@@ -241,8 +266,8 @@ export type SummarizerStopReason =
      * tries to stop its spawned summarizer client.
      */
     | "parentShouldNotSummarize"
-    /** summarizer client disconnected */
-    | "summarizeClientDisconnected"
+    /** Summarizer client was disconnected */
+    | "summarizerClientDisconnected"
     /* running summarizer threw an exception */
     | "summarizerException";
 
@@ -253,11 +278,9 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
-    stop(reason?: SummarizerStopReason): void;
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
+    stop(reason: SummarizerStopReason): void;
     run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
-    updateOnBehalfOf(onBehalfOf: string): void;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.
