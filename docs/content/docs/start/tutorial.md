@@ -22,7 +22,7 @@ In the DiceRoller app, users are shown a die with a button to roll it. When the 
 
 ## Application setup
 
-To create a Fluid application that connects to the [Azure Fluid Relay service]({{< relref "../../deployment/azure-frs.md" >}}), start by creating a new instance of the Fluid Azure Client. The client is responsible for creating and loading containers as well as communicating changes between all of the collaborators. Learn more about configuring the [Azure FRS Client]({{< relref "../../deployment/azure-frs.md" >}}).
+To create a Fluid application that connects to the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}), start by creating a new instance of the Azure Fluid Relay service client. The client is responsible for creating and loading containers as well as communicating changes between all of the collaborators. Learn more about configuring the client at [Azure Fluid Relay service client]({{< relref "azure-frs.md" >}}).
 
 The containers our app creates require a configuration which defines the set of initial Distributed Data Structures that will be attached to the returned container. View our full list of [Distributed Data Structures]({{< relref "../../data-structures/overview.md" >}})
 
