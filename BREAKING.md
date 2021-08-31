@@ -20,7 +20,7 @@
 - `FlushMode.Automatic` to `FlushMode.Immediate`
 
 ### `name` removed from ContainerSchema
-The `name` property on the ContainerSchema was used for multi-container scenarios but has not materialized to be a useful schema property. The feedback has been negative to neutral and the goal is to remove it before it becomes formalized. Support for multi-container scenarios, if any is required, will be addressed as a future change.
+The `name` property on the ContainerSchema was used for multi-container scenarios but has not materialized to be a useful schema property. The feedback has been negative to neutral so it is being removed before it becomes formalized. Support for multi-container scenarios, if any is required, will be addressed as a future change.
 
 ### Anonymous return types for container calls in client packages
 `createContainer` and `getContainer` in `@fluidframework/azure-client` and `@fluidframework/tinylicious-client` will no longer return typed objects but instead will return an anonymous type. This provide the flexibility that comes with tuple deconstruction with the strong typing of property names.
@@ -55,10 +55,10 @@ For all `*-client` packages `createContainer` and `getContainer` would return an
 
 ```javascript
 // old
-const { fluidContainer, containerServices } = client.getContainer;
+const { fluidContainer, containerServices } = client.getContainer(...);
 
 // new
-const { container, services } = client.getContainer;
+const { container, services } = client.getContainer(...);
 ```
 
 ### tinylicious and azure clients createContainer now detached
@@ -74,7 +74,7 @@ const id = container.attach();
 ```
 
 ### container id is returned from new attach() and not exposed on the container
-Because we now have an explicit attach flow the container id is apart of that flow. The id is returned from the `attach()` call.
+Because we now have an explicit attach flow, the container id is part of that flow as well. The id is returned from the `attach()` call.
 
 ```javascript
 // old
