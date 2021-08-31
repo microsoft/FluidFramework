@@ -38,6 +38,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         clients: undefined,
         durableSequenceNumber: 0,
         epoch,
+        expHash1: "00000000",
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
@@ -121,7 +122,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log?.info(`Deli checkpoint from summary: 
+                    context.log?.info(`Deli checkpoint from summary:
                         ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {

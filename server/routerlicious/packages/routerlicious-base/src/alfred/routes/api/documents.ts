@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as crypto from "crypto";
 import { IDocumentStorage, IThrottler, ITenantManager, ICache } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
@@ -77,6 +78,7 @@ export function create(
                 summary,
                 sequenceNumber,
                 1,
+                crypto.randomBytes(4).toString("hex"),
                 values);
 
             handleResponse(createP.then(() => id), response, undefined, 201);

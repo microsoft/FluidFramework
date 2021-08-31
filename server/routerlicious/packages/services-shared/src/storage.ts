@@ -114,6 +114,7 @@ export class DocumentStorage implements IDocumentStorage {
         appTree: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -153,6 +154,7 @@ export class DocumentStorage implements IDocumentStorage {
         const deli: IDeliState = {
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
+            expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
             epoch: undefined,

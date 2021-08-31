@@ -29,6 +29,7 @@ describe("Routerlicious", () => {
                         clients: undefined,
                         durableSequenceNumber: 0,
                         epoch: 0,
+                        expHash1: "00000000",
                         logOffset,
                         sequenceNumber,
                         term: 1,
