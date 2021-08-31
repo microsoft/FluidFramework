@@ -10,7 +10,7 @@ describe("UrlUtils", () => {
     const exampleFluidUrl1 = "fluid://orderer.examplehost.com/example-tenant/some-document?param1=value1";
     const exampleFluidUrl2 = "fluid://examplehost.com/other-tenant/";
     describe("parseFluidUrl()", () => {
-        it("parses fluid url", () => {
+        it("parses Fluid url", () => {
             const parsedUrl = parseFluidUrl(exampleFluidUrl1);
             assert.strictEqual(parsedUrl.protocol, "fluid:");
             assert.strictEqual(parsedUrl.host, "orderer.examplehost.com");
@@ -21,7 +21,7 @@ describe("UrlUtils", () => {
             assert.strictEqual(parsedUrl.toString(), exampleFluidUrl1);
         });
 
-        it("parses fluid url with blank document id", () => {
+        it("parses Fluid url with blank document id", () => {
             const parsedUrl = parseFluidUrl(exampleFluidUrl2);
             assert.strictEqual(parsedUrl.protocol, "fluid:");
             assert.strictEqual(parsedUrl.host, "examplehost.com");
