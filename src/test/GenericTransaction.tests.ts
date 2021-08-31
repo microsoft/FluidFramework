@@ -21,4 +21,13 @@ describe('GenericTransaction', () => {
 		transaction.applyChanges([{}, {}], trappedPath);
 		expect(transaction.status).equals(EditStatus.Applied);
 	});
+
+	it('reflects failure status when validateOnClose is not successful', () => {
+		const transaction = new MockTransaction<unknown>(initialRevisionViewWithValidation, {
+			statusOnClose: EditStatus.Invalid,
+		});
+		const result = transaction.close();
+		expect(result.status).equals(EditStatus.Invalid);
+		expect(transaction.status).equals(EditStatus.Invalid);
+	});
 });

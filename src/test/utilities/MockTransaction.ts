@@ -3,23 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { EditStatus, GenericTransaction } from '../../generic';
+import { ChangeResult, EditStatus, GenericTransaction } from '../../generic';
 import { RevisionView } from '../../TreeView';
 
 /**
  * A mock implementation of `GenericTransaction` for use in tests.
  * @internal
  */
+// eslint-disable-next-line import/export
 export class MockTransaction<TChange> extends GenericTransaction<TChange> {
+	public options: MockTransaction.Options;
+
+	public constructor(view: RevisionView, options: MockTransaction.Options = MockTransaction.defaultOptions) {
+		super(view);
+		this.options = options;
+	}
+
 	public static factory<TChange>(view: RevisionView): MockTransaction<TChange> {
 		return new MockTransaction<TChange>(view);
 	}
 
 	protected validateOnClose(): EditStatus {
-		return EditStatus.Applied;
+		return this.options.statusOnClose;
 	}
 
-	protected dispatchChange(change: TChange): EditStatus {
-		return EditStatus.Applied;
+	protected dispatchChange(): ChangeResult {
+		return this;
 	}
+}
+
+/**
+ * @internal
+ */
+// eslint-disable-next-line import/export
+export namespace MockTransaction {
+	export interface Options {
+		statusOnClose: EditStatus;
+	}
+
+	export const defaultOptions: Options = {
+		statusOnClose: EditStatus.Applied,
+	};
 }

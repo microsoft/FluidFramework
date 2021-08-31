@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from '../Common';
-import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
+import { ReconciliationPath } from '../ReconciliationPath';
 import { RevisionView, TransactionView } from '../TreeView';
 import { EditStatus } from './PersistedTypes';
 
@@ -34,6 +34,45 @@ export interface ValidEditingResult<TChange> {
 }
 
 /**
+ * The ongoing state of a transaction.
+ * @public
+ */
+export interface TransactionState<TChange> {
+	/**
+	 * The current status of the transaction.
+	 */
+	readonly status: EditStatus;
+	/**
+	 * The view reflecting the latest applied change.
+	 */
+	readonly view: TransactionView;
+	/**
+	 * The applied changes so far.
+	 */
+	readonly changes: readonly TChange[];
+	/**
+	 * The editing steps applied so far.
+	 */
+	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: TransactionView }[];
+}
+
+/**
+ * The result of applying a change within a transaction.
+ * @public
+ */
+export type ChangeResult =
+	| {
+			/**
+			 * The new view resulting from a change being applied.
+			 */
+			view: TransactionView;
+			status: EditStatus.Applied;
+	  }
+	| {
+			status: EditStatus.Invalid | EditStatus.Malformed;
+	  };
+
+/**
  * A mutable transaction for applying sequences of changes to a TreeView.
  * Allows viewing the intermediate states.
  *
@@ -46,51 +85,69 @@ export interface ValidEditingResult<TChange> {
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
  */
-export abstract class GenericTransaction<TChange> {
+export abstract class GenericTransaction<TChange> implements TransactionState<TChange> {
 	protected readonly before: RevisionView;
-	protected _view: TransactionView;
-	protected _status: EditStatus = EditStatus.Applied;
-	protected readonly changes: TChange[] = [];
-	protected readonly steps: ReconciliationChange<TChange>[] = [];
-	protected isOpen = true;
+	private state: TransactionState<TChange>;
+	private isOpen = true;
 
 	/**
 	 * Create and open an edit of the provided `TreeView`. After applying 0 or more changes, this editor should be closed via `close()`.
 	 * @param view - the `TreeView` at which this edit begins. The first change will be applied against this view.
 	 */
 	public constructor(view: RevisionView) {
-		this._view = view.openForTransaction();
 		this.before = view;
+		this.state = {
+			view: view.openForTransaction(),
+			status: EditStatus.Applied,
+			changes: [],
+			steps: [],
+		};
 	}
 
-	/** The most up-to-date `TreeView` for this edit. This is the state of the tree after all changes applied so far. */
+	/**
+	 * The most up-to-date `TreeView` for this edit. This is the state of the tree after all changes applied so far.
+	 */
 	public get view(): TransactionView {
-		return this._view;
+		return this.state.view;
 	}
 
-	/** The status code of the most recent attempted change */
+	/**
+	 * The status code of the most recent attempted change.
+	 */
 	public get status(): EditStatus {
-		return this._status;
+		return this.state.status;
+	}
+
+	/**
+	 * The status code of the most recent attempted change.
+	 */
+	public get changes(): readonly TChange[] {
+		return this.state.changes;
+	}
+
+	/**
+	 * The status code of the most recent attempted change.
+	 */
+	public get steps(): readonly { readonly resolvedChange: TChange; readonly after: TransactionView }[] {
+		return this.state.steps;
 	}
 
 	/** @returns the final `EditStatus` and `TreeView` after all changes are applied. */
 	public close(): EditingResult<TChange> {
 		assert(this.isOpen, 'transaction has already been closed');
 		this.isOpen = false;
-		if (this.status === EditStatus.Applied) {
-			this._status = this.validateOnClose();
-		}
-		if (this.status === EditStatus.Applied) {
+		const finalStatus = this.status === EditStatus.Applied ? this.validateOnClose() : this.status;
+		if (finalStatus === EditStatus.Applied) {
 			return {
+				...this.state,
 				status: EditStatus.Applied,
 				before: this.before,
-				after: this._view.close(),
-				changes: this.changes,
-				steps: this.steps,
+				after: this.view.close(),
 			};
 		}
+		this.state = { ...this.state, status: finalStatus };
 		return {
-			status: this.status,
+			status: finalStatus,
 			changes: this.changes,
 			before: this.before,
 		};
@@ -181,14 +238,26 @@ export abstract class GenericTransaction<TChange> {
 		}
 		const resolvedChange = this.tryResolveChange(change, path);
 		if (resolvedChange === undefined) {
-			this._status = EditStatus.Invalid;
+			this.state = { ...this.state, status: EditStatus.Invalid };
 			return this;
 		}
-		this.changes.push(change);
-		this._status = this.dispatchChange(resolvedChange);
-		this.steps.push({ resolvedChange, after: this.view });
+
+		const changeResult = this.dispatchChange(resolvedChange);
+		if (changeResult.status === EditStatus.Applied) {
+			this.state = {
+				status: EditStatus.Applied,
+				view: changeResult.view,
+				changes: this.changes.concat(change),
+				steps: this.steps.concat({ resolvedChange, after: changeResult.view }),
+			};
+		} else {
+			this.state = {
+				...this.state,
+				...changeResult,
+			};
+		}
 		return this;
 	}
 
-	protected abstract dispatchChange(change: TChange): EditStatus;
+	protected abstract dispatchChange(change: TChange): ChangeResult;
 }

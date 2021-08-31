@@ -35,7 +35,13 @@ export {
 	SharedTreeOpType,
 } from './PersistedTypes';
 export { newEdit, newEditId } from './GenericEditUtilities';
-export { GenericTransaction, EditingResult, ValidEditingResult } from './GenericTransaction';
+export {
+	GenericTransaction,
+	EditingResult,
+	ValidEditingResult,
+	TransactionState,
+	ChangeResult,
+} from './GenericTransaction';
 export {
 	SharedTreeSummary,
 	SharedTreeSummaryBase,

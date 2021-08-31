@@ -86,6 +86,8 @@ export {
 	EditStatus,
 	TraitLocation,
 	GenericTransaction,
+	TransactionState,
+	ChangeResult,
 	EditingResult,
 	ValidEditingResult,
 	SharedTreeFactoryOptions,

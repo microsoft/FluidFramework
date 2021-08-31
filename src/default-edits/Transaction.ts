@@ -5,7 +5,7 @@
 
 import { assert, copyPropertyIfDefined, fail } from '../Common';
 import { NodeId, DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { GenericTransaction, BuildNode, EditStatus } from '../generic';
+import { GenericTransaction, BuildNode, EditStatus, ChangeResult } from '../generic';
 import { RevisionView, TreeViewNode } from '../TreeView';
 import { EditValidationResult } from '../Checkout';
 import { Build, Change, ChangeType, Constraint, ConstraintEffect, Detach, Insert, SetValue } from './PersistedTypes';
@@ -43,7 +43,7 @@ export class Transaction extends GenericTransaction<Change> {
 		return this.detached.size !== 0 ? EditStatus.Malformed : EditStatus.Applied;
 	}
 
-	protected dispatchChange(change: Change): EditStatus {
+	protected dispatchChange(change: Change): ChangeResult {
 		switch (change.type) {
 			case ChangeType.Build:
 				return this.applyBuild(change);
@@ -60,9 +60,9 @@ export class Transaction extends GenericTransaction<Change> {
 		}
 	}
 
-	private applyBuild(change: Build): EditStatus {
+	private applyBuild(change: Build): ChangeResult {
 		if (this.detached.has(change.destination)) {
-			return EditStatus.Malformed;
+			return { status: EditStatus.Malformed };
 		}
 
 		let idAlreadyPresent = false;
@@ -89,38 +89,44 @@ export class Transaction extends GenericTransaction<Change> {
 		);
 
 		if (detachedSequenceNotFound || duplicateIdInBuild) {
-			return EditStatus.Malformed;
+			return { status: EditStatus.Malformed };
 		}
 		if (idAlreadyPresent) {
-			return EditStatus.Invalid;
+			return { status: EditStatus.Invalid };
 		}
 
 		const view = this.view.addNodes(map.values());
-		this._view = view;
 		this.detached.set(change.destination, newIds ?? fail());
-		return EditStatus.Applied;
+		return { status: EditStatus.Applied, view };
 	}
 
-	private applyInsert(change: Insert): EditStatus {
+	private applyInsert(change: Insert): ChangeResult {
 		const source = this.detached.get(change.source);
 		if (source === undefined) {
-			return EditStatus.Malformed;
+			return { status: EditStatus.Malformed };
 		}
 
 		const destinationChangeResult = validateStablePlace(this.view, change.destination);
 		if (destinationChangeResult !== EditValidationResult.Valid) {
-			return destinationChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed;
+			return {
+				status:
+					destinationChangeResult === EditValidationResult.Invalid
+						? EditStatus.Invalid
+						: EditStatus.Malformed,
+			};
 		}
 
 		this.detached.delete(change.source);
-		this._view = insertIntoTrait(this.view, source, change.destination);
-		return EditStatus.Applied;
+		const view = insertIntoTrait(this.view, source, change.destination);
+		return { status: EditStatus.Applied, view };
 	}
 
-	private applyDetach(change: Detach): EditStatus {
+	private applyDetach(change: Detach): ChangeResult {
 		const sourceChangeResult = validateStableRange(this.view, change.source);
 		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed;
+			return {
+				status: sourceChangeResult === EditValidationResult.Invalid ? EditStatus.Invalid : EditStatus.Malformed,
+			};
 		}
 
 		const result = detachRange(this.view, change.source);
@@ -130,26 +136,25 @@ export class Transaction extends GenericTransaction<Change> {
 		// Store or dispose detached
 		if (change.destination !== undefined) {
 			if (this.detached.has(change.destination)) {
-				return EditStatus.Malformed;
+				return { status: EditStatus.Malformed };
 			}
 			this.detached.set(change.destination, detached);
 		} else {
 			modifiedView = modifiedView.deleteNodes(detached);
 		}
-
-		this._view = modifiedView;
-		return EditStatus.Applied;
+		return { status: EditStatus.Applied, view: modifiedView };
 	}
 
-	private applyConstraint(change: Constraint): EditStatus {
+	private applyConstraint(change: Constraint): ChangeResult {
 		// TODO: Implement identityHash and contentHash
 		assert(change.identityHash === undefined, 'identityHash constraint is not implemented');
 		assert(change.contentHash === undefined, 'contentHash constraint is not implemented');
 
 		const sourceChangeResult = validateStableRange(this.view, change.toConstrain);
-		const onViolation = change.effect === ConstraintEffect.ValidRetry ? EditStatus.Applied : EditStatus.Invalid;
+		const onViolation: ChangeResult =
+			change.effect === ConstraintEffect.ValidRetry ? this : { status: EditStatus.Invalid };
 		if (sourceChangeResult !== EditValidationResult.Valid) {
-			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : EditStatus.Malformed;
+			return sourceChangeResult === EditValidationResult.Invalid ? onViolation : { status: EditStatus.Malformed };
 		}
 
 		const { start, end } = rangeFromStableRange(this.view, change.toConstrain);
@@ -168,16 +173,16 @@ export class Transaction extends GenericTransaction<Change> {
 			return onViolation;
 		}
 
-		return EditStatus.Applied;
+		return this;
 	}
 
-	private applySetValue(change: SetValue): EditStatus {
+	private applySetValue(change: SetValue): ChangeResult {
 		if (!this.view.hasNode(change.nodeToModify)) {
-			return EditStatus.Invalid;
+			return { status: EditStatus.Invalid };
 		}
 
-		this._view = this.view.setNodeValue(change.nodeToModify, change.payload);
-		return EditStatus.Applied;
+		const newView = this.view.setNodeValue(change.nodeToModify, change.payload);
+		return { status: EditStatus.Applied, view: newView };
 	}
 
 	/**

@@ -61,6 +61,14 @@ export const Change: {
 export type ChangeNode = TreeNode<ChangeNode>;
 
 // @public
+export type ChangeResult = {
+    view: TransactionView;
+    status: EditStatus.Applied;
+} | {
+    status: EditStatus.Invalid | EditStatus.Malformed;
+};
+
+// @public
 export enum ChangeType {
     // (undocumented)
     Build = 2,
@@ -289,31 +297,26 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 }
 
 // @public
-export abstract class GenericTransaction<TChange> {
+export abstract class GenericTransaction<TChange> implements TransactionState<TChange> {
     constructor(view: RevisionView);
     applyChange(change: TChange, path?: ReconciliationPath<TChange>): this;
     applyChanges(changes: Iterable<TChange>, path?: ReconciliationPath<TChange>): this;
     // (undocumented)
     protected readonly before: RevisionView;
-    // (undocumented)
-    protected readonly changes: TChange[];
+    get changes(): readonly TChange[];
     // (undocumented)
     close(): EditingResult<TChange>;
     // (undocumented)
-    protected abstract dispatchChange(change: TChange): EditStatus;
-    // (undocumented)
-    protected isOpen: boolean;
+    protected abstract dispatchChange(change: TChange): ChangeResult;
     get status(): EditStatus;
-    // (undocumented)
-    protected _status: EditStatus;
-    // (undocumented)
-    protected readonly steps: ReconciliationChange<TChange>[];
+    get steps(): readonly {
+        readonly resolvedChange: TChange;
+        readonly after: TransactionView;
+    }[];
     // (undocumented)
     protected tryResolveChange(change: TChange, path: ReconciliationPath<TChange>): TChange | undefined;
     protected abstract validateOnClose(): EditStatus;
     get view(): TransactionView;
-    // (undocumented)
-    protected _view: TransactionView;
 }
 
 // @public
@@ -633,11 +636,22 @@ export class Transaction extends GenericTransaction<Change> {
     // (undocumented)
     protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
     // (undocumented)
-    protected dispatchChange(change: Change): EditStatus;
+    protected dispatchChange(change: Change): ChangeResult;
     // (undocumented)
     static factory(view: RevisionView): Transaction;
     // (undocumented)
     protected validateOnClose(): EditStatus;
+}
+
+// @public
+export interface TransactionState<TChange> {
+    readonly changes: readonly TChange[];
+    readonly status: EditStatus;
+    readonly steps: readonly {
+        readonly resolvedChange: TChange;
+        readonly after: TransactionView;
+    }[];
+    readonly view: TransactionView;
 }
 
 // @public
