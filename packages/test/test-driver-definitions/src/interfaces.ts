@@ -15,6 +15,11 @@ export interface ITestDriver{
     readonly type: TestDriverTypes;
 
     /**
+     * Specific endpoint name if there are any
+     */
+    readonly endpointName?: string;
+
+    /**
      * The semantic version of the test drivers package.
      * In general this version will match that of the  client
      * interfaces and implementation exposed and used by the test driver.
