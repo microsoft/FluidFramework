@@ -14,7 +14,7 @@ const _ = require('lodash');
  *
  * @constructor
  * @package
- * @alias LYNX.Property.PropertyTemplateWrapper
+ * @alias property-properties.PropertyTemplateWrapper
  * @category Properties
  */
 export default class PropertyTemplateWrapper {
@@ -40,7 +40,7 @@ export default class PropertyTemplateWrapper {
 
 /**
  * To get the property template that this is wrapping.
- * @return {LYNX.Property.PropertyTemplate} The template this wrapper contains
+ * @return {property-properties.PropertyTemplate} The template this wrapper contains
  * @package
  */
 PropertyTemplateWrapper.prototype.getPropertyTemplate = function () {
@@ -49,8 +49,8 @@ PropertyTemplateWrapper.prototype.getPropertyTemplate = function () {
 
 /**
  * Gets the compiled template or creates it then returns it.
- * @param {LYNX.Property.PropertyFactory} in_propertyFactory The assosiated PropertyFactory.
- * @return {LYNX.Property.PropertyTemplate} The compiled template
+ * @param {property-properties.PropertyFactory} in_propertyFactory The assosiated PropertyFactory.
+ * @return {property-properties.PropertyTemplate} The compiled template
  * A compiled template is the template which is actually used for creating objects.
  * It has all information from parent Templates, and other changes.
  * @package
@@ -122,8 +122,8 @@ const hasAssociatedTemplate = (in_typeid) => {
 
 /**
  * Contructs the compiled template from the template this wraps
- * @param {LYNX.Property.PropertyFactory} in_propertyFactory The associated PropertyFactory.
- * @return {LYNX.Property.PropertyTemplate} The compiled template
+ * @param {property-properties.PropertyFactory} in_propertyFactory The associated PropertyFactory.
+ * @return {property-properties.PropertyTemplate} The compiled template
  * A compiled template is the template which is actually used for creating objects.
  * It has all information from parent Templates, and other changes.
  * @package
@@ -334,7 +334,7 @@ PropertyTemplateWrapper.prototype.hasConstantTree = function () {
 
 /**
  * Creates the constant tree if it doesn't exist yet, then apply it to the passed in property
- * @param {LYNX.Property.BaseProperty} in_property The property which will have constants applied to
+ * @param {property-properties.BaseProperty} in_property The property which will have constants applied to
  */
 PropertyTemplateWrapper.prototype.loadConstants = function (in_property) {
     if (this.hasConstantTree()) {
@@ -347,7 +347,7 @@ PropertyTemplateWrapper.prototype.loadConstants = function (in_property) {
 
 /**
  * Begins the process of creating and saving the constant tree.
- * @param {LYNX.Property.BaseProperty} in_property The property which has constants to be saved
+ * @param {property-properties.BaseProperty} in_property The property which has constants to be saved
  */
 PropertyTemplateWrapper.prototype._saveConstants = function (in_property) {
     this._saveConstantsRecursive(in_property, {});
@@ -356,7 +356,7 @@ PropertyTemplateWrapper.prototype._saveConstants = function (in_property) {
 
 /**
  * Recursive function which extracts all constants from in_property and saves them.
- * @param {LYNX.Property.BaseProperty} in_property The property whose constants will be saved
+ * @param {property-properties.BaseProperty} in_property The property whose constants will be saved
  * @param {Object} out_property A tree like series of nested objects which holds all constants of in_property
  * @return {Boolean} returns true if there is a constant within the subtree passed in as in_property
  */
@@ -406,7 +406,7 @@ PropertyTemplateWrapper.prototype._saveConstantsRecursive = function (in_propert
 
 /**
   * Applies save constants to the property passed in
-  * @param {LYNX.Property.BaseProperty} in_property The property that constants are being applied to
+  * @param {property-properties.BaseProperty} in_property The property that constants are being applied to
   */
 PropertyTemplateWrapper.prototype._applyConstants = function (in_property) {
     this._applyConstantsRecursive(this.constantTree, in_property);
@@ -415,7 +415,7 @@ PropertyTemplateWrapper.prototype._applyConstants = function (in_property) {
 /**
  * Applies constants from the in_property on to the out_property
  * @param {Object} in_property The property whose constants will be transfered
- * @param {LYNX.Property.BaseProperty} out_property The property that constants are being applied to
+ * @param {property-properties.BaseProperty} out_property The property that constants are being applied to
  */
 PropertyTemplateWrapper.prototype._applyConstantsRecursive = function (in_property, out_property) {
     if (out_property instanceof ContainerProperty) {

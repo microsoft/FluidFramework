@@ -356,7 +356,7 @@ Integer64MapProperty.prototype._prettyPrintChildren = function (indent, printFct
     var int64Prop;
     _.mapValues(this._dynamicChildren, function (val, key) {
         // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
-        //       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
+        //       such object to use it. It would be better to have it in LynxUtils Integer64.prototype.toString
         if (val instanceof Int64) {
             int64Prop = new Int64Property({});
         } else {

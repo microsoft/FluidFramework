@@ -1,8 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 /**
 * @fileoverview This file contains the implementation of the ContainerProperty class
 */
@@ -92,7 +87,9 @@ ContainerProperty.prototype.insert = function (in_id, in_property) {
         if (this._dynamicChildren[in_id] !== undefined) {
             throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_id);
         }
-        in_property._validateInsertIn(this);
+        if (!in_property._canInsert()) {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+        }
         // If an id is passed, it is stored in the child property object
         in_property._setId(in_id);
     }
@@ -187,6 +184,20 @@ ContainerProperty.prototype._validateRemove = function (in_id) {
 ContainerProperty.prototype.clear = function () {
     this._checkIsNotReadOnly(true);
     _.each(this._dynamicChildren, this.remove.bind(this));
+};
+
+var removeAllDeprecatedWarning = false;
+/**
+ * Removes all dynamic children
+ * @throws if node property is read-only
+ * @deprecated use .clear instead.
+ */
+ContainerProperty.prototype.removeAll = function () {
+    if (!removeAllDeprecatedWarning) {
+        console.warn(MSG.NODE_REMOVE_ALL_DEPRECATED);
+        removeAllDeprecatedWarning = true;
+    }
+    this.clear();
 };
 
 /**
@@ -300,7 +311,7 @@ ContainerProperty.prototype._getDynamicChildrenReadOnly = function () {
  * </pre>
  * You would update the values like
  * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
- * WARNING: not completely implemented for all types
+ * WARNING: not completely impemented for all types (see LYNXDEV-835)
  * @param {object} in_properties The properties you would like to assign
  * @private
  */

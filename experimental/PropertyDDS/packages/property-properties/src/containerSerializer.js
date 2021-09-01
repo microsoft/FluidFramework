@@ -55,7 +55,7 @@ ScopeProperty.prototype._remove = function (in_id) {
 
 /**
  * Serialize the input document.
- * @param {Array.<property-properties.BaseProperty>} in_psets property set
+ * @param {Array<BaseProperty>} in_psets property set
  * @param {bool} in_dirtyOnly serialize dirty properties only
  * @return {{}} JSON data of the document
  * @alias property-properties.serialize
