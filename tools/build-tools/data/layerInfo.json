@@ -152,9 +152,7 @@
             "HostUtils": {
                 "dev": true,
                 "packages": [
-                    "@fluidframework/azure-client",
-                    "@fluid-experimental/get-container",
-                    "@fluidframework/tinylicious-client"
+                    "@fluid-experimental/get-container"
                 ],
                 "deps": [
                     "Framework",
@@ -184,7 +182,6 @@
                 "packages": [
                     "@fluid-internal/client-api",
                     "@fluid-experimental/data-objects",
-                    "fluid-framework",
                     "@fluidframework/fluid-static"
                 ],
                 "dirs": [
@@ -193,6 +190,30 @@
                     "packages/framework/"
                 ],
                 "deps": [
+                    "Hosts",
+                    "Runtime"
+                ]
+            },
+            "ServiceClients": {
+                "packages": [
+                    "@fluidframework/azure-client",
+                    "@fluidframework/tinylicious-client"
+                ],
+                "deps": [
+                    "Framework",
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Server-Shared-Utils",
+                    "Test"
+                ]
+            },
+            "UberPackage": {
+                "packages": [
+                    "fluid-framework"
+                ],
+                "deps": [
+                    "Framework",
                     "Hosts",
                     "Runtime"
                 ]

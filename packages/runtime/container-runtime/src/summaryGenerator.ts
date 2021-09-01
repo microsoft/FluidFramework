@@ -146,8 +146,6 @@ export class SummaryGenerator {
     private summarizing: Deferred<void> | undefined;
     public isSummarizing() { return this.summarizing !== undefined; }
     public async waitSummarizing() { await this.summarizing?.promise; }
-    private summarizeCount = 0;
-    public getSummarizeCount() { return this.summarizeCount; }
     private readonly summarizeTimer: Timer;
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
@@ -176,8 +174,6 @@ export class SummaryGenerator {
         cancellationToken: ISummaryCancellationToken,
         resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
-        ++this.summarizeCount;
-
         if (this.summarizing !== undefined) {
             // We do not expect this case. Log the error and let it try again anyway.
             this.logger.sendErrorEvent({ eventName: "ConcurrentSummarizeAttempt", ...summarizeProps });

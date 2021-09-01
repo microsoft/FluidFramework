@@ -91,6 +91,7 @@ export class RunningSummarizer implements IDisposable {
         options: ISummarizeOptions;
         readonly resultsBuilder: SummarizeResultBuilder;
     } | undefined;
+    private summarizeCount = 0;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -105,7 +106,7 @@ export class RunningSummarizer implements IDisposable {
         { disableHeuristics = false }: Readonly<Partial<ISummarizerOptions>> = {},
     ) {
         this.logger = ChildLogger.create(
-            baseLogger, "Running", { all: { summaryGenTag: () => this.generator.getSummarizeCount() } });
+            baseLogger, "Running", { all: { summaryGenTag: () => this.summarizeCount } });
 
         if (!disableHeuristics) {
             this.heuristicRunner = new SummarizeHeuristicRunner(
@@ -273,6 +274,8 @@ export class RunningSummarizer implements IDisposable {
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
 
+        this.summarizeCount++;
+
         (async () => {
             const attempts = [
                 { refreshLatestAck: false, fullTree: false },
@@ -281,22 +284,22 @@ export class RunningSummarizer implements IDisposable {
                 { refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
             ];
             let overrideDelaySeconds: number | undefined;
-            let totalRetries = 0;
-            let retriesPerPhase = 0;
-            // Note: intentionally incrementing retryNumber in for loop rather than attemptPhase.
+            let totalAttempts = 0;
+            let attemptPerPhase = 0;
+
             for (let attemptPhase = 0; attemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
                     return;
                 }
 
-                totalRetries++;
-                retriesPerPhase++;
+                totalAttempts++;
+                attemptPerPhase++;
 
                 const summarizeProps: ITelemetryProperties = {
                     summarizeReason,
-                    summarizeTotalRetries: totalRetries,
-                    summarizeRetriesPerPhase: retriesPerPhase,
-                    summarizeAttemptPhase: attemptPhase,
+                    summarizeTotalAttempts: totalAttempts,
+                    summarizeAttemptsPerPhase: attemptPerPhase,
+                    summarizeAttemptPhase: attemptPhase + 1, // make everything 1-based
                 };
 
                 const { delaySeconds: regularDelaySeconds = 0, ...options } = attempts[attemptPhase];
@@ -324,9 +327,9 @@ export class RunningSummarizer implements IDisposable {
                 // Check for retryDelay that can come from summaryNack or upload summary flow.
                 // Retry the same step only once per retryAfter response.
                 overrideDelaySeconds = result.retryAfterSeconds;
-                if (overrideDelaySeconds === undefined || retriesPerPhase > 1) {
+                if (overrideDelaySeconds === undefined || attemptPerPhase > 1) {
                     attemptPhase++;
-                    retriesPerPhase = 0;
+                    attemptPerPhase = 0;
                 }
             }
             // If all attempts failed, close the summarizer container
@@ -361,6 +364,7 @@ export class RunningSummarizer implements IDisposable {
             // Another summary is currently being generated.
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
+        this.summarizeCount++;
         const result = this.generator.summarize(
             { summarizeReason: `onDemand/${reason}` },
             options,
@@ -437,6 +441,7 @@ export class RunningSummarizer implements IDisposable {
         const { reason, resultsBuilder, options } = this.enqueuedSummary;
         // Set to undefined first, so that subsequent enqueue attempt while summarize will occur later.
         this.enqueuedSummary = undefined;
+        this.summarizeCount++;
         this.generator.summarize(
             { summarizeReason: `enqueuedSummary/${reason}` },
             options,

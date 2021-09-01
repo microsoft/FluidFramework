@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ServiceAudience } from "fluid-framework";
 import { ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
 export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
