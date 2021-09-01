@@ -88,6 +88,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
             }
             this.stop("summarizerClientDisconnected");
         });
+        this.runtime.once("dispose", () => this.stop("summarizerClientDisconnected"));
     }
 
     /**

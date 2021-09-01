@@ -306,7 +306,7 @@ export interface IConnectableRuntime {
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
-    once(event: "connected" | "disconnected", listener: () => void): this;
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 // @public

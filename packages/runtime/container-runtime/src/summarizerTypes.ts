@@ -82,7 +82,7 @@ export interface IConnectableRuntime {
     readonly connected: boolean;
     readonly clientId: string | undefined;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    once(event: "connected" | "disconnected", listener: () => void): this;
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
