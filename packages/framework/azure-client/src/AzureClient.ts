@@ -16,7 +16,7 @@ import {
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
 
 import {
     AzureConnectionConfig,

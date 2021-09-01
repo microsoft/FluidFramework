@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
@@ -25,6 +24,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
+import { parseFluidUrl } from "./urlUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -61,7 +61,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         ensureFluidResolvedUrl(createNewResolvedUrl);
         assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
         assert(!!createNewResolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-        const parsedUrl = parse(createNewResolvedUrl.url);
+        const parsedUrl = parseFluidUrl(createNewResolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
@@ -121,7 +121,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = parseFluidUrl(fluidResolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
             throw new Error(

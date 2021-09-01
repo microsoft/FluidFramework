@@ -4,20 +4,19 @@
 
 ```ts
 
-import { ContainerSchema } from 'fluid-framework';
-import { FluidContainer } from 'fluid-framework';
+import { ContainerSchema } from '@fluidframework/fluid-static';
+import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
-import { IMember } from 'fluid-framework';
-import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
+import { IMember } from '@fluidframework/fluid-static';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { IServiceAudience } from 'fluid-framework';
+import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { ServiceAudience } from 'fluid-framework';
+import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
@@ -86,10 +85,6 @@ export const createAzureCreateNewRequest: () => IRequest;
 
 // @public (undocumented)
 export type IAzureAudience = IServiceAudience<AzureMember>;
-
-export { InsecureTokenProvider }
-
-export { ITokenProvider }
 
 
 // (No @packageDocumentation comment for this package)

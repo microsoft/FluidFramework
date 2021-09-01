@@ -22,7 +22,6 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 const counterKey = "count";
 
@@ -110,7 +109,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             [[codeDetails, factory]],
             provider.documentServiceFactory,
             provider.urlResolver,
-            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+            provider.logger,
         );
         loaderContainerTracker.add(loader);
         return createAndAttachContainer(
@@ -122,7 +121,7 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
             [[codeDetails, factory]],
             provider.documentServiceFactory,
             provider.urlResolver,
-            ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver?.type } }),
+            provider.logger,
         );
         loaderContainerTracker.add(loader);
         return loader.resolve({ url: await provider.driver.createContainerUrl(documentId) });
