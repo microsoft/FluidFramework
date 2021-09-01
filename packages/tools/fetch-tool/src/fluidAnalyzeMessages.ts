@@ -480,63 +480,72 @@ function processOp(
     let recorded = false;
     if (isRuntimeMessage(message)) {
         const runtimeMessage = unpackRuntimeMessage(message);
-        if (runtimeMessage.type === ContainerMessageType.Attach) {
-            const attachMessage = runtimeMessage.contents as IAttachMessage;
-            processDataStoreAttachOp(attachMessage, dataType);
-        } else if (runtimeMessage.type !== ContainerMessageType.BlobAttach) {
-            let envelop = runtimeMessage.contents as IEnvelope;
-            // TODO: Legacy?
-            if (envelop && typeof envelop === "string") {
-                envelop = JSON.parse(envelop);
+        switch (runtimeMessage.type) {
+            case ContainerMessageType.Attach: {
+                const attachMessage = runtimeMessage.contents as IAttachMessage;
+                processDataStoreAttachOp(attachMessage, dataType);
             }
-            const innerContent = envelop.contents as {
-                content: any;
-                type: string;
-            };
-            const address = envelop.address;
-            type = `${type}/${innerContent.type}`;
-            if (innerContent.type === DataStoreMessageType.Attach) {
-                const attachMessage = innerContent.content as IAttachMessage;
-                let objectType = attachMessage.type;
-                if (objectType.startsWith(objectTypePrefix)) {
-                    objectType = objectType.substring(objectTypePrefix.length);
+            // skip for now because these ops do not have contents
+            case ContainerMessageType.BlobAttach: {}
+            default: {
+                let envelope = runtimeMessage.contents as IEnvelope;
+                // TODO: Legacy?
+                if (envelope && typeof envelope === "string") {
+                    envelope = JSON.parse(envelope);
                 }
-                dataType.set(getObjectId(address, attachMessage.id), objectType);
-            } else if (innerContent.type === DataStoreMessageType.ChannelOp) {
-                const innerEnvelop = innerContent.content as IEnvelope;
-                const innerContent2 = innerEnvelop.contents as {
-                    type?: string;
-                    value?: any;
+                const innerContent = envelope.contents as {
+                    content: any;
+                    type: string;
                 };
+                const address = envelope.address;
+                type = `${type}/${innerContent.type}`;
+                switch (innerContent.type) {
+                    case DataStoreMessageType.Attach: {
+                        const attachMessage = innerContent.content as IAttachMessage;
+                        let objectType = attachMessage.type;
+                        if (objectType.startsWith(objectTypePrefix)) {
+                            objectType = objectType.substring(objectTypePrefix.length);
+                        }
+                        dataType.set(getObjectId(address, attachMessage.id), objectType);
+                    }
+                    case DataStoreMessageType.ChannelOp:
+                    default: {
+                        const innerEnvelope = innerContent.content as IEnvelope;
+                        const innerContent2 = innerEnvelope.contents as {
+                            type?: string;
+                            value?: any;
+                        };
 
-                const objectId = getObjectId(address, innerEnvelop.address);
-                incr(objectStats, objectId, msgSize);
-                let objectType = dataType.get(objectId);
-                if (objectType === undefined) {
-                    // Somehow we do not have data...
-                    dataType.set(objectId, objectId);
-                    objectType = objectId;
-                }
-                incr(dataTypeStats, objectType, msgSize);
-                recorded = true;
+                        const objectId = getObjectId(address, innerEnvelope.address);
+                        incr(objectStats, objectId, msgSize);
+                        let objectType = dataType.get(objectId);
+                        if (objectType === undefined) {
+                            // Somehow we do not have data...
+                            dataType.set(objectId, objectId);
+                            objectType = objectId;
+                        }
+                        incr(dataTypeStats, objectType, msgSize);
+                        recorded = true;
 
-                let subType = innerContent2.type;
-                if (innerContent2.type === "set" &&
-                    typeof innerContent2.value === "object" &&
-                    innerContent2.value !== null) {
-                    type = `${type}/${subType}`;
-                    subType = innerContent2.value.type;
-                } else if (objectType === "mergeTree" && subType !== undefined) {
-                    const types = ["insert", "remove", "annotate", "group"];
-                    if (types[subType]) {
-                        subType = types[subType];
+                        let subType = innerContent2.type;
+                        if (innerContent2.type === "set" &&
+                            typeof innerContent2.value === "object" &&
+                            innerContent2.value !== null) {
+                            type = `${type}/${subType}`;
+                            subType = innerContent2.value.type;
+                        } else if (objectType === "mergeTree" && subType !== undefined) {
+                            const types = ["insert", "remove", "annotate", "group"];
+                            if (types[subType]) {
+                                subType = types[subType];
+                            }
+                        }
+                        if (subType !== undefined) {
+                            type = `${type}/${subType}`;
+                        }
+
+                        type = `${type} (${objectType})`;
                     }
                 }
-                if (subType !== undefined) {
-                    type = `${type}/${subType}`;
-                }
-
-                type = `${type} (${objectType})`;
             }
         }
     }
