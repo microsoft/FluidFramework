@@ -80,7 +80,11 @@ async function* loadAllSequencedMessages(
     } catch (error) {
         statusCode = error.getTelemetryProperties().statusCode;
         innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
-        if (statusCode === 410 && innerMostErrorCode === "fluidDeltaDataNotAvailable") {
+        if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
+            throw error;
+        }
+        
+        response = JSON.parse(error.getTelemetryProperties().response);
             response = JSON.parse(error.getTelemetryProperties().response);
         } else {
             throw error;
