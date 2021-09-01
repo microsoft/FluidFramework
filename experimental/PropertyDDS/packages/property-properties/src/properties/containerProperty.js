@@ -87,7 +87,7 @@ ContainerProperty.prototype.insert = function (in_id, in_property) {
         if (this._dynamicChildren[in_id] !== undefined) {
             throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_id);
         }
-        if (!in_property._canInsert()) {
+        if (!in_property._canInsert(this)) {
             throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
         }
         // If an id is passed, it is stored in the child property object
