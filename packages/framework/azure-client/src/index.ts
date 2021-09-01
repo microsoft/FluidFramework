@@ -9,5 +9,4 @@ export { ITokenProvider } from "@fluidframework/routerlicious-driver";
 export * from "./AzureAudience";
 export * from "./AzureClient";
 export * from "./AzureFunctionTokenProvider";
-export * from "./AzureUrlResolver";
 export * from "./interfaces";

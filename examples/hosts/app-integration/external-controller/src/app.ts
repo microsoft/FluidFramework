@@ -68,9 +68,11 @@ const containerSchema = {
 async function start(): Promise<void> {
     // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
     // and hook to the Telemetry system
-    const consoleLogger: ConsoleLogger = new ConsoleLogger();
-
-    const client = new AzureClient(connectionConfig, consoleLogger);
+    const azureConfig = {
+        connectionConfig,
+        logger: new ConsoleLogger(),
+    };
+    const client = new AzureClient(azureConfig);
     let container: FluidContainer;
     let services: AzureContainerServices;
     let id: string;

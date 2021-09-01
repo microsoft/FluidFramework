@@ -4,15 +4,51 @@
  */
 
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IMember,
     IServiceAudience,
 } from "fluid-framework";
 
+// Re-export so developers can build loggers without pulling in common-definitions
+export {
+    ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
+} from "@fluidframework/common-definitions";
+
+/**
+ * Configuration for initializing a new AzureClient instance
+ */
+export interface AzureClientConfig {
+    /**
+     * Configuration for establishing a connection with the Azure Relay Service.
+     */
+    readonly connectionConfig: AzureConnectionConfig,
+    /**
+     * Optional. A logger instance to receive diagnostic messages.
+     */
+    readonly logger?: ITelemetryBaseLogger,
+}
+
+/**
+ * Parameters for establishing a connection with the Azure Fluid Relay service.
+ */
 export interface AzureConnectionConfig {
-    tenantId: "local" | string;
+    /**
+     * URI to the Azure Fluid Relay orderer endpoint
+     */
     orderer: string;
+    /**
+     * URI to the Azure Fluid Relay storage endpoint
+     */
     storage: string;
+    /**
+     * Unique tenant identifier
+    */
+    tenantId: "local" | string;
+    /**
+     * Instance that provides Azure Fluid Relay endpoint tokens
+     */
     tokenProvider: ITokenProvider;
 }
 
@@ -40,4 +76,7 @@ export interface AzureMember<T = any> extends IMember {
     additionalDetails?: T;
 }
 
+/**
+ * Audience object for Azure Fluid Relay containers
+ */
 export type IAzureAudience = IServiceAudience<AzureMember>;

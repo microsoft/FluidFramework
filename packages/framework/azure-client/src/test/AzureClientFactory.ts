@@ -34,5 +34,5 @@ export function createAzureClient(): AzureClient {
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new AzureClient(connectionConfig);
+    return new AzureClient({ connectionConfig });
 }
