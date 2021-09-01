@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import URLParse = require("url-parse");
+import URLParse from "url-parse";
 
 export const parseFluidUrl = (fluidUrl: string): URLParse => {
     return new URLParse(fluidUrl);
