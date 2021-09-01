@@ -514,7 +514,7 @@ describe('NodeProperty', function () {
 
             // Pretty printing
             var expectedPrettyStr =
-                'null (autodesk.tests:MixedNodeTestProperty-1.0.0):\n' +
+                'undefined (autodesk.tests:MixedNodeTestProperty-1.0.0):\n' +
                 '  stringProperty (String): "modified1"\n' +
                 '  stringProperty2 (String): "string2"\n' +
                 '  dynamicFloat (Float32): 11\n' +
@@ -526,7 +526,6 @@ describe('NodeProperty', function () {
             });
             expect(prettyStr).to.equal(expectedPrettyStr);
         });
-
 
         it('inserting the same node twice should be a bug', function () {
             var rootNode = PropertyFactory.create('NodeProperty');
@@ -557,7 +556,7 @@ describe('NodeProperty', function () {
 
             expect(function () {
                 node.insert('a', child);
-            }).to.throw(MSG.OVERWRITING_ID + 'a');
+            }).to.throw(MSG.PROPERTY_ALREADY_EXISTS + 'a');
         });
 
         it('Should correctly report whether it is a root', function () {

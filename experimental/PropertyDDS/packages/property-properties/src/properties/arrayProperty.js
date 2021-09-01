@@ -5,20 +5,19 @@
 /**
  * @fileoverview Definition of the array property class
  */
+const _ = require('lodash');
 const BaseProperty = require('./baseProperty');
 const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
-const ArrayChangeSetIterator = require('@fluid-experimental/property-changeset').ArrayChangeSetIterator;
-const deserializeNonPrimitiveArrayElements =
-    require('../containerSerializer').deserializeNonPrimitiveArrayElements;
-const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
-const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
-const _ = require('lodash');
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
+const { ArrayChangeSetIterator } = require('@fluid-experimental/property-changeset');
+const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
 const Property = require('./lazyLoadedProperties');
-const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
+const { PathHelper } = require('@fluid-experimental/property-changeset');
+const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const deepCopy = _.cloneDeep;
-const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
@@ -1020,7 +1019,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
 
         // Perform a binary search to find the largest entry in the list of found sub
         // sequences that has a sequenceEnd that is smaller or equal than currentSegmentStart
-        var index = _.sortedIndex(foundSubSequences, { sequenceLastEntry: currentSegmentStart }, 'sequenceLastEntry');
+        var index = _.sortedIndexBy(foundSubSequences, { sequenceLastEntry: currentSegmentStart }, 'sequenceLastEntry');
         var lastEntry = index > 0 ? foundSubSequences[index - 1] : undefined;
 
         // Create a new entry that is obtained by concatenating the longest sequence found so far
@@ -1033,7 +1032,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
         };
 
         // Search for the insertion position for this entry
-        var insertionPoint = _.sortedIndex(foundSubSequences, newEntry, 'sequenceLength');
+        var insertionPoint = _.sortedIndexBy(foundSubSequences, newEntry, 'sequenceLength');
         if (foundSubSequences[insertionPoint] !== undefined &&
             foundSubSequences[insertionPoint].sequenceLength === newEntry.sequenceLength) {
             insertionPoint++;
@@ -1076,7 +1075,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
  * Internal helper function that implements the deserialize algorithm for an array of named properties.
  *
  * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
- *     has to be an normalized change-set (only containing inserts. Removes and Modifies are forbidden).
+ *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
  * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
  *                                             and trigger a modified event there. When batching updates, this
  *                                             can be prevented via this flag.
@@ -1125,7 +1124,7 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
     var segmentStartPointsInInitialArray = [];
     var segmentStartPointsInTargetArray = [];
     var segmentLengths = [];
-    var segmentInterruped = false;
+    var segmentInterrupted = false;
     for (var i = 0; i < initialArrayLength; i++) {
         // Get the GUID of the entry
         var guid = this._dataArrayGetValue(i).getGuid();
@@ -1134,7 +1133,7 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
         var index = resultGuidToIndexMap[guid];
         if (index !== undefined) {
             // Check whether we can append the entry to the existing sequence
-            if (!segmentInterruped &&
+            if (!segmentInterrupted &&
                 segmentStartPointsInTargetArray.length > 0 &&
                 _.last(segmentStartPointsInTargetArray) + _.last(segmentLengths) === index) {
                 // In that case we just increase the length of the segment
@@ -1144,10 +1143,10 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
                 segmentStartPointsInInitialArray.push(i);
                 segmentStartPointsInTargetArray.push(index);
                 segmentLengths.push(1);
-                segmentInterruped = false;
+                segmentInterrupted = false;
             }
         } else {
-            segmentInterruped = true;
+            segmentInterrupted = true;
         }
     }
 
@@ -1190,22 +1189,14 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
         // to insert the elements between the two points
         if (startPointInTargetArray > lastPositionInTargetArray) {
             changes.insert = changes.insert || [];
+            let elementsToInsert = targetArray.slice(lastPositionInTargetArray, startPointInTargetArray);
             changes.insert.push([
                 lastPositionInInitialArray,
-                deepCopy(targetArray.slice(lastPositionInTargetArray, startPointInTargetArray))
+                deepCopy(elementsToInsert)
             ]);
-
-            var insertedProperties = [];
             var scope = this._getScope();
-            for (var j = lastPositionInTargetArray; j < startPointInTargetArray; ++j) {
-                var createdProperty = Property.PropertyFactory._createProperty(
-                    targetArray[j]['typeid'], null, undefined, scope, true);
-                // Set parent so scope is defined for deserialization
-                createdProperty._setParent(this);
-                createdProperty._deserialize(targetArray[j], false);
-                insertedProperties.push(createdProperty);
-            }
-            this._insertRangeWithoutDirtying(lastPositionInInitialArray + offset, insertedProperties, false);
+            var insertedProperties = deserializeNonPrimitiveArrayElements(elementsToInsert, scope);
+            this._insertRangeWithoutDirtying(lastPositionInInitialArray + offset, insertedProperties);
             offsetChange += insertedProperties.length;
         }
 
@@ -1300,15 +1291,7 @@ ArrayProperty.prototype._deserializeArray = function (in_serializedObj) {
 };
 
 /**
- * Sets the property to the state in the given normalized changeset
- *
- * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
- *     has to be an normalized change-set (only containing inserts. Removes and Modifies are forbidden).
- * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
- *                                             and trigger a modified event there. When batching updates, this
- *                                             can be prevented via this flag.
- * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
- *     deserialization
+ * @inheritdoc
  */
 ArrayProperty.prototype._deserialize = function (in_serializedObj, in_reportToView) {
 
@@ -1365,7 +1348,7 @@ ArrayProperty.prototype._deserialize = function (in_serializedObj, in_reportToVi
 
             for (var i = 0; i < propertyDescriptions.length; ++i) {
                 var createdProperty = Property.PropertyFactory._createProperty(
-                    propertyDescriptions[i]['typeid'], null, undefined, scope, true);
+                    propertyDescriptions[i]['typeid'], null, undefined, scope);
                 createdProperty._setParent(this);
                 createdProperty._deserialize(propertyDescriptions[i], false);
                 result.push(createdProperty);
@@ -1383,13 +1366,15 @@ ArrayProperty.prototype._deserialize = function (in_serializedObj, in_reportToVi
                 if (this._typeid === 'Int64' || this._typeid === 'Uint64') {
                     // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
                     for (i = 0; i < len; i++) {
-                        if (changeSetArray[i][0] !== buffer[i].getValueLow() || changeSetArray[i][1] !== buffer[i].getValueHigh())
+                        if (changeSetArray[i][0] !== buffer[i].getValueLow() || changeSetArray[i][1] !== buffer[i].getValueHigh()) {
                             break;
+                        }
                     }
                 } else {
                     for (i = 0; i < len; i++) {
-                        if (buffer[i] !== changeSetArray[i])
+                        if (buffer[i] !== changeSetArray[i]) {
                             break;
+                        }
                     }
                 }
                 if (i === len) {
