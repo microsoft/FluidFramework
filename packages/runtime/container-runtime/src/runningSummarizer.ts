@@ -80,7 +80,6 @@ export class RunningSummarizer implements IDisposable {
     private stopping = false;
     private _disposed = false;
     private summarizingLock: Promise<void> | undefined;
-    private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
     private heuristicRunner?: ISummarizeHeuristicRunner;
     private readonly generator: SummaryGenerator;
@@ -275,7 +274,11 @@ export class RunningSummarizer implements IDisposable {
         return action().finally(() => {
             summarizingLock.resolve();
             this.summarizingLock = undefined;
-            this.checkSummarizeAgain();
+            // After summarizing, we should check to see if we need to summarize again.
+            // Rerun the heuristics and check for enqueued summaries.
+            if (!this.stopping && !this.tryRunEnqueuedSummary()) {
+                this.heuristicRunner?.run();
+            }
         });
     }
 
@@ -317,9 +320,11 @@ export class RunningSummarizer implements IDisposable {
         cancellationToken = this.cancellationToken): void
     {
         if (this.summarizingLock !== undefined) {
-            // Indicate that heuristics tried to summarize, and check immediately
-            // after completion if heuristics still indicate we should summarize.
-            this.tryWhileSummarizing = true;
+            // This should not happen often, if at all (depends on how on-demand and enqueues summaries are used)
+            // Log an error to learn about these cases and assess if we need to change anything.
+            this.logger.sendTelemetryEvent({ eventName: "ConcurrentSummaryAttempt", reason: summarizeReason });
+            // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
+            // if it's still needed
             return;
         }
 
@@ -442,21 +447,6 @@ export class RunningSummarizer implements IDisposable {
             alreadyEnqueued: true,
             overridden: true,
         } : results;
-    }
-
-    /**
-     * After summarizing, we should check to see if we need to summarize again.
-     * Rerun the heuristics and check for enqueued summaries.
-     */
-    private checkSummarizeAgain() {
-        if (this.tryRunEnqueuedSummary()) {
-            this.tryWhileSummarizing = false;
-        } else if (this.tryWhileSummarizing) {
-            this.tryWhileSummarizing = false;
-            if (!this.stopping) {
-                this.heuristicRunner?.run();
-            }
-        }
     }
 
     private tryRunEnqueuedSummary() {
