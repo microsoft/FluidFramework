@@ -244,25 +244,6 @@ MapProperty.prototype.insert = function (in_key, in_property) {
     }
 };
 
-var insertValueDeprecatedWarning = false;
-/**
- * Inserts a property or value into the map
- *
- * @param {string} in_key   - The key under which the entry is added
- * @param {*}  in_value - The property to insert
- * @throws if the property already exists
- * @throws if the property already has a parent
- * @throws if in_key is not a string
- * @deprecated use .insert instead
- */
-MapProperty.prototype.insertValue = function (in_key, in_value) {
-    if (!insertValueDeprecatedWarning) {
-        console.warn(MSG.MAP_INSERT_VALUE_DEPRECATED);
-        insertValueDeprecatedWarning = true;
-    }
-    this.insert(in_key, in_value);
-};
-
 /**
  * Removes the entry with the given key from the map
  *
@@ -274,41 +255,6 @@ MapProperty.prototype.remove = function (in_key) {
     var item = this.get(in_key);
     this._removeByKey(in_key, true);
     return item;
-};
-
-var removeValueDeprecatedWarning = false;
-/**
- * Removes the entry with the given key from the map
- *
- * @param {string} in_key - The key of the entry to remove from the map
- * @throws if trying to remove an entry that does not exist
- * @return {*} the item removed
- * @deprecated use .remove instead
- */
-MapProperty.prototype.removeValue = function (in_key) {
-    if (!removeValueDeprecatedWarning) {
-        console.warn(MSG.MAP_REMOVE_VALUE_DEPRECATED);
-        removeValueDeprecatedWarning = true;
-    }
-    return this.remove(in_key);
-};
-
-var setValueDeprecatedWarning = false;
-/**
- * deprecated - replaced by set
- * @param {string}                                  in_key    - The key under which the entry is stored
- * @param {property-properties.MapProperty~MapValueType}  in_property  - The property to store in the map
- * @throws if in_property is not a property
- * @throws if trying to insert a property that has a parent
- * @throws if in_key is not a string or a number
- * @deprecated use .set instead
- */
-MapProperty.prototype.setValue = function (in_key, in_property) {
-    if (!setValueDeprecatedWarning) {
-        console.warn(MSG.MAP_SET_VALUE_DEPRECATED);
-        setValueDeprecatedWarning = true;
-    }
-    this.set(in_key, in_property);
 };
 
 /**
@@ -353,29 +299,6 @@ MapProperty.prototype.set = function (in_key, in_property) {
  */
 MapProperty.prototype.getEntriesReadOnly = function () {
     return this._dynamicChildren;
-};
-
-var getValueDeprecatedWarning = false;
-/** Deprecated - replaced by .get
- * @param {string|array<string>} in_ids - key of the entry to return or an array of keys
- *     if an array is passed, the .get function will be performed on each id in sequence
- *     for example .get(['position','x']) is equivalent to .get('position').get('x').
- *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
- *     refers to.
- * @param {Object} in_options - parameter object
- * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
- *     How should this function behave during reference resolution?
- *
- * @return {property-properties.MapProperty~MapValueType|undefined} The entry in the collection or undefined
- *     if none could be found
- * @deprecated use .get instead.
- */
-MapProperty.prototype.getValue = function (in_ids, in_options) {
-    if (!getValueDeprecatedWarning) {
-        console.warn(MSG.MAP_GET_VALUE_DEPRECATED);
-        getValueDeprecatedWarning = true;
-    }
-    return this.get(in_ids, in_options);
 };
 
 /**
