@@ -7,7 +7,7 @@ aliases:
   - "/start/tutorial/"
 ---
 
-In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at [https://github.com/microsoft/FluidHelloWorld](https://github.com/microsoft/FluidHelloWorld). To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
+In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at <https://github.com/microsoft/FluidHelloWorld>. To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
     bundleName="dice-roller.12142020.js" >}}
