@@ -19,7 +19,7 @@ export {
 /**
  * Configuration for initializing a new AzureClient instance
  */
-export interface AzureClientConfig {
+export interface AzureClientProps {
     /**
      * Configuration for establishing a connection with the Azure Relay Service.
      */

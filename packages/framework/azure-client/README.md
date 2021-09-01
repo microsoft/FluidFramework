@@ -37,7 +37,7 @@ const config: AzureConnectionConfig = {
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
-const azureClient = new AzureClient(config);
+const azureClient = new AzureClient({config});
 ```
 
 ### Backed by a Live FRS Instance
@@ -56,7 +56,7 @@ const config: AzureConnectionConfig = {
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 };
-const azureClient = new AzureClient(config);
+const azureClient = new AzureClient({config});
 ```
 
 ## Fluid Containers

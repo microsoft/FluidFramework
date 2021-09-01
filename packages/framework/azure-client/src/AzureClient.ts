@@ -17,7 +17,7 @@ import {
 } from "fluid-framework";
 
 import {
-    AzureClientConfig,
+    AzureClientProps,
     AzureContainerServices,
 } from "./interfaces";
 import { AzureAudience } from "./AzureAudience";
@@ -32,11 +32,11 @@ export class AzureClient {
 
     /**
      * Creates a new client instance using configuration parameters.
-     * @param config - Configuration for initializing a new AzureClient instance
+     * @param props - Properties for initializing a new AzureClient instance
      */
-    constructor(private readonly config: AzureClientConfig) {
+    constructor(private readonly props: AzureClientProps) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            this.config.connectionConfig.tokenProvider,
+            this.props.connectionConfig.tokenProvider,
         );
     }
 
@@ -106,16 +106,16 @@ export class AzureClient {
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
         const urlResolver = new AzureUrlResolver(
-            this.config.connectionConfig.tenantId,
-            this.config.connectionConfig.orderer,
-            this.config.connectionConfig.storage,
-            this.config.connectionConfig.tokenProvider,
+            this.props.connectionConfig.tenantId,
+            this.props.connectionConfig.orderer,
+            this.props.connectionConfig.storage,
+            this.props.connectionConfig.tokenProvider,
         );
         return new Loader({
             urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: this.config.logger,
+            logger: this.props.logger,
         });
     }
     // #endregion

@@ -24,7 +24,7 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 
 // @public
 export class AzureClient {
-    constructor(config: AzureClientConfig);
+    constructor(props: AzureClientProps);
     createContainer(containerSchema: ContainerSchema): Promise<{
         container: FluidContainer;
         services: AzureContainerServices;
@@ -36,7 +36,7 @@ export class AzureClient {
     }
 
 // @public
-export interface AzureClientConfig {
+export interface AzureClientProps {
     readonly connectionConfig: AzureConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
