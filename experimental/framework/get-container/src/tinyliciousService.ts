@@ -19,7 +19,7 @@ export class TinyliciousService implements IGetContainerService {
     constructor(tinyliciousPort?: number) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
-        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider, this.urlResolver);
+        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
     }
 }
 

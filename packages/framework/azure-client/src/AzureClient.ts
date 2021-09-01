@@ -48,7 +48,7 @@ export class AzureClient {
             connectionConfig.storage,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            connectionConfig.tokenProvider, this.urlResolver,
+            connectionConfig.tokenProvider,
         );
     }
 

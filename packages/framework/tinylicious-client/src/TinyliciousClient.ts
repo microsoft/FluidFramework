@@ -51,7 +51,7 @@ export class TinyliciousClient {
             connectionConfig?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            tokenProvider, this.urlResolver,
+            tokenProvider,
         );
     }
 

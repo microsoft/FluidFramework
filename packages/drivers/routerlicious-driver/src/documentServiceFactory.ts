@@ -8,7 +8,6 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
-    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -24,7 +23,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
-import { parseFluidUrl } from "./urlUtils";
+import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -44,7 +43,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
-        private readonly urlResolver: IUrlResolver,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
         this.driverPolicies = {
@@ -55,13 +53,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
-        createNewResolvedUrl: IResolvedUrl,
+        resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        ensureFluidResolvedUrl(createNewResolvedUrl);
+        ensureFluidResolvedUrl(resolvedUrl);
         assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
-        assert(!!createNewResolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-        const parsedUrl = parseFluidUrl(createNewResolvedUrl.url);
+        assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
+        const parsedUrl = parseFluidUrl(resolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
@@ -82,7 +80,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             logger2,
             rateLimiter,
-            createNewResolvedUrl.endpoints.ordererUrl,
+            resolvedUrl.endpoints.ordererUrl,
         );
         const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
@@ -92,12 +90,26 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
+        parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
+        const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
+        if (!deltaStorageUrl) {
+            throw new Error(
+                `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
+        }
+        const parsedDeltaStorageUrl = new URL(deltaStorageUrl);
+        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
 
-        // Craft a resolved URL using the new document ID as an URL
-        const resolvedUrl = await this.urlResolver.resolve({ url: documentId });
-        ensureFluidResolvedUrl(resolvedUrl);
-
-        return this.createDocumentService(resolvedUrl, logger);
+        return this.createDocumentService(
+            {
+                ...resolvedUrl,
+                url: parsedUrl.toString(),
+                id: documentId,
+                endpoints: {
+                    ...resolvedUrl.endpoints,
+                    deltaStorageUrl: parsedDeltaStorageUrl.toString(),
+                },
+            },
+            logger);
     }
 
     /**
