@@ -68,9 +68,9 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
         if (this.runtime.connected) {
             this.everConnected = true;
         } else if (this.runtime.disposed) {
+            this.everConnected = true;
             this.stop("summarizerClientDisconnected");
-        }
-        else {
+        } else {
             this.runtime.once("connected", () => this.everConnected = true);
         }
         // We only listen on disconnected event for clientType === "summarizer" container!
@@ -94,8 +94,9 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
      * Starts and waits for a promise which resolves when connected.
      * The promise will also resolve if stopped either externally or by disconnect.
      */
-    public async waitStart() {
+    protected async waitStart() {
         if (!this.runtime.connected && !this.everConnected) {
+            assert(!this._cancelled, "not cancelled");
             const waitConnected = new Promise<void>((resolve) =>
                 this.runtime.once("connected", resolve));
             return Promise.race([waitConnected, this.waitCancelled]);
