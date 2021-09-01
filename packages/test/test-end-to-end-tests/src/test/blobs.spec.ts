@@ -29,25 +29,22 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
-    public readonly blobs = new Map<number, ArrayBufferLike>();
+    public readonly blobs = new Map<string, ArrayBufferLike>();
 
     public get size() { return this.blobs.size; }
 
     public getBlobIds(): string[] {
-        return Array.from(this.blobs.keys()).map((id) => id.toString());
+        return Array.from(this.blobs.keys());
     }
 
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        const id = this.size;
+        const id = this.size.toString();
         this.blobs.set(id, content);
-        return {
-            id: id.toString(),
-            url: "",
-        };
+        return { id, url: "" };
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const blob = this.blobs.get(parseInt(blobId, 10));
+        const blob = this.blobs.get(blobId);
         assert(blob);
         return blob;
     }
