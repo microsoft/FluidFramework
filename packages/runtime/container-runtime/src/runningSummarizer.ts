@@ -81,6 +81,7 @@ export class RunningSummarizer implements IDisposable {
     private stopping = false;
     private _disposed = false;
     private summarizingLock: Promise<void> | undefined;
+    private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
     private heuristicRunner?: ISummarizeHeuristicRunner;
     private readonly generator: SummaryGenerator;
@@ -278,9 +279,13 @@ export class RunningSummarizer implements IDisposable {
         return action().finally(() => {
             summarizingLock.resolve();
             this.summarizingLock = undefined;
+
+            const retry = this.tryWhileSummarizing;
+            this.tryWhileSummarizing = false;
+
             // After summarizing, we should check to see if we need to summarize again.
             // Rerun the heuristics and check for enqueued summaries.
-            if (!this.stopping && !this.tryRunEnqueuedSummary()) {
+            if (!this.stopping && !this.tryRunEnqueuedSummary() && retry) {
                 this.heuristicRunner?.run();
             }
         });
@@ -329,6 +334,7 @@ export class RunningSummarizer implements IDisposable {
             this.logger.sendTelemetryEvent({ eventName: "ConcurrentSummaryAttempt", reason: summarizeReason });
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
+            this.tryWhileSummarizing = true;
             return;
         }
 
