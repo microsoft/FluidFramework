@@ -187,20 +187,6 @@ ContainerProperty.prototype.clear = function () {
     _.each(this._dynamicChildren, this.remove.bind(this));
 };
 
-var removeAllDeprecatedWarning = false;
-/**
- * Removes all dynamic children
- * @throws if node property is read-only
- * @deprecated use .clear instead.
- */
-ContainerProperty.prototype.removeAll = function () {
-    if (!removeAllDeprecatedWarning) {
-        console.warn(MSG.NODE_REMOVE_ALL_DEPRECATED);
-        removeAllDeprecatedWarning = true;
-    }
-    this.clear();
-};
-
 /**
  * Inserts a property into the collection
  *

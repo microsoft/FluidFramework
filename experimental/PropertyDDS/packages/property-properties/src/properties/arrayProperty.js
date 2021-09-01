@@ -84,40 +84,6 @@ ArrayProperty.prototype = Object.create(AbstractStaticCollectionProperty.prototy
 ArrayProperty.prototype._context = 'array';
 ArrayProperty.prototype._staticChildren = {};
 
-var getValueDeprecatedWarning = false;
-/**
- * deprecated - replaced with .get
- * @param {number | array<string|number>} in_position the target index
- * @param {Object} in_options - parameter object
- * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
- *   the token indicating the mode of resolution for reference properties
- * @deprecated use .get instead.
- * @return {*} the value found at in_position
- */
-ArrayProperty.prototype.getValue = function (in_position, in_options) {
-    if (!getValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_GET_VALUE_DEPRECATED);
-        getValueDeprecatedWarning = true;
-    }
-    return this.get(in_position, in_options);
-};
-
-var setValueDeprecatedWarning = false;
-/**
- * deprecated - replaced with .set
- * @param {number} in_position the target index
- * @param {*} in_value the new property or value
- * @deprecated use .set instead.
- */
-ArrayProperty.prototype.setValue = function (in_position, in_value) {
-    if (!setValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_SET_VALUE_DEPRECATED);
-        setValueDeprecatedWarning = true;
-    }
-    this.set(in_position, in_value);
-};
-
-
 /**
  * Returns the path segment for a child
  *
@@ -180,26 +146,6 @@ ArrayProperty.prototype.insert = function (in_position, in_value) {
     this.insertRange(in_position, [in_value]);
 };
 
-var insertValueDeprecatedWarning = false;
-/**
- * Insert into the array at a given position.
- * It will not overwrite the existing value, it will push it to the right.
- * E.g. [1, 2, 3]  .insert(1, 4) => [1, 4, 2, 3]
- * @param {number} in_position target index
- * @param {*} in_value inserted value (or property)
- * @throws if in_position is smaller than zero, larger than the length of the array or not a number.
- * @throws if trying to insert a property that already has a parent.
- * @throws if trying to modify a referenced property.
- * @deprecated use .insert instead.
- */
-ArrayProperty.prototype.insertValue = function (in_position, in_value) {
-    if (!insertValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_INSERT_VALUE_DEPRECATED);
-        insertValueDeprecatedWarning = true;
-    }
-    this.insert(in_position, in_value);
-};
-
 /**
  * Is this property a leaf node with regard to flattening?
  *
@@ -226,22 +172,6 @@ ArrayProperty.prototype.push = function (in_values) {
         this.insertRange(this._dataArrayGetLength(), [in_values]);
     }
     return this._dataArrayGetLength();
-};
-
-var pushValueDeprecatedWarning = false;
-/**
- * add a value at the end of the array
- * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values
- * the property or properties to be pushed
- * @return {number} new length of the array
- * @deprecated use .push instead.
- */
-ArrayProperty.prototype.pushValue = function (in_values) {
-    if (!pushValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_PUSH_VALUE_DEPRECATED);
-        pushValueDeprecatedWarning = true;
-    }
-    return this.push(in_values);
 };
 
 /**
@@ -298,21 +228,6 @@ ArrayProperty.prototype.pop = function () {
     } else {
         return undefined;
     }
-};
-
-var popValueDeprecatedWarning = false;
-/**
- * Remove the last element of the array
- * @throws if trying to modify a referenced property
- * @return {property-properties.BaseProperty|*|undefined} deleted element or undefined if no element found
- * @deprecated use .pop instead.
- */
-ArrayProperty.prototype.popValue = function () {
-    if (!popValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_POP_VALUE_DEPRECATED);
-        popValueDeprecatedWarning = true;
-    }
-    return this.pop();
 };
 
 /**
@@ -609,25 +524,6 @@ ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
     this._setDirty();
 };
 
-var insertValueRangeDeprecatedWarning = false;
-/**
- * inserts the content of a given array into the array property
- * It will not overwrite the existing values but push them to the right instead.
- * @param {number} in_offset target index
- * @param {Array<*>} in_array the array to be inserted
- * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
- * @throws if trying to insert a property that already has a parent.
- * @throws if trying to modify a referenced property.
- * @deprecated use insertRange instead.
- */
-ArrayProperty.prototype.insertValueRange = function (in_offset, in_array) {
-    if (!insertValueRangeDeprecatedWarning) {
-        console.warn(MSG.ARRAY_INSERT_VALUE_RANGE_DEPRECATED);
-        insertValueRangeDeprecatedWarning = true;
-    }
-    this.insertRange(in_offset, in_array);
-};
-
 /**
  * inserts the content of a given array, but doesn't dirty the property
  * this is useful for batch changes
@@ -758,24 +654,6 @@ ArrayProperty.prototype.setRange = function (in_offset, in_array) {
     this._checkIsNotReadOnly(true);
     this._setRangeWithoutDirtying(in_offset, in_array);
     this._setDirty();
-};
-
-var setValueRangeDeprecatedWarning = false;
-/**
- * sets the array properties elements to the content of the given array
- * all changed elements must already exist
- * @param {number} in_offset target start index
- * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
- * @throws if in_offset is not a number
- * @throws if in_offset is smaller than zero
- * @deprecated use setRange instead.
- */
-ArrayProperty.prototype.setValueRange = function (in_offset, in_array) {
-    if (!setValueRangeDeprecatedWarning) {
-        console.warn(MSG.ARRAY_SET_VALUE_RANGE_DEPRECATED);
-        setValueRangeDeprecatedWarning = true;
-    }
-    this.setRange(in_offset, in_array);
 };
 
 /**
