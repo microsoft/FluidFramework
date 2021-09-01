@@ -161,21 +161,25 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							writeSummaryFormat: version,
 						});
 
-						history.forEach((edit) => {
-							tree.processLocalEdit(edit);
-						});
+						try {
+							history.forEach((edit) => {
+								tree.processLocalEdit(edit);
+							});
 
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
+							// Wait for the ops to to be submitted and processed across the containers.
+							await testObjectProvider.ensureSynchronized();
 
-						// Save a new summary with the expected tree and use it to load a new SharedTree
-						const newSummary = tree.saveSummary();
-						const { tree: tree2 } = setUpTestSharedTree();
-						tree2.loadSummary(newSummary);
+							// Save a new summary with the expected tree and use it to load a new SharedTree
+							const newSummary = tree.saveSummary();
+							const { tree: tree2 } = setUpTestSharedTree();
+							tree2.loadSummary(newSummary);
 
-						// The expected tree, tree loaded with the existing summary, and the tree loaded
-						// with the new summary should all be equal.
-						expect(tree2.equals(tree)).to.be.true;
+							// The expected tree, tree loaded with the existing summary, and the tree loaded
+							// with the new summary should all be equal.
+							expect(tree2.equals(tree)).to.be.true;
+						} finally {
+							testObjectProvider.reset();
+						}
 					});
 				}
 
@@ -335,32 +339,35 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 									writeSummaryFormat: supportedWriteVersion,
 								});
 
-								// Load the summary to be read
-								const serializedSummary = assertNotUndefined(summaryByVersion.get(readVersion));
-								const summary = deserialize(serializedSummary, testSerializer);
+								try {
+									// Load the summary to be read
+									const serializedSummary = assertNotUndefined(summaryByVersion.get(readVersion));
+									const summary = deserialize(serializedSummary, testSerializer);
 
-								// Wait for the ops to to be submitted and processed across the containers.
-								await testObjectProvider.ensureSynchronized();
-								tree.loadSummary(summary);
+									// Wait for the ops to to be submitted and processed across the containers.
+									await testObjectProvider.ensureSynchronized();
+									tree.loadSummary(summary);
 
-								await testObjectProvider.ensureSynchronized();
+									await testObjectProvider.ensureSynchronized();
 
-								// Write a new summary with the specified version
-								const newSummary = JSON.parse(tree.saveSerializedSummary());
+									// Write a new summary with the specified version
+									const newSummary = JSON.parse(tree.saveSerializedSummary());
 
-								const blobs = blobsByVersion.get(writeVersion);
-								if (blobs !== undefined) {
-									expectBlobsByVersion(newSummary, blobs, history);
+									const blobs = blobsByVersion.get(writeVersion);
+									if (blobs !== undefined) {
+										expectBlobsByVersion(newSummary, blobs, history);
+									}
+
+									// Check the newly written summary is equivalent to its corresponding test summary file.
+									// This assumes the input file is normalized (that summarizing it produces an identical output).
+									const expectedSummary = JSON.parse(
+										assertNotUndefined(summaryByVersion.get(writeVersion))
+									);
+
+									expect(newSummary).to.deep.equal(expectedSummary);
+								} finally {
+									testObjectProvider.reset();
 								}
-
-								// Check the newly written summary is equivalent to its corresponding test summary file.
-								// This assumes the input file is normalized (that summarizing it produces an identical output).
-								const expectedSummary = JSON.parse(
-									assertNotUndefined(summaryByVersion.get(writeVersion))
-								);
-
-								expect(newSummary).to.deep.equal(expectedSummary);
-								testObjectProvider.reset();
 							});
 						}
 					}
@@ -380,36 +387,40 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 									writeSummaryFormat: supportedWriteVersion,
 								});
 
-								const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
-								const summary = deserialize(serializedSummary, testSerializer);
+								try {
+									const serializedSummary = assertNotUndefined(summaryByVersion.get(loadVersion));
+									const summary = deserialize(serializedSummary, testSerializer);
 
-								// Wait for the ops to to be submitted and processed across the containers.
-								await testObjectProvider.ensureSynchronized();
-								tree.loadSummary(summary);
+									// Wait for the ops to to be submitted and processed across the containers.
+									await testObjectProvider.ensureSynchronized();
+									tree.loadSummary(summary);
 
-								await testObjectProvider.ensureSynchronized();
+									await testObjectProvider.ensureSynchronized();
 
-								// Write a new summary with the summarizer of version `summarizerVersion`.
-								const newSummary = JSON.parse(tree.saveSerializedSummary());
+									// Write a new summary with the summarizer of version `summarizerVersion`.
+									const newSummary = JSON.parse(tree.saveSerializedSummary());
 
-								// Check the new summary is equivalent to the conditional version summary if the condition is true.
-								// Otherwise, check it's equivalent to the summarizer version summary.
-								const conditionalSummary = deserialize(
-									assertNotUndefined(summaryByVersion.get(conditionalWriteVersion)),
-									testSerializer
-								);
-								let expectedSummary: SharedTreeSummaryBase;
-
-								if (condition(conditionalSummary)) {
-									expectedSummary = conditionalSummary;
-								} else {
-									expectedSummary = deserialize(
-										assertNotUndefined(summaryByVersion.get(summarizerVersion)),
+									// Check the new summary is equivalent to the conditional version summary if the condition is true.
+									// Otherwise, check it's equivalent to the summarizer version summary.
+									const conditionalSummary = deserialize(
+										assertNotUndefined(summaryByVersion.get(conditionalWriteVersion)),
 										testSerializer
 									);
-								}
+									let expectedSummary: SharedTreeSummaryBase;
 
-								expect(newSummary).to.deep.equal(expectedSummary);
+									if (condition(conditionalSummary)) {
+										expectedSummary = conditionalSummary;
+									} else {
+										expectedSummary = deserialize(
+											assertNotUndefined(summaryByVersion.get(summarizerVersion)),
+											testSerializer
+										);
+									}
+
+									expect(newSummary).to.deep.equal(expectedSummary);
+								} finally {
+									testObjectProvider.reset();
+								}
 							}
 						});
 					}
