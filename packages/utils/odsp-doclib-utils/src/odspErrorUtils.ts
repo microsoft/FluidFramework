@@ -34,7 +34,8 @@ export const fetchTimeoutStatusCode = 713;
 export const fluidEpochMismatchError = 409;
 // Error code for when the fetched token is null.
 export const fetchTokenErrorCode = 724;
-// Error code for when the server state is read only and client tries to write.
+// Error code for when the server state is read only and client tries to write. This code is set by the server
+// and is not likely to change.
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
 export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
