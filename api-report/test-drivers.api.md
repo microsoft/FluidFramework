@@ -23,7 +23,7 @@ import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicio
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 
 // @public (undocumented)
-export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver>;
+export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<ITestDriver>;
 
 // @public (undocumented)
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> = T extends (config: infer P, ...args: any) => any ? P : never;
@@ -45,6 +45,8 @@ export interface DriverApiType {
 export interface FluidTestDriverConfig {
     // (undocumented)
     odsp?: CreateFromEnvConfigParam<typeof OdspTestDriver.createFromEnv>;
+    // (undocumented)
+    r11s?: CreateFromEnvConfigParam<typeof RouterliciousTestDriver.createFromEnv>;
 }
 
 // @public (undocumented)
@@ -151,7 +153,7 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
-    constructor(bearerSecret: string, tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api?: RouterliciousDriverApiType);
+    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api?: RouterliciousDriverApiType, endpointName?: string | undefined);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
@@ -159,9 +161,13 @@ export class RouterliciousTestDriver implements ITestDriver {
     // (undocumented)
     createDocumentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
-    static createFromEnv(api?: RouterliciousDriverApiType): RouterliciousTestDriver;
+    static createFromEnv(config?: {
+        r11sEndpointName?: string;
+    }, api?: RouterliciousDriverApiType): RouterliciousTestDriver;
     // (undocumented)
     createUrlResolver(): InsecureUrlResolver;
+    // (undocumented)
+    readonly endpointName?: string | undefined;
     // (undocumented)
     readonly type = "routerlicious";
     // (undocumented)

@@ -6,13 +6,18 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
-export type TestDriverTypes = "tinylicious" | "routerlicious" | "odsp" | "local";
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 export interface ITestDriver{
     /**
      * The type of server the test driver executes against
      */
     readonly type: TestDriverTypes;
+
+    /**
+     * Specific endpoint name if there are any
+     */
+    readonly endpointName?: string;
 
     /**
      * The semantic version of the test drivers package.

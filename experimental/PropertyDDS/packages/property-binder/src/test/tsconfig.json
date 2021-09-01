@@ -6,11 +6,19 @@
         "jsx": "react",
         "types": [
             "jest"
-        ]
+        ],
+        "module": "commonjs",
+        "rootDir": "./",
+        "outDir": "../../dist/test",
+        "declaration": false,
+        "declarationMap": false
     },
     "include": [
-        "./src/**/*",
-        "./test/**/*",
-        "./custom.d.ts"
+        "./**/*"
     ],
+    "references": [
+        {
+            "path": "../.."
+        }
+    ]
 }

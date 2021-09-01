@@ -12,6 +12,8 @@
 
 {{- $firstHeaderLevel := len (seq (index (findRE "[1-2]" (index $headers 0) 1) 0)) -}}
 
+{{- if not (eq .Params.status "unwritten") -}}
+
 {{- $.Scratch.Set "bareul" slice -}}
 <nav id="docs-subnavbar" aria-label="On Page" data-spy="affix" data-offset-top="20">
     <h4>In this article</h4>
@@ -84,4 +86,5 @@
     </ul>
     {{- partial "connect.html" . }}
 </nav>
+{{- end -}}
 {{- end -}}

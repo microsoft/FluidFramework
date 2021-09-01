@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import os from "os";
+import { compare } from "semver";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
     IDocumentServiceFactory,
@@ -65,7 +66,6 @@ interface LoginTenants {
  * Get from the env a set of credential to use from a single tenant
  * @param requestedUserName specific user name to filter to
  */
-
 function getCredentials(requestedUserName?: string) {
     const creds: { [user: string]: string } = {};
     const loginTenants = process.env.login__odsp__test__tenants;
@@ -102,6 +102,8 @@ export class OdspTestDriver implements ITestDriver {
     // Share the tokens and driverId across multiple instance of the test driver
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private static readonly driveIdPCache = new Map<string, Promise<string>>();
+    // Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
+    private static readonly legacyDriverUserRandomIndex = Math.random();
     private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
         try {
@@ -129,9 +131,11 @@ export class OdspTestDriver implements ITestDriver {
         api: OdspDriverApiType = OdspDriverApi,
     ) {
         const creds = getCredentials(config?.username);
-        // Pick a random one on the list
+        // Pick a random one on the list (only supported for >= 0.46)
         const users = Object.keys(creds);
-        const userIndex = Math.floor(Math.random() * users.length);
+        const randomIndex = compare(api.version, "0.46.0") >= 0 ?
+            Math.random() : OdspTestDriver.legacyDriverUserRandomIndex;
+        const userIndex = Math.floor(randomIndex * users.length);
         const username = users[userIndex];
 
         const emailServer = username.substr(username.indexOf("@") + 1);

@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IWholeSummaryPayload, IWriteSummaryResponse} from "@fluidframework/server-services-client";
+import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse} from "@fluidframework/server-services-client";
 import { IThrottler } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
 import { Router } from "express";
@@ -14,10 +14,10 @@ import { ICache, ITenantService } from "../services";
 import * as utils from "./utils";
 
 export function create(
-    store: nconf.Provider,
+    config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 
@@ -25,6 +25,15 @@ export function create(
         throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
         throttleIdSuffix: utils.Constants.throttleIdSuffix,
     };
+
+    async function getSummary(
+        tenantId: string,
+        authorization: string,
+        sha: string,
+        useCache: boolean): Promise<IWholeFlatSummary> {
+        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
+        return service.getSummary(sha, useCache);
+    }
 
     async function createSummary(
         tenantId: string,
@@ -34,13 +43,26 @@ export function create(
         return service.createSummary(params);
     }
 
+    router.get("/repos/:ignored?/:tenantId/git/summaries/:sha",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const useCache = !("disableCache" in request.query);
+            const summaryP = getSummary(
+                request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+
+            utils.handleResponse(
+                summaryP,
+                response,
+                useCache);
+    });
+
     router.post("/repos/:ignored?/:tenantId/git/summaries",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
-            const commitP = createSummary(request.params.tenantId, request.get("Authorization"), request.body);
+            const summaryP = createSummary(request.params.tenantId, request.get("Authorization"), request.body);
 
             utils.handleResponse(
-                commitP,
+                summaryP,
                 response,
                 false,
                 201);
