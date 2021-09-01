@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import {
     IMember,
     IServiceAudience,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 export interface AzureConnectionConfig {
     tenantId: "local" | string;
