@@ -364,15 +364,11 @@ export class RunningSummarizer implements IDisposable {
             // Another summary is currently being generated.
             return { alreadyRunning: this.generator.waitSummarizing() };
         }
-<<<<<<< HEAD
         this.summarizeCount++;
-        const result = this.generator.summarize({ summarizeReason: `onDemand/${reason}` }, options);
-=======
         const result = this.generator.summarize(
             { summarizeReason: `onDemand/${reason}` },
             options,
             this.cancellationToken);
->>>>>>> e8f7b566c7e177540d96d0635293feac46f02d31
         result.receivedSummaryAckOrNack.finally(() => this.checkSummarizeAgain());
         return result;
     }
