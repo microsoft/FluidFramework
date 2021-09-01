@@ -67,6 +67,18 @@ export function printUsage() {
     }
 }
 
+export function setArguments(values: {
+    saveDir: string,
+    paramURL: string
+    dumpMessages?: boolean,
+    dumpMessageStats?: boolean,
+    dumpSnapshotStats?: boolean,
+    dumpSnapshotTrees?: boolean }) {
+    paramSaveDir = values.saveDir;
+    paramURL = values.paramURL;
+    dumpMessages = values.dumpMessages ?? dumpMessages;
+}
+
 export function parseArguments() {
     for (let i = 2; i < process.argv.length; i++) {
         const arg = process.argv[i];

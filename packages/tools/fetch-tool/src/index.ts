@@ -4,3 +4,4 @@
  */
 
 export * from "./fluidFetch";
+export * from "./fluidFetchArgs";
