@@ -13,7 +13,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
         private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
     ) { }
 
-    public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+    public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
         return {
             jwt: await this.getToken(tenantId, documentId),
         };
@@ -25,8 +25,8 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
         };
     }
 
-    private async getToken(tenantId: string, documentId: string): Promise<string> {
-        return axios.get(this.azFunctionUrl, {
+    private async getToken(tenantId: string, documentId: string | undefined): Promise<string> {
+        const response = await axios.get(this.azFunctionUrl, {
             params: {
                 tenantId,
                 documentId,
@@ -34,10 +34,7 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
                 userName: this.user?.userName,
                 additionalDetails: this.user?.additionalDetails,
             },
-        }).then((response) => {
-            return response.data as string;
-        }).catch((err) => {
-            return err as string;
         });
+        return response.data as string;
     }
 }

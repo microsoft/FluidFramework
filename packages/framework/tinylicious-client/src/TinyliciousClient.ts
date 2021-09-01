@@ -2,19 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { v4 as uuid } from "uuid";
 import { Container, Loader } from "@fluidframework/container-loader";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentServiceFactory,
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
+    createTinyliciousCreateNewRequest,
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
@@ -40,16 +42,16 @@ export class TinyliciousClient {
      * @param logger - Optional. A logger instance to receive diagnostic messages.
      */
     constructor(
-        serviceConnectionConfig?: TinyliciousConnectionConfig,
+        connectionConfig?: TinyliciousConnectionConfig,
         private readonly logger?: ITelemetryBaseLogger,
     ) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
-            serviceConnectionConfig?.port,
-            serviceConnectionConfig?.domain,
+            connectionConfig?.port,
+            connectionConfig?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            tokenProvider,
+            tokenProvider, this.urlResolver,
         );
     }
 
@@ -60,12 +62,34 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
-        // temporarily we'll generate the new container ID here
-        // until container ID changes are settled in lower layers.
-        const id = uuid();
-        const container = await this.getContainerCore(id, containerSchema, true);
-        return this.getFluidContainerAndServices(id, container);
+    ): Promise<{ container: FluidContainer; services: TinyliciousContainerServices }> {
+        const loader = this.createLoader(containerSchema);
+
+        // We're not actually using the code proposal (our code loader always loads the same module
+        // regardless of the proposal), but the Container will only give us a NullRuntime if there's
+        // no proposal.  So we'll use a fake proposal.
+        const container = await loader.createDetachedContainer({
+            package: "no-dynamic-package",
+            config: {},
+        });
+
+        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
+
+        const fluidContainer = new (class extends FluidContainer {
+            async attach() {
+                if (this.attachState !== AttachState.Detached) {
+                    throw new Error("Cannot attach container. Container is not in detached state");
+                }
+                const request = createTinyliciousCreateNewRequest();
+                await container.attach(request);
+                const resolved = container.resolvedUrl;
+                ensureFluidResolvedUrl(resolved);
+                return resolved.id;
+            }
+        })(container, rootDataObject);
+
+        const services = this.getContainerServices(container);
+        return { container: fluidContainer, services };
     }
 
     /**
@@ -77,26 +101,19 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
-        const container = await this.getContainerCore(id, containerSchema, false);
-        return this.getFluidContainerAndServices(id, container);
-    }
+    ): Promise<{ container: FluidContainer; services: TinyliciousContainerServices }> {
+        const loader = this.createLoader(containerSchema);
 
-    // #region private
-    private async getFluidContainerAndServices(
-        id: string,
-        container: Container,
-    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
+        // Request must be appropriate and parseable by resolver.
+        const container = await loader.resolve({ url: id });
+
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const attach = async () => {
-            await container.attach({ url: id });
-            return id;
-        };
-        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
-        const services: TinyliciousContainerServices = this.getContainerServices(container);
+        const fluidContainer = new FluidContainer(container, rootDataObject);
+        const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }
 
+    // #region private
     private getContainerServices(
         container: Container,
     ): TinyliciousContainerServices {
@@ -105,11 +122,7 @@ export class TinyliciousClient {
         };
     }
 
-    private async getContainerCore(
-        id: string,
-        containerSchema: ContainerSchema,
-        createNew: boolean,
-    ): Promise<Container> {
+    private createLoader(containerSchema: ContainerSchema) {
         const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
             containerSchema,
         );
@@ -122,22 +135,7 @@ export class TinyliciousClient {
             codeLoader,
             logger: this.logger,
         });
-
-        let container: Container;
-
-        if (createNew) {
-            // We're not actually using the code proposal (our code loader always loads the same module
-            // regardless of the proposal), but the Container will only give us a NullRuntime if there's
-            // no proposal.  So we'll use a fake proposal.
-            container = await loader.createDetachedContainer({
-                package: "no-dynamic-package",
-                config: {},
-            });
-        } else {
-            // Request must be appropriate and parseable by resolver.
-            container = await loader.resolve({ url: id });
-        }
-        return container;
+        return loader;
     }
     // #endregion
 }

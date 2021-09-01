@@ -23,7 +23,7 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 
 // @public
 class TinyliciousClient {
-    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
+    constructor(connectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
     createContainer(containerSchema: ContainerSchema): Promise<{
         container: FluidContainer;
         services: TinyliciousContainerServices;

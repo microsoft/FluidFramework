@@ -70,8 +70,7 @@ export class RouterliciousService implements IGetContainerService {
             name: "Unique Idee",
         };
         const tokenProvider = new InsecureTokenProvider(config.key, user);
-        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-
         this.urlResolver = new SimpleUrlResolver(config, user);
+        this.documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider, this.urlResolver);
     }
 }

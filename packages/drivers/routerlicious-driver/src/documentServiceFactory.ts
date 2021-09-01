@@ -9,6 +9,7 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IResolvedUrl,
+    IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -43,6 +44,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
+        private readonly urlResolver: IUrlResolver,
         driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
     ) {
         this.driverPolicies = {
@@ -53,17 +55,17 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
     public async createContainer(
         createNewSummary: ISummaryTree | undefined,
-        resolvedUrl: IResolvedUrl,
+        createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService> {
-        ensureFluidResolvedUrl(resolvedUrl);
+        ensureFluidResolvedUrl(createNewResolvedUrl);
         assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
-        assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-        const parsedUrl = parse(resolvedUrl.url);
+        assert(!!createNewResolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
+        const parsedUrl = parse(createNewResolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
-        const [, tenantId, id] = parsedUrl.pathname.split("/");
+        const [, tenantId] = parsedUrl.pathname.split("/");
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {
@@ -76,49 +78,26 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
-            id,
+            undefined,
             this.tokenProvider,
             logger2,
             rateLimiter,
-            resolvedUrl.endpoints.ordererUrl,
+            createNewResolvedUrl.endpoints.ordererUrl,
         );
         const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
-                id,
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
             },
         );
-        /**
-         * Assume documentId is at end of url path.
-         * This is true for Routerlicious' and Tinylicious' documentUrl and deltaStorageUrl.
-         * Routerlicious and Tinylicious do not use documentId in storageUrl nor ordererUrl.
-         * TODO: Ideally we would be able to regenerate the resolvedUrl, rather than patching the current one.
-         */
-        const replaceDocumentIdInPath = (urlPath: string): string =>
-            urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
-        parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname);
-        const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
-        if (!deltaStorageUrl) {
-            throw new Error(
-                `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
-        }
-        const parsedDeltaStorageUrl = parse(deltaStorageUrl);
-        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname);
 
-        return this.createDocumentService(
-            {
-                ...resolvedUrl,
-                url: parsedUrl.href,
-                id: documentId,
-                endpoints: {
-                    ...resolvedUrl.endpoints,
-                    deltaStorageUrl: parsedDeltaStorageUrl.href,
-                },
-            },
-            logger);
+        // Craft a resolved URL using the new document ID as an URL
+        const resolvedUrl = await this.urlResolver.resolve({ url: documentId });
+        ensureFluidResolvedUrl(resolvedUrl);
+
+        return this.createDocumentService(resolvedUrl, logger);
     }
 
     /**

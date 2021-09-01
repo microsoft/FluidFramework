@@ -25,6 +25,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { RestWrapper } from '@fluidframework/server-services-client';
 
@@ -96,7 +97,7 @@ export interface IRouterliciousDriverPolicies {
 
 // @public
 export interface ITokenProvider {
-    fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
 
@@ -136,9 +137,9 @@ export class NullBlobStorageService implements IDocumentStorageService {
 
 // @public
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
+    constructor(tokenProvider: ITokenProvider, urlResolver: IUrlResolver, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
     // (undocumented)
-    createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     // (undocumented)
     readonly protocolName = "fluid:";

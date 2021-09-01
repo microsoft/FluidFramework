@@ -13,6 +13,7 @@ import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
 
 export const deltaConns = new Map<string, ILocalDeltaConnectionServer>();
 
@@ -55,6 +56,7 @@ export function getDocumentServiceFactory(
         ),
         new RouterliciousDocumentServiceFactory(
             routerliciousTokenProvider,
+            undefined as any as IUrlResolver,
             {
                 enableWholeSummaryUpload: options.mode === "r11s" || options.mode === "docker"
                     ? options.enableWholeSummaryUpload
