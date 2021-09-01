@@ -399,8 +399,8 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0);
                     const retryProps1 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 1,
                         summarizeAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
@@ -417,8 +417,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 1, "retry1 should be refreshLatestAck");
                     const retryProps2 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 2,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 2,
                         summarizeAttemptPhase: 2,
                     };
                     assert(mockLogger.matchEvents([
@@ -437,8 +437,8 @@ describe("Runtime", () => {
                     assertRunCounts(3, 0, 2, "retry2 should be refreshLatestAck");
                     const retryProps3 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 3,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 3,
                         summarizeAttemptPhase: 3,
                     };
                     assert(mockLogger.matchEvents([
@@ -457,8 +457,8 @@ describe("Runtime", () => {
                     assertRunCounts(4, 1, 3, "retry3 should be fullTree and refreshLatestAck");
                     const retryProps4 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 4,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 4,
                         summarizeAttemptPhase: 4,
                     };
                     assert(mockLogger.matchEvents([
@@ -485,8 +485,8 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "normal run");
                     const retryProps1 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 1,
                         summarizeAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
@@ -508,8 +508,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0, "rerun after retryAfter delay");
                     const retryProps2 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 2,
-                        summarizeTotalRetries: 2,
+                        summarizeAttemptsPerPhase: 2,
+                        summarizeTotalAttempts: 2,
                         summarizeAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
@@ -529,8 +529,8 @@ describe("Runtime", () => {
                     assertRunCounts(3, 0, 1, "retry again with refreshLatestAck");
                     const retryProps3 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 3,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 3,
                         summarizeAttemptPhase: 2,
                     };
                     assert(mockLogger.matchEvents([
@@ -556,14 +556,14 @@ describe("Runtime", () => {
                     assertRunCounts(1, 0, 0, "failed upload");
                     const retryProps1 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 1,
-                        summarizeTotalRetries: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 1,
                         summarizeAttemptPhase: 1,
                      };
                     const retryProps2 = {
                         summaryGenTag: 1,
-                        summarizeRetryPerPhase: 2,
-                        summarizeTotalRetries: 2,
+                        summarizeAttemptsPerPhase: 2,
+                        summarizeTotalAttempts: 2,
                         summarizeAttemptPhase: 1,
                     };
                     assert(mockLogger.matchEvents([
