@@ -17,7 +17,7 @@ export {
 } from "@fluidframework/common-definitions";
 
 /**
- * Configuration for initializing a new AzureClient instance
+ * Props for initializing a new AzureClient instance
  */
 export interface AzureClientProps {
     /**
