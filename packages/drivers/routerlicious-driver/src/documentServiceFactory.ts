@@ -23,7 +23,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
-import { parseFluidUrl, replaceDocumentIdInPath, stringifyAsFluidUrl } from "./urlUtils";
+import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -91,7 +91,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
-        parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
+        parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
             throw new Error(
@@ -103,7 +103,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         return this.createDocumentService(
             {
                 ...resolvedUrl,
-                url: stringifyAsFluidUrl(parsedUrl),
+                url: parsedUrl.toString(),
                 id: documentId,
                 endpoints: {
                     ...resolvedUrl.endpoints,

@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { parseFluidUrl, replaceDocumentIdInPath, stringifyAsFluidUrl } from "../urlUtils";
+import { parseFluidUrl, replaceDocumentIdInPath } from "../urlUtils";
 
 describe("UrlUtils", () => {
     const exampleFluidUrl1 = "fluid://orderer.examplehost.com/example-tenant/some-document?param1=value1";
@@ -15,8 +15,8 @@ describe("UrlUtils", () => {
             assert.strictEqual(parsedUrl.host, "orderer.examplehost.com");
             assert.strictEqual(parsedUrl.hostname, "orderer.examplehost.com");
             assert.strictEqual(parsedUrl.pathname, "/example-tenant/some-document");
-            assert.strictEqual(parsedUrl.searchParams.get("param1"), "value1");
-            assert.strictEqual(stringifyAsFluidUrl(parsedUrl), exampleFluidUrl1);
+            assert.strictEqual(parsedUrl.query.param1, "value1");
+            assert.strictEqual(parsedUrl.toString(), exampleFluidUrl1);
         });
 
         it("parses Fluid url with blank document id", () => {
@@ -24,13 +24,13 @@ describe("UrlUtils", () => {
             assert.strictEqual(parsedUrl.host, "examplehost.com");
             assert.strictEqual(parsedUrl.hostname, "examplehost.com");
             assert.strictEqual(parsedUrl.pathname, "/other-tenant/");
-            assert.strictEqual(stringifyAsFluidUrl(parsedUrl), exampleFluidUrl2);
+            assert.strictEqual(parsedUrl.toString(), exampleFluidUrl2);
         });
 
         it("updating pathname alters toString of parsedUrl", () => {
             const parsedUrl = parseFluidUrl(exampleFluidUrl2);
-            parsedUrl.pathname = "/not-same";
-            assert.strictEqual(stringifyAsFluidUrl(parsedUrl), "fluid://examplehost.com/not-same");
+            parsedUrl.set("pathname", "/not-same");
+            assert.strictEqual(parsedUrl.toString(), "fluid://examplehost.com/not-same");
         });
     });
 
@@ -45,8 +45,8 @@ describe("UrlUtils", () => {
         });
         it("replaced pathname is altered in full URL", () => {
             const parsedUrl = parseFluidUrl(exampleFluidUrl1);
-            parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, "otherdoc");
-            assert.strictEqual(stringifyAsFluidUrl(parsedUrl), exampleFluidUrl1.replace("some-document", "otherdoc"));
+            parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, "otherdoc"));
+            assert.strictEqual(parsedUrl.toString(), exampleFluidUrl1.replace("some-document", "otherdoc"));
         });
     });
 });

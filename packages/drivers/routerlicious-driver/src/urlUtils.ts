@@ -3,21 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Converts a Fluid URL string (e.g. `fluid://host.com/tenant/document`) into a URL object.
- * The browser API for URL does not treat `fluid:` as a valid protocol, so we replace it with http here.
- * IMPORTANT: When converting back to a full URL string, use `stringifyAsFluidUrl` from this package.
- */
-export const parseFluidUrl = (fluidUrl: string): URL => {
-    return new URL(fluidUrl.replace(/^fluid:/, "https:"));
-};
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import URLParse = require("url-parse");
 
-/**
- * Converts a URL object to a Fluid URL string by replacing `http:` or `https:` protocol with `fluid:`.
- * The browser API for URL does not treat `fluid:` as a valid protocol, so we replace it after stringifying the URL.
- */
-export const stringifyAsFluidUrl = (url: URL): string => {
-    return url.toString().replace(/^https?:/, "fluid:");
+export const parseFluidUrl = (fluidUrl: string): URLParse => {
+    return new URLParse(fluidUrl);
 };
 
 /**
