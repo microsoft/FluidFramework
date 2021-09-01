@@ -23,21 +23,26 @@ The first two steps can be viewed in the DiceRoller's [app.ts](https://github.co
 
 ## Set up the application
 
-To create a Fluid application that connects to the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}), start by creating a new instance of the Azure Fluid Relay service client. The client is responsible for creating and loading containers as well as communicating changes between all of the collaborators. Learn more about configuring the client at [Azure Fluid Relay service client]({{< relref "azure-frs.md" >}}).
+Start by creating a new instance of the Tinylicious client. Tinylicious is the Fluid Framework's local testing server, and a client is responsible for creating and loading containers as well as communicating changes between all of the collaborators.
 
-The app creates Fluid containers using a configuration that defines a set of *initial objects* that will be available in the container. Learn more about initial objects in [Data modeling]({{< relref "data-modeling.md" >}}).
+The app creates Fluid containers using a schema that defines a set of *initial objects* that will be available in the container. Learn more about initial objects in [Data modeling]({{< relref "data-modeling.md" >}}).
 
 Lastly, `root` defines the HTML element that the Dice will render on.
 
 ```js
-const client = new AzureClient(localConfig);
+import { SharedMap } from "fluid-framework";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-const containerConfig = {
+const client = new TinyliciousClient();
+
+const containerSchema = {
       initialObjects: { diceMap: SharedMap }
   };
 
 const root = document.getElementById("root")
 ```
+
+\* To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
 
 ## Create a Fluid container
 
@@ -53,7 +58,7 @@ Now that the app has a connected container and default data, the dice roller vie
 
 ```js
 const createNewDice = async () => {
-    const { container } = await client.createContainer(containerConfig);
+    const { container } = await client.createContainer(containerSchema);
     // Set default data
     container.initialObjects.diceMap.set("value", 1);
     // Attach container to service and return assigned ID
@@ -69,7 +74,7 @@ Loading a container is more straightforward than creating a new one. When loadin
 
 ```js
 const loadExistingDice = async (id) => {
-  const { container } = await client.getContainer(id, containerConfig);
+  const { container } = await client.getContainer(id, containerSchema);
   renderDiceRoller(container.initialObjects.diceMap, root);
 }
 
@@ -111,13 +116,13 @@ function renderDiceRoller(diceMap, elem) {
 
     const rollButton = document.createElement("button");
     rollButton.textContent = "Roll";
-    rollButton.onclick = () => updateDice(Math.floor(Math.random() * 6));
+    rollButton.onclick = () => updateDice(Math.floor(Math.random() * 6)+1);
     
     elem.append(dice, rollButton);
 
     const updateDice = (value) => {
         // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
-        dice.textContent = String.fromCodePoint(0x2680 + value);
+        dice.textContent = String.fromCodePoint(0x267f + value);
     };
     updateDice(1);
 }
@@ -132,7 +137,7 @@ To begin using Fluid in the application, the first thing to change is what happe
 Pushing local state out to Fluid shared objects is a common pattern that allows the view to react the same way for both local and remote changes.
 
 ```js
-    rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6));
+    rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6)+1);
 ```
 
 
@@ -143,7 +148,7 @@ The next change that needs to be made is to change the `updateDice` function so 
 ```js
     const updateDice = () => {
         const diceValue = diceMap.get("value");
-        dice.textContent = String.fromCodePoint(0x2680 + diceValue);
+        dice.textContent = String.fromCodePoint(0x267f + diceValue);
     };
     updateDice();
 ```
