@@ -34,20 +34,17 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  * @protected
  * @category Properties
  */
-var PropertyTemplate = function (in_params) {
-    in_params = in_params || {};
+var PropertyTemplate = function (in_params = {}) {
+    let params = deepCopy(in_params);
     /** The identifier of the property */
-    this.id = in_params.id;
+    this.id = params.id;
     /** The type identifier of the property */
-    this.typeid = in_params.typeid;
+    this.typeid = params.typeid;
 
     /** Size of the property (if this is an array) */
-    if (in_params.context === 'array') {
-        if (in_params.length !== undefined) {
-            this.length = in_params.length;
-        } else if (in_params.size !== undefined) {
-            console.warn(MSG.SIZE_IS_DEPRECATED);
-            this.length = in_params.size;
+    if (params.context === 'array') {
+        if (params.length !== undefined) {
+            this.length = params.length;
         } else {
             this.length = 0;
         }
@@ -57,19 +54,19 @@ var PropertyTemplate = function (in_params) {
     ConsoleUtils.assert(_.isNumber(this.length), MSG.LENGTH_MUST_BE_NUMBER + this.length);
 
     /** The context of the property */
-    this.context = in_params.context;
+    this.context = params.context;
 
     /** Array with sub-properties */
-    this.properties = in_params.properties;
+    this.properties = params.properties;
 
     /** The annotation object */
-    this.annotation = in_params.annotation || {};
+    this.annotation = params.annotation || {};
 
     /** Array with constant properties */
-    this.constants = in_params.constants;
+    this.constants = params.constants;
 
     /** Typeids of properties this property inherits from */
-    this.inherits = _.isString(in_params.inherits) ? [in_params.inherits] : in_params.inherits;
+    this.inherits = _.isString(params.inherits) ? [params.inherits] : params.inherits;
 
     if (_.includes(this.inherits, 'Enum')) {
         this._enumDictionary = this._parseEnums(this.properties);
