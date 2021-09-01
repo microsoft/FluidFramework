@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Node, Project, TypedNode, TypePredicateNode } from "ts-morph";
+import { Node, Project } from "ts-morph";
 import * as fs from "fs";
 import { getPackageDetails, PackageDetails } from "./packageJson";
 
