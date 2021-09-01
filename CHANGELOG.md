@@ -1,5 +1,14 @@
 # Change Log
 
+## 8.1.0
+
+* refactor: BREAKING CHANGE: clearer contract for `GenericTransaction` implementers
+  * Associated pull request: [33888](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33888)
+  * Commit: [0e2826c247e23721df805104050fb6560c129070](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/0e2826c247e23721df805104050fb6560c129070)
+* merge: `releases/2021.08.4` into `master`
+  * Associated pull request: [33711](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33711)
+  * Commit: [f9c1fa2b08226f10c73fab2922496a4dcd34750c](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f9c1fa2b08226f10c73fab2922496a4dcd34750c)
+
 ## 7.6.0
 
 * build: update package dependencies
