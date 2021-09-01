@@ -209,7 +209,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         if (![this.id, undefined, null].includes(versionId)) {
-            // Blobs in this scenario will never have multiple versions, so return blobId as is with no treeId
+            // Blobs in this scenario will never have multiple versions, so return blobId as is
             return [{
                 id: versionId,
                 treeId: undefined!,
@@ -230,7 +230,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         return commits.map((commit) => ({
             date: commit.commit.author.date,
             id: commit.sha,
-            treeId: commit.commit.tree.sha,
+            treeId: undefined!,
         }));
     }
 
@@ -249,10 +249,10 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
             this.logger,
             {
                 eventName: "getWholeFlatSummary",
-                treeId: requestVersion.treeId,
+                treeId: requestVersion.id,
             },
             async (event) => {
-                const response = await this.manager.getSummary(requestVersion!.treeId);
+                const response = await this.manager.getSummary(requestVersion!.id);
                 event.end({
                     size: response.trees[0]?.entries.length,
                 });
