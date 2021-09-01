@@ -6,7 +6,7 @@
 import http from "http";
 import * as path from "path";
 import Axios from "axios";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
@@ -62,7 +62,7 @@ export async function createFluidTestDriver(
     fluidTestDriverType: TestDriverTypes = "local",
     config?: FluidTestDriverConfig,
     api: DriverApiType = DriverApi,
-): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver> {
+): Promise<ITestDriver> {
     switch (fluidTestDriverType) {
         case "local":
             return new LocalServerTestDriver(api.LocalDriverApi);

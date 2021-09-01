@@ -20,6 +20,7 @@ export interface ITestDriver {
     createCreateNewRequest(testId: string): IRequest;
     createDocumentServiceFactory(): IDocumentServiceFactory;
     createUrlResolver(): IUrlResolver;
+    readonly endpointName?: string;
     readonly type: TestDriverTypes;
     readonly version: string;
 }
