@@ -126,7 +126,7 @@ var _createTemplateValidator = function (skipSemver) {
  *
  * @constructor
  * @protected
- * @alias LYNX.Property.PropertyFactory
+ * @alias property-properties.PropertyFactory
  * @category HFDM
  */
 var PropertyFactory = function () {
@@ -427,7 +427,7 @@ var registerLocal = function (in_template) {
  * In the case of typeids, it adds it to a list of unknown dependencies if the corresponding template
  * is not known locally. The case of arrays is a a repetitive application of the scalar type.
  *
- * @param {LYNX.Property.PropertyTemplate|object|String|Array} in_input - a template, a typeid or an array of either
+ * @param {property-properties.PropertyTemplate|object|String|Array} in_input - a template, a typeid or an array of either
  */
 PropertyFactory.prototype.register = function (in_input) {
 
@@ -536,7 +536,7 @@ PropertyFactory.prototype.registerFrom = function (in_fromType, in_toConvert) {
  * - If the template structure has been extended (add new fields) then the MINOR version should be bumped
  * - If the annotation field has been updated then the PATCH version should be bumped
  * If any of these rules have been broken then a warning message is printed onto the console.
- * @param {object|LYNX.Property.PropertyTemplate} in_template - the template to compare against
+ * @param {object|property-properties.PropertyTemplate} in_template - the template to compare against
  *  its previous or next versions
  * @param {boolean} in_compareRemote - Flag indicating whether we want to compare the given
  *  template against the remote registry
@@ -605,7 +605,7 @@ PropertyFactory.prototype._validateSemver = function (in_template, in_compareRem
 
 /**
  * Internal method used to register remote templates coming over the wire.
- * @param {LYNX.Property.PropertyTemplate|object} in_remoteTemplate - The remote template to register
+ * @param {property-properties.PropertyTemplate|object} in_remoteTemplate - The remote template to register
  * @param {string} in_scope - The scope in which the template will be stored in. The scope is usually determined by
  * the currently checked out workspaces. Each workspace can have their own set of versioned templates
  * that may be different from other workspaces.
@@ -687,9 +687,9 @@ PropertyFactory.prototype._removeScope = function (in_scope) {
 
 /**
  * Triggered when a template is registered.
- * @event LYNX.Property.PropertyFactory#registered
- * @param {LYNX.Property.Template} Template - The template being registered.
- * @memberof LYNX.Property.PropertyFactory
+ * @event property-properties.PropertyFactory#registered
+ * @param {property-properties.Template} Template - The template being registered.
+ * @memberof property-properties.PropertyFactory
  *
  **/
 
@@ -698,9 +698,9 @@ PropertyFactory.prototype._removeScope = function (in_scope) {
  *
  * This is the internal function used to register templates and primitive properties.
  *
- * @param {LYNX.Property.PropertyTemplate|string}                            in_typeid  -
+ * @param {property-properties.PropertyTemplate|string}                            in_typeid  -
  *     typeid of for the property the given template/constructor represents
- * @param {LYNX.Property.PropertyTemplate|object|LYNX.Property.BaseProperty} in_templateOrProperty
+ * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrProperty
  *     Template/native property class to associate with the typeid
  * @param {string}                                                          [in_context='single'] -
  *     The context for which the parameter is added (if it is set to all the object will be used in
@@ -737,7 +737,7 @@ PropertyFactory.prototype._registerTypeId = function (in_typeid, in_templateOrPr
 /**
  * Validate a template
  * Check that the template is syntactically correct as well as semantically correct.
- * @param {object|LYNX.Property.PropertyTemplate} in_template The template to check against
+ * @param {object|property-properties.PropertyTemplate} in_template The template to check against
  * @return {object|undefined} map of key-value pairs
  *  where the path of the invalid property is the key and the value is the error message
  *  i.e.
@@ -782,7 +782,7 @@ PropertyFactory.prototype._get = function (in_typeid, in_context, in_scope = und
  * @param {string} [in_context]  - The context of the property to create
  * @param {string} [in_scope] - The scope in which the property typeid is defined
  *
- * @return {LYNX.Property.PropertyTemplateWrapper|LYNX.Property.BaseProperty|undefined}
+ * @return {property-properties.PropertyTemplateWrapper|property-properties.BaseProperty|undefined}
  *     Template/Property identified by the typeid.
  */
 PropertyFactory.prototype._getWrapper = function (in_typeid, in_context, in_scope) {
@@ -814,7 +814,7 @@ PropertyFactory.prototype._getWrapper = function (in_typeid, in_context, in_scop
  * Get template based on typeid
  *
  * @param {string} in_typeid - The type unique identifier
- * @return {LYNX.Property.PropertyTemplate|undefined} Template identified by the typeid.
+ * @return {property-properties.PropertyTemplate|undefined} Template identified by the typeid.
  */
 PropertyFactory.prototype.getTemplate = function (in_typeid) {
     if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
@@ -826,7 +826,7 @@ PropertyFactory.prototype.getTemplate = function (in_typeid) {
  * Get remote templates based on typeid
  * @private
  * @param {string} in_typeid - The type unique identifier
- * @return {array<LYNX.Property.PropertyTemplate>} Array of templates.
+ * @return {array<property-properties.PropertyTemplate>} Array of templates.
  */
 PropertyFactory.prototype._getRemoteTemplates = function (in_typeid) {
     var templatesFound = [];
@@ -858,7 +858,7 @@ PropertyFactory.prototype._getRemoteTemplates = function (in_typeid) {
  * @param {boolean|undefined} in_optimizeConstants - set true if constant optimization should occur
  * @throws if the property does not have a unique id.
  * @throws if the property has a typeid that is not registered.
- * @return {LYNX.Property.BaseProperty|undefined} the property instance
+ * @return {property-properties.BaseProperty|undefined} the property instance
  * @private
  */
 PropertyFactory.prototype._createProperty = function (
@@ -940,11 +940,11 @@ PropertyFactory.prototype._setInitialValue = function (property, valueParsed) {
  *                               Accepted values are "single" (default), "array", "map" and "set".
  * @param {object=} in_initialProperties A set of initial values for the PropertySet being created
  * @param {object=} in_options Additional options
- * @param {LYNX.Property.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
+ * @param {property-properties.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
  *  the function will check against the schemas that have been registered within the workspace
  * @throws if the property does not have a unique id.
  * @throws if the property has a typeid that is not registered.
- * @return {LYNX.Property.BaseProperty|undefined} the property instance
+ * @return {property-properties.BaseProperty|undefined} the property instance
  */
 PropertyFactory.prototype.create = function (in_typeid, in_context, in_initialProperties, in_options) {
     in_options = in_options || {};
@@ -1026,13 +1026,13 @@ PropertyFactory.prototype._getConstructorFunctionForTypeidAndID = function (in_c
  *
  * @param {string}                               in_typeid - The type unique identifier
  * @param {string}                               in_id     - The id of the property to create
- * @param {LYNX.Property.BaseProperty} in_parent - The parent property object. If
+ * @param {property-properties.BaseProperty} in_parent - The parent property object. If
  *                                                           it exists it will be returned
- * @param {LYNX.Property.PropertyTemplate|object|LYNX.Property.BaseProperty} in_templateOrConstructor -
+ * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
  *        the Template/Property for this in_typeid
  * @param {string|undefined} in_scope - The scope in which the property typeid is defined
  *
- * @return {LYNX.Property.BaseProperty} The property that serves as parent for the properties in the template
+ * @return {property-properties.BaseProperty} The property that serves as parent for the properties in the template
  * @private
  */
 PropertyFactory.prototype._ensurePropertyParentExists = function (in_typeid, in_id, in_parent,
@@ -1162,7 +1162,7 @@ PropertyFactory.prototype._computeTypeid = function (in_propertiesEntry, in_pare
  * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
  * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
  * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
- * @param {LYNX.Property.BaseProperty}  in_parent                      - The parent property which will be used as
+ * @param {property-properties.BaseProperty}  in_parent                      - The parent property which will be used as
  *                                                                        the root to construct the property template
  * @param {string} [in_scope] - The scope in which the property typeid is defined
  * @param {boolean} [in_evaluateConstants] - If constants need to be traversed and created
@@ -1340,8 +1340,8 @@ PropertyFactory.prototype._parseTypedValue = function (in_property, in_scope, in
 /**
  * Parse a given property template appending its property and constant objects to the given property parent object
  *
- * @param {LYNX.Property.PropertyTemplate} in_template - template for the property
- * @param {LYNX.Property.BaseProperty}     in_parent   - the parent
+ * @param {property-properties.PropertyTemplate} in_template - template for the property
+ * @param {property-properties.BaseProperty}     in_parent   - the parent
  * @param {string} in_scope - The scope in which in_template is defined in
  * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
  *                                        This is used for extending inherited properties.
@@ -1414,7 +1414,7 @@ PropertyFactory.prototype._parseTemplate = function (
  * @param {string}  in_baseTypeid         - The base template to check for
  * @param {object} [in_options]          - Additional options
  * @param {boolean} [in_options.includeSelf=true] - Also return true if in_templateTypeid === in_baseTypeid
- * @param {LYNX.Property.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
+ * @param {property-properties.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
  *  the function will check against the schemas that have been registered within the workspace
  * @throws if no template is found for in_templateTypeid
  * @return {boolean} True if in_baseTypeid is a parent of in_templateTypeid or
@@ -1468,7 +1468,7 @@ PropertyFactory.prototype.inheritsFrom = function (in_templateTypeid, in_baseTyp
  *                                                   Everything implicitly inherits
  *                                                   from BaseProperty, but it is not explicitly listed in the
  *                                                   template, so it is only included if explicitly requested
- * @param {LYNX.Property.Workspace} [in_options.workspace] - A checked out workspace to check against.
+ * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against.
  *                                                   If supplied, the function will check against the
  *                                                   schemas that have been registered within the workspace
  * @throws if no template found for in_typeid. Make sure it is registered first.
@@ -1556,7 +1556,7 @@ PropertyFactory.prototype._clear = function () {
  * sessions, when trying out different templates.
  *
  * @protected
- * @param {LYNX.Property.PropertyTemplate|object|LYNX.Property.BaseProperty} in_template - The template to reregister
+ * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_template - The template to reregister
  */
 PropertyFactory.prototype._reregister = function (in_template) {
     var typeid = in_template.typeid;
@@ -1627,7 +1627,7 @@ PropertyFactory.prototype.initializeSchemaStore = function (in_options) {
  * Extracts typeids directly referred to in a template and that are not locally known
  *
  * @public
- * @param {LYNX.Property.PropertyTemplate|object} in_template from which to extract dependencies
+ * @param {property-properties.PropertyTemplate|object} in_template from which to extract dependencies
  *
  * @return {Array} list of unknown typeids
  */
@@ -1845,7 +1845,7 @@ PropertyFactory.prototype.resolveSchemas = function () {
  * property typeid and context.
  *
  * @public
- * @param {LYNX.Property.BaseProperty} in_property The property to test
+ * @param {property-properties.BaseProperty} in_property The property to test
  * @param {String} in_primitiveTypeid - Native property typeid
  * @param {String} in_context - Context of the property
  * @return {boolean} True, if the property is an instance of the corresponding type

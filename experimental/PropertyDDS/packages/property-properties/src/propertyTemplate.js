@@ -27,25 +27,27 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  *   are used to define children properties
  * @param {Array.<object>} in_params.constants List of property templates that
  *   are used to define constant properties and their values
- * @param {Array.<string>|string} in_params.inherits List of property template typeids that this
+ * @param {Array.<string>} in_params.inherits List of property template typeids that this
  *   PropertyTemplate inherits from
  *
  * @constructor
  * @protected
- * @alias property-properties.PropertyTemplate
  * @category Properties
  */
 var PropertyTemplate = function (in_params) {
-    let params = in_params ? deepCopy(in_params) : {};
+    in_params = in_params || {};
     /** The identifier of the property */
-    this.id = params.id;
+    this.id = in_params.id;
     /** The type identifier of the property */
-    this.typeid = params.typeid;
+    this.typeid = in_params.typeid;
 
     /** Size of the property (if this is an array) */
-    if (params.context === 'array') {
-        if (params.length !== undefined) {
-            this.length = params.length;
+    if (in_params.context === 'array') {
+        if (in_params.length !== undefined) {
+            this.length = in_params.length;
+        } else if (in_params.size !== undefined) {
+            console.warn(MSG.SIZE_IS_DEPRECATED);
+            this.length = in_params.size;
         } else {
             this.length = 0;
         }
@@ -55,19 +57,19 @@ var PropertyTemplate = function (in_params) {
     ConsoleUtils.assert(_.isNumber(this.length), MSG.LENGTH_MUST_BE_NUMBER + this.length);
 
     /** The context of the property */
-    this.context = params.context;
+    this.context = in_params.context;
 
     /** Array with sub-properties */
-    this.properties = params.properties;
+    this.properties = in_params.properties;
 
     /** The annotation object */
-    this.annotation = params.annotation || {};
+    this.annotation = in_params.annotation || {};
 
     /** Array with constant properties */
-    this.constants = params.constants;
+    this.constants = in_params.constants;
 
     /** Typeids of properties this property inherits from */
-    this.inherits = _.isString(params.inherits) ? [params.inherits] : params.inherits;
+    this.inherits = _.isString(in_params.inherits) ? [in_params.inherits] : in_params.inherits;
 
     if (_.includes(this.inherits, 'Enum')) {
         this._enumDictionary = this._parseEnums(this.properties);
@@ -82,19 +84,23 @@ PropertyTemplate.prototype.hasNestedProperties = function () {
     return (this.properties && this.properties.length > 0);
 };
 
+PropertyTemplate.prototype.hasNestedConstants = function () {
+    return (this.constants && this.constants.length > 0);
+};
+
 /**
- * internal function to recursively traverse a property template and create dictionaries for found inline enums
- * @param {{}} in_currentPropertyLevel the current level in the template hierarchy
+ * internal function to recursivly traverse a property template and create dictionaries for found inline enums
+ * @param {{}} in_currentPropertyLevel the current level in the template hierarchie
  */
 PropertyTemplate.prototype._digestNestedInlineEnumProperties = function (in_currentPropertyLevel) {
     if (in_currentPropertyLevel.properties) {
-        for (const currentLevelProperty of in_currentPropertyLevel.properties) {
-            if (currentLevelProperty.typeid === 'Enum') {
-                var dictionary = this._parseEnums(currentLevelProperty.properties);
-                currentLevelProperty._enumDictionary = dictionary;
-            } else if (currentLevelProperty.properties) {
+        for (var i = 0; i < in_currentPropertyLevel.properties.length; i++) {
+            if (in_currentPropertyLevel.properties[i].typeid === 'Enum') {
+                var dictionary = this._parseEnums(in_currentPropertyLevel.properties[i].properties);
+                in_currentPropertyLevel.properties[i]._enumDictionary = dictionary;
+            } else if (in_currentPropertyLevel.properties[i].properties) {
                 // call self
-                this._digestNestedInlineEnumProperties(currentLevelProperty);
+                this._digestNestedInlineEnumProperties(in_currentPropertyLevel.properties[i]);
             }
         }
     }
@@ -112,8 +118,9 @@ PropertyTemplate.prototype._parseEnums = function (in_enumProperties) {
     if (in_enumProperties.length !== 0) {
         minValue = in_enumProperties[0].value;
     }
-    for (const enumEntry of in_enumProperties) {
-        const value = enumEntry.value;
+    for (var i = 0; i < in_enumProperties.length; i++) {
+        var enumEntry = in_enumProperties[i];
+        var value = enumEntry.value;
         ConsoleUtils.assert(enumEntry.id, MSG.ENUM_TYPEID_MISSING);
         ConsoleUtils.assert(!_.isNaN(enumEntry.value), MSG.ENUM_VALUE_NOT_NUMBER + value);
         enumDictionary.enumEntriesById[enumEntry.id] = { value: value, annotation: enumEntry.annotation };
@@ -136,7 +143,7 @@ PropertyTemplate.prototype._parseEnums = function (in_enumProperties) {
  * @return {property-properties.PropertyTemplate} The cloned template
  */
 PropertyTemplate.prototype.clone = function () {
-    return new PropertyTemplate(this);
+    return new PropertyTemplate(deepCopy(this._serializedParams));
 };
 
 /**
@@ -338,28 +345,30 @@ PropertyTemplate.extractDependencies = function (template) {
 
     if (template.inherits) {
         var inherits = (typeof template.inherits === 'string') ? [template.inherits] : template.inherits;
-        for (const parentType of inherits) {
-            var elem = TypeIdHelper.extractTypeId(parentType);
+        for (var i = 0; i < inherits.length; i++) {
+            var elem = TypeIdHelper.extractTypeId(inherits[i]);
             dependencies[elem] = true;
         }
     }
 
     if (template.properties) {
         var properties = template.properties;
-        for (const property of properties) {
+        for (var i = 0; i < properties.length; i++) {
+            var property = properties[i];
             if (PropertyTemplate.isTemplate(property)) {
-                const typeid = TypeIdHelper.extractTypeId(property.typeid);
+                var typeid = TypeIdHelper.extractTypeId(property.typeid);
                 dependencies[typeid] = true;
 
                 if (property.typedValue) {
-                    for (const typedVal of property.typedValue) {
-                        dependencies[typedVal.typeid] = true;
+                    for (var t = 0; t < property.typedValue.length; t++) {
+                        var typedValue = property.typedValue[t];
+                        dependencies[typedValue.typeid] = true;
                     }
                 }
             } else if (property.properties) {
                 var deps = PropertyTemplate.extractDependencies(property);
-                for (const dep of deps) {
-                    const typeid = TypeIdHelper.extractTypeId(dep);
+                for (var j = 0; j < deps.length; j++) {
+                    var typeid = TypeIdHelper.extractTypeId(deps[j]);
                     dependencies[typeid] = true;
                 }
             }
@@ -368,25 +377,27 @@ PropertyTemplate.extractDependencies = function (template) {
 
     if (template.constants) {
         var constants = template.constants;
-        for (const constant of constants) {
+        for (var i = 0; i < constants.length; i++) {
+            var constant = constants[i];
             if (PropertyTemplate.isTemplate(constant)) {
-                const typeid = TypeIdHelper.extractTypeId(constant.typeid);
+                var typeid = TypeIdHelper.extractTypeId(constant.typeid);
                 dependencies[typeid] = true;
             } else if (constant.context === 'map' && constant.contextKeyType === 'typeid' && constant.value) {
                 var keys = Object.keys(constant.value);
-                for (const key of keys) {
-                    const typeid = TypeIdHelper.extractTypeId(key);
+                for (var k = 0; k < keys.length; k++) {
+                    var typeid = TypeIdHelper.extractTypeId(keys[k]);
                     dependencies[typeid] = true;
                 }
             }
 
-            // Search for typeid hidden in typedValue
+            // Search for typeid hidden in typedValue [LYNXDEV-6692]
             // the context could be inherited and therefore missing, so we have to try them all.
             if (constant.typedValue) {
                 // for arrays
                 if (_.isArray(constant.typedValue)) {
-                    for (const typedVal of constant.typedValue) {
-                        dependencies[typedVal.typeid] = true;
+                    for (var t = 0; t < constant.typedValue.length; t++) {
+                        var typedValue = constant.typedValue[t];
+                        dependencies[typedValue.typeid] = true;
                     }
                     // for singles
                 } else if (constant.typedValue.typeid) {
@@ -394,8 +405,8 @@ PropertyTemplate.extractDependencies = function (template) {
                     // for maps
                 } else {
                     var keys = Object.keys(constant.typedValue);
-                    for (const key of keys) {
-                        const typeid = constant.typedValue[key].typeid;
+                    for (var k = 0; k < keys.length; k++) {
+                        var typeid = constant.typedValue[keys[k]].typeid;
                         if (typeid) {
                             dependencies[typeid] = true;
                         }

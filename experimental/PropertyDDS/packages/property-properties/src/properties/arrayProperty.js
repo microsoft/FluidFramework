@@ -6,7 +6,7 @@
  * @fileoverview Definition of the array property class
  */
 const BaseProperty = require('./baseProperty');
-const ContainerProperty = require('./containerProperty');
+const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
 const ArrayChangeSetIterator = require('@fluid-experimental/property-changeset').ArrayChangeSetIterator;
 const deserializeNonPrimitiveArrayElements =
@@ -61,12 +61,11 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @param {string} [in_scope] - The scope in which the property typeid is defined
  * @protected
  * @constructor
- * @extends property-properties.ContainerProperty
  * @alias property-properties.ArrayProperty
  * @category Arrays
  */
 var ArrayProperty = function (in_params, in_scope) {
-    ContainerProperty.call(this, in_params);
+    AbstractStaticCollectionProperty.call(this, in_params);
     var length = in_params.size || in_params.length || 0;
 
     // changesets
@@ -80,10 +79,44 @@ var ArrayProperty = function (in_params, in_scope) {
     this._dataArrayCreate(length);
 };
 
-ArrayProperty.prototype = Object.create(ContainerProperty.prototype);
+ArrayProperty.prototype = Object.create(AbstractStaticCollectionProperty.prototype);
 
 ArrayProperty.prototype._context = 'array';
-ArrayProperty.prototype._children = {};
+ArrayProperty.prototype._staticChildren = {};
+
+var getValueDeprecatedWarning = false;
+/**
+ * deprecated - replaced with .get
+ * @param {number | array<string|number>} in_position the target index
+ * @param {Object} in_options - parameter object
+ * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+ *   the token indicating the mode of resolution for reference properties
+ * @deprecated use .get instead.
+ * @return {*} the value found at in_position
+ */
+ArrayProperty.prototype.getValue = function (in_position, in_options) {
+    if (!getValueDeprecatedWarning) {
+        console.warn(MSG.ARRAY_GET_VALUE_DEPRECATED);
+        getValueDeprecatedWarning = true;
+    }
+    return this.get(in_position, in_options);
+};
+
+var setValueDeprecatedWarning = false;
+/**
+ * deprecated - replaced with .set
+ * @param {number} in_position the target index
+ * @param {*} in_value the new property or value
+ * @deprecated use .set instead.
+ */
+ArrayProperty.prototype.setValue = function (in_position, in_value) {
+    if (!setValueDeprecatedWarning) {
+        console.warn(MSG.ARRAY_SET_VALUE_DEPRECATED);
+        setValueDeprecatedWarning = true;
+    }
+    this.set(in_position, in_value);
+};
+
 
 /**
  * Returns the path segment for a child
@@ -129,7 +162,7 @@ ArrayProperty.prototype._resolvePathSegment = function (in_segment, in_segmentTy
         }
         return this._dataArrayGetValue(index);
     } else {
-        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 };
 
@@ -145,6 +178,26 @@ ArrayProperty.prototype._resolvePathSegment = function (in_segment, in_segmentTy
  */
 ArrayProperty.prototype.insert = function (in_position, in_value) {
     this.insertRange(in_position, [in_value]);
+};
+
+var insertValueDeprecatedWarning = false;
+/**
+ * Insert into the array at a given position.
+ * It will not overwrite the existing value, it will push it to the right.
+ * E.g. [1, 2, 3]  .insert(1, 4) => [1, 4, 2, 3]
+ * @param {number} in_position target index
+ * @param {*} in_value inserted value (or property)
+ * @throws if in_position is smaller than zero, larger than the length of the array or not a number.
+ * @throws if trying to insert a property that already has a parent.
+ * @throws if trying to modify a referenced property.
+ * @deprecated use .insert instead.
+ */
+ArrayProperty.prototype.insertValue = function (in_position, in_value) {
+    if (!insertValueDeprecatedWarning) {
+        console.warn(MSG.ARRAY_INSERT_VALUE_DEPRECATED);
+        insertValueDeprecatedWarning = true;
+    }
+    this.insert(in_position, in_value);
 };
 
 /**
@@ -175,6 +228,22 @@ ArrayProperty.prototype.push = function (in_values) {
     return this._dataArrayGetLength();
 };
 
+var pushValueDeprecatedWarning = false;
+/**
+ * add a value at the end of the array
+ * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values
+ * the property or properties to be pushed
+ * @return {number} new length of the array
+ * @deprecated use .push instead.
+ */
+ArrayProperty.prototype.pushValue = function (in_values) {
+    if (!pushValueDeprecatedWarning) {
+        console.warn(MSG.ARRAY_PUSH_VALUE_DEPRECATED);
+        pushValueDeprecatedWarning = true;
+    }
+    return this.push(in_values);
+};
+
 /**
  * Add elements to the end of the queue (array)
  */
@@ -186,6 +255,7 @@ ArrayProperty.prototype.enqueue = ArrayProperty.prototype.push;
  * @param {Array<*>|*|Array<property-properties.BaseProperty>|property-properties.BaseProperty} in_values the values
  * or properties to be pushed
  * @throws if trying to insert a property that already has a parent.
+ * @throws if trying to insert a root property
  * @throws if trying to modify a referenced property.
  * @return {number} new length of the array
  */
@@ -228,6 +298,21 @@ ArrayProperty.prototype.pop = function () {
     } else {
         return undefined;
     }
+};
+
+var popValueDeprecatedWarning = false;
+/**
+ * Remove the last element of the array
+ * @throws if trying to modify a referenced property
+ * @return {property-properties.BaseProperty|*|undefined} deleted element or undefined if no element found
+ * @deprecated use .pop instead.
+ */
+ArrayProperty.prototype.popValue = function () {
+    if (!popValueDeprecatedWarning) {
+        console.warn(MSG.ARRAY_POP_VALUE_DEPRECATED);
+        popValueDeprecatedWarning = true;
+    }
+    return this.pop();
 };
 
 /**
@@ -287,14 +372,14 @@ ArrayProperty.prototype._setValues = function (in_values, in_typed, in_initial) 
                     prop = in_values[i];
                 } else {
                     prop = Property.PropertyFactory._createProperty(
-                        in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
+                        in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope(), !in_initial);
                 }
                 arr.push(prop);
             }
 
             this._setValuesInternal(arr);
         } else {
-            ContainerProperty.prototype._setValues.call(this, in_values, in_typed, in_initial);
+            AbstractStaticCollectionProperty.prototype._setValues.call(this, in_values, in_typed, in_initial);
         }
     } else {
         this._setValuesInternal(in_values);
@@ -312,31 +397,23 @@ ArrayProperty.prototype._setValuesInternal = function (in_values) {
         if (_.isArray(in_values)) {
             this.clear();
             this.insertRange(0, in_values);
-        } else {
-            ContainerProperty.prototype.setValues.call(this, in_values);
-        }
+        } else AbstractStaticCollectionProperty.prototype.setValues.call(this, in_values);
     } else {
-        if (_.isArray(in_values)) {
-            if (in_values.length < this._dataArrayGetLength()) {
-                this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
-            }
-            this.setRange(0, in_values.slice(0, this._dataArrayGetLength()));
-            if (in_values.length > this._dataArrayGetLength()) {
-                this.insertRange(this._dataArrayGetLength(), in_values.slice(this._dataArrayGetLength()));
-            }
-        } else {
-            var that = this;
-            var maxIndex = this._dataArrayGetLength() - 1;
-            _.each(in_values, function (value, index) {
-                if (index > maxIndex) {
-                    that.insert(index, value);
-                } else {
-                    if (that._dataArrayGetValue(index) !== value) {
-                        that.set(index, value);
-                    }
-                }
-            });
+        if (_.isArray(in_values) && in_values.length < this._dataArrayGetLength()) {
+            this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
         }
+
+        var that = this;
+        var maxIndex = this._dataArrayGetLength() - 1;
+        _.each(in_values, function (value, index) {
+            if (index > maxIndex) {
+                that.insert(index, value);
+            } else {
+                if (that._dataArrayGetValue(index) !== value) {
+                    that.set(index, value);
+                }
+            }
+        });
     }
 };
 
@@ -522,8 +599,9 @@ ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
     }
 
     for (var i = 0; i < in_array.length; i++) {
-        if (in_array[i] instanceof BaseProperty) {
-            in_array[i]._validateInsertIn(this, in_offset + i);
+        if (in_array[i] instanceof BaseProperty &&
+            !in_array[i]._canInsert()) {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
         }
     }
     this._checkIsNotReadOnly(true);
@@ -531,18 +609,40 @@ ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
     this._setDirty();
 };
 
+var insertValueRangeDeprecatedWarning = false;
+/**
+ * inserts the content of a given array into the array property
+ * It will not overwrite the existing values but push them to the right instead.
+ * @param {number} in_offset target index
+ * @param {Array<*>} in_array the array to be inserted
+ * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
+ * @throws if trying to insert a property that already has a parent.
+ * @throws if trying to modify a referenced property.
+ * @deprecated use insertRange instead.
+ */
+ArrayProperty.prototype.insertValueRange = function (in_offset, in_array) {
+    if (!insertValueRangeDeprecatedWarning) {
+        console.warn(MSG.ARRAY_INSERT_VALUE_RANGE_DEPRECATED);
+        insertValueRangeDeprecatedWarning = true;
+    }
+    this.insertRange(in_offset, in_array);
+};
+
 /**
  * inserts the content of a given array, but doesn't dirty the property
  * this is useful for batch changes
  * @param {number} in_offset target index
  * @param {Array<*>} in_array the array to be inserted
+ * @param {Boolean=} [in_setParents=true] If true, set parent of inserted properties.
+ *                   If false, caller has already set parents.
  * @private
  */
-ArrayProperty.prototype._insertRangeWithoutDirtying = function (in_offset, in_array) {
+ArrayProperty.prototype._insertRangeWithoutDirtying = function (in_offset, in_array, in_setParents) {
+    if (in_setParents === undefined) in_setParents = true;
     if (in_offset < 0 || in_offset > this.length || !_.isNumber(in_offset)) {
         throw Error(MSG.START_OFFSET_INVALID + in_offset);
     }
-    if (!this._isPrimitive) {
+    if (in_setParents && !this._isPrimitive) {
         var arr = [];
         for (var i = 0; i < in_array.length; ++i) {
             var prop = in_array[i];
@@ -651,15 +751,31 @@ ArrayProperty.prototype.setRange = function (in_offset, in_array) {
         throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.setRange');
     }
     in_offset = Math.floor(in_offset);
-    if (!isFinite(in_offset)) {
-        throw new Error(MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.setRange or .set');
-    }
+    if (!isFinite(in_offset)) throw new Error(MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.setRange or .set');
     ConsoleUtils.assert(in_offset >= -1 && (in_offset + in_array.length) <= this.getLength(),
         MSG.SET_OUT_OF_BOUNDS + 'Cannot set ' + in_array.length + ' items starting at index ' + in_offset +
         '. Array length: ' + this.getLength());
     this._checkIsNotReadOnly(true);
     this._setRangeWithoutDirtying(in_offset, in_array);
     this._setDirty();
+};
+
+var setValueRangeDeprecatedWarning = false;
+/**
+ * sets the array properties elements to the content of the given array
+ * all changed elements must already exist
+ * @param {number} in_offset target start index
+ * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
+ * @throws if in_offset is not a number
+ * @throws if in_offset is smaller than zero
+ * @deprecated use setRange instead.
+ */
+ArrayProperty.prototype.setValueRange = function (in_offset, in_array) {
+    if (!setValueRangeDeprecatedWarning) {
+        console.warn(MSG.ARRAY_SET_VALUE_RANGE_DEPRECATED);
+        setValueRangeDeprecatedWarning = true;
+    }
+    this.setRange(in_offset, in_array);
 };
 
 /**
@@ -846,9 +962,14 @@ ArrayProperty.prototype.getLength = function () {
 };
 
 /**
- * @inheritdoc
+ * Modifies the property according to the given changeset
+ *
+ * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
+ * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+ *                                             and trigger a modified event there. When batching updates, this
+ *                                             can be prevented via this flag.
  */
-ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions) {
+ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView) {
     this._checkIsNotReadOnly(false);
 
     // Iterator to process the changes in the ChangeSet in the correct order
@@ -861,12 +982,19 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                 case ArrayChangeSetIterator.types.INSERT:
                     // Handle inserts
                     var propertyDescriptions = arrayIterator.opDescription.operation[1];
+                    var insertedPropertyInstances = [];
                     var scope = this._getScope();
-                    var insertedPropertyInstances = deserializeNonPrimitiveArrayElements(propertyDescriptions, scope);
+                    for (var i = 0; i < propertyDescriptions.length; ++i) {
+                        var createdProperty = Property.PropertyFactory._createProperty(
+                            propertyDescriptions[i]['typeid'], null, undefined, scope, true);
+                        // Set parent so scope is defined for deserialization
+                        createdProperty._setParent(this);
+                        createdProperty._deserialize(propertyDescriptions[i], false);
+                        insertedPropertyInstances.push(createdProperty);
+                    }
                     this._insertRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
-                        this._deserializeArray(insertedPropertyInstances));
+                        this._deserializeArray(insertedPropertyInstances), false);
                     break;
-
                 case ArrayChangeSetIterator.types.REMOVE:
                     // Handle removes
                     var numRemoved = arrayIterator.opDescription.operation[1];
@@ -875,7 +1003,6 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                     }
                     this._removeRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset, numRemoved);
                     break;
-
                 case ArrayChangeSetIterator.types.MODIFY:
                     // Handle modifies
                     var propertyDescriptions = arrayIterator.opDescription.operation[1];
@@ -889,7 +1016,6 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                         modifiedProperty._applyChangeset(propertyDescriptions[i], false);
                     }
                     break;
-
                 default:
                     console.error('applyChangeset: ' + MSG.UNKNOWN_OPERATION + arrayIterator.opDescription.type);
             }
@@ -1016,7 +1142,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
 
         // Perform a binary search to find the largest entry in the list of found sub
         // sequences that has a sequenceEnd that is smaller or equal than currentSegmentStart
-        var index = _.sortedIndexBy(foundSubSequences, { sequenceLastEntry: currentSegmentStart }, 'sequenceLastEntry');
+        var index = _.sortedIndex(foundSubSequences, { sequenceLastEntry: currentSegmentStart }, 'sequenceLastEntry');
         var lastEntry = index > 0 ? foundSubSequences[index - 1] : undefined;
 
         // Create a new entry that is obtained by concatenating the longest sequence found so far
@@ -1029,7 +1155,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
         };
 
         // Search for the insertion position for this entry
-        var insertionPoint = _.sortedIndexBy(foundSubSequences, newEntry, 'sequenceLength');
+        var insertionPoint = _.sortedIndex(foundSubSequences, newEntry, 'sequenceLength');
         if (foundSubSequences[insertionPoint] !== undefined &&
             foundSubSequences[insertionPoint].sequenceLength === newEntry.sequenceLength) {
             insertionPoint++;
@@ -1072,7 +1198,7 @@ var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_se
  * Internal helper function that implements the deserialize algorithm for an array of named properties.
  *
  * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
- *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
+ *     has to be an normalized change-set (only containing inserts. Removes and Modifies are forbidden).
  * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
  *                                             and trigger a modified event there. When batching updates, this
  *                                             can be prevented via this flag.
@@ -1121,7 +1247,7 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
     var segmentStartPointsInInitialArray = [];
     var segmentStartPointsInTargetArray = [];
     var segmentLengths = [];
-    var segmentInterrupted = false;
+    var segmentInterruped = false;
     for (var i = 0; i < initialArrayLength; i++) {
         // Get the GUID of the entry
         var guid = this._dataArrayGetValue(i).getGuid();
@@ -1130,7 +1256,7 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
         var index = resultGuidToIndexMap[guid];
         if (index !== undefined) {
             // Check whether we can append the entry to the existing sequence
-            if (!segmentInterrupted &&
+            if (!segmentInterruped &&
                 segmentStartPointsInTargetArray.length > 0 &&
                 _.last(segmentStartPointsInTargetArray) + _.last(segmentLengths) === index) {
                 // In that case we just increase the length of the segment
@@ -1140,10 +1266,10 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
                 segmentStartPointsInInitialArray.push(i);
                 segmentStartPointsInTargetArray.push(index);
                 segmentLengths.push(1);
-                segmentInterrupted = false;
+                segmentInterruped = false;
             }
         } else {
-            segmentInterrupted = true;
+            segmentInterruped = true;
         }
     }
 
@@ -1186,14 +1312,22 @@ ArrayProperty.prototype._deserializeNamedPropertyArray = function (in_serialized
         // to insert the elements between the two points
         if (startPointInTargetArray > lastPositionInTargetArray) {
             changes.insert = changes.insert || [];
-            let elementsToInsert = targetArray.slice(lastPositionInTargetArray, startPointInTargetArray);
             changes.insert.push([
                 lastPositionInInitialArray,
-                deepCopy(elementsToInsert)
+                deepCopy(targetArray.slice(lastPositionInTargetArray, startPointInTargetArray))
             ]);
+
+            var insertedProperties = [];
             var scope = this._getScope();
-            var insertedProperties = deserializeNonPrimitiveArrayElements(elementsToInsert, scope);
-            this._insertRangeWithoutDirtying(lastPositionInInitialArray + offset, insertedProperties);
+            for (var j = lastPositionInTargetArray; j < startPointInTargetArray; ++j) {
+                var createdProperty = Property.PropertyFactory._createProperty(
+                    targetArray[j]['typeid'], null, undefined, scope, true);
+                // Set parent so scope is defined for deserialization
+                createdProperty._setParent(this);
+                createdProperty._deserialize(targetArray[j], false);
+                insertedProperties.push(createdProperty);
+            }
+            this._insertRangeWithoutDirtying(lastPositionInInitialArray + offset, insertedProperties, false);
             offsetChange += insertedProperties.length;
         }
 
@@ -1288,7 +1422,15 @@ ArrayProperty.prototype._deserializeArray = function (in_serializedObj) {
 };
 
 /**
- * @inheritdoc
+ * Sets the property to the state in the given normalized changeset
+ *
+ * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
+ *     has to be an normalized change-set (only containing inserts. Removes and Modifies are forbidden).
+ * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+ *                                             and trigger a modified event there. When batching updates, this
+ *                                             can be prevented via this flag.
+ * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
+ *     deserialization
  */
 ArrayProperty.prototype._deserialize = function (in_serializedObj, in_reportToView) {
 
@@ -1345,7 +1487,7 @@ ArrayProperty.prototype._deserialize = function (in_serializedObj, in_reportToVi
 
             for (var i = 0; i < propertyDescriptions.length; ++i) {
                 var createdProperty = Property.PropertyFactory._createProperty(
-                    propertyDescriptions[i]['typeid'], null, undefined, scope);
+                    propertyDescriptions[i]['typeid'], null, undefined, scope, true);
                 createdProperty._setParent(this);
                 createdProperty._deserialize(propertyDescriptions[i], false);
                 result.push(createdProperty);
@@ -1363,15 +1505,13 @@ ArrayProperty.prototype._deserialize = function (in_serializedObj, in_reportToVi
                 if (this._typeid === 'Int64' || this._typeid === 'Uint64') {
                     // For (u)int64, we will compare (Ui/I)nt64 objects with arrays [low, high]
                     for (i = 0; i < len; i++) {
-                        if (changeSetArray[i][0] !== buffer[i].getValueLow() || changeSetArray[i][1] !== buffer[i].getValueHigh()) {
+                        if (changeSetArray[i][0] !== buffer[i].getValueLow() || changeSetArray[i][1] !== buffer[i].getValueHigh())
                             break;
-                        }
                     }
                 } else {
                     for (i = 0; i < len; i++) {
-                        if (buffer[i] !== changeSetArray[i]) {
+                        if (buffer[i] !== changeSetArray[i])
                             break;
-                        }
                     }
                 }
                 if (i === len) {
@@ -1480,7 +1620,7 @@ ArrayProperty.prototype._getChangesetForCustomTypeArray = function (in_basePrope
                 for (var j = 0; j < currentInsert[1].length; ++j) {
                     // TODO: we don't use the data from the changeset anymore, since we directly
                     // TODO: read the data from the array now - remove the data from the op and
-                    // TODO: replace it with just the length instead
+                    // TODO: replace it with just the length instead  (LYNXDEV-833)
                     if (!this._dataArrayGetValue(opStartIndex + j)) {
                         throw new Error('insert: invalid index');
                     }
@@ -1526,7 +1666,7 @@ ArrayProperty.prototype._getChangesetForCustomTypeArray = function (in_basePrope
  */
 ArrayProperty.prototype._serialize = function (in_dirtyOnly, in_includeRootTypeid,
     in_dirtinessType, in_includeReferencedRepositories) {
-    var result = ContainerProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid,
+    var result = AbstractStaticCollectionProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories);
 
     if (!this._isPrimitive) {
@@ -1745,7 +1885,7 @@ ArrayProperty.prototype._dataArraySetRange = function (in_position, in_range) {
  * @private
  */
 ArrayProperty.prototype._getScope = function () {
-    var scope = ContainerProperty.prototype._getScope.call(this);
+    var scope = AbstractStaticCollectionProperty.prototype._getScope.call(this);
 
     if (scope !== undefined) {
         return scope;

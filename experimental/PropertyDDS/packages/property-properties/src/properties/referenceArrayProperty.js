@@ -13,7 +13,7 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
 const _ = require('lodash');
-const ContainerProperty = require('./containerProperty');
+const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const ReferenceProperty = require('./referenceProperty');
 
 
@@ -69,8 +69,8 @@ ReferenceArrayProperty.prototype.get = function (in_ids, in_options) {
       in_options.referenceResolutionMode;
 
   if (_.isArray(in_ids)) {
-    // Forward handling of arrays to the ContainerProperty function
-    return ContainerProperty.prototype.get.call(this, in_ids, in_options);
+    // Forward handling of arrays to the AbstractStaticCollectionProperty function
+    return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
   } else {
     var value = this._dataArrayRef.getValue(in_ids);
     if (value === undefined ||
@@ -215,7 +215,7 @@ ReferenceArrayProperty.prototype._resolvePathSegment = function (in_segment, in_
     return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
   } else {
     // Everything else is handled by the implementation in the base property
-    return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+    return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
   }
 };
 

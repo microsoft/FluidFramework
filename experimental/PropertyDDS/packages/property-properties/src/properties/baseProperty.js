@@ -58,22 +58,6 @@ var PATH_TOKENS = {
 };
 
 /**
- * The options to selectively create only a subset of a property.
- *
- * For now the filtering options are propagated by many functions, but are actually used only by
- * functions that create properties from schemas. It is then possible to create only a subset of
- * the properties of a schema by providing a restricted list of paths.
- *
- * Thus, with the filtering options, it is NOT possible to prevent a part of a ChangeSet from being
- * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
- * created by a direct call to a function like `deserialize()` or `createProperty()`.
- *
- * @typedef {Object} BaseProperty.PathFilteringOptions
- * @property {string} basePath The canonical path of the property we are about to create.
- * @property {array<string>} paths The canonical paths of the properties we are allowed to create.
- */
-
-/**
  * Default constructor for BaseProperty
  * @param {object} in_params List of parameters
  * @param {string} in_params.id id of the property
@@ -312,25 +296,17 @@ BaseProperty.prototype._getDirtyFlags = function () {
  * Helper function, which reports the fact that a property has been dirtied to the checkout view
  * @private
  */
-// TODO: Cleaner way to make the property tree aware of the DDS hosting it.
-// Currently, this._tree is set in SharedPropertyTree constructor.
-BaseProperty.prototype._reportDirtinessToView = function _reportDirtinessToView() {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let currentNode = this;
-
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+BaseProperty.prototype._reportDirtinessToView = function () {
+    // Get the root of the property hierarchy
+    var currentNode = this;
     while (currentNode._parent) {
         currentNode = currentNode._parent;
     }
 
-    if (
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        currentNode._tree &&
-        currentNode._tree.notificationDelayScope === 0 &&
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
-    ) {
-        currentNode._tree._reportDirtinessToView();
+    // Report the dirtiness to the checkout view
+    if (currentNode._checkedOutRepositoryInfo &&
+        currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)) {
+        currentNode._checkedOutRepositoryInfo._propertyDirtied();
     }
 };
 
@@ -342,11 +318,11 @@ BaseProperty.prototype._reportDirtinessToView = function _reportDirtinessToView(
  *    The filtering options to consider while applying the ChangeSet.
  * @throws if in_changeSet is invalid.
  */
-BaseProperty.prototype.applyChangeSet = function (in_changeSet, in_filteringOptions) {
+BaseProperty.prototype.applyChangeSet = function (in_changeSet) {
     this._checkIsNotReadOnly(false);
 
     // We just forward the call to the internal function
-    this._applyChangeset(in_changeSet, true, in_filteringOptions);
+    this._applyChangeset(in_changeSet, true);
 };
 
 /**
@@ -363,7 +339,7 @@ BaseProperty.prototype.applyChangeSet = function (in_changeSet, in_filteringOpti
  *    control property creation, to prevent properties from being created outside the checked out
  *    paths. It does not validate that a value inside the ChangeSet is outside those paths.
  */
-BaseProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions = undefined) {
+BaseProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView) {
     var typeids = _.keys(in_changeSet);
     for (var i = 0; i < typeids.length; i++) {
         var typeid = typeids[i];
@@ -514,8 +490,8 @@ BaseProperty.prototype.getId = function () {
  * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} value - The checkedOut repository info.
  * @protected
  */
-BaseProperty.prototype._setCheckedOutRepositoryInfo = function (value) {
-    this._checkedOutRepositoryInfo = value;
+BaseProperty.prototype._setCheckoutView = function (value) {
+    this._checkoutView = value;
 };
 
 /**
@@ -523,20 +499,10 @@ BaseProperty.prototype._setCheckedOutRepositoryInfo = function (value) {
  * @return {property-properties.CheckoutView} - the checkout view
  */
 BaseProperty.prototype._getCheckoutView = function () {
-    let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
-    return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
-};
-
-/**
- * Returns the checkedOutRepositoryInfo.
- * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
- * @protected
- */
-BaseProperty.prototype._getCheckedOutRepositoryInfo = function () {
     if (!this._parent) {
-        return this._checkedOutRepositoryInfo;
+        return this._checkoutView;
     } else {
-        return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
+        return this.getRoot()._getCheckoutView();
     }
 };
 
@@ -610,7 +576,8 @@ BaseProperty.prototype._setId = function (in_id) {
  */
 BaseProperty.prototype.clone = function () {
     const PropertyFactory = Property.PropertyFactory;
-    var clone = PropertyFactory._createProperty(this.getFullTypeid(), null, undefined, this._getScope());
+    var clone = PropertyFactory._createProperty(
+        this.getFullTypeid(), null, undefined, this._getScope(), true);
 
     // TODO: this is not very efficient. Clone should be overriden
     // by the child classes
@@ -919,23 +886,10 @@ BaseProperty.prototype.getAbsolutePath = function () {
             var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
             for (var i = 0; i < keys.length; i++) {
                 if (keys[i]) {
-                    let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]];
-                    let refProperty = undefined;
-
-                    if (repoRef) {
-                        refProperty = repoRef._repositoryReferenceProperties[keys[i]] ?
-                            repoRef._repositoryReferenceProperties[keys[i]].property : undefined;
-                    }
-
-                    let refRoot;
-                    try {
-                        refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
-                    } catch (e) {
-                        console.warn(e.message);
-                    }
-
-                    if (that.getRoot() === refRoot) {
-                        referenceProps.push(refProperty);
+                    var repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]]
+                        ._repositoryReferenceProperties[keys[i]].property;
+                    if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
+                        referenceProps.push(repoRef);
                         break;
                     }
                 }
@@ -1110,9 +1064,7 @@ BaseProperty.prototype.serialize = function (in_options) {
         'includeReferencedRepositories': false
     };
     if (in_options !== undefined) {
-        if (typeof in_options !== 'object') {
-            throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
-        }
+        if (typeof in_options !== 'object') throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
         Object.assign(opts, in_options);
     }
 
@@ -1154,7 +1106,7 @@ BaseProperty.prototype._checkIsNotReadOnly = function (in_checkConstant) {
 BaseProperty.prototype._setAsConstant = function () {
     this._isConstant = true;
 
-    if (this instanceof Property.ContainerProperty) {
+    if (this instanceof Property.AbstractStaticCollectionProperty) {
         // Set all children properties as constants
         this.traverseDown(function (prop) {
             prop._isConstant = true;
@@ -1170,7 +1122,7 @@ BaseProperty.prototype._unsetAsConstant = function () {
     // fall back to the entry in the prototype (false)
     delete this._isConstant;
 
-    if (this instanceof Property.ContainerProperty) {
+    if (this instanceof Property.AbstractStaticCollectionProperty) {
         // Unset all children properties as constants
         this.traverseDown(function (prop) {
             // Deleting this property will make the object
@@ -1200,40 +1152,16 @@ BaseProperty.prototype._setDirtyTree = function (in_reportToView) {
 };
 
 /**
- * Determines whether a property can be inserted as a child of another property
- * This does NOT validate if the parent can accept the child property, it only validates if
- * the child property can be inserted in the parent.
- * @param {property-properties.BaseProperty} in_targetParent - The parent property
- * @param {string} in_childId - The id of the child property
- * @throws if the property can not be inserted
- * @private
+ * Returns the boolean to determine whether a property can be inserted to another property
+ * @return {boolean} True if the property can be inserted. False if the property is already inserted
  */
-BaseProperty.prototype._validateInsertIn = function (in_targetParent, in_childId) {
-    // Already a child?
-    if (this._parent !== undefined) {
-        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-    }
-    // A root?
-    if (this._getCheckedOutRepositoryInfo() !== undefined) {
-        throw new Error(MSG.INSERTED_ROOT_ENTRY);
-    }
-    // Would create a cycle?
-    let parent = in_targetParent;
-    while (parent !== undefined) {
-        if (parent === this) {
-            throw new Error(MSG.INSERTED_IN_OWN_CHILDREN);
-        }
-        parent = parent._parent;
-    }
-    // Outside the checked out paths?
-    const repositoryInfo = in_targetParent._getCheckedOutRepositoryInfo();
-    if (repositoryInfo && !repositoryInfo._allCoveredByCheckout(in_targetParent.getAbsolutePath(), in_childId, this)) {
-        throw new Error(MSG.INSERTED_OUTSIDE_PATHS);
-    }
+BaseProperty.prototype._canInsert = function () {
+    return (this._parent === undefined && this._getCheckoutView() === undefined);
 };
 
-
 /**
+ * TODO: Remove it later. Kept not to modify tests
+ *
  * Validates if the property and all its children are covered by the given list of paths.
  *
  * This function is expected to be used before inserting the property into its parent. That is the
@@ -1246,7 +1174,7 @@ BaseProperty.prototype._validateInsertIn = function (in_targetParent, in_childId
  * @return {Bool} If the property and all its children are included in the paths
  * @private
  */
-BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
+ BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
     // First, get the coverage of the base property
     const coverage = PathHelper.getPathCoverage(in_basePath, in_paths);
 
@@ -1288,14 +1216,6 @@ BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
     return false;
 };
 
-/**
- * Check if a property has a fixed id during insert
- * @private
- * @return {boolean} has fixed id
- */
-BaseProperty.prototype._hasFixedId = function () {
-    return false;
-};
 
 Object.defineProperty(
     BaseProperty.prototype,

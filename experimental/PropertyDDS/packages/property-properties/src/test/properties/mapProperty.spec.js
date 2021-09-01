@@ -800,8 +800,8 @@ describe('MapProperty', function () {
 
       // Pretty printing
       var expectedPrettyStr =
-        'undefined (Map of ContainerProperty):\n' +
-        '  entry (Map of ContainerProperty):\n' +
+        'undefined (Map of BaseProperty):\n' +
+        '  entry (Map of BaseProperty):\n' +
         '    entry (Map of NodeProperty):\n' +
         '      entry (NodeProperty):\n';
       var prettyStr = '';

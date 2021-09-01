@@ -1,12 +1,8 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 /**
  * @fileoverview Definition of the map property class
  */
 const BaseProperty = require('./baseProperty');
-const ContainerProperty = require('./containerProperty');
+const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const IndexedCollectionBaseProperty = require('./indexedCollectionBaseProperty');
 const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
@@ -42,7 +38,7 @@ var MapProperty = function (in_params, in_scope) {
   this._contextKeyType = in_params.contextKeyType || 'string';
 
   /** Contains the actual entries of the map */
-  this._entries = {};
+  this._dynamicChildren = {};
 };
 
 MapProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
@@ -201,17 +197,17 @@ MapProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
  * Resolves a direct child node based on the given path segment
  *
  * @param {String} in_segment                                   - The path segment to resolve
- * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
- *
- * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+ * @param {property-properties.PathHelper.TOKEN_uTYPES} in_segmentType - The type of segment in the tokenized path
+ *u
+ * @return {property-properties.BasePruoperty|undefined} The child property that has been resolved
  * @protected
  */
 MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
   // Base Properties only support paths separated via dots
   if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-    return this._entries[in_segment];
+    return this._dynamicChildren[in_segment];
   } else {
-    return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+    return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
   }
 };
 
@@ -230,20 +226,41 @@ MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType
  */
 MapProperty.prototype.insert = function (in_key, in_property) {
   ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
-  if (this._entries[in_key] !== undefined) {
+  if (this._dynamicChildren[in_key] !== undefined) {
     throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
   }
   if (in_property instanceof BaseProperty) {
-    in_property._validateInsertIn(this, in_key);
+    if (in_property._canInsert()) {
+      // Set the ID of the entry, to make sure it corresponds to the used key
+      in_property._setId(in_key);
 
-    // Set the ID of the entry, to make sure it corresponds to the used key
-    in_property._setId(in_key);
-
-    // Insert the entry into the collection
-    this._insert(in_key, in_property, true);
+      // Insert the entry into the collection
+      this._insert(in_key, in_property, true);
+    } else {
+      throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+    }
   } else {
     throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
   }
+};
+
+var insertValueDeprecatedWarning = false;
+/**
+ * Inserts a property or value into the map
+ *
+ * @param {string} in_key   - The key under which the entry is added
+ * @param {*}  in_value - The property to insert
+ * @throws if the property already exists
+ * @throws if the property already has a parent
+ * @throws if in_key is not a string
+ * @deprecated use .insert instead
+ */
+MapProperty.prototype.insertValue = function (in_key, in_value) {
+  if (!insertValueDeprecatedWarning) {
+    console.warn(MSG.MAP_INSERT_VALUE_DEPRECATED);
+    insertValueDeprecatedWarning = true;
+  }
+  this.insert(in_key, in_value);
 };
 
 /**
@@ -259,6 +276,41 @@ MapProperty.prototype.remove = function (in_key) {
   return item;
 };
 
+var removeValueDeprecatedWarning = false;
+/**
+ * Removes the entry with the given key from the map
+ *
+ * @param {string} in_key - The key of the entry to remove from the map
+ * @throws if trying to remove an entry that does not exist
+ * @return {*} the item removed
+ * @deprecated use .remove instead
+ */
+MapProperty.prototype.removeValue = function (in_key) {
+  if (!removeValueDeprecatedWarning) {
+    console.warn(MSG.MAP_REMOVE_VALUE_DEPRECATED);
+    removeValueDeprecatedWarning = true;
+  }
+  return this.remove(in_key);
+};
+
+var setValueDeprecatedWarning = false;
+/**
+ * deprecated - replaced by set
+ * @param {string}                                  in_key    - The key under which the entry is stored
+ * @param {property-properties.MapProperty~MapValueType}  in_property  - The property to store in the map
+ * @throws if in_property is not a property
+ * @throws if trying to insert a property that has a parent
+ * @throws if in_key is not a string or a number
+ * @deprecated use .set instead
+ */
+MapProperty.prototype.setValue = function (in_key, in_property) {
+  if (!setValueDeprecatedWarning) {
+    console.warn(MSG.MAP_SET_VALUE_DEPRECATED);
+    setValueDeprecatedWarning = true;
+  }
+  this.set(in_key, in_property);
+};
+
 /**
  * Sets the entry with the given key to the property passed in
  *
@@ -272,11 +324,11 @@ MapProperty.prototype.remove = function (in_key) {
  */
 MapProperty.prototype.set = function (in_key, in_property) {
   this._checkIsNotReadOnly(true);
-  if (this._entries[in_key] !== in_property) {
+  if (this._dynamicChildren[in_key] !== in_property) {
     if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
       throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
     }
-    if (this._entries[in_key] !== undefined) {
+    if (this._dynamicChildren[in_key] !== undefined) {
       this._removeByKey(in_key, false);
     }
     // Set the ID of the entry, to make sure it corresponds to the used key
@@ -300,7 +352,30 @@ MapProperty.prototype.set = function (in_key, in_property) {
  * @return {Object} The map with all entries in the map.
  */
 MapProperty.prototype.getEntriesReadOnly = function () {
-  return this._entries;
+  return this._dynamicChildren;
+};
+
+var getValueDeprecatedWarning = false;
+/** Deprecated - replaced by .get
+ * @param {string|array<string>} in_ids - key of the entry to return or an array of keys
+ *     if an array is passed, the .get function will be performed on each id in sequence
+ *     for example .get(['position','x']) is equivalent to .get('position').get('x').
+ *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
+ *     refers to.
+ * @param {Object} in_options - parameter object
+ * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+ *     How should this function behave during reference resolution?
+ *
+ * @return {property-properties.MapProperty~MapValueType|undefined} The entry in the collection or undefined
+ *     if none could be found
+ * @deprecated use .get instead.
+ */
+MapProperty.prototype.getValue = function (in_ids, in_options) {
+  if (!getValueDeprecatedWarning) {
+    console.warn(MSG.MAP_GET_VALUE_DEPRECATED);
+    getValueDeprecatedWarning = true;
+  }
+  return this.get(in_ids, in_options);
 };
 
 /**
@@ -321,7 +396,7 @@ MapProperty.prototype.getEntriesReadOnly = function () {
 MapProperty.prototype.get = function (in_ids, in_options) {
   if (_.isArray(in_ids)) {
     // Forward handling of arrays to the BaseProperty function
-    return ContainerProperty.prototype.get.call(this, in_ids, in_options);
+    return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
   } else {
     in_options = in_options || {};
     in_options.referenceResolutionMode =
@@ -336,7 +411,7 @@ MapProperty.prototype.get = function (in_ids, in_options) {
     } else if (in_ids === PATH_TOKENS.REF) {
       throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
     } else {
-      prop = prop._entries[in_ids];
+      prop = prop._dynamicChildren[in_ids];
     }
 
     // Handle automatic reference resolution
@@ -357,7 +432,7 @@ MapProperty.prototype.get = function (in_ids, in_options) {
  * @return {boolean} True if the property exists, otherwise false.
  */
 MapProperty.prototype.has = function (in_id) {
-  return this._entries[in_id] !== undefined;
+  return this._dynamicChildren[in_id] !== undefined;
 };
 
 /**
@@ -369,7 +444,7 @@ MapProperty.prototype.has = function (in_id) {
  *     is a shallow copy which can be modified by the caller without effects on the map.
  */
 MapProperty.prototype.getAsArray = function () {
-  return _.values(this._entries);
+  return _.values(this._dynamicChildren);
 };
 
 /**
@@ -380,7 +455,7 @@ MapProperty.prototype.getAsArray = function () {
  * @return {Array.<string>} The keys
  */
 MapProperty.prototype.getIds = function () {
-  return Object.keys(this._entries);
+  return Object.keys(this._dynamicChildren);
 };
 
 /**
