@@ -6,9 +6,9 @@ import {
     AzureFunctionTokenProvider,
     AzureClient,
     AzureConnectionConfig,
-    InsecureTokenProvider,
     AzureContainerServices,
 } from "@fluidframework/azure-client";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import {
     FluidContainer,
     SharedMap,

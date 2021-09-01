@@ -9,7 +9,6 @@ import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IMember } from '@fluidframework/fluid-static';
-import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -83,10 +82,6 @@ export class AzureUrlResolver implements IUrlResolver {
 
 // @public (undocumented)
 export type IAzureAudience = IServiceAudience<AzureMember>;
-
-export { InsecureTokenProvider }
-
-export { ITokenProvider }
 
 
 // (No @packageDocumentation comment for this package)
