@@ -273,6 +273,8 @@ export class RunningSummarizer implements IDisposable {
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
 
+        this.summarizeCount++;
+
         return action().finally(() => {
             summarizingLock.resolve();
             this.summarizingLock = undefined;
@@ -330,7 +332,6 @@ export class RunningSummarizer implements IDisposable {
             return;
         }
 
-        this.summarizeCount++;
         this.lockedSummaryAction(async () => {
             const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
                 { refreshLatestAck: false, fullTree: false },
