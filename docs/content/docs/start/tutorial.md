@@ -54,7 +54,7 @@ The create path of the application starts with calling `createContainer` and pas
 
 After setting some default values on the `diceMap`, the container is attached by calling the `attach` function. Attaching allows changes to be sent to and from the client, and returns the assigned container id that will be used in the load path.
 
-Now that the app has a connected container and default data, the dice roller view is ready to render.
+The app now has an attached container that contains data. The final step to complete the app is to create a view to display the dice to the user.
 
 ```js
 const createNewDice = async () => {
@@ -82,7 +82,7 @@ const loadExistingDice = async (id) => {
 
 ### Switching between loading and creating
 
-The application supports both creating a new container and loading an existing container using its `id`. To control which state the app is in, it stores the container id in the URL hash. If the URL has a hash, the app will load that existing container, otherwise the app creates a new container, attaches it, and sets the returned `id` as the hash.
+The application supports both creating a new container and loading an existing container using its `id`. To control which state the app is in, it stores the container ID in the URL hash. If the URL has a hash, the app will load that existing container, otherwise the app creates a new container, attaches it, and sets the returned `id` as the hash.
 
 Because both the `getContainer` and `createContainer` methods are async, the `start` function needs to be created and then called, catching any errors that are returned.
 
@@ -134,7 +134,7 @@ function renderDiceRoller(diceMap, elem) {
 
 To begin using Fluid in the application, the first thing to change is what happens when the user clicks the `rollButton`. Instead of updating the local state directly, the button updates the number stored in the `value` key of the passed in `diceMap`. Because the `diceMap` is a Fluid `SharedMap`, changes will be distributed to all clients. Any changes to the `diceMap` will cause a `valueChanged` event to be emitted, and an event handler can trigger an update of the view.
 
-Pushing local state out to Fluid shared objects is a common pattern that allows the view to react the same way for both local and remote changes.
+This pattern is common in Fluid because it enables the view to behave the same way for both local and remote changes.
 
 ```js
     rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6)+1);
@@ -155,7 +155,7 @@ The next change that needs to be made is to change the `updateDice` function so 
 
 ### Handling remote changes
 
-The values returned from `diceMap` are only a snapshot in time. To keep the data up to date as it changes an event handler must be set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent. See the documentation for individual DDSes to get a list of events fired and the values passed to those events.
+The values returned from `diceMap` are only a snapshot in time. To keep the data up to date as it changes an event handler must be set on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent. See the [documentation for SharedMap][SharedMap] to get a list of events fired and the values passed to those events.
 
 ```js
     diceMap.on("valueChanged", updateDice);
