@@ -15,14 +15,8 @@ const { isGUID } = require('@fluid-experimental/property-common').GuidUtils;
 const ContainerProperty = require('../..').ContainerProperty;
 
 describe('NamedNodeProperty', function () {
-    var PropertyFactory, NamedNodeProperty, isGUID;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('../..').PropertyFactory;
-        NamedNodeProperty = require('../../properties/namedNodeProperty');
-        isGUID = require('@fluid-experimental/property-common').GuidUtils.isGUID;
-
         // Register a templates
         var InheritingDirectlyTemplate = {
             typeid: 'autodesk.tests:InheritingDirectly-1.0.0',
