@@ -11,7 +11,7 @@ import { PathHelper, TypeIdHelper, ArrayChangeSetIterator, Utils } from '@fluid-
 import _ from 'underscore';
 import { ModificationContext } from './modification_context';
 import { RemovalContext } from './removal_context';
-import { getOrInsertDefaultInNestedObjects, getInNestedObjects } from '../external/utils/nested_object_helpers';
+import { getOrInsertDefaultInNestedObjects, getInNestedObjects } from '../external/utils/nestedObjectHelpers';
 import {
   escapeTokenizedPathForMap, unescapeTokenizedStringForMap,
   initializeReferencePropertyTableNode, invokeCallbacks,

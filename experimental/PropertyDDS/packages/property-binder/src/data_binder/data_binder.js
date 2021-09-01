@@ -9,8 +9,8 @@ import { DataBindingTree, ArrayNode, concatTokenizedPath } from './data_binding_
 import { ModificationContext } from './modification_context';
 import { RemovalContext } from './removal_context';
 import StatelessDataBindingWrapper from '../internal/stateless_data_binding_wrapper';
-import { DataBinderHandle } from '../internal/data_binder_handle';
-import { PropertyElement } from '../internal/property_element.js';
+import { DataBinderHandle } from '../internal/dataBinderHandle';
+import { PropertyElement } from '../internal/property_element';
 import { SemverMap, UpgradeType } from '../internal/semvermap';
 
 import {
