@@ -6,7 +6,7 @@
 import URLParse from "url-parse";
 
 export const parseFluidUrl = (fluidUrl: string): URLParse => {
-    return new URLParse(fluidUrl);
+    return new URLParse(fluidUrl, true);
 };
 
 /**
