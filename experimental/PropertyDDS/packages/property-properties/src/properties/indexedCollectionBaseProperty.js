@@ -132,7 +132,7 @@ IndexedCollectionBaseProperty.prototype._insert = function (in_key, in_value, in
     if (!this.has(in_key)) {
         // Make sure, the property we are inserting is not already part of some other collection
         if (!this._containsPrimitiveTypes &&
-            !in_value._canInsert()) {
+            !in_value._canInsert(this)) {
             throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
         }
 

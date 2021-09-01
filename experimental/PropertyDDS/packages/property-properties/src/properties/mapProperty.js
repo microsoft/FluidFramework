@@ -37,8 +37,8 @@ var MapProperty = function (in_params, in_scope) {
     this._scope = in_scope;
     this._contextKeyType = in_params.contextKeyType || 'string';
 
-  /** Contains the actual entries of the map */
-  this._dynamicChildren = {};
+    /** Contains the actual entries of the map */
+    this._dynamicChildren = {};
 };
 
 MapProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
@@ -203,12 +203,12 @@ MapProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
  * @protected
  */
 MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
-  // Base Properties only support paths separated via dots
-  if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-    return this._dynamicChildren[in_segment];
-  } else {
-    return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-  }
+    // Base Properties only support paths separated via dots
+    if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
+        return this._dynamicChildren[in_segment];
+    } else {
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+    }
 };
 
 /**
@@ -225,23 +225,23 @@ MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType
  * @throws if the property is a root property
  */
 MapProperty.prototype.insert = function (in_key, in_property) {
-  ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
-  if (this._dynamicChildren[in_key] !== undefined) {
-    throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
-  }
-  if (in_property instanceof BaseProperty) {
-    if (in_property._canInsert()) {
-      // Set the ID of the entry, to make sure it corresponds to the used key
-      in_property._setId(in_key);
-
-      // Insert the entry into the collection
-      this._insert(in_key, in_property, true);
-    } else {
-      throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+    ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
+    if (this._dynamicChildren[in_key] !== undefined) {
+        throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
     }
-  } else {
-    throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
-  }
+    if (in_property instanceof BaseProperty) {
+        if (in_property._canInsert(this)) {
+            // Set the ID of the entry, to make sure it corresponds to the used key
+            in_property._setId(in_key);
+
+            // Insert the entry into the collection
+            this._insert(in_key, in_property, true);
+        } else {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+        }
+    } else {
+        throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
+    }
 };
 
 var insertValueDeprecatedWarning = false;
@@ -256,11 +256,11 @@ var insertValueDeprecatedWarning = false;
  * @deprecated use .insert instead
  */
 MapProperty.prototype.insertValue = function (in_key, in_value) {
-  if (!insertValueDeprecatedWarning) {
-    console.warn(MSG.MAP_INSERT_VALUE_DEPRECATED);
-    insertValueDeprecatedWarning = true;
-  }
-  this.insert(in_key, in_value);
+    if (!insertValueDeprecatedWarning) {
+        console.warn(MSG.MAP_INSERT_VALUE_DEPRECATED);
+        insertValueDeprecatedWarning = true;
+    }
+    this.insert(in_key, in_value);
 };
 
 /**
@@ -286,11 +286,11 @@ var removeValueDeprecatedWarning = false;
  * @deprecated use .remove instead
  */
 MapProperty.prototype.removeValue = function (in_key) {
-  if (!removeValueDeprecatedWarning) {
-    console.warn(MSG.MAP_REMOVE_VALUE_DEPRECATED);
-    removeValueDeprecatedWarning = true;
-  }
-  return this.remove(in_key);
+    if (!removeValueDeprecatedWarning) {
+        console.warn(MSG.MAP_REMOVE_VALUE_DEPRECATED);
+        removeValueDeprecatedWarning = true;
+    }
+    return this.remove(in_key);
 };
 
 var setValueDeprecatedWarning = false;
@@ -304,11 +304,11 @@ var setValueDeprecatedWarning = false;
  * @deprecated use .set instead
  */
 MapProperty.prototype.setValue = function (in_key, in_property) {
-  if (!setValueDeprecatedWarning) {
-    console.warn(MSG.MAP_SET_VALUE_DEPRECATED);
-    setValueDeprecatedWarning = true;
-  }
-  this.set(in_key, in_property);
+    if (!setValueDeprecatedWarning) {
+        console.warn(MSG.MAP_SET_VALUE_DEPRECATED);
+        setValueDeprecatedWarning = true;
+    }
+    this.set(in_key, in_property);
 };
 
 /**
@@ -323,19 +323,19 @@ MapProperty.prototype.setValue = function (in_key, in_property) {
  * @throws if in_key is not a string or a number
  */
 MapProperty.prototype.set = function (in_key, in_property) {
-  this._checkIsNotReadOnly(true);
-  if (this._dynamicChildren[in_key] !== in_property) {
-    if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
-      throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-    }
-    if (this._dynamicChildren[in_key] !== undefined) {
-      this._removeByKey(in_key, false);
-    }
-    // Set the ID of the entry, to make sure it corresponds to the used key
-    if (this._containsPrimitiveTypes === false) {
-      in_property._setId(in_key);
-    }
-    this._insert(in_key, in_property, false);
+    this._checkIsNotReadOnly(true);
+    if (this._dynamicChildren[in_key] !== in_property) {
+        if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+        }
+        if (this._dynamicChildren[in_key] !== undefined) {
+            this._removeByKey(in_key, false);
+        }
+        // Set the ID of the entry, to make sure it corresponds to the used key
+        if (this._containsPrimitiveTypes === false) {
+            in_property._setId(in_key);
+        }
+        this._insert(in_key, in_property, false);
 
         // Make one final report
         this._reportDirtinessToView();
@@ -352,7 +352,7 @@ MapProperty.prototype.set = function (in_key, in_property) {
  * @return {Object} The map with all entries in the map.
  */
 MapProperty.prototype.getEntriesReadOnly = function () {
-  return this._dynamicChildren;
+    return this._dynamicChildren;
 };
 
 var getValueDeprecatedWarning = false;
@@ -371,11 +371,11 @@ var getValueDeprecatedWarning = false;
  * @deprecated use .get instead.
  */
 MapProperty.prototype.getValue = function (in_ids, in_options) {
-  if (!getValueDeprecatedWarning) {
-    console.warn(MSG.MAP_GET_VALUE_DEPRECATED);
-    getValueDeprecatedWarning = true;
-  }
-  return this.get(in_ids, in_options);
+    if (!getValueDeprecatedWarning) {
+        console.warn(MSG.MAP_GET_VALUE_DEPRECATED);
+        getValueDeprecatedWarning = true;
+    }
+    return this.get(in_ids, in_options);
 };
 
 /**
@@ -394,25 +394,25 @@ MapProperty.prototype.getValue = function (in_ids, in_options) {
  *     if none could be found
  */
 MapProperty.prototype.get = function (in_ids, in_options) {
-  if (_.isArray(in_ids)) {
-    // Forward handling of arrays to the BaseProperty function
-    return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
-  } else {
-    in_options = in_options || {};
-    in_options.referenceResolutionMode =
-      in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-        in_options.referenceResolutionMode;
-
-    var prop = this;
-    if (in_ids === PATH_TOKENS.ROOT) {
-      prop = prop.getRoot();
-    } else if (in_ids === PATH_TOKENS.UP) {
-      prop = prop.getParent();
-    } else if (in_ids === PATH_TOKENS.REF) {
-      throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+    if (_.isArray(in_ids)) {
+        // Forward handling of arrays to the BaseProperty function
+        return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
     } else {
-      prop = prop._dynamicChildren[in_ids];
-    }
+        in_options = in_options || {};
+        in_options.referenceResolutionMode =
+            in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
+                in_options.referenceResolutionMode;
+
+        var prop = this;
+        if (in_ids === PATH_TOKENS.ROOT) {
+            prop = prop.getRoot();
+        } else if (in_ids === PATH_TOKENS.UP) {
+            prop = prop.getParent();
+        } else if (in_ids === PATH_TOKENS.REF) {
+            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+        } else {
+            prop = prop._dynamicChildren[in_ids];
+        }
 
         // Handle automatic reference resolution
         if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
@@ -432,7 +432,7 @@ MapProperty.prototype.get = function (in_ids, in_options) {
  * @return {boolean} True if the property exists, otherwise false.
  */
 MapProperty.prototype.has = function (in_id) {
-  return this._dynamicChildren[in_id] !== undefined;
+    return this._dynamicChildren[in_id] !== undefined;
 };
 
 /**
@@ -444,7 +444,7 @@ MapProperty.prototype.has = function (in_id) {
  *     is a shallow copy which can be modified by the caller without effects on the map.
  */
 MapProperty.prototype.getAsArray = function () {
-  return _.values(this._dynamicChildren);
+    return _.values(this._dynamicChildren);
 };
 
 /**
@@ -455,7 +455,7 @@ MapProperty.prototype.getAsArray = function () {
  * @return {Array.<string>} The keys
  */
 MapProperty.prototype.getIds = function () {
-  return Object.keys(this._dynamicChildren);
+    return Object.keys(this._dynamicChildren);
 };
 
 /**
