@@ -132,6 +132,8 @@ export class OdspTestDriver implements ITestDriver {
     // (undocumented)
     createUrlResolver(): IUrlResolver;
     // (undocumented)
+    getUrlFromItemId(itemId: string): string;
+    // (undocumented)
     readonly type = "odsp";
     // (undocumented)
     get version(): string;
