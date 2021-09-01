@@ -133,6 +133,7 @@ async function runnerProcess(
         const logger = ChildLogger.create(baseLogger, undefined,
             {
                 all: {
+                    runId: runConfig.runId,
                     driverType: testDriver.type,
                     driverEndpointName: testDriver.endpointName,
                 },
