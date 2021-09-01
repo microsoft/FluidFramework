@@ -7,18 +7,12 @@ author: tylerbutler
 editor: sambroner
 ---
 
-The Fluid Framework provides developers with two types of Fluid objects: *distributed data structures* (DDSes) and
-Data Objects. DDSes are low-level data structures, while Data Object`s are composed of DDSes and other Fluid objects. Data Objects are
+The Fluid Framework provides developers with two types of shared objects: *distributed data structures* (DDSes) and
+Data Objects. DDSes are low-level data structures, while Data Objects are composed of DDSes and other Fluid objects. Data Objects are
 used to organize DDSes into semantically meaningful groupings for your scenario, as well as
 providing an API surface to your app's data. However, many Fluid applications will use only DDSes.
 
-There are a number of DDS types built into the Fluid Framework base library and you can create your own by extending base classes.
-
-{{% callout note "See also" %}}
-
-[Encapsulating data with DataObject]({{< relref "dataobject-aqueduct.md" >}})
-
-{{% /callout %}}
+There are a number of shared objects built into the Fluid Framework. See [Distributed data structures]({{< relref "/docs/data-structures/overview.md" >}}) for more information.
 
 DDSes automatically ensure that each client has access to the same state. They're called *distributed data structures*
 because they are similar to data structures used commonly when programming, like strings, maps/dictionaries, and
@@ -191,7 +185,7 @@ editing the data at the same time, then the one who made the most recent change 
 other user.
 
 Imagine that a user "A" is collaborating with a colleague, and the user changes the shape's width while the colleague "B" changes the
-shape's height. This will generate two operations: a `set` operation for user A's change, and another `set` operation for user B's change. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's merge behavior is LWW. Since we're storing the shape as an object, both `set` operations *set the whole object*.
+shape's height. This will generate two operations: a `set` operation for user A's change, and another `set` operation for user B's change. Both operations will be sequenced by the Fluid service, but only one will 'win,' because the SharedMap's merge behavior is LWW. Because the shape is stored as an object, both `set` operations *set the whole object*.
 
 This results in someone's changes being "lost" from a user's perspective. This may be perfectly fine for your needs.
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge

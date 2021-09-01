@@ -15,7 +15,7 @@ There are three primary concepts to understand when building an application with
 
 - Service
 - Container
-- Fluid objects
+- Shared objects
 
 ### Service
 
@@ -34,18 +34,18 @@ The container is the primary unit of encapsulation in Fluid. It consists of a co
 
 For more about containers see [Containers](./containers.md).
 
-### Fluid objects
+### Shared objects
 
-A *Fluid object* is any object type that supports collaboration (simultaneous editing). Fluid Framework contains two
+A *shared object* is any object type that supports collaboration (simultaneous editing). Fluid Framework contains two
 types of Fluid objects:
 
 - **Distributed data structures (DDSes):** A DDS holds shared data that the collaborators are working with.
 - **Data Objects:** A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
 
-DDSes are low-level data structures, while Data Objects are composed of DDSes and other Fluid objects. Data Objects are
+DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects. Data Objects are
 used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data. 
 
-For more information about these types and the differences between them, see [Data modeling](./data-modeling.md) and [Introducing distributed data structures](./dds.md).
+For more information about these types and the differences between them, see [Data modeling]({{< relref "data-modeling.md" >}}) and [Introducing distributed data structures]({{< relref "dds.md" >}}).
 
 ## Library structure
 

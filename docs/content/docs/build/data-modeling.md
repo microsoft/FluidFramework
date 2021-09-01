@@ -6,7 +6,7 @@ editor: tylerbutler
 ---
 
 Fluid offers flexible ways to model your collaborative data. Your application can declaratively define a set of Fluid objects
-that are immediately and always available to all clients; or, for more complex scenarios, your application can create Fluid objects at runtime only when a user takes a particular path through the application.
+that are immediately and always available to all clients; or, for more complex scenarios, your application can create shared objects at runtime only when a user takes a particular path through the application.
 
 ## Defining initial objects
 
@@ -45,8 +45,8 @@ const cell = fluidContainer.initialObjects["custom-cell"];
 
 ## Dynamic objects
 
-A Fluid object can be created by the container at runtime. **Dynamic objects** are both created and loaded
-dynamically. When your code can creates an object dynamically, it must store a reference to the object within another Fluid object so that your code can later
+A shared object can be created by the container at runtime. **Dynamic objects** are both created and loaded
+dynamically. When your code creates an object dynamically, it must store a reference to the object within another Fluid object so that your code can later
 retrieve it.
 
 ### Creating a dynamic object
@@ -83,9 +83,9 @@ it dynamically at runtime.
 
 ### Using handles to store and retrieve Fluid objects
 
-All Fluid objects have a `handle` property that can be used to store and retrieve them from other Fluid objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
+All shared objects supported by Fluid have a `handle` property that can be used to store and retrieve them from other shared objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
 
-Dynamically created objects need to be stored on an already connected Fluid object, so the most common case is to store references to them in an initial object property, because initial objects are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense Fluid objects are arbitrarily nestable. But the hierarchy of referenced objects must rest in an initial object that holds the references to the first level of dynamic objects. So, there is always at least one initial object in every container.
+Dynamically created objects need to be stored on an already connected shared object, so the most common case is to store references to them in an initial object property, because initial objects are connected on creation. However, you can also store dynamic objects in other connected dynamic objects. In this sense shared objects are arbitrarily nestable. But the hierarchy of referenced objects must rest in an initial object that holds the references to the first level of dynamic objects. So, there is always at least one initial object in every container.
 
 When retrieving dynamically created objects your code needs to first get the object's handle then get the object from the handle. This reference based approach enables the Fluid Framework to virtualize the data underneath, only loading objects when they are requested.
 
@@ -136,7 +136,7 @@ Dynamic objects are more difficult to work with than initial objects, but are es
 - When the app has a very large data set. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded.
 - When the data needed by the app will vary depending on choices made by the user. Dynamic objects are also not strictly defined in the container schema. This enables your app to create containers with flexible, user-generated schemas.
 
-An example where this is useful is building a collaborative storyboarding application. In this scenario, you can have a large number of individual boards that make up the storyboard. By using a dynamic Fluid object for each board your code can load them on demand as the user accesses them, instead of having to load them all in memory at once.
+An example where this is useful is building a collaborative storyboarding application. In this scenario, you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board your code can load the boards on demand as the user accesses them, instead of having to load them all in memory at once.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
