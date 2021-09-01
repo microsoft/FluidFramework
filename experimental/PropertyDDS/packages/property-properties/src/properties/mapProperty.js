@@ -32,13 +32,13 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @category Maps
  */
 var MapProperty = function (in_params, in_scope) {
-  IndexedCollectionBaseProperty.call(this, in_params);
+    IndexedCollectionBaseProperty.call(this, in_params);
 
-  this._scope = in_scope;
-  this._contextKeyType = in_params.contextKeyType || 'string';
+    this._scope = in_scope;
+    this._contextKeyType = in_params.contextKeyType || 'string';
 
-  /** Contains the actual entries of the map */
-  this._dynamicChildren = {};
+    /** Contains the actual entries of the map */
+    this._dynamicChildren = {};
 };
 
 MapProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
@@ -51,11 +51,11 @@ MapProperty.prototype._context = 'map';
  * @return {string} The typeid
  */
 MapProperty.prototype.getFullTypeid = function (in_hideCollection) {
-  if (in_hideCollection) {
-    return this._typeid;
-  } else {
-    return TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
-  }
+    if (in_hideCollection) {
+        return this._typeid;
+    } else {
+        return TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
+    }
 };
 
 /**
@@ -66,7 +66,7 @@ MapProperty.prototype.getFullTypeid = function (in_hideCollection) {
  * @return {boolean} Is it a leaf with regard to flattening?
  */
 MapProperty.prototype._isFlattenLeaf = function () {
-  return true;
+    return true;
 };
 
 /**
@@ -79,43 +79,43 @@ MapProperty.prototype._isFlattenLeaf = function () {
  * @private
  */
 MapProperty.prototype._setValuesInternal = function (in_values, in_typed) {
-  if (this._containsPrimitiveTypes) {
-    var that = this;
-    _.each(in_values, function (value, key) {
-      if (that.has(key)) {
-        that.remove(key);
-      }
+    if (this._containsPrimitiveTypes) {
+        var that = this;
+        _.each(in_values, function (value, key) {
+            if (that.has(key)) {
+                that.remove(key);
+            }
 
-      that.insert(key, value);
-    });
-  } else {
-    var that = this;
-    _.each(in_values, function (value, key) {
-      var property = that.get(String(key), { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-      // if key exists in set replace its value else insert a new key/value
-      if (property) {
-        if (property instanceof Property.ValueProperty || property instanceof Property.StringProperty) {
-          property.setValue(value);
-        } else if (property instanceof BaseProperty && _.isObject(value)) {
-          property._setValues(value, false, false);
-        } else {
-          throw new Error(MSG.SET_VALUES_PATH_INVALID + key);
-        }
-      } else {
-        if (value instanceof BaseProperty) {
-          that.insert(key, value);
-        } else {
-          if (in_typed) {
-            that.insert(key, Property.PropertyFactory._createProperty(
-              value.typeid || that._typeid, null, value.value, that._getScope()));
-          } else {
-            that.insert(key, Property.PropertyFactory._createProperty(
-              that._typeid, null, value, that._getScope()));
-          }
-        }
-      }
-    });
-  }
+            that.insert(key, value);
+        });
+    } else {
+        var that = this;
+        _.each(in_values, function (value, key) {
+            var property = that.get(String(key), { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+            // if key exists in set replace its value else insert a new key/value
+            if (property) {
+                if (property instanceof Property.ValueProperty || property instanceof Property.StringProperty) {
+                    property.setValue(value);
+                } else if (property instanceof BaseProperty && _.isObject(value)) {
+                    property._setValues(value, false, false);
+                } else {
+                    throw new Error(MSG.SET_VALUES_PATH_INVALID + key);
+                }
+            } else {
+                if (value instanceof BaseProperty) {
+                    that.insert(key, value);
+                } else {
+                    if (in_typed) {
+                        that.insert(key, Property.PropertyFactory._createProperty(
+                            value.typeid || that._typeid, null, value.value, that._getScope()));
+                    } else {
+                        that.insert(key, Property.PropertyFactory._createProperty(
+                            that._typeid, null, value, that._getScope()));
+                    }
+                }
+            }
+        });
+    }
 };
 
 /**
@@ -129,11 +129,11 @@ MapProperty.prototype._setValuesInternal = function (in_values, in_typed) {
  * @override
  */
 MapProperty.prototype._setValues = function (in_values, in_typed, in_initial) {
-  if (in_initial) {
-    this.clear();
-  }
+    if (in_initial) {
+        this.clear();
+    }
 
-  this._setValuesInternal(in_values, in_typed);
+    this._setValuesInternal(in_values, in_typed);
 };
 
 /**
@@ -145,14 +145,14 @@ MapProperty.prototype._setValues = function (in_values, in_typed, in_initial) {
  * @override
  */
 MapProperty.prototype.setValues = function (in_values) {
-  var checkoutView = this._getCheckoutView();
-  if (checkoutView !== undefined) {
-    checkoutView.pushNotificationDelayScope();
-    this._setValues(in_values, false, false);
-    checkoutView.popNotificationDelayScope();
-  } else {
-    this._setValues(in_values, false, false);
-  }
+    var checkoutView = this._getCheckoutView();
+    if (checkoutView !== undefined) {
+        checkoutView.pushNotificationDelayScope();
+        this._setValues(in_values, false, false);
+        checkoutView.popNotificationDelayScope();
+    } else {
+        this._setValues(in_values, false, false);
+    }
 };
 
 /**
@@ -168,17 +168,17 @@ MapProperty.prototype.setValues = function (in_values) {
     }
   */
 MapProperty.prototype.getValues = function () {
-  var ids = this.getIds();
-  var result = {};
-  for (var i = 0; i < ids.length; i++) {
-    var child = this.get(ids[i]);
-    if (child.isPrimitiveType()) {
-      result[ids[i]] = this.get(ids[i]).getValue();
-    } else {
-      result[ids[i]] = child.getValues();
+    var ids = this.getIds();
+    var result = {};
+    for (var i = 0; i < ids.length; i++) {
+        var child = this.get(ids[i]);
+        if (child.isPrimitiveType()) {
+            result[ids[i]] = this.get(ids[i]).getValue();
+        } else {
+            result[ids[i]] = child.getValues();
+        }
     }
-  }
-  return result;
+    return result;
 };
 
 /**
@@ -190,7 +190,7 @@ MapProperty.prototype.getValues = function () {
  * @protected
  */
 MapProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
-  return '[' + PathHelper.quotePathSegmentIfNeeded(in_childNode._id) + ']';
+    return '[' + PathHelper.quotePathSegmentIfNeeded(in_childNode._id) + ']';
 };
 
 /**
@@ -203,12 +203,12 @@ MapProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
  * @protected
  */
 MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
-  // Base Properties only support paths separated via dots
-  if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-    return this._dynamicChildren[in_segment];
-  } else {
-    return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-  }
+    // Base Properties only support paths separated via dots
+    if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
+        return this._dynamicChildren[in_segment];
+    } else {
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+    }
 };
 
 /**
@@ -225,23 +225,23 @@ MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType
  * @throws if the property is a root property
  */
 MapProperty.prototype.insert = function (in_key, in_property) {
-  ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
-  if (this._dynamicChildren[in_key] !== undefined) {
-    throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
-  }
-  if (in_property instanceof BaseProperty) {
-    if (in_property._canInsert()) {
-      // Set the ID of the entry, to make sure it corresponds to the used key
-      in_property._setId(in_key);
-
-      // Insert the entry into the collection
-      this._insert(in_key, in_property, true);
-    } else {
-      throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+    ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
+    if (this._dynamicChildren[in_key] !== undefined) {
+        throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
     }
-  } else {
-    throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
-  }
+    if (in_property instanceof BaseProperty) {
+        if (in_property._canInsert(this)) {
+            // Set the ID of the entry, to make sure it corresponds to the used key
+            in_property._setId(in_key);
+
+            // Insert the entry into the collection
+            this._insert(in_key, in_property, true);
+        } else {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+        }
+    } else {
+        throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
+    }
 };
 
 var insertValueDeprecatedWarning = false;
@@ -256,11 +256,11 @@ var insertValueDeprecatedWarning = false;
  * @deprecated use .insert instead
  */
 MapProperty.prototype.insertValue = function (in_key, in_value) {
-  if (!insertValueDeprecatedWarning) {
-    console.warn(MSG.MAP_INSERT_VALUE_DEPRECATED);
-    insertValueDeprecatedWarning = true;
-  }
-  this.insert(in_key, in_value);
+    if (!insertValueDeprecatedWarning) {
+        console.warn(MSG.MAP_INSERT_VALUE_DEPRECATED);
+        insertValueDeprecatedWarning = true;
+    }
+    this.insert(in_key, in_value);
 };
 
 /**
@@ -271,9 +271,9 @@ MapProperty.prototype.insertValue = function (in_key, in_value) {
  * @return {*} the item removed
  */
 MapProperty.prototype.remove = function (in_key) {
-  var item = this.get(in_key);
-  this._removeByKey(in_key, true);
-  return item;
+    var item = this.get(in_key);
+    this._removeByKey(in_key, true);
+    return item;
 };
 
 var removeValueDeprecatedWarning = false;
@@ -286,11 +286,11 @@ var removeValueDeprecatedWarning = false;
  * @deprecated use .remove instead
  */
 MapProperty.prototype.removeValue = function (in_key) {
-  if (!removeValueDeprecatedWarning) {
-    console.warn(MSG.MAP_REMOVE_VALUE_DEPRECATED);
-    removeValueDeprecatedWarning = true;
-  }
-  return this.remove(in_key);
+    if (!removeValueDeprecatedWarning) {
+        console.warn(MSG.MAP_REMOVE_VALUE_DEPRECATED);
+        removeValueDeprecatedWarning = true;
+    }
+    return this.remove(in_key);
 };
 
 var setValueDeprecatedWarning = false;
@@ -304,11 +304,11 @@ var setValueDeprecatedWarning = false;
  * @deprecated use .set instead
  */
 MapProperty.prototype.setValue = function (in_key, in_property) {
-  if (!setValueDeprecatedWarning) {
-    console.warn(MSG.MAP_SET_VALUE_DEPRECATED);
-    setValueDeprecatedWarning = true;
-  }
-  this.set(in_key, in_property);
+    if (!setValueDeprecatedWarning) {
+        console.warn(MSG.MAP_SET_VALUE_DEPRECATED);
+        setValueDeprecatedWarning = true;
+    }
+    this.set(in_key, in_property);
 };
 
 /**
@@ -323,23 +323,23 @@ MapProperty.prototype.setValue = function (in_key, in_property) {
  * @throws if in_key is not a string or a number
  */
 MapProperty.prototype.set = function (in_key, in_property) {
-  this._checkIsNotReadOnly(true);
-  if (this._dynamicChildren[in_key] !== in_property) {
-    if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
-      throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-    }
-    if (this._dynamicChildren[in_key] !== undefined) {
-      this._removeByKey(in_key, false);
-    }
-    // Set the ID of the entry, to make sure it corresponds to the used key
-    if (this._containsPrimitiveTypes === false) {
-      in_property._setId(in_key);
-    }
-    this._insert(in_key, in_property, false);
+    this._checkIsNotReadOnly(true);
+    if (this._dynamicChildren[in_key] !== in_property) {
+        if (this._containsPrimitiveTypes === false && in_property.getParent() !== undefined) {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+        }
+        if (this._dynamicChildren[in_key] !== undefined) {
+            this._removeByKey(in_key, false);
+        }
+        // Set the ID of the entry, to make sure it corresponds to the used key
+        if (this._containsPrimitiveTypes === false) {
+            in_property._setId(in_key);
+        }
+        this._insert(in_key, in_property, false);
 
-    // Make one final report
-    this._reportDirtinessToView();
-  }
+        // Make one final report
+        this._reportDirtinessToView();
+    }
 };
 
 /**
@@ -352,7 +352,7 @@ MapProperty.prototype.set = function (in_key, in_property) {
  * @return {Object} The map with all entries in the map.
  */
 MapProperty.prototype.getEntriesReadOnly = function () {
-  return this._dynamicChildren;
+    return this._dynamicChildren;
 };
 
 var getValueDeprecatedWarning = false;
@@ -371,11 +371,11 @@ var getValueDeprecatedWarning = false;
  * @deprecated use .get instead.
  */
 MapProperty.prototype.getValue = function (in_ids, in_options) {
-  if (!getValueDeprecatedWarning) {
-    console.warn(MSG.MAP_GET_VALUE_DEPRECATED);
-    getValueDeprecatedWarning = true;
-  }
-  return this.get(in_ids, in_options);
+    if (!getValueDeprecatedWarning) {
+        console.warn(MSG.MAP_GET_VALUE_DEPRECATED);
+        getValueDeprecatedWarning = true;
+    }
+    return this.get(in_ids, in_options);
 };
 
 /**
@@ -394,35 +394,35 @@ MapProperty.prototype.getValue = function (in_ids, in_options) {
  *     if none could be found
  */
 MapProperty.prototype.get = function (in_ids, in_options) {
-  if (_.isArray(in_ids)) {
-    // Forward handling of arrays to the BaseProperty function
-    return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
-  } else {
-    in_options = in_options || {};
-    in_options.referenceResolutionMode =
-      in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-        in_options.referenceResolutionMode;
-
-    var prop = this;
-    if (in_ids === PATH_TOKENS.ROOT) {
-      prop = prop.getRoot();
-    } else if (in_ids === PATH_TOKENS.UP) {
-      prop = prop.getParent();
-    } else if (in_ids === PATH_TOKENS.REF) {
-      throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+    if (_.isArray(in_ids)) {
+        // Forward handling of arrays to the BaseProperty function
+        return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
     } else {
-      prop = prop._dynamicChildren[in_ids];
-    }
+        in_options = in_options || {};
+        in_options.referenceResolutionMode =
+            in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
+                in_options.referenceResolutionMode;
 
-    // Handle automatic reference resolution
-    if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
-      if (prop instanceof Property.ReferenceProperty) {
-        prop = prop.ref;
-      }
-    }
+        var prop = this;
+        if (in_ids === PATH_TOKENS.ROOT) {
+            prop = prop.getRoot();
+        } else if (in_ids === PATH_TOKENS.UP) {
+            prop = prop.getParent();
+        } else if (in_ids === PATH_TOKENS.REF) {
+            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+        } else {
+            prop = prop._dynamicChildren[in_ids];
+        }
 
-    return prop;
-  }
+        // Handle automatic reference resolution
+        if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
+            if (prop instanceof Property.ReferenceProperty) {
+                prop = prop.ref;
+            }
+        }
+
+        return prop;
+    }
 };
 
 /**
@@ -432,7 +432,7 @@ MapProperty.prototype.get = function (in_ids, in_options) {
  * @return {boolean} True if the property exists, otherwise false.
  */
 MapProperty.prototype.has = function (in_id) {
-  return this._dynamicChildren[in_id] !== undefined;
+    return this._dynamicChildren[in_id] !== undefined;
 };
 
 /**
@@ -444,7 +444,7 @@ MapProperty.prototype.has = function (in_id) {
  *     is a shallow copy which can be modified by the caller without effects on the map.
  */
 MapProperty.prototype.getAsArray = function () {
-  return _.values(this._dynamicChildren);
+    return _.values(this._dynamicChildren);
 };
 
 /**
@@ -455,7 +455,7 @@ MapProperty.prototype.getAsArray = function () {
  * @return {Array.<string>} The keys
  */
 MapProperty.prototype.getIds = function () {
-  return Object.keys(this._dynamicChildren);
+    return Object.keys(this._dynamicChildren);
 };
 
 /**
@@ -466,23 +466,23 @@ MapProperty.prototype.getIds = function () {
  * @private
  */
 MapProperty.prototype._getScope = function () {
-  var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
+    var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-  if (scope !== undefined) {
-    return scope;
-  } else {
-    return this._scope;
-  }
+    if (scope !== undefined) {
+        return scope;
+    } else {
+        return this._scope;
+    }
 };
 
 /**
  * Deletes all values from the Map
  */
 MapProperty.prototype.clear = function () {
-  var that = this;
-  this.getIds().forEach(function (id) {
-    that.remove(id);
-  });
+    var that = this;
+    this.getIds().forEach(function (id) {
+        that.remove(id);
+    });
 };
 
 

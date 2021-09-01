@@ -1155,8 +1155,40 @@ BaseProperty.prototype._setDirtyTree = function (in_reportToView) {
  * Returns the boolean to determine whether a property can be inserted to another property
  * @return {boolean} True if the property can be inserted. False if the property is already inserted
  */
-BaseProperty.prototype._canInsert = function () {
+BaseProperty.prototype._canInsert = function (in_targetParent) {
+    // Already a child?
+    if (this._parent !== undefined) {
+        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+    }
+
+    // A root?
+    if (this._getCheckedOutRepositoryInfo() !== undefined) {
+        throw new Error(MSG.INSERTED_ROOT_ENTRY);
+    }
+
+    // Would create a cycle?
+    let parent = in_targetParent;
+    while (parent !== undefined) {
+        if (parent === this) {
+            throw new Error(MSG.INSERTED_IN_OWN_CHILDREN);
+        }
+        parent = parent._parent;
+    }
+
     return (this._parent === undefined && this._getCheckoutView() === undefined);
+};
+
+/**
+ * Returns the checkedOutRepositoryInfo.
+ * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
+ * @protected
+ */
+BaseProperty.prototype._getCheckedOutRepositoryInfo = function () {
+    if (!this._parent) {
+        return this._checkedOutRepositoryInfo;
+    } else {
+        return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
+    }
 };
 
 /**
@@ -1174,7 +1206,7 @@ BaseProperty.prototype._canInsert = function () {
  * @return {Bool} If the property and all its children are included in the paths
  * @private
  */
- BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
+BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
     // First, get the coverage of the base property
     const coverage = PathHelper.getPathCoverage(in_basePath, in_paths);
 

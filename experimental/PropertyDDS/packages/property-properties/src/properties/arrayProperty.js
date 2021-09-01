@@ -600,7 +600,7 @@ ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
 
     for (var i = 0; i < in_array.length; i++) {
         if (in_array[i] instanceof BaseProperty &&
-            !in_array[i]._canInsert()) {
+            !in_array[i]._canInsert(this)) {
             throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
         }
     }
