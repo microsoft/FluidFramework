@@ -1,8 +1,9 @@
-/* eslint-disable max-len */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable max-len */
 
 import * as fetchArgs from "../fluidFetchArgs";
 import { fluidFetchInit } from "../fluidFetchInit";
