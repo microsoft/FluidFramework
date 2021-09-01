@@ -57,6 +57,7 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
+
 const containerSchema = {
     initialObjects: {
         /* [id]: DataObject */
@@ -73,7 +74,7 @@ async function start(): Promise<void> {
         logger: new ConsoleLogger(),
     };
     const client = new AzureClient(azureConfig);
-    let container: FluidContainer;
+    let container: FluidContainer<{ map1: typeof SharedMap; map2: typeof SharedMap;}>;
     let services: AzureContainerServices;
     let id: string;
 
@@ -98,7 +99,7 @@ async function start(): Promise<void> {
     document.title = id;
 
     // We now get the first SharedMap from the container
-    const sharedMap1 = container.initialObjects.map1 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1;
 
     // Our controller manipulates the data object (model).
     const diceRollerController = new DiceRollerController(sharedMap1);
@@ -110,7 +111,7 @@ async function start(): Promise<void> {
     contentDiv.appendChild(div1);
 
     // We now get the second SharedMap from the container
-    const sharedMap2 = container.initialObjects.map2 as SharedMap;
+    const sharedMap2 = container.initialObjects.map2;
 
     // Our controller manipulates the data object (model).
     const diceRollerController2 = new DiceRollerController(sharedMap2);

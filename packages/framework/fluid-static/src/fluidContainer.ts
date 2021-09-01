@@ -7,22 +7,27 @@ import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { IAudience, AttachState } from "@fluidframework/container-definitions";
-import { LoadableObjectClass, LoadableObjectRecord } from "./types";
+import {
+    LoadableObjectClass,
+    LoadableObjectClassRecord,
+    LoadableObjectInstanceTypeRecord,
+} from "./types";
 import { RootDataObject } from "./rootDataObject";
 
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
 }
 
-export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<O extends LoadableObjectClassRecord> extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
     readonly disposed: boolean;
-    readonly initialObjects: LoadableObjectRecord;
+    readonly initialObjects: LoadableObjectInstanceTypeRecord<O>;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
 }
 
-export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
+export class FluidContainer<O extends LoadableObjectClassRecord = LoadableObjectClassRecord>
+extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<O> {
     private readonly connectedHandler = () => this.emit("connected");
     private readonly disconnectedHandler = () => this.emit("disconnected");
     private readonly disposedHandler = () => this.emit("disposed");
@@ -50,8 +55,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         return this.container.connected;
     }
 
-    public get initialObjects() {
-        return this.rootDataObject.initialObjects;
+    public get initialObjects(): LoadableObjectInstanceTypeRecord<O> {
+        return this.rootDataObject.initialObjects as LoadableObjectInstanceTypeRecord<O>;
     }
 
     /**

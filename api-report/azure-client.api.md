@@ -14,6 +14,7 @@ import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { LoadableObjectClassRecord } from 'fluid-framework';
 import { ServiceAudience } from 'fluid-framework';
 
 // @public (undocumented)
@@ -25,12 +26,12 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(props: AzureClientProps);
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+    createContainer<T extends LoadableObjectClassRecord>(containerSchema: ContainerSchema<T>): Promise<{
+        container: FluidContainer<T>;
         services: AzureContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+    getContainer<T extends LoadableObjectClassRecord>(id: string, containerSchema: ContainerSchema<T>): Promise<{
+        container: FluidContainer<T>;
         services: AzureContainerServices;
     }>;
     }

@@ -24,9 +24,9 @@ import { Jsonable } from '@fluidframework/datastore-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public (undocumented)
-export interface ContainerSchema {
+export interface ContainerSchema<T extends LoadableObjectClassRecord = LoadableObjectClassRecord> {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
-    initialObjects: LoadableObjectClassRecord;
+    initialObjects: T;
 }
 
 // @public
@@ -42,7 +42,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     }
 
 // @public (undocumented)
-export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
+export class FluidContainer<O extends LoadableObjectClassRecord = LoadableObjectClassRecord> extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer<O> {
     constructor(container: Container, rootDataObject: RootDataObject, attachCallback: () => Promise<string>);
     // (undocumented)
     attach(): Promise<string>;
@@ -61,7 +61,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    get initialObjects(): Record<string, IFluidLoadable>;
+    get initialObjects(): LoadableObjectInstanceTypeRecord<O>;
     }
 
 // @public
@@ -73,7 +73,7 @@ export interface IConnection {
 }
 
 // @public (undocumented)
-export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
+export interface IFluidContainer<O extends LoadableObjectClassRecord> extends IEventProvider<IFluidContainerEvents> {
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
@@ -83,7 +83,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
-    readonly initialObjects: LoadableObjectRecord;
+    readonly initialObjects: LoadableObjectInstanceTypeRecord<O>;
 }
 
 // @public (undocumented)
@@ -142,6 +142,11 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+
+// @public
+export type LoadableObjectInstanceTypeRecord<K extends LoadableObjectClassRecord> = {
+    [P in keyof K]: InstanceType<K[P]>;
+};
 
 // @public (undocumented)
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;

@@ -13,6 +13,7 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    LoadableObjectClassRecord,
     RootDataObject,
 } from "fluid-framework";
 
@@ -45,9 +46,9 @@ export class AzureClient {
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
-    public async createContainer(
-        containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    public async createContainer<T extends LoadableObjectClassRecord>(
+        containerSchema: ContainerSchema<T>,
+    ): Promise<{ container: FluidContainer<T>; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
@@ -56,7 +57,7 @@ export class AzureClient {
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
         const id = uuid();
-        return this.getFluidContainerAndServices(id, container);
+        return this.getFluidContainerAndServices<T>(id, container);
     }
 
     /**
@@ -65,27 +66,27 @@ export class AzureClient {
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
      */
-    public async getContainer(
+    public async getContainer<T extends LoadableObjectClassRecord>(
         id: string,
-        containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+        containerSchema: ContainerSchema<T>,
+    ): Promise<{ container: FluidContainer<T>; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         return this.getFluidContainerAndServices(id, container);
     }
 
     // #region private
-    private async getFluidContainerAndServices(
+    private async getFluidContainerAndServices<T extends LoadableObjectClassRecord>(
         id: string,
         container: Container,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    ): Promise<{ container: FluidContainer<T>; services: AzureContainerServices }> {
         const attach = async () => {
             await container.attach({ url: id });
             return id;
         };
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
-        const services: AzureContainerServices = this.getContainerServices(container);
+        const fluidContainer = new FluidContainer<T>(container, rootDataObject, attach);
+        const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }
 

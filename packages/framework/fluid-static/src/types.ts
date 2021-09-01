@@ -13,6 +13,13 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 /**
+ * Construct a type with a set of properties K of type T
+ */
+export type LoadableObjectInstanceTypeRecord<K extends LoadableObjectClassRecord> = {
+    [P in keyof K]: InstanceType<K[P]>;
+};
+
+/**
  * A LoadableObjectClass is an class object of DataObject or SharedObject
  */
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
@@ -36,7 +43,7 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
-export interface ContainerSchema {
+export interface ContainerSchema<T extends LoadableObjectClassRecord = LoadableObjectClassRecord> {
     /**
      * initialObjects defines loadable objects that will be created when the Container
      * is first created. It uses the key as the id and the value as the loadable object to create.
@@ -52,7 +59,7 @@ export interface ContainerSchema {
      * }
      * ```
      */
-    initialObjects: LoadableObjectClassRecord;
+    initialObjects: T;
 
     /**
      * Dynamic objects are Loadable objects that can be created after the initial Container creation.
