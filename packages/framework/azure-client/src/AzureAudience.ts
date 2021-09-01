@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ServiceAudience } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ServiceAudience } from "fluid-framework";
 import { IAzureAudience, AzureMember } from "./interfaces";
 
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {

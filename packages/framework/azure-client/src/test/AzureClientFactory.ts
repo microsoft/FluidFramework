@@ -4,9 +4,9 @@
  */
 
 import { generateUser } from "@fluidframework/server-services-client";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import {
     AzureClient,
-    InsecureTokenProvider,
 } from "..";
 
 // This function will detemine if local or remote mode is required (based on FLUID_CLIENT),
