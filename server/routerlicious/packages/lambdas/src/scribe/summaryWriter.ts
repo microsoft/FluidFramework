@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     generateServiceProtocolEntries,
@@ -156,7 +157,8 @@ export class SummaryWriter implements ISummaryWriter {
                 content.handle,
                 protocolEntries,
                 logTailEntries,
-                serviceProtocolEntries);
+                serviceProtocolEntries,
+                checkpoint.protocolState.sequenceNumber);
         } else {
             const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
                 this.summaryStorage.createTree({ entries: logTailEntries }),
@@ -253,12 +255,15 @@ export class SummaryWriter implements ISummaryWriter {
             op.additionalContent,
             JSON.stringify(checkpoint));
 
-        // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
-        const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
-
         if (this.enableWholeSummaryUpload) {
-            await this.createWholeServiceSummary(lastCommit.sha, logTailEntries, serviceProtocolEntries);
+            await this.createWholeServiceSummary(
+                existingRef.object.sha,
+                logTailEntries,
+                serviceProtocolEntries,
+                op.sequenceNumber);
         } else {
+            // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
+            const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
             const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
                 this.summaryStorage.createTree({ entries: logTailEntries }),
                 this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
@@ -362,7 +367,8 @@ export class SummaryWriter implements ISummaryWriter {
         appSummaryHandle: string,
         protocolEntries: ITreeEntry[],
         logTailEntries: ITreeEntry[],
-        serviceProtocolEntries: ITreeEntry[]): Promise<string> {
+        serviceProtocolEntries: ITreeEntry[],
+        sequenceNumber: number): Promise<string> {
         const fullTree: ISummaryTree =  {
             type: SummaryType.Tree,
             tree: {
@@ -378,14 +384,15 @@ export class SummaryWriter implements ISummaryWriter {
             },
         };
         const uploadManager = new WholeSummaryUploadManager(this.summaryStorage);
-        const uploadHandle = await uploadManager.writeSummaryTree(fullTree, parentHandle, "container");
+        const uploadHandle = await uploadManager.writeSummaryTree(fullTree, parentHandle, "container", sequenceNumber);
         return uploadHandle;
     }
 
     private async createWholeServiceSummary(
         parentHandle: string,
         logTailEntries: ITreeEntry[],
-        serviceProtocolEntries: ITreeEntry[]): Promise<string> {
+        serviceProtocolEntries: ITreeEntry[],
+        sequenceNumber: number): Promise<string> {
         const fullTree: ISummaryTree =  {
             type: SummaryType.Tree,
             tree: {
@@ -396,19 +403,56 @@ export class SummaryWriter implements ISummaryWriter {
             },
         };
         const uploadManager = new WholeSummaryUploadManager(this.summaryStorage);
-        const uploadHandle = await uploadManager.writeSummaryTree(fullTree, parentHandle, "container");
+        const uploadHandle = await uploadManager.writeSummaryTree(fullTree, parentHandle, "container", sequenceNumber);
         return uploadHandle;
     }
 
     // We should optimize our API so that we don't have to do this conversion.
     private createSummaryTreeFromEntry(treeEntries: ITreeEntry[]): ISummaryTree {
-        const tree: { [path: string]: SummaryObject } = {};
-        for (const entry of treeEntries) {
-            tree[entry.path] = entry.value as SummaryObject;
-        }
+        const tree = this.createSummaryTreeFromEntryCore(treeEntries);
         return {
             tree,
             type: SummaryType.Tree,
         };
+    }
+
+    private createSummaryTreeFromEntryCore(treeEntries: ITreeEntry[]): { [path: string]: SummaryObject } {
+        const tree: { [path: string]: SummaryObject } = {};
+        for (const treeEntry of treeEntries) {
+            let summaryObject: SummaryObject;
+            switch(treeEntry.type) {
+                case TreeEntry.Attachment: {
+                    summaryObject = {
+                        type: SummaryType.Attachment,
+                        id: treeEntry.value.id,
+                    };
+                    break;
+                }
+                case TreeEntry.Blob: {
+                    summaryObject = {
+                        type: SummaryType.Blob,
+                        content: treeEntry.value.encoding === "base64" ?
+                                 fromBase64ToUtf8(treeEntry.value.contents) :
+                                 treeEntry.value.contents,
+                    };
+                    break;
+                }
+                case TreeEntry.Tree: {
+                    summaryObject = {
+                        type: SummaryType.Tree,
+                        unreferenced: treeEntry.value.unreferenced,
+                        tree: this.createSummaryTreeFromEntryCore(treeEntry.value.entries),
+                    };
+                    break;
+                }
+                default: {
+                    throw new Error(`Unexpected TreeEntry type: ${treeEntry.type} when converting ITreeEntry.`);
+                }
+            }
+
+            tree[treeEntry.path] = summaryObject;
+        }
+
+        return tree;
     }
 }

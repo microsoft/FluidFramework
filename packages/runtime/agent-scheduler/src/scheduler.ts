@@ -18,7 +18,6 @@ import {
     IFluidDataStoreFactory,
     NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { isContextExisting } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
@@ -382,13 +381,13 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
         return [this.type, Promise.resolve(new AgentSchedulerFactory())];
     }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const mapFactory = SharedMap.getFactory();
         const consensusRegisterCollectionFactory = ConsensusRegisterCollection.getFactory();
         const dataTypes = new Map<string, IChannelFactory>();
         dataTypes.set(mapFactory.type, mapFactory);
         dataTypes.set(consensusRegisterCollectionFactory.type, consensusRegisterCollectionFactory);
 
-        return new AgentSchedulerRuntime(context, dataTypes, isContextExisting(context, existing));
+        return new AgentSchedulerRuntime(context, dataTypes, existing);
     }
 }

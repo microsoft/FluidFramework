@@ -112,7 +112,7 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
     ];
 }
 
-const genLTSConfig = (compatVersion: number | string): CompatConfig[]  => {
+const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
     return [
         {
             name: `compat LTS ${compatVersion} - old loader`,
@@ -165,11 +165,16 @@ const options = {
     driver: {
         choices: [
             "tinylicious",
+            "t9s",
             "routerlicious",
+            "r11s",
             "odsp",
             "local",
         ],
         requiresArg: true,
+    },
+    r11sEndpointName: {
+        type: "string",
     },
 };
 
@@ -183,7 +188,12 @@ nconf.argv({
     },
 }).env({
     separator: "__",
-    whitelist: ["fluid__test__compatKind", "fluid__test__compatVersion", "fluid__test__driver"],
+    whitelist: [
+        "fluid__test__compatKind",
+        "fluid__test__compatVersion",
+        "fluid__test__driver",
+        "fluid__test__r11sEndpointName",
+    ],
     parseValues: true,
 }).defaults(
     {
@@ -199,12 +209,14 @@ nconf.argv({
 const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
 const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
 const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
+const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string ?? "r11s";
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
 // Number arrays needs quote so that single element array can be interpret as array.
 process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
+process.env.fluid__test__r11sEndpointName = r11sEndpointName;
 
 let configList: CompatConfig[] = [];
 if (!compatVersions || compatVersions.length === 0) {
@@ -248,6 +260,9 @@ function describeCompat(
                         {
                             type: driver,
                             version: config.driver,
+                            config: {
+                                r11s: { r11sEndpointName },
+                            },
                         },
                         config.containerRuntime,
                         config.dataRuntime,

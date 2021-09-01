@@ -100,8 +100,7 @@ export async function createNewEmptyFluidFile(
     epochTracker: EpochTracker,
 ): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    // add .tmp to filename, the app is responsible for removing this once a summary is posted.
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
+    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}`);
     const initialUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
         }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;

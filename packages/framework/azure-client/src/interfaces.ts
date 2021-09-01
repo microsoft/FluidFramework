@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import {
-    FluidContainer,
     IMember,
     IServiceAudience,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 export interface AzureConnectionConfig {
     tenantId: "local" | string;
@@ -39,11 +38,6 @@ export interface AzureContainerServices {
 export interface AzureMember<T = any> extends IMember {
     userName: string;
     additionalDetails?: T;
-}
-
-export interface AzureResources {
-    fluidContainer: FluidContainer;
-    containerServices: AzureContainerServices;
 }
 
 export type IAzureAudience = IServiceAudience<AzureMember>;

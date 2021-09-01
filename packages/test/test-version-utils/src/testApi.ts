@@ -169,6 +169,7 @@ export function getDriverApi(requested?: number | string): typeof DriverApi {
 
     const routerliciousDriverApi: typeof DriverApi.RouterliciousDriverApi = {
         version,
+        modulePath,
         RouterliciousDocumentServiceFactory:
             loadPackage(modulePath, "@fluidframework/routerlicious-driver").RouterliciousDocumentServiceFactory,
     };

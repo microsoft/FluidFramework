@@ -157,9 +157,7 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
 
                 data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose + 1;
-                assert(runner.runOnClose() === true, "should run on close");
-                assertAttemptCount(1, "should run");
-                assert(getLastAttempt() === "lastSummary");
+                assert(runner.shouldRunLastSummary() === true, "should run on close");
             });
 
             it("Should not summarize on close if insufficient outstanding ops", () => {
@@ -168,8 +166,7 @@ describe("Runtime", () => {
                 initialize({ refSequenceNumber: lastSummary, minOpsForAttemptOnClose });
 
                 data.lastOpSequenceNumber = lastSummary + minOpsForAttemptOnClose;
-                assert(runner.runOnClose() === false, "should not run on close");
-                assertAttemptCount(0, "should not run");
+                assert(runner.shouldRunLastSummary() === false, "should not run on close");
             });
 
             it("Should not run idle timer after dispose", () => {

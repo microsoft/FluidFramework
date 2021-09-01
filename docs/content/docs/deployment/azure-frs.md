@@ -3,7 +3,10 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid container][] to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Relay instance using the `FrsClient` in the `@fluid-experimental/frs-client` package. `FrsClient` handles the logic of
+connecting your [Fluid container][] to the service while keeping the container object itself service-agnostic. You can
+use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `AzureClient` in your own application.
 
@@ -33,7 +36,7 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [AzureFunctionTokenProvider]({{< relref "https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/frs-client/src/AzureFunctionTokenProvider.ts" >}}) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
@@ -173,37 +176,21 @@ fetched back user details for the members in your collaborative session!
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
