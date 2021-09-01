@@ -83,12 +83,7 @@ async function* loadAllSequencedMessages(
         if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
             throw error;
         }
-        
         response = JSON.parse(error.getTelemetryProperties().response);
-            response = JSON.parse(error.getTelemetryProperties().response);
-        } else {
-            throw error;
-        }
         const seq = response.error.firstAvailableDelta;
         lastSeq = seq - 1;
     }
