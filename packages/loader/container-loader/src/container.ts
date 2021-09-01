@@ -1839,7 +1839,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * Get the most recent snapshot, or a specific version.
+     * Get the most recent snapshot, or a specific version
      * @param specifiedVersion - The specific version of the snapshot to retrieve
      * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
      */
