@@ -27,7 +27,6 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
-    name: string;
 }
 
 // @public

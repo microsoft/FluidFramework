@@ -8,7 +8,6 @@
 export * from "@fluidframework/aqueduct";
 export * from "@fluidframework/fluid-static";
 export * from "@fluidframework/map";
-export * from "@fluidframework/merge-tree";
 export * from "@fluidframework/sequence";
 
 // (No @packageDocumentation comment for this package)
