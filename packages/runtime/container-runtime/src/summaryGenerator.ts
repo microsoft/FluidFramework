@@ -143,8 +143,6 @@ export class SummarizeResultBuilder {
  * This class generates and tracks a summary attempt.
  */
 export class SummaryGenerator {
-    private summarizeCount = 0;
-    public getSummarizeCount() { return this.summarizeCount; }
     private readonly summarizeTimer: Timer;
     constructor(
         private readonly pendingAckTimer: IPromiseTimer,
@@ -173,8 +171,6 @@ export class SummaryGenerator {
         cancellationToken: ISummaryCancellationToken,
         resultsBuilder = new SummarizeResultBuilder(),
     ): ISummarizeResults {
-        ++this.summarizeCount;
-
         this.summarizeCore(summarizeProps, options, resultsBuilder, cancellationToken)
         .catch((error) => {
             const message = "UnexpectedSummarizeError";

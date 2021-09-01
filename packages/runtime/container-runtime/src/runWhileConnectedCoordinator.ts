@@ -68,7 +68,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
         if (this.runtime.connected) {
             this.everConnected = true;
         } else if (this.runtime.disposed) {
-            this.stop("summarizeClientDisconnected");
+            this.stop("summarizerClientDisconnected");
         }
         else {
             this.runtime.once("connected", () => this.everConnected = true);
@@ -86,7 +86,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
             if (!this.everConnected) {
                 return;
             }
-            this.stop("summarizeClientDisconnected");
+            this.stop("summarizerClientDisconnected");
         });
     }
 

@@ -394,9 +394,15 @@ describe("Runtime", () => {
                     // now should run a normal run
                     await emitNextOp(1);
                     assertRunCounts(1, 0, 0);
+                    const retryProps1 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 1,
+                        summarizeAttemptPhase: 1,
+                    };
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", ...retryProps1 },
+                        { eventName: "Running:SummaryOp", ...retryProps1 },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasn't been acked/nacked yet
@@ -406,14 +412,16 @@ describe("Runtime", () => {
                     // should run with refresh after first nack
                     await emitNack();
                     assertRunCounts(2, 0, 1, "retry1 should be refreshLatestAck");
+                    const retryProps2 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 2,
+                        summarizeAttemptPhase: 2,
+                    };
                     assert(mockLogger.matchEvents([
-                        {
-                            eventName: "Running:Summarize_cancel",
-                            summaryGenTag: (runCount - 1),
-                            reason: "summaryNack",
-                        },
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_cancel", ...retryProps1, reason: "summaryNack" },
+                        { eventName: "Running:GenerateSummary", ...retryProps2 },
+                        { eventName: "Running:SummaryOp", ...retryProps2 },
                     ]), "unexpected log sequence");
 
                     // Should not run, because of 2 min delay
@@ -424,14 +432,16 @@ describe("Runtime", () => {
                     // Should run with refreshLatestAck after second nack
                     await tickAndFlushPromises(1);
                     assertRunCounts(3, 0, 2, "retry2 should be refreshLatestAck");
+                    const retryProps3 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 3,
+                        summarizeAttemptPhase: 3,
+                    };
                     assert(mockLogger.matchEvents([
-                        {
-                            eventName: "Running:Summarize_cancel",
-                            summaryGenTag: (runCount - 1),
-                            reason: "summaryNack",
-                        },
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_cancel", ...retryProps2, reason: "summaryNack" },
+                        { eventName: "Running:GenerateSummary", ...retryProps3 },
+                        { eventName: "Running:SummaryOp", ...retryProps3 },
                     ]), "unexpected log sequence");
 
                     // Should not run, because of 10 min delay
@@ -442,14 +452,16 @@ describe("Runtime", () => {
                     // Should run with fullTree after third nack
                     await tickAndFlushPromises(1);
                     assertRunCounts(4, 1, 3, "retry3 should be fullTree and refreshLatestAck");
+                    const retryProps4 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 4,
+                        summarizeAttemptPhase: 4,
+                    };
                     assert(mockLogger.matchEvents([
-                        {
-                            eventName: "Running:Summarize_cancel",
-                            summaryGenTag: (runCount - 1),
-                            reason: "summaryNack",
-                        },
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_cancel", ...retryProps3, reason: "summaryNack" },
+                        { eventName: "Running:GenerateSummary", ...retryProps4 },
+                        { eventName: "Running:SummaryOp", ...retryProps4 },
                     ]), "unexpected log sequence");
 
                     // Should stop after final nack
@@ -468,9 +480,15 @@ describe("Runtime", () => {
                     // now should run a normal run
                     await emitNextOp(1);
                     assertRunCounts(1, 0, 0, "normal run");
+                    const retryProps1 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 1,
+                        summarizeAttemptPhase: 1,
+                    };
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", ...retryProps1 },
+                        { eventName: "Running:SummaryOp", ...retryProps1 },
                     ]), "unexpected log sequence");
 
                     // should not run, because our summary hasn't been acked/nacked yet
@@ -485,15 +503,17 @@ describe("Runtime", () => {
                     // should rerun the normal try after the delay
                     await tickAndFlushPromises(1);
                     assertRunCounts(2, 0, 0, "rerun after retryAfter delay");
+                    const retryProps2 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 2,
+                        summarizeTotalAttempts: 2,
+                        summarizeAttemptPhase: 1,
+                    };
                     assert(mockLogger.matchEvents([
-                        {
-                            eventName: "Running:Summarize_cancel",
-                            summaryGenTag: (runCount - 1),
-                            reason: "summaryNack",
-                        },
-                        { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount - 1 },
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_cancel", summaryGenTag: 1, reason: "summaryNack" },
+                        { eventName: "Running:SummarizeAttemptDelay", ...retryProps2 },
+                        { eventName: "Running:GenerateSummary", ...retryProps2 },
+                        { eventName: "Running:SummaryOp", ...retryProps2 },
                     ]), "unexpected log sequence");
 
                     // should not run, because of specified 30 sec delay
@@ -504,15 +524,17 @@ describe("Runtime", () => {
                     // should run the next stage with refreshLatestAck after delay
                     await tickAndFlushPromises(1);
                     assertRunCounts(3, 0, 1, "retry again with refreshLatestAck");
+                    const retryProps3 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 3,
+                        summarizeAttemptPhase: 2,
+                    };
                     assert(mockLogger.matchEvents([
-                        {
-                            eventName: "Running:Summarize_cancel",
-                            summaryGenTag: (runCount - 1),
-                            reason: "summaryNack",
-                        },
-                        { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount - 1 },
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_cancel", ...retryProps2, reason: "summaryNack" },
+                        { eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
+                        { eventName: "Running:GenerateSummary", ...retryProps3 },
+                        { eventName: "Running:SummaryOp", ...retryProps3 },
                     ]), "unexpected log sequence");
                 });
 
@@ -529,9 +551,21 @@ describe("Runtime", () => {
                     await tickAndFlushPromises(30 * 1000 - 1);
 
                     assertRunCounts(1, 0, 0, "failed upload");
+                    const retryProps1 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 1,
+                        summarizeTotalAttempts: 1,
+                        summarizeAttemptPhase: 1,
+                     };
+                    const retryProps2 = {
+                        summaryGenTag: 1,
+                        summarizeAttemptsPerPhase: 2,
+                        summarizeTotalAttempts: 2,
+                        summarizeAttemptPhase: 1,
+                    };
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:Summarize_cancel", summaryGenTag: runCount },
-                        { eventName: "Running:SummarizeAttemptDelay", summaryGenTag: runCount },
+                        { eventName: "Running:Summarize_cancel", ...retryProps1 },
+                        { eventName: "Running:SummarizeAttemptDelay", ...retryProps2 },
                     ]), "unexpected log sequence");
 
                     shouldDeferGenerateSummary = false;
@@ -539,8 +573,8 @@ describe("Runtime", () => {
                     assertRunCounts(2, 0, 0, "normal run");
 
                     assert(mockLogger.matchEvents([
-                        { eventName: "Running:GenerateSummary", summaryGenTag: runCount },
-                        { eventName: "Running:SummaryOp", summaryGenTag: runCount },
+                        { eventName: "Running:GenerateSummary", ...retryProps2 },
+                        { eventName: "Running:SummaryOp", ...retryProps2 },
                     ]), "unexpected log sequence");
                 });
             });

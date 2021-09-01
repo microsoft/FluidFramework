@@ -267,7 +267,7 @@ export type SummarizerStopReason =
      */
     | "parentShouldNotSummarize"
     /** Summarizer client was disconnected */
-    | "summarizeClientDisconnected"
+    | "summarizerClientDisconnected"
     /* running summarizer threw an exception */
     | "summarizerException";
 
