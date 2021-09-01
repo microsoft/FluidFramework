@@ -44,8 +44,7 @@ export enum OdspErrorType {
     cannotCatchUp = "cannotCatchUp",
 
     // SPO can occasionally return 403 for r/w operations on document when there is a fail over to another data center.
-    // The intention here is that data is read-only for a while, while fail over happens, to preserve integrity of
-    // the data.
+    // So to preserve integrity of the data, the data becomes readonly.
     serviceReadOnly = "serviceReadOnly",
 }
 

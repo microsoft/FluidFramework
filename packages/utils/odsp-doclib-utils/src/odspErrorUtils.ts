@@ -35,7 +35,7 @@ export const fluidEpochMismatchError = 409;
 // Error code for when the fetched token is null.
 export const fetchTokenErrorCode = 724;
 // Error code for when the server state is read only and client tries to write.
-export const serviceReadOnlyErrorCode = 729;
+export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
 export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
     interface LoggingHeader {
@@ -145,11 +145,10 @@ export function createOdspNetworkError(
             break;
         case 401:
         case 403:
-            if (innerMostErrorCode === OdspErrorType.serviceReadOnly) {
+            if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
                 error = new RetryableError(
                     errorMessage,
                     OdspErrorType.serviceReadOnly,
-                    { statusCode: serviceReadOnlyErrorCode },
                 );
             } else {
                 const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
