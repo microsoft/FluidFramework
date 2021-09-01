@@ -1,8 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 /**
  * @fileoverview Abstract base class for indexed collections (sets and maps)
  */
@@ -136,8 +131,9 @@ IndexedCollectionBaseProperty.prototype._insert = function (in_key, in_value, in
 
     if (!this.has(in_key)) {
         // Make sure, the property we are inserting is not already part of some other collection
-        if (!this._containsPrimitiveTypes) {
-            in_value._validateInsertIn(this)
+        if (!this._containsPrimitiveTypes &&
+            !in_value._canInsert()) {
+            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
         }
 
         this._dynamicChildren[in_key] = in_value;

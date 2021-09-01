@@ -549,7 +549,7 @@ AbstractStaticCollectionProperty.prototype._traverseStaticProperties = function 
  *     Only include dirty entries in the serialization
  * @param {boolean} in_includeRootTypeid -
  *     Include the typeid of the root of the hierarchy
- * @param {LYNX.Property.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
+ * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
  *     The type of dirtiness to use when reporting dirty changes. By default this is
  *     PENDING_CHANGE
  * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
