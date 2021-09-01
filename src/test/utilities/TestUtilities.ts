@@ -266,11 +266,19 @@ export interface LocalServerSharedTreeTestingOptions {
 	setupEditId?: EditId;
 }
 
+const testObjectProviders: TestObjectProvider[] = [];
+afterEach(() => {
+	for (const provider of testObjectProviders) {
+		provider.reset();
+	}
+	testObjectProviders.length = 0;
+});
+
 /**
  * Sets up and returns an object of components useful for testing SharedTree with a local server.
  * Required for tests that involve the uploadBlob API.
  *
- * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
+ * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
  */
 export async function setUpLocalServerTestSharedTree(
 	options: LocalServerSharedTreeTestingOptions
@@ -282,7 +290,7 @@ export async function setUpLocalServerTestSharedTree(
  * Sets up and returns an object of components useful for testing SharedTreeWithAnchors with a local server.
  * Required for tests that involve the uploadBlob API.
  *
- * If using this method, be sure to clean up server state by calling `reset` on the TestObjectProvider.
+ * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
  */
 export async function setUpLocalServerTestSharedTreeWithAnchors(
 	options: LocalServerSharedTreeTestingOptions
@@ -330,6 +338,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	} else {
 		const driver = new LocalServerTestDriver();
 		provider = new TestObjectProvider(Loader, driver, runtimeFactory);
+		testObjectProviders.push(provider);
 		container = (await provider.makeTestContainer()) as Container;
 	}
 

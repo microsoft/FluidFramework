@@ -41,8 +41,7 @@ describe('SharedTree history virtualization', () => {
 		});
 	});
 
-	afterEach(async () => {
-		testObjectProvider.reset();
+	afterEach(() => {
 		editChunksUploaded = 0;
 	});
 

@@ -5,8 +5,6 @@
 
 import * as fs from 'fs';
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
-import type { TestObjectProvider } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { SharedTree } from '../../default-edits';
 import { EditId } from '../../Identifiers';
@@ -33,7 +31,6 @@ export function runSummaryLoadPerfTests<TSharedTree extends SharedTree | SharedT
 		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
 
 		let tree: TSharedTree;
-		let testObjectProvider: TestObjectProvider;
 
 		const testSerializer = new TestFluidSerializer();
 
@@ -67,14 +64,10 @@ export function runSummaryLoadPerfTests<TSharedTree extends SharedTree | SharedT
 									uploadEditChunks: false,
 								});
 								tree = testingComponents.tree;
-								testObjectProvider = testingComponents.testObjectProvider;
 							},
 							benchmarkFn: () => {
 								const summary = deserialize(serializedSummary, testSerializer);
 								tree.loadSummary(summary);
-							},
-							after: () => {
-								testObjectProvider.reset();
 							},
 						});
 					}

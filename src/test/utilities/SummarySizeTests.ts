@@ -127,10 +127,6 @@ export function runSummarySizeTests<TSharedTree extends SharedTree | SharedTreeW
 			testObjectProvider = testingComponents.testObjectProvider;
 		});
 
-		afterEach(() => {
-			testObjectProvider.reset();
-		});
-
 		async function checkSummarySize(
 			edits: Edit<Change>[],
 			expectedSummarySize: number,
