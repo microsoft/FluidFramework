@@ -7,6 +7,7 @@
 - [createContainer and getContainer response objects properties renamed](#createContainer-and-getContainer-response-objects-properties-renamed)
 - [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
 - [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
+- [AzureClient initialization as a singular config](#AzureClient-initialization-as-a-singular-config)
 
 ### Property removed from IFluidDataStoreContext
 - the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
@@ -84,6 +85,23 @@ const containerId = fluidContainer.id;
 // new
 const { container } = client.createContainer(...);
 const containerId = container.attach();
+```
+
+### AzureClient initialization as a singular config
+AzureClient now takes a singular config instead of multiple parameters. This enables easier scaling of config properties as we introduce new functionality.
+
+```js
+// old
+const connectionConfig = {...};
+const logger = new MyLogger();
+const client = new AzureClient(connectionConfig, logger);
+
+// new
+const config = {
+    connectionConfig: {...},
+    logger: new MyLogger(...)
+}
+const client = new AzureClient(config);
 ```
 
 ## 0.46 Breaking changes
