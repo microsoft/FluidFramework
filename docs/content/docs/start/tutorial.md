@@ -58,7 +58,7 @@ The attach call returns the `id` of the container, which the app can later use t
 const createNewDice = async () => {
     const { container } = await client.createContainer(containerSchema);
     // Set default data
-    container.initialObjects.diceMap.set("value", 1);
+    container.initialObjects.diceMap.set("dice-value-key", 1);
     // Attach container to service and return assigned ID
     const id = container.attach();
     // load the dice roller
@@ -135,7 +135,7 @@ To begin using Fluid in the application, the first thing to change is what happe
 This pattern is common in Fluid because it enables the view to behave the same way for both local and remote changes.
 
 ```js
-    rollButton.onclick = () => diceMap.set("value", Math.floor(Math.random() * 6)+1);
+    rollButton.onclick = () => diceMap.set("dice-value-key", Math.floor(Math.random() * 6)+1);
 ```
 
 
@@ -145,7 +145,7 @@ The next change that needs to be made is to change the `updateDice` function so 
 
 ```js
     const updateDice = () => {
-        const diceValue = diceMap.get("value");
+        const diceValue = diceMap.get("dice-value-key");
         dice.textContent = String.fromCodePoint(0x267f + diceValue);
     };
     updateDice();
