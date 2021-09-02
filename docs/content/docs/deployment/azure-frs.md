@@ -10,7 +10,7 @@ use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `AzureClient` in your own application.
 
-{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
+{{< include file="_includes/azureFluidRelay-onboarding.html" safeHTML=true >}}
 
 ## Connecting to the service
 
