@@ -62,3 +62,4 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: common/lib/driver-definitions
     tagName: driver-definitions
+    taskTest: false

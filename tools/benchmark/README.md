@@ -11,6 +11,8 @@ To run benchmarks defined using these tools, invoke mocha normally, but add the 
 
 > `--expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js"`
 
+To configure the reporter output directory, you can add `--reporter-options reportDir=./benchmarks`
+
 To filter to a specific `BenchmarkType` such as `Measurement` you can use it as the `--fgrep` instead:
 
 > `--expose-gc --perfMode --fgrep @Measurement --reporter @fluid-tools/benchmark/dist/MochaReporter.js"`

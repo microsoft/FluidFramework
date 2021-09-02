@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert, delay, performance } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentStorageService,
@@ -19,10 +18,9 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { canRetryOnError } from "@fluidframework/driver-utils";
-import { Odsp409Error } from "./epochTracker";
+import { runWithRetry } from "./retryUtils";
 
-export class RetryCoherencyErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
+export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
     private _disposed = false;
     constructor(
         private readonly internalStorageService: IDocumentStorageService,
@@ -92,42 +90,18 @@ export class RetryCoherencyErrorsStorageAdapter implements IDocumentStorageServi
         );
     }
 
-    private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-        let retryAfter = 1000;
-        const start = performance.now();
-        for (let retry = 1; ; retry++) {
-            if (this._disposed) {
-                throw new LoggingError("storageServiceDisposedCannotRetry", { canRetry: false });
-            }
-            try
-            {
-                return await api();
-            } catch (error) {
-                const canRetry = canRetryOnError(error);
-
-                if (error?.[Odsp409Error] !== true) {
-                    throw error;
-                }
-
-                // SPO itself does number of retries internally before returning 409 to client.
-                // That multiplied to 5 suggests need to reconsider current design, as client spends
-                // too much time / bandwidth doing the same thing without any progress.
-                if (retry === 5) {
-                    this.logger.sendErrorEvent({
-                        eventName: "CoherencyErrorTooManyRetries",
-                        callName,
-                        retry,
-                        duration: performance.now() - start, // record total wait time.
-                    });
-                    // Fail hard.
-                    error.canRetry = false;
-                    throw error;
-                }
-
-                assert(canRetry, "can retry");
-                await delay(Math.floor(retryAfter));
-                retryAfter += retryAfter / 4  * (1 + Math.random());
-            }
+    private checkStorageDisposed() {
+        if (this._disposed) {
+            throw new LoggingError("storageServiceDisposedCannotRetry", { canRetry: false });
         }
+    }
+
+    private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
+        return runWithRetry(
+            api,
+            callName,
+            this.logger,
+            () => this.checkStorageDisposed(),
+        );
     }
 }

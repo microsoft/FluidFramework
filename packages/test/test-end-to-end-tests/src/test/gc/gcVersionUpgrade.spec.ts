@@ -17,7 +17,9 @@ import {
     ContainerRuntime,
     IAckedSummary,
     IContainerRuntimeOptions,
+    ISummaryNackMessage,
     SummaryCollection,
+    neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
@@ -88,7 +90,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
     // Stores the latest summary context uploaded to the server.
     let latestSummaryContext: ISummaryContext | undefined;
     // Stores the latest acked summary for the document.
-    let latestSummaryAck: IAckedSummary;
+    let latestSummaryAck: IAckedSummary | undefined;
 
     let container: IContainer;
     let dataStore1Id: string;
@@ -102,7 +104,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
     /**
      * Loads a summarizer client with the given version (if any) and returns its container runtime.
      */
-    async function loadSummarizer(runtimeFactory: IRuntimeFactory, summaryVersion?: string): Promise<ContainerRuntime> {
+    async function loadSummarizer(runtimeFactory: IRuntimeFactory, summaryVersion?: string) {
         const requestHeader = {
             [LoaderHeader.cache]: false,
             [LoaderHeader.clientDetails]: {
@@ -115,8 +117,18 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             [LoaderHeader.version]: summaryVersion,
         };
         const summarizer = await provider.loadContainer(runtimeFactory, undefined /* options */, requestHeader);
+
+        const summaryCollection = new SummaryCollection(summarizer.deltaManager, logger);
+        // Fail fast if we receive a nack as something must have gone wrong.
+        summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
+            throw new Error(`Received Nack for sequence#: ${op.contents.summaryProposal.summarySequenceNumber}`);
+        });
+
         const defaultDataStore = await requestFluidObject<TestDataObject>(summarizer, "default");
-        return defaultDataStore._context.containerRuntime as ContainerRuntime;
+        return {
+            containerRuntime: defaultDataStore._context.containerRuntime as ContainerRuntime,
+            summaryCollection,
+        };
     }
 
     /**
@@ -128,13 +140,12 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
      * @param dataStoresAsHandles - List of data stores whose summary should be handles.
      */
     async function validateDataStoreSummaryState(
-        containerRuntime: ContainerRuntime,
-        summaryCollection: SummaryCollection,
+        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
         dataStoresAsHandles: string[],
     ) {
-        const summarySequenceNumber = await submitSummary(containerRuntime);
-        latestSummaryAck = await summaryCollection.waitSummaryAck(summarySequenceNumber);
-        await refreshSummaryAck(containerRuntime, latestSummaryAck);
+        const summarySequenceNumber = await submitSummary(summarizerClient.containerRuntime);
+        latestSummaryAck = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
+        await refreshSummaryAck(summarizerClient.containerRuntime, latestSummaryAck);
 
         assert(
             latestSummaryContext && latestSummaryContext.referenceSequenceNumber >= summarySequenceNumber,
@@ -181,11 +192,13 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
     async function submitSummary(containerRuntime: ContainerRuntime): Promise<number> {
         await provider.ensureSynchronized();
         const summarySequenceNumber = containerRuntime.deltaManager.lastSequenceNumber;
-        await containerRuntime.submitSummary({
+        const result = await containerRuntime.submitSummary({
             fullTree: false,
             refreshLatestAck: false,
             summaryLogger: logger,
+            cancellationToken: neverCancelledSummaryToken,
         });
+        assert.strictEqual(result.stage, "submit", "The summary was not submitted");
         return summarySequenceNumber;
     }
 
@@ -228,6 +241,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
     afterEach(() => {
         latestSummaryContext = undefined;
         latestUploadedSummary = undefined;
+        latestSummaryAck = undefined;
     });
 
     it("should regenerate summary and GC data when GC version updates", async () => {
@@ -235,15 +249,14 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
         let dataStoresAsHandles: string[] = [];
 
         // Load a summarizer client.
-        const summarizer1ContainerRuntime = await loadSummarizer(defaultRuntimeFactory);
-        const summaryCollection1 = new SummaryCollection(summarizer1ContainerRuntime.deltaManager, logger);
+        const summarizerClient1 = await loadSummarizer(defaultRuntimeFactory);
 
         // Generate a summary and validate that all data store summaries are trees.
-        await validateDataStoreSummaryState(summarizer1ContainerRuntime, summaryCollection1, dataStoresAsHandles);
+        await validateDataStoreSummaryState(summarizerClient1, dataStoresAsHandles);
 
         // Generate another summary in which the summaries for all data stores are handles.
         dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
-        await validateDataStoreSummaryState(summarizer1ContainerRuntime, summaryCollection1, dataStoresAsHandles);
+        await validateDataStoreSummaryState(summarizerClient1, dataStoresAsHandles);
 
         // Create a ContainerRuntimeFactoryWithGC which creates container runtime with an incremented GC version.
         const gcRuntimeFactory = new ContainerRuntimeFactoryWithGC(
@@ -256,31 +269,25 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             flattenRuntimeOptions(runtimeOptions),
         );
 
+        assert(latestSummaryAck !== undefined, "Summary ack isn't available as expected");
         // Load a new summarizer with a new GC version and the latest summary that has been generated.
-        const summarizer2ContainerRuntime = await loadSummarizer(
-            gcRuntimeFactory, latestSummaryAck.summaryAck.contents.handle);
-        const summaryCollection2 = new SummaryCollection(summarizer2ContainerRuntime.deltaManager, logger);
+        const summarizerClient2 = await loadSummarizer(gcRuntimeFactory, latestSummaryAck.summaryAck.contents.handle);
 
         // Validate that there aren't any handles in the summary generated by the new container runtime since the
         // GC version got updated.
         dataStoresAsHandles = [];
-        await validateDataStoreSummaryState(summarizer2ContainerRuntime, summaryCollection2, dataStoresAsHandles);
-
-        // Generate another summary and validate that the summaries are not handles for the data stores.
-        dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
-        await validateDataStoreSummaryState(summarizer2ContainerRuntime, summaryCollection2, dataStoresAsHandles);
+        await validateDataStoreSummaryState(summarizerClient2, dataStoresAsHandles);
     });
 
     it("should regenerate summary and GC data on receiving ack with different GC version", async () => {
         // Stores the ids of data stores whose summary tree should be handles.
-        let dataStoresAsHandles: string[] = [];
+        const dataStoresAsHandles: string[] = [];
 
         // Load a summarizer client.
-        const summarizer1ContainerRuntime = await loadSummarizer(defaultRuntimeFactory);
-        const summaryCollection1 = new SummaryCollection(summarizer1ContainerRuntime.deltaManager, logger);
+        const summarizerClient1 = await loadSummarizer(defaultRuntimeFactory);
 
         // Generate a summary and validate that all data store summaries are trees.
-        await validateDataStoreSummaryState(summarizer1ContainerRuntime, summaryCollection1, dataStoresAsHandles);
+        await validateDataStoreSummaryState(summarizerClient1, dataStoresAsHandles);
 
         // Create a ContainerRuntimeFactoryWithGC which creates container runtime with an incremented GC version.
         const gcRuntimeFactory = new ContainerRuntimeFactoryWithGC(
@@ -293,24 +300,20 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             flattenRuntimeOptions(runtimeOptions),
         );
 
-        // Load a new summarizer with a new GC version and the latest summary that has been generated.
-        const summarizer2ContainerRuntime = await loadSummarizer(
-            gcRuntimeFactory, latestSummaryAck.summaryAck.contents.handle);
-        const summaryCollection2 = new SummaryCollection(summarizer2ContainerRuntime.deltaManager, logger);
+        assert(latestSummaryAck !== undefined, "Summary ack isn't available as expected");
+        // Load a new summarizer with the above runtime factory and the latest summary that has been generated.
+        const summarizerClient2 = await loadSummarizer(gcRuntimeFactory, latestSummaryAck.summaryAck.contents.handle);
         // Validate that there aren't any handles in the summary generated by the new container runtime since the
         // GC version got updated.
-        await validateDataStoreSummaryState(summarizer2ContainerRuntime, summaryCollection2, dataStoresAsHandles);
+        await validateDataStoreSummaryState(summarizerClient2, dataStoresAsHandles);
 
-        // Generate another summary and validate that the summaries are not handles for the data stores.
-        dataStoresAsHandles.push(dataStore1Id, dataStore2Id, dataStore3Id);
-        await validateDataStoreSummaryState(summarizer2ContainerRuntime, summaryCollection2, dataStoresAsHandles);
-
-        // Now, update the ack for the old container runtime with old GC version with the newer GC version ack.
-        await refreshSummaryAck(summarizer1ContainerRuntime, latestSummaryAck);
+        // Now, update the the old container runtime (with old GC version) with an ack that has new GC version. This
+        // simulates the scenario where an ack is received for a summary that was generated by a client running with a
+        // different GC version.
+        await refreshSummaryAck(summarizerClient1.containerRuntime, latestSummaryAck);
 
         // Validate that there aren't any handles in the summary generated by the old container runtime since we
         // will regenerate the GC data and summary.
-        dataStoresAsHandles = [];
-        await validateDataStoreSummaryState(summarizer1ContainerRuntime, summaryCollection1, dataStoresAsHandles);
+        await validateDataStoreSummaryState(summarizerClient1, dataStoresAsHandles);
     });
 });

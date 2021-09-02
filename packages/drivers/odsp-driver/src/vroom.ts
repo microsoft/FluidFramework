@@ -10,6 +10,7 @@ import { ISocketStorageDiscovery } from "./contracts";
 import { getWithRetryForTokenRefresh, getOrigin } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
+import { runWithRetry } from "./retryUtils";
 
 interface IJoinSessionBody {
     requestSocketToken?: boolean;
@@ -73,12 +74,16 @@ export async function fetchJoinSession(
                     }
                 }
 
-                const response = await epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
-                    `${getApiRoot(siteOrigin)}/drives/${
-                        urlParts.driveId
-                    }/items/${urlParts.itemId}/${path}?${queryParams}`,
-                    { method, headers, body: body ? JSON.stringify(body) : undefined },
+                const response = await runWithRetry(
+                    async () => epochTracker.fetchAndParseAsJSON<ISocketStorageDiscovery>(
+                        `${getApiRoot(siteOrigin)}/drives/${
+                            urlParts.driveId
+                        }/items/${urlParts.itemId}/${path}?${queryParams}`,
+                        { method, headers, body: body ? JSON.stringify(body) : undefined },
+                        "joinSession",
+                    ),
                     "joinSession",
+                    logger,
                 );
 
                 // TODO SPO-specific telemetry

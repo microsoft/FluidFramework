@@ -50,6 +50,7 @@ export interface ITestObjectProvider {
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
     loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
 
+    logger: ITelemetryBaseLogger,
     documentServiceFactory: IDocumentServiceFactory,
     urlResolver: IUrlResolver,
     defaultCodeDetails: IFluidCodeDetails,
@@ -92,6 +93,7 @@ export class TestObjectProvider {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _documentId?: string;
+    private _logger: ITelemetryBaseLogger | undefined;
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -104,6 +106,19 @@ export class TestObjectProvider {
         private readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
 
+    }
+
+    get logger() {
+        if (this._logger === undefined) {
+            this._logger = ChildLogger.create(getTestLogger?.(), undefined,
+                {
+                    all: {
+                        driverType: this.driver.type,
+                        driverEndpointName: this.driver.endpointName,
+                    },
+                });
+        }
+        return this._logger;
     }
 
     get documentServiceFactory() {
@@ -150,8 +165,7 @@ export class TestObjectProvider {
         detachedBlobStorage?: IDetachedBlobStorage,
     ) {
         const multiSinkLogger = new MultiSinkLogger();
-        multiSinkLogger.addLogger(ChildLogger.create(getTestLogger?.(),
-            undefined, { all: { driverType: this.driver.type } }));
+        multiSinkLogger.addLogger(this.logger);
         if (options?.logger !== undefined) {
             multiSinkLogger.addLogger(options.logger);
         }
@@ -240,6 +254,7 @@ export class TestObjectProvider {
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
         this._documentId = undefined;
+        this._logger = undefined;
     }
 
     public async ensureSynchronized() {

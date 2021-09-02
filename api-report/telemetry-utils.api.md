@@ -105,7 +105,7 @@ export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErr
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
+    [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
 // @public (undocumented)
@@ -114,14 +114,6 @@ export interface ITelemetryLoggerPropertyBags {
     all?: ITelemetryLoggerPropertyBag;
     // (undocumented)
     error?: ITelemetryLoggerPropertyBag;
-}
-
-// @public
-export interface IWriteableLoggingError {
-    // (undocumented)
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
-    // (undocumented)
-    getTelemetryProperties(): ITelemetryProperties;
 }
 
 // @public
@@ -186,6 +178,9 @@ export enum TelemetryDataTag {
     PackageData = "PackageData",
     UserData = "UserData"
 }
+
+// @public (undocumented)
+export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
 // @public
 export abstract class TelemetryLogger implements ITelemetryLogger {
