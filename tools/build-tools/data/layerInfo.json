@@ -225,8 +225,7 @@
                     "examples/",
                     "experimental/examples/",
                     "experimental/PropertyDDS/examples/",
-                    "experimental/PropertyDDS/services/",
-                    "packages/agents/"
+                    "experimental/PropertyDDS/services/"
                 ],
                 "deps": [
                     "Framework",
