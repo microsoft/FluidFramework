@@ -35,12 +35,14 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
         if (request.headers && request.headers[DriverHeader.createNew] === true) {
             return {
                 endpoints: {
+                    deltaStorageUrl: `${this.tinyliciousEndpoint}/deltas/tinylicious/new`,
                     ordererUrl: this.tinyliciousEndpoint,
+                    storageUrl: `${this.tinyliciousEndpoint}/repos/tinylicious`,
                 },
                 id: "",
                 tokens: {},
                 type: "fluid",
-                url: `${this.fluidProtocolEndpoint}/tinylicious`,
+                url: `${this.fluidProtocolEndpoint}/tinylicious/new`,
             };
         }
         const url = request.url.replace(`${this.tinyliciousEndpoint}/`, "");

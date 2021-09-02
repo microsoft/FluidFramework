@@ -26,12 +26,14 @@ export class AzureUrlResolver implements IUrlResolver {
         if (request.headers && request.headers[DriverHeader.createNew] === true) {
             return {
                 endpoints: {
+                    deltaStorageUrl: `${this.orderer}/deltas/${this.tenantId}/new`,
                     ordererUrl: this.orderer,
+                    storageUrl: `${this.storage}/repos/${this.tenantId}`,
                 },
                 id: "",
                 tokens: {},
                 type: "fluid",
-                url: `${this.orderer}/${this.tenantId}`,
+                url: `${this.orderer}/${this.tenantId}/new`,
             };
         }
         const containerId = request.url.split("/")[0];
