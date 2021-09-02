@@ -277,14 +277,12 @@ export class SummaryGenerator {
                 }
             }
 
-            if (summaryData.stage === "submit") {
-                logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
-            }
-            else {
-                // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
+            // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
+            if (summaryData.stage !== "submit") {
                 return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
             }
 
+            logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
             return fail("submitSummaryFailure", error);
