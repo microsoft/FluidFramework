@@ -45,7 +45,7 @@ describe("TinyliciousClient", () => {
      * be returned.
      */
     it("can create a container successfully with port number specification", async () => {
-        const clientProps = { connection: { port: 7070 }};
+        const clientProps = { connection: { port: 7070 } };
         const clientWithPort = new TinyliciousClient(clientProps);
 
         const containerAndServicesP = clientWithPort.createContainer(schema);

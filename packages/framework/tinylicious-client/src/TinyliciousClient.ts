@@ -35,7 +35,7 @@ export class TinyliciousClient {
 
     /**
      * Creates a new client instance using configuration parameters.
-     * @param props - Properties for initializing a new TinyliciousClient instance
+     * @param props - Optional. Properties for initializing a new TinyliciousClient instance
      */
     constructor(private readonly props?: TinyliciousClientProps) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();

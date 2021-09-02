@@ -19,7 +19,7 @@ In the example below we are connecting to a locally running instance of our Tiny
 ```javascript
 import { TinyliciousClient, TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
 
-const clientProps = { connection: { port: 7070 }};
+const clientProps = { connection: { port: 7070 } };
 const tinyliciousClient = new TinyliciousClient(clientProps);
 ```
 
