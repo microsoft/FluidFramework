@@ -51,7 +51,7 @@ export class RunningSummarizer implements IDisposable {
         configuration: ISummaryConfiguration,
         submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         heuristicData: ISummarizeHeuristicData,
-        raiseSummarizingError: (description: string) => void,
+        raiseSummarizingError: (errorCode: string) => void,
         summaryCollection: SummaryCollection,
         cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -100,7 +100,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly configuration: ISummaryConfiguration,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
         private readonly heuristicData: ISummarizeHeuristicData,
-        private readonly raiseSummarizingError: (description: string) => void,
+        private readonly raiseSummarizingError: (errorCode: string) => void,
         private readonly summaryCollection: SummaryCollection,
         private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -123,7 +123,7 @@ export class RunningSummarizer implements IDisposable {
         this.pendingAckTimer = new PromiseTimer(
             maxAckWaitTime,
             () => {
-                this.raiseSummarizingError("SummaryAckWaitTimeout");
+                this.raiseSummarizingError("summaryAckWaitTimeout");
                 // Note: summaryGenTag (from ChildLogger definition) may be 0,
                 // since this code path is hit when RunningSummarizer first starts up,
                 // before this instance has kicked off a new summarize run.

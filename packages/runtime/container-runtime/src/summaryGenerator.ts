@@ -148,7 +148,7 @@ export class SummaryGenerator {
         private readonly pendingAckTimer: IPromiseTimer,
         private readonly heuristicData: ISummarizeHeuristicData,
         private readonly submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
-        private readonly raiseSummarizingError: (description: string) => void,
+        private readonly raiseSummarizingError: (errorCode: string) => void,
         private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -197,14 +197,15 @@ export class SummaryGenerator {
             timeSinceLastSummary: Date.now() - this.heuristicData.lastSuccessfulSummary.summaryTime,
         });
         // Helper functions to report failures and return.
-        const getFailMessage = (message: keyof typeof summarizeErrors) => `${message}: ${summarizeErrors[message]}`;
+        const getFailMessage =
+            (errorCode: keyof typeof summarizeErrors) => `${errorCode}: ${summarizeErrors[errorCode]}`;
         const fail = (
-            errorReason: keyof typeof summarizeErrors,
+            errorCode: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
             nackSummaryResult?: IAckNackSummaryResult,
         ) => {
-            this.raiseSummarizingError(summarizeErrors[errorReason]);
+            this.raiseSummarizingError(summarizeErrors[errorCode]);
             // UploadSummary may fail with 429 and retryAfter - respect that
             // Summary Nack also can have retryAfter, it's parsed below and comes as a property.
             const retryAfterSeconds = getRetryDelaySecondsFromError(error);
@@ -212,11 +213,11 @@ export class SummaryGenerator {
             // Report any failure as an error unless it was due to cancellation (like "disconnected" error)
             summarizeEvent.cancel({
                  ...properties,
-                 reason: errorReason,
+                 reason: errorCode,
                  category: cancellationToken.cancelled ? "generic" : "error",
                  retryAfterSeconds,
             }, error);
-            resultsBuilder.fail(getFailMessage(errorReason), error, nackSummaryResult, retryAfterSeconds);
+            resultsBuilder.fail(getFailMessage(errorCode), error, nackSummaryResult, retryAfterSeconds);
         };
 
         // Wait to generate and send summary
