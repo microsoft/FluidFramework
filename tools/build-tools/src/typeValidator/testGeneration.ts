@@ -32,14 +32,14 @@ import * as current from "../index";
                 const currentType = `current.${type.name}`
 
                 if(currentTypeData.packageDetails.broken[type.name]?.forwardCompat !== false){
-                    testString.push(`// validate forward comapt of old type to new type`);
+                    testString.push(`// validate forward compat by using old type in place of current type`);
                     testString.push(`// disable in package.json under typeValidation.broken:`);
                     testString.push(`// "${type.name}": {"forwardCompat": false}`);
                     testString.push(... buildTestCase(oldType, currentType))
                 }
 
                 if(currentTypeData.packageDetails.broken[type.name]?.backCompat !== false){
-                    testString.push(`// validate backward comapt of new type to old type`);
+                    testString.push(`// validate back compat by using current type in place of old type`);
                     testString.push(`// disable in package.json under typeValidation.broken:`);
                     testString.push(`// "${type.name}": {"backCompat": false}`);
                     testString.push(... buildTestCase(currentType, oldType))
@@ -52,13 +52,13 @@ import * as current from "../index";
 }
 
 
-function buildTestCase(getType:string, setType:string){
-    const setSig =`set_${setType.replace(".","_")}`;
-    const getSig =`get_${getType.replace(".","_")}`;
+function buildTestCase(getAsType:string, useType:string){
+    const getSig =`get_${getAsType.replace(".","_")}`;
+    const useSig =`use_${useType.replace(".","_")}`;
     const testString: string[] =[];
-    testString.push(`declare function ${setSig}(set: ${setType});`);
-    testString.push(`declare function ${getSig}(): ${getType};`);
-    testString.push(`${setSig}(${getSig}());`)
+    testString.push(`declare function ${getSig}(): ${getAsType};`);
+    testString.push(`declare function ${useSig}(use: ${useType});`);
+    testString.push(`${useSig}(${getSig}());`)
     testString.push("");
     return testString
 }
