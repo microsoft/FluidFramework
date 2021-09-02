@@ -4,8 +4,8 @@
 
 ```ts
 
-import { ContainerSchema } from 'fluid-framework';
-import { FluidContainer } from 'fluid-framework';
+import { ContainerSchema } from '@fluidframework/fluid-static';
+import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IMember } from 'fluid-framework';
 import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';

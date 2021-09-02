@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedMap, SharedDirectory, ContainerSchema } from "fluid-framework";
 import { DiceRoller } from "@fluid-example/diceroller";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import {
     TinyliciousClient,
     TinyliciousConnectionConfig,

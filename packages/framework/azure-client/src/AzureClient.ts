@@ -7,14 +7,14 @@ import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
     AzureClientProps,

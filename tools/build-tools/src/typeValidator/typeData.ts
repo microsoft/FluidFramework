@@ -122,6 +122,6 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     }
     return {
         packageDetails,
-        typeData,
+        typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
     };
 }

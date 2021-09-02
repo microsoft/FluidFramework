@@ -1,5 +1,5 @@
 ---
-title: Signals
+title: Signals and SignalManager
 menuPosition: 6
 status: discussion
 discussion: 5469

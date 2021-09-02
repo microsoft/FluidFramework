@@ -68,6 +68,7 @@
     "axios": "^0.21.1",
     "json-stringify-safe": "5.0.1",
     "socket.io-client": "^2.4.0",
+    "url-parse": "^1.5.3",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -78,6 +79,7 @@
     "@types/mocha": "^8.2.2",
     "@types/nock": "^9.3.0",
     "@types/socket.io-client": "^1.4.32",
+    "@types/url-parse": "^1.4.4",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

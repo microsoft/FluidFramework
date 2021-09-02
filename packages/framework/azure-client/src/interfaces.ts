@@ -8,7 +8,8 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IMember,
     IServiceAudience,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
+import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 // Re-export so developers can build loggers without pulling in common-definitions
 export {

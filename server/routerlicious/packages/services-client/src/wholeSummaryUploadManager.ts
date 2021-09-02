@@ -24,9 +24,9 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
         summaryTree: ISummaryTree,
         parentHandle: string | undefined,
         summaryType: IWholeSummaryPayloadType,
-        sequenceNumber: number,
+        sequenceNumber?: number,
     ): Promise<string> {
-        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType, sequenceNumber);
+        const id = await this.writeSummaryTreeCore(parentHandle, summaryTree, summaryType, sequenceNumber ?? 0);
         if (!id) {
             throw new Error(`Failed to write summary tree`);
         }
