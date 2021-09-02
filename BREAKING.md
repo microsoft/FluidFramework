@@ -98,7 +98,7 @@ const client = new AzureClient(connectionConfig, logger);
 
 // new
 const config = {
-    connectionConfig: {...},
+    connection: {...},
     logger: new MyLogger(...)
 }
 const client = new AzureClient(config);
