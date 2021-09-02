@@ -37,6 +37,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
+import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 
 // Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
 function gatesBinaryFormatSnapshot() {
@@ -185,7 +186,7 @@ export class OdspDocumentService implements IDocumentService {
             );
         }
 
-        return this.storageManager;
+        return new RetryErrorsStorageAdapter(this.storageManager, this.logger);
     }
 
     /**

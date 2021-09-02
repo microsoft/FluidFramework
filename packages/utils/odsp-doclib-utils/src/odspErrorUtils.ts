@@ -34,6 +34,9 @@ export const fetchTimeoutStatusCode = 713;
 export const fluidEpochMismatchError = 409;
 // Error code for when the fetched token is null.
 export const fetchTokenErrorCode = 724;
+// Error code for when the server state is read only and client tries to write. This code is set by the server
+// and is not likely to change.
+export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
 export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
     interface LoggingHeader {
@@ -124,15 +127,37 @@ export function createOdspNetworkError(
     props: ITelemetryProperties = {},
 ): LoggingError & OdspError & IFacetCodes {
     let error: LoggingError & OdspError & IFacetCodes;
+    const parseResult = tryParseErrorResponse(responseText);
+    let facetCodes: string[] | undefined;
+    let innerMostErrorCode: string | undefined;
+    if (parseResult.success) {
+        // Log the whole response if it looks like the error format we expect
+        props.response = responseText;
+        const errorResponse = parseResult.errorResponse;
+        facetCodes = parseFacetCodes(errorResponse);
+        if (facetCodes !== undefined) {
+            innerMostErrorCode = facetCodes[0];
+            props.innerMostErrorCode = innerMostErrorCode;
+        }
+    }
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
             break;
         case 401:
         case 403:
-            const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
-            const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-            error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
+            // The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
+            // database on server becomes readonly. The driver retries for such cases with exponential backup logic.
+            if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
+                error = new RetryableError(
+                    errorMessage,
+                    OdspErrorType.serviceReadOnly,
+                );
+            } else {
+                const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+                const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
+                error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
+            }
             break;
         case 404:
             error = new NonRetryableError(
@@ -190,29 +215,19 @@ export function createOdspNetworkError(
             error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
             break;
     }
-    enrichOdspError(error, response, responseText, props);
+    enrichOdspError(error, response, facetCodes, props);
     return error;
 }
 
 export function enrichOdspError(
     error: LoggingError & OdspError & IFacetCodes,
     response?: Response,
-    responseText?: string,
+    facetCodes?: string[],
     props: ITelemetryProperties = {},
 ) {
     error.online = OnlineStatus[isOnline()];
-
-    const parseResult = tryParseErrorResponse(responseText);
-    if (parseResult.success) {
-        // Log the whole response if it looks like the error format we expect
-        props.response = responseText;
-
-        const errorResponse = parseResult.errorResponse;
-        const facetCodes = parseFacetCodes(errorResponse);
-        if (facetCodes !== undefined) {
-            props.innerMostErrorCode = facetCodes[0];
-            error.facetCodes = facetCodes;
-        }
+    if (facetCodes !== undefined) {
+        error.facetCodes = facetCodes;
     }
 
     if (response) {
