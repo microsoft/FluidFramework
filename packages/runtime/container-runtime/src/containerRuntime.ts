@@ -776,8 +776,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
-    // This is the version of GC data in the latest successful summary this client has seen.
-    private summaryGCVersion: GCVersion;
+    // This is the version of GC data in the latest summary this client has seen.
+    private latestSummaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -795,7 +795,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
     private get gcEnabled(): boolean {
-        return this.summaryGCVersion > 0;
+        return this.latestSummaryGCVersion > 0;
     }
 
     // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
@@ -833,7 +833,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           */
         const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
         // Default to false for now.
-        this.summaryGCVersion = prevSummaryGCVersion ??
+        this.latestSummaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
 
         // Can override with localStorage flag.
@@ -1167,7 +1167,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for now
+            // If GC is disabled for this document, the gcFeature is whatever we loaded from. If GC is enabled,
+            // we always write the current GC version as that is what is used to generate the GC data.
+            gcFeature: this.gcEnabled ? this.currentGCVersion : this.latestSummaryGCVersion,
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
@@ -1824,7 +1826,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // container is running, we need to regenerate the GC data and run full summary. This is used to handle
             // scenarios where we upgrade the GC version because we cannot trust the data from the previous GC version.
             let forceRegenerateData = false;
-            if (this.gcEnabled && this.summaryGCVersion !== this.currentGCVersion) {
+            if (this.gcEnabled && this.latestSummaryGCVersion !== this.currentGCVersion) {
                 forceRegenerateData = true;
             }
 
@@ -2192,7 +2194,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If the summary was tracked by this client, it was the one that generated the summary in the first place.
             // Update the summaryGCVersion to the currentGCVersion of this client.
             if (result.wasSummaryTracked) {
-                this.summaryGCVersion = this.currentGCVersion;
+                this.latestSummaryGCVersion = this.currentGCVersion;
                 return;
             }
             // If the summary was not tracked by this client, update summaryGCVersion from the snapshot that was used
@@ -2239,10 +2241,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Updates the summary GC version as per the metadata blob in given snapshot.
      */
     private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
+        assert(this.gcEnabled, "GC version should not be updated when GC is disabled");
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
             const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
-            this.summaryGCVersion = getGCVersion(metadata);
+            this.latestSummaryGCVersion = getGCVersion(metadata);
         }
     }
 

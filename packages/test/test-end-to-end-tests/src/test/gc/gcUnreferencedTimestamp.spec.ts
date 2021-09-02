@@ -11,6 +11,7 @@ import {
     ContainerRuntime,
     IAckedSummary,
     IContainerRuntimeOptions,
+    ISummaryNackMessage,
     SummaryCollection,
     neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
@@ -70,7 +71,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     // Stores the latest summary context uploaded to the server.
     let latestSummaryContext: ISummaryContext | undefined;
     // Stores the latest acked summary for the document.
-    let latestSummaryAck: IAckedSummary;
+    let latestSummaryAck: IAckedSummary | undefined;
 
     let firstContainer: IContainer;
     let firstContainerRuntime: ContainerRuntime;
@@ -83,7 +84,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     /**
      * Loads a summarizer client with the given version (if any) and returns its container runtime.
      */
-    async function loadSummarizer(summaryVersion?: string): Promise<ContainerRuntime> {
+    async function loadSummarizer(summaryVersion?: string) {
         const requestHeader = {
             [LoaderHeader.cache]: false,
             [LoaderHeader.clientDetails]: {
@@ -96,11 +97,21 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             [LoaderHeader.version]: summaryVersion,
         };
         const summarizer = await provider.loadContainer(runtimeFactory, undefined /* options */, requestHeader);
+
+        // Fail fast if we receive a nack as something must have gone wrong.
+        const summaryCollection = new SummaryCollection(summarizer.deltaManager, logger);
+        summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
+            throw new Error(`Received Nack for sequence#: ${op.contents.summaryProposal.summarySequenceNumber}`);
+        });
+
         const defaultDataStore = await requestFluidObject<TestDataObject>(summarizer, "default");
-        return defaultDataStore._context.containerRuntime as ContainerRuntime;
+        return {
+            containerRuntime: defaultDataStore._context.containerRuntime as ContainerRuntime,
+            summaryCollection,
+        };
     }
 
-    /**
+     /**
      * Callback that will be called by the document storage service whenever a summary is uploaded by the client.
      * Update the summary context to include the summary proposal and ack handle as per the latest ack for the
      * document.
@@ -127,12 +138,13 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     async function submitSummary(containerRuntime: ContainerRuntime): Promise<number> {
         await provider.ensureSynchronized();
         const summarySequenceNumber = containerRuntime.deltaManager.lastSequenceNumber;
-        await containerRuntime.submitSummary({
+        const result = await containerRuntime.submitSummary({
             fullTree: true,
             refreshLatestAck: false,
             summaryLogger: logger,
             cancellationToken: neverCancelledSummaryToken,
         });
+        assert.strictEqual(result.stage, "submit", "The summary was not submitted");
         return summarySequenceNumber;
     }
 
@@ -153,13 +165,12 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * If the data store is referenced, the ureferenced timestamp is undefined.
      */
     async function getDataStoreUnreferencedTimestamp(
-        containerRuntime: ContainerRuntime,
-        summaryCollection: SummaryCollection,
+        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
         dataStoreId: string,
     ): Promise<number | undefined> {
-        const summarySequenceNumber = await submitSummary(containerRuntime);
-        latestSummaryAck = await summaryCollection.waitSummaryAck(summarySequenceNumber);
-        await refreshSummaryAck(containerRuntime, latestSummaryAck);
+        const summarySequenceNumber = await submitSummary(summarizerClient.containerRuntime);
+        latestSummaryAck = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
+        await refreshSummaryAck(summarizerClient.containerRuntime, latestSummaryAck);
 
         assert(
             latestSummaryContext && latestSummaryContext.referenceSequenceNumber >= summarySequenceNumber,
@@ -202,66 +213,65 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     });
 
     afterEach(() => {
+        latestSummaryAck = undefined;
         latestSummaryContext = undefined;
         latestUploadedSummary = undefined;
     });
 
     it("adds / removes unreferenced timestamp from data stores correctly", async () => {
-        const summarizer = await loadSummarizer();
-        const summaryCollection = new SummaryCollection(summarizer.deltaManager, logger);
+        const summarizerClient = await loadSummarizer();
 
         // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
         const newDataStore = await dataObjectFactory.createInstance(firstContainerRuntime);
         firstDataStore._root.set("newDataStore", newDataStore.handle);
 
         // Validate that the new data store does not have unreferenced timestamp.
-        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizer, summaryCollection, newDataStore.id);
+        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
         assert(unrefTimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
 
         // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
         // unreferenced timestamp.
         firstDataStore._root.delete("newDataStore");
-        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizer, summaryCollection, newDataStore.id);
+        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
         assert(unrefTimestamp2 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
 
         // Perform some operations and generate another summary. Validate that the data store still has the same
         // unreferenced timestamp.
         firstDataStore._root.set("key", "value");
-        const unrefTimestamp3 = await getDataStoreUnreferencedTimestamp(summarizer, summaryCollection, newDataStore.id);
+        const unrefTimestamp3 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
         assert(unrefTimestamp3 !== undefined, `data store should still have unreferenced timestamp`);
         assert.strictEqual(unrefTimestamp2, unrefTimestamp3, "unreferenced timestamp should not have changed");
 
         // Mark the data store as referenced again and validate that the unreferenced timestamp is removed.
         firstDataStore._root.set("newDataStore", newDataStore.handle);
         // Validate that the data store does not have unreferenced timestamp after being referenced.
-        const unrefTimestamp4 = await getDataStoreUnreferencedTimestamp(summarizer, summaryCollection, newDataStore.id);
+        const unrefTimestamp4 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
         assert(unrefTimestamp4 === undefined, `data store should not have unreferenced timestamp anymore`);
     });
 
     it("uses unreferenced timestamp from previous summary correctly", async () => {
-        const summarizer = await loadSummarizer();
-        const summaryCollection = new SummaryCollection(summarizer.deltaManager, logger);
+        const summarizerClient1 = await loadSummarizer();
 
         // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
         const newDataStore = await dataObjectFactory.createInstance(firstContainerRuntime);
         firstDataStore._root.set("newDataStore", newDataStore.handle);
 
         // Validate that the new data store does not have unreferenced timestamp.
-        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizer, summaryCollection, newDataStore.id);
+        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient1, newDataStore.id);
         assert(unrefTimestamp1 === undefined, `new data store should not have unreferenced timestamp`);
 
         // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
         // unreferenced timestamp.
         firstDataStore._root.delete("newDataStore");
-        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizer, summaryCollection, newDataStore.id);
+        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient1, newDataStore.id);
         assert(unrefTimestamp2 !== undefined, `new data store should have unreferenced timestamp`);
 
         // Load a new summarizer from the last summary and validate that the unreferenced timestamp from the summary is
         // used for the data store.
-        const newSummarizer = await loadSummarizer(latestSummaryAck.summaryAck.contents.handle);
-        const newSummaryCollection = new SummaryCollection(newSummarizer.deltaManager, logger);
+        assert(latestSummaryAck !== undefined, "Summary ack isn't available as expected");
+        const summarizerClient2 = await loadSummarizer(latestSummaryAck.summaryAck.contents.handle);
         const unrefTimestamp3 =
-            await getDataStoreUnreferencedTimestamp(newSummarizer, newSummaryCollection, newDataStore.id);
+            await getDataStoreUnreferencedTimestamp(summarizerClient2, newDataStore.id);
         assert(unrefTimestamp3 !== undefined, `new data store should still have unreferenced timestamp`);
         assert.strictEqual(unrefTimestamp2, unrefTimestamp3, "The unreferenced timestamp should not have changed");
     });

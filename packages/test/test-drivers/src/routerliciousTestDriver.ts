@@ -82,6 +82,7 @@ export class RouterliciousTestDriver implements ITestDriver {
             tenantSecret,
             serviceEndpoint,
             api,
+            config?.r11sEndpointName,
         );
     }
 
@@ -92,6 +93,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
         private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
+        public readonly endpointName?: string,
     ) {
     }
 

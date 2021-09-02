@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { SharedMap, ContainerSchema } from "fluid-framework";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map";
 import { createAzureClient } from "./AzureClientFactory";
 
 describe("AzureClient", () => {
