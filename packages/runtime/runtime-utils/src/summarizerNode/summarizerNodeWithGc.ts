@@ -4,9 +4,9 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { cloneGCData } from "@fluidframework/garbage-collector";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
     CreateChildSummarizerNodeParam,
     gcBlobKey,
@@ -26,6 +26,8 @@ import {
     ISummarizerNodeRootContract,
     SummaryNode,
 } from "./summarizerNodeUtils";
+
+const defaultmaxUnreferencedTime = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
@@ -62,7 +64,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     private referenceUsedRoutes: string[] | undefined;
 
     // The GC details of this node in the initial summary.
-    private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
+    private gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails> | undefined;
 
     private gcData: IGarbageCollectionData | undefined;
 
@@ -74,14 +76,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // If this node is marked as unreferenced, the time when it marked as such.
     private unreferencedTimestamp: number | undefined;
 
-    // Returns the GC details that my be added to this node's summary.
-    public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
-        return {
-            gcData: this.gcData,
-            usedRoutes: this.usedRoutes,
-            unrefTimestamp: this.unreferencedTimestamp,
-        };
-    }
+    // The max amount of time this node can be unreferenced before it is eligible for deletion.
+    private readonly maxUnreferencedTime: number;
+
+    // The timer that runs when the node is marked unreferenced.
+    private readonly unreferencedTimer: Timer;
+
+    // Tracks whether this node has expired after being unreferenced for maxUnreferencedTime.
+    private expired: boolean = false;
 
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
@@ -113,6 +115,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         );
 
         this.gcDisabled = config.gcDisabled === true;
+        this.maxUnreferencedTime = config.maxUnreferencedTime ?? defaultmaxUnreferencedTime;
 
         this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
             // back-compat: 0.32. getInitialGCSummaryDetailsFn() returns undefined in 0.31. Remove undefined check
@@ -120,6 +123,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             const gcSummaryDetails = await getInitialGCSummaryDetailsFn?.();
             return gcSummaryDetails ?? { usedRoutes: [] };
         });
+
+        this.unreferencedTimer = new Timer(this.maxUnreferencedTime, () => {
+            this.expired = true;
+        });
+    }
+
+    // Returns the GC details that my be added to this node's summary.
+    public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
+        return {
+            gcData: this.gcData,
+            usedRoutes: this.usedRoutes,
+            unrefTimestamp: this.unreferencedTimestamp,
+        };
     }
 
     /**
@@ -129,24 +145,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
      * - gcData: The garbage collection data of this node that is required for running GC.
      */
     private async loadInitialGCSummaryDetails() {
-        // If referenceUsedRoutes exists, don't do anything because we have already initialized.
-        if (this.referenceUsedRoutes !== undefined) {
+        if (this.gcDetailsInInitialSummaryP === undefined) {
             return;
         }
 
-        const gcDetailsInInitialSummary = await this.gcDetailsInInitialSummaryP;
+        const gcDetailsInInitialSummaryP = this.gcDetailsInInitialSummaryP;
+        this.gcDetailsInInitialSummaryP = undefined;
 
-        // Possible re-entrancy. It's possible that referenceUsedRoutes was set while we were waiting to get the
-        // initial GC details.
-        if (this.referenceUsedRoutes !== undefined) {
-            return;
-        }
-
-        this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
+        const gcDetailsInInitialSummary = await gcDetailsInInitialSummaryP;
         // If the GC details has GC data, initialize our GC data from it.
         if (gcDetailsInInitialSummary.gcData !== undefined) {
             this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
+        this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
         this.unreferencedTimestamp = gcDetailsInInitialSummary.unrefTimestamp;
     }
 
@@ -326,6 +337,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 ...config,
                 // Propagate our gcDisabled state to the child if its not explicity specified in child's config.
                 gcDisabled: config.gcDisabled ?? this.gcDisabled,
+                maxUnreferencedTime: config.maxUnreferencedTime ?? this.maxUnreferencedTime,
             },
             createDetails.changeSequenceNumber,
             createDetails.latestSummary,
@@ -369,19 +381,74 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // are in the same order.
         this.usedRoutes = usedRoutes.sort();
 
-        // If this node is referenced, clear unreferencedTimestamp, if any.
-        // If this node is not referenced and unreferencedTimestamp is undefined, it just became unreferenced. Update
-        // unreferencedTimestamp to the gcTimestamp.
-        if (this.isReferenced()) {
-            this.unreferencedTimestamp = undefined;
-        } else if (this.unreferencedTimestamp === undefined) {
-            this.unreferencedTimestamp = gcTimestamp;
-        }
-
         // If GC is not disabled and we are tracking a summary, update the work-in-progress used routes so that it can
         // be tracked for this summary.
         if (!this.gcDisabled && this.isTrackingInProgress()) {
             this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
+        }
+
+        if (this.isReferenced()) {
+            // If this node has been unreferenced for longer than maxUnreferencedTime and is being referenced,
+            // log an error as this may mean the maxUnreferencedTime is not long enough.
+            this.logErrorIfExpired("expiredObjectRevived", gcTimestamp);
+
+            // Clear unreferenced / expired state, if any.
+            this.expired = false;
+            this.unreferencedTimestamp = undefined;
+            this.unreferencedTimer.clear();
+            return;
+        }
+
+        // This node is unreferenced. We need to check if this node has expired or if we need to start the unreferenced
+        // timer which would mark the node as expired.
+
+        // If there is no timestamp when GC was run, we don't have enough information to determine whether this content
+        // should be expired.
+        if (gcTimestamp === undefined) {
+            return;
+        }
+
+        // If unreferencedTimestamp is not present, this node just became unreferenced. Update unreferencedTimestamp and
+        // start the unreferenced timer.
+        // Note that it's possible this node has been unreferenced before but the unreferencedTimestamp was not added.
+        // For example, older versions where this concept did not exist or if gcTimestamp wasn't available. In such
+        // cases, we track them as if the content just became unreferenced.
+        if (this.unreferencedTimestamp === undefined) {
+            this.unreferencedTimestamp = gcTimestamp;
+            this.unreferencedTimer.start();
+            return;
+        }
+
+        // If we are here, this node was unreferenced earlier.
+
+        // If it has already expired or has an unreferenced timer running, there is no more work to be done.
+        if (this.expired || this.unreferencedTimer.hasTimer) {
+            return;
+        }
+
+        // If it has been unreferenced longer than maxUnreferencedTime, mark it as expired. Otherwise, start the
+        // unreferenced timer for the duration left for it to reach maxUnreferencedTime.
+        const currentUnreferencedTime = gcTimestamp - this.unreferencedTimestamp;
+        if (currentUnreferencedTime >= this.maxUnreferencedTime) {
+            this.expired = true;
+        } else {
+            this.unreferencedTimer.start(this.maxUnreferencedTime - currentUnreferencedTime);
+        }
+    }
+
+    public recordChange(op: ISequencedDocumentMessage): void {
+        this.logErrorIfExpired("expiredObjectChanged");
+        super.recordChange(op);
+    }
+
+    private logErrorIfExpired(eventName: string, currentTimestamp?: number) {
+        if (this.expired) {
+            assert(this.unreferencedTimestamp !== undefined, "Node should not expire without unreferencedTimestamp");
+            this.defaultLogger.sendErrorEvent({
+                eventName,
+                unreferencedTime: currentTimestamp ?? Date.now() - this.unreferencedTimestamp,
+                maxUnreferencedTime: this.maxUnreferencedTime,
+            });
         }
     }
 

@@ -296,6 +296,7 @@ export interface ISummarizerNodeConfig {
 // @public (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
+    readonly maxUnreferencedTime?: number;
 }
 
 // @public

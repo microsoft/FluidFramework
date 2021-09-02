@@ -62,6 +62,8 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
      * This is propagated to all child nodes.
      */
     readonly gcDisabled?: boolean;
+    /** The max time for which a node can be unreferenced before it is eligible for deletion. */
+    readonly maxUnreferencedTime?: number;
 }
 
 export enum CreateSummarizerNodeSource {
