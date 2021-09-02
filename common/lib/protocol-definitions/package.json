@@ -54,5 +54,47 @@
     "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
   },
-  "typeValidationVersion": "0.1025.0"
+  "typeValidation": {
+    "version": "0.1025.0",
+    "broken": {
+      "ICreateBlobResponse": {
+        "backCompat": false
+      },
+      "IQuorum": {
+        "forwardCompat": false
+      },
+      "ISummaryAttachment": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ISummaryBlob": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ISummaryHandle": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "ISummaryTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "SummaryObject": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "SummaryTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "SummaryType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "SummaryTypeNoHandle": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
+  }
 }

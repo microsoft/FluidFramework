@@ -27,22 +27,51 @@ import * as current from "../index";
         for(const type of currentTypeData.typeData){
             const typeString = type.name.replace(".","");
             // no need to test new types
-            if(!type.internal && oldTypes.some((t)=>t.name.replace(".","") == typeString)){
+            if(oldTypes.some((t)=>t.name.replace(".","") == typeString)){
                 const oldType = `old.${type.name}`
                 const currentType = `current.${type.name}`
 
-
-                const getOldSig =`get_old_${typeString}`;
-                const setOldSig =`set_old_${typeString}`;
-                testString.push(`declare function ${getOldSig}(): ${oldType};`);
-                const testGet = [`const current${typeString}: ${currentType} =`,`${getOldSig}();`];
-                testString.push(`${testGet[0]}${ testGet[0].length + testGet[1].length > 125 ?"\n    " : " "}${testGet[1]}`)
-                testString.push()
-                testString.push(`declare function ${setOldSig}(oldVal: ${oldType});`);
-                testString.push(`${setOldSig}(current${typeString});`)
+                testString.push(`/*`)
+                testString.push(`* validate forward compat by using old type in place of current type`);
+                testString.push(`* to disable, add in package.json under typeValidation.broken:`);
+                testString.push(`* "${type.name}": {"forwardCompat": false}`);
+                const forwarCompatCase = buildTestCase(oldType, currentType);
+                if(currentTypeData.packageDetails.broken[type.name]?.forwardCompat !== false){
+                    testString.push("*/");
+                    testString.push(... forwarCompatCase);
+                }else{
+                    testString.push(... forwarCompatCase);
+                    testString.push("*/");
+                }
                 testString.push("");
+
+                testString.push(`/*`)
+                testString.push(`* validate back compat by using current type in place of old type`);
+                testString.push(`* to disable, add in package.json under typeValidation.broken:`);
+                testString.push(`* "${type.name}": {"backCompat": false}`);
+                const backCompatCase = buildTestCase(currentType, oldType);
+                if(currentTypeData.packageDetails.broken[type.name]?.backCompat !== false){
+                    testString.push("*/");
+                    testString.push(... backCompatCase)
+                }else{
+                    testString.push(... backCompatCase);
+                    testString.push("*/");
+                }
+                testString.push("");
+
             }
         }
         fs.writeFileSync(`${packageDir}/src/test/validate${oldDetails.packageDetails.version}.ts`, testString.join("\n"));
     }
+}
+
+
+function buildTestCase(getAsType:string, useType:string){
+    const getSig =`get_${getAsType.replace(".","_")}`;
+    const useSig =`use_${useType.replace(".","_")}`;
+    const testString: string[] =[];
+    testString.push(`declare function ${getSig}(): ${getAsType};`);
+    testString.push(`declare function ${useSig}(use: ${useType});`);
+    testString.push(`${useSig}(${getSig}());`)
+    return testString
 }
