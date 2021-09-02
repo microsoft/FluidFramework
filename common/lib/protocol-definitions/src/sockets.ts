@@ -58,7 +58,7 @@ export interface IConnect {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
-     supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, any>;
 }
 
 /**
@@ -144,5 +144,10 @@ export interface IConnected {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
-     supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, any>;
+
+    /**
+     * The time the client connected
+     */
+    timestamp?: number;
 }

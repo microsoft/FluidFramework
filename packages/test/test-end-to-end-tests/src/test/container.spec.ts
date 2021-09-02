@@ -33,7 +33,6 @@ import {
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     getDataStoreFactory,
     ITestDataObject,
@@ -59,7 +58,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
     before(async ()=>{
         const loader = new Loader({
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            logger: provider.logger,
             urlResolver: provider.urlResolver,
             documentServiceFactory:
                 provider.documentServiceFactory,
@@ -75,7 +74,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            logger: provider.logger,
             urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
                 props?.documentServiceFactory ?? provider.documentServiceFactory,

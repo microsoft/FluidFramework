@@ -24,7 +24,6 @@ import {
     createMap,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { isContextExisting } from "@fluidframework/runtime-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
@@ -176,23 +175,22 @@ class ProseMirrorFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const backCompatExisting = isContextExisting(context, existing);
         const runtime = new runtimeClass(
             context,
             new Map([
                 SharedMap.getFactory(),
                 SharedString.getFactory(),
             ].map((factory) => [factory.type, factory])),
-            backCompatExisting,
+            existing,
         );
-        const routerP = ProseMirror.load(runtime, context, backCompatExisting);
+        const routerP = ProseMirror.load(runtime, context, existing);
 
         return runtime;
     }

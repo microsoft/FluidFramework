@@ -15,6 +15,7 @@ export class DocumentContext extends EventEmitter implements IContext {
     private tailInternal: IQueuedMessage;
 
     private closed = false;
+    private contextError = undefined;
 
     constructor(
         head: IQueuedMessage,
@@ -75,6 +76,7 @@ export class DocumentContext extends EventEmitter implements IContext {
     }
 
     public error(error: any, errorData: IContextErrorData) {
+        this.contextError = error;
         this.emit("error", error, errorData);
     }
 
@@ -82,5 +84,9 @@ export class DocumentContext extends EventEmitter implements IContext {
         this.closed = true;
 
         this.removeAllListeners();
+    }
+
+    public getContextError() {
+        return this.contextError;
     }
 }

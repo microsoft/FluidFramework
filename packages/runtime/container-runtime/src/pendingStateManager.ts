@@ -171,18 +171,19 @@ export class PendingStateManager implements IDisposable {
      * @param flushMode - The flushMode that was updated.
      */
     public onFlushModeUpdated(flushMode: FlushMode) {
-        if (flushMode === FlushMode.Automatic) {
+        if (flushMode === FlushMode.Immediate) {
             const previousState = this.pendingStates.peekBack();
 
-            // We don't have to track a previous "flush" state because FlushMode.Automatic flushes the messages. So,
-            // just tracking this FlushMode.Automatic is enough.
+            // We don't have to track a previous "flush" state because FlushMode.Immediate flushes the messages. So,
+            // just tracking this FlushMode.Immediate is enough.
             if (previousState?.type === "flush") {
                 this.pendingStates.removeBack();
             }
 
-            // If no messages were sent between FlushMode.Manual and FlushMode.Automatic, then we do not have to track
-            // both these states. Remove FlushMode.Manual from the pending queue and return.
-            if (previousState?.type === "flushMode" && previousState.flushMode === FlushMode.Manual) {
+            // If no messages were sent between FlushMode.TurnBased and FlushMode.Immediate,
+            // then we do not have to track both these states.
+            // Remove FlushMode.TurnBased from the pending queue and return.
+            if (previousState?.type === "flushMode" && previousState.flushMode === FlushMode.TurnBased) {
                 this.pendingStates.removeBack();
                 return;
             }
@@ -199,9 +200,9 @@ export class PendingStateManager implements IDisposable {
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
      */
     public onFlush() {
-        // If the FlushMode is Automatic, we should not track this flush call as it is only applicable when FlushMode
-        // is Manual.
-        if (this.containerRuntime.flushMode === FlushMode.Automatic) {
+        // If the FlushMode is Immediate, we should not track this flush call as it is only applicable when FlushMode
+        // is TurnBased.
+        if (this.containerRuntime.flushMode === FlushMode.Immediate) {
             return;
         }
 
@@ -341,7 +342,7 @@ export class PendingStateManager implements IDisposable {
         // If the pending state is of type "flushMode", it must be Manual since Automatic flush mode is processed
         // after a message is processed and not before.
         if (pendingState.type === "flushMode") {
-            assert(pendingState.flushMode === FlushMode.Manual,
+            assert(pendingState.flushMode === FlushMode.TurnBased,
                 0x16a /* "Flush mode should be manual when processing batch begin" */);
         }
 
@@ -363,13 +364,13 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        // If the next pending state is of type "flushMode", it must be Automatic and if so, we need to remove it from
+        // If the next pending state is of type "flushMode", it must be Immediate and if so, we need to remove it from
         // the queue.
         // Note that we do not remove the type "flush" from the queue because it indicates the end of one batch and the
         // beginning of a new one. So, it will removed when the next batch begin is processed.
         if (nextPendingState.type === "flushMode") {
-            assert(nextPendingState.flushMode === FlushMode.Automatic,
-                0x16c /* "Flush mode is set to Manual in the middle of processing a batch" */);
+            assert(nextPendingState.flushMode === FlushMode.Immediate,
+                0x16c /* "Flush mode is set to TurnBased in the middle of processing a batch" */);
             this.pendingStates.shift();
         }
 

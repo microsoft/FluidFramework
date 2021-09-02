@@ -36,7 +36,7 @@
     "test:realsvc": "npm run test:realsvc:tinylicious",
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
     "test:realsvc:run": "mocha dist/test --no-timeouts",
-    "test:realsvc:tinylicious": "cross-env fluid__test__driver=tinylicious start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
+    "test:realsvc:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "tsc": "tsc",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
@@ -108,6 +108,7 @@
     "nyc": "^15.0.0",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
+    "tinylicious": "^0.4.34614",
     "typescript": "~4.1.3"
   }
 }
