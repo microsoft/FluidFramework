@@ -9,7 +9,7 @@ import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
     LoadableObjectClass,
-    LoadableObjectRecord,
+    LoadableObjectClassRecord,
     LoadableObjectInstanceTypeRecord,
 } from "./types";
 import { RootDataObject } from "./rootDataObject";
