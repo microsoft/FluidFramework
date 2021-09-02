@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IMember,

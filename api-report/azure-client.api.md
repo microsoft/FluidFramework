@@ -7,14 +7,13 @@
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IMember } from 'fluid-framework';
-import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
-import { IServiceAudience } from 'fluid-framework';
+import { IMember } from '@fluidframework/fluid-static';
+import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { ServiceAudience } from 'fluid-framework';
+import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
@@ -74,13 +73,9 @@ export interface AzureMember<T = any> extends IMember {
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
-export { InsecureTokenProvider }
-
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
-
-export { ITokenProvider }
 
 
 // (No @packageDocumentation comment for this package)
