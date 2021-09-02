@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { SharedMap, ContainerSchema } from "fluid-framework";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map";
 import { createAzureClient } from "./AzureClientFactory";
 
 describe("AzureClient", () => {
     const client = createAzureClient();
     const schema: ContainerSchema = {
-        name: "azure-client-test",
         initialObjects: {
             map1: SharedMap,
         },
     };
 
-    it("can create new FRS container successfully", async () => {
+    it("can create new Azure Fluid Relay container successfully", async () => {
         const resources = client.createContainer(schema);
 
         await assert.doesNotReject(
             resources,
             () => true,
-            "container cannot be created in FRS",
+            "container cannot be created in Azure Fluid Relay",
         );
 
         const { container } = await resources;
@@ -53,7 +53,7 @@ describe("AzureClient", () => {
         );
     });
 
-    it("can retrieve existing FRS container successfully", async () => {
+    it("can retrieve existing Azure Fluid Relay container successfully", async () => {
         const { container: newContainer } = await client.createContainer(schema);
         const containerId = await newContainer.attach();
 
@@ -61,7 +61,7 @@ describe("AzureClient", () => {
         await assert.doesNotReject(
             resources,
             () => true,
-            "container cannot be retrieved from FRS",
+            "container cannot be retrieved from Azure Fluid Relay",
         );
 
         const { container } = await resources;

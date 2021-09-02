@@ -119,7 +119,6 @@ export class SummarizerClientElection
                 // If there are no eligible clients, just wait until a client joins
                 // and will be auto-elected.
                 this.clientElection.resetElectedClient(sequenceNumber);
-                return;
             }
             // Election can trigger a change in SummaryManager state.
             this.emit("electedSummarizerChanged");

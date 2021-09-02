@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedMap, SharedDirectory, ContainerSchema } from "fluid-framework";
 import { DiceRoller } from "@fluid-example/diceroller";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import {
     TinyliciousClient,
     TinyliciousConnectionConfig,
@@ -15,7 +16,6 @@ import {
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
     const schema: ContainerSchema = {
-        name: "tinylicious-client-test",
         initialObjects: {
             map1: SharedMap,
         },
@@ -184,7 +184,6 @@ describe("TinyliciousClient", () => {
      */
     it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
         const dynamicSchema: ContainerSchema = {
-            name: "dynamic-schema-test",
             initialObjects: {
                 map1: SharedMap,
             },
@@ -215,7 +214,6 @@ describe("TinyliciousClient", () => {
      */
     it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
         const dynamicSchema: ContainerSchema = {
-            name: "dynamic-schema-test",
             initialObjects: {
                 map1: SharedMap,
             },

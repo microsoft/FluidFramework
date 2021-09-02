@@ -27,7 +27,6 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
-    name: string;
 }
 
 // @public
@@ -49,10 +48,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     attach(): Promise<string>;
     // (undocumented)
     get attachState(): AttachState;
-    // @deprecated (undocumented)
-    get audience(): IAudience;
-    // @deprecated (undocumented)
-    get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)

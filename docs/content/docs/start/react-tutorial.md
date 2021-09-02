@@ -13,7 +13,7 @@ The following image shows the same four clients one second after the **click** b
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview](../overview.md) and that you have completed the [QuickStart](./quick-start.md). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
 
 {{< /callout >}}
 
@@ -32,7 +32,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     |Library |Description |
     |---|---|
     |fluid&#x2011;experimental/fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
+    |fluidframework/azure&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
     &nbsp;
 
     Run the following command to install the libraries.
@@ -267,20 +267,17 @@ When you make changes to the code the project will automatically rebuild and the
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "data-structures/ink.md" >}}
-[PureDataObject]: {{< relref "apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "apis/aqueduct/puredataobjectfactory.md" >}}
-[SharedCell]: {{< relref "data-structures/cell.md" >}}
-[SharedCounter]: {{< relref "data-structures/counter.md" >}}
-[SharedDirectory]: {{< relref "data-structures/directory.md" >}}
-[SharedMap]: {{< relref "data-structures/map.md" >}}
-[SharedMatrix]: {{< relref "data-structures/matrix.md" >}}
-[SharedNumberSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedObjectSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedString]: {{< relref "data-structures/string.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

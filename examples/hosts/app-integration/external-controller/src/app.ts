@@ -6,9 +6,9 @@ import {
     AzureFunctionTokenProvider,
     AzureClient,
     AzureConnectionConfig,
-    InsecureTokenProvider,
     AzureContainerServices,
 } from "@fluidframework/azure-client";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import {
     FluidContainer,
     SharedMap,
@@ -42,7 +42,7 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure ? {
+const connectionProps: AzureConnectionConfig = useAzure ? {
     tenantId: "",
     tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",
@@ -58,7 +58,6 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
 const containerSchema = {
-    name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
         map1: SharedMap,
@@ -69,9 +68,11 @@ const containerSchema = {
 async function start(): Promise<void> {
     // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
     // and hook to the Telemetry system
-    const consoleLogger: ConsoleLogger = new ConsoleLogger();
-
-    const client = new AzureClient(connectionConfig, consoleLogger);
+    const azureConfig = {
+        connection: connectionProps,
+        logger: new ConsoleLogger(),
+    };
+    const client = new AzureClient(azureConfig);
     let container: FluidContainer;
     let services: AzureContainerServices;
     let id: string;

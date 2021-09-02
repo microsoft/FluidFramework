@@ -7,7 +7,7 @@ editor: tylerbutler
 
 ## Overview
 
-The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of shared objects and APIs to manage the lifecyle of those objects.
+The container is the primary unit of encapsulation in the Fluid Framework. A container is represented by the `FluidContainer` type and consists of a collection of shared objects and APIs to manage the lifecycle of those objects.
 
 This documentation will explain how to create and load containers, the APIs to interact with them, and the overall container lifecycle.
 
@@ -165,20 +165,17 @@ Use the `name` property on the container to help manage multiple containers.
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "data-structures/ink.md" >}}
-[PureDataObject]: {{< relref "apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "apis/aqueduct/puredataobjectfactory.md" >}}
-[SharedCell]: {{< relref "data-structures/cell.md" >}}
-[SharedCounter]: {{< relref "data-structures/counter.md" >}}
-[SharedDirectory]: {{< relref "data-structures/directory.md" >}}
-[SharedMap]: {{< relref "data-structures/map.md" >}}
-[SharedMatrix]: {{< relref "data-structures/matrix.md" >}}
-[SharedNumberSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedObjectSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedSequence]: {{< relref "data-structures/sequences.md" >}}
-[SharedString]: {{< relref "data-structures/string.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

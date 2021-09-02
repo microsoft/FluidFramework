@@ -10,7 +10,7 @@ aliases:
 ---
 
 In this Quick Start you will be getting a dice roller Fluid application up and running first on your computer's
-localhost, then deploy it to an Azure Fluid Relay instance to collaborate with others.
+localhost.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
 bundleName="dice-roller.12142020.js" >}}
@@ -62,42 +62,5 @@ action copy the full URL in the browser, including the ID, into a new window or 
 second client for your dice roller application. With both windows open, click the **Roll** button in either and note
 that the state of the dice changes in both clients.
 
-## Running against the Azure Fluid Relay service
-
-To run against the Azure Fluid Relay service, you'll make a code change to ```app.ts```. The app is configured to use a
-local in-memory service called Tinylicious, which runs on port 7070 by default.
-
-To use an Azure Fluid Relay instance instead, replace the configuration values with your Azure Fluid Relay tenant ID,
-orderer, and storage URLs that were provided as part of the onboarding process. Then pass that configuration object into
-the `AzureClient` constructor:
-
-```typescript
-// This configures the AzureClient to use a remote Azure Fluid Relay Service instance.
-const config: AzureConnectionConfig = {
-    tenantId: "myTenantId",
-    // IMPORTANT: this token provider is suitable for testing ONLY. It is NOT secure.
-    tokenProvider: new InsecureTokenProvider("myTenantKey", { id: "UserId", name: "Test User" }),
-    orderer: "https://myOrdererUrl",
-    storage: "https://myStorageUrl",
-}
-
-const client = new AzureClient(config);
-```
-
-### TokenProvider
-
-The Azure Fluid Relay onboarding process provides you with a secret key for your tenant. You can use
-InsecureTokenProvider to generate and sign auth tokens such that the Azure Fluid Relay service service will accept it.
-**To ensure that the secret doesn't get exposed, this should be replaced with another implementation of ITokenProvider
-that fetches the token from a secure, developer-provided backend service prior to releasing to production.**
-
-### Build and run the client only
-
-Now that you've updated the `AzureClient` configuration, now run just the client to test it. You no longer need to run a
-local service, because you're using the remote Azure Fluid Relay service instance!
-
-```bash
-npm run start:client
-```
 
 🥳**Congratulations**🎉 You have successfully taken the first step towards unlocking the world of Fluid collaboration.
