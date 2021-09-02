@@ -31,19 +31,33 @@ import * as current from "../index";
                 const oldType = `old.${type.name}`
                 const currentType = `current.${type.name}`
 
+                testString.push(`/*`)
+                testString.push(`* validate forward compat by using old type in place of current type`);
+                testString.push(`* disable in package.json under typeValidation.broken:`);
+                testString.push(`* "${type.name}": {"forwardCompat": false}`);
+                const forwarCompatCase = buildTestCase(oldType, currentType);
                 if(currentTypeData.packageDetails.broken[type.name]?.forwardCompat !== false){
-                    testString.push(`// validate forward compat by using old type in place of current type`);
-                    testString.push(`// disable in package.json under typeValidation.broken:`);
-                    testString.push(`// "${type.name}": {"forwardCompat": false}`);
-                    testString.push(... buildTestCase(oldType, currentType))
+                    testString.push("*/");
+                    testString.push(... forwarCompatCase);
+                }else{
+                    testString.push(... forwarCompatCase);
+                    testString.push("*/");
                 }
+                testString.push("");
 
+                testString.push(`/*`)
+                testString.push(`* validate back compat by using current type in place of old type`);
+                testString.push(`* disable in package.json under typeValidation.broken:`);
+                testString.push(`* "${type.name}": {"backCompat": false}`);
+                const backCompatCase = buildTestCase(currentType, oldType);
                 if(currentTypeData.packageDetails.broken[type.name]?.backCompat !== false){
-                    testString.push(`// validate back compat by using current type in place of old type`);
-                    testString.push(`// disable in package.json under typeValidation.broken:`);
-                    testString.push(`// "${type.name}": {"backCompat": false}`);
-                    testString.push(... buildTestCase(currentType, oldType))
+                    testString.push("*/");
+                    testString.push(... backCompatCase)
+                }else{
+                    testString.push(... backCompatCase);
+                    testString.push("*/");
                 }
+                testString.push("");
 
             }
         }
@@ -59,6 +73,5 @@ function buildTestCase(getAsType:string, useType:string){
     testString.push(`declare function ${getSig}(): ${getAsType};`);
     testString.push(`declare function ${useSig}(use: ${useType});`);
     testString.push(`${useSig}(${getSig}());`)
-    testString.push("");
     return testString
 }
