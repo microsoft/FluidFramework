@@ -157,6 +157,8 @@ export enum OdspErrorType {
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
     outOfStorageError = "outOfStorageError",
+    // (undocumented)
+    serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
 }
 
