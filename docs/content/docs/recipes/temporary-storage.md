@@ -27,8 +27,10 @@ One of the more challenging aspects of this scenario is knowing the current stat
 
 When the data saving logic runs client-side, it makes sense to have this logic run in the context of a single user, operating on the local data that this user is seeing. If the other clients in the session haven't agreed to stop sending operations, the data is still subject to change after the "saving client" writes the data to the source of truth data store.
 
-Fluid Framework does not contain built-in functionality to limit a client's ability to edit a container. The
-recommendation is that developers create a data structure in the container that clients can use to manage editability of
-the container, probably controlled by user actions in the developer's application.
+Fluid Framework does not contain built-in functionality to limit a client's ability to edit a container. However,
+developers can add this functionality to their containers and manage the editable/non-editable state within the
+container themselves. A consensus-based distributed data structure (DDS) like TaskManager can be used to coordinate
+between clients. When saving needs to occur, one client can change the container to a non-editable state, and once all
+clients confirm, the save operation can continue.
 
 Developers are responsible for managing the writing of data back to the original data store, including the frequency of writes, unlocking the original data store, managing the situation where users don't trigger the write action from the application as expected, etc.
