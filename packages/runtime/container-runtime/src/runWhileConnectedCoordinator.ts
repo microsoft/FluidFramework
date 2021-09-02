@@ -26,7 +26,6 @@ export const neverCancelledSummaryToken: ISummaryCancellationToken = {
  * when disconnected or if stop() is called.
  */
 export class RunWhileConnectedCoordinator implements ICancellableSummarizerController {
-    private everConnected = false;
     private _cancelled = false;
     private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
@@ -64,42 +63,35 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
     }
 
     protected constructor(private readonly runtime: IConnectableRuntime) {
-        // Try to determine if the runtime has ever been connected
-        if (this.runtime.connected) {
-            this.everConnected = true;
-        } else if (this.runtime.disposed) {
-            this.stop("summarizerClientDisconnected");
-        }
-        else {
-            this.runtime.once("connected", () => this.everConnected = true);
-        }
-        // We only listen on disconnected event for clientType === "summarizer" container!
-        // And only do it here - no other place should check it! That way we have only one place
-        // that controls policy and it's easy to change policy in the future if we want to!
-        // We do not listen for "main" (aka interactive) container disconnect here, as it's
-        // responsibility of SummaryManager to decide if that's material or not. There are cases
-        // like "lastSummary", or main client experiencing nacks / disconnects due to hitting limit
-        // of non-summarized ops, where can make determination to continue with summary even if main
-        // client is disconnected.
-        this.runtime.once("disconnected", () => {
-            // Sometimes the initial connection state is raised as disconnected
-            if (!this.everConnected) {
-                return;
-            }
-            this.stop("summarizerClientDisconnected");
-        });
     }
 
     /**
      * Starts and waits for a promise which resolves when connected.
      * The promise will also resolve if stopped either externally or by disconnect.
+     *
+     * We only listen on disconnected event for clientType === "summarizer" container!
+     * And only do it here - no other place should check it! That way we have only one place
+     * that controls policy and it's easy to change policy in the future if we want to!
+     * We do not listen for "main" (aka interactive) container disconnect here, as it's
+     * responsibility of SummaryManager to decide if that's material or not. There are cases
+     * like "lastSummary", or main client experiencing nacks / disconnects due to hitting limit
+     * of non-summarized ops, where can make determination to continue with summary even if main
+     * client is disconnected.
      */
-    public async waitStart() {
-        if (!this.runtime.connected && !this.everConnected) {
+    protected async waitStart() {
+        if (this.runtime.disposed) {
+            this.stop("summarizerClientDisconnected");
+            return;
+        }
+
+        this.runtime.once("dispose", () => this.stop("summarizerClientDisconnected"));
+
+        if (!this.runtime.connected) {
             const waitConnected = new Promise<void>((resolve) =>
                 this.runtime.once("connected", resolve));
-            return Promise.race([waitConnected, this.waitCancelled]);
+            await Promise.race([waitConnected, this.waitCancelled]);
         }
+        this.runtime.once("disconnected", () => this.stop("summarizerClientDisconnected"));
     }
 
     /**

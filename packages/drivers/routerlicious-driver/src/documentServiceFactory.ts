@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import {
     IDocumentService,
@@ -24,6 +23,7 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
+import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -59,7 +59,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         ensureFluidResolvedUrl(resolvedUrl);
         assert(!!createNewSummary, 0x204 /* "create empty file not supported" */);
         assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-        const parsedUrl = parse(resolvedUrl.url);
+        const parsedUrl = parseFluidUrl(resolvedUrl.url);
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
@@ -91,31 +91,23 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 values: quorumValues,
             },
         );
-        /**
-         * Assume documentId is at end of url path.
-         * This is true for Routerlicious' and Tinylicious' documentUrl and deltaStorageUrl.
-         * Routerlicious and Tinylicious do not use documentId in storageUrl nor ordererUrl.
-         * TODO: Ideally we would be able to regenerate the resolvedUrl, rather than patching the current one.
-         */
-        const replaceDocumentIdInPath = (urlPath: string): string =>
-            urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
-        parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname);
+        parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
         const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
         if (!deltaStorageUrl) {
             throw new Error(
                 `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
         }
-        const parsedDeltaStorageUrl = parse(deltaStorageUrl);
-        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname);
+        const parsedDeltaStorageUrl = new URL(deltaStorageUrl);
+        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedDeltaStorageUrl.pathname, documentId);
 
         return this.createDocumentService(
             {
                 ...resolvedUrl,
-                url: parsedUrl.href,
+                url: parsedUrl.toString(),
                 id: documentId,
                 endpoints: {
                     ...resolvedUrl.endpoints,
-                    deltaStorageUrl: parsedDeltaStorageUrl.href,
+                    deltaStorageUrl: parsedDeltaStorageUrl.toString(),
                 },
             },
             logger);
@@ -142,7 +134,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`);
         }
 
-        const parsedUrl = parse(fluidResolvedUrl.url);
+        const parsedUrl = parseFluidUrl(fluidResolvedUrl.url);
         const [, tenantId, documentId] = parsedUrl.pathname.split("/");
         if (!documentId || !tenantId) {
             throw new Error(

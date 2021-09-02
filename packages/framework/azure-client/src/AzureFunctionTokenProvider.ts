@@ -7,7 +7,16 @@ import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-dr
 import axios from "axios";
 import { AzureMember } from "./interfaces";
 
+/**
+ * Token Provider implementation for connecting to an Azure Function endpoint for
+ * Azure Fluid Relay service token resolution.
+ */
 export class AzureFunctionTokenProvider implements ITokenProvider {
+    /**
+     * Creates a new instance using configuration parameters.
+     * @param azFunctionUrl - URL to Azure Function endpoint
+     * @param user - User object
+     */
     constructor(
         private readonly azFunctionUrl: string,
         private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,

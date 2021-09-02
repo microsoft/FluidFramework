@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IMember, IServiceAudience } from "fluid-framework";
+import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
 export interface TinyliciousConnectionConfig {
     port?: number;

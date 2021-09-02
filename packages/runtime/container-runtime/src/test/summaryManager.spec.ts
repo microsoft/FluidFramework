@@ -17,7 +17,9 @@ import {
 } from "../summaryManager";
 import { Summarizer } from "../summarizer";
 import {
-    ISummarizer, ISummarizerEvents,
+    ISummarizer,
+    ISummarizerEvents,
+    SummarizerStopReason,
 } from "../summarizerTypes";
 import { ISummarizerClientElection, ISummarizerClientElectionEvents } from "../summarizerClientElection";
 
@@ -77,7 +79,7 @@ describe("Summary Manager", () => {
         public stop(reason?: string): void {
             this.stopDeferred.resolve(reason);
         }
-        public async run(onBehalfOf: string): Promise<void> {
+        public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
             this.onBehalfOf = onBehalfOf;
             this.state = "running";
             await Promise.all([
@@ -85,6 +87,7 @@ describe("Summary Manager", () => {
                 this.runDeferred.promise,
             ]);
             this.state = "stopped";
+            return "summarizerClientDisconnected";
         }
 
         public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = () => this.notImplemented();

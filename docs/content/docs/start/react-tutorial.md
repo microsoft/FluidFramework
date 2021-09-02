@@ -13,10 +13,7 @@ The following image shows the same four clients one second after the **click** b
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/_index.md" >}}) and that you have completed
-the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/),
-[creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React
-Hooks](https://reactjs.org/docs/hooks-intro.html).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
 
 {{< /callout >}}
 
@@ -35,7 +32,7 @@ Hooks](https://reactjs.org/docs/hooks-intro.html).
     |Library |Description |
     |---|---|
     |fluid&#x2011;experimental/fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluid&#x2011;experimental/frs&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
+    |fluidframework/azure&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
     &nbsp;
 
     Run the following command to install the libraries.

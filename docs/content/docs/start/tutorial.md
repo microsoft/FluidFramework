@@ -106,7 +106,7 @@ Since the models you create will be persisted over time as users load and close 
 
 - `hasInitialized()` runs when clients load the DiceRoller. Use this to hook up our event listeners to respond to data changes made in other clients.
 
-DataObject also provides a `root` **distributed data structure (DDS)**. DDSes are collaborative data structures that you use like local data structures, but as each client modifies the data, all other clients will see the changes. This `root` DDS is a [SharedDirectory][] which stores key/value pairs and works very similarly to a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like `set()` and `get()`. However, it also fires a `"valueChanged"` event so you can observe changes to the data coming in from other users.
+DataObject also provides a `root` **distributed data structure (DDS)**. DDSes are collaborative data structures that you use like local data structures, but as each client modifies the data, all other clients will see the changes. This `root` DDS is a SharedDirectory which stores key/value pairs and works very similarly to a [Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map), providing methods like `set()` and `get()`. However, it also fires a `"valueChanged"` event so you can observe changes to the data coming in from other users.
 
 To instantiate the DataObject, the Fluid Framework needs a corresponding factory. Since you used the DataObject class, you also use the [DataObjectFactory][] which pairs with it. You need to provide it with a unique name ("dice-roller" in this case) and the class constructor. The third and fourth parameters provide additional options that are not used in this example.
 
