@@ -14,7 +14,6 @@ import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
@@ -22,7 +21,7 @@ import {
     RootDataObject,
 } from "@fluidframework/fluid-static";
 import {
-    TinyliciousConnectionConfig,
+    TinyliciousClientProps,
     TinyliciousContainerServices,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
@@ -36,17 +35,13 @@ export class TinyliciousClient {
 
     /**
      * Creates a new client instance using configuration parameters.
-     * @param connectionConfig - Optional. Configuration parameters to override default connection settings.
-     * @param logger - Optional. A logger instance to receive diagnostic messages.
+     * @param props - Properties for initializing a new TinyliciousClient instance
      */
-    constructor(
-        serviceConnectionConfig?: TinyliciousConnectionConfig,
-        private readonly logger?: ITelemetryBaseLogger,
-    ) {
+    constructor(private readonly props?: TinyliciousClientProps) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
-            serviceConnectionConfig?.port,
-            serviceConnectionConfig?.domain,
+            this.props?.connection?.port,
+            this.props?.connection?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             tokenProvider,
@@ -69,7 +64,7 @@ export class TinyliciousClient {
     }
 
     /**
-     * Acesses the existing container given its unique ID in the tinylicious server.
+     * Accesses the existing container given its unique ID in the tinylicious server.
      * @param id - Unique ID of the container.
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
@@ -120,7 +115,7 @@ export class TinyliciousClient {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: this.logger,
+            logger: this.props?.logger,
         });
 
         let container: Container;
