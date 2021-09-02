@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IRequest,
     IResponse,
