@@ -1,0 +1,20 @@
+name: Hugo Broken Link Check
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  broken_link_check_internal:
+    runs-on: ubuntu-latest
+    name: Check from broken internal links
+    steps:
+    - uses: marccampbell/hugo-linkcheck-action@v0.1.3
+      name: Internal link check
+      with:
+        secrets: "${{ secrets.GITHUB_TOKEN }}"
+      env:
+        HUGO_EXCLUSIONS_LIST: "./.github/excluded-links.json"
+        HUGO_CONFIG: "./docs/config.yml"
+        HUGO_ROOT: "./docs"
+        HUGO_CONTENT_ROOT: "./docs/content"
+        HUGO_FINAL_URL: "https://fluidframework.com"
