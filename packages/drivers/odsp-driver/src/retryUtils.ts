@@ -34,9 +34,7 @@ export async function runWithRetry<T>(
                 throw error;
             }
 
-            // SPO itself does number of retries internally before returning 409 to client.
-            // That multiplied to 5 suggests need to reconsider current design, as client spends
-            // too much time / bandwidth doing the same thing without any progress.
+            // Retry for max of 5 times.
             if (retry === 5) {
                 logger.sendErrorEvent({
                     eventName: "ServiceReadonlyErrorTooManyRetries",
