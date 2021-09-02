@@ -92,9 +92,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
-    public async run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
+    public async run(
+        onBehalfOf: string,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
+    {
         try {
-            await this.runCore(onBehalfOf, options);
+            return await this.runCore(onBehalfOf, options);
         } catch (error) {
             this.stop("summarizerException");
             throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
@@ -124,7 +127,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return create404Response(request);
     }
 
-    private async runCore(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
+    private async runCore(
+        onBehalfOf: string,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
+    {
         // Initialize values and first ack (time is not exact)
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
@@ -145,7 +151,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         });
 
         if (runCoordinator.cancelled) {
-            return;
+            return runCoordinator.waitCancelled;
         }
 
         // Summarizing container ID (with clientType === "summarizer")
@@ -215,6 +221,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
         // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
         runCoordinator.stop(stopReason);
+
+        return stopReason;
     }
 
     /**
