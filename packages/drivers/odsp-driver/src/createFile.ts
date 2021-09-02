@@ -39,6 +39,7 @@ import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
+import { runWithRetry } from "./retryUtils";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -99,8 +100,7 @@ export async function createNewEmptyFluidFile(
     epochTracker: EpochTracker,
 ): Promise<string> {
     const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    // add .tmp to filename, the app is responsible for removing this once a summary is posted.
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
+    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}`);
     const initialUrl =
         `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
         }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
@@ -115,14 +115,19 @@ export async function createNewEmptyFluidFile(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                    url,
-                    {
-                        body: undefined,
-                        headers,
-                        method: "PUT",
-                    },
-                    "createFile");
+                const fetchResponse = await runWithRetry(
+                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
+                        url,
+                        {
+                            body: undefined,
+                            headers,
+                            method: "PUT",
+                        },
+                        "createFile",
+                    ),
+                    "createFile",
+                    logger,
+                );
 
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
@@ -164,14 +169,19 @@ export async function createNewFluidFileFromSummary(
                 const { url, headers } = getUrlAndHeadersWithAuth(initialUrl, storageToken);
                 headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                    url,
-                    {
-                        body: JSON.stringify(containerSnapshot),
-                        headers,
-                        method: "POST",
-                    },
-                    "createFile");
+                const fetchResponse = await runWithRetry(
+                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
+                        url,
+                        {
+                            body: JSON.stringify(containerSnapshot),
+                            headers,
+                            method: "POST",
+                        },
+                        "createFile",
+                    ),
+                    "createFile",
+                    logger,
+                );
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {

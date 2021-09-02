@@ -20,12 +20,13 @@ export interface ITestDriver {
     createCreateNewRequest(testId: string): IRequest;
     createDocumentServiceFactory(): IDocumentServiceFactory;
     createUrlResolver(): IUrlResolver;
+    readonly endpointName?: string;
     readonly type: TestDriverTypes;
     readonly version: string;
 }
 
 // @public (undocumented)
-export type TestDriverTypes = "tinylicious" | "routerlicious" | "odsp" | "local";
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 
 // (No @packageDocumentation comment for this package)

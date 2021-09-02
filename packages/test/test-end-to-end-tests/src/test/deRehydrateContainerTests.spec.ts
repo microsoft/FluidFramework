@@ -29,7 +29,6 @@ import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/orde
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { getSnapshotTreeFromSerializedContainer } from "@fluidframework/container-loader/dist/utils";
@@ -122,7 +121,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             urlResolver: provider.urlResolver,
             documentServiceFactory: provider.documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}}),
+            logger: provider.logger,
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;

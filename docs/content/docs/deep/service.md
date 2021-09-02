@@ -3,6 +3,7 @@ title: The Fluid service
 menuPosition: 3
 aliases:
   - "/docs/concepts/service"
+draft: true
 ---
 
 The Fluid Framework contains a service component. A reference implementation of a Fluid service called *Routerlicious* is

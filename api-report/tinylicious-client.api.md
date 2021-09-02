@@ -4,13 +4,13 @@
 
 ```ts
 
-import { ContainerSchema } from 'fluid-framework';
-import { FluidContainer } from 'fluid-framework';
+import { ContainerSchema } from '@fluidframework/fluid-static';
+import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IMember } from 'fluid-framework';
-import { IServiceAudience } from 'fluid-framework';
+import { IMember } from '@fluidframework/fluid-static';
+import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ServiceAudience } from 'fluid-framework';
+import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
@@ -24,8 +24,14 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 // @public
 class TinyliciousClient {
     constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<TinyliciousResources>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<TinyliciousResources>;
+    createContainer(containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: TinyliciousContainerServices;
+    }>;
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: TinyliciousContainerServices;
+    }>;
     }
 
 export { TinyliciousClient }
@@ -49,14 +55,6 @@ export interface TinyliciousContainerServices {
 export interface TinyliciousMember extends IMember {
     // (undocumented)
     userName: string;
-}
-
-// @public (undocumented)
-export interface TinyliciousResources {
-    // (undocumented)
-    containerServices: TinyliciousContainerServices;
-    // (undocumented)
-    fluidContainer: FluidContainer;
 }
 
 

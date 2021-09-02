@@ -2,7 +2,7 @@
 title: Sequences
 menuPosition: 7
 aliases:
-  - "/docs/data-structures/sequences"
+  - "/docs/data-structures/sequence"
 ---
 
 <!-- IMPORTANT: Don't manually edit the auto-generated content below. Instead, edit the source file (look at the path
@@ -262,4 +262,4 @@ within the sequence you should find its segment via `segment = s.getContainingSe
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-[SharedMap]: {{< relref "data-structures/map.md" >}}
+[SharedMap]: {{< relref "map.md" >}}
