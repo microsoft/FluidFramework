@@ -377,13 +377,6 @@ declare function set_old_IQueueMessage(set: old.IQueueMessage);
 declare function get_current_IQueueMessage(): current.IQueueMessage;
 set_old_IQueueMessage(get_current_IQueueMessage());
 
-// validate forward comapt of old type to new type
-// disable in package.json under typeValidation.broken:
-// "IQuorum": {"forwardCompat": false}
-declare function set_current_IQuorum(set: current.IQuorum);
-declare function get_old_IQuorum(): old.IQuorum;
-set_current_IQuorum(get_old_IQuorum());
-
 // validate backward comapt of new type to old type
 // disable in package.json under typeValidation.broken:
 // "IQuorum": {"backCompat": false}
@@ -397,6 +390,13 @@ set_old_IQuorum(get_current_IQuorum());
 declare function set_current_IQuorumEvents(set: current.IQuorumEvents);
 declare function get_old_IQuorumEvents(): old.IQuorumEvents;
 set_current_IQuorumEvents(get_old_IQuorumEvents());
+
+// validate backward comapt of new type to old type
+// disable in package.json under typeValidation.broken:
+// "IQuorumEvents": {"backCompat": false}
+declare function set_old_IQuorumEvents(set: old.IQuorumEvents);
+declare function get_current_IQuorumEvents(): current.IQuorumEvents;
+set_old_IQuorumEvents(get_current_IQuorumEvents());
 
 // validate forward comapt of old type to new type
 // disable in package.json under typeValidation.broken:
