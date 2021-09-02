@@ -33,7 +33,7 @@ import * as current from "../index";
 
                 testString.push(`/*`)
                 testString.push(`* validate forward compat by using old type in place of current type`);
-                testString.push(`* disable in package.json under typeValidation.broken:`);
+                testString.push(`* to disable, add in package.json under typeValidation.broken:`);
                 testString.push(`* "${type.name}": {"forwardCompat": false}`);
                 const forwarCompatCase = buildTestCase(oldType, currentType);
                 if(currentTypeData.packageDetails.broken[type.name]?.forwardCompat !== false){
@@ -47,7 +47,7 @@ import * as current from "../index";
 
                 testString.push(`/*`)
                 testString.push(`* validate back compat by using current type in place of old type`);
-                testString.push(`* disable in package.json under typeValidation.broken:`);
+                testString.push(`* to disable, add in package.json under typeValidation.broken:`);
                 testString.push(`* "${type.name}": {"backCompat": false}`);
                 const backCompatCase = buildTestCase(currentType, oldType);
                 if(currentTypeData.packageDetails.broken[type.name]?.backCompat !== false){
