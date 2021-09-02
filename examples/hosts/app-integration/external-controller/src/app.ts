@@ -42,7 +42,7 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure ? {
+const connectionProps: AzureConnectionConfig = useAzure ? {
     tenantId: "",
     tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",
@@ -68,9 +68,11 @@ const containerSchema = {
 async function start(): Promise<void> {
     // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
     // and hook to the Telemetry system
-    const consoleLogger: ConsoleLogger = new ConsoleLogger();
-
-    const client = new AzureClient(connectionConfig, consoleLogger);
+    const azureConfig = {
+        connection: connectionProps,
+        logger: new ConsoleLogger(),
+    };
+    const client = new AzureClient(azureConfig);
     let container: FluidContainer;
     let services: AzureContainerServices;
     let id: string;

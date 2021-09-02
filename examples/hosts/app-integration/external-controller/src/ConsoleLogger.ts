@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryBaseEvent } from "@fluidframework/azure-client";
 
 // Define a custom ITelemetry Logger. This logger will be passed into TinyliciousClient
 // and gets hooked up to the Tinylicious container telemetry system.
