@@ -277,11 +277,11 @@ export class SummaryGenerator {
                 }
             }
 
-            // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
             if (summaryData.stage !== "submit") {
                 return fail("submitSummaryFailure", summaryData.error, generateTelemetryProps);
             }
 
+            // Log event here on summary success only, as Summarize_cancel duplicates failure logging.
             logger.sendTelemetryEvent({ eventName: "GenerateSummary", ...generateTelemetryProps });
             resultsBuilder.summarySubmitted.resolve({ success: true, data: summaryData });
         } catch (error) {
@@ -354,7 +354,8 @@ export class SummaryGenerator {
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
-                logger.sendTelemetryEvent({ eventName: "SummaryNack", ...generateTelemetryProps }, error);
+                logger.sendTelemetryEvent(
+                    { eventName: "SummaryNack", ...generateTelemetryProps, retryAfterSeconds }, error);
                 assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, "retryAfterSeconds");
                 // This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
                 return fail(
