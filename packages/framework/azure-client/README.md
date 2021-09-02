@@ -31,13 +31,15 @@ Now, with our local service running in the background, we need to connect the ap
 ```typescript
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
-const config: AzureConnectionConfig = {
-    tenantId: "local",
-    tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
-    orderer: "http://localhost:7070",
-    storage: "http://localhost:7070",
+const clientProps = {
+    connection: {
+        tenantId: "local",
+        tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
+        orderer: "http://localhost:7070",
+        storage: "http://localhost:7070",
+    },
 };
-const azureClient = new AzureClient({config});
+const azureClient = new AzureClient(clientProps);
 ```
 
 ### Backed by a Live FRS Instance
@@ -47,16 +49,18 @@ When running against a live FRS instance, we can use the same interface as we do
 ```typescript
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
 
-const config: AzureConnectionConfig = {
-    tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new AzureFunctionTokenProvider(
-        "AZURE-FUNCTION-URL"+"/api/GetFrsToken",
-        { userId: "test-user",userName: "Test User" }
-    ),
-    orderer: "ENTER-ORDERER-URL-HERE",
-    storage: "ENTER-STORAGE-URL-HERE",
+const lientProps = {
+    connection: {
+        tenantId: "YOUR-TENANT-ID-HERE",
+        tokenProvider: new AzureFunctionTokenProvider(
+            "AZURE-FUNCTION-URL"+"/api/GetFrsToken",
+            { userId: "test-user",userName: "Test User" }
+        ),
+        orderer: "ENTER-ORDERER-URL-HERE",
+        storage: "ENTER-STORAGE-URL-HERE",
+    },
 };
-const azureClient = new AzureClient({config});
+const azureClient = new AzureClient(clientProps);
 ```
 
 ## Fluid Containers
@@ -78,7 +82,7 @@ const schema = {
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
-const azureClient = new AzureClient(config);
+const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.createContainer(schema);
 
 // Set any default data on the container's `initialObjects` before attaching
@@ -93,7 +97,7 @@ Using the `AzureClient` object the developer can create and get Fluid containers
 ```typescript
 import { AzureClient } from "@fluidframework/azure-client";
 
-const azureClient = new AzureClient(config);
+const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);
 ```
 
