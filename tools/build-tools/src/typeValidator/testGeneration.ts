@@ -4,8 +4,9 @@
  */
 
 import * as fs from "fs";
+import { TypedNode } from "ts-morph";
 import { PackageDetails } from "./packageJson";
-import { generateTypeDataForProject } from "./typeData";
+import { generateTypeDataForProject, TypeData } from "./typeData";
 
 export function generateTests(packageDetails: PackageDetails, packageDir: string) {
 
@@ -23,13 +24,18 @@ import * as current from "../index";
 `
             ];
         const oldDetails = generateTypeDataForProject(packageDir, oldVersion);
-        const oldTypes = oldDetails.typeData;
+        const oldTypes = new Map<string, TypeData>(oldDetails.typeData.map((v)=>[v.name,v]));
         for(const type of currentTypeData.typeData){
-            const typeString = type.name.replace(".","");
             // no need to test new types
-            if(oldTypes.some((t)=>t.name.replace(".","") == typeString)){
-                const oldType = `old.${type.name}`
-                const currentType = `current.${type.name}`
+            if(oldTypes.has(type.name)){
+                const oldType: TestCaseTypeData = {
+                    prefix: "old",
+                    ... oldTypes.get(type.name)!,
+                }
+                const currentType: TestCaseTypeData = {
+                    prefix: "current",
+                    ... type,
+                }
 
                 testString.push(`/*`)
                 testString.push(`* validate forward compat by using old type in place of current type`);
@@ -61,17 +67,26 @@ import * as current from "../index";
 
             }
         }
-        fs.writeFileSync(`${packageDir}/src/test/validate${oldDetails.packageDetails.version}.ts`, testString.join("\n"));
+        const testPath = `${packageDir}/src/test`
+        if(!fs.existsSync(testPath)){
+            fs.mkdirSync(testPath);
+        }
+
+        fs.writeFileSync(`${testPath}/validate${oldDetails.packageDetails.version}.ts`, testString.join("\n"));
     }
 }
 
 
-function buildTestCase(getAsType:string, useType:string){
-    const getSig =`get_${getAsType.replace(".","_")}`;
-    const useSig =`use_${useType.replace(".","_")}`;
+interface TestCaseTypeData extends TypeData{
+    prefix: "old" | "current"
+}
+
+function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData){
+    const getSig =`get_${getAsType.prefix}_${getAsType.name}`;
+    const useSig =`use_${useType.prefix}_${useType.name}`;
     const testString: string[] =[];
-    testString.push(`declare function ${getSig}(): ${getAsType};`);
-    testString.push(`declare function ${useSig}(use: ${useType});`);
+    testString.push(`declare function ${getSig}(): ${getAsType.prefix}.${getAsType.name}${getAsType.typeParams ?? ""};`);
+    testString.push(`declare function ${useSig}(use: ${useType.prefix}.${useType.name}${useType.typeParams ?? ""});`);
     testString.push(`${useSig}(${getSig}());`)
     return testString
 }

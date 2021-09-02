@@ -53,8 +53,8 @@ export function getPackageDetails(packageDir: string): PackageDetails {
 
     if(pkgJson.version !== pkgJson.typeValidation?.version){
         if(pkgJson.typeValidation !== undefined){
-            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation}`] =
-                `npm:${pkgJson.name}@${pkgJson.typeValidation}`;
+            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
+                `npm:${pkgJson.name}@${pkgJson.typeValidation.version}`;
 
             pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
         }
