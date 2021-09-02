@@ -49,7 +49,7 @@ Dice Roller uses the following distributed data structures:
 
 ## Backed Locally and running with live Azure Fluid Relay service instance
 
-We can connect to both a live Azure Fluid Relay  instance by passing in the tenant ID, orderer and storage, as well as using the tenant ID as "local" for running against Tinylicious for development purpose.
+We can connect to a live Azure Fluid Relay instance by passing in the tenant ID, orderer, and storage, or we can connect to a local Tinylicious server for development purposes by passing in "local" for the tenant ID.
 
 To run the the `AzureClient` against our local Tinylicious instance, we pass the `tenantId` as "local" and make use of
 `InsecureTokenProvider`. For the latter, we pass in two values to its constructor: a key string, which can be anything
@@ -79,5 +79,5 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
 ```
 
 In this way, we can toggle between remote and local mode using the same config format. We make use of
-`AzureFunctionTokenProvider` for running against live Azure Fluid Relay  instance since it is more secured, without exposing the tenant
+`AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
