@@ -146,6 +146,8 @@ export function createOdspNetworkError(
             break;
         case 401:
         case 403:
+            // The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
+            // database on server becomes readonly. The driver retries for such cases with exponential backup logic.
             if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
                 error = new RetryableError(
                     errorMessage,
