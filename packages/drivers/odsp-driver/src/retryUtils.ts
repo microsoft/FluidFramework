@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { Odsp409Error } from "./epochTracker";
@@ -16,18 +16,17 @@ export async function runWithRetry<T>(
     api: () => Promise<T>,
     callName: string,
     logger: ITelemetryLogger,
-    checkRetry?: () => void,
+    checkDisposed?: () => void,
 ): Promise<T> {
     let retryAfter = 1000;
     const start = performance.now();
     for (let retry = 1; ; retry++) {
-        try
-        {
+        if (checkDisposed !== undefined) {
+            checkDisposed();
+        }
+        try {
             return await api();
         } catch (error) {
-            if (checkRetry !== undefined) {
-                checkRetry();
-            }
             const canRetry = canRetryOnError(error);
 
             const coherencyError = error?.[Odsp409Error] === true;
