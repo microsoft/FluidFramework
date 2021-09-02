@@ -27,13 +27,17 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
+let currSeq: number = 1;
+
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
     files?: string[],
     sequenceNumber: number = 0) {
     let lastSeq = sequenceNumber;
+    currSeq = sequenceNumber;
 
+    let seqNumMismatch = false;
     // If we have local save, read ops from there first
     if (files !== undefined) {
         for (let i = 0; i < files.length; i++) {
@@ -42,12 +46,18 @@ async function* loadAllSequencedMessages(
                 console.log(`reading messages${file}.json`);
                 const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
-                assert(messages[0].sequenceNumber === lastSeq + 1,
-                    0x1b9 /* "Unexpected value for sequence number of first message in file" */);
+                seqNumMismatch = messages[0].sequenceNumber !== lastSeq + 1;
+                assert(!seqNumMismatch, 0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 yield messages;
                 lastSeq = messages[messages.length - 1].sequenceNumber;
+                currSeq = lastSeq;
             } catch (e) {
-                console.error(`Error reading / parsing messages from ${file}`);
+                console.error(`Error reading / parsing messages from ${files}`);
+                if (seqNumMismatch) {
+                    console.error("There are deleted ops in the document being requested," +
+                        " please back up the existing messages.json file and delete it from its directory." +
+                        " Then try fetch tool again.");
+                }
                 console.error(e);
                 return;
             }
@@ -84,8 +94,8 @@ async function* loadAllSequencedMessages(
             throw error;
         }
         response = JSON.parse(error.getTelemetryProperties().response);
-        const seq = response.error.firstAvailableDelta;
-        lastSeq = seq - 1;
+        currSeq = response.error.firstAvailableDelta;
+        lastSeq = currSeq - 1;
     }
     const stream = deltaStorage.fetchMessages(
         lastSeq + 1, // inclusive left
@@ -166,11 +176,12 @@ async function* saveOps(
     if (files.length !== 0) {
         index = (files.length - 1);
     }
-    let curr = index * chunk + 1;
+    let curr = index * chunk + currSeq;
 
     let sequencedMessages: ISequencedDocumentMessage[] = [];
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
+        curr = index * chunk + currSeq;
         if (!result.done) {
             let messages = result.value;
             yield messages;

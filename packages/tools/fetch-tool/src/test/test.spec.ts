@@ -9,12 +9,11 @@ import * as fetchArgs from "../fluidFetchArgs";
 import { fluidFetchInit } from "../fluidFetchInit";
 import { fluidFetchMessages } from "../fluidFetchMessages";
 
-// const paramURL = `${hostUrl}?auth=2&action=edit&driver=${driveId}&item=${itemId}&file=${fileName}&siteUrl=${siteUrl}`;
-const paramURL = "https://www.office.com/launch/fluid/content?auth=2&home=1&action=edit&siteUrl=https:%2F%2Fmicrosoft-my.sharepoint-df.com%2Fpersonal%2Fchensi_microsoft_com&drive=b!oawYwRoNW0KS94bXPoujHaqq57rBNC1AqKDH2f6aOeCxkzDDbiAMSI9Znzc7q5A4&item=01QCFOW6WLA2SMCVYDQ5A3S2OM7BUBDCBH&file=https:%2F%2Fmicrosoft-my.sharepoint-df.com%2Fpersonal%2Fchensi_microsoft_com%2FDocuments%2FUntitled.fluid";
+const paramURL = "https://www.office.com/launch/fluid/content?auth=2&siteUrl=https:%2F%2Fmicrosoft-my.sharepoint-df.com%2Fpersonal%2Fanthonm_microsoft_com&drive=b!_XnMGqtB_EyzUvxXY3p7BUP07bmr8R1EjfELBvCmYllNhl5eInKQSZqCPXPSbmqp&item=01TOL2ZGOU43SP4KNMDVHJQDEAIRIN7ERZ&file=https:%2F%2Fmicrosoft-my.sharepoint-df.com%2Fpersonal%2Fanthonm_microsoft_com%2FDocuments%2FFluid%2520Framework%2520Summer%2520Vacation.fluid%3Fweb%3D1";
 const args = {
     saveDir: "ops/",
     paramURL,
-    dumpMessages: true,
+    dumpMessages: false,
 };
 
 describe("fetch tool", () => {
