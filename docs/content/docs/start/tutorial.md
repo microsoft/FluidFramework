@@ -23,7 +23,7 @@ The first two steps can be viewed in the DiceRoller's [app.ts](https://github.co
 
 ## Set up the application
 
-Start by creating a new instance of the Tinylicious client. Tinylicious is the Fluid Framework's local testing server, and a client is responsible for creating and loading containers as well as communicating changes between all of the collaborators.
+Start by creating a new instance of the Tinylicious client. Tinylicious is the Fluid Framework's local testing server, and a client is responsible for creating and loading containers.
 
 The app creates Fluid containers using a schema that defines a set of *initial objects* that will be available in the container. Learn more about initial objects in [Data modeling]({{< relref "data-modeling.md" >}}).
 
@@ -50,11 +50,9 @@ Fluid data is stored within containers, and these containers need to be created 
 
 ### Create a new container
 
-The create path of the application starts with calling `createContainer` and passing in a schema defining which shared objects will be available on the new `container`.
+The creation section of the application starts with calling `createContainer` and passing in a schema defining which shared objects will be available on the new `container`. After a new container is created, default data can be set on the shared objects before the container is attached to the Tinylicious service.
 
-After setting some default values on the `diceMap`, the container is attached by calling the `attach` function. Attaching allows changes to be sent to and from the client, and returns the assigned container id that will be used in the load path.
-
-The app now has an attached container that contains data. The final step to complete the app is to create a view to display the dice to the user.
+The attach call returns the `id` of the container, which the app can later use to load this container. Once attached, any further changes to the shared objects, made by the rendered app, will be communicated to all collaborators.
 
 ```js
 const createNewDice = async () => {
