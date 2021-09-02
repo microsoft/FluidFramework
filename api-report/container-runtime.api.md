@@ -30,7 +30,6 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidRunnable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -307,7 +306,7 @@ export interface IConnectableRuntime {
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
-    once(event: "connected" | "disconnected", listener: () => void): this;
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 // @public
@@ -462,10 +461,10 @@ export interface ISummarizeOptions {
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
@@ -652,7 +651,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];

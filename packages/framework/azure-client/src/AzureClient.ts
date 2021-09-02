@@ -37,7 +37,7 @@ export class AzureClient {
      */
     constructor(private readonly props: AzureClientProps) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            this.props.connectionConfig.tokenProvider,
+            this.props.connection.tokenProvider,
         );
     }
 
@@ -107,10 +107,10 @@ export class AzureClient {
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
         const urlResolver = new AzureUrlResolver(
-            this.props.connectionConfig.tenantId,
-            this.props.connectionConfig.orderer,
-            this.props.connectionConfig.storage,
-            this.props.connectionConfig.tokenProvider,
+            this.props.connection.tenantId,
+            this.props.connection.orderer,
+            this.props.connection.storage,
+            this.props.connection.tokenProvider,
         );
         return new Loader({
             urlResolver,

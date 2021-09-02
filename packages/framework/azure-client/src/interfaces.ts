@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IMember,
     IServiceAudience,
@@ -23,7 +24,7 @@ export interface AzureClientProps {
     /**
      * Configuration for establishing a connection with the Azure Relay Service.
      */
-    readonly connectionConfig: AzureConnectionConfig,
+    readonly connection: AzureConnectionConfig,
     /**
      * Optional. A logger instance to receive diagnostic messages.
      */

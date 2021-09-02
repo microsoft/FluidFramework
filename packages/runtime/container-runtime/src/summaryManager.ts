@@ -189,6 +189,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
         assert(this.summarizer === undefined, "Old summarizer is still working!");
 
+        let reason = "unknown";
+
         this.delayBeforeCreatingSummarizer().then(async (startWithInitialDelay: boolean) => {
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
             // but only if creation was delayed. If it was not, then we want to ensure we always create
@@ -218,7 +220,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const clientId = this.latestClientId!;
 
-            await PerformanceEvent.timedExecAsync(
+            reason = await PerformanceEvent.timedExecAsync(
                 this.logger,
                 { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
                 async () => summarizer.run(clientId, this.summarizerOptions),
@@ -236,6 +238,11 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             this.state = SummaryManagerState.Off;
 
             this.summarizer = undefined;
+
+            this.logger.sendTelemetryEvent({
+                eventName: "EndingSummarizer",
+                reason,
+            });
 
             if (this.getShouldSummarizeState().shouldSummarize) {
                 this.startSummarization();
