@@ -7,10 +7,9 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
-import { Odsp409Error } from "./epochTracker";
 
 /**
- * This method retries only for retriable coherency and service read only errors.
+ * This method retries only for retriable service read only errors.
  */
 export async function runWithRetry<T>(
     api: () => Promise<T>,
@@ -29,10 +28,9 @@ export async function runWithRetry<T>(
         } catch (error) {
             const canRetry = canRetryOnError(error);
 
-            const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
-            // Retry for 409 coherency errors or serviceReadOnly errors.
-            if (!(coherencyError || serviceReadonlyError)) {
+            // Retry for serviceReadOnly errors.
+            if (!serviceReadonlyError) {
                 throw error;
             }
 
@@ -41,7 +39,7 @@ export async function runWithRetry<T>(
             // too much time / bandwidth doing the same thing without any progress.
             if (retry === 5) {
                 logger.sendErrorEvent({
-                    eventName: coherencyError ? "CoherencyErrorTooManyRetries" : "ServiceReadonlyErrorTooManyRetries",
+                    eventName: "ServiceReadonlyErrorTooManyRetries",
                     callName,
                     retry,
                     duration: performance.now() - start, // record total wait time.
