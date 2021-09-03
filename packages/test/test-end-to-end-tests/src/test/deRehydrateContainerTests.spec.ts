@@ -314,14 +314,14 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
         it("Rehydrate container multiple times round trip serialize/deserialize", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();
-            const snapshotTree1 = container.serialize();
-            const container1 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree1);
-
-            const snapshotTree2 = container1.serialize();
-            const container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree2);
+            let container1 = container;
+            for (let i = 0; i < 5; ++i) {
+                const snapshotTree1 = container1.serialize();
+                container1 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree1);
+            }
 
             // Check for default data store
-            const response = await container2.request({ url: "/" });
+            const response = await container1.request({ url: "/" });
             assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
             assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
