@@ -19,54 +19,75 @@ In the below scenarios, `client` represents the service-specific client. See the
 
 ### Container schema
 
-You must define a schema that represents the structure of the data within your container. A schema can include `initialObjects` that are always available and types that can be dynamically created by the container at runtime. The same schema definition must be provided for creation and subsequent loading of the container. For more information on `initialObjects` and dynamic object creation see [Data modeling](./data-modeling.md).
+You must define a schema that represents the structure of the data within your container. A schema can include `initialObjects` that are always available and types that can be dynamically created by the container at runtime. The same schema definition must be provided for creation and subsequent loading of the container. For more information on `initialObjects` and dynamic object creation see
+[Data modeling]({{< relref "data-modeling.md" >}}).
 
 This example schema defines two initial objects, and declares `SharedCell` and `SharedString` as shared object types that can be dynamically created at runtime.
 
-```typescript
-const schema = {
-    name: "example-container",
+```typescript {linenos=inline}
+const containerSchema = {
     initialObjects: {
-        layout: SharedDirectory,
+        layout: SharedMap,
         text: SharedString
     },
     dynamicObjectTypes: [ SharedCell, SharedString ],
-}
+};
 ```
 
 ### Creating a container
 
 Containers are created from the service-specific client's `createContainer` function. You must provide a config that is specific to the service and a schema object that defines the container schema.
 
-```typescript {hl_lines=[10]}
+```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
     },
-}
-const { container, containerServices} =
+};
+
+const { container, containerServices } =
     await client.createContainer(/*service config*/, schema);
-```
 
-### Loading a container
-
-To load the container created in the above section you must provide the service config as well as the exact same schema definition. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
-
-```typescript {hl_lines=[10]}
-const schema = {
-    name: "example-container",
-    initialObjects: {
-        layout: SharedMap,
-    },
-}
-const { container, containerServices} =
-    await client.getContainer(/*service config*/, schema);
+const containerId = await container.attach();
 ```
 
 ### Attaching a container
 
-Once the `createContainer` or `loadContainer` function calls complete, the returned container is *attached* -- that is, it is connected to the Fluid service -- and ready to power collaboration.
+A newly created container is in a *detached* state. This is the point where you can create initial data to populate your
+DDSes if needed. A detached container is not connected to the Fluid service and no data is shared with other clients.
+
+In order to attach the container to a service, call its `attach` function. Once *attached*, the Fluid container is
+connected to the Fluid service and can be loaded by other clients.
+
+```typescript {linenos=inline,hl_lines=[10]}
+const schema = {
+    initialObjects: {
+        layout: SharedMap,
+    },
+};
+
+const { container, containerServices } =
+    await client.createContainer(/*service config*/, schema);
+
+const containerId = await container.attach();
+```
+
+### Loading a container
+
+To load a container you must provide the service config as well as the exact same schema definition. The same container
+schema is required on all subsequent loads or the container will not be loaded correctly.
+
+Note that when loading an existing container, the container is already attached.
+
+```typescript {linenos=inline}
+const schema = {
+    initialObjects: {
+        layout: SharedMap,
+    },
+};
+const { container, containerServices } =
+    await client.getContainer(/*container id*/, schema);
+```
 
 ### Deleting a container
 
@@ -78,7 +99,7 @@ Deleting a container is a service-specific feature, so you should refer to the d
 
 The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
 
-```typescript
+```typescript {linenos=inline}
 const connected = container.connected();
 
 container.on("disconnected", () => {
@@ -96,7 +117,7 @@ container.on("connected", () => {
 
 The container object may be disposed to remove any server connections and clean up registered events. Once a container is disposed, you must call `getContainer` again if you want to re-load it.
 
-```typescript
+```typescript {linenos=inline}
 container.dispose();
 
 const disposed = container.disposed();
@@ -110,7 +131,7 @@ container.on("disposed", () => {
 
 `initialObjects` are shared objects that you define in a container's schema and exist for the lifetime of the container. These shared objects are exposed via the `initialObjects` property on the container.
 
-```typescript
+```typescript {linenos=inline}
 const schema = {
     name: "example-container",
     initialObjects: {
