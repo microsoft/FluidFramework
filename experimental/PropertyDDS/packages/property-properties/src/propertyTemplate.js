@@ -386,7 +386,7 @@ PropertyTemplate.extractDependencies = function (template) {
                 }
             }
 
-            // Search for typeid hidden in typedValue [LYNXDEV-6692]
+            // Search for typeid hidden in typedValue
             // the context could be inherited and therefore missing, so we have to try them all.
             if (constant.typedValue) {
                 // for arrays
