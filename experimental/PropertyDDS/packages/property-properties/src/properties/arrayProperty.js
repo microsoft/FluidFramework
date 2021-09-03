@@ -1481,7 +1481,7 @@ ArrayProperty.prototype._getChangesetForCustomTypeArray = function (in_basePrope
                 for (var j = 0; j < currentInsert[1].length; ++j) {
                     // TODO: we don't use the data from the changeset anymore, since we directly
                     // TODO: read the data from the array now - remove the data from the op and
-                    // TODO: replace it with just the length instead  (LYNXDEV-833)
+                    // TODO: replace it with just the length instead
                     if (!this._dataArrayGetValue(opStartIndex + j)) {
                         throw new Error('insert: invalid index');
                     }

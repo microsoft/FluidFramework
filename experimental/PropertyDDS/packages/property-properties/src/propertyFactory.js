@@ -132,7 +132,7 @@ var _createTemplateValidator = function (skipSemver) {
  * @category HFDM
  */
 var PropertyFactory = function () {
-    // Unfortunately, PropertyFactory can't inherit from LynxEventEmitter class as
+    // Unfortunately, PropertyFactory can't inherit from EventEmitter class as
     // it shares the same member methods names `register` and `unregister`.
     this._eventEmitter = new EventEmitter();
 

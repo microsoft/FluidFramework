@@ -302,7 +302,7 @@ ContainerProperty.prototype._getDynamicChildrenReadOnly = function () {
  * </pre>
  * You would update the values like
  * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
- * WARNING: not completely impemented for all types (see LYNXDEV-835)
+ * WARNING: not completely implemented for all types
  * @param {object} in_properties The properties you would like to assign
  * @private
  */
