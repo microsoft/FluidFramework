@@ -54,7 +54,7 @@ const containerId = await container.attach();
 ### Attaching a container
 
 A newly created container is in a *detached* state. This is the point where you can create initial data to populate your
-DDSes if needed. A detached container is not connected to the Fluid service and no data is shared with other clients.
+shared objects if needed. A detached container is not connected to the Fluid service and no data is shared with other clients.
 
 In order to attach the container to a service, call its `attach` function. Once *attached*, the Fluid container is
 connected to the Fluid service and can be loaded by other clients.
