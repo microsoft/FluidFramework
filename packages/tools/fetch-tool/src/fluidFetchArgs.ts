@@ -88,6 +88,10 @@ export function parseArguments() {
             case "--dump:rawmessage":
                 dumpMessages = true;
                 break;
+                case "--dump:rawmessage:overwrite":
+                dumpMessages = true;
+                overWrite = true;
+                break;
             case "--overwrite":
                 overWrite = true;
                 break;
