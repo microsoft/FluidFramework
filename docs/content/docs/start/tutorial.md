@@ -1,7 +1,6 @@
 ---
 title: 'Tutorial: Create a Fluid Framework application'
 menuPosition: 2
-status: outdated
 aliases:
   - "/docs/get-started/tutorial/"
   - "/start/tutorial/"
