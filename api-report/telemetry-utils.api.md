@@ -17,6 +17,7 @@ import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { TelemetryEventCategory } from '@fluidframework/common-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -203,6 +204,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
+        category: TelemetryEventCategory;
+    }, error?: any): void;
 }
 
 // @public

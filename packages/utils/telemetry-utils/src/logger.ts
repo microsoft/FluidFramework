@@ -13,6 +13,7 @@ import {
     ITelemetryProperties,
     TelemetryEventPropertyType,
     ITaggedTelemetryPropertyType,
+    TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
@@ -123,10 +124,20 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = {
-            ...event,
-            category: event.category ?? (error === undefined ?  "generic" : "error"),
-        };
+        this.sendTelemetryEventCore({ ...event, category: "generic"}, error);
+    }
+
+    /**
+     * Send a telemetry event with the logger
+     *
+     * @param event - the event to send
+     * @param error - optional error object to log
+     */
+     protected sendTelemetryEventCore(
+        event: ITelemetryGenericEvent & { category: TelemetryEventCategory },
+        error?: any)
+    {
+        const newEvent = { ...event };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
@@ -146,7 +157,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        this.sendTelemetryEvent({ ...event, category: "error" }, error);
+        this.sendTelemetryEventCore({ ...event, category: "error" }, error);
     }
 
     /**
@@ -156,12 +167,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-        const perfEvent: ITelemetryGenericEvent = {
+        const perfEvent = {
             ...event,
             category: event.category ? event.category : "performance",
         };
 
-        this.sendTelemetryEvent(perfEvent, error);
+        this.sendTelemetryEventCore(perfEvent, error);
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
