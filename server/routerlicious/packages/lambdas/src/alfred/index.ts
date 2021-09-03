@@ -24,6 +24,7 @@ import {
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
+import { BaseTelemetryProperties, LogLevel, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     createRoomJoinMessage,
     createNackMessage,
@@ -58,10 +59,14 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
     tenantId,
 });
 
+const getLumberProperties = (documentId: string, tenantId: string) => ({
+    [BaseTelemetryProperties.tenantId]: tenantId,
+    [BaseTelemetryProperties.documentId]: documentId,
+});
+
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
-    logger.error(
-        errorMessage,
-        getMessageMetadata(documentId, tenantId));
+    logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
+    Lumberjack.log(errorMessage, LogLevel.Error, getLumberProperties(documentId, tenantId));
     // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject({ code: 500, message: "Failed to connect client to document." });
 };
@@ -130,6 +135,7 @@ function checkThrottle(
                         eventName: "throttling",
                     },
                 });
+            Lumberjack.log(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, LogLevel.Error);
         }
     }
 }
@@ -324,6 +330,11 @@ export function configureWebSocketServices(
 
                     // eslint-disable-next-line max-len
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                    Lumberjack.log(
+                        `Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`,
+                        LogLevel.Error,
+                        getLumberProperties(connection.documentId, connection.tenantId),
+                    );
                     clearExpirationTimer();
                     socket.disconnect(true);
                 });
@@ -399,11 +410,13 @@ export function configureWebSocketServices(
                     }
                 },
                 (error) => {
-                    const messageMetaData = {
-                        documentId: connectionMessage.id,
-                        tenantId: connectionMessage.tenantId,
-                    };
+                    const messageMetaData = getMessageMetadata(connectionMessage.id, connectionMessage.tenantId);
                     logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
+                    Lumberjack.log(
+                        `Connect Document error: ${safeStringify(error, undefined, 2)}`,
+                        LogLevel.Error,
+                        getLumberProperties(connectionMessage.id, connectionMessage.tenantId),
+                    );
                     socket.emit("connect_document_error", error);
                 });
         });
@@ -448,9 +461,11 @@ export function configureWebSocketServices(
                                 if (message.type === MessageType.RoundTrip) {
                                     if (message.traces) {
                                         // End of tracking. Write traces.
+                                        // TODO: add Lumber metric here?
                                         metricLogger.writeLatencyMetric("latency", message.traces).catch(
                                             (error) => {
                                                 logger.error(error.stack);
+                                                Lumberjack.log(error.stack, LogLevel.Error);
                                             });
                                     }
                                     return false;
@@ -498,22 +513,26 @@ export function configureWebSocketServices(
             clearExpirationTimer();
             // Send notification messages for all client IDs in the connection map
             for (const [clientId, connection] of connectionsMap) {
-                const messageMetaData = {
-                    documentId: connection.documentId,
-                    tenantId: connection.tenantId,
-                };
+                const messageMetaData = getMessageMetadata(connection.documentId, connection.tenantId);
                 logger.info(`Disconnect of ${clientId}`, { messageMetaData });
+                Lumberjack.log(
+                    `Disconnect of ${clientId}`,
+                    LogLevel.Info,
+                    getLumberProperties(connection.documentId, connection.tenantId),
+                );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
             }
             // Send notification messages for all client IDs in the room map
             const removeP: Promise<void>[] = [];
             for (const [clientId, room] of roomMap) {
-                const messageMetaData = {
-                    documentId: room.documentId,
-                    tenantId: room.tenantId,
-                };
+                const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
+                Lumberjack.log(
+                    `Disconnect of ${clientId} from room`,
+                    LogLevel.Info,
+                    getLumberProperties(room.documentId, room.tenantId),
+                );
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }
