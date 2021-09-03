@@ -27,7 +27,7 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
-let currSeq: number = 1;
+let currSeq: number;
 
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
@@ -35,7 +35,7 @@ async function* loadAllSequencedMessages(
     files?: string[],
     sequenceNumber: number = 0) {
     let lastSeq = sequenceNumber;
-    currSeq = sequenceNumber;
+    currSeq = sequenceNumber + 1;
 
     let seqNumMismatch = false;
     // If we have local save, read ops from there first
@@ -176,12 +176,11 @@ async function* saveOps(
     if (files.length !== 0) {
         index = (files.length - 1);
     }
-    let curr = index * chunk + currSeq;
 
     let sequencedMessages: ISequencedDocumentMessage[] = [];
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
-        curr = index * chunk + currSeq;
+        let curr = index * chunk + currSeq;
         if (!result.done) {
             let messages = result.value;
             yield messages;

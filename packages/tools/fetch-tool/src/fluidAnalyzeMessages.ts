@@ -484,9 +484,12 @@ function processOp(
             case ContainerMessageType.Attach: {
                 const attachMessage = runtimeMessage.contents as IAttachMessage;
                 processDataStoreAttachOp(attachMessage, dataType);
+                break;
             }
             // skip for now because these ops do not have contents
-            case ContainerMessageType.BlobAttach: {}
+            case ContainerMessageType.BlobAttach: {
+                break;
+            }
             default: {
                 let envelope = runtimeMessage.contents as IEnvelope;
                 // TODO: Legacy?
@@ -507,6 +510,7 @@ function processOp(
                             objectType = objectType.substring(objectTypePrefix.length);
                         }
                         dataType.set(getObjectId(address, attachMessage.id), objectType);
+                        break;
                     }
                     case DataStoreMessageType.ChannelOp:
                     default: {
