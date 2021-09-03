@@ -588,7 +588,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async (id) => {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, "storage undefined in attached container");
+                assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
                 return readAndParse(storage, id);
             },
         );
@@ -805,7 +805,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summarizer(): Summarizer {
-        assert(this._summarizer !== undefined, "This is not summarizing container");
+        assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
         return this._summarizer;
     }
 
@@ -1802,7 +1802,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 // That said, we rely on submitSystemMessage() that today only works in connected state.
                 // So if we fail here, it either means that RunWhileConnectedCoordinator does not work correctly,
                 // OR that design changed and we need to remove this check and fix submitSystemMessage.
-                assert(this.connected, "connected");
+                assert(this.connected, 0x258 /* "connected" */);
 
                 // Ensure that lastSequenceNumber has not changed after pausing.
                 // We need the summary op's reference sequence number to match our summary sequence number,
@@ -2122,7 +2122,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         appData?: any,
     ) {
         this.verifyNotClosed();
-        assert(this.connected, "Container disconnected when trying to submit system message");
+        assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
@@ -2241,7 +2241,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Updates the summary GC version as per the metadata blob in given snapshot.
      */
     private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
-        assert(this.gcEnabled, "GC version should not be updated when GC is disabled");
+        assert(this.gcEnabled, 0x25a /* "GC version should not be updated when GC is disabled" */);
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
             const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
