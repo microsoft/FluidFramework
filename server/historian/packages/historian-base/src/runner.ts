@@ -98,6 +98,6 @@ export class HistorianRunner implements IRunner {
             ? `pipe ${  addr}`
             : `port ${  addr.port}`;
         winston.info(`Listening on ${  bind}`);
-        Lumberjack.log(`Listening on ${  bind}`, LogLevel.Error);
+        Lumberjack.log(`Listening on ${  bind}`, LogLevel.Info);
     }
 }

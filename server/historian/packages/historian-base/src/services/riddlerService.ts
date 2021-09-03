@@ -54,6 +54,7 @@ export class RiddlerService implements ITenantService {
         });
         if (cachedDetail) {
             winston.info(`Resolving tenant details from cache`);
+            Lumberjack.log(`Resolving tenant details from cache`, LogLevel.Info, lumberProperties);
             return JSON.parse(cachedDetail) as ITenantConfig;
         }
         const tenantUrl = `/api/tenants/${tenantId}`;
