@@ -20,6 +20,7 @@ export class DeferredPromise<T> implements Promise<T> {
             this._rejectSelf = reject;
         });
     }
+    [Symbol.toStringTag]: string;
 
     public async finally(onfinally?: () => void): Promise<T> {
         throw new Error("Method not implemented.");
@@ -57,6 +58,4 @@ export class DeferredPromise<T> implements Promise<T> {
 
     public resolve(val: T) { this._resolveSelf(val); }
     public reject(reason: any) { this._rejectSelf(reason); }
-
-    [Symbol.toStringTag]: "Promise";
 }

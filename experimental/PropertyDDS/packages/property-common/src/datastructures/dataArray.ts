@@ -71,12 +71,7 @@ class BaseDataArray {
      * @returns An object containing an array of the values.
      */
     serialize(): number[] {
-        // Copy over the data to a standard Javascript array.
-        const valArray: number[] = new Array(this.size);
-        for (let i = 0; i < this.size; i++) {
-            valArray[i] = this._buffer[i];
-        }
-        return valArray;
+        return Array.from(this._buffer.subarray(0, this.size));
     }
 
     /**

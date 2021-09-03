@@ -368,7 +368,7 @@ export class Collection<T> {
     }
 
     /**
-     * Clear this collectionreturns
+     * Clear this collection
      * @returns this collection
      */
     clear() {

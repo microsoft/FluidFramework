@@ -1495,79 +1495,8 @@ const PssClientError = {
     FAILED_TO_GET_SQUASHED_COMMIT_RANGE: "PC-018: Server error: Failed to get squashed commit range. Branch guid: ",
 };
 
-const BinaryPropertyError = {
-    /**
-     * This error message will be displayed when the workflow requires an object key to be present, but
-     *              none has been provided
-     */
-    BP_NO_OBJECT_KEY_PROVIDED: "BP-001: No object key has been provided.",
-
-    /**
-     * This error message will be displayed when the workflow requires a DataSource to be present, but
-     *              none has been provided
-     */
-    BP_NO_DATASOURCE_PROVIDED:
-        "BP-002: No DataSource has been provided.",
-
-    /**
-     * This error message will be displayed when the workflow requires a PSS client to be present, but
-     *              none has been provided
-     */
-    BP_NO_PSS_CLIENT_PROVIDED:
-        "BP-003: No PSS client has been provided.",
-
-    /**
-     * This error message will be displayed when the workflow requires a workspace to be present, but
-     *              none has been provided
-     */
-    BP_NO_WORKSPACE_PROVIDED:
-        "BP-004: No workspace has been provided.",
-
-    /**
-     * This error message will be displayed when the workflow requires an active branch to be present, but
-     *              none has been provided
-     */
-    BP_NO_ACTIVE_BRANCH_PROVIDED:
-        "BP-005: No active branch has been provided.",
-
-    /**
-     * This error message will be displayed when a BP method is called which requires the Binary property
-     *              to have been uploaded beforehand
-     */
-    BP_UPLOAD_REQUIRED:
-        "BP-006: The BinaryProperty must be uploaded before calling this method.",
-
-    /**
-     * This error message will be displayed when an automatic upload (one not explicitly
-     *              requested by the user) fails.
-     */
-    BP_UPLOAD_FAILED_WITH_ERROR:
-        "BP-007: Automatic upload failed with error: ",
-
-    /**
-     * This error message will be displayed when a user tries to upload a file larger than 5GB in a
-     *              single request, instead of using multipart upload.
-     */
-    BP_PART_SIZE_EXCEEDED:
-        "BP-008: Cannot upload more than 5GB in a single request.",
-
-    /**
-     * This error message will be displayed when a user tries to start an upload or download request
-     *              with an ID that is already used by an in-progress upload or download for that property.
-     */
-    BP_REQUEST_ID_IN_USE:
-        "BP-009: Request ID is already in use.",
-
-    // UNCLASSIFIED / UNKNOWN
-    CHILD_WITHOUT_ID_ADDED: "A child without an ID cannot be added to a NodeProperty",
-    INSERTING_INTO_MODIFY_CHANGESET: "Tried to add an insert to a ChangeSet that already contains a modify",
-    INVALID_STATE_MISSING_REPOSITORY_BY_BRANCH: "Invalid state - attempting to add a commit node to an unknown " +
-        "repository referenced by branch: ",
-};
-
 const PROPERTY_PATH_DELIMITER = ".";
 const MESSAGE_CONSTANTS = {
-    ...BinaryPropertyError,
     ...ChangeSetError,
     ...PropertyError,
     ...PropertyFactoryError,
