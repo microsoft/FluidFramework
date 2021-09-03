@@ -13,7 +13,8 @@ const paramURL = "https://www.office.com/launch/fluid/content?auth=2&siteUrl=htt
 const args = {
     saveDir: "ops/",
     paramURL,
-    dumpMessages: true,
+    dumpMessages: false,
+    overWrite: true,
 };
 
 describe("fetch tool", () => {

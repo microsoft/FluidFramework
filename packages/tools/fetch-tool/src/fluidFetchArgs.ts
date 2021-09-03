@@ -73,10 +73,12 @@ export function setArguments(values: {
     dumpMessages?: boolean,
     dumpMessageStats?: boolean,
     dumpSnapshotStats?: boolean,
-    dumpSnapshotTrees?: boolean }) {
+    dumpSnapshotTrees?: boolean,
+    overWrite?: boolean }) {
     paramSaveDir = values.saveDir;
     paramURL = values.paramURL;
     dumpMessages = values.dumpMessages ?? dumpMessages;
+    overWrite = values.overWrite ?? overWrite;
 }
 
 export function parseArguments() {
@@ -86,8 +88,7 @@ export function parseArguments() {
             case "--dump:rawmessage":
                 dumpMessages = true;
                 break;
-            case "--dump:rawmessage:overwrite":
-                dumpMessages = true;
+            case "--overwrite":
                 overWrite = true;
                 break;
             case "--stat:message":

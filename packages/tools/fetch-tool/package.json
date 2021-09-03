@@ -14,7 +14,7 @@
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
     "build:commonjs": "npm run tsc && npm run build:test",
-    "build:compile": "concurrently npm:build:commonjs",
+    "build:compile": "npm run build:commonjs",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:test": "tsc --project ./src/test/tsconfig.json",

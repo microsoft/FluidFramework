@@ -19,6 +19,7 @@ import {
     connectToWebSocket,
     dumpMessages,
     dumpMessageStats,
+    overWrite,
     paramActualFormatting,
     messageTypeFilter,
 } from "./fluidFetchArgs";
@@ -52,12 +53,16 @@ async function* loadAllSequencedMessages(
                 lastSeq = messages[messages.length - 1].sequenceNumber;
                 currSeq = lastSeq;
             } catch (e) {
-                console.error(`Error reading / parsing messages from ${files}`);
                 if (seqNumMismatch) {
+                    if (overWrite) {
+                        fs.unlinkSync(`${dir}/messages${file}.json`);
+                        break;
+                    }
                     console.error("There are deleted ops in the document being requested," +
                         " please back up the existing messages.json file and delete it from its directory." +
                         " Then try fetch tool again.");
                 }
+                console.error(`Error reading / parsing messages from ${files}`);
                 console.error(e);
                 return;
             }
