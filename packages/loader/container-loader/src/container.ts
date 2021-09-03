@@ -888,7 +888,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             if (hasAttachmentBlobs) {
                 // upload blobs to storage
-                assert(!!this.loader.services.detachedBlobStorage, "assertion for type narrowing");
+                assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
 
                 // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
                 // support blob handles that only know about the local IDs
@@ -929,7 +929,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         } catch(error) {
             // we should retry upon any retriable errors, so we shouldn't see them here
-            assert(!canRetryOnError(error), "retriable error thrown from attach()");
+            assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
             const newError = DataProcessingError.wrapIfUnrecognized(
@@ -1373,7 +1373,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
         if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
             assert(!!this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0,
-                "serialized container with attachment blobs must be rehydrated with detached blob storage");
+                0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */);
             delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
         }
 

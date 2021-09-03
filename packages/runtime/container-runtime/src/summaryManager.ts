@@ -144,7 +144,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         } else if (this.connectedState.clientId !== this.clientElection.electedClientId) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
-            assert(false, "Disposed should mean disconnected!");
+            assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
             return { shouldSummarize: true };
         }
@@ -184,10 +184,10 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     };
 
     private startSummarization() {
-        assert(this.state === SummaryManagerState.Off, "Expected: off");
+        assert(this.state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
         this.state = SummaryManagerState.Starting;
 
-        assert(this.summarizer === undefined, "Old summarizer is still working!");
+        assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
         let reason = "unknown";
 
@@ -210,7 +210,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 return;
             }
 
-            assert(this.state === SummaryManagerState.Starting, "Expected: starting");
+            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
             this.state = SummaryManagerState.Running;
 
             summarizer.on("summarizingError",
@@ -234,7 +234,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             // that needs to be fixed either way.
             this.stop("summarizerException");
         }).finally(() => {
-            assert(this.state !== SummaryManagerState.Off, "Expected: Not Off");
+            assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
             this.state = SummaryManagerState.Off;
 
             this.summarizer = undefined;
@@ -251,7 +251,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(this.state === SummaryManagerState.Running, "Expected: Running");
+        assert(this.state === SummaryManagerState.Running, 0x265 /* "Expected: Running" */);
         this.state = SummaryManagerState.Stopping;
 
         if (this.summarizer !== undefined) {

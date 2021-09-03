@@ -269,7 +269,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     private async lockedSummaryAction<T>(action: () => Promise<T>) {
-        assert (this.summarizingLock === undefined, "Caller is responsible for checking lock");
+        assert (this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
 
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
@@ -381,7 +381,7 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
-                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, "not nack");
+                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, 0x25c /* "not nack" */);
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.

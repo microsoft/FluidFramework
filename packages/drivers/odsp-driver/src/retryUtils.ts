@@ -66,7 +66,7 @@ export async function runWithRetry<T>(
                 throw error;
             }
 
-            assert(canRetry, "can retry");
+            assert(canRetry, 0x24d /* "can retry" */);
             await delay(Math.floor(retryAfter));
             retryAfter += retryAfter / 4  * (1 + Math.random());
             lastError = error;

@@ -208,13 +208,13 @@ export class BlobManager {
 
     public setRedirectTable(table: Map<string, string>) {
         assert(this.runtime.attachState === AttachState.Detached,
-            "redirect table can only be set in detached container");
-        assert(!this.redirectTable, "redirect table already exists");
+            0x252 /* "redirect table can only be set in detached container" */);
+        assert(!this.redirectTable, 0x253 /* "redirect table already exists" */);
         for (const [localId, storageId] of table) {
-            assert(this.detachedBlobIds.delete(localId), "unrecognized id in redirect table");
+            assert(this.detachedBlobIds.delete(localId), 0x254 /* "unrecognized id in redirect table" */);
             this.blobIds.add(storageId);
         }
-        assert(this.detachedBlobIds.size === 0, "detached blob id absent in redirect table");
+        assert(this.detachedBlobIds.size === 0, 0x255 /* "detached blob id absent in redirect table" */);
         this.redirectTable = table;
     }
 }

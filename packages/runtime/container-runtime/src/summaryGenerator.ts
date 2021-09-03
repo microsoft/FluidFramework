@@ -122,7 +122,7 @@ export class SummarizeResultBuilder {
 
     public fail(message: string, error: any, nackSummaryResult?: IAckNackSummaryResult, retryAfterSeconds?: number) {
         assert(!this.receivedSummaryAckOrNack.isCompleted,
-            "no reason to call fail if all promises have been completed");
+            0x25e /* "no reason to call fail if all promises have been completed" */);
 
         const result: SummarizeResultPart<undefined> =
             { success: false, message, data: undefined, error, retryAfterSeconds } as const;
@@ -342,7 +342,7 @@ export class SummaryGenerator {
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
                 logger.sendTelemetryEvent(
                     { eventName: "SummaryNack", ...generateTelemetryProps, retryAfterSeconds }, error);
-                assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, "retryAfterSeconds");
+                assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, 0x25f /* "retryAfterSeconds" */);
                 // This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
                 return fail(
                     "summaryNack",
