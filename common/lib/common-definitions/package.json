@@ -57,11 +57,11 @@
   "typeValidation": {
     "version": "0.21.0",
     "broken": {
-      "ITelemetryBaseEvent": {"backCompat": false},
-      "ITelemetryErrorEvent": {"backCompat": false},
-      "ITelemetryGenericEvent": {"backCompat": false},
-      "ITelemetryPerformanceEvent": {"backCompat": false},
-      "ITelemetryProperties": {"backCompat": false}
+      "InterfaceDeclaration_ITelemetryBaseEvent": {"backCompat": false},
+      "InterfaceDeclaration_ITelemetryErrorEvent": {"backCompat": false},
+      "InterfaceDeclaration_ITelemetryGenericEvent": {"backCompat": false},
+      "InterfaceDeclaration_ITelemetryPerformanceEvent": {"backCompat": false},
+      "InterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
     }
   }
 }

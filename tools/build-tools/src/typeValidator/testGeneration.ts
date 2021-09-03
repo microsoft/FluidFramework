@@ -4,7 +4,6 @@
  */
 
 import * as fs from "fs";
-import { TypedNode } from "ts-morph";
 import { PackageDetails } from "./packageJson";
 import { generateTypeDataForProject, TypeData } from "./typeData";
 
@@ -24,25 +23,26 @@ import * as current from "../index";
 `
             ];
         const oldDetails = generateTypeDataForProject(packageDir, oldVersion);
-        const oldTypes = new Map<string, TypeData>(oldDetails.typeData.map((v)=>[v.name,v]));
-        for(const type of currentTypeData.typeData){
+        const currentTypeMap = new Map<string, TypeData>(currentTypeData.typeData.map((v)=>[getFullTypeName(v),v]));
+        for(const oldTypeData of oldDetails.typeData){
             // no need to test new types
-            if(oldTypes.has(type.name)){
+            if(currentTypeMap.has(getFullTypeName(oldTypeData))){
                 const oldType: TestCaseTypeData = {
                     prefix: "old",
-                    ... oldTypes.get(type.name)!,
+                    ... oldTypeData,
                 }
                 const currentType: TestCaseTypeData = {
                     prefix: "current",
-                    ... type,
+                    ... currentTypeMap.get(getFullTypeName(oldTypeData))!,
+
                 }
 
                 testString.push(`/*`)
                 testString.push(`* validate forward compat by using old type in place of current type`);
                 testString.push(`* to disable, add in package.json under typeValidation.broken:`);
-                testString.push(`* "${type.name}": {"forwardCompat": false}`);
+                testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
                 const forwarCompatCase = buildTestCase(oldType, currentType);
-                if(currentTypeData.packageDetails.broken[type.name]?.forwardCompat !== false){
+                if(currentTypeData.packageDetails.broken[getFullTypeName(currentType)]?.forwardCompat !== false){
                     testString.push("*/");
                     testString.push(... forwarCompatCase);
                 }else{
@@ -54,9 +54,9 @@ import * as current from "../index";
                 testString.push(`/*`)
                 testString.push(`* validate back compat by using current type in place of old type`);
                 testString.push(`* to disable, add in package.json under typeValidation.broken:`);
-                testString.push(`* "${type.name}": {"backCompat": false}`);
+                testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
                 const backCompatCase = buildTestCase(currentType, oldType);
-                if(currentTypeData.packageDetails.broken[type.name]?.backCompat !== false){
+                if(currentTypeData.packageDetails.broken[getFullTypeName(currentType)]?.backCompat !== false){
                     testString.push("*/");
                     testString.push(... backCompatCase)
                 }else{
@@ -72,7 +72,9 @@ import * as current from "../index";
             fs.mkdirSync(testPath);
         }
 
-        fs.writeFileSync(`${testPath}/validate${oldDetails.packageDetails.version}.ts`, testString.join("\n"));
+        fs.writeFileSync(
+            `${testPath}/validate${oldDetails.packageDetails.version}.ts`,
+            testString.join("\n"));
     }
 }
 
@@ -82,11 +84,19 @@ interface TestCaseTypeData extends TypeData{
 }
 
 function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData){
-    const getSig =`get_${getAsType.prefix}_${getAsType.name}`;
-    const useSig =`use_${useType.prefix}_${useType.name}`;
+    const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType)}`;
+    const useSig =`use_${useType.prefix}_${getFullTypeName(useType)}`;
     const testString: string[] =[];
-    testString.push(`declare function ${getSig}(): ${getAsType.prefix}.${getAsType.name}${getAsType.typeParams ?? ""};`);
-    testString.push(`declare function ${useSig}(use: ${useType.prefix}.${useType.name}${useType.typeParams ?? ""});`);
-    testString.push(`${useSig}(${getSig}());`)
+    testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType)};`);
+    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType)});`);
+    testString.push(`${useSig}(\n    ${getSig}());`)
     return testString
+}
+
+function getFullTypeName(typeData: TypeData){
+    return `${typeData.kind}_${typeData.name}`
+}
+
+function toTypeString(typeData: TestCaseTypeData){
+    return `${typeData.needsTypeof ? "typeof " : ""}${typeData.prefix}.${typeData.name}${typeData.typeParams ?? ""}`;
 }

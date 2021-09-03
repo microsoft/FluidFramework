@@ -1,0 +1,1087 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as old from "@fluidframework/container-definitions-0.39.8";
+import * as current from "../index";
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_AttachState": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_AttachState():
+    old.AttachState;
+declare function use_current_EnumDeclaration_AttachState(
+    use: current.AttachState);
+use_current_EnumDeclaration_AttachState(
+    get_old_EnumDeclaration_AttachState());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_AttachState": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_AttachState():
+    current.AttachState;
+declare function use_old_EnumDeclaration_AttachState(
+    use: old.AttachState);
+use_old_EnumDeclaration_AttachState(
+    get_current_EnumDeclaration_AttachState());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_BindState": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_BindState():
+    old.BindState;
+declare function use_current_EnumDeclaration_BindState(
+    use: current.BindState);
+use_current_EnumDeclaration_BindState(
+    get_old_EnumDeclaration_BindState());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_BindState": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_BindState():
+    current.BindState;
+declare function use_old_EnumDeclaration_BindState(
+    use: old.BindState);
+use_old_EnumDeclaration_BindState(
+    get_current_EnumDeclaration_BindState());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_ContainerErrorType": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_ContainerErrorType():
+    old.ContainerErrorType;
+declare function use_current_EnumDeclaration_ContainerErrorType(
+    use: current.ContainerErrorType);
+use_current_EnumDeclaration_ContainerErrorType(
+    get_old_EnumDeclaration_ContainerErrorType());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_ContainerErrorType": {"backCompat": false}
+declare function get_current_EnumDeclaration_ContainerErrorType():
+    current.ContainerErrorType;
+declare function use_old_EnumDeclaration_ContainerErrorType(
+    use: old.ContainerErrorType);
+use_old_EnumDeclaration_ContainerErrorType(
+    get_current_EnumDeclaration_ContainerErrorType());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ContainerWarning": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ContainerWarning():
+    old.ContainerWarning;
+declare function use_current_InterfaceDeclaration_ContainerWarning(
+    use: current.ContainerWarning);
+use_current_InterfaceDeclaration_ContainerWarning(
+    get_old_InterfaceDeclaration_ContainerWarning());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ContainerWarning": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ContainerWarning():
+    current.ContainerWarning;
+declare function use_old_InterfaceDeclaration_ContainerWarning(
+    use: old.ContainerWarning);
+use_old_InterfaceDeclaration_ContainerWarning(
+    get_current_InterfaceDeclaration_ContainerWarning());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAudience": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAudience():
+    old.IAudience;
+declare function use_current_InterfaceDeclaration_IAudience(
+    use: current.IAudience);
+use_current_InterfaceDeclaration_IAudience(
+    get_old_InterfaceDeclaration_IAudience());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAudience": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAudience():
+    current.IAudience;
+declare function use_old_InterfaceDeclaration_IAudience(
+    use: old.IAudience);
+use_old_InterfaceDeclaration_IAudience(
+    get_current_InterfaceDeclaration_IAudience());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICodeAllowList():
+    old.ICodeAllowList;
+declare function use_current_InterfaceDeclaration_ICodeAllowList(
+    use: current.ICodeAllowList);
+use_current_InterfaceDeclaration_ICodeAllowList(
+    get_old_InterfaceDeclaration_ICodeAllowList());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICodeAllowList": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICodeAllowList():
+    current.ICodeAllowList;
+declare function use_old_InterfaceDeclaration_ICodeAllowList(
+    use: old.ICodeAllowList);
+use_old_InterfaceDeclaration_ICodeAllowList(
+    get_current_InterfaceDeclaration_ICodeAllowList());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
+declare function get_old_InterfaceDeclaration_ICodeLoader():
+    old.ICodeLoader;
+declare function use_current_InterfaceDeclaration_ICodeLoader(
+    use: current.ICodeLoader);
+use_current_InterfaceDeclaration_ICodeLoader(
+    get_old_InterfaceDeclaration_ICodeLoader());
+*/
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_ICodeLoader():
+    current.ICodeLoader;
+declare function use_old_InterfaceDeclaration_ICodeLoader(
+    use: old.ICodeLoader);
+use_old_InterfaceDeclaration_ICodeLoader(
+    get_current_InterfaceDeclaration_ICodeLoader());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IConnectionDetails": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IConnectionDetails():
+    old.IConnectionDetails;
+declare function use_current_InterfaceDeclaration_IConnectionDetails(
+    use: current.IConnectionDetails);
+use_current_InterfaceDeclaration_IConnectionDetails(
+    get_old_InterfaceDeclaration_IConnectionDetails());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IConnectionDetails": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IConnectionDetails():
+    current.IConnectionDetails;
+declare function use_old_InterfaceDeclaration_IConnectionDetails(
+    use: old.IConnectionDetails);
+use_old_InterfaceDeclaration_IConnectionDetails(
+    get_current_InterfaceDeclaration_IConnectionDetails());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainer": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IContainer():
+    old.IContainer;
+declare function use_current_InterfaceDeclaration_IContainer(
+    use: current.IContainer);
+use_current_InterfaceDeclaration_IContainer(
+    get_old_InterfaceDeclaration_IContainer());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainer": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IContainer():
+    current.IContainer;
+declare function use_old_InterfaceDeclaration_IContainer(
+    use: old.IContainer);
+use_old_InterfaceDeclaration_IContainer(
+    get_current_InterfaceDeclaration_IContainer());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerContext": {"forwardCompat": false}
+declare function get_old_InterfaceDeclaration_IContainerContext():
+    old.IContainerContext;
+declare function use_current_InterfaceDeclaration_IContainerContext(
+    use: current.IContainerContext);
+use_current_InterfaceDeclaration_IContainerContext(
+    get_old_InterfaceDeclaration_IContainerContext());
+*/
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerContext": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IContainerContext():
+    current.IContainerContext;
+declare function use_old_InterfaceDeclaration_IContainerContext(
+    use: old.IContainerContext);
+use_old_InterfaceDeclaration_IContainerContext(
+    get_current_InterfaceDeclaration_IContainerContext());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IContainerEvents():
+    old.IContainerEvents;
+declare function use_current_InterfaceDeclaration_IContainerEvents(
+    use: current.IContainerEvents);
+use_current_InterfaceDeclaration_IContainerEvents(
+    get_old_InterfaceDeclaration_IContainerEvents());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerEvents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IContainerEvents():
+    current.IContainerEvents;
+declare function use_old_InterfaceDeclaration_IContainerEvents(
+    use: old.IContainerEvents);
+use_old_InterfaceDeclaration_IContainerEvents(
+    get_current_InterfaceDeclaration_IContainerEvents());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerLoadMode": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IContainerLoadMode():
+    old.IContainerLoadMode;
+declare function use_current_InterfaceDeclaration_IContainerLoadMode(
+    use: current.IContainerLoadMode);
+use_current_InterfaceDeclaration_IContainerLoadMode(
+    get_old_InterfaceDeclaration_IContainerLoadMode());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerLoadMode": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IContainerLoadMode():
+    current.IContainerLoadMode;
+declare function use_old_InterfaceDeclaration_IContainerLoadMode(
+    use: old.IContainerLoadMode);
+use_old_InterfaceDeclaration_IContainerLoadMode(
+    get_current_InterfaceDeclaration_IContainerLoadMode());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ICriticalContainerError": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ICriticalContainerError():
+    old.ICriticalContainerError;
+declare function use_current_TypeAliasDeclaration_ICriticalContainerError(
+    use: current.ICriticalContainerError);
+use_current_TypeAliasDeclaration_ICriticalContainerError(
+    get_old_TypeAliasDeclaration_ICriticalContainerError());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ICriticalContainerError": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ICriticalContainerError():
+    current.ICriticalContainerError;
+declare function use_old_TypeAliasDeclaration_ICriticalContainerError(
+    use: old.ICriticalContainerError);
+use_old_TypeAliasDeclaration_ICriticalContainerError(
+    get_current_TypeAliasDeclaration_ICriticalContainerError());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaHandlerStrategy": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltaHandlerStrategy():
+    old.IDeltaHandlerStrategy;
+declare function use_current_InterfaceDeclaration_IDeltaHandlerStrategy(
+    use: current.IDeltaHandlerStrategy);
+use_current_InterfaceDeclaration_IDeltaHandlerStrategy(
+    get_old_InterfaceDeclaration_IDeltaHandlerStrategy());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaHandlerStrategy": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltaHandlerStrategy():
+    current.IDeltaHandlerStrategy;
+declare function use_old_InterfaceDeclaration_IDeltaHandlerStrategy(
+    use: old.IDeltaHandlerStrategy);
+use_old_InterfaceDeclaration_IDeltaHandlerStrategy(
+    get_current_InterfaceDeclaration_IDeltaHandlerStrategy());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaManager": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltaManager():
+    old.IDeltaManager<any,any>;
+declare function use_current_InterfaceDeclaration_IDeltaManager(
+    use: current.IDeltaManager<any,any>);
+use_current_InterfaceDeclaration_IDeltaManager(
+    get_old_InterfaceDeclaration_IDeltaManager());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaManager": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltaManager():
+    current.IDeltaManager<any,any>;
+declare function use_old_InterfaceDeclaration_IDeltaManager(
+    use: old.IDeltaManager<any,any>);
+use_old_InterfaceDeclaration_IDeltaManager(
+    get_current_InterfaceDeclaration_IDeltaManager());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaManagerEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltaManagerEvents():
+    old.IDeltaManagerEvents;
+declare function use_current_InterfaceDeclaration_IDeltaManagerEvents(
+    use: current.IDeltaManagerEvents);
+use_current_InterfaceDeclaration_IDeltaManagerEvents(
+    get_old_InterfaceDeclaration_IDeltaManagerEvents());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaManagerEvents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltaManagerEvents():
+    current.IDeltaManagerEvents;
+declare function use_old_InterfaceDeclaration_IDeltaManagerEvents(
+    use: old.IDeltaManagerEvents);
+use_old_InterfaceDeclaration_IDeltaManagerEvents(
+    get_current_InterfaceDeclaration_IDeltaManagerEvents());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaQueue": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltaQueue():
+    old.IDeltaQueue<any>;
+declare function use_current_InterfaceDeclaration_IDeltaQueue(
+    use: current.IDeltaQueue<any>);
+use_current_InterfaceDeclaration_IDeltaQueue(
+    get_old_InterfaceDeclaration_IDeltaQueue());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaQueue": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltaQueue():
+    current.IDeltaQueue<any>;
+declare function use_old_InterfaceDeclaration_IDeltaQueue(
+    use: old.IDeltaQueue<any>);
+use_old_InterfaceDeclaration_IDeltaQueue(
+    get_current_InterfaceDeclaration_IDeltaQueue());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaQueueEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltaQueueEvents():
+    old.IDeltaQueueEvents<any>;
+declare function use_current_InterfaceDeclaration_IDeltaQueueEvents(
+    use: current.IDeltaQueueEvents<any>);
+use_current_InterfaceDeclaration_IDeltaQueueEvents(
+    get_old_InterfaceDeclaration_IDeltaQueueEvents());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaQueueEvents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltaQueueEvents():
+    current.IDeltaQueueEvents<any>;
+declare function use_old_InterfaceDeclaration_IDeltaQueueEvents(
+    use: old.IDeltaQueueEvents<any>);
+use_old_InterfaceDeclaration_IDeltaQueueEvents(
+    get_current_InterfaceDeclaration_IDeltaQueueEvents());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IDeltaSender": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IDeltaSender():
+    typeof old.IDeltaSender;
+declare function use_current_VariableDeclaration_IDeltaSender(
+    use: typeof current.IDeltaSender);
+use_current_VariableDeclaration_IDeltaSender(
+    get_old_VariableDeclaration_IDeltaSender());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IDeltaSender": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IDeltaSender():
+    typeof current.IDeltaSender;
+declare function use_old_VariableDeclaration_IDeltaSender(
+    use: typeof old.IDeltaSender);
+use_old_VariableDeclaration_IDeltaSender(
+    get_current_VariableDeclaration_IDeltaSender());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaSender": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltaSender():
+    old.IDeltaSender;
+declare function use_current_InterfaceDeclaration_IDeltaSender(
+    use: current.IDeltaSender);
+use_current_InterfaceDeclaration_IDeltaSender(
+    get_old_InterfaceDeclaration_IDeltaSender());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltaSender": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltaSender():
+    current.IDeltaSender;
+declare function use_old_InterfaceDeclaration_IDeltaSender(
+    use: old.IDeltaSender);
+use_old_InterfaceDeclaration_IDeltaSender(
+    get_current_InterfaceDeclaration_IDeltaSender());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IErrorBase": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IErrorBase():
+    old.IErrorBase;
+declare function use_current_InterfaceDeclaration_IErrorBase(
+    use: current.IErrorBase);
+use_current_InterfaceDeclaration_IErrorBase(
+    get_old_InterfaceDeclaration_IErrorBase());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IErrorBase": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IErrorBase():
+    current.IErrorBase;
+declare function use_old_InterfaceDeclaration_IErrorBase(
+    use: old.IErrorBase);
+use_old_InterfaceDeclaration_IErrorBase(
+    get_current_InterfaceDeclaration_IErrorBase());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidBrowserPackage": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IFluidBrowserPackage():
+    old.IFluidBrowserPackage;
+declare function use_current_InterfaceDeclaration_IFluidBrowserPackage(
+    use: current.IFluidBrowserPackage);
+use_current_InterfaceDeclaration_IFluidBrowserPackage(
+    get_old_InterfaceDeclaration_IFluidBrowserPackage());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidBrowserPackage": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IFluidBrowserPackage():
+    current.IFluidBrowserPackage;
+declare function use_old_InterfaceDeclaration_IFluidBrowserPackage(
+    use: old.IFluidBrowserPackage);
+use_old_InterfaceDeclaration_IFluidBrowserPackage(
+    get_current_InterfaceDeclaration_IFluidBrowserPackage());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidBrowserPackageEnvironment": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IFluidBrowserPackageEnvironment():
+    old.IFluidBrowserPackageEnvironment;
+declare function use_current_InterfaceDeclaration_IFluidBrowserPackageEnvironment(
+    use: current.IFluidBrowserPackageEnvironment);
+use_current_InterfaceDeclaration_IFluidBrowserPackageEnvironment(
+    get_old_InterfaceDeclaration_IFluidBrowserPackageEnvironment());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidBrowserPackageEnvironment": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IFluidBrowserPackageEnvironment():
+    current.IFluidBrowserPackageEnvironment;
+declare function use_old_InterfaceDeclaration_IFluidBrowserPackageEnvironment(
+    use: old.IFluidBrowserPackageEnvironment);
+use_old_InterfaceDeclaration_IFluidBrowserPackageEnvironment(
+    get_current_InterfaceDeclaration_IFluidBrowserPackageEnvironment());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidCodeResolver": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IFluidCodeResolver():
+    old.IFluidCodeResolver;
+declare function use_current_InterfaceDeclaration_IFluidCodeResolver(
+    use: current.IFluidCodeResolver);
+use_current_InterfaceDeclaration_IFluidCodeResolver(
+    get_old_InterfaceDeclaration_IFluidCodeResolver());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidCodeResolver": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IFluidCodeResolver():
+    current.IFluidCodeResolver;
+declare function use_old_InterfaceDeclaration_IFluidCodeResolver(
+    use: old.IFluidCodeResolver);
+use_old_InterfaceDeclaration_IFluidCodeResolver(
+    get_current_InterfaceDeclaration_IFluidCodeResolver());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidModule": {"forwardCompat": false}
+declare function get_old_InterfaceDeclaration_IFluidModule():
+    old.IFluidModule;
+declare function use_current_InterfaceDeclaration_IFluidModule(
+    use: current.IFluidModule);
+use_current_InterfaceDeclaration_IFluidModule(
+    get_old_InterfaceDeclaration_IFluidModule());
+*/
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidModule": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IFluidModule():
+    current.IFluidModule;
+declare function use_old_InterfaceDeclaration_IFluidModule(
+    use: old.IFluidModule);
+use_old_InterfaceDeclaration_IFluidModule(
+    get_current_InterfaceDeclaration_IFluidModule());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IFluidTokenProvider": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IFluidTokenProvider():
+    typeof old.IFluidTokenProvider;
+declare function use_current_VariableDeclaration_IFluidTokenProvider(
+    use: typeof current.IFluidTokenProvider);
+use_current_VariableDeclaration_IFluidTokenProvider(
+    get_old_VariableDeclaration_IFluidTokenProvider());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IFluidTokenProvider": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IFluidTokenProvider():
+    typeof current.IFluidTokenProvider;
+declare function use_old_VariableDeclaration_IFluidTokenProvider(
+    use: typeof old.IFluidTokenProvider);
+use_old_VariableDeclaration_IFluidTokenProvider(
+    get_current_VariableDeclaration_IFluidTokenProvider());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidTokenProvider": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IFluidTokenProvider():
+    old.IFluidTokenProvider;
+declare function use_current_InterfaceDeclaration_IFluidTokenProvider(
+    use: current.IFluidTokenProvider);
+use_current_InterfaceDeclaration_IFluidTokenProvider(
+    get_old_InterfaceDeclaration_IFluidTokenProvider());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidTokenProvider": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IFluidTokenProvider():
+    current.IFluidTokenProvider;
+declare function use_old_InterfaceDeclaration_IFluidTokenProvider(
+    use: old.IFluidTokenProvider);
+use_old_InterfaceDeclaration_IFluidTokenProvider(
+    get_current_InterfaceDeclaration_IFluidTokenProvider());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGenericError():
+    old.IGenericError;
+declare function use_current_InterfaceDeclaration_IGenericError(
+    use: current.IGenericError);
+use_current_InterfaceDeclaration_IGenericError(
+    get_old_InterfaceDeclaration_IGenericError());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGenericError": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IGenericError():
+    current.IGenericError;
+declare function use_old_InterfaceDeclaration_IGenericError(
+    use: old.IGenericError);
+use_old_InterfaceDeclaration_IGenericError(
+    get_current_InterfaceDeclaration_IGenericError());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IHostLoader": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IHostLoader():
+    old.IHostLoader;
+declare function use_current_InterfaceDeclaration_IHostLoader(
+    use: current.IHostLoader);
+use_current_InterfaceDeclaration_IHostLoader(
+    get_old_InterfaceDeclaration_IHostLoader());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IHostLoader": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IHostLoader():
+    current.IHostLoader;
+declare function use_old_InterfaceDeclaration_IHostLoader(
+    use: old.IHostLoader);
+use_old_InterfaceDeclaration_IHostLoader(
+    get_current_InterfaceDeclaration_IHostLoader());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILoader": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILoader():
+    old.ILoader;
+declare function use_current_InterfaceDeclaration_ILoader(
+    use: current.ILoader);
+use_current_InterfaceDeclaration_ILoader(
+    get_old_InterfaceDeclaration_ILoader());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILoader": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_ILoader():
+    current.ILoader;
+declare function use_old_InterfaceDeclaration_ILoader(
+    use: old.ILoader);
+use_old_InterfaceDeclaration_ILoader(
+    get_current_InterfaceDeclaration_ILoader());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILoaderHeader": {"forwardCompat": false}
+declare function get_old_InterfaceDeclaration_ILoaderHeader():
+    old.ILoaderHeader;
+declare function use_current_InterfaceDeclaration_ILoaderHeader(
+    use: current.ILoaderHeader);
+use_current_InterfaceDeclaration_ILoaderHeader(
+    get_old_InterfaceDeclaration_ILoaderHeader());
+*/
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILoaderHeader": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILoaderHeader():
+    current.ILoaderHeader;
+declare function use_old_InterfaceDeclaration_ILoaderHeader(
+    use: old.ILoaderHeader);
+use_old_InterfaceDeclaration_ILoaderHeader(
+    get_current_InterfaceDeclaration_ILoaderHeader());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ILoaderOptions": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ILoaderOptions():
+    old.ILoaderOptions;
+declare function use_current_TypeAliasDeclaration_ILoaderOptions(
+    use: current.ILoaderOptions);
+use_current_TypeAliasDeclaration_ILoaderOptions(
+    get_old_TypeAliasDeclaration_ILoaderOptions());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ILoaderOptions": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ILoaderOptions():
+    current.ILoaderOptions;
+declare function use_old_TypeAliasDeclaration_ILoaderOptions(
+    use: old.ILoaderOptions);
+use_old_TypeAliasDeclaration_ILoaderOptions(
+    get_current_TypeAliasDeclaration_ILoaderOptions());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPendingLocalState():
+    old.IPendingLocalState;
+declare function use_current_InterfaceDeclaration_IPendingLocalState(
+    use: current.IPendingLocalState);
+use_current_InterfaceDeclaration_IPendingLocalState(
+    get_old_InterfaceDeclaration_IPendingLocalState());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPendingLocalState": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPendingLocalState():
+    current.IPendingLocalState;
+declare function use_old_InterfaceDeclaration_IPendingLocalState(
+    use: old.IPendingLocalState);
+use_old_InterfaceDeclaration_IPendingLocalState(
+    get_current_InterfaceDeclaration_IPendingLocalState());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IProvideDeltaSender():
+    old.IProvideDeltaSender;
+declare function use_current_InterfaceDeclaration_IProvideDeltaSender(
+    use: current.IProvideDeltaSender);
+use_current_InterfaceDeclaration_IProvideDeltaSender(
+    get_old_InterfaceDeclaration_IProvideDeltaSender());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideDeltaSender": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IProvideDeltaSender():
+    current.IProvideDeltaSender;
+declare function use_old_InterfaceDeclaration_IProvideDeltaSender(
+    use: old.IProvideDeltaSender);
+use_old_InterfaceDeclaration_IProvideDeltaSender(
+    get_current_InterfaceDeclaration_IProvideDeltaSender());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IProvideFluidTokenProvider():
+    old.IProvideFluidTokenProvider;
+declare function use_current_InterfaceDeclaration_IProvideFluidTokenProvider(
+    use: current.IProvideFluidTokenProvider);
+use_current_InterfaceDeclaration_IProvideFluidTokenProvider(
+    get_old_InterfaceDeclaration_IProvideFluidTokenProvider());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideFluidTokenProvider": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IProvideFluidTokenProvider():
+    current.IProvideFluidTokenProvider;
+declare function use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
+    use: old.IProvideFluidTokenProvider);
+use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
+    get_current_InterfaceDeclaration_IProvideFluidTokenProvider());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideRuntimeFactory": {"forwardCompat": false}
+declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
+    old.IProvideRuntimeFactory;
+declare function use_current_InterfaceDeclaration_IProvideRuntimeFactory(
+    use: current.IProvideRuntimeFactory);
+use_current_InterfaceDeclaration_IProvideRuntimeFactory(
+    get_old_InterfaceDeclaration_IProvideRuntimeFactory());
+*/
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProvideRuntimeFactory": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IProvideRuntimeFactory():
+    current.IProvideRuntimeFactory;
+declare function use_old_InterfaceDeclaration_IProvideRuntimeFactory(
+    use: old.IProvideRuntimeFactory);
+use_old_InterfaceDeclaration_IProvideRuntimeFactory(
+    get_current_InterfaceDeclaration_IProvideRuntimeFactory());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
+    old.IProxyLoaderFactory;
+declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
+    use: current.IProxyLoaderFactory);
+use_current_InterfaceDeclaration_IProxyLoaderFactory(
+    get_old_InterfaceDeclaration_IProxyLoaderFactory());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
+    current.IProxyLoaderFactory;
+declare function use_old_InterfaceDeclaration_IProxyLoaderFactory(
+    use: old.IProxyLoaderFactory);
+use_old_InterfaceDeclaration_IProxyLoaderFactory(
+    get_current_InterfaceDeclaration_IProxyLoaderFactory());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IResolvedFluidCodeDetails": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IResolvedFluidCodeDetails():
+    old.IResolvedFluidCodeDetails;
+declare function use_current_InterfaceDeclaration_IResolvedFluidCodeDetails(
+    use: current.IResolvedFluidCodeDetails);
+use_current_InterfaceDeclaration_IResolvedFluidCodeDetails(
+    get_old_InterfaceDeclaration_IResolvedFluidCodeDetails());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IResolvedFluidCodeDetails": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IResolvedFluidCodeDetails():
+    current.IResolvedFluidCodeDetails;
+declare function use_old_InterfaceDeclaration_IResolvedFluidCodeDetails(
+    use: old.IResolvedFluidCodeDetails);
+use_old_InterfaceDeclaration_IResolvedFluidCodeDetails(
+    get_current_InterfaceDeclaration_IResolvedFluidCodeDetails());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRuntime": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRuntime():
+    old.IRuntime;
+declare function use_current_InterfaceDeclaration_IRuntime(
+    use: current.IRuntime);
+use_current_InterfaceDeclaration_IRuntime(
+    get_old_InterfaceDeclaration_IRuntime());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRuntime": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IRuntime():
+    current.IRuntime;
+declare function use_old_InterfaceDeclaration_IRuntime(
+    use: old.IRuntime);
+use_old_InterfaceDeclaration_IRuntime(
+    get_current_InterfaceDeclaration_IRuntime());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IRuntimeFactory": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_IRuntimeFactory():
+    typeof old.IRuntimeFactory;
+declare function use_current_VariableDeclaration_IRuntimeFactory(
+    use: typeof current.IRuntimeFactory);
+use_current_VariableDeclaration_IRuntimeFactory(
+    get_old_VariableDeclaration_IRuntimeFactory());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_IRuntimeFactory": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_IRuntimeFactory():
+    typeof current.IRuntimeFactory;
+declare function use_old_VariableDeclaration_IRuntimeFactory(
+    use: typeof old.IRuntimeFactory);
+use_old_VariableDeclaration_IRuntimeFactory(
+    get_current_VariableDeclaration_IRuntimeFactory());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRuntimeFactory": {"forwardCompat": false}
+declare function get_old_InterfaceDeclaration_IRuntimeFactory():
+    old.IRuntimeFactory;
+declare function use_current_InterfaceDeclaration_IRuntimeFactory(
+    use: current.IRuntimeFactory);
+use_current_InterfaceDeclaration_IRuntimeFactory(
+    get_old_InterfaceDeclaration_IRuntimeFactory());
+*/
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRuntimeFactory": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IRuntimeFactory():
+    current.IRuntimeFactory;
+declare function use_old_InterfaceDeclaration_IRuntimeFactory(
+    use: old.IRuntimeFactory);
+use_old_InterfaceDeclaration_IRuntimeFactory(
+    get_current_InterfaceDeclaration_IRuntimeFactory());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidBrowserPackage": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_isFluidBrowserPackage():
+    typeof old.isFluidBrowserPackage;
+declare function use_current_VariableDeclaration_isFluidBrowserPackage(
+    use: typeof current.isFluidBrowserPackage);
+use_current_VariableDeclaration_isFluidBrowserPackage(
+    get_old_VariableDeclaration_isFluidBrowserPackage());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidBrowserPackage": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_isFluidBrowserPackage():
+    typeof current.isFluidBrowserPackage;
+declare function use_old_VariableDeclaration_isFluidBrowserPackage(
+    use: typeof old.isFluidBrowserPackage);
+use_old_VariableDeclaration_isFluidBrowserPackage(
+    get_current_VariableDeclaration_isFluidBrowserPackage());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IThrottlingWarning():
+    old.IThrottlingWarning;
+declare function use_current_InterfaceDeclaration_IThrottlingWarning(
+    use: current.IThrottlingWarning);
+use_current_InterfaceDeclaration_IThrottlingWarning(
+    get_old_InterfaceDeclaration_IThrottlingWarning());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
+declare function get_current_InterfaceDeclaration_IThrottlingWarning():
+    current.IThrottlingWarning;
+declare function use_old_InterfaceDeclaration_IThrottlingWarning(
+    use: old.IThrottlingWarning);
+use_old_InterfaceDeclaration_IThrottlingWarning(
+    get_current_InterfaceDeclaration_IThrottlingWarning());
+*/
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_LoaderHeader": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_LoaderHeader():
+    old.LoaderHeader;
+declare function use_current_EnumDeclaration_LoaderHeader(
+    use: current.LoaderHeader);
+use_current_EnumDeclaration_LoaderHeader(
+    get_old_EnumDeclaration_LoaderHeader());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "EnumDeclaration_LoaderHeader": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_LoaderHeader():
+    current.LoaderHeader;
+declare function use_old_EnumDeclaration_LoaderHeader(
+    use: old.LoaderHeader);
+use_old_EnumDeclaration_LoaderHeader(
+    get_current_EnumDeclaration_LoaderHeader());
+
+/*
+* validate forward compat by using old type in place of current type
+* to disable, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ReadOnlyInfo": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ReadOnlyInfo():
+    old.ReadOnlyInfo;
+declare function use_current_TypeAliasDeclaration_ReadOnlyInfo(
+    use: current.ReadOnlyInfo);
+use_current_TypeAliasDeclaration_ReadOnlyInfo(
+    get_old_TypeAliasDeclaration_ReadOnlyInfo());
+
+/*
+* validate back compat by using current type in place of old type
+* to disable, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ReadOnlyInfo": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ReadOnlyInfo():
+    current.ReadOnlyInfo;
+declare function use_old_TypeAliasDeclaration_ReadOnlyInfo(
+    use: old.ReadOnlyInfo);
+use_old_TypeAliasDeclaration_ReadOnlyInfo(
+    get_current_TypeAliasDeclaration_ReadOnlyInfo());
