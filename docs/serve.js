@@ -3,21 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// const servor = require("servor");
-
-// const start = async () => {
-//     const instance = await servor({
-//         root: "public",
-//         fallback: "index.html",
-//         module: false,
-//         static: false,
-//         reload: false,
-//         port: 1313,
-//     });
-// }
-
-// start();
-
+// This script is just a wrapper around the serve package so we can use pm2 to spawn it in the background when checking
+// broken links in CI. Look at .github/workflows/broken-link-checker.yml to see how it is used.
 
 const handler = require("serve-handler");
 const http = require("http");

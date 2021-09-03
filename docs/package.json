@@ -60,7 +60,6 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
     "serve": "^12.0.0",
-    "servor": "^4.0.2",
     "shelljs": "^0.8.4"
   }
 }
