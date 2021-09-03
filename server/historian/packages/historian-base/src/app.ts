@@ -15,6 +15,7 @@ import * as nconf from "nconf";
 import split = require("split");
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
+import { LogLevel, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
 import { getTenantIdFromRequest } from "./utils";
@@ -24,6 +25,7 @@ import { getTenantIdFromRequest } from "./utils";
  */
 const stream = split().on("data", (message) => {
     winston.info(message);
+    Lumberjack.log(message, LogLevel.Info);
 });
 
 export function create(
@@ -49,6 +51,7 @@ export function create(
                 eventName: "http_requests",
              };
              winston.info("request log generated", { messageMetaData });
+             Lumberjack.log("request log generated", LogLevel.Info, messageMetaData);
              return undefined;
         }, { stream }));
     } else {

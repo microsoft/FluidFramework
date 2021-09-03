@@ -21,7 +21,8 @@ import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
-import { getRequestErrorTranslator } from "../utils";
+import { BaseTelemetryProperties, LogLevel, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getRequestErrorTranslator, safelyLogError } from "../utils";
 import { ICache } from "./definitions";
 
 // We include the historian version in the user-agent string
@@ -47,6 +48,7 @@ function endsWith(value: string, endings: string[]): boolean {
 
 export class RestGitService {
     private readonly restWrapper: RestWrapper;
+    private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
 
     constructor(
         private readonly storage: ITenantStorage,
@@ -63,8 +65,25 @@ export class RestGitService {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+        this.lumberProperties = {
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+        };
 
-        winston.info(`base url: ${storage.url}, Storage-Routing-Id: ${this.getStorageRoutingHeaderValue()}`);
+        winston.info(
+            `Created RestGitService: ${JSON.stringify({
+                "BaseUrl": storage.url,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            })}`,
+        );
+        Lumberjack.log(
+            `Created RestGitService: ${JSON.stringify({
+                "BaseUrl": storage.url,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            })}`,
+            LogLevel.Info,
+            this.lumberProperties,
+        );
 
         this.restWrapper = new BasicRestWrapper(
             storage.url,
@@ -94,6 +113,7 @@ export class RestGitService {
         // Fetch the full blob so we can have it in cache
         this.getBlob(createResults.sha, true).catch((error) => {
             winston.error(`Error fetching blob ${createResults.sha}`);
+            Lumberjack.log(`Error fetching blob: ${createResults.sha}`, LogLevel.Error, this.lumberProperties);
         });
 
         return createResults;
@@ -138,10 +158,12 @@ export class RestGitService {
         // Also fetch the tree for the commit to have it in cache
         this.getTree(commit.tree.sha, true, true).catch((error) => {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+            Lumberjack.log(`Error fetching commit tree: ${commit.tree.sha}`, LogLevel.Error, this.lumberProperties);
         });
         // ... as well as pull in the header for it
         this.getHeader(commit.sha, true).catch((error) => {
             winston.error(`Error fetching header ${commit.sha}`);
+            Lumberjack.log(`Error fetching header: ${commit.sha}`, LogLevel.Error, this.lumberProperties);
         });
 
         return commit;
@@ -360,6 +382,7 @@ export class RestGitService {
             // Attempt to cache to Redis - log any errors but don't fail
             this.cache.set(key, value).catch((error) => {
                 winston.error(`Error caching ${key} to redis`, error);
+                safelyLogError(`Error caching ${key} to redis`, error, this.lumberProperties);
             });
         }
     }
@@ -369,16 +392,19 @@ export class RestGitService {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
+                safelyLogError(`Error fetching ${key} from cache`, error, this.lumberProperties);
                 return undefined;
             });
 
             if (cachedValue) {
                 winston.info(`Resolving ${key} from cache`);
+                Lumberjack.log(`Resolving ${key} from cache`, LogLevel.Info, this.lumberProperties);
                 return cachedValue;
             }
 
             // Value is not cached - fetch it with the provided function and then cache the value
             winston.info(`Fetching ${key}`);
+            Lumberjack.log(`Fetching ${key}`, LogLevel.Info, this.lumberProperties);
             const value = await fetch();
             this.setCache(key, value);
 

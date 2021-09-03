@@ -30,6 +30,7 @@
     "@fluidframework/server-services": "^0.1030.0-0",
     "@fluidframework/server-services-client": "^0.1030.0-0",
     "@fluidframework/server-services-core": "^0.1030.0-0",
+    "@fluidframework/server-services-telemetry": "^0.1030.0-0",
     "@fluidframework/server-services-utils": "^0.1030.0-0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
