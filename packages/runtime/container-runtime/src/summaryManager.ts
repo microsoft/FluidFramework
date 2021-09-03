@@ -226,11 +226,13 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
         }).catch((error) => {
-            // Most of exceptions happen due to container being closed while loading it.
-            // Not worth reporting such errors. That said, we might miss some real errors if
+            // Most of exceptions happen due to container being closed while loading it, due to
+            // summarizer container loosing connection while load.
+            // Not worth reporting such errors as errors. That said, we might miss some real errors if
             // we ignore blindly, so try to narrow signature we are looking for - skip logging
-            // error only if interactive container also is disconnected (or went through reconnection),
-            // we do not have summarizer. We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad",
+            // error only if interactive container should no longer be summarizer (which in practice
+            // means it also lost connection), and error happened on load (we do not have summarizer).
+            // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
             // but that does not seem to be necessary.
             if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
                 this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
