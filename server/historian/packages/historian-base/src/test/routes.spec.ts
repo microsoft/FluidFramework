@@ -32,7 +32,9 @@ const defaultProvider = new nconf.Provider({}).defaults({
 const defaultTenantService = new TestTenantService();
 
 const lumberjackEngine = new TestEngine1();
-Lumberjack.setup([lumberjackEngine]);
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 /**
  * A helper method that will first send (limit) number of requests and assert they are not throttled,
