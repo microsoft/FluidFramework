@@ -10,8 +10,8 @@ import { SerializedChangeSet } from "./changeset";
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
 import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper";
 import { isReservedKeyword } from "./isReservedKeyword";
-import { PathHelper, TokenizedPath } from "./pathHelper";
-import { OperationTypes } from "./changeset_operations/operationTypes"
+import { PathHelper, PathTree } from "./pathHelper";
+import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes"
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
@@ -75,7 +75,7 @@ export namespace Utils {
         let postOrderContext;
 
         // Call the callback function for this ChangeSet
-        in_context.startTraversal();
+        in_context._traversalStopped = false;
         const typeid = in_context.getTypeid()
         let splitTypeId = typeid !== undefined ?
             TypeIdHelper.extractContext(typeid) :
@@ -102,7 +102,7 @@ export namespace Utils {
 
                 const _typeid = in_context.getTypeid();
                 // Call the callback function for this ChangeSet
-                in_context.startTraversal();
+                in_context._traversalStopped = false;
                 splitTypeId = _typeid !== undefined ?
                     TypeIdHelper.extractContext(_typeid) :
                     undefined;
@@ -236,7 +236,7 @@ export namespace Utils {
                                 function(n4) {
                                     let operation;
                                     switch (arrayIterator.opDescription.type) {
-                                        case OperationTypes.INSERT:
+                                        case ArrayIteratorOperationTypes.INSERT:
                                             in_context._operationType = "insert";
                                             operation = arrayIterator.opDescription.operation;
                                             eachOfSeries(operation[1] as any, function(item: any, i: number, n5) {
@@ -262,7 +262,7 @@ export namespace Utils {
                                             });
 
                                             break;
-                                        case OperationTypes.REMOVE:
+                                        case ArrayIteratorOperationTypes.REMOVE:
                                             in_context._operationType = "remove";
                                             operation = arrayIterator.opDescription.operation;
                                             timesSeries(operation[1], function(i: number, n5) {
@@ -288,7 +288,7 @@ export namespace Utils {
                                             });
 
                                             break;
-                                        case OperationTypes.MODIFY:
+                                        case ArrayIteratorOperationTypes.MODIFY:
                                             operation = arrayIterator.opDescription.operation;
                                             in_context._operationType = "modify";
 
@@ -583,7 +583,7 @@ export namespace Utils {
         const nestedChangeSet = in_context.getNestedChangeSet();
 
         // Call the callback function for this ChangeSet
-        in_context.startTraversal();
+        in_context._traversalStopped = false;
         const splitTypeId = in_context.getTypeid() !== undefined ?
             TypeIdHelper.extractContext(in_context.getTypeid()) :
             undefined;
@@ -696,7 +696,7 @@ export namespace Utils {
             let modifyCounter = 0;
             while (!arrayIterator.atEnd()) {
                 switch (arrayIterator.opDescription.type) {
-                    case OperationTypes.INSERT:
+                    case ArrayIteratorOperationTypes.INSERT:
                         in_context._operationType = "insert";
                         for (i = 0; i < arrayIterator.opDescription.operation[1].length; ++i) {
                             // The typeid is stored inline for arrays
@@ -707,7 +707,7 @@ export namespace Utils {
                         }
                         insertCounter++;
                         break;
-                    case OperationTypes.REMOVE:
+                    case ArrayIteratorOperationTypes.REMOVE:
                         in_context._operationType = "remove";
                         for (i = 0; i < arrayIterator.opDescription.operation[1]; ++i) {
                             // For removals, we don't have a typeid and we use the ChangeSet of the removal operation as nested
@@ -717,7 +717,7 @@ export namespace Utils {
                         }
                         removeCounter++;
                         break;
-                    case OperationTypes.MODIFY:
+                    case ArrayIteratorOperationTypes.MODIFY:
                         in_context._operationType = "modify";
                         for (i = 0; i < arrayIterator.opDescription.operation[1].length; ++i) {
                             // The typeid is stored inline for arrays
@@ -819,7 +819,7 @@ export namespace Utils {
         public _typeid: string | undefined;
         public _splitTypeId: any;
         public _userData: any;
-        private _traversalStopped: boolean;
+        public _traversalStopped: boolean;
         public _nestedChangeSet: SerializedChangeSet;
         public _parentNestedChangeSet: SerializedChangeSet;
         public _propertyContainerType: PropertyContainerType;
@@ -874,7 +874,7 @@ export namespace Utils {
         }
 
         /**
-         * Stop the traversal for all nodes below the currently processed one
+         * Start the traversal for all nodes below the currently processed one
          */
         startTraversal() {
             this._traversalStopped = false;
@@ -1181,6 +1181,9 @@ export namespace Utils {
             return this._userStack;
         }
 
+        /**
+         * @returns Last segment string.
+         */
         getLastSegmentString(): string {
             return this._lastSegmentString;
         }
@@ -1472,7 +1475,7 @@ export namespace Utils {
                         // If this is a removal operation, we mark the path as removed, even if we haven't reached the end of the
                         // path
                         result.removed = true;
-                        in_context.stopTraversal();
+                        in_context._traversalStopped = true;
                     } else {
                         // Did we find the last segment in the path?
                         if (level === pathSegments.length - 1) {
@@ -1485,7 +1488,7 @@ export namespace Utils {
                                 Utils._stripTypeids(currentChangeSet);
                             }
                             result[in_context.getOperationType()][in_context.getFullPath()] = currentChangeSet;
-                            in_context.stopTraversal();
+                            in_context._traversalStopped = true;
                         } else {
                             // Otherwise, we continue recursively with the next level
                             in_context.setUserData({ currentLevel: level + 1 });
@@ -1493,7 +1496,7 @@ export namespace Utils {
                     }
                 } else {
                     // Stop the traversal, if this is the wrong segment
-                    in_context.stopTraversal();
+                    in_context._traversalStopped = true;
                 }
             },
             userData: { currentLevel: 0 },
@@ -1692,14 +1695,14 @@ export namespace Utils {
                         // path
                         in_callback(in_context, _toCallbackParam(nestedSubPath), currentTokenizedPath, false);
 
-                        in_context.stopTraversal();
+                        in_context._traversalStopped = true;
                     } else {
                         in_callback(in_context, _toCallbackParam(nestedSubPath), currentTokenizedPath, false);
                     }
                 } else {
                     // Stop the traversal, if this is the wrong segment
                     in_context.setUserData({ currentSubPaths: undefined, numberOfSegments });
-                    in_context.stopTraversal();
+                    in_context._traversalStopped = true;
                 }
             },
             postCallback(in_context) {
@@ -1716,7 +1719,7 @@ export namespace Utils {
         });
     }
 
-    type PathsType = string[] | TokenizedPath;
+    type PathsType = string[] | PathTree;
 
     /**
      * Filter change sets by paths.
@@ -1960,7 +1963,7 @@ export namespace Utils {
      * @returns {Map} A tree structured representation of the tokenized paths that can be
      *     passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
      */
-    export function convertPathArrayToTree(in_paths: string[]): TokenizedPath {
+    export function convertPathArrayToTree(in_paths: string[]): PathTree {
         in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
         const pathsToProcess = new Set(in_paths);
 
@@ -2050,7 +2053,7 @@ export namespace Utils {
                     const typeId = in_context.getTypeid();
                     const lastSegment = in_context.getLastSegment();
                     delete in_context.getParentNestedChangeSet()[operationType][typeId][lastSegment];
-                    in_context.stopTraversal();
+                    in_context._traversalStopped = true;
                 }
             },
         });

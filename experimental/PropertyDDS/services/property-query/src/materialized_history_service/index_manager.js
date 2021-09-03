@@ -387,7 +387,7 @@ class IndexManager {
           // 2) Array shifting. Inserting or removing items will require an update of other indexed paths, to point
           //    to the right place.
           if (context.getSplitTypeID().context === 'array') {
-            context.stopTraversal();
+            context._traversalStopped = true;
           }
         }
       }
@@ -479,7 +479,7 @@ class IndexManager {
 
           // Don't want to process here either
           if (context.getSplitTypeID().context === 'array') {
-            context.stopTraversal();
+            context._traversalStopped = true;
           }
         }
       });

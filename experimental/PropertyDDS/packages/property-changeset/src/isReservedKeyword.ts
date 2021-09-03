@@ -13,6 +13,5 @@
 export const isReservedKeyword = (in_key: string): boolean => in_key === "insert" ||
         in_key === "remove" ||
         in_key === "modify" ||
-        in_key === ".children" || // To be removed
         in_key === "typeid" ||
         in_key === "insertTemplates";

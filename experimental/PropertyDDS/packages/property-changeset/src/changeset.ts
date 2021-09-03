@@ -6,8 +6,6 @@
  * @fileoverview Serialized representation of the changes in a repository
  */
 
-//TODO: Define options interface, its repeated everywhere in this class.
-
 import _ from "lodash"
 
 //@ts-ignore
@@ -24,7 +22,7 @@ import { isEmptyChangeSet } from "./changeset_operations/isEmptyChangeset";
 import { isReservedKeyword } from "./isReservedKeyword";
 import { Utils } from "./utils";
 import { TemplateValidator } from "./templateValidator";
-import { OperationTypes } from "./changeset_operations/operationTypes"
+import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes"
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 const { joinPaths } = Strings;
@@ -90,9 +88,8 @@ export class ChangeSet {
     _isNormalized: boolean;
 
     /**
-     * @param [in_changes] - The serialized changes
-     * To store in this change set If a string is supplied, we assume it to be a serialized JSON representation of the change set.
-     * If none is supplied, an empty changeset will be created.
+     * @param [in_changes] - The serialized changes to store in this change set if a string is supplied,
+     * we assume it to be a serialized JSON representation of the change set. If none is supplied, an empty changeset will be created.
      */
     constructor(in_changes?: ChangeSetType) {
         if (in_changes === undefined || in_changes === null) {
@@ -174,7 +171,7 @@ export class ChangeSet {
         }
 
         if (!_.isObject(this._changes) || _.isArray(this._changes)) {
-            const oldValue = _.isObject(changes) &&  !_.isArray(changes) && (changes as SerializedChangeSet).value !== undefined ? (changes as SerializedChangeSet).value : changes;
+            const oldValue = _.isObject(changes) && (changes as SerializedChangeSet).value !== undefined ? (changes as SerializedChangeSet).value : changes;
             this._changes = _.isArray(oldValue) ? oldValue.slice() : oldValue;
         } else {
             this._performApplyAfterOnProperty(this._changes, changes, !this._isNormalized, in_options);
@@ -819,7 +816,7 @@ export class ChangeSet {
                 // This type of situation can occur in the materialized history, if an insert happens right at a chunk boundary.
                 if (_.keys(nestedChangeset).length === 1 &&
                     nestedChangeset.insert) {
-                    in_context.stopTraversal();
+                    in_context._traversalStopped = true;
                     return;
                 }
                 if (current === undefined) {
@@ -1084,7 +1081,7 @@ export class ChangeSet {
 
         if (isWithinInsertOrDelete && in_context.getOperationType() !== "modify") {
             // We are within an insert or remove sub tree. Skip this iteration.
-            in_context.stopTraversal();
+            in_context._traversalStopped = true;
             return;
         }
 
@@ -1128,21 +1125,21 @@ export class ChangeSet {
                 // Successively invert the changes from the changeSet
                 while (!arrayIterator.atEnd()) {
                     switch (arrayIterator.opDescription.type) {
-                        case OperationTypes.INSERT:
+                        case ArrayIteratorOperationTypes.INSERT:
                             // Handle inserts
                             resultChangeset.remove.push([
                                 arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
                                 arrayIterator.opDescription.operation[1],
                             ]);
                             break;
-                        case OperationTypes.REMOVE:
+                        case ArrayIteratorOperationTypes.REMOVE:
                             // Handle removes
                             resultChangeset.insert.push([
                                 arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
                                 arrayIterator.opDescription.operation[1],
                             ]);
                             break;
-                        case OperationTypes.MODIFY:
+                        case ArrayIteratorOperationTypes.MODIFY:
                             // Handle modifies
                             if (isPrimitiveType(splitType.typeid)) {
                                 resultChangeset.modify.push([

@@ -28,11 +28,7 @@ const { MSG } = constants;
 
 const ajvFactory = new Ajv({
     allErrors: true,
-    verbose: true,
-    // keywords: [
-    //     ajvKeywords["prohibited"],
-    //     ajvKeywords["typeof"]
-    // ],
+    verbose: true
 });
 
 ajvKeywords(ajvFactory, "prohibited");
@@ -818,11 +814,11 @@ const _processValidationResults = function(in_template: PropertySchema) {
 /**
  * Validate just the syntax of a template
  * Check that the template is well-formed, according to the schema.
- * @param {object} in_template The template to check against
+ * @param in_template The template to check against
  * @throws if a property with context set is not an instance of NamedProperties
  * @ignore
  */
-let _validateSyntax = function(in_template) {
+let _validateSyntax = function(in_template: PropertySchema) {
     const that = this;
     // recursively test all properties for context
     let recursiveContextCheck = function(template) {
@@ -860,9 +856,9 @@ const createContextCheckAsyncQueue = function() {
  * Validate just the syntax of a template
  * Check that the template is well-formed, according to the schema.
  *
- * @param {object} in_template The template to check against
+ * @param in_template The template to check against
  * Mainly checks context. See _validateContextAsync
- * @return {Promise} Promise that resolves without any result
+ * @returns Promise that resolves without any result
  * @ignore
  */
 let _validateSyntaxAsync = function(in_template: PropertySchema): Promise<SchemaValidationResult> {

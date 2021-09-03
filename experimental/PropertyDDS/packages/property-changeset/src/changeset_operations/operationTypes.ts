@@ -7,7 +7,7 @@
  * Iterator types
  * The operations that can be performed on the array
  */
-export enum OperationTypes {
+export enum ArrayIteratorOperationTypes {
     INSERT,
     REMOVE,
     MODIFY,

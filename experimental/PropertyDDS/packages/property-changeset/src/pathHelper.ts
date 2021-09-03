@@ -11,7 +11,7 @@ import { constants } from '@fluid-experimental/property-common';
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
-export type TokenizedPath = Map<String, TokenizedPath>
+export type PathTree = Map<String, PathTree>
 
 /**
  * Helper functions for string processing

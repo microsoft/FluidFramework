@@ -47,6 +47,7 @@ interface SegmentType<T=GenericOperation, K=GenericOperation, L=GenericOperation
 /**
  * A range of an array operation
  */
+// TODO: Cleaning up these types using discriminated union
 export interface OperationRangeDescription<T=GenericOperation> {
     opA?: any;
     opB?: any;
@@ -110,7 +111,6 @@ export type OperationRange = OperationRangeNoneNOP | OperationRangeNOP;
     if (!io_operation) {
         return;
     }
-
     if (io_operation.type === ArrayChangeSetIterator.types.NOP) {
         const dummyOp: NOPOperation = {
             type: ArrayChangeSetIterator.types.NOP,
@@ -235,9 +235,9 @@ const getRangeForAppliedOperation = function(
  * @private
  */
 const _splitArrayParameter = function(
-    in_firstResult: Array<Array<any> | string | number> | undefined,
-    in_secondResult: Array<Array<any> | string | number>,
-    in_data: Array<Array<any> | string | number>,
+    in_firstResult: arrayModifyList | arrayRemoveList,
+    in_secondResult: arrayModifyList | arrayRemoveList,
+    in_data: arrayModifyList | arrayRemoveList,
     in_start: number
 ) {
     let firstTmp: any;
@@ -773,7 +773,7 @@ const mergeWithLastIfPossible = function(
 
 interface RemoveOpInfo {
     position: number;
-    offsetIncremented: any;
+    offsetIncremented: boolean;
     length: number;
 }
 
@@ -942,7 +942,7 @@ const handleCombinations = function(in_segment: SegmentType, in_isPrimitiveType:
                 // have to keep the previous state from before the
                 // apply after
                 if (opA.operation[2] !== undefined) {
-                    (opB as ModifyOperation).operation[2] = opA.operation[2]; // TODO: Check if valid.
+                    (opB as ModifyOperation).operation[2] = opA.operation[2];
                 }
                 break;
             } else {
@@ -1051,9 +1051,10 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  */
 const handleRebaseCombinations = function(
     in_segment: SegmentType,
-    out_conflicts: { path: any; type: number; conflictingChange: any; }[],
-    in_basePath: any, in_isPrimitiveType: any,
-    in_options: { applyAfterMetaInformation: { set: (arg0: any, arg1: { rebasedRemoveInsertRanges: { rangeStart: number; rangeLength: any; originalStartPosition: any; }[]; }) => void; }; }) {
+    out_conflicts: ConflictInfo[],
+    in_basePath: string,
+    in_isPrimitiveType: string,
+    in_options: ApplyChangeSetOptions) {
     const opA = in_segment.opA;
     const opB = in_segment.opB;
     if (opB.type === ArrayChangeSetIterator.types.INSERT) {

@@ -10,7 +10,7 @@ import { TemplateValidator } from "../templateValidator";
 import { TypeIdHelper } from "../helpers/typeidHelper";
 
 export class SchemaValidator {
-    schemaMap: {};
+    schemaMap: Record<string, any>;
     constructor() {
         this.schemaMap = {};
     }

@@ -39,7 +39,7 @@ const _fastIsEmptyObject = function(in_object: any): boolean {
         return _.isEmpty(in_object);
     }
 
-    for (const _ in in_object) { // eslint-disable-line
+    for (const _entry in in_object) { // eslint-disable-line
         return false;
     }
 
@@ -419,7 +419,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
         let modifyMap = {};
         // Helper function which stores the changes indexed by key in the changesByKeys array to
         // make it easier to compare the related changes in the two ChangeSets
-        const addChanges = function(in_collection: { [x: string]: any; }, in_changeIdentifier: string, in_changePrefix: string, in_typeidChange?: string) {
+        const addChanges = function(in_collection: Record<string, any>, in_changeIdentifier: string, in_changePrefix: string, in_typeidChange?: string) {
             // Collection didn't exist in this ChangeSet
             if (in_collection === undefined) {
                 return;

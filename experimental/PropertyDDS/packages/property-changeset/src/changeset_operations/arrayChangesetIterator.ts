@@ -10,7 +10,7 @@
 import { constants } from "@fluid-experimental/property-common";
 import _ from "lodash";
 import { SerializedChangeSet } from "../changeset";
-import { OperationTypes } from "./operationTypes";
+import { ArrayIteratorOperationTypes } from "./operationTypes";
 
 
 const { MSG } = constants;
@@ -19,7 +19,7 @@ const { MSG } = constants;
 
 type genericArray = Array<number | string | (SerializedChangeSet & {typeid:string})>;
 export type arrayInsertList = [number, string | genericArray]
-export type arrayModifyList = [number, string | genericArray] | [number, string | genericArray, string | genericArray]
+export type arrayModifyList = [number, string | genericArray] | [number,  string, string] | [number,  genericArray, genericArray]
 export type arrayRemoveList = [number, number | string | genericArray]
 
 
@@ -29,7 +29,7 @@ export type arrayRemoveList = [number, number | string | genericArray]
  */
 export interface OperationDescription {
     _absoluteBegin?: number;
-    type?: OperationTypes,
+    type?: ArrayIteratorOperationTypes,
     offset?: number,
 }
 
@@ -37,7 +37,7 @@ export interface OperationDescription {
  * Description of an insert array operation
  */
 export interface InsertOperation extends OperationDescription {
-    type: OperationTypes.INSERT;
+    type: ArrayIteratorOperationTypes.INSERT;
     removeInsertOperation?: arrayInsertList;
     operation?: arrayInsertList;
 }
@@ -47,7 +47,7 @@ export interface InsertOperation extends OperationDescription {
  * Description of a remove array operation
  */
 export interface RemoveOperation extends OperationDescription {
-    type: OperationTypes.REMOVE;
+    type: ArrayIteratorOperationTypes.REMOVE;
     removeInsertOperation?: arrayRemoveList;
     operation?: arrayRemoveList;
 }
@@ -56,7 +56,7 @@ export interface RemoveOperation extends OperationDescription {
  * Description of a modify array operation
  */
 export interface ModifyOperation extends OperationDescription {
-    type: OperationTypes.MODIFY;
+    type: ArrayIteratorOperationTypes.MODIFY;
     removeInsertOperation?: arrayModifyList;
     operation: arrayModifyList;
 }
@@ -65,7 +65,7 @@ export interface ModifyOperation extends OperationDescription {
  * Description of a modify array operation
  */
  export interface NOPOperation extends Omit<OperationDescription, "removeInsertOperation"|"operation"> {
-    type: OperationTypes.NOP;
+    type: ArrayIteratorOperationTypes.NOP;
     operation?: [];
 }
 
@@ -77,11 +77,9 @@ export type GenericOperation = NoneNOPOperation | NOPOperation;
  * position within the array. Additionally, it will keep track of the modifications to the array indices caused
  * by the previous operations.
  *
- * @param in_changeSet - The ChangeSet to iterate over (this has to be an array
- *                                                           ChangeSet)
  */
 export class ArrayChangeSetIterator {
-    static types = OperationTypes; // @TODO Not sure if this is still required if we export it separately.
+    static types = ArrayIteratorOperationTypes; // @TODO Not sure if this is still required if we export it separately.
 
     private _changeSet: SerializedChangeSet;
     private _copiedModifies: string | any[];
@@ -109,6 +107,9 @@ export class ArrayChangeSetIterator {
         return this._lastOperationOffset;
     }
 
+    /**
+     * @param in_changeSet - The ChangeSet to iterate over (this has to be an array ChangeSet
+     */
     constructor(in_changeSet: SerializedChangeSet) {
         this._changeSet = in_changeSet;
         // if we need to chop overlapping modifies internally, so we have to copy them
@@ -126,7 +127,7 @@ export class ArrayChangeSetIterator {
         this._atEnd = false;
 
         this._op = {
-            type: OperationTypes.NOP,
+            type: ArrayIteratorOperationTypes.NOP,
             offset: 0,
             operation: undefined
         };
@@ -142,7 +143,7 @@ export class ArrayChangeSetIterator {
     next(): boolean {
         // Find the smallest index in the operations lists
         let currentIndex = Infinity;
-        let type: OperationTypes;
+        let type: ArrayIteratorOperationTypes;
         (this._op as any).removeInsertOperation = undefined;
         // Process the current remove entry
         if (this._changeSet.remove &&
@@ -222,7 +223,6 @@ export class ArrayChangeSetIterator {
                 {
                     this._op.type = ArrayChangeSetIterator.types.MODIFY;
                     this._op.offset = this._currentOffset;
-
                     // check, if the modify's range overlaps with coming insert changes:
                     let nextModify = this._copiedModifies[this._currentIndices.modify];
                     const modifyEnd = nextModify[0] + nextModify[1].length;
