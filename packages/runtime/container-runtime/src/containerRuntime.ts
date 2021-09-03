@@ -1044,7 +1044,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerRuntimeDisposed",
-            category: "generic",
             isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
