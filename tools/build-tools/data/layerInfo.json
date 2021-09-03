@@ -164,9 +164,6 @@
                 ]
             },
             "Runtime": {
-                "packages": [
-                    "@fluidframework/agent-scheduler"
-                ],
                 "dirs": [
                     "experimental/dds/",
                     "packages/dds/",
