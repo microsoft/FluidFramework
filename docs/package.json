@@ -33,6 +33,7 @@
     "install:hugo:default": "[ ! -f bin/hugo ] && npm run install:hugo:force ; exit 0",
     "install:hugo:force": "binstall install -n hugo -d bin",
     "install:hugo:win32": "if not exist bin/hugo.exe npm run install:hugo:force",
+    "linkcheck": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/docs/apis/*",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "npm run build:md-magic && run-script-os",
@@ -43,6 +44,7 @@
     "@tylerbu/bin-installer": "^0.0.2",
     "@tylerbu/custom-api-documenter": "0.3.3-tylerbu-1",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
+    "broken-link-checker": "^0.7.8",
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
     "download-cli": "^1.1.1",
@@ -57,6 +59,8 @@
     "node-fetch": "^2.6.1",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
+    "serve": "^12.0.0",
+    "servor": "^4.0.2",
     "shelljs": "^0.8.4"
   }
 }

@@ -1,4 +1,4 @@
-name: Hugo Broken Link Check
+name: Broken Link Check
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
@@ -6,15 +6,51 @@ on:
 jobs:
   broken_link_check_internal:
     runs-on: ubuntu-latest
-    name: Check from broken internal links
+    name: Check for broken internal links
     steps:
-    - uses: marccampbell/hugo-linkcheck-action@v0.1.3
-      name: Internal link check
+    - uses: actions/checkout@v2
       with:
-        secrets: "${{ secrets.GITHUB_TOKEN }}"
-      env:
-        HUGO_EXCLUSIONS_LIST: "./.github/excluded-links.json"
-        HUGO_CONFIG: "./docs/config.yml"
-        HUGO_ROOT: "./docs"
-        HUGO_CONTENT_ROOT: "./docs/content"
-        HUGO_FINAL_URL: "https://fluidframework.com"
+        submodules: false
+    - uses: actions/setup-node@v2-beta
+      with:
+        node-version: "12"
+    - name: Build site
+      run: |
+        cd $GITHUB_WORKSPACE/docs
+        npm ci
+        npm run download
+        npm run build
+    - name: Check internal links
+      id: linkcheck
+      run: |
+        npm install pm2 -g
+        cd $GITHUB_WORKSPACE/docs
+        pm2 start $GITHUB_WORKSPACE/docs/serve.js
+        npm run linkcheck
+    # - name: sdf
+    #   uses: BerniWittmann/background-server-action@main
+    #   with:
+    #     start: npm start
+    #     command: npm run linkcheck
+    # - name: Run broken-link-checker
+    #   id: link-report
+    #   uses: tylerbutler/link-checker@master
+    #   with:
+    #     url: http://localhost:1313
+    #     honorRobotExclusions: true
+    #     ignorePatterns: "https://github.com/*/edit/*,http*://*/docs/apis/*"
+    #     recursiveLinks: true
+    #     additionalArgs: "-ore"
+    - name: Success
+      if: ${{ success() }}
+      uses: github-actions-up-and-running/pr-comment@v1.0.1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        message: "🔗 No broken links found! ✅"
+        # message: "${{steps.linkcheck.outputs.result}}"
+    - name: Failure
+      if: ${{ failure() }}
+      uses: github-actions-up-and-running/pr-comment@v1.0.1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        message: "${{steps.linkcheck.outputs.result}}"
