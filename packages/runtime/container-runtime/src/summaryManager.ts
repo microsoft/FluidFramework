@@ -144,7 +144,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         } else if (this.connectedState.clientId !== this.clientElection.electedClientId) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
-            assert(false, "Disposed should mean disconnected!");
+            assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
             return { shouldSummarize: true };
         }
@@ -184,10 +184,10 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     };
 
     private startSummarization() {
-        assert(this.state === SummaryManagerState.Off, "Expected: off");
+        assert(this.state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
         this.state = SummaryManagerState.Starting;
 
-        assert(this.summarizer === undefined, "Old summarizer is still working!");
+        assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
         let reason = "unknown";
 
@@ -210,7 +210,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 return;
             }
 
-            assert(this.state === SummaryManagerState.Starting, "Expected: starting");
+            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
             this.state = SummaryManagerState.Running;
 
             summarizer.on("summarizingError",
@@ -226,15 +226,25 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
         }).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
-            this.emit("summarizerWarning", error);
+            // Most of exceptions happen due to container being closed while loading it, due to
+            // summarizer container loosing connection while load.
+            // Not worth reporting such errors as errors. That said, we might miss some real errors if
+            // we ignore blindly, so try to narrow signature we are looking for - skip logging
+            // error only if this client should no longer be a summarizer (which in practice
+            // means it also lost connection), and error happened on load (we do not have summarizer).
+            // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
+            // but that does not seem to be necessary.
+            if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
+                this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
+                this.emit("summarizerWarning", error);
 
-            // Note that summarizer may keep going (like doing last summary).
-            // Ideally we await stopping process, but this code path is due to a bug
-            // that needs to be fixed either way.
-            this.stop("summarizerException");
+                // Note that summarizer may keep going (like doing last summary).
+                // Ideally we await stopping process, but this code path is due to a bug
+                // that needs to be fixed either way.
+                this.stop("summarizerException");
+            }
         }).finally(() => {
-            assert(this.state !== SummaryManagerState.Off, "Expected: Not Off");
+            assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
             this.state = SummaryManagerState.Off;
 
             this.summarizer = undefined;
@@ -251,7 +261,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(this.state === SummaryManagerState.Running, "Expected: Running");
+        assert(this.state === SummaryManagerState.Running || this.state === SummaryManagerState.Starting,
+            0x265 /* "Expected: Starting or Running" */);
         this.state = SummaryManagerState.Stopping;
 
         if (this.summarizer !== undefined) {
@@ -276,7 +287,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
             this.emit(
                 "summarizerWarning",
-                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false),
+                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
             );
         }
 

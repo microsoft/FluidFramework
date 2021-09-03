@@ -31,7 +31,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 
     public get cancelled() {
         if (!this._cancelled) {
-            assert(this.runtime.deltaManager.active, "We should never connect as 'read'");
+            assert(this.runtime.deltaManager.active, 0x25d /* "We should never connect as 'read'" */);
 
             // This check can't be enabled in current design due to lastSummary flow, where
             // summarizer for closed container stays around and can produce one more summary.

@@ -311,6 +311,44 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
+        it("Rehydrate container multiple times round trip serialize/deserialize", async () => {
+            const { container } =
+                await createDetachedContainerAndGetRootDataStore();
+            let container1 = container;
+            for (let i = 0; i < 5; ++i) {
+                const snapshotTree1 = container1.serialize();
+                container1 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree1);
+            }
+
+            // Check for default data store
+            const response = await container1.request({ url: "/" });
+            assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
+            const defaultDataStore = response.value as TestFluidObject;
+            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+
+            // Check for dds
+            const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+            const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+            const sharedString = await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
+            const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+            const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+            const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+            const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+            const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
+            const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+            const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
+            assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
+            assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
+            assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
+            assert.strictEqual(sharedCell.id, sharedCellId, "Shared cell should exist!!");
+            assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
+            assert.strictEqual(crc.id, crcId, "CRC should exist!!");
+            assert.strictEqual(coc.id, cocId, "COC should exist!!");
+            assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
+            assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
+            assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
+        });
+
         it("Storage in detached container", async () => {
             const { container } =
                 await createDetachedContainerAndGetRootDataStore();

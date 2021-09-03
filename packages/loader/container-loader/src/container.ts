@@ -344,7 +344,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 // It is also default mode in general.
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
                 assert(pendingLocalState === undefined || loadOptions.loadMode === undefined,
-                    0x1e1 /* "pending state requires immidiate connection!" */);
+                    0x1e1 /* "pending state requires immediate connection!" */);
                 const mode: IContainerLoadMode = loadOptions.loadMode ?? defaultMode;
 
                 const onClosed = (err?: ICriticalContainerError) => {
@@ -820,6 +820,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const appSummary: ISummaryTree = this.context.createSummary();
         const protocolSummary = this.captureProtocolSummary();
         const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+
+        if (this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0) {
+            combinedSummary.tree[".hasAttachmentBlobs"] = { type: SummaryType.Blob, content: "true" };
+        }
         return JSON.stringify(combinedSummary);
     }
 
@@ -884,7 +888,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             if (hasAttachmentBlobs) {
                 // upload blobs to storage
-                assert(!!this.loader.services.detachedBlobStorage, "assertion for type narrowing");
+                assert(!!this.loader.services.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
 
                 // build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
                 // support blob handles that only know about the local IDs
@@ -925,7 +929,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         } catch(error) {
             // we should retry upon any retriable errors, so we shouldn't see them here
-            assert(!canRetryOnError(error), "retriable error thrown from attach()");
+            assert(!canRetryOnError(error), 0x24f /* "retriable error thrown from attach()" */);
 
             // add resolved URL on error object so that host has the ability to find this document and delete it
             const newError = DataProcessingError.wrapIfUnrecognized(
@@ -1367,6 +1371,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
+        if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
+            assert(!!this.loader.services.detachedBlobStorage && this.loader.services.detachedBlobStorage.size > 0,
+                0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */);
+            delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
+        }
+
         const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
@@ -1785,17 +1795,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // Check and report if we're getting messages from a clientId that we previously
         // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
         if (message.clientId != null) {
-            let errorMsg: string | undefined;
+            let errorCode: string | undefined;
             const client: ILocalSequencedClient | undefined =
                 this.getQuorum().getMember(message.clientId);
             if (client === undefined && message.type !== MessageType.ClientJoin) {
-                errorMsg = "messageClientIdMissingFromQuorum";
+                errorCode = "messageClientIdMissingFromQuorum";
             } else if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                errorMsg = "messageClientIdShouldHaveLeft";
+                errorCode = "messageClientIdShouldHaveLeft";
             }
-            if (errorMsg !== undefined) {
+            if (errorCode !== undefined) {
                 const error = new DataCorruptionError(
-                    errorMsg,
+                    errorCode,
                     extractSafePropertiesFromMessage(message));
                 this.close(normalizeError(error));
             }
