@@ -77,7 +77,8 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
 
         let typeParams: string | undefined;
         if(Node.isInterfaceDeclaration(node) || Node.isTypeAliasDeclaration(node)){
-
+            // it's really hard to build the right type for a generic,
+            // so for now we'll just pass any, as it will always work
             if(node.getTypeParameters().length > 0){
                 typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
             }
