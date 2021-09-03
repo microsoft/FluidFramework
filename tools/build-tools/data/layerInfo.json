@@ -145,8 +145,7 @@
                     "@fluidframework/base-host"
                 ],
                 "deps": [
-                    "Loader",
-                    "Framework-Utils"
+                    "Loader"
                 ]
             },
             "HostUtils": {
@@ -195,6 +194,7 @@
                     "packages/framework/"
                 ],
                 "deps": [
+                    "Framework-Utils",
                     "Hosts",
                     "Runtime"
                 ]
