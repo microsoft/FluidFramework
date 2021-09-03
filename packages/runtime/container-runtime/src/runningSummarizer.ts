@@ -269,7 +269,7 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     private async lockedSummaryAction<T>(action: () => Promise<T>) {
-        assert (this.summarizingLock === undefined, "Caller is responsible for checking lock");
+        assert (this.summarizingLock === undefined, 0x25b /* "Caller is responsible for checking lock" */);
 
         const summarizingLock = new Deferred<void>();
         this.summarizingLock = summarizingLock.promise;
@@ -329,9 +329,6 @@ export class RunningSummarizer implements IDisposable {
         cancellationToken = this.cancellationToken): void
     {
         if (this.summarizingLock !== undefined) {
-            // This should not happen often, if at all (depends on how on-demand and enqueues summaries are used)
-            // Log an error to learn about these cases and assess if we need to change anything.
-            this.logger.sendTelemetryEvent({ eventName: "ConcurrentSummaryAttempt", reason: summarizeReason });
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
             this.tryWhileSummarizing = true;
@@ -381,7 +378,7 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
-                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, "not nack");
+                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, 0x25c /* "not nack" */);
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.

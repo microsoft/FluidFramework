@@ -9,8 +9,13 @@ import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
+
+export { ITelemetryBaseEvent }
+
+export { ITelemetryBaseLogger }
 
 // @public (undocumented)
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
@@ -23,7 +28,7 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 
 // @public
 class TinyliciousClient {
-    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
+    constructor(props?: TinyliciousClientProps | undefined);
     createContainer(containerSchema: ContainerSchema): Promise<{
         container: FluidContainer;
         services: TinyliciousContainerServices;
@@ -38,11 +43,15 @@ export { TinyliciousClient }
 
 export default TinyliciousClient;
 
-// @public (undocumented)
+// @public
+export interface TinyliciousClientProps {
+    connection?: TinyliciousConnectionConfig;
+    logger?: ITelemetryBaseLogger;
+}
+
+// @public
 export interface TinyliciousConnectionConfig {
-    // (undocumented)
     domain?: string;
-    // (undocumented)
     port?: number;
 }
 

@@ -82,7 +82,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         //    retryAfter into account!
         // But retry loop is required for creation flow (Container.attach)
         assert((context.referenceSequenceNumber === 0) === (context.ackHandle === undefined),
-            "creation summary has to have seq=0 && handle === undefined");
+            0x251 /* "creation summary has to have seq=0 && handle === undefined" */);
         if (context.referenceSequenceNumber !== 0) {
             return this.internalStorageService.uploadSummaryWithContext(summary, context);
         }
