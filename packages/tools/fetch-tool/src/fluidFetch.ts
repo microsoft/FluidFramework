@@ -12,7 +12,7 @@ import { fluidFetchMessages } from "./fluidFetchMessages";
 import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint";
 import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
 
-export async function fluidFetchOneFile(urlStr: string, name?: string) {
+async function fluidFetchOneFile(urlStr: string, name?: string) {
     const documentService = await fluidFetchInit(urlStr);
     const saveDir = paramSaveDir ? (name ? `${paramSaveDir}/${name}` : paramSaveDir) : undefined;
     if (saveDir !== undefined) {
@@ -66,7 +66,7 @@ function getSharepointServerRelativePathFromURL(url: URL) {
     return decodeURI(sitePath);
 }
 
-export async function fluidFetchMain() {
+async function fluidFetchMain() {
     if (!paramURL) {
         return;
     }
