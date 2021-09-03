@@ -13,6 +13,8 @@ import { TestThrottler } from "@fluidframework/server-test-utils";
 import * as historianApp from "../app";
 import { RestGitService } from "../services";
 import { TestTenantService, TestCache } from "./utils";
+import { WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 const limit = 10;
 const sha = "testSha";
@@ -29,6 +31,9 @@ const defaultProvider = new nconf.Provider({}).defaults({
     },
 });
 const defaultTenantService = new TestTenantService();
+
+const lumberjackEngine = new WinstonLumberjackEngine();
+Lumberjack.setup([lumberjackEngine]);
 
 /**
  * A helper method that will first send (limit) number of requests and assert they are not throttled,
