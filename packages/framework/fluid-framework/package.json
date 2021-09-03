@@ -27,7 +27,6 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.47.0",
     "@fluidframework/fluid-static": "^0.47.0",
     "@fluidframework/map": "^0.47.0",
     "@fluidframework/sequence": "^0.47.0"
