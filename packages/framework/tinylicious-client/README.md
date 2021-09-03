@@ -19,8 +19,8 @@ In the example below we are connecting to a locally running instance of our Tiny
 ```javascript
 import { TinyliciousClient, TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
 
-const config: TinyliciousConnectionConfig = { port: 7070 };
-const tinyliciousClient = new TinyliciousClient(config);
+const clientProps = { connection: { port: 7070 } };
+const tinyliciousClient = new TinyliciousClient(clientProps);
 ```
 
 ## Fluid Containers
@@ -56,7 +56,7 @@ Using the default `TinyliciousClient` object the developer can create and get Fl
 ```javascript
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-const tinyliciousClient = new TinyliciousClient(config);
+const tinyliciousClient = new TinyliciousClient(props);
 const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
 ```
 
