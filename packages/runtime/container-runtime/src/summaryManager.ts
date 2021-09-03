@@ -226,13 +226,21 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
                 async () => summarizer.run(clientId, this.summarizerOptions),
             );
         }).catch((error) => {
-            this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
-            this.emit("summarizerWarning", error);
+            // Most of exceptions happen due to container being closed while loading it.
+            // Not worth reporting such errors. That said, we might miss some real errors if
+            // we ignore blindly, so try to narrow signature we are looking for - skip logging
+            // error only if interactive container also is disconnected (or went through reconnection),
+            // we do not have summarizer. We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad",
+            // but that does not seem to be necessary.
+            if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
+                this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
+                this.emit("summarizerWarning", error);
 
-            // Note that summarizer may keep going (like doing last summary).
-            // Ideally we await stopping process, but this code path is due to a bug
-            // that needs to be fixed either way.
-            this.stop("summarizerException");
+                // Note that summarizer may keep going (like doing last summary).
+                // Ideally we await stopping process, but this code path is due to a bug
+                // that needs to be fixed either way.
+                this.stop("summarizerException");
+            }
         }).finally(() => {
             assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
             this.state = SummaryManagerState.Off;
@@ -251,7 +259,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 
     private stop(reason: SummarizerStopReason) {
-        assert(this.state === SummaryManagerState.Running, 0x265 /* "Expected: Running" */);
+        assert(this.state === SummaryManagerState.Running || this.state === SummaryManagerState.Starting,
+            0x265 /* "Expected: Starting or Running" */);
         this.state = SummaryManagerState.Stopping;
 
         if (this.summarizer !== undefined) {
