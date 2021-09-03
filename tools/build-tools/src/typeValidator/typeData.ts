@@ -14,6 +14,7 @@ export interface PackageAndTypeData{
 
 export interface TypeData{
     readonly name: string;
+    readonly typeParams: string | undefined;
     readonly deprecated: boolean;
     readonly internal: boolean;
 }
@@ -74,6 +75,15 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
             ? `${namespacePrefix}.${node.getName()}`
             : node.getName()!;
 
+        let typeParams: string | undefined;
+        if(Node.isInterfaceDeclaration(node) || Node.isTypeAliasDeclaration(node)){
+            // it's really hard to build the right type for a generic,
+            // so for now we'll just pass any, as it will always work
+            if(node.getTypeParameters().length > 0){
+                typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
+            }
+        }
+
         const deprecated = hasDocTag(node, "deprecated");
         const internal = hasDocTag(node, "internal");
 
@@ -81,6 +91,7 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
             name,
             deprecated,
             internal,
+            typeParams,
         }];
     }
 

@@ -36,6 +36,7 @@
   "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/common-definitions-0.20.0": "npm:@fluidframework/common-definitions@0.20.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
@@ -52,5 +53,15 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.1.3",
     "typescript-formatter": "7.1.0"
+  },
+  "typeValidation": {
+    "version": "0.21.0",
+    "broken": {
+      "ITelemetryBaseEvent": {"backCompat": false},
+      "ITelemetryErrorEvent": {"backCompat": false},
+      "ITelemetryGenericEvent": {"backCompat": false},
+      "ITelemetryPerformanceEvent": {"backCompat": false},
+      "ITelemetryProperties": {"backCompat": false}
+    }
   }
 }
