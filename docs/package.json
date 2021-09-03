@@ -33,7 +33,7 @@
     "install:hugo:default": "[ ! -f bin/hugo ] && npm run install:hugo:force ; exit 0",
     "install:hugo:force": "binstall install -n hugo -d bin",
     "install:hugo:win32": "if not exist bin/hugo.exe npm run install:hugo:force",
-    "linkcheck": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/docs/apis/*",
+    "linkcheck": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/index.xml --exclude http://localhost:1313/docs/apis/*",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
     "start": "npm run build:md-magic && run-script-os",

@@ -1,12 +1,14 @@
-name: Broken Link Check
+name: Website validation
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - "docs/**"
 
 jobs:
-  broken_link_check_internal:
+  build_site:
     runs-on: ubuntu-latest
-    name: Check for broken internal links
+    name: Build site
     steps:
     - uses: actions/checkout@v2
       with:
@@ -14,43 +16,71 @@ jobs:
     - uses: actions/setup-node@v2-beta
       with:
         node-version: "12"
-    - name: Build site
+    - name: Build site artifact
       run: |
         cd $GITHUB_WORKSPACE/docs
         npm ci
         npm run download
         npm run build
-    - name: Check internal links
-      id: linkcheck
+    - name: Upload site artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: fluidframework-site
+        path: docs/public
+        retention-days: 3
+
+  broken_link_check_internal:
+    runs-on: ubuntu-latest
+    name: 🔗 Broken Link Check
+    needs: build_site
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: false
+    - uses: actions/setup-node@v2-beta
+      with:
+        node-version: "12"
+    - name: Download site artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: fluidframework-site
+        path: docs/public
+    - name: Install dependencies
       run: |
         npm install pm2 -g
         cd $GITHUB_WORKSPACE/docs
+        npm ci
+    - name: Start server in background
+      run: |
+        cd $GITHUB_WORKSPACE/docs
         pm2 start $GITHUB_WORKSPACE/docs/serve.js
+    - name: Check internal links
+      id: linkcheck
+      run: |
+        cd $GITHUB_WORKSPACE/docs
         npm run linkcheck
-    # - name: sdf
-    #   uses: BerniWittmann/background-server-action@main
-    #   with:
-    #     start: npm start
-    #     command: npm run linkcheck
-    # - name: Run broken-link-checker
-    #   id: link-report
-    #   uses: tylerbutler/link-checker@master
-    #   with:
-    #     url: http://localhost:1313
-    #     honorRobotExclusions: true
-    #     ignorePatterns: "https://github.com/*/edit/*,http*://*/docs/apis/*"
-    #     recursiveLinks: true
-    #     additionalArgs: "-ore"
-    - name: Success
-      if: ${{ success() }}
-      uses: github-actions-up-and-running/pr-comment@v1.0.1
+    - name: Report success
+      if: ${{ success() && steps.linkcheck.outcome == 'success' }}
+      uses: marocchino/sticky-pull-request-comment@v2
       with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        message: "🔗 No broken links found! ✅"
-        # message: "${{steps.linkcheck.outputs.result}}"
-    - name: Failure
-      if: ${{ failure() }}
-      uses: github-actions-up-and-running/pr-comment@v1.0.1
+        header: linkreport
+        recreate: true
+        message: |
+          ### Broken link report 👍🏻
+
+          🔗 No broken links found! ✅
+
+          Your attention to detail is admirable.
+    - name: Report failure
+      if: ${{ failure() || steps.linkcheck.outcome != 'success' }}
+      uses: marocchino/sticky-pull-request-comment@v2
       with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        message: "${{steps.linkcheck.outputs.result}}"
+        header: linkreport
+        recreate: true
+        message: |
+          ### Broken link report ⚠
+
+          🔗 Found some broken links! 💔
+
+          Run a link check locally to find them. See
+          <https://github.com/microsoft/FluidFramework/wiki/Checking-for-broken-links-in-the-documentation> for more information.
