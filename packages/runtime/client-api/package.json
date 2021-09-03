@@ -67,8 +67,7 @@
     "@fluidframework/runtime-utils": "^0.47.0",
     "@fluidframework/sequence": "^0.47.0",
     "@fluidframework/shared-object-base": "^0.47.0",
-    "@types/node": "^12.19.0",
-    "jwt-decode": "^2.2.0"
+    "@types/node": "^12.19.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
