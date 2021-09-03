@@ -17,6 +17,8 @@ export interface TypeData{
     readonly typeParams: string | undefined;
     readonly deprecated: boolean;
     readonly internal: boolean;
+    readonly needsTypeof: boolean;
+    readonly kind: string;
 }
 
 function hasDocTag(node: Node, tagName: "deprecated" | "internal"){
@@ -67,7 +69,6 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
     if(Node.isClassDeclaration(node)
         || Node.isEnumDeclaration(node)
         || Node.isInterfaceDeclaration(node)
-        || Node.isFunctionDeclaration(node)
         || Node.isTypeAliasDeclaration(node)
         || Node.isVariableDeclaration(node)){
 
@@ -84,6 +85,8 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
             }
         }
 
+        const needsTypeof = Node.isVariableDeclaration(node) || Node.isFunctionDeclaration(node);
+
         const deprecated = hasDocTag(node, "deprecated");
         const internal = hasDocTag(node, "internal");
 
@@ -92,6 +95,8 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
             deprecated,
             internal,
             typeParams,
+            needsTypeof,
+            kind: node.getKindName(),
         }];
     }
 
@@ -109,7 +114,7 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     const tsConfigPath =`${basePath}/tsconfig.json`
 
     if(!fs.existsSync(tsConfigPath)){
-        throw new Error(`Tsconfig json does not exist: ${tsConfigPath}`)
+        throw new Error(`Tsconfig json does not exist: ${tsConfigPath}.\nYou may need to install the package via npm install in the package dir.`)
     }
 
     const packageDetails = getPackageDetails(basePath);
@@ -121,7 +126,7 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
 
     const file = project.getSourceFile("index.ts")
     if(file == undefined){
-        throw new Error("index.ts does not exist in package source");
+        throw new Error("index.ts does not exist in package source.\nYou may need to install the package via npm install in the package dir.");
     }
     const typeData: TypeData[]=[];
 
