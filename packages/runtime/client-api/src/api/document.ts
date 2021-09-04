@@ -26,28 +26,6 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { CodeLoader } from "./codeLoader";
 
-// Registered services to use when loading a document
-let defaultDocumentServiceFactory: IDocumentServiceFactory;
-
-/**
- * Registers the default services to use for interacting with shared documents. To simplify the API it is
- * expected that the implementation provider of these will register themselves during startup prior to the user
- * requesting to load a shared object.
- */
-export function registerDocumentServiceFactory(service: IDocumentServiceFactory) {
-    defaultDocumentServiceFactory = service;
-}
-
-export const getDefaultDocumentServiceFactory = (): IDocumentServiceFactory => defaultDocumentServiceFactory;
-
-let chaincodeRepo: string;
-export function registerChaincodeRepo(repo: string) {
-    chaincodeRepo = repo;
-}
-
-export const getChaincodeRepo = (): string => chaincodeRepo;
-// End temporary calls
-
 /**
  * A document is a collection of shared types.
  */
@@ -200,7 +178,7 @@ export const load = async (
     url: string,
     urlResolver: IUrlResolver,
     options: ILoaderOptions = {},
-    documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    documentServiceFactory?: IDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
 ): Promise<Document> => createOrLoad(
         url,
@@ -215,7 +193,7 @@ export const create = async (
     url: string,
     urlResolver: IUrlResolver,
     options: ILoaderOptions = {},
-    documentServiceFactory: IDocumentServiceFactory = defaultDocumentServiceFactory,
+    documentServiceFactory?: IDocumentServiceFactory,
     runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
 ): Promise<Document> => createOrLoad(
         url,
