@@ -11,10 +11,11 @@ import {
     IFluidHandle,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreContext, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { SharedSegmentSequenceUndoRedoHandler, UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
@@ -2950,6 +2951,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     constructor(
         element: HTMLDivElement,
         public clientApiDocument: api.Document,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly context: IFluidDataStoreContext,
         public sharedString: Sequence.SharedString,
         public status: Status,
         public options?: Record<string, any>) {
@@ -3068,8 +3071,15 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         flowElement: HTMLDivElement,
         flowRect: IExcludedRectangle,
         marker: MergeTree.Marker) {
-        const childFlow = new FlowView(flowElement, this.clientApiDocument, this.sharedString,
-            this.status, this.options);
+        const childFlow = new FlowView(
+            flowElement,
+            this.clientApiDocument,
+            this.runtime,
+            this.context,
+            this.sharedString,
+            this.status,
+            this.options,
+        );
         childFlow.parentFlow = this;
         childFlow.setEdit(this.docRoot);
         childFlow.comments = this.comments;

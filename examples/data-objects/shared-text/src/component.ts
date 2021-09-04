@@ -216,6 +216,8 @@ export class SharedTextRunner
                 this.runtime,
                 this.context,
             ),
+            this.runtime,
+            this.context,
             this.sharedString,
             image,
             {});
