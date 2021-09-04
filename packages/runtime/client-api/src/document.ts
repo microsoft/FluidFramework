@@ -4,18 +4,10 @@
  */
 
 import { EventEmitter } from "events";
-import * as cell from "@fluidframework/cell";
-import {
-    IDeltaManager, ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
-import * as ink from "@fluidframework/ink";
-import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
-    IDocumentMessage,
     ISequencedClient,
-    ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
@@ -27,14 +19,6 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 export class Document extends EventEmitter {
     public get clientId(): string {
         return this.runtime.clientId;
-    }
-
-    public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-        return this.runtime.deltaManager;
-    }
-
-    public get options(): ILoaderOptions {
-        return this.runtime.options;
     }
 
     /**
@@ -51,7 +35,7 @@ export class Document extends EventEmitter {
         public readonly runtime: FluidDataStoreRuntime,
         public readonly context: IFluidDataStoreContext,
         private readonly root: ISharedMap,
-        private readonly closeFn: () => void,
+        closeFn: () => void,
     ) {
         super();
     }
@@ -82,31 +66,10 @@ export class Document extends EventEmitter {
     }
 
     /**
-     * Creates a new shared directory
-     */
-    public createDirectory(): ISharedDirectory {
-        return SharedDirectory.create(this.runtime);
-    }
-
-    /**
-     * Creates a new shared cell.
-     */
-    public createCell(): cell.ISharedCell {
-        return cell.SharedCell.create(this.runtime);
-    }
-
-    /**
      * Creates a new shared string
      */
     public createString(): sequence.SharedString {
         return sequence.SharedString.create(this.runtime);
-    }
-
-    /**
-     * Creates a new ink shared object
-     */
-    public createInk(): ink.IInk {
-        return ink.Ink.create(this.runtime);
     }
 
     /**
@@ -116,24 +79,8 @@ export class Document extends EventEmitter {
         return this.root;
     }
 
-    public getClients(): Map<string, ISequencedClient> {
-        const quorum = this.runtime.getQuorum();
-        return quorum.getMembers();
-    }
-
     public getClient(clientId: string): ISequencedClient {
         const quorum = this.runtime.getQuorum();
         return quorum.getMember(clientId);
-    }
-
-    /**
-     * Closes the document and detaches all listeners
-     */
-    public close() {
-        return this.closeFn();
-    }
-
-    public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-        return this.runtime.uploadBlob(blob);
     }
 }
