@@ -34,8 +34,6 @@ export class Document extends EventEmitter {
     constructor(
         public readonly runtime: FluidDataStoreRuntime,
         public readonly context: IFluidDataStoreContext,
-        private readonly root: ISharedMap,
-        closeFn: () => void,
     ) {
         super();
     }
@@ -70,13 +68,6 @@ export class Document extends EventEmitter {
      */
     public createString(): sequence.SharedString {
         return sequence.SharedString.create(this.runtime);
-    }
-
-    /**
-     * Retrieves the root shared object that the document is based on
-     */
-    public getRoot(): ISharedMap {
-        return this.root;
     }
 
     public getClient(clientId: string): ISequencedClient {

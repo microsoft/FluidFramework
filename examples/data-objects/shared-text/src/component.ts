@@ -215,8 +215,6 @@ export class SharedTextRunner
             new API.Document(
                 this.runtime,
                 this.context,
-                this.rootView,
-                () => { throw new Error("Can't close document"); },
             ),
             this.sharedString,
             image,
