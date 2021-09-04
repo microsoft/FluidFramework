@@ -28,15 +28,13 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
-let currSeq: number;
+let currSeq: number = 1;
 
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
-    files?: string[],
-    sequenceNumber: number = 0) {
-    let lastSeq = sequenceNumber;
-    currSeq = sequenceNumber + 1;
+    files?: string[]) {
+    let lastSeq = 0;
 
     let seqNumMismatch = false;
     // If we have local save, read ops from there first
@@ -51,7 +49,7 @@ async function* loadAllSequencedMessages(
                 assert(!seqNumMismatch, 0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 yield messages;
                 lastSeq = messages[messages.length - 1].sequenceNumber;
-                currSeq = lastSeq;
+                currSeq = lastSeq + 1;
             } catch (e) {
                 if (seqNumMismatch) {
                     if (overWrite) {
