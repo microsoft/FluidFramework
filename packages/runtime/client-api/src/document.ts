@@ -10,17 +10,6 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * A document is a collection of shared types.
  */
 export class Document {
-    public get clientId(): string {
-        return this.runtime.clientId;
-    }
-
-    /**
-     * Flag indicating whether this document is fully connected.
-     */
-    public get isConnected(): boolean {
-        return this.runtime.connected;
-    }
-
     /**
      * Constructs a new document from the provided details
      */

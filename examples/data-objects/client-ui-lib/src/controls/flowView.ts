@@ -394,7 +394,7 @@ const commands: IFlowViewCmd[] = [
     {
         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString, f.clientApiDocument.clientId);
+            Table.createTable(f.cursor.pos, f.sharedString, f.clientApiDocument.runtime.clientId);
             f.hostSearchMenu(f.cursor.pos);
         },
         key: "table test",
@@ -3106,7 +3106,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         for (let i = 0; i < k; i++) {
             const pos1 = Math.floor(Math.random() * (len - 1));
             const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            const props = { clid: this.clientApiDocument.clientId };
+            const props = { clid: this.clientApiDocument.runtime.clientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.SlideOnRemove, props);
         }
         this.hostSearchMenu(-1);
@@ -4378,7 +4378,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteColumn(this.sharedString, this.clientApiDocument.clientId,
+            Table.deleteColumn(this.sharedString, this.clientApiDocument.runtime.clientId,
                 cellMarker.cell, rowMarker.row, tableMarker.table);
         }
     }
@@ -4392,7 +4392,12 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertRow(this.sharedString, this.clientApiDocument.clientId, rowMarker.row, tableMarker.table);
+            Table.insertRow(
+                this.sharedString,
+                this.clientApiDocument.runtime.clientId,
+                rowMarker.row,
+                tableMarker.table,
+            );
         }
     }
 
@@ -4511,7 +4516,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             Table.insertColumn(
                 this.sharedString,
-                this.clientApiDocument.clientId,
+                this.clientApiDocument.runtime.clientId,
                 cellMarker.cell,
                 rowMarker.row,
                 tableMarker.table);
@@ -4550,7 +4555,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
-                Table.createTable(this.cursor.pos, this.sharedString, this.clientApiDocument.clientId);
+                Table.createTable(this.cursor.pos, this.sharedString, this.clientApiDocument.runtime.clientId);
                 break;
             }
             case CharacterCodes.M: {
@@ -4894,7 +4899,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId).presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
-                    shouldShowCursor: () => this.clientApiDocument.clientId !== clientId &&
+                    shouldShowCursor: () => this.clientApiDocument.runtime.clientId !== clientId &&
                         this.getRemoteClientInfo(clientId) !== undefined,
                     user: clientInfo.user,
                 } as ILocalPresenceInfo;
