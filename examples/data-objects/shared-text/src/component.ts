@@ -39,7 +39,7 @@ import {
     create404Response,
 } from "@fluidframework/runtime-utils";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { Document } from "./document";
+import { SharedTextDocument } from "./document";
 import { downloadRawText, getInsights, setTranslation } from "./utils";
 
 const debug = registerDebug("fluid:shared-text");
@@ -69,7 +69,7 @@ export class SharedTextRunner
     private sharedString: SharedString;
     private insightsMap: ISharedMap;
     private rootView: ISharedMap;
-    private collabDoc: Document;
+    private sharedTextDocument: SharedTextDocument;
     private uiInitialized = false;
     private readonly title: string = "Shared Text";
 
@@ -107,20 +107,20 @@ export class SharedTextRunner
     }
 
     private async initialize(existing: boolean): Promise<void> {
-        this.collabDoc = await Document.load(this.runtime, existing);
-        this.rootView = this.collabDoc.getRoot();
+        this.sharedTextDocument = await SharedTextDocument.load(this.runtime, existing);
+        this.rootView = this.sharedTextDocument.getRoot();
 
         if (!existing) {
             const insightsMapId = "insights";
 
-            const insights = this.collabDoc.createMap(insightsMapId);
+            const insights = this.sharedTextDocument.createMap(insightsMapId);
             this.rootView.set(insightsMapId, insights.handle);
 
             debug(`Not existing ${this.runtime.id} - ${performance.now()}`);
-            this.rootView.set("users", this.collabDoc.createMap().handle);
-            const seq = SharedNumberSequence.create(this.collabDoc.runtime);
+            this.rootView.set("users", this.sharedTextDocument.createMap().handle);
+            const seq = SharedNumberSequence.create(this.sharedTextDocument.runtime);
             this.rootView.set("sequence-test", seq.handle);
-            const newString = this.collabDoc.createString();
+            const newString = this.sharedTextDocument.createString();
 
             const template = parse(window.location.search.substr(1)).template;
             const starterText = template
@@ -140,14 +140,14 @@ export class SharedTextRunner
             }
             this.rootView.set("text", newString.handle);
 
-            insights.set(newString.id, this.collabDoc.createMap().handle);
+            insights.set(newString.id, this.sharedTextDocument.createMap().handle);
 
             // The flowContainerMap MUST be set last
 
-            const flowContainerMap = this.collabDoc.createMap();
+            const flowContainerMap = this.sharedTextDocument.createMap();
             this.rootView.set("flowContainerMap", flowContainerMap.handle);
 
-            insights.set(newString.id, this.collabDoc.createMap().handle);
+            insights.set(newString.id, this.sharedTextDocument.createMap().handle);
         }
 
         debug(`collabDoc loaded ${this.runtime.id} - ${performance.now()}`);
@@ -169,7 +169,7 @@ export class SharedTextRunner
 
         const options = parse(window.location.search.substr(1));
         setTranslation(
-            this.collabDoc,
+            this.sharedTextDocument,
             this.sharedString.id,
             options.translationFromLanguage as string,
             options.translationToLanguage as string,

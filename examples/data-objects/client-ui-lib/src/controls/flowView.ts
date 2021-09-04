@@ -394,7 +394,7 @@ const commands: IFlowViewCmd[] = [
     {
         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString, f.collabDocument.clientId);
+            Table.createTable(f.cursor.pos, f.sharedString, f.clientApiDocument.clientId);
             f.hostSearchMenu(f.cursor.pos);
         },
         key: "table test",
@@ -730,7 +730,7 @@ function renderSegmentIntoLine(
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         handleFromLegacyUri(
                             `/${componentMarker.properties.leafId}`,
-                            lineContext.flowView.collabDocument.context.containerRuntime)
+                            lineContext.flowView.clientApiDocument.context.containerRuntime)
                         .get()
                         .then(async (component) => {
                             if (!HTMLViewAdapter.canAdapt(component)) {
@@ -2949,7 +2949,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     constructor(
         element: HTMLDivElement,
-        public collabDocument: api.Document,
+        public clientApiDocument: api.Document,
         public sharedString: Sequence.SharedString,
         public status: Status,
         public options?: Record<string, any>) {
@@ -2997,18 +2997,18 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
 
         // Refresh cursors when clients join or leave
-        collabDocument.runtime.getQuorum().on("addMember", () => {
+        clientApiDocument.runtime.getQuorum().on("addMember", () => {
             this.updatePresenceCursors();
             this.broadcastPresence();
         });
-        collabDocument.runtime.getQuorum().on("removeMember", () => {
+        clientApiDocument.runtime.getQuorum().on("removeMember", () => {
             this.updatePresenceCursors();
         });
-        collabDocument.runtime.getAudience().on("addMember", () => {
+        clientApiDocument.runtime.getAudience().on("addMember", () => {
             this.updatePresenceCursors();
             this.broadcastPresence();
         });
-        collabDocument.runtime.getAudience().on("removeMember", () => {
+        clientApiDocument.runtime.getAudience().on("removeMember", () => {
             this.updatePresenceCursors();
         });
 
@@ -3029,7 +3029,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
 
         // Provide access to the containing shared object
-        this.services.set("document", this.collabDocument);
+        this.services.set("document", this.clientApiDocument);
     }
 
     // Remember an element to give to a component; element will be absolutely positioned during render, if needed
@@ -3068,7 +3068,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         flowElement: HTMLDivElement,
         flowRect: IExcludedRectangle,
         marker: MergeTree.Marker) {
-        const childFlow = new FlowView(flowElement, this.collabDocument, this.sharedString,
+        const childFlow = new FlowView(flowElement, this.clientApiDocument, this.sharedString,
             this.status, this.options);
         childFlow.parentFlow = this;
         childFlow.setEdit(this.docRoot);
@@ -3106,7 +3106,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         for (let i = 0; i < k; i++) {
             const pos1 = Math.floor(Math.random() * (len - 1));
             const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            const props = { clid: this.collabDocument.clientId };
+            const props = { clid: this.clientApiDocument.clientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.SlideOnRemove, props);
         }
         this.hostSearchMenu(-1);
@@ -4256,7 +4256,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public createComment() {
         const sel = this.cursor.getSelection();
         if (sel) {
-            const commentStory = this.collabDocument.createString();
+            const commentStory = Sequence.SharedString.create(this.clientApiDocument.runtime);
             commentStory.insertText(0, "a comment...");
             this.comments.add(
                 sel.start,
@@ -4269,7 +4269,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const router = await this.collabDocument.context.containerRuntime.createDataStore(chaincode);
+        const router = await this.clientApiDocument.context.containerRuntime.createDataStore(chaincode);
         const object = await requestFluidObject(router, "");
         const loadable = object.IFluidLoadable;
 
@@ -4378,7 +4378,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteColumn(this.sharedString, this.collabDocument.clientId,
+            Table.deleteColumn(this.sharedString, this.clientApiDocument.clientId,
                 cellMarker.cell, rowMarker.row, tableMarker.table);
         }
     }
@@ -4392,7 +4392,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.insertRow(this.sharedString, this.collabDocument.clientId, rowMarker.row, tableMarker.table);
+            Table.insertRow(this.sharedString, this.clientApiDocument.clientId, rowMarker.row, tableMarker.table);
         }
     }
 
@@ -4511,7 +4511,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             Table.insertColumn(
                 this.sharedString,
-                this.collabDocument.clientId,
+                this.clientApiDocument.clientId,
                 cellMarker.cell,
                 rowMarker.row,
                 tableMarker.table);
@@ -4550,7 +4550,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
-                Table.createTable(this.cursor.pos, this.sharedString, this.collabDocument.clientId);
+                Table.createTable(this.cursor.pos, this.sharedString, this.clientApiDocument.clientId);
                 break;
             }
             case CharacterCodes.M: {
@@ -4744,7 +4744,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
-        this.presenceSignal = new PresenceSignal(this.collabDocument.runtime);
+        this.presenceSignal = new PresenceSignal(this.clientApiDocument.runtime);
         this.addPresenceSignal(this.presenceSignal);
 
         this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
@@ -4894,7 +4894,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId).presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
-                    shouldShowCursor: () => this.collabDocument.clientId !== clientId &&
+                    shouldShowCursor: () => this.clientApiDocument.clientId !== clientId &&
                         this.getRemoteClientInfo(clientId) !== undefined,
                     user: clientInfo.user,
                 } as ILocalPresenceInfo;
@@ -4912,11 +4912,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private getRemoteClientInfo(clientId: string): IClient {
-        const quorumClient = this.collabDocument.getClient(clientId);
+        const quorumClient = this.clientApiDocument.runtime.getQuorum().getMember(clientId);
         if (quorumClient) {
             return quorumClient.client;
         } else {
-            const audience = this.collabDocument.runtime.getAudience().getMembers();
+            const audience = this.clientApiDocument.runtime.getAudience().getMembers();
             if (audience.has(clientId)) {
                 return audience.get(clientId);
             }
@@ -4924,7 +4924,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private broadcastPresence() {
-        if (this.presenceSignal && this.collabDocument.isConnected) {
+        if (this.presenceSignal && this.clientApiDocument.runtime.connected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
@@ -4936,7 +4936,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private broadcastDragPresence() {
-        if (this.presenceSignal && this.collabDocument.isConnected) {
+        if (this.presenceSignal && this.clientApiDocument.runtime.connected) {
             const dragPresenceInfo: IRemoteDragInfo = {
                 dx: this.movingInclusion.dx,
                 dy: this.movingInclusion.dy,

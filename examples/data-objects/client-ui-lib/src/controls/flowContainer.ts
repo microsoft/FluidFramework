@@ -26,7 +26,7 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         title: string,
-        private readonly collabDocument: api.Document,
+        private readonly clientApiDocument: api.Document,
         private readonly sharedString: Sequence.SharedString,
         private readonly image: Image,
         private readonly options?: Record<string, any>) {
@@ -50,7 +50,7 @@ export class FlowContainer extends ui.Component {
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
-        this.flowView = new FlowView(flowViewDiv, this.collabDocument, this.sharedString, this.status, this.options);
+        this.flowView = new FlowView(flowViewDiv, this.clientApiDocument, this.sharedString, this.status, this.options);
 
         // Layer panel lets us put the canvas on top of the text
         const layerPanelDiv = document.createElement("div");
