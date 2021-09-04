@@ -5,10 +5,11 @@
 
 import { EventEmitter } from "events";
 import * as cell from "@fluidframework/cell";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager, ILoaderOptions,
 } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import * as ink from "@fluidframework/ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
@@ -19,7 +20,6 @@ import {
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * A document is a collection of shared types.
