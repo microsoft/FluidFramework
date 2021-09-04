@@ -9,10 +9,6 @@ import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
     IDeltaManager, ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { Deferred } from "@fluidframework/common-utils";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import * as ink from "@fluidframework/ink";
 import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
@@ -24,7 +20,6 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { CodeLoader } from "./codeLoader";
 
 /**
  * A document is a collection of shared types.
@@ -141,96 +136,4 @@ export class Document extends EventEmitter {
     public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
         return this.runtime.uploadBlob(blob);
     }
-}
-
-function attach(loader: Loader, url: string, deferred: Deferred<Document>): void {
-    const responseP = loader.request({ url });
-
-    void responseP.then(
-        (response) => {
-            if (response.status !== 200 || response.mimeType !== "fluid/object") {
-                return;
-            }
-
-            // Check if the Fluid object is viewable
-            deferred.resolve(response.value);
-        });
-}
-
-async function requestDocument(loader: Loader, container: Container, uri: string) {
-    const deferred = new Deferred<Document>();
-
-    const errorHandler = (e) => deferred.reject(e);
-    container.on("error", errorHandler);
-    attach(loader, uri, deferred);
-    container.on("contextChanged", () => {
-        attach(loader, uri, deferred);
-    });
-
-    deferred.promise.finally(() => container.removeListener("error", errorHandler));
-    return deferred.promise;
-}
-
-/**
- * Loads a specific version (commit) of the shared object
- */
-export const load = async (
-    url: string,
-    urlResolver: IUrlResolver,
-    options: ILoaderOptions = {},
-    documentServiceFactory?: IDocumentServiceFactory,
-    runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
-): Promise<Document> => createOrLoad(
-        url,
-        urlResolver,
-        options,
-        documentServiceFactory,
-        runtimeOptions,
-        false, // createNew
-    );
-
-export const create = async (
-    url: string,
-    urlResolver: IUrlResolver,
-    options: ILoaderOptions = {},
-    documentServiceFactory?: IDocumentServiceFactory,
-    runtimeOptions: IContainerRuntimeOptions = { summaryOptions: { generateSummaries: false } },
-): Promise<Document> => createOrLoad(
-        url,
-        urlResolver,
-        options,
-        documentServiceFactory,
-        runtimeOptions,
-        true, // createNew
-    );
-
-async function createOrLoad(
-    url: string,
-    urlResolver: IUrlResolver,
-    options: ILoaderOptions,
-    documentServiceFactory: IDocumentServiceFactory,
-    runtimeOptions: IContainerRuntimeOptions,
-    createNew: boolean,
-): Promise<Document> {
-    const codeLoader = new CodeLoader(runtimeOptions);
-    const loader = new Loader({
-        urlResolver,
-        documentServiceFactory,
-        codeLoader,
-        options,
-    });
-
-    let container: Container;
-
-    if (createNew) {
-        container = await loader.createDetachedContainer({
-            package: "no-dynamic-package",
-            config: {},
-        });
-        await container.attach({ url });
-    } else {
-        container = await loader.resolve({ url });
-    }
-
-    return requestDocument(loader, container, url);
 }
