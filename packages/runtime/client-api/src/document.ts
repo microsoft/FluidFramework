@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
     ISequencedClient,
@@ -16,7 +15,7 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 /**
  * A document is a collection of shared types.
  */
-export class Document extends EventEmitter {
+export class Document {
     public get clientId(): string {
         return this.runtime.clientId;
     }
@@ -32,16 +31,9 @@ export class Document extends EventEmitter {
      * Constructs a new document from the provided details
      */
     constructor(
-        public readonly runtime: FluidDataStoreRuntime,
+        public readonly runtime: IFluidDataStoreRuntime,
         public readonly context: IFluidDataStoreContext,
-    ) {
-        super();
-    }
-
-    public on(event: string | symbol, listener: (...args: any[]) => void): this {
-        this.runtime.on(event, listener);
-        return this;
-    }
+    ) { }
 
     /**
      * Loads the specified shared object. Returns null if it does not exist
