@@ -4,7 +4,6 @@
  */
 
 import * as SearchMenu from "@fluid-example/search-menu";
-import * as api from "@fluid-internal/client-api";
 import { performance } from "@fluidframework/common-utils";
 import {
     IFluidObject,
@@ -395,7 +394,7 @@ const commands: IFlowViewCmd[] = [
     {
         exec: (c, p, f) => {
             f.updatePGInfo(f.cursor.pos - 1);
-            Table.createTable(f.cursor.pos, f.sharedString, f.clientApiDocument.runtime.clientId);
+            Table.createTable(f.cursor.pos, f.sharedString, f.runtime.clientId);
             f.hostSearchMenu(f.cursor.pos);
         },
         key: "table test",
@@ -731,7 +730,7 @@ function renderSegmentIntoLine(
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         handleFromLegacyUri(
                             `/${componentMarker.properties.leafId}`,
-                            lineContext.flowView.clientApiDocument.context.containerRuntime)
+                            lineContext.flowView.context.containerRuntime)
                         .get()
                         .then(async (component) => {
                             if (!HTMLViewAdapter.canAdapt(component)) {
@@ -2950,9 +2949,8 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
 
     constructor(
         element: HTMLDivElement,
-        public clientApiDocument: api.Document,
-        private readonly runtime: IFluidDataStoreRuntime,
-        private readonly context: IFluidDataStoreContext,
+        public readonly runtime: IFluidDataStoreRuntime,
+        public readonly context: IFluidDataStoreContext,
         public sharedString: Sequence.SharedString,
         public status: Status,
         public options?: Record<string, any>) {
@@ -3000,18 +2998,18 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         });
 
         // Refresh cursors when clients join or leave
-        clientApiDocument.runtime.getQuorum().on("addMember", () => {
+        runtime.getQuorum().on("addMember", () => {
             this.updatePresenceCursors();
             this.broadcastPresence();
         });
-        clientApiDocument.runtime.getQuorum().on("removeMember", () => {
+        runtime.getQuorum().on("removeMember", () => {
             this.updatePresenceCursors();
         });
-        clientApiDocument.runtime.getAudience().on("addMember", () => {
+        runtime.getAudience().on("addMember", () => {
             this.updatePresenceCursors();
             this.broadcastPresence();
         });
-        clientApiDocument.runtime.getAudience().on("removeMember", () => {
+        runtime.getAudience().on("removeMember", () => {
             this.updatePresenceCursors();
         });
 
@@ -3030,9 +3028,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             console.log("Component invalidated layout");
             this.hostSearchMenu(FlowView.docStartPosition);
         });
-
-        // Provide access to the containing shared object
-        this.services.set("document", this.clientApiDocument);
     }
 
     // Remember an element to give to a component; element will be absolutely positioned during render, if needed
@@ -3073,7 +3068,6 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         marker: MergeTree.Marker) {
         const childFlow = new FlowView(
             flowElement,
-            this.clientApiDocument,
             this.runtime,
             this.context,
             this.sharedString,
@@ -3116,7 +3110,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         for (let i = 0; i < k; i++) {
             const pos1 = Math.floor(Math.random() * (len - 1));
             const intervalLen = Math.max(1, Math.floor(Math.random() * Math.min(len - pos1, 150)));
-            const props = { clid: this.clientApiDocument.runtime.clientId };
+            const props = { clid: this.runtime.clientId };
             this.bookmarks.add(pos1, pos1 + intervalLen, MergeTree.IntervalType.SlideOnRemove, props);
         }
         this.hostSearchMenu(-1);
@@ -4266,7 +4260,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     public createComment() {
         const sel = this.cursor.getSelection();
         if (sel) {
-            const commentStory = Sequence.SharedString.create(this.clientApiDocument.runtime);
+            const commentStory = Sequence.SharedString.create(this.runtime);
             commentStory.insertText(0, "a comment...");
             this.comments.add(
                 sel.start,
@@ -4279,7 +4273,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     public async insertComponentNew(prefix: string, chaincode: string, inline = false) {
-        const router = await this.clientApiDocument.context.containerRuntime.createDataStore(chaincode);
+        const router = await this.context.containerRuntime.createDataStore(chaincode);
         const object = await requestFluidObject(router, "");
         const loadable = object.IFluidLoadable;
 
@@ -4388,7 +4382,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 const tableMarkerPos = getPosition(this, tableMarker);
                 Table.parseTable(tableMarker, tableMarkerPos, this.sharedString, makeFontInfo(this.lastDocContext));
             }
-            Table.deleteColumn(this.sharedString, this.clientApiDocument.runtime.clientId,
+            Table.deleteColumn(this.sharedString, this.runtime.clientId,
                 cellMarker.cell, rowMarker.row, tableMarker.table);
         }
     }
@@ -4404,7 +4398,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             Table.insertRow(
                 this.sharedString,
-                this.clientApiDocument.runtime.clientId,
+                this.runtime.clientId,
                 rowMarker.row,
                 tableMarker.table,
             );
@@ -4526,7 +4520,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             }
             Table.insertColumn(
                 this.sharedString,
-                this.clientApiDocument.runtime.clientId,
+                this.runtime.clientId,
                 cellMarker.cell,
                 rowMarker.row,
                 tableMarker.table);
@@ -4565,7 +4559,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                 break;
             case CharacterCodes.R: {
                 this.updatePGInfo(this.cursor.pos - 1);
-                Table.createTable(this.cursor.pos, this.sharedString, this.clientApiDocument.runtime.clientId);
+                Table.createTable(this.cursor.pos, this.sharedString, this.runtime.clientId);
                 break;
             }
             case CharacterCodes.M: {
@@ -4759,7 +4753,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
             // eslint-disable-next-line max-len
             console.log(`time to edit/impression: ${this.timeToEdit} time to load: ${Date.now() - clockStart}ms len: ${this.sharedString.getLength()} - ${performance.now()}`);
         }
-        this.presenceSignal = new PresenceSignal(this.clientApiDocument.runtime);
+        this.presenceSignal = new PresenceSignal(this.runtime);
         this.addPresenceSignal(this.presenceSignal);
 
         this.sharedString.on("valueChanged", (delta: types.IValueChanged) => {
@@ -4909,7 +4903,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId).presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
-                    shouldShowCursor: () => this.clientApiDocument.runtime.clientId !== clientId &&
+                    shouldShowCursor: () => this.runtime.clientId !== clientId &&
                         this.getRemoteClientInfo(clientId) !== undefined,
                     user: clientInfo.user,
                 } as ILocalPresenceInfo;
@@ -4927,11 +4921,11 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private getRemoteClientInfo(clientId: string): IClient {
-        const quorumClient = this.clientApiDocument.runtime.getQuorum().getMember(clientId);
+        const quorumClient = this.runtime.getQuorum().getMember(clientId);
         if (quorumClient) {
             return quorumClient.client;
         } else {
-            const audience = this.clientApiDocument.runtime.getAudience().getMembers();
+            const audience = this.runtime.getAudience().getMembers();
             if (audience.has(clientId)) {
                 return audience.get(clientId);
             }
@@ -4939,7 +4933,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private broadcastPresence() {
-        if (this.presenceSignal && this.clientApiDocument.runtime.connected) {
+        if (this.presenceSignal && this.runtime.connected) {
             const presenceInfo: IRemotePresenceInfo = {
                 origMark: this.cursor.mark,
                 origPos: this.cursor.pos,
@@ -4951,7 +4945,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
     }
 
     private broadcastDragPresence() {
-        if (this.presenceSignal && this.clientApiDocument.runtime.connected) {
+        if (this.presenceSignal && this.runtime.connected) {
             const dragPresenceInfo: IRemoteDragInfo = {
                 dx: this.movingInclusion.dx,
                 dy: this.movingInclusion.dy,

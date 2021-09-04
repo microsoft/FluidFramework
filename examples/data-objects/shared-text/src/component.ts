@@ -9,7 +9,6 @@ import * as url from "url";
 import registerDebug from "debug";
 import { controls, ui } from "@fluid-example/client-ui-lib";
 import { TextAnalyzer } from "@fluid-example/intelligence-runner-agent";
-import * as API from "@fluid-internal/client-api";
 import { IAgentScheduler } from "@fluidframework/agent-scheduler";
 import { SharedCell } from "@fluidframework/cell";
 import { performance } from "@fluidframework/common-utils";
@@ -211,11 +210,6 @@ export class SharedTextRunner
         const container = new controls.FlowContainer(
             containerDiv,
             this.title,
-            // API.Document should not be used here. This should be removed once #2915 is fixed.
-            new API.Document(
-                this.runtime,
-                this.context,
-            ),
             this.runtime,
             this.context,
             this.sharedString,

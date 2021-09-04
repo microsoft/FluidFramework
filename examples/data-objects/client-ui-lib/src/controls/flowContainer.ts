@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluid-internal/client-api";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
@@ -28,7 +27,6 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         title: string,
-        private readonly clientApiDocument: api.Document,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly context: IFluidDataStoreContext,
         private readonly sharedString: Sequence.SharedString,
@@ -56,7 +54,6 @@ export class FlowContainer extends ui.Component {
         flowViewDiv.classList.add("flow-view");
         this.flowView = new FlowView(
             flowViewDiv,
-            this.clientApiDocument,
             this.runtime,
             this.context,
             this.sharedString,
