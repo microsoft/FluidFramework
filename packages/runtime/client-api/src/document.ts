@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as sequence from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**
  * A document is a collection of shared types.
@@ -34,19 +33,6 @@ export class Document {
         public readonly runtime: IFluidDataStoreRuntime,
         public readonly context: IFluidDataStoreContext,
     ) { }
-
-    /**
-     * Loads the specified shared object. Returns null if it does not exist
-     *
-     * This method should not be called directly. Instead access should be obtained through the root map
-     * or another shared object.
-     *
-     * @param id - Identifier of the object to load
-     */
-    public async get(id: string): Promise<ISharedObject> {
-        const channel = await this.runtime.getChannel(id);
-        return channel as ISharedObject;
-    }
 
     /**
      * Creates a new shared map
