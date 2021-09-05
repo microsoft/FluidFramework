@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.47.0",
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/async": "^3.2.6",
     "@types/lodash": "^4.14.118",
