@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader": "^0.47.0",
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/expect-puppeteer": "2.2.1",

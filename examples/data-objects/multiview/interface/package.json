@@ -27,7 +27,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/expect-puppeteer": "2.2.1",
     "@types/node": "^12.19.0",

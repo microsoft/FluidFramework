@@ -52,7 +52,7 @@
     "@fluid-experimental/property-dds": "^0.47.0",
     "@fluid-experimental/property-properties": "^0.47.0",
     "@fluid-experimental/property-proxy": "^0.47.0",
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@hig/fonts": "^1.0.2",
     "@material-ui/core": "^4.0.0",
     "@material-ui/lab": "^4.0.0-alpha.16",
