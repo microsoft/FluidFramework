@@ -656,15 +656,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                triggerConnectionRecovery: (reason: string) => {
+                logConnectionIssue: (eventName: string) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
-                    this._deltaManager.triggerConnectionRecovery(
-                        reason,
-                        {
-                            duration: performance.now() - this.connectionTransitionTimes[this.connectionState],
-                        },
-                    );
+                    this._deltaManager.logConnectionIssue({
+                        eventName,
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
+                    });
                 },
             },
             this.logger,
@@ -1217,7 +1215,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // connections to same file) in two ways:
         // A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
         // B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
-        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", mode: "write", fetchOpsFromStorage: false };
+        const connectionArgs: IConnectionArgs = { reason: "DocumentOpen", fetchOpsFromStorage: false };
 
         // Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
         // DeltaManager is resilient to this and will wait to start processing ops until after it is attached.

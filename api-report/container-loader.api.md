@@ -44,6 +44,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
@@ -182,6 +183,8 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get lastSequenceNumber(): number;
     // (undocumented)
+    logConnectionIssue(event: ITelemetryErrorEvent): void;
+    // (undocumented)
     get maxMessageSize(): number;
     // (undocumented)
     get minimumSequenceNumber(): number;
@@ -212,8 +215,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     submit(type: MessageType, contents: any, batch?: boolean, metadata?: any): number;
     // (undocumented)
     submitSignal(content: any): void;
-    // (undocumented)
-    triggerConnectionRecovery(reason: string, props: ITelemetryProperties): void;
     // (undocumented)
     get version(): string;
 }

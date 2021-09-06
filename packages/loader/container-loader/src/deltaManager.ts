@@ -10,6 +10,7 @@ import {
     ITelemetryLogger,
     IEventProvider,
     ITelemetryProperties,
+    ITelemetryErrorEvent,
 } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -452,18 +453,32 @@ export class DeltaManager
         }
     }
 
-    public triggerConnectionRecovery(reason: string, props: ITelemetryProperties) {
-            assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
-            this.logger.sendErrorEvent({
-                eventName: "ConnectionRecovery",
-                reason,
-                // This directly tells us if fetching ops is in flight, and thus likely the reason of
-                // stalled op processing
-                fetchReason: this.fetchReason,
-                ...props,
-            });
-            this.disconnectFromDeltaStream(reason);
-            this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
+    /**
+     * Log error event with a bunch of internal to DeltaManager information about state of op processing
+     * Used to diagnose connectivity issues related to op processing (i.e. cases where for some reason
+     * we stop processing ops that results in no processing join op and thus moving to connected state)
+     * @param event - Event to log.
+     */
+    public logConnectionIssue(event: ITelemetryErrorEvent) {
+        assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
+
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        this.logger.sendErrorEvent({
+            ...event,
+            // This directly tells us if fetching ops is in flight, and thus likely the reason of
+            // stalled op processing
+            fetchReason: this.fetchReason,
+            // A bunch of useful sequence numbers to understand if we are holding some ops from processing
+            lastQueuedSequenceNumber: this.lastQueuedSequenceNumber, // last sequential op
+            lastProcessedSequenceNumber: this.lastProcessedSequenceNumber, // same as above, but after processing
+            lastObserved: this.lastObservedSeqNumber, // last sequence we ever saw; may have gaps with above.
+            // connection info
+            ...this.connectionStateProps,
+            pendingOps: this.pending.length, // Do we have any pending ops?
+            pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
+            haveHandler: this.handler !== undefined, // do we have handler installed
+            closed: this.closed,
+        });
     }
 
     private set_readonlyPermissions(readonly: boolean) {
@@ -894,7 +909,7 @@ export class DeltaManager
             assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
             this.closeAbortController.signal.onabort = () => controller.abort();
 
-            const listener = (op: ISequencedDocumentMessage) => {
+            listenerToClear = (op: ISequencedDocumentMessage) => {
                 // Be prepared for the case where webSocket would receive the ops that we are trying to fill through
                 // storage. Ideally it should never happen (i.e. ops on socket are always ordered, and thus once we
                 // detected gap, this gap can't be filled in later on through websocket).
@@ -903,11 +918,9 @@ export class DeltaManager
                 assert(op.sequenceNumber === this.lastQueuedSequenceNumber, 0x23a /* "seq#'s" */);
                 if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                     controller.abort();
-                    this._inbound.off("push", listener);
                 }
             };
-            this._inbound.on("push", listener);
-            listenerToClear = listener;
+            this._inbound.on("push", listenerToClear);
         }
 
         try {
@@ -1536,7 +1549,7 @@ export class DeltaManager
         }
 
         if (this.closed) {
-            this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection" });
+            this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasClosedConnection" });
             return;
         }
 
