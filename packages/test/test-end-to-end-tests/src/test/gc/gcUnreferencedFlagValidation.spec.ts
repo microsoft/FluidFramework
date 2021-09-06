@@ -17,7 +17,7 @@ import {
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 
@@ -31,8 +31,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-// REVIEW: enable compat testing?
-describeNoCompat("GC unreferenced flag validation in snapshot", (getTestObjectProvider) => {
+describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",

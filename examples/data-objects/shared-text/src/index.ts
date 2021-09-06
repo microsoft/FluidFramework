@@ -8,27 +8,22 @@
 import "./publicpath";
 
 import { AgentSchedulerFactory } from "@fluidframework/agent-scheduler";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
     IFluidDataStoreContext,
     IFluidDataStoreFactory,
-    NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import { defaultRouteRequestHandler } from "@fluidframework/aqueduct";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import * as sharedTextComponent from "./component";
 
 /* eslint-disable max-len */
-const math = import(/* webpackChunkName: "math", webpackPrefetch: true */ "@fluid-example/math");
 // const monaco = import(/* webpackChunkName: "monaco", webpackPrefetch: true */ "@fluid-example/monaco");
-const progressBars = import(
-    /* webpackChunkName: "collections", webpackPrefetch: true */ "@fluid-example/progress-bars");
-const images = import(
-    /* webpackChunkName: "image-collection", webpackPrefetch: true */ "@fluid-example/image-collection");
 
 const DefaultComponentName = "text";
 
@@ -47,32 +42,28 @@ const DefaultComponentName = "text";
 // };
 /* eslint-enable max-len */
 
-const defaultRegistryEntries: NamedFluidDataStoreRegistryEntries = [
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    ["@fluid-example/math", math.then((m) => m.fluidExport)],
-    ["@fluid-example/progress-bars", progressBars.then((m) => m.fluidExport)],
-    ["@fluid-example/image-collection", images.then((m) => m.fluidExport)],
-];
-
-class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFactory {
+class SharedTextFactoryComponent extends RuntimeFactoryHelper implements IFluidDataStoreFactory {
     public static readonly type = "@fluid-example/shared-text";
     public readonly type = SharedTextFactoryComponent.type;
 
     public get IFluidDataStoreFactory() { return this; }
-    public get IRuntimeFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
-        return sharedTextComponent.instantiateDataStore(context);
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean) {
+        return sharedTextComponent.instantiateDataStore(context, existing);
     }
 
-    /**
-     * Instantiates a new chaincode host
-     */
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
+        await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
+    }
+
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             [
-                ...defaultRegistryEntries,
                 [SharedTextFactoryComponent.type, Promise.resolve(this)],
                 AgentSchedulerFactory.registryEntry,
             ],
@@ -80,13 +71,10 @@ class SharedTextFactoryComponent implements IFluidDataStoreFactory, IRuntimeFact
                 defaultRouteRequestHandler(DefaultComponentName),
                 innerRequestHandler,
             ),
+            undefined, // runtimeOptions
+            undefined, // containerScope
+            existing,
         );
-
-        // On first boot create the base component
-        if (!runtime.existing) {
-            await runtime.createRootDataStore(AgentSchedulerFactory.type, "_scheduler");
-            await runtime.createRootDataStore(SharedTextFactoryComponent.type, DefaultComponentName);
-        }
 
         return runtime;
     }

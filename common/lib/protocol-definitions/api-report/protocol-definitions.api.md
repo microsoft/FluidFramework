@@ -76,6 +76,7 @@ export interface IClient {
     permission: string[];
     // (undocumented)
     scopes: string[];
+    timestamp?: number;
     // (undocumented)
     user: IUser;
 }
@@ -122,6 +123,7 @@ export interface IConnect {
     id: string;
     mode: ConnectionMode;
     nonce?: string;
+    supportedFeatures?: Record<string, any>;
     tenantId: string;
     token: string | null;
     versions: string[];
@@ -141,7 +143,9 @@ export interface IConnected {
     mode: ConnectionMode;
     nonce?: string;
     serviceConfiguration: IClientConfiguration;
+    supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
+    timestamp?: number;
     version: string;
 }
 
@@ -257,27 +261,42 @@ export interface IQueueMessage {
 }
 
 // @public
-export interface IQuorum extends IEventProvider<IQuorumEvents>, IDisposable {
-    // (undocumented)
-    get(key: string): any;
-    // (undocumented)
-    getApprovalData(key: string): ICommittedProposal | undefined;
+export interface IQuorum extends Omit<IQuorumClients, "on" | "once" | "off">, Omit<IQuorumProposals, "on" | "once" | "off">, IEventProvider<IQuorumEvents> {
+}
+
+// @public
+export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents>, IDisposable {
     // (undocumented)
     getMember(clientId: string): ISequencedClient | undefined;
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
+}
+
+// @public
+export interface IQuorumClientsEvents extends IErrorEvent {
+    // (undocumented)
+    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
+    // (undocumented)
+    (event: "removeMember", listener: (clientId: string) => void): any;
+}
+
+// @public
+export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
+
+// @public
+export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
+    // (undocumented)
+    get(key: string): any;
+    // (undocumented)
+    getApprovalData(key: string): ICommittedProposal | undefined;
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
     propose(key: string, value: any): Promise<void>;
 }
 
-// @public (undocumented)
-export interface IQuorumEvents extends IErrorEvent {
-    // (undocumented)
-    (event: "addMember", listener: (clientId: string, details: ISequencedClient) => void): any;
-    // (undocumented)
-    (event: "removeMember", listener: (clientId: string) => void): any;
+// @public
+export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: IPendingProposal) => void): any;
     // (undocumented)
@@ -310,6 +329,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
+    // @alpha
+    expHash1?: string;
     // (undocumented)
     metadata?: any;
     // (undocumented)
@@ -517,6 +538,8 @@ export interface ITokenClaims {
     exp: number;
     // (undocumented)
     iat: number;
+    // (undocumented)
+    jti?: string;
     // (undocumented)
     scopes: string[];
     // (undocumented)

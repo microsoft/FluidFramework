@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import {
     ContainerRuntime,
 } from "@fluidframework/container-runtime";
@@ -15,12 +15,12 @@ import {
 import {
     NamedFluidDataStoreRegistryEntries,
     IFluidDataStoreFactory,
-    FlushMode,
 } from "@fluidframework/runtime-definitions";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 const defaultStoreId = "" as const;
 
-export class RuntimeFactory implements IRuntimeFactory {
+export class RuntimeFactory extends RuntimeFactoryHelper {
     private readonly registry: NamedFluidDataStoreRegistryEntries;
 
     constructor(
@@ -28,6 +28,7 @@ export class RuntimeFactory implements IRuntimeFactory {
         storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
         private readonly requestHandlers: RuntimeRequestHandler[] = [],
     ) {
+        super();
         this.registry =
             (storeFactories.includes(defaultStoreFactory)
                 ? storeFactories
@@ -37,24 +38,24 @@ export class RuntimeFactory implements IRuntimeFactory {
                 (factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
     }
 
-    public get IRuntimeFactory() { return this; }
+    public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+        await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
+    }
 
-    public async instantiateRuntime(context: IContainerContext): Promise<IRuntime> {
-        const runtime = await ContainerRuntime.load(
+    public async preInitialize(
+        context: IContainerContext,
+        existing: boolean,
+    ): Promise<ContainerRuntime> {
+        const runtime: ContainerRuntime = await ContainerRuntime.load(
             context,
             this.registry,
             buildRuntimeRequestHandler(
                 ...this.requestHandlers,
                 innerRequestHandler),
+            undefined, // runtimeOptions
+            undefined, // containerScope
+            existing,
         );
-
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
-
-        // On first boot create the base data store
-        if (!runtime.existing && this.defaultStoreFactory.type) {
-            await runtime.createRootDataStore(this.defaultStoreFactory.type, defaultStoreId);
-        }
 
         return runtime;
     }

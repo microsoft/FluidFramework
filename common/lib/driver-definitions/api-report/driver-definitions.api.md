@@ -8,6 +8,7 @@ import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -35,6 +36,7 @@ export enum DriverErrorType {
     fetchFailure = "fetchFailure",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
+    // @deprecated (undocumented)
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
@@ -84,10 +86,11 @@ export interface IDeltaStorageService {
 }
 
 // @public (undocumented)
-export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
+export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     checkpointSequenceNumber?: number;
     claims: ITokenClaims;
     clientId: string;
+    // @deprecated
     close(): void;
     existing: boolean;
     initialClients: ISignalClient[];
@@ -135,15 +138,14 @@ export interface IDocumentService {
 
 // @public (undocumented)
 export interface IDocumentServiceFactory {
-    // (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
+    createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
     protocolName: string;
 }
 
 // @public (undocumented)
 export interface IDocumentServicePolicies {
-    storageOnly?: boolean;
+    readonly storageOnly?: boolean;
 }
 
 // @public

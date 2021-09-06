@@ -7,15 +7,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UnassignedSequenceNumber } from "./constants";
-import { CollaborationWindow, ISegment } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import * as Properties from "./properties";
 
-export class SegmentPropertiesManager {
+export class PropertiesManager {
     private pendingKeyUpdateCount: Properties.MapLike<number> | undefined;
     private pendingRewriteCount: number;
 
-    constructor(private readonly segment: ISegment) {
+    constructor() {
         this.pendingRewriteCount = 0;
     }
 
@@ -37,16 +36,14 @@ export class SegmentPropertiesManager {
     }
 
     public addProperties(
+        oldProps: Properties.PropertySet,
         newProps: Properties.PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collabWindow?: CollaborationWindow): Properties.PropertySet | undefined {
-        if (!this.segment.properties) {
-            this.segment.properties = Properties.createMap<any>();
+        collaborating: boolean = false): Properties.PropertySet | undefined {
+        if (!this.pendingKeyUpdateCount) {
             this.pendingKeyUpdateCount = Properties.createMap<number>();
         }
-
-        const collaborating = collabWindow && collabWindow.collaborating;
 
         // There are outstanding local rewrites, so block all non-local changes
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
@@ -72,11 +69,11 @@ export class SegmentPropertiesManager {
             }
             // We are re-writting so delete all the properties
             // not in the new props
-            for (const key of Object.keys(this.segment.properties)) {
+            for (const key of Object.keys(oldProps)) {
                 if (!newProps[key] && shouldModifyKey(key)) {
-                    deltas[key] = this.segment.properties[key];
+                    deltas[key] = oldProps[key];
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                    delete this.segment.properties[key];
+                    delete oldProps[key];
                 }
             }
         }
@@ -85,15 +82,15 @@ export class SegmentPropertiesManager {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
                     if (this.pendingKeyUpdateCount?.[key] === undefined) {
-                        this.pendingKeyUpdateCount![key] = 0;
+                        this.pendingKeyUpdateCount[key] = 0;
                     }
-                    this.pendingKeyUpdateCount![key]++;
+                    this.pendingKeyUpdateCount[key]++;
                 } else if (!shouldModifyKey(key)) {
                     continue;
                 }
             }
 
-            const previousValue: any = this.segment.properties[key];
+            const previousValue: any = oldProps[key];
             // The delta should be null if undefined, as thats how we encode delete
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
@@ -104,30 +101,38 @@ export class SegmentPropertiesManager {
             }
             if (newValue === null) {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-                delete this.segment.properties[key];
+                delete oldProps[key];
             } else {
-                this.segment.properties[key] = newValue;
+                oldProps[key] = newValue;
             }
         }
 
         return deltas;
     }
 
-    public copyTo(leafSegment: ISegment) {
-        if (this.segment.properties) {
-            leafSegment.properties = Properties.createMap<any>();
-            for (const key of Object.keys(this.segment.properties)) {
-                leafSegment.properties[key] = this.segment.properties[key];
+    public copyTo(
+        oldProps: Properties.PropertySet,
+        newProps: Properties.PropertySet | undefined,
+        newManager: PropertiesManager,
+    ): Properties.PropertySet | undefined {
+        if (oldProps) {
+            if (!newProps) {
+                // eslint-disable-next-line no-param-reassign
+                newProps = Properties.createMap<any>();
             }
-            if (this.segment.propertyManager) {
-                leafSegment.propertyManager = new SegmentPropertiesManager(leafSegment);
-                leafSegment.propertyManager.pendingRewriteCount = this.pendingRewriteCount;
-                leafSegment.propertyManager.pendingKeyUpdateCount = Properties.createMap<number>();
-                for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
-                    leafSegment.propertyManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
-                }
+            if (!newManager) {
+                throw new Error("Must provide new PropertyManager");
+            }
+            for (const key of Object.keys(oldProps)) {
+                newProps[key] = oldProps[key];
+            }
+            newManager.pendingRewriteCount = this.pendingRewriteCount;
+            newManager.pendingKeyUpdateCount = Properties.createMap<number>();
+            for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
+                newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
             }
         }
+        return newProps;
     }
 
     public hasPendingProperties() {

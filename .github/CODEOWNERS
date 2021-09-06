@@ -1,9 +1,11 @@
-# DOCUMENTATION
-# Folders
+# API reports
+api-report/                                                               @microsoft/fluid-cr-api
+
+# Documentation folders
 /.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs @tylerbutler
 /docs/                                                                    @microsoft/fluid-cr-docs @tylerbutler
 
-# Files
+# Documentation files
 /.github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml     @microsoft/fluid-cr-docs @tylerbutler
 /README.md                                                                @microsoft/fluid-cr-docs @tylerbutler
 /.markdownlint.json                                                       @microsoft/fluid-cr-docs @tylerbutler

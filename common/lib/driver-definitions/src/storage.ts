@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEventProvider, IErrorEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     ConnectionMode,
     IClient,
@@ -148,7 +148,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "error", listener: (error: any) => void);
 }
 
-export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaConnectionEvents> {
+export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<IDocumentDeltaConnectionEvents> {
     /**
      * ClientID for the connection
      */
@@ -220,6 +220,7 @@ export interface IDocumentDeltaConnection extends IEventProvider<IDocumentDeltaC
 
     /**
      * Disconnects the given delta connection
+     * @deprecated in 0.45, please use dispose()
      */
     close(): void;
 }
@@ -240,7 +241,7 @@ export interface IDocumentServicePolicies {
     /**
      * Do not connect to delta stream
      */
-    storageOnly?: boolean;
+    readonly storageOnly?: boolean;
 }
 
 export interface IDocumentService {
@@ -291,9 +292,13 @@ export interface IDocumentServiceFactory {
      */
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger): Promise<IDocumentService>;
 
-    // Creates a new document on the host with the provided options. Returns the document service.
+    /**
+     * Creates a new document with the provided options. Returns the document service.
+     * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
+     * should be posted later, before connecting to ordering service.
+     */
     createContainer(
-        createNewSummary: ISummaryTree,
+        createNewSummary: ISummaryTree | undefined,
         createNewResolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
     ): Promise<IDocumentService>;

@@ -21,10 +21,9 @@ import { PureDataObject } from "./pureDataObject";
  * and registering channels with the runtime any new DDS that is set on the root
  * will automatically be registered.
  *
- * Generics:
- * O - represents a type that will define optional providers that will be injected
- * S - the initial state type that the produced data store may take during creation
- * E - represents events that will be available in the EventForwarder
+ * @typeParam O - represents a type that will define optional providers that will be injected
+ * @typeParam S - the initial state type that the produced data object may take during creation
+ * @typeParam E - represents events that will be available in the EventForwarder
  */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export abstract class DataObject<O extends IFluidObject = object, S = undefined, E extends IEvent = IEvent>
@@ -63,8 +62,8 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
      * Initializes internal objects and calls initialization overrides.
      * Caller is responsible for ensuring this is only invoked once.
      */
-    public async initializeInternal(): Promise<void> {
-        if (!this.runtime.existing) {
+    public async initializeInternal(existing: boolean): Promise<void> {
+        if (!existing) {
             // Create a root directory and register it before calling initializingFirstTime
             this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
             this.internalRoot.bindToContext();
@@ -84,7 +83,7 @@ export abstract class DataObject<O extends IFluidObject = object, S = undefined,
             }
         }
 
-        await super.initializeInternal();
+        await super.initializeInternal(existing);
     }
 
     protected getUninitializedErrorString(item: string) {

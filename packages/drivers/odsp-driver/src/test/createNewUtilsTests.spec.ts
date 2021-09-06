@@ -5,80 +5,127 @@
 
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
-import { convertSummaryTreeToIOdspSnapshot } from "../createNewUtils";
-import { IOdspSnapshotTreeEntryTree } from "../contracts";
+import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
+import { createNewFluidFile } from "../createFile";
+import { EpochTracker } from "../epochTracker";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { INewFileInfo, createCacheSnapshotKey, ISnapshotContents } from "../odspUtils";
+import { LocalPersistentCache } from "../odspCache";
+import { mockFetchOk } from "./mockFetch";
+
+const createUtLocalCache = () => new LocalPersistentCache(2000);
 
 describe("Create New Utils Tests", () => {
-    beforeEach(() => {
-    });
+    const documentAttributes: api.IDocumentAttributes = {
+        branch: "",
+        minimumSequenceNumber: 0,
+        sequenceNumber: 0,
+        term: 1,
+    };
+    const blobContent = "testing";
+    const createSummary = () => {
+        const summary: api.ISummaryTree = {
+            type: api.SummaryType.Tree,
+            tree: {},
+        };
 
-    it("Should convert as expected and check contents", async () => {
-        const rootBlob: api.ISummaryBlob = {
-            type: api.SummaryType.Blob,
-            content: JSON.stringify("root"),
-        };
-        const componentBlob: api.ISummaryBlob = {
-            type: api.SummaryType.Blob,
-            content: JSON.stringify("component"),
-        };
-        const contentBlob: api.ISummaryBlob = {
-            type: api.SummaryType.Blob,
-            content: "[]",
-        };
-        const rootBlobPath = "default/root";
-        const componentBlobPath = "default/component";
-        const contentBlobPath = "contentTree/contentBlob";
-        const appSummary: api.ISummaryTree = {
+        summary.tree[".app"] = {
             type: api.SummaryType.Tree,
             tree: {
-                default: {
-                    type: api.SummaryType.Tree,
-                    tree: {
-                        component: componentBlob,
-                        root: rootBlob,
-                    },
-                },
-                contentTree: {
-                    type: api.SummaryType.Tree,
-                    tree: {
-                        contentBlob,
-                    },
-                    unreferenced: true,
+                attributes: {
+                    type: api.SummaryType.Blob,
+                    content: blobContent,
                 },
             },
         };
+        summary.tree[".protocol"] = {
+            type: api.SummaryType.Tree,
+            tree: {
+                attributes: {
+                    type: api.SummaryType.Blob,
+                    content: JSON.stringify(documentAttributes),
+                },
+            },
+        };
+        return summary;
+    };
 
-        const odspSnapshot = convertSummaryTreeToIOdspSnapshot(appSummary);
-        assert.strictEqual(odspSnapshot.trees.length, 1, "1 main tree should be there");
-        assert.strictEqual(odspSnapshot.blobs?.length, 3, "3 blobs should be there");
+    const test = (snapshot: ISnapshotContents) => {
+        const snapshotTree = snapshot.snapshotTree;
+        assert.strictEqual(Object.entries(snapshotTree.trees).length, 2, "app and protocol should be there");
+        assert.strictEqual(snapshot.blobs.size, 2, "2 blobs should be there");
 
-        const mainTree = odspSnapshot.trees[0];
-        assert.strictEqual(mainTree.id, odspSnapshot.id, "Main tree id should match");
+        const appTree = snapshotTree.trees[".app"];
+        const protocolTree = snapshotTree.trees[".protocol"];
+        assert(appTree !== undefined, "App tree should be there");
+        assert(protocolTree !== undefined, "Protocol tree should be there");
 
-        const blobEntries: string[] = [];
-        const treeEntries: IOdspSnapshotTreeEntryTree[] = [];
-        mainTree.entries.forEach((entry) => {
-            if (entry.type === "tree") {
-                treeEntries.push(entry);
-            } else {
-                blobEntries.push(entry.path);
-            }
-        });
+        const appTreeBlobId = appTree.blobs.attributes;
+        const appTreeBlobValBuffer = snapshot.blobs.get(appTreeBlobId);
+        assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
+        const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
+        assert(appTreeBlobVal === blobContent, "Blob content should match");
 
-        // Validate that the snapshot has all the expected blob entries.
-        assert.strictEqual(blobEntries.length, 3, "There should be 3 blob entries in the main tree");
-        assert(blobEntries.includes(rootBlobPath), "Root blob should exist");
-        assert(blobEntries.includes(componentBlobPath), "Component blob should exist");
-        assert(blobEntries.includes(contentBlobPath), "Content blob should exist");
+        const docAttributesBlobId = protocolTree.blobs.attributes;
+        const docAttributesBuffer = snapshot.blobs.get(docAttributesBlobId);
+        assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
+        const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");
+        assert(docAttributesBlobValue === JSON.stringify(documentAttributes), "Blob content should match");
 
-        // Validate that the snapshot has correct reference state for tree entries.
-        assert.strictEqual(treeEntries.length, 2, "There should be 2 tree entries in the main tree");
-        for (const treeEntry of treeEntries) {
-            if (treeEntry.path === "default") {
-                assert(treeEntry.unreferenced === undefined, "default tree entry should be referenced");
-            } else {
-                assert(treeEntry.unreferenced, "content tree entry should be unreferenced");
-            }
-        }
+        assert(snapshot.ops.length === 0, "No ops should be there");
+        assert(snapshot.sequenceNumber === 0, "Seq number should be 0");
+    };
+
+    it("Should convert as expected and check contents", async () => {
+        const snapshot = convertCreateNewSummaryTreeToTreeAndBlobs(createSummary(),"");
+        test(snapshot);
+    });
+
+    it("Should cache converted summary during createNewFluidFile", async () => {
+        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+        const driveId = "driveId";
+        const itemId = "itemId";
+        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+        const localCache = createUtLocalCache();
+        // use null logger here as we expect errors
+        const epochTracker = new EpochTracker(
+            localCache,
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryNullLogger());
+
+        const filePath = "path";
+        const newFileParams: INewFileInfo = {
+            driveId,
+            siteUrl: "https://www.localhost.xxx",
+            filePath,
+            filename: "filename",
+        };
+
+        const fileEntry: IFileEntry = {
+            docId: hashedDocumentId,
+            resolvedUrl,
+        };
+
+        const odspResolvedUrl = await mockFetchOk(
+                async () =>createNewFluidFile(
+                    async (_options) => "token",
+                    newFileParams,
+                    new TelemetryNullLogger(),
+                    createSummary(),
+                    epochTracker,
+                    fileEntry,
+                    true,
+                ) ,
+                { itemId: "itemId1", id: "Summary handle"},
+                { "x-fluid-epoch": "epoch1" },
+                );
+        const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+        test(snapshot);
     });
 });

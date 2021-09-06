@@ -29,7 +29,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
     IClientConfiguration,
     IClientDetails,
-    IDocumentAttributes,
     IDocumentMessage,
     IQuorum,
     ISequencedDocumentMessage,
@@ -54,7 +53,6 @@ export class ContainerContext implements IContainerContext {
         codeLoader: ICodeDetailsLoader | ICodeLoader,
         codeDetails: IFluidCodeDetails,
         baseSnapshot: ISnapshotTree | undefined,
-        attributes: IDocumentAttributes,
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
@@ -73,7 +71,6 @@ export class ContainerContext implements IContainerContext {
             codeLoader,
             codeDetails,
             baseSnapshot,
-            attributes,
             deltaManager,
             quorum,
             loader,
@@ -89,7 +86,16 @@ export class ContainerContext implements IContainerContext {
         return context;
     }
 
-    public readonly logger: ITelemetryLogger;
+    public readonly taggedLogger: ITelemetryLogger;
+
+    /**
+     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
+     * details.
+    */
+    /** @deprecated See IContainerContext for more details. */
+    public get logger(): ITelemetryLogger {
+        return this.taggedLogger;
+    }
 
     public get id(): string {
         return this.container.id;
@@ -101,10 +107,6 @@ export class ContainerContext implements IContainerContext {
 
     public get clientDetails(): IClientDetails {
         return this.container.clientDetails;
-    }
-
-    public get branch(): string {
-        return this.attributes.branch;
     }
 
     public get connected(): boolean {
@@ -166,7 +168,6 @@ export class ContainerContext implements IContainerContext {
         private readonly codeLoader: ICodeDetailsLoader | ICodeLoader,
         private readonly _codeDetails: IFluidCodeDetails,
         private readonly _baseSnapshot: ISnapshotTree | undefined,
-        private readonly attributes: IDocumentAttributes,
         public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         public readonly quorum: IQuorum,
         public readonly loader: ILoader,
@@ -180,7 +181,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
-        this.logger = container.subLogger;
+        this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
@@ -210,8 +211,15 @@ export class ContainerContext implements IContainerContext {
         return this.container.attachState;
     }
 
-    public createSummary(): ISummaryTree {
-        return this.runtime.createSummary();
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
+    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+        return this.runtime.createSummary(blobRedirectTable);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -281,6 +289,10 @@ export class ContainerContext implements IContainerContext {
         return true;
     }
 
+    public notifyAttaching() {
+        this.runtime.setAttachState(AttachState.Attaching);
+    }
+
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
@@ -292,28 +304,20 @@ export class ContainerContext implements IContainerContext {
         return runtimeFactory;
     }
 
-    /**
-     * #3429
-     * Will be adjusted to branch on the `existing` parameter
-     * and call the proper runtime factory initializer
-     */
-    private async instantiateRuntime(_existing: boolean) {
+    private async instantiateRuntime(existing: boolean) {
         const runtimeFactory = await this.getRuntimeFactory();
-        this._runtime = await runtimeFactory.instantiateRuntime(this);
+        this._runtime = await runtimeFactory.instantiateRuntime(this, existing);
     }
 
     private attachListener() {
-        this.container.once("attaching", () => {
-            this._runtime?.setAttachState?.(AttachState.Attaching);
-        });
         this.container.once("attached", () => {
-            this._runtime?.setAttachState?.(AttachState.Attached);
+            this.runtime.setAttachState(AttachState.Attached);
         });
     }
 
     private async loadCodeModule(codeDetails: IFluidCodeDetails) {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
         );

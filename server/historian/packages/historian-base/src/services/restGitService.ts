@@ -11,8 +11,11 @@ import {
     IGetRefParamsExternal,
     ICreateRefParamsExternal,
     IPatchRefParamsExternal,
+    IWholeSummaryPayload,
+    IWriteSummaryResponse,
     BasicRestWrapper,
     RestWrapper,
+    IWholeFlatSummary,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
@@ -47,16 +50,21 @@ export class RestGitService {
 
     constructor(
         private readonly storage: ITenantStorage,
-        private readonly cache: ICache,
         private readonly writeToExternalStorage: boolean,
+        private readonly tenantId: string,
+        private readonly documentId: string,
+        private readonly cache?: ICache,
         private readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         const defaultHeaders: OutgoingHttpHeaders = {
             "User-Agent": userAgent,
+            "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
         };
         if (storage.credentials) {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+
+        winston.info(`base url: ${storage.url}, Storage-Routing-Id: ${this.getStorageRoutingHeaderValue()}`);
 
         this.restWrapper = new BasicRestWrapper(
             storage.url,
@@ -93,7 +101,7 @@ export class RestGitService {
 
     public async getContent(path: string, ref: string): Promise<any> {
         const query = querystring.stringify({ ref });
-        return this.get(`/repos/${this.getRepoPath()}/contents/${path}?${query}`);
+        return this.get(`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query}`);
     }
 
     public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
@@ -149,9 +157,9 @@ export class RestGitService {
                 config: { enabled: true },
             };
             const params = encodeURIComponent(JSON.stringify(getRefParams));
-            return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}?config=${params}`);
+            return this.get(`/repos/${this.getRepoPath()}/git/refs/${encodeURIComponent(ref)}?config=${params}`);
         }
-        return this.get(`/repos/${this.getRepoPath()}/git/refs/${ref}`);
+        return this.get(`/repos/${this.getRepoPath()}/git/refs/${encodeURIComponent(ref)}`);
     }
 
     public async createRef(params: ICreateRefParamsExternal): Promise<git.IRef> {
@@ -160,6 +168,22 @@ export class RestGitService {
             params.config.enabled = false;
         }
         return this.post(`/repos/${this.getRepoPath()}/git/refs`, params);
+    }
+
+    public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
+        const summaryResponse = await this.post<IWriteSummaryResponse>(
+            `/repos/${this.getRepoPath()}/git/summaries`,
+             summaryParams);
+
+        return summaryResponse;
+    }
+
+    public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
+        return this.resolve(
+            `${sha}:summary`,
+            async () => this.get<IWholeFlatSummary>(
+                `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
+            useCache);
     }
 
     public async updateRef(ref: string, params: IPatchRefParamsExternal): Promise<git.IRef> {
@@ -278,6 +302,11 @@ export class RestGitService {
             useCache);
     }
 
+    private getStorageRoutingHeaderValue()
+    {
+        return `${this.tenantId}:${this.documentId}`;
+    }
+
     /**
      * Helper method to translate from an owner repo pair to the URL component for it. In the future we will require
      * the owner parameter. But for back compat we allow it to be optional.
@@ -327,14 +356,16 @@ export class RestGitService {
      * Caches the given key/value pair. Will log any errors with the cache.
      */
     private setCache<T>(key: string, value: T) {
-        // Attempt to cache to Redis - log any errors but don't fail
-        this.cache.set(key, value).catch((error) => {
-            winston.error(`Error caching ${key} to redis`, error);
-        });
+        if (this.cache) {
+            // Attempt to cache to Redis - log any errors but don't fail
+            this.cache.set(key, value).catch((error) => {
+                winston.error(`Error caching ${key} to redis`, error);
+            });
+        }
     }
 
     private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
-        if (useCache) {
+        if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);

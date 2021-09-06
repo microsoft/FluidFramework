@@ -14,9 +14,6 @@ import {
 } from "@fluidframework/server-services-core";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
-import { tryImportNodeRdkafka } from "./tryImport";
-
-const kafka = tryImportNodeRdkafka();
 
 export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
@@ -79,10 +76,11 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			"queue.buffering.max.ms": 0.5,
 			"batch.num.messages": 10000,
 			...this.producerOptions.additionalOptions,
+			...this.sslOptions,
 		};
 
 		const producer: kafkaTypes.Producer = this.producer =
-			new kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
+			new this.kafka.HighLevelProducer(options, this.producerOptions.topicConfig);
 
 		producer.on("ready", () => {
 			this.connected = true;

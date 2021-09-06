@@ -32,6 +32,7 @@ describe("Odsp Create Container Test", () => {
         itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
         driveId,
         itemId,
+        id : "fakeSummaryHandle",
     };
 
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
@@ -79,11 +80,12 @@ describe("Odsp Create Container Test", () => {
 
     it("Check Document Service Successfully", async () => {
         const resolved = await resolver.resolve(request);
-        const docID = getHashedDocumentId(driveId, itemId);
+        const docID = await getHashedDocumentId(driveId, itemId);
         const summary = createSummary(true, true);
         const docService = await mockFetchOk(
             async () => odspDocumentServiceFactory.createContainer(summary, resolved, new TelemetryUTLogger()),
             expectedResponse,
+            { "x-fluid-epoch": "epoch1" },
         );
         const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
         assert.strictEqual(finalResolverUrl.driveId, driveId, "Drive Id should match");

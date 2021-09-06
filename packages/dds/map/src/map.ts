@@ -21,7 +21,6 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 import {
     ISharedMap,
     ISharedMapEvents,
@@ -349,9 +348,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
-    protected onDisconnect() {
-        debug(`Map ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}

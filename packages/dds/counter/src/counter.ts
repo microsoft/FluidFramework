@@ -19,7 +19,6 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory";
-import { debug } from "./debug";
 import { ISharedCounter, ISharedCounterEvents } from "./interfaces";
 
 /**
@@ -162,15 +161,16 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         this._value = content.value;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     */
     protected registerCore() {
     }
 
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() {
-        debug(`SharedCounter ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() {}
 
     /**
      * Process a counter operation
@@ -195,6 +195,9 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
         }
     }
 
+    /**
+     * Not implemented.
+     */
     protected applyStashedOp() {
         throw new Error("not implemented");
     }

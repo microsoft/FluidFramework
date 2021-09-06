@@ -13,12 +13,15 @@ async function getKeys(keyVaultClient, rc, vaultUri) {
     for (const secret of secretList) {
         if (secret.attributes.enabled) {
             const secretName = secret.id.split('/').pop();
-            keyVaultClient.getSecret(vaultUri, secretName, '').then((response) => {
-                const envName = secretName.split('-').join('__'); // secret name can't contain underscores
-                console.log(`Setting environment variable ${envName}...`);
-                setEnv(envName, response.value);
-                rc.secrets[envName] = response.value;
-            });
+            // exclude secrets with automation prefix, which should only be used in automation
+            if(!secretName.startsWith("automation")){
+                keyVaultClient.getSecret(vaultUri, secretName, '').then((response) => {
+                    const envName = secretName.split('-').join('__'); // secret name can't contain underscores
+                    console.log(`Setting environment variable ${envName}...`);
+                    setEnv(envName, response.value);
+                    rc.secrets[envName] = response.value;
+                });
+            }
         }
     }
 }
@@ -61,8 +64,7 @@ function stdResponse(err, stdout, stderr) {
     try {
         // Key Vault with restricted access for the FF dev team only
         await getKeys(client, rc, "https://ff-internal-dev-secrets.vault.azure.net/");
-    } catch (e) {
-        console.log("Couldn't get secrets from FF internal keyvault. If you need access make sure you are in the relevant security group.")
-    }
+        console.log("Overriding defaults with values from the FF internal keyvault.")
+    } catch (e) {}
     await rcTools.saveRC(rc);
 })();

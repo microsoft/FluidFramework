@@ -693,7 +693,7 @@ class DataBinding {
    * @param {string[]} in_tokenizedRegistrySubPath -
    * @param {string} [in_referenceKey] - if provided, in_referenceProperty is assumed to be an array/map of references
    *     and this parameter is used as key to identify the exact reference.
-   * @param {ModificationContext|RemovalContext} in_modificationContext -
+   * @param {ModificationContext|RemovalContext} [in_modificationContext] -
    *     The modifications / removal information for the reference
    * @private
    * @hidden

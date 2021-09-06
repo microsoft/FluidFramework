@@ -40,15 +40,10 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
-    "readme:update": "npm run readme:update:root && npm run readme:update:docs",
-    "readme:update:docs": "md-magic --path \"docs/content/**/*.md\" --ignore \"node_modules/**\" --config ./md-magic.config.js",
-    "readme:update:root": "md-magic --path \"{common,examples,packages}/*{/*/,/}*/README.md\" --ignore \"node_modules/**\" --config ./md-magic.config.js",
     "restart": "cd server/routerlicious && npm run restart",
     "start:docker": "docker-compose -f server/docker-compose.yml up",
-    "start:tinylicious": "forever start node_modules/tinylicious/dist/index.js",
     "stop:docker": "docker-compose -f server/docker-compose.yml down",
     "stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
-    "stop:tinylicious": "forever stop node_modules/tinylicious/dist/index.js",
     "test": "npm run test:mocha && npm run test:jest && npm run test:types && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
@@ -76,20 +71,16 @@
     "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.25384",
+    "@fluidframework/build-tools": "^0.2.35662",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.16.1",
     "c8": "^7.7.1",
     "concurrently": "^5.2.0",
     "copyfiles": "^2.1.0",
-    "forever": "^3.0.4",
-    "lerna": "^3.14.1",
-    "markdown-magic": "^1.0.0",
+    "lerna": "^4.0.0",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
-    "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.21640",
     "typescript": "~4.1.3"
   },
   "c8": {
@@ -136,9 +127,7 @@
       "server": "server/routerlicious",
       "client": {
         "directory": "",
-        "ignoredDirs": [
-          "examples/apps/cra-demo"
-        ]
+        "ignoredDirs": []
       },
       "tools": [
         "tools/benchmark",

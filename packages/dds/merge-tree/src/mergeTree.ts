@@ -29,7 +29,7 @@ import * as ops from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
 import * as Properties from "./properties";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { SegmentPropertiesManager } from "./segmentPropertiesManager";
+import { PropertiesManager } from "./segmentPropertiesManager";
 
 export interface ReferencePosition {
     properties?: Properties.PropertySet;
@@ -88,7 +88,7 @@ export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;
     readonly trackingCollection: TrackingGroupCollection;
-    propertyManager?: SegmentPropertiesManager;
+    propertyManager?: PropertiesManager;
     localSeq?: number;
     localRemovedSeq?: number;
     seq?: number;  // If not present assumed to be previous to window min
@@ -452,7 +452,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     removedClientOverlap?: number[];
     readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
     readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
-    propertyManager?: SegmentPropertiesManager;
+    propertyManager?: PropertiesManager;
     properties?: Properties.PropertySet;
     localRefs?: LocalReferenceCollection;
     abstract readonly type: string;
@@ -461,9 +461,12 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     addProperties(newProps: Properties.PropertySet, op?: ops.ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
         if (!this.propertyManager) {
-            this.propertyManager = new SegmentPropertiesManager(this);
+            this.propertyManager = new PropertiesManager();
         }
-        return this.propertyManager.addProperties(newProps, op, seq, collabWindow);
+        if (!this.properties) {
+            this.properties = Properties.createMap<any>();
+        }
+        return this.propertyManager.addProperties(this.properties, newProps, op, seq, collabWindow && collabWindow.collaborating);
     }
 
     hasProperty(key: string): boolean {
@@ -536,9 +539,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         if (pos > 0) {
             const leafSegment = this.createSplitSegmentAt(pos);
             if (leafSegment) {
-                if (this.propertyManager) {
-                    this.propertyManager.copyTo(leafSegment);
-                }
+                this.copyPropertiesTo(leafSegment);
                 leafSegment.parent = this.parent;
 
                 // Give the leaf a temporary yet valid ordinal.
@@ -562,6 +563,15 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 }
             }
             return leafSegment;
+        }
+    }
+
+    private copyPropertiesTo(other: ISegment) {
+        if (this.propertyManager) {
+            if (this.properties) {
+                other.propertyManager = new PropertiesManager();
+                other.properties = this.propertyManager.copyTo(this.properties, other.properties, other.propertyManager);
+            }
         }
     }
 

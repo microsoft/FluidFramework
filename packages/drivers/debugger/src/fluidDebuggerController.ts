@@ -153,12 +153,14 @@ export class DebugReplayController extends ReplayController implements IDebugger
         }
 
         const documentDeltaStorageService = await this.documentService.connectToDeltaStorage();
-        const messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
+        let messages = await this.fetchOpsFromDeltaStorage(documentDeltaStorageService);
 
-        const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
-        const cleanMessages = sanitizer.sanitize();
+        if(anonymize) {
+            const sanitizer = new Sanitizer(messages, false /* fullScrub */, false /* noBail */);
+            messages = sanitizer.sanitize();
+        }
 
-        return JSON.stringify(cleanMessages, undefined, 2);
+        return JSON.stringify(messages, undefined, 2);
     }
 
     private async fetchOpsFromDeltaStorage(documentDeltaStorageService): Promise<ISequencedDocumentMessage[]> {

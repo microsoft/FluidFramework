@@ -4,3 +4,4 @@
  */
 
 export * from "./lambdaFactory";
+export * from "./documentContext";

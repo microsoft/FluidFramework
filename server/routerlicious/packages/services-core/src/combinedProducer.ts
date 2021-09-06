@@ -3,13 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { ITicketedMessage } from "./messages";
 import { IProducer } from "./queue";
 
 /**
  * Combines multiple producers to one.
+ * This produces messages to all the producers.
+ * It can produce the messages parallelly or sequentially.
+ *
+ * When producing parallelly, it will produce the messages to all the producers at once.
+ * It will wait for all the sends to complete before resolving.
+ *
+ * When producing sequentially, it will produce the messages to each producer one
+ * after another in order of the producers argument.
+ * It will wait for each send to complete before sending the message to the next producer.
  */
-export class CombinedProducer implements IProducer {
-    constructor(private readonly producers: IProducer[]) {
+export class CombinedProducer<T = ITicketedMessage> implements IProducer<T> {
+    constructor(private readonly producers: IProducer<T>[], private readonly parallel: boolean) {
     }
 
     /**
@@ -19,13 +29,20 @@ export class CombinedProducer implements IProducer {
         return this.producers.every((producer) => producer.isConnected());
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async send(messages: object[], tenantId: string, documentId: string): Promise<any> {
-        const sendP = [];
-        for (const producer of this.producers) {
-            sendP.push(producer.send(messages, tenantId, documentId));
+    public async send(messages: T[], tenantId: string, documentId: string): Promise<any> {
+        if (this.parallel) {
+            // parallelly
+            const sendP = [];
+            for (const producer of this.producers) {
+                sendP.push(producer.send(messages, tenantId, documentId));
+            }
+            return Promise.all(sendP);
+        } else {
+            // sequentially
+            for (const producer of this.producers) {
+                await producer.send(messages, tenantId, documentId);
+            }
         }
-        return Promise.all(sendP);
     }
 
     public async close(): Promise<void> {

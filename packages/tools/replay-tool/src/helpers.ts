@@ -5,33 +5,19 @@
 
 import { strict } from "assert";
 import fs from "fs";
-import * as API from "@fluid-internal/client-api";
-import { assert } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
-import {
-    IFluidDataStoreRuntime,
-    IChannelFactory,
-    IChannelAttributes,
-    IChannelServices,
-    IChannel,
-} from "@fluidframework/datastore-definitions";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
     IDocumentServiceFactory,
     IFluidResolvedUrl,
     IResolvedUrl,
-    IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import {
-    IFluidDataStoreContext,
-    IGarbageCollectionData,
-    IChannelSummarizeResult,
-} from "@fluidframework/runtime-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import { ReplayDataStoreFactory, ReplayRuntimeFactory } from "./replayFluidFactories";
+import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
+import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
 
 /**
  * Helper function that normalizes the snapshot trees in the given file snapshot.
@@ -81,130 +67,6 @@ export function compareWithReferenceSnapshot(
     }
 }
 
-class UnknownChannel implements IChannel {
-    constructor(
-        public readonly id: string,
-        public readonly attributes: IChannelAttributes,
-        services: IChannelServices)
-    {
-        services.deltaConnection.attach({
-            process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => {
-            },
-            setConnectionState: (connected: boolean) => {
-            },
-            reSubmit: (content: any, localOpMetadata: unknown) => {
-            },
-            applyStashedOp: (content: any) => {
-            },
-        });
-    }
-
-    get IFluidLoadable() { return this; }
-    get handle(): IFluidHandle {
-        throw new Error("not implemented");
-    }
-
-    public summarize(fullTree?: boolean, trackState?: boolean): IChannelSummarizeResult {
-        return {
-            gcData: { gcNodes: {} },
-            stats: {
-                treeNodeCount: 0,
-                blobNodeCount: 0,
-                handleNodeCount: 0,
-                totalBlobSize: 0,
-                unreferencedBlobSize: 0,
-            },
-            summary: {
-                type: SummaryType.Tree,
-                tree: { },
-            },
-        };
-    }
-
-    public isAttached() { return true; }
-
-    public connect(services: IChannelServices): void {}
-
-    public getGCData(): IGarbageCollectionData {
-        return { gcNodes: {} };
-    }
-}
-
-class UnknownChannelFactory implements IChannelFactory {
-    readonly type = "Unknown DDS";
-    readonly attributes: IChannelAttributes = {
-        type: "Unknown DDS",
-        snapshotFormatVersion: "1.0",
-        packageVersion: "1.0",
-    };
-
-    async load(
-        runtime: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        channelAttributes: Readonly<IChannelAttributes>,
-    ): Promise<IChannel> {
-        return new UnknownChannel(id, channelAttributes, services);
-    }
-
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
-        throw new Error("Not implemented");
-    }
-}
-
-class ObjectRegistryWithUnknownChannels implements ISharedObjectRegistry {
-    private static readonly types = new Set<string>();
-
-    constructor(private readonly base: ISharedObjectRegistry) {}
-    public get(name: string): IChannelFactory | undefined {
-        const res = this.base.get(name);
-        if (res) {
-            return res;
-        }
-        if (!ObjectRegistryWithUnknownChannels.types.has(name)) {
-            ObjectRegistryWithUnknownChannels.types.add(name);
-            console.error(`DDS of type ${name} can't be created`);
-        }
-        return new UnknownChannelFactory();
-    }
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-function mixinDataStoreWithAnyChannel(
-    Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
-{
-    return class RuntimeWithRequestHandler extends Base {
-        constructor(
-            dataStoreContext: IFluidDataStoreContext,
-            sharedObjectRegistry: ISharedObjectRegistry,
-        ) {
-            super(dataStoreContext, new ObjectRegistryWithUnknownChannels(sharedObjectRegistry));
-        }
-    } as typeof FluidDataStoreRuntime;
-}
-
-/**
- * URL Resolver object
- */
-class ContainerUrlResolver implements IUrlResolver {
-    constructor(private readonly cache?: Map<string, IResolvedUrl>) {
-    }
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (!this.cache.has(request.url)) {
-            return Promise.reject(new Error(`ContainerUrlResolver can't resolve ${request}`));
-        }
-        return this.cache.get(request.url);
-    }
-
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-    ): Promise<string> {
-        throw new Error("Not implemented");
-    }
-}
-
 export async function loadContainer(
     documentServiceFactory: IDocumentServiceFactory,
     documentName: string,
@@ -221,57 +83,50 @@ export async function loadContainer(
         type: "fluid",
         url: `fluid-file://localhost:6000/fluid/${documentName}`,
     };
+    const urlResolver = new ReplayUrlResolver(
+        new Map<string, IResolvedUrl>([[resolved.url, resolved]]),
+    );
 
-    const urlResolver = new ContainerUrlResolver(
-        new Map<string, IResolvedUrl>([[resolved.url, resolved]]));
-    const chaincode = new API.Chaincode(
-        () => { throw new Error("Can't close Document"); },
-        mixinDataStoreWithAnyChannel());
+    const dataStoreFactory = new ReplayDataStoreFactory(mixinDataStoreWithAnyChannel());
+    // List of data store registries in container runtime.
+    const dataStoreRegistries = new Map([
+        ["_scheduler", Promise.resolve(dataStoreFactory)],
+        ["@ms/atmentions", Promise.resolve(dataStoreFactory)],
+        ["@ms/augloop", Promise.resolve(dataStoreFactory)],
+        ["@ms/catalog", Promise.resolve(dataStoreFactory)],
+        ["@ms/scriptor", Promise.resolve(dataStoreFactory)],
+        ["@ms/discover", Promise.resolve(dataStoreFactory)],
+        ["@ms/registro", Promise.resolve(dataStoreFactory)],
+        ["@ms/formula", Promise.resolve(dataStoreFactory)],
+        ["@ms/application-services", Promise.resolve(dataStoreFactory)],
+        ["@ms/undo-stack", Promise.resolve(dataStoreFactory)],
+        ["@ms/commanding-surface", Promise.resolve(dataStoreFactory)],
+        ["@ms/dias", Promise.resolve(dataStoreFactory)],
+        ["@ms/scriptor/Titulo", Promise.resolve(dataStoreFactory)],
+        ["@fluidx/tasks", Promise.resolve(dataStoreFactory)],
+        ["@ms/tablero/TableroView", Promise.resolve(dataStoreFactory)],
+        ["@ms/tablero/TableroDocument", Promise.resolve(dataStoreFactory)],
+        ["@fluid-example/table-document/TableDocument", Promise.resolve(dataStoreFactory)],
+        ["LastEditedComponent", Promise.resolve(dataStoreFactory)],
+        ["OfficeRootComponent", Promise.resolve(dataStoreFactory)],
+        ["OneNoteRootComponentType", Promise.resolve(dataStoreFactory)],
+    ]);
+
     // Older snapshots may not contain summary acks, so the summarizer will throw error in case it faces more
     // ops than "maxOpsSinceLastSummary". So set it to a higher number to suppress those errors and run tests.
-    const codeLoader = new API.CodeLoader({
-        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 }},
-        [
-            ["_scheduler", Promise.resolve(chaincode)],
-            ["@ms/atmentions", Promise.resolve(chaincode)],
-            ["@ms/augloop", Promise.resolve(chaincode)],
-            ["@ms/catalog", Promise.resolve(chaincode)],
-            ["@ms/scriptor", Promise.resolve(chaincode)],
-            ["@ms/discover", Promise.resolve(chaincode)],
-            ["@ms/registro", Promise.resolve(chaincode)],
-            ["@ms/formula", Promise.resolve(chaincode)],
-            ["@ms/application-services", Promise.resolve(chaincode)],
-            ["@ms/undo-stack", Promise.resolve(chaincode)],
-            ["@ms/commanding-surface", Promise.resolve(chaincode)],
-            ["@ms/dias", Promise.resolve(chaincode)],
-            ["@ms/scriptor/Titulo", Promise.resolve(chaincode)],
-            ["@fluidx/tasks", Promise.resolve(chaincode)],
-            ["@ms/tablero/TableroView", Promise.resolve(chaincode)],
-            ["@ms/tablero/TableroDocument", Promise.resolve(chaincode)],
-            ["@fluid-example/table-document/TableDocument", Promise.resolve(chaincode)],
-            ["LastEditedComponent", Promise.resolve(chaincode)],
-            ["OfficeRootComponent", Promise.resolve(chaincode)],
-            ["OneNoteRootComponentType", Promise.resolve(chaincode)],
-        ]);
-
-    // Make sure any package (string[]) is resolved as well.
-    (chaincode as any).IFluidDataStoreRegistry = chaincode;
-    (chaincode as any).get = async () => Promise.resolve(chaincode);
-
-    const options = {};
+    const runtimeOptions: IContainerRuntimeOptions = {
+        summaryOptions: { generateSummaries: false, maxOpsSinceLastSummary: 100000 },
+    };
+    const codeLoader = new ReplayCodeLoader(new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries));
 
     // Load the Fluid document
     const loader = new Loader({
         urlResolver,
         documentServiceFactory,
         codeLoader,
-        options,
+        options: {},
         logger,
     });
-    const container: Container = await loader.resolve({ url: resolved.url });
 
-    assert(container.existing,
-        0x1c4 /* "Container does not exist!" */); // ReplayFileDeltaConnection.create() guarantees that
-
-    return container;
+    return loader.resolve({ url: resolved.url });
 }

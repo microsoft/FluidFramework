@@ -34,6 +34,9 @@ export const fetchTimeoutStatusCode = 713;
 export const fluidEpochMismatchError = 409;
 // Error code for when the fetched token is null.
 export const fetchTokenErrorCode = 724;
+// Error code for when the server state is read only and client tries to write. This code is set by the server
+// and is not likely to change.
+export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
 export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string) => string | undefined | null}) {
     interface LoggingHeader {
@@ -65,18 +68,46 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
 
 export interface IFacetCodes {
     facetCodes?: string[];
- }
+}
 
-export function parseFacetCodes(response: string): string[] {
-    const stack: string[] = [];
-    let error;
+/** Empirically-based model of error response inner error from ODSP */
+export interface OdspErrorResponseInnerError {
+    code?: string;
+    innerError?: OdspErrorResponseInnerError
+}
+
+/** Empirically-based model of error responses from ODSP */
+export interface OdspErrorResponse {
+    error: OdspErrorResponseInnerError & {
+        message: string;
+    }
+}
+
+/** Empirically-based type guard for error responses from ODSP */
+function isOdspErrorResponse(x: any): x is OdspErrorResponse {
+    const error = x?.error;
+    return typeof(error?.message) === "string" &&
+        (error?.code === undefined || typeof(error?.code) === "string");
+}
+
+export function tryParseErrorResponse(
+    response: string | undefined,
+): { success: true, errorResponse: OdspErrorResponse } | { success: false } {
     try {
-        error = JSON.parse(response).error;
+        if (response !== undefined) {
+            const parsed = JSON.parse(response);
+            if (isOdspErrorResponse(parsed)) {
+                return { success: true, errorResponse: parsed };
+            }
+        }
     }
-    catch(e) {
-        return stack;
-    }
+    catch(e) {}
+    return { success: false };
+}
 
+export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
+    const stack: string[] = [];
+    let error: OdspErrorResponseInnerError | undefined = errorResponse.error;
     // eslint-disable-next-line no-null/no-null
     while (typeof error === "object" && error !== null) {
         if (error.code !== undefined) {
@@ -94,17 +125,39 @@ export function createOdspNetworkError(
     response?: Response,
     responseText?: string,
     props: ITelemetryProperties = {},
-): OdspError & LoggingError & IFacetCodes {
-    let error: OdspError & LoggingError & IFacetCodes;
+): LoggingError & OdspError & IFacetCodes {
+    let error: LoggingError & OdspError & IFacetCodes;
+    const parseResult = tryParseErrorResponse(responseText);
+    let facetCodes: string[] | undefined;
+    let innerMostErrorCode: string | undefined;
+    if (parseResult.success) {
+        // Log the whole response if it looks like the error format we expect
+        props.response = responseText;
+        const errorResponse = parseResult.errorResponse;
+        facetCodes = parseFacetCodes(errorResponse);
+        if (facetCodes !== undefined) {
+            innerMostErrorCode = facetCodes[0];
+            props.innerMostErrorCode = innerMostErrorCode;
+        }
+    }
     switch (statusCode) {
         case 400:
             error = new GenericNetworkError(errorMessage, false, { statusCode });
             break;
         case 401:
         case 403:
-            const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
-            const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-            error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
+            // The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
+            // database on server becomes readonly. The driver retries for such cases with exponential backup logic.
+            if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
+                error = new RetryableError(
+                    errorMessage,
+                    OdspErrorType.serviceReadOnly,
+                );
+            } else {
+                const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
+                const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
+                error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
+            }
             break;
         case 404:
             error = new NonRetryableError(
@@ -119,6 +172,11 @@ export function createOdspNetworkError(
             break;
         case fluidEpochMismatchError:
             error = new NonRetryableError(errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
+            break;
+        case 412:
+            // "Precondition Failed" error - happens when uploadSummaryWithContext uses wrong parent.
+            // Resubmitting same payload is not going to help, so this is non-recoverable failure!
+            error = new NonRetryableError(errorMessage, DriverErrorType.genericNetworkError, { statusCode });
             break;
         case 413:
             error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
@@ -147,7 +205,7 @@ export function createOdspNetworkError(
             error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
+            error = new RetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
             error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
@@ -155,15 +213,23 @@ export function createOdspNetworkError(
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
             error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
+            break;
+    }
+    enrichOdspError(error, response, facetCodes, props);
+    return error;
+}
+
+export function enrichOdspError(
+    error: LoggingError & OdspError & IFacetCodes,
+    response?: Response,
+    facetCodes?: string[],
+    props: ITelemetryProperties = {},
+) {
+    error.online = OnlineStatus[isOnline()];
+    if (facetCodes !== undefined) {
+        error.facetCodes = facetCodes;
     }
 
-    error.online = OnlineStatus[isOnline()];
-
-    const facetCodes = responseText !== undefined ? parseFacetCodes(responseText) : undefined;
-    error.facetCodes = facetCodes;
-    (error as any).response = responseText; // Issue #6139: This shouldn't be logged - will be fixed with #6485
-
-    props.innerMostErrorCode = facetCodes !== undefined ? facetCodes[0] : undefined;
     if (response) {
         props.responseType = response.type;
         if (response.headers) {
@@ -194,7 +260,6 @@ export function throwOdspNetworkError(
         response,
         responseText);
 
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw networkError;
 }
 

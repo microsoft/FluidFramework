@@ -24,25 +24,25 @@ const packageName = `${pkgName}@${pkgVersion}`;
 class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
     private error: boolean = false;
     private readonly schema = new Map<string, number>();
-    private  logs: ITelemetryBaseEvent[] = [];
+    private logs: ITelemetryBaseEvent[] = [];
 
     public constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
         super();
     }
 
-    async flush(runInfo?: {url: string,  runId?: number}): Promise<void> {
-        const baseFlushP =  this.baseLogger?.flush();
+    async flush(runInfo?: { url: string, runId?: number }): Promise<void> {
+        const baseFlushP = this.baseLogger?.flush();
 
-        if(this.error && runInfo !== undefined) {
+        if (this.error && runInfo !== undefined) {
             const logs = this.logs;
             const outputDir = `${__dirname}/output/${crypto.createHash("md5").update(runInfo.url).digest("hex")}`;
-            if(!fs.existsSync(outputDir)) {
-                fs.mkdirSync(outputDir, {recursive: true});
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
             }
             // sort from most common column to least common
-            const schema = [...this.schema].sort((a,b)=>b[1] - a[1]).map((v)=>v[0]);
+            const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
             const data = logs.reduce(
-                (file, event)=> `${file}\n${schema.reduce((line,k)=>`${line}${event[k] ?? ""},`,"")}`,
+                (file, event) => `${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
                 schema.join(","));
             const filePath = `${outputDir}/${runInfo.runId ?? "orchestrator"}_${Date.now()}.csv`;
             fs.writeFileSync(
@@ -55,25 +55,25 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
         return baseFlushP;
     }
     send(event: ITelemetryBaseEvent): void {
-        this.baseLogger?.send({...event, hostName: pkgName});
+        this.baseLogger?.send({ ...event, hostName: pkgName });
 
         event.Event_Time = Date.now();
         // keep track of the frequency of every log event, as we'll sort by most common on write
-        Object.keys(event).forEach((k)=>this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
-        if(event.category === "error") {
+        Object.keys(event).forEach((k) => this.schema.set(k, (this.schema.get(k) ?? 0) + 1));
+        if (event.category === "error") {
             this.error = true;
         }
         this.logs.push(event);
     }
 }
 
-export const loggerP = new LazyPromise<FileLogger>(async ()=>{
+export const loggerP = new LazyPromise<FileLogger>(async () => {
     if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
         await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
         const logger = getTestLogger?.();
         assert(logger !== undefined, "Expected getTestLogger to return something");
         return new FileLogger(logger);
-    }else{
+    } else {
         return new FileLogger();
     }
 });
@@ -84,7 +84,7 @@ const codeDetails: IFluidCodeDetails = {
 };
 
 export const createCodeLoader =
-    (options: IContainerRuntimeOptions)=>
+    (options: IContainerRuntimeOptions) =>
         new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
 export async function initialize(testDriver: ITestDriver, seed: number) {
@@ -96,7 +96,13 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
         urlResolver: testDriver.createUrlResolver(),
         documentServiceFactory: testDriver.createDocumentServiceFactory(),
         codeLoader: createCodeLoader(random.pick(randEng, generateRuntimeOptions(seed))),
-        logger: ChildLogger.create(await loggerP, undefined, {all: { driverType: testDriver.type }}),
+        logger: ChildLogger.create(await loggerP, undefined,
+            {
+                all: {
+                    driverType: testDriver.type,
+                    driverEndpointName: testDriver.endpointName,
+                },
+            }),
         options,
     });
 
@@ -113,14 +119,16 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
     return testDriver.createContainerUrl(testId);
 }
 
-export async function createTestDriver(driver: TestDriverTypes, seed: number, runId: number | undefined) {
+export async function createTestDriver(
+    driver: TestDriverTypes, seed: number, runId: number | undefined, supportsBrowserAuth?: true) {
     const options = generateOdspHostStoragePolicy(seed);
     return createFluidTestDriver(
         driver,
         {
             odsp: {
                 directory: "stress",
-                options: options[ (runId ?? seed) % options.length],
+                options: options[(runId ?? seed) % options.length],
+                supportsBrowserAuth,
             },
         });
 }
@@ -145,9 +153,9 @@ export function getProfile(profileArg: string) {
 
 export async function safeExit(code: number, url: string, runId?: number) {
     // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-    await(new Promise((res) => { setTimeout(res, 1000); }));
+    await (new Promise((res) => { setTimeout(res, 1000); }));
     // Flush the logs
-    await loggerP.then(async (l)=>l.flush({url, runId}));
+    await loggerP.then(async (l) => l.flush({ url, runId }));
 
     process.exit(code);
 }

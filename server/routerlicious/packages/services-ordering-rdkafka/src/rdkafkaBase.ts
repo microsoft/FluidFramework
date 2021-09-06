@@ -8,95 +8,119 @@ import { IContextErrorData } from "@fluidframework/server-services-core";
 import type * as kafkaTypes from "node-rdkafka";
 import { tryImportNodeRdkafka } from "./tryImport";
 
-// The native dependency of node-rdkafka throws an error when installing in one environment (e.g., macOS) and running
-// inside another (e.g., docker ubuntu). The issue only occurs because we volume mount code directly into docker
-// for local dev flow. Using a pre-built image works fine (https://github.com/Blizzard/node-rdkafka/issues/315).
-// Because of this limitation, currently we cannot use node-rdkafka in local dev flow. So locally kafka config should
-// always point to kafka-node library. Production code can use either one of those.
-const kafka = tryImportNodeRdkafka();
-
 export interface IKafkaBaseOptions {
-	numberOfPartitions: number;
-	replicationFactor: number;
+    numberOfPartitions: number;
+    replicationFactor: number;
+    sslCACertFilePath?: string;
 }
 
 export interface IKafkaEndpoints {
-	kafka: string[];
-	zooKeeper?: string[];
+    kafka: string[];
+    zooKeeper?: string[];
 }
 
 export abstract class RdkafkaBase extends EventEmitter {
-	private readonly options: IKafkaBaseOptions;
+    protected readonly kafka: typeof kafkaTypes;
+    protected readonly sslOptions?: kafkaTypes.ConsumerGlobalConfig;
+    private readonly options: IKafkaBaseOptions;
 
-	constructor(
-		protected readonly endpoints: IKafkaEndpoints,
-		public readonly clientId: string,
-		public readonly topic: string,
-		options?: Partial<IKafkaBaseOptions>,
-	) {
-		super();
+    constructor(
+        protected readonly endpoints: IKafkaEndpoints,
+        public readonly clientId: string,
+        public readonly topic: string,
+        options?: Partial<IKafkaBaseOptions>,
+    ) {
+        super();
 
-		if (!kafka) {
-			throw new Error("Invalid node-rdkafka package");
-		}
+        const kafka = tryImportNodeRdkafka();
+        if (!kafka) {
+            throw new Error("Invalid node-rdkafka package");
+        }
 
-		this.options = {
-			...options,
-			numberOfPartitions: options?.numberOfPartitions ?? 32,
-			replicationFactor: options?.replicationFactor ?? 3,
-		};
+        this.kafka = kafka;
+        this.options = {
+            ...options,
+            numberOfPartitions: options?.numberOfPartitions ?? 32,
+            replicationFactor: options?.replicationFactor ?? 3,
+        };
 
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this.initialize();
-	}
+        // In RdKafka, we can check what features are enabled using kafka.features. If "ssl" is listed,
+        // it means RdKafka has been built with support for SSL.
+        // To build node-rdkafka with SSL support, make sure OpenSSL libraries are available in the
+        // environment node-rdkafka would be running. Once OpenSSL is available, building node-rdkafka
+        // as usual will automatically include SSL support.
+        const rdKafkaHasSSLEnabled =
+            kafka.features.filter((feature) => feature.toLowerCase().indexOf("ssl") >= 0).length > 0;
 
-	protected abstract connect(): void;
+        if (options?.sslCACertFilePath) {
+            // If the use of SSL is desired, but rdkafka has not been built with SSL support,
+            // throw an error making that clear to the user.
+            if (!rdKafkaHasSSLEnabled) {
+                throw new Error(
+                    "Attempted to configure SSL, but rdkafka has not been built to support it. " +
+                    "Please make sure OpenSSL is available and build rdkafka again.");
+            }
 
-	private async initialize() {
-		try {
-			await this.ensureTopics();
-		} catch (ex) {
-			this.emit("error", ex);
+            this.sslOptions = {
+                "security.protocol": "ssl",
+                "ssl.ca.location": options?.sslCACertFilePath,
+            };
+        }
 
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.initialize();
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.initialize();
+    }
 
-			return;
-		}
+    protected abstract connect(): void;
 
-		this.connect();
-	}
+    private async initialize() {
+        try {
+            await this.ensureTopics();
+        } catch (ex) {
+            this.emit("error", ex);
 
-	protected async ensureTopics() {
-		const adminClient = kafka.AdminClient.create({
-			"client.id": `${this.clientId}-admin`,
-			"metadata.broker.list": this.endpoints.kafka.join(","),
-		});
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.initialize();
 
-		const newTopic: kafkaTypes.NewTopic = {
-			topic: this.topic,
-			num_partitions: this.options.numberOfPartitions,
-			replication_factor: this.options.replicationFactor,
-		};
+            return;
+        }
 
-		return new Promise<void>((resolve, reject) => {
-			adminClient.createTopic(newTopic, 10000, (err) => {
-				adminClient.disconnect();
+        this.connect();
+    }
 
-				if (err && err.code !== kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
-					reject(err);
-				} else {
-					resolve();
-				}
-			});
-		});
-	}
+    protected async ensureTopics() {
+        const options: kafkaTypes.GlobalConfig = {
+            "client.id": `${this.clientId}-admin`,
+            "metadata.broker.list": this.endpoints.kafka.join(","),
+            ...this.sslOptions,
+        };
 
-	protected error(error: any, restartOnError: boolean = false) {
-		const errorData: IContextErrorData = {
-			restart: restartOnError,
-		};
+        const adminClient = this.kafka.AdminClient.create(options);
 
-		this.emit("error", error, errorData);
-	}
+        const newTopic: kafkaTypes.NewTopic = {
+            topic: this.topic,
+            num_partitions: this.options.numberOfPartitions,
+            replication_factor: this.options.replicationFactor,
+        };
+
+        return new Promise<void>((resolve, reject) => {
+            adminClient.createTopic(newTopic, 10000, (err) => {
+                adminClient.disconnect();
+
+                if (err && err.code !== this.kafka.CODES.ERRORS.ERR_TOPIC_ALREADY_EXISTS) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    protected error(error: any, restartOnError: boolean = false) {
+        const errorData: IContextErrorData = {
+            restart: restartOnError,
+        };
+
+        this.emit("error", error, errorData);
+    }
 }

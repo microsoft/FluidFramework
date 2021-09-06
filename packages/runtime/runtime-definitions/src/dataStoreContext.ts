@@ -16,7 +16,6 @@ import {
     IAudience,
     IDeltaManager,
     ContainerWarning,
-    ILoader,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -34,8 +33,8 @@ import { IGarbageCollectionData, IGarbageCollectionSummaryDetails } from "./garb
 import { IInboundSignalMessage } from "./protocol";
 import {
     CreateChildSummarizerNodeParam,
-    IChannelSummarizeResult,
     ISummarizerNodeWithGC,
+    ISummaryTreeWithStats,
     SummarizeInternalFn,
 } from "./summary";
 
@@ -44,15 +43,15 @@ import {
  */
 export enum FlushMode {
     /**
-     * In automatic flush mode the runtime will immediately send all operations to the driver layer.
+     * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
      */
-    Automatic,
+    Immediate,
 
     /**
-     * When in manual flush mode the runtime will buffer operations in the current turn and send them as a single
+     * When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
      * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
      */
-    Manual,
+    TurnBased,
 }
 
 export interface IContainerRuntimeBaseEvents extends IEvent{
@@ -154,7 +153,7 @@ export interface IFluidDataStoreChannel extends
     readonly id: string;
 
     /**
-     * Indicates the attachment state of the data store to a host service.
+     * Indicates the attachment state of the channel to a host service.
      */
     readonly attachState: AttachState;
 
@@ -167,7 +166,7 @@ export interface IFluidDataStoreChannel extends
     /**
      * Retrieves the summary used as part of the initial summary message
      */
-    getAttachSummary(): IChannelSummarizeResult;
+    getAttachSummary(): ISummaryTreeWithStats;
 
     /**
      * Processes the op.
@@ -180,12 +179,12 @@ export interface IFluidDataStoreChannel extends
     processSignal(message: any, local: boolean): void;
 
     /**
-     * Generates a summary for the data store.
+     * Generates a summary for the channel.
      * Introduced with summarizerNode - will be required in a future release.
      * @param fullTree - true to bypass optimizations and force a full summary tree.
      * @param trackState - This tells whether we should track state from this summary.
      */
-    summarize(fullTree?: boolean, trackState?: boolean): Promise<IChannelSummarizeResult>;
+    summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
 
     /**
      * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
@@ -196,8 +195,11 @@ export interface IFluidDataStoreChannel extends
 
     /**
      * After GC has run, called to notify this channel of routes that are used in it.
+     * @param usedRoutes - The routes that are used in this channel.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
+     * as part of this GC run, this should be used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
     /**
      * Notifies this object about changes in the connection state.
@@ -237,7 +239,6 @@ export interface IFluidDataStoreContext extends
     IEventProvider<IFluidDataStoreContextEvents>,
     Partial<IProvideFluidDataStoreRegistry>,
     IProvideFluidHandleContext {
-    readonly documentId: string;
     readonly id: string;
     /**
      * A data store created by a client, is a local data store for that client. Also, when a detached container loads
@@ -252,10 +253,6 @@ export interface IFluidDataStoreContext extends
      * The package path of the data store as per the package factory.
      */
     readonly packagePath: readonly string[];
-    /**
-     * TODO: should remove after detachedNew is in place
-     */
-    readonly existing: boolean;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly connected: boolean;
@@ -264,11 +261,6 @@ export interface IFluidDataStoreContext extends
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly logger: ITelemetryBaseLogger;
     readonly clientDetails: IClientDetails;
-    /**
-     * @deprecated 0.37 Containers created using a loader will make automatically it
-     * available through scope instead
-     */
-    readonly loader: ILoader;
     /**
      * Indicates the attachment state of the data store to a host service.
      */

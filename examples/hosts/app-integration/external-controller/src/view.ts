@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFrsAudience } from "@fluid-experimental/frs-client";
-import { ITinyliciousAudience } from "@fluid-experimental/tinylicious-client";
+import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import { ICustomUserDetails } from "./app";
 import { IDiceRollerController } from "./controller";
 
 /**
@@ -45,7 +45,7 @@ export function renderDiceRoller(diceRoller: IDiceRollerController, div: HTMLDiv
  * @param audience - Object that provides the list of current members and listeners for when the list changes
  * @param div - The div to render into
  */
-export function renderAudience(audience: ITinyliciousAudience | IFrsAudience, div: HTMLDivElement) {
+export function renderAudience(audience: IAzureAudience, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "center";
     wrapperDiv.style.margin = "70px";
@@ -57,15 +57,23 @@ export function renderAudience(audience: ITinyliciousAudience | IFrsAudience, di
     const onAudienceChanged = () => {
         const members = audience.getMembers();
         const self = audience.getMyself();
-        const memberNames: string[] = [];
-        members.forEach((member) => {
+        const memberStrings: string[] = [];
+        const useAzure = process.env.FLUID_CLIENT === "azure";
+
+        members.forEach((member: AzureMember<ICustomUserDetails>) => {
             if (member.userId !== self?.userId) {
-                memberNames.push(member.userName);
+                if (useAzure) {
+                    const memberString = `${member.userName}: {Gender: ${member.additionalDetails?.gender},
+                        Email: ${member.additionalDetails?.email}}`;
+                    memberStrings.push(memberString);
+                } else {
+                    memberStrings.push(member.userName);
+                }
             }
         });
         audienceDiv.innerHTML = `
             Current User: ${self?.userName} <br />
-            Other Users: ${memberNames.join(", ")}
+            Other Users: ${memberStrings.join(", ")}
         `;
     };
 

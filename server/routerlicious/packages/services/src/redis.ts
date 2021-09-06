@@ -33,8 +33,12 @@ export class RedisCache implements ICache {
         return this.client.get(this.getKey(key));
     }
 
-    public async set(key: string, value: string): Promise<void> {
-        const result = await this.client.set(this.getKey(key), value, "EX", this.expireAfterSeconds);
+    public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
+        const result = await this.client.set(
+            this.getKey(key),
+            value,
+            "EX",
+            expireAfterSeconds ?? this.expireAfterSeconds);
         if (result !== "OK") {
             return Promise.reject(result);
         }

@@ -26,7 +26,12 @@ export enum ContainerErrorType {
      * Error encountered when processing an operation. May correlate with data corruption.
      */
     dataProcessingError = "dataProcessingError",
-}
+
+    /**
+     * Error indicating an API is being used improperly resulting in an invalid operation.
+     */
+     usageError = "usageError",
+    }
 
 /**
  * Base interface for all errors and warnings at container level
@@ -39,8 +44,6 @@ export interface IErrorBase {
      */
     readonly errorType: string;
     readonly message: string;
-    /** Sequence number when error happened */
-    sequenceNumber?: number;
 }
 
 /**
@@ -65,6 +68,13 @@ export type ICriticalContainerError = IErrorBase;
 export interface IGenericError extends IErrorBase {
     readonly errorType: ContainerErrorType.genericError;
     error?: any;
+}
+
+/**
+ * Error indicating an API is being used improperly resulting in an invalid operation.
+ */
+ export interface IUsageError extends IErrorBase {
+    readonly errorType: ContainerErrorType.usageError;
 }
 
 /**

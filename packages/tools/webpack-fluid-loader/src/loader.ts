@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
-import { IPersistedCache } from "@fluidframework/odsp-driver-definitions";
+import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
@@ -52,6 +52,7 @@ export interface IDockerRouteOptions extends IBaseRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
+    enableWholeSummaryUpload?: boolean;
 }
 
 export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
@@ -60,6 +61,7 @@ export interface IRouterliciousRouteOptions extends IBaseRouteOptions {
     tenantId?: string;
     tenantSecret?: string;
     bearerSecret?: string;
+    enableWholeSummaryUpload?: boolean;
 }
 
 export interface ITinyliciousRouteOptions extends IBaseRouteOptions {
@@ -159,8 +161,14 @@ async function createWebLoader(
     testOrderer: boolean = false,
     odspPersistantCache?: IPersistedCache,
 ): Promise<Loader> {
+    const odspHostStoragePolicy: HostStoragePolicy = {};
+    if (window.location.hash === "#binarySnapshot") {
+        assert(options.mode === "spo-df" || options.mode === "spo",
+            0x240 /* "Binary format snapshot only for odsp driver!!" */);
+        odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
+    }
     let documentServiceFactory: IDocumentServiceFactory =
-        getDocumentServiceFactory(documentId, options, odspPersistantCache);
+        getDocumentServiceFactory(documentId, options, odspPersistantCache, odspHostStoragePolicy);
     // Create the inner document service which will be wrapped inside local driver. The inner document service
     // will be used for ops(like delta connection/delta ops) while for storage, local storage would be used.
     if (testOrderer) {
@@ -223,11 +231,11 @@ export async function start(
         config: {},
     };
 
-    let urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
+    const urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
     const odspPersistantCache = new OdspPersistentCache();
 
     // Create the loader that is used to load the Container.
-    let loader1 = await createWebLoader(
+    const loader1 = await createWebLoader(
         documentId,
         fluidModule,
         options,
@@ -260,22 +268,6 @@ export async function start(
         }
         container1 = await loader1.resolve({ url: documentUrl });
         containers.push(container1);
-
-        /**
-         * For existing documents, the container should already exist. If it doesn't, we treat this as the new
-         * document scenario.
-         * Create a new `documentId`, a new Loader and a new detached container.
-         */
-        if (!container1.existing) {
-            console.warn(`Document with id ${documentId} not found. Falling back to creating a new document.`);
-            container1.close();
-
-            documentId = moniker.choose();
-            url = url.replace(id, documentId);
-            urlResolver = new MultiUrlResolver(documentId, window.location.origin, options);
-            loader1 = await createWebLoader(documentId, fluidModule, options, urlResolver, codeDetails, testOrderer);
-            container1 = await loader1.createDetachedContainer(codeDetails);
-        }
     }
 
     let leftDiv: HTMLDivElement = div;

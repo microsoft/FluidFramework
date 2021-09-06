@@ -7,6 +7,7 @@ export * from "./containerRuntime";
 export * from "./deltaScheduler";
 export * from "./dataStoreRegistry";
 export * from "./pendingStateManager";
-export * from "./runWhileConnectedCoordinator";
 export * from "./summarizer";
+export * from "./summarizerTypes";
 export * from "./summaryCollection";
+export { neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
