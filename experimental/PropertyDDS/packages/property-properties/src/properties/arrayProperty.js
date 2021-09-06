@@ -8,10 +8,13 @@
 const _ = require('lodash');
 const BaseProperty = require('./baseProperty');
 const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
-const { ArrayChangeSetIterator } = require('@fluid-experimental/property-changeset');
 const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
-const { ChangeSet } = require('@fluid-experimental/property-changeset');
-const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
+const {
+    ArrayChangeSetIterator,
+    ChangeSet,
+    PathHelper,
+    TypeIdHelper
+} = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const Property = require('./lazyLoadedProperties');
 const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
@@ -644,7 +647,9 @@ ArrayProperty.prototype.setRange = function (in_offset, in_array) {
         throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.setRange');
     }
     in_offset = Math.floor(in_offset);
-    if (!isFinite(in_offset)) throw new Error(MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.setRange or .set');
+    if (!isFinite(in_offset)) {
+        throw new Error(MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.setRange or .set');
+    }
     ConsoleUtils.assert(in_offset >= -1 && (in_offset + in_array.length) <= this.getLength(),
         MSG.SET_OUT_OF_BOUNDS + 'Cannot set ' + in_array.length + ' items starting at index ' + in_offset +
         '. Array length: ' + this.getLength());

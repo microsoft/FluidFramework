@@ -58,6 +58,22 @@ var PATH_TOKENS = {
 };
 
 /**
+ * The options to selectively create only a subset of a property.
+ *
+ * For now the filtering options are propagated by many functions, but are actually used only by
+ * functions that create properties from schemas. It is then possible to create only a subset of
+ * the properties of a schema by providing a restricted list of paths.
+ *
+ * Thus, with the filtering options, it is NOT possible to prevent a part of a ChangeSet from being
+ * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
+ * created by a direct call to a function like `deserialize()` or `createProperty()`.
+ *
+ * @typedef {Object} BaseProperty.PathFilteringOptions
+ * @property {string} basePath The canonical path of the property we are about to create.
+ * @property {array<string>} paths The canonical paths of the properties we are allowed to create.
+ */
+
+/**
  * Default constructor for BaseProperty
  * @param {object} in_params List of parameters
  * @param {string} in_params.id id of the property
@@ -296,6 +312,8 @@ BaseProperty.prototype._getDirtyFlags = function () {
  * Helper function, which reports the fact that a property has been dirtied to the checkout view
  * @private
  */
+// TODO: Cleaner way to make the property tree aware of the DDS hosting it.
+// Currently, this._tree is set in SharedPropertyTree constructor.
 BaseProperty.prototype._reportDirtinessToView = function () {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let currentNode = this;
@@ -505,10 +523,20 @@ BaseProperty.prototype._setCheckoutView = function (value) {
  * @return {property-properties.CheckoutView} - the checkout view
  */
 BaseProperty.prototype._getCheckoutView = function () {
+    let checkedOutRepositoryInfo = this._getCheckedOutRepositoryInfo();
+    return checkedOutRepositoryInfo ? checkedOutRepositoryInfo.getCheckoutView() : undefined;
+};
+
+/**
+ * Returns the checkedOutRepositoryInfo.
+ * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
+ * @protected
+ */
+BaseProperty.prototype._getCheckedOutRepositoryInfo = function () {
     if (!this._parent) {
-        return this._checkoutView;
+        return this._checkedOutRepositoryInfo;
     } else {
-        return this.getRoot()._getCheckoutView();
+        return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
     }
 };
 
@@ -892,10 +920,23 @@ BaseProperty.prototype.getAbsolutePath = function () {
             var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
             for (var i = 0; i < keys.length; i++) {
                 if (keys[i]) {
-                    var repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]]
-                        ._repositoryReferenceProperties[keys[i]].property;
-                    if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
-                        referenceProps.push(repoRef);
+                    let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]];
+                    let refProperty = undefined;
+
+                    if (repoRef) {
+                        refProperty = repoRef._repositoryReferenceProperties[keys[i]] ?
+                            repoRef._repositoryReferenceProperties[keys[i]].property : undefined;
+                    }
+
+                    let refRoot;
+                    try {
+                        refRoot = refProperty ? refProperty.getReferencedRepositoryRoot() : undefined;
+                    } catch (e) {
+                        console.warn(e.message);
+                    }
+
+                    if (that.getRoot() === refRoot) {
+                        referenceProps.push(refProperty);
                         break;
                     }
                 }
@@ -1182,19 +1223,6 @@ BaseProperty.prototype._canInsert = function (in_targetParent) {
     }
 
     return (this._parent === undefined && this._getCheckoutView() === undefined);
-};
-
-/**
- * Returns the checkedOutRepositoryInfo.
- * @return {property-properties.CheckoutView~CheckedOutRepositoryInfo} The checkedOut repository info.
- * @protected
- */
-BaseProperty.prototype._getCheckedOutRepositoryInfo = function () {
-    if (!this._parent) {
-        return this._checkedOutRepositoryInfo;
-    } else {
-        return this.getRoot() ? this.getRoot()._getCheckedOutRepositoryInfo() : undefined;
-    }
 };
 
 /**
