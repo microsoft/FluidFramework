@@ -297,16 +297,22 @@ BaseProperty.prototype._getDirtyFlags = function () {
  * @private
  */
 BaseProperty.prototype._reportDirtinessToView = function () {
-    // Get the root of the property hierarchy
-    var currentNode = this;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let currentNode = this;
+
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     while (currentNode._parent) {
         currentNode = currentNode._parent;
     }
 
-    // Report the dirtiness to the checkout view
-    if (currentNode._checkedOutRepositoryInfo &&
-        currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)) {
-        currentNode._checkedOutRepositoryInfo._propertyDirtied();
+    if (
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        currentNode._tree &&
+        currentNode._tree.notificationDelayScope === 0 &&
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        currentNode._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.DIRTY)
+    ) {
+        currentNode._tree._reportDirtinessToView();
     }
 };
 
