@@ -1511,6 +1511,10 @@ export class DeltaManager
         }
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
+        // a bunch of code assumes that this is true
+        assert(this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
+            "lastObservedSeqNumber should be updated first");
+
         // Back-compat for older server with no term
         if (message.term === undefined) {
             message.term = 1;

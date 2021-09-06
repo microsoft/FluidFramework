@@ -48,11 +48,10 @@ class LoadTestDataStoreModel {
     }
 
     private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
-        if(runtime.deltaManager.active) {
+        const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
+        if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
             return;
         }
-
-        const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
 
         return new Promise<void>((resolve, reject) => {
             if (runtime.disposed) {
