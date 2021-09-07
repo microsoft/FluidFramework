@@ -31,7 +31,7 @@
     "nconf": "^0.11.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/server-test-utils": "^0.1030.0",
     "@types/debug": "^4.1.5",

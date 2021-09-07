@@ -31,7 +31,7 @@
     "request": "^2.88.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/node": "^12.19.0",
     "@types/request": "^2.47.1",
