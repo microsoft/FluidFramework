@@ -45,7 +45,7 @@
 		"buffer": "^6.0.3",
 		"denque": "^1.5.1",
 		"lru-cache": "^6.0.0",
-		"sorted-btree": "^1.5.0",
+		"sorted-btree": "^1.6.0",
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
@@ -63,7 +63,7 @@
 		"@microsoft/api-extractor": "^7.18.7",
 		"@types/lru-cache": "^5.1.1",
 		"@types/socket.io-client": "^1.4.36",
-		"@typescript-eslint/parser": "^4.29.3",
+		"@typescript-eslint/parser": "^4.31.0",
 		"chai": "^4.3.4",
 		"concurrently": "^6.2.1",
 		"copyfiles": "^2.4.1",
