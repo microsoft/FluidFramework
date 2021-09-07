@@ -4,7 +4,7 @@
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, TypedEventEmitter, assert } from "@fluidframework/common-utils";
+import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
@@ -90,7 +90,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     constructor(
         private readonly clientElection: ISummarizerClientElection,
         private readonly connectedState: IConnectedState,
-        private readonly summaryCollection: Pick<SummaryCollection, "opsSinceLastAck">,
+        private readonly summaryCollection:
+            Pick<SummaryCollection, "opsSinceLastAck" | "addOpListener" | "removeOpListener">,
         parentLogger: ITelemetryLogger,
         /** Creates summarizer by asking interactive container to spawn summarizing container and
          * get back its Summarizer instance. */
@@ -317,7 +318,32 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
 
         if (delayMs > 0) {
-            await delay(delayMs);
+            // eslint-disable-next-line prefer-const
+            let timer;
+            let resolveFn;
+            // Create a listener that will break the delay if we've exceeded the initial delay ops count.
+            const opsListenerFn = () => {
+                if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
+                    clearTimeout(timer);
+                    resolveFn();
+                }
+            };
+            // Create a Promise and capture its resolve function.
+            const delayPromise = new Promise<void>((resolve) => { resolveFn = resolve; }).catch(() => {
+                this.summaryCollection.removeOpListener(opsListenerFn);
+                if (timer) {
+                    clearTimeout(timer);
+                }
+            });
+            // Start a timer to delay creating the summarizer.
+            timer =
+                setTimeout(() => {
+                    resolveFn();
+                },
+                delayMs);
+            this.summaryCollection.addOpListener(opsListenerFn);
+            await delayPromise;
+            this.summaryCollection.removeOpListener(opsListenerFn);
         }
         return startWithInitialDelay;
     }

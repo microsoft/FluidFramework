@@ -33,7 +33,8 @@ describe("Summary Manager", () => {
     let summaryManager: SummaryManager;
 
     // Fake objects
-    const summaryCollection = { opsSinceLastAck: 0 };
+    const summaryCollection =
+        { opsSinceLastAck: 0, addOpListener: (listener) => {}, removeOpListener: (listener) => {} };
     const throttler = {
         delayMs: 0,
         numAttempts: 0,
