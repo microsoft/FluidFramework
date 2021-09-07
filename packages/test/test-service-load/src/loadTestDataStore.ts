@@ -16,7 +16,8 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { delay } from "@fluidframework/common-utils";
+import { delay, assert } from "@fluidframework/common-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -49,6 +50,8 @@ class LoadTestDataStoreModel {
 
     private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
+        assert(runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
+            "lastKnownSeqNumber should never be below last processed sequence number");
         if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
             return;
         }
@@ -58,8 +61,8 @@ class LoadTestDataStoreModel {
                 reject(new Error("disposed"));
             }
 
-            const opListener = () => {
-                if (runtime.deltaManager.lastSequenceNumber === lastKnownSeq) {
+            const opListener = (op: ISequencedDocumentMessage) => {
+                if (lastKnownSeq <= op.sequenceNumber) {
                     runtime.deltaManager.off("op", opListener);
                     runtime.off("dispose", disposeListener);
                     resolve();
