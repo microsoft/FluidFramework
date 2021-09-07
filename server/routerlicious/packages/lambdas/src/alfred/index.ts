@@ -24,7 +24,12 @@ import {
 import safeStringify from "json-stringify-safe";
 import * as semver from "semver";
 import * as core from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties, LogLevel, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+    BaseTelemetryProperties,
+    CommonProperties,
+    LogLevel,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import {
     createRoomJoinMessage,
     createNackMessage,
@@ -116,6 +121,7 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 function checkThrottle(
     throttler: core.IThrottler | undefined,
     throttleId: string,
+    tenantId: string,
     logger?: core.ILogger): core.ThrottlingError | undefined {
     if (!throttler) {
         return;
@@ -135,7 +141,10 @@ function checkThrottle(
                         eventName: "throttling",
                     },
                 });
-            Lumberjack.log(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, LogLevel.Error);
+            Lumberjack.log(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, LogLevel.Error, {
+                [CommonProperties.telemetryGroupName]: "throttling",
+                [BaseTelemetryProperties.tenantId]: tenantId,
+            });
         }
     }
 }
@@ -197,6 +206,7 @@ export function configureWebSocketServices(
             const throttleError = checkThrottle(
                 connectThrottler,
                 getSocketConnectThrottleId(message.tenantId),
+                message.tenantId,
                 logger);
             if (throttleError) {
                 return Promise.reject(throttleError);
@@ -443,6 +453,7 @@ export function configureWebSocketServices(
                     const throttleError = checkThrottle(
                         submitOpThrottler,
                         getSubmitOpThrottleId(clientId, connection.tenantId),
+                        connection.tenantId,
                         logger);
                     if (throttleError) {
                         const nackMessage = createNackMessage(
