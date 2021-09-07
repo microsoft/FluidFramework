@@ -145,7 +145,7 @@ export class Lumber<T extends string = LumberEventName> {
         if (exception instanceof Error) {
             this._exception = exception;
         } else if (exception !== undefined) { // We want to log the exception even if its value is `false`
-            this._exception = new Error (safeStringify(exception));
+            this._exception = new Error(safeStringify(exception));
         }
 
         this._durationInMs = performance.now() - this._startTime;

@@ -64,23 +64,20 @@ export class Lumberjack {
 
     public static debug(
         message: string,
-        properties?: Map<string, any> | Record<string, any>,
-        exception?: any) {
-        this.instance.log(message, LogLevel.Debug, properties, exception);
+        properties?: Map<string, any> | Record<string, any>) {
+        this.instance.log(message, LogLevel.Debug, properties);
     }
 
     public static verbose(
         message: string,
-        properties?: Map<string, any> | Record<string, any>,
-        exception?: any) {
-        this.instance.log(message, LogLevel.Verbose, properties, exception);
+        properties?: Map<string, any> | Record<string, any>) {
+        this.instance.log(message, LogLevel.Verbose, properties);
     }
 
     public static info(
         message: string,
-        properties?: Map<string, any> | Record<string, any>,
-        exception?: any) {
-        this.instance.log(message, LogLevel.Info, properties, exception);
+        properties?: Map<string, any> | Record<string, any>) {
+        this.instance.log(message, LogLevel.Info, properties);
     }
 
     public static warning(
@@ -154,23 +151,20 @@ export class Lumberjack {
 
     public debug(
         message: string,
-        properties?: Map<string, any> | Record<string, any>,
-        exception?: any) {
-        this.log(message, LogLevel.Debug, properties, exception);
+        properties?: Map<string, any> | Record<string, any>) {
+        this.log(message, LogLevel.Debug, properties);
     }
 
     public verbose(
         message: string,
-        properties?: Map<string, any> | Record<string, any>,
-        exception?: any) {
-        this.log(message, LogLevel.Verbose, properties, exception);
+        properties?: Map<string, any> | Record<string, any>) {
+        this.log(message, LogLevel.Verbose, properties);
     }
 
     public info(
         message: string,
-        properties?: Map<string, any> | Record<string, any>,
-        exception?: any) {
-        this.log(message, LogLevel.Info, properties, exception);
+        properties?: Map<string, any> | Record<string, any>) {
+        this.log(message, LogLevel.Info, properties);
     }
 
     public warning(
