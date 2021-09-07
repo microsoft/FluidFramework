@@ -58,8 +58,43 @@ export class Lumberjack {
         message: string,
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
-        exception?: Error) {
+        exception?: any) {
         this.instance.log(message, level, properties, exception);
+    }
+
+    public static debug(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Debug, properties, exception);
+    }
+
+    public static verbose(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Verbose, properties, exception);
+    }
+
+    public static info(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Info, properties, exception);
+    }
+
+    public static warning(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Warning, properties, exception);
+    }
+
+    public static error(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Error, properties, exception);
     }
 
     public setup(
@@ -101,7 +136,7 @@ export class Lumberjack {
         message: string,
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
-        exception?: Error) {
+        exception?: any) {
         this.errorOnIncompleteSetup();
         const lumber = new Lumber<string>(
             this.getLogCallerInfo(),
@@ -115,6 +150,41 @@ export class Lumberjack {
         } else {
             lumber.success(message, level);
         }
+    }
+
+    public debug(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Debug, properties, exception);
+    }
+
+    public verbose(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Verbose, properties, exception);
+    }
+
+    public info(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Info, properties, exception);
+    }
+
+    public warning(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Warning, properties, exception);
+    }
+
+    public error(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Error, properties, exception);
     }
 
     /**
@@ -131,9 +201,10 @@ export class Lumberjack {
         const defaultStackTracePreparer = Error.prepareStackTrace;
         try {
             Error.prepareStackTrace = (_, structuredStackTrace) => {
-                // Since we have a static log() and an instance log(), we should discard the first entry
-                // in the call stack in case the static log() called the singleton's instance log()
-                if (structuredStackTrace[0].getFileName() === __filename) {
+                // Since we have a static log() and an instance log(), as well as convenience
+                // methods such as info(), error(), etc, we should discard the first entry
+                // in the call stack while it points to this Lumberjack file.
+                while (structuredStackTrace[0].getFileName() === __filename) {
                     structuredStackTrace.shift();
                 }
                 const caller = structuredStackTrace[0];

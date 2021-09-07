@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
+    "json-stringify-safe": "^5.0.1",
     "path-browserify": "^1.0.1",
     "uuid": "^8.3.1"
   },

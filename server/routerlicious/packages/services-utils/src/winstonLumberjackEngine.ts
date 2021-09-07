@@ -15,12 +15,12 @@ export class WinstonLumberjackEngine implements ILumberjackEngine {
         const obj = {
             eventName: lumber.eventName,
             id: lumber.id,
-            properties: propObj,
+            properties: JSON.stringify(propObj),
             type: LumberType[lumber.type],
             timestamp: new Date(lumber.timestamp).toISOString(),
             durationInMs: lumber.durationInMs,
             successful: lumber.successful,
-            exception: lumber.exception,
+            exception: lumber.exception?.message,
         };
 
         const level = this.getLogLevelToWinstonMapping(lumber.logLevel);
