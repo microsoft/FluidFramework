@@ -76,6 +76,7 @@ export function getRequestErrorTranslator(
         }
         // Treat anything else as an internal error, but log for debugging purposes
         winston.error(getStandardLogErrorMessage(safeStringify(error)));
+        safelyLogError(getStandardLogErrorMessage(""), error);
         Lumberjack.log(getStandardLogErrorMessage(safeStringify(error)), LogLevel.Error);
         throw new NetworkError(500, "Internal Server Error");
     };
