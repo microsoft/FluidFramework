@@ -8,65 +8,70 @@
  * single result.
  */
 
-/**
- * Instantiates a ValidationResultBuilder
- * @param {string} in_typeid A template typeid.
- * @constructor
- */
-class ValidationResultBuilder {
-    constructor(in_typeid) {
+ export declare interface SchemaValidationResult {
+    isValid: boolean;
+    errors: Error[];
+    warnings: string[];
+    resolvedTypes: string[];
+    unresolvedTypes: string[];
+    typeid?: string;
+}
+
+export class ValidationResultBuilder {
+    private readonly _result: SchemaValidationResult;
+
+    /**
+     * Instantiates a ValidationResultBuilder
+     * @param in_typeid A template typeid.
+     */
+    constructor(in_typeid: string) {
         this._result = {
             isValid: true,
             errors: [],
             warnings: [],
             resolvedTypes: [],
-            unresolvedTypes: []
+            unresolvedTypes: [],
         };
 
         if (in_typeid) {
             this._result.typeid = in_typeid;
         }
-
-        /**
-         * Fetches the validation result. Example: {
-         *   isValid: false,
-         *   errors: ['Something went wrong. Validation failed.'],
-         *   warnings: ['A non-fatal warning'],
-         *   typeid: 'SomeNamespace:PointID-1.0.0'
-         * }
-         */
-        Object.defineProperty(this, 'result', {
-            get: function () {
-                return this._result;
-            }
-        });
     }
+
     /**
      * Add a validation error.
      * @param {Error} in_error An Error instance.
      */
-    addError(in_error) {
+    public get result() {
+        return this._result;
+    }
+
+    /**
+     * Add a validation error.
+     * @param in_error An Error instance.
+     */
+    public addError(in_error: Error) {
         this._result.isValid = false;
         // remove empty error messages before logging.
         if (in_error.message) {
             this._result.errors.push(in_error);
         }
     }
+
     /**
      * Add a validation warning.
-     * @param {string} in_msg A warning description.
+     * @param in_msg A warning description.
      */
-    addWarning(in_msg) {
+    public addWarning(in_msg: string) {
         this._result.warnings.push(in_msg);
     }
+
     /**
      * Fetches the boolean validation result.
-     * @return {boolean} True if validation produced no error, false otherwise. Warnings don't affect
+     * @return True if validation produced no error, false otherwise. Warnings don't affect
      *   this value.
      */
-    isValid() {
+    public isValid(): boolean {
         return this._result.isValid;
     }
 }
-
-module.exports = ValidationResultBuilder;

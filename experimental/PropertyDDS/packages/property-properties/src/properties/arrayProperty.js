@@ -857,29 +857,29 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
     if (!this._isPrimitive) {
         // Successively apply the changes from the changeSet
         while (!arrayIterator.atEnd()) {
-            switch (arrayIterator.type) {
+            switch (arrayIterator.opDescription.type) {
                 case ArrayChangeSetIterator.types.INSERT:
                     // Handle inserts
-                    var propertyDescriptions = arrayIterator.operation[1];
+                    var propertyDescriptions = arrayIterator.opDescription.operation[1];
                     var scope = this._getScope();
                     var insertedPropertyInstances = deserializeNonPrimitiveArrayElements(propertyDescriptions, scope);
-                    this._insertRangeWithoutDirtying(arrayIterator.operation[0] + arrayIterator.offset,
+                    this._insertRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
                         this._deserializeArray(insertedPropertyInstances));
                     break;
 
                 case ArrayChangeSetIterator.types.REMOVE:
                     // Handle removes
-                    var numRemoved = arrayIterator.operation[1];
+                    var numRemoved = arrayIterator.opDescription.operation[1];
                     if (!_.isNumber(numRemoved)) {
                         numRemoved = numRemoved.length;
                     }
-                    this._removeRangeWithoutDirtying(arrayIterator.operation[0] + arrayIterator.offset, numRemoved);
+                    this._removeRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset, numRemoved);
                     break;
 
                 case ArrayChangeSetIterator.types.MODIFY:
                     // Handle modifies
-                    var propertyDescriptions = arrayIterator.operation[1];
-                    var startIndex = arrayIterator.operation[0] + arrayIterator.offset;
+                    var propertyDescriptions = arrayIterator.opDescription.operation[1];
+                    var startIndex = arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset;
                     for (var i = 0; i < propertyDescriptions.length; ++i) {
                         var modifiedProperty = this.get(startIndex + i,
                             { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
@@ -891,35 +891,35 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                     break;
 
                 default:
-                    console.error('applyChangeset: ' + MSG.UNKNOWN_OPERATION + arrayIterator.type);
+                    console.error('applyChangeset: ' + MSG.UNKNOWN_OPERATION + arrayIterator.opDescription.type);
             }
             arrayIterator.next();
         }
     } else {
         // Successively apply the changes from the changeSet
         while (!arrayIterator.atEnd()) {
-            switch (arrayIterator.type) {
+            switch (arrayIterator.opDescription.type) {
                 case ArrayChangeSetIterator.types.INSERT:
                     // Handle inserts
-                    this._insertRangeWithoutDirtying(arrayIterator.operation[0] + arrayIterator.offset,
-                        this._deserializeArray(arrayIterator.operation[1]));
+                    this._insertRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
+                        this._deserializeArray(arrayIterator.opDescription.operation[1]));
                     break;
                 case ArrayChangeSetIterator.types.REMOVE:
                     // Handle removes
-                    var removeLength = arrayIterator.operation[1];
+                    var removeLength = arrayIterator.opDescription.operation[1];
                     if (_.isArray(removeLength) || _.isString(removeLength)) {
                         removeLength = removeLength.length;
                     }
 
-                    this._removeRangeWithoutDirtying(arrayIterator.operation[0] + arrayIterator.offset, removeLength);
+                    this._removeRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset, removeLength);
                     break;
                 case ArrayChangeSetIterator.types.MODIFY:
                     // Handle modifies
-                    this._modifyRangeWithoutDirtying(arrayIterator.operation[0] + arrayIterator.offset,
-                        this._deserializeArray(arrayIterator.operation[1]));
+                    this._modifyRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
+                        this._deserializeArray(arrayIterator.opDescription.operation[1]));
                     break;
                 default:
-                    console.error('applyChangeset: ' + MSG.UNKNOWN_OPERATION + arrayIterator.type);
+                    console.error('applyChangeset: ' + MSG.UNKNOWN_OPERATION + arrayIterator.opDescription.type);
             }
             arrayIterator.next();
         }
@@ -1407,11 +1407,11 @@ ArrayProperty.prototype._getChangesetForCustomTypeArray = function (in_basePrope
     while (!iterator.atEnd() || currentArrayIndex < currentArraySize) {
 
         if (!iterator.atEnd()) {
-            op = iterator;
+            op = iterator.opDescription;
             opStartIndex = op.operation[0] + op.offset;
         } else {
             // no more ops
-            op = { offset: iterator.offset };
+            op = { offset: iterator.opDescription.offset };
             opStartIndex = Number.MAX_VALUE;
         }
 
