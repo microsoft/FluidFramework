@@ -102,7 +102,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             if (this.joinOpTimer.hasTimer) {
                 this.stopJoinOpTimer();
             } else {
-                // timer has already fired, meaning it too too long to get join on.
+                // timer has already fired, meaning it took too long to get join on.
                 // Record how long it actually took to recover.
                 this.handler.logConnectionIssue("ReceivedJoinOp");
             }

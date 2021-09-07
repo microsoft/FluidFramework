@@ -476,7 +476,7 @@ export class DeltaManager
             ...this.connectionStateProps,
             pendingOps: this.pending.length, // Do we have any pending ops?
             pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
-            haveHandler: this.handler !== undefined, // do we have handler installed
+            haveHandler: this.handler !== undefined, // do we have handler installed?
             closed: this.closed,
         });
     }
