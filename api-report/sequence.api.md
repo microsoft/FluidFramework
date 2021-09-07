@@ -42,6 +42,14 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export type DeserializeCallback = (properties: MergeTree.PropertySet) => void;
 
 // @public (undocumented)
+export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
+    // (undocumented)
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
+    // (undocumented)
+    (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: MergeTree.PropertySet) => void): any;
+}
+
+// @public (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
@@ -96,8 +104,6 @@ export class Interval implements ISerializableInterval {
     union(b: Interval): Interval;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IIntervalCollectionEvent" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)

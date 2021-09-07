@@ -36,7 +36,7 @@
     "test:realsvc": "npm run test:realsvc:tinylicious",
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
     "test:realsvc:run": "mocha dist/test --no-timeouts",
-    "test:realsvc:tinylicious": "cross-env fluid__test__driver=tinylicious start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
+    "test:realsvc:tinylicious": "cross-env fluid__test__driver=t9s start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious:run": "npm run test:realsvc:run",
     "tsc": "tsc",
     "usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
@@ -87,7 +87,7 @@
     "random-js": "^1.0.8"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.47.0",
     "@types/mocha": "^8.2.2",

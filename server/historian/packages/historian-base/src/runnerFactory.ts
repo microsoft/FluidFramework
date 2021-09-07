@@ -19,8 +19,8 @@ export class HistorianResources implements core.IResources {
         public readonly config: Provider,
         public readonly port: string | number,
         public readonly riddler: historianServices.ITenantService,
-        public readonly cache: historianServices.RedisCache,
         public readonly throttler: core.IThrottler,
+        public readonly cache?: historianServices.RedisCache,
         public readonly asyncLocalStorage?: AsyncLocalStorage<string>) {
         this.webServerFactory = new services.BasicWebServerFactory();
     }
@@ -49,7 +49,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
         };
 
         const redisClient = new Redis(redisOptions);
-        const gitCache = new historianServices.RedisCache(redisClient, redisParams);
+        const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
+        const gitCache = disableGitCache ?  undefined : new historianServices.RedisCache(redisClient, redisParams);
         const tenantCache = new historianServices.RedisTenantCache(redisClient, redisParams);
         // Create services
         const riddlerEndpoint = config.get("riddler");
@@ -84,7 +85,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
         const port = normalizePort(process.env.PORT || "3000");
 
-        return new HistorianResources(config, port, riddler, gitCache, throttler, asyncLocalStorage);
+        return new HistorianResources(config, port, riddler, throttler, gitCache, asyncLocalStorage);
     }
 }
 
@@ -95,8 +96,8 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
             resources.config,
             resources.port,
             resources.riddler,
-            resources.cache,
             resources.throttler,
+            resources.cache,
             resources.asyncLocalStorage);
     }
 }

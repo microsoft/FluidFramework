@@ -4,21 +4,20 @@
  */
 import { v4 as uuid } from "uuid";
 import { Container, Loader } from "@fluidframework/container-loader";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import {
-    AzureConnectionConfig,
+    AzureClientProps,
     AzureContainerServices,
 } from "./interfaces";
 import { AzureAudience } from "./AzureAudience";
@@ -33,15 +32,11 @@ export class AzureClient {
 
     /**
      * Creates a new client instance using configuration parameters.
-     * @param connectionConfig - Configuration parameters needed to establish a connection with the Azure Relay Service.
-     * @param logger - Optional. A logger instance to receive diagnostic messages.
+     * @param props - Properties for initializing a new AzureClient instance
      */
-    constructor(
-        private readonly connectionConfig: AzureConnectionConfig,
-        private readonly logger?: ITelemetryBaseLogger,
-    ) {
+    constructor(private readonly props: AzureClientProps) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            this.connectionConfig.tokenProvider,
+            this.props.connection.tokenProvider,
         );
     }
 
@@ -65,7 +60,7 @@ export class AzureClient {
     }
 
     /**
-     * Acesses the existing container given its unique ID in the Azure Fluid Relay service.
+     * Accesses the existing container given its unique ID in the Azure Fluid Relay service.
      * @param id - Unique ID of the container in Azure Fluid Relay service
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
@@ -111,16 +106,16 @@ export class AzureClient {
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
         const urlResolver = new AzureUrlResolver(
-            this.connectionConfig.tenantId,
-            this.connectionConfig.orderer,
-            this.connectionConfig.storage,
-            this.connectionConfig.tokenProvider,
+            this.props.connection.tenantId,
+            this.props.connection.orderer,
+            this.props.connection.storage,
+            this.props.connection.tokenProvider,
         );
         return new Loader({
             urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: this.logger,
+            logger: this.props.logger,
         });
     }
     // #endregion

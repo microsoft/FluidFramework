@@ -67,10 +67,11 @@
     "@fluidframework/tinylicious-driver": "^0.47.0",
     "@fluidframework/tool-utils": "^0.47.0",
     "axios": "^0.21.1",
+    "semver": "^7.3.4",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",

@@ -50,7 +50,8 @@ const packageList = [
 ];
 
 export const ensurePackageInstalled =
-    async (version: number | string, force: boolean) => ensureInstalled(getRequestedRange(version), packageList, force);
+    async (baseVersion: string, version: number | string, force: boolean) =>
+        ensureInstalled(getRequestedRange(baseVersion, version), packageList, force);
 
 // Current versions of the APIs
 const LoaderApi = {
@@ -83,8 +84,8 @@ const DataRuntimeApi = {
     },
 };
 
-export function getLoaderApi(requested?: number | string): typeof LoaderApi {
-    const requestedStr = getRequestedRange(requested);
+export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
+    const requestedStr = getRequestedRange(baseVersion, requested);
 
     // If the current version satisfies the range, use it.
     if (semver.satisfies(pkgVersion, requestedStr)) {
@@ -98,8 +99,11 @@ export function getLoaderApi(requested?: number | string): typeof LoaderApi {
     };
 }
 
-export function getContainerRuntimeApi(requested?: number | string): typeof ContainerRuntimeApi {
-    const requestedStr = getRequestedRange(requested);
+export function getContainerRuntimeApi(
+    baseVersion: string,
+    requested?: number | string,
+): typeof ContainerRuntimeApi {
+    const requestedStr = getRequestedRange(baseVersion, requested);
     if (semver.satisfies(pkgVersion, requestedStr)) {
         return ContainerRuntimeApi;
     }
@@ -112,8 +116,11 @@ export function getContainerRuntimeApi(requested?: number | string): typeof Cont
     };
 }
 
-export function getDataRuntimeApi(requested?: number | string): typeof DataRuntimeApi {
-    const requestedStr = getRequestedRange(requested);
+export function getDataRuntimeApi(
+    baseVersion: string,
+    requested?: number | string,
+): typeof DataRuntimeApi {
+    const requestedStr = getRequestedRange(baseVersion, requested);
     if (semver.satisfies(pkgVersion, requestedStr)) {
         return DataRuntimeApi;
     }
@@ -140,8 +147,8 @@ export function getDataRuntimeApi(requested?: number | string): typeof DataRunti
     };
 }
 
-export function getDriverApi(requested?: number | string): typeof DriverApi {
-    const requestedStr = getRequestedRange(requested);
+export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
+    const requestedStr = getRequestedRange(baseVersion, requested);
 
     // If the current version satisfies the range, use it.
     if (semver.satisfies(pkgVersion, requestedStr)) {

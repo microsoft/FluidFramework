@@ -12,7 +12,7 @@ services]({{< relref "service-options.md" >}}) for more information.
 
 ## Azure Fluid Relay service
 
-{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
+{{< include file="_includes/azureFluidRelay-onboarding.html" safeHTML=true >}}
 
 Each Azure Fluid Relay service tenant you create is assigned a *tenant ID* and its own unique *tenant secret key*.
 

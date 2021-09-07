@@ -140,21 +140,18 @@
                     "Container-Utils"
                 ]
             },
-            "Hosts": {
+            "BaseHost": {
                 "packages": [
                     "@fluidframework/base-host"
                 ],
                 "deps": [
-                    "Loader",
-                    "Framework-Utils"
+                    "Loader"
                 ]
             },
             "HostUtils": {
                 "dev": true,
                 "packages": [
-                    "@fluidframework/azure-client",
-                    "@fluid-experimental/get-container",
-                    "@fluidframework/tinylicious-client"
+                    "@fluid-experimental/get-container"
                 ],
                 "deps": [
                     "Framework",
@@ -166,9 +163,6 @@
                 ]
             },
             "Runtime": {
-                "packages": [
-                    "@fluidframework/agent-scheduler"
-                ],
                 "dirs": [
                     "experimental/dds/",
                     "packages/dds/",
@@ -180,11 +174,18 @@
                     "Container-Utils"
                 ]
             },
+            "ClientApi": {
+                "packages": [
+                    "@fluid-internal/client-api"
+                ],
+                "deps": [
+                    "Framework",
+                    "Runtime"
+                ]
+            },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api",
                     "@fluid-experimental/data-objects",
-                    "fluid-framework",
                     "@fluidframework/fluid-static"
                 ],
                 "dirs": [
@@ -193,7 +194,31 @@
                     "packages/framework/"
                 ],
                 "deps": [
-                    "Hosts",
+                    "Framework-Utils",
+                    "Loader",
+                    "Runtime"
+                ]
+            },
+            "ServiceClients": {
+                "packages": [
+                    "@fluidframework/azure-client",
+                    "@fluidframework/tinylicious-client"
+                ],
+                "deps": [
+                    "Framework",
+                    "Loader",
+                    "Routerlicious-Driver",
+                    "Server-Libs",
+                    "Server-Shared-Utils",
+                    "Test"
+                ]
+            },
+            "UberPackage": {
+                "packages": [
+                    "fluid-framework"
+                ],
+                "deps": [
+                    "Framework",
                     "Runtime"
                 ]
             },
@@ -204,8 +229,7 @@
                     "examples/",
                     "experimental/examples/",
                     "experimental/PropertyDDS/examples/",
-                    "experimental/PropertyDDS/services/",
-                    "packages/agents/"
+                    "experimental/PropertyDDS/services/"
                 ],
                 "deps": [
                     "Framework",

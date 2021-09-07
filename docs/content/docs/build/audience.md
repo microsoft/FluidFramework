@@ -8,11 +8,11 @@ editor: tylerbutler
 
 The audience is the collection of users connected to a container.  When you create a container using a service-specific client package, you are provided a service-specific audience object for that container as well.  You can query the audience for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, `tinylicious-client` is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence. For anything service-specific, `tinylicious-client` is used.
 
 ## Working with the audience
 
-When creating a container, you are also provided a container services object which holds the audience.  This audience is backed by that same container.
+When creating a container, you are also provided a container services object which holds the audience. This audience is backed by that same container.
 
 ```js
 const { fluidContainer, containerServices } =
@@ -31,7 +31,7 @@ export interface IMember {
 }
 ```
 
-An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
+An `IMember` represents a single user identity. `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
 
 {{% callout tip %}}
 

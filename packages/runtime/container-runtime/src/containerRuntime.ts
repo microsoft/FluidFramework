@@ -113,12 +113,13 @@ import {
     blobsTreeName,
     chunksBlobName,
     electedSummarizerBlobName,
+    extractSummaryMetadataMessage,
     getGCVersion,
     GCVersion,
-    ReadContainerRuntimeMetadata,
+    IContainerRuntimeMetadata,
+    ISummaryMetadataMessage,
     metadataBlobName,
     wrapSummaryInChannelsTree,
-    WriteContainerRuntimeMetadata,
 } from "./summaryFormat";
 import { SummaryCollection } from "./summaryCollection";
 import { getLocalStorageFeatureGate } from "./localStorageFeatureGates";
@@ -577,7 +578,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         };
         const chunks = await tryFetchBlob<[string, string[]][]>(chunksBlobName) ?? [];
-        const metadata = await tryFetchBlob<ReadContainerRuntimeMetadata>(metadataBlobName);
+        const metadata = await tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName);
         const electedSummarizerData = await tryFetchBlob<ISerializedElection>(electedSummarizerBlobName);
         const loadExisting = existing === true || context.existing === true;
 
@@ -587,13 +588,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             async (id) => {
                 // IContainerContext storage api return type still has undefined in 0.39 package version.
                 // So once we release 0.40 container-defn package we can remove this check.
-                assert(storage !== undefined, "storage undefined in attached container");
+                assert(storage !== undefined, 0x256 /* "storage undefined in attached container" */);
                 return readAndParse(storage, id);
             },
         );
 
         // Verify summary runtime sequence number matches protocol sequence number.
-        const runtimeSequenceNumber = metadata?.sequenceNumber;
+        const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
         if (runtimeSequenceNumber !== undefined) {
             const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
             // Unless bypass is explicitly set, then take action when sequence numbers mismatch.
@@ -775,8 +776,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // The current GC version that this container is running.
     private readonly currentGCVersion = GCVersion;
-    // This is the version of GC data in the latest successful summary this client has seen.
-    private summaryGCVersion: GCVersion;
+    // This is the version of GC data in the latest summary this client has seen.
+    private latestSummaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
     /**
@@ -785,6 +786,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * and is the single source of truth for this container.
      */
     public readonly disableIsolatedChannels: boolean;
+    /** The message in the metadata of the base summary this container is loaded from. */
+    private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
 
     private static get defaultFlushMode(): FlushMode {
         return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
@@ -792,7 +795,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     // Tells whether GC is enabled for this document or not. If the summaryGCVersion is > 0, GC is enabled.
     private get gcEnabled(): boolean {
-        return this.summaryGCVersion > 0;
+        return this.latestSummaryGCVersion > 0;
     }
 
     // Tells whether this container is running in GC test mode. If so, unreferenced data stores are immediately
@@ -802,14 +805,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private get summarizer(): Summarizer {
-        assert(this._summarizer !== undefined, "This is not summarizing container");
+        assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
         return this._summarizer;
     }
 
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
-        metadata: ReadContainerRuntimeMetadata,
+        metadata: IContainerRuntimeMetadata | undefined,
         electedSummarizerData: ISerializedElection | undefined,
         chunks: [string, string[]][],
         private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
@@ -822,6 +825,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         super();
 
+        this.baseSummaryMessage = metadata?.message;
         /**
           * gcFeature in metadata is introduced with v1 in the metadata blob. Forced to 0/disallowed before that.
           * For existing documents, we get this value from the metadata blob.
@@ -829,7 +833,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           */
         const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
         // Default to false for now.
-        this.summaryGCVersion = prevSummaryGCVersion ??
+        this.latestSummaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
 
         // Can override with localStorage flag.
@@ -1040,7 +1044,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.logger.sendTelemetryEvent({
             eventName: "ContainerRuntimeDisposed",
-            category: "generic",
             isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
@@ -1159,12 +1162,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return !this.disableIsolatedChannels || this.gcEnabled;
     }
 
-    private formMetadata(): WriteContainerRuntimeMetadata {
+    private formMetadata(): IContainerRuntimeMetadata {
         return {
             summaryFormatVersion: 1,
             disableIsolatedChannels: this.disableIsolatedChannels || undefined,
-            gcFeature: this.summaryGCVersion, // retain value, this is unchangeable for now
-            sequenceNumber: this.deltaManager.lastSequenceNumber,
+            // If GC is disabled for this document, the gcFeature is whatever we loaded from. If GC is enabled,
+            // we always write the current GC version as that is what is used to generate the GC data.
+            gcFeature: this.gcEnabled ? this.currentGCVersion : this.latestSummaryGCVersion,
+            // The last message processed at the time of summary. If there are no messages, nothing has changed from
+            // the base summary we loaded from. So, use the message from its metadata blob.
+            message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
         };
     }
 
@@ -1782,10 +1789,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             // Helper function to check whether we should still continue between each async step.
             const checkContinue = (): { continue: true; } | { continue: false; error: string } => {
-                // If summarizer loses connection it will never reconnect
-                if (!this.connected) {
+                // Do not check for loss of connectivity directly! Instead leave it up to
+                // RunWhileConnectedCoordinator to control policy in a single place.
+                // This will allow easier change of design if we chose to. For example, we may chose to allow
+                // summarizer to reconnect in the future.
+                // Also checking for cancellation is a must as summary process may be abandoned for other reasons,
+                // like loss of connectivity for main (interactive) client.
+                if (options.cancellationToken.cancelled) {
                     return { continue: false, error: "disconnected" };
                 }
+                // That said, we rely on submitSystemMessage() that today only works in connected state.
+                // So if we fail here, it either means that RunWhileConnectedCoordinator does not work correctly,
+                // OR that design changed and we need to remove this check and fix submitSystemMessage.
+                assert(this.connected, 0x258 /* "connected" */);
+
                 // Ensure that lastSequenceNumber has not changed after pausing.
                 // We need the summary op's reference sequence number to match our summary sequence number,
                 // otherwise we'll get the wrong sequence number stamped on the summary's .protocol attributes.
@@ -1808,7 +1825,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // container is running, we need to regenerate the GC data and run full summary. This is used to handle
             // scenarios where we upgrade the GC version because we cannot trust the data from the previous GC version.
             let forceRegenerateData = false;
-            if (this.gcEnabled && this.summaryGCVersion !== this.currentGCVersion) {
+            if (this.gcEnabled && this.latestSummaryGCVersion !== this.currentGCVersion) {
                 forceRegenerateData = true;
             }
 
@@ -2101,7 +2118,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any) {
+        appData?: any,
+    ) {
+        this.verifyNotClosed();
+        assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
@@ -2173,7 +2193,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // If the summary was tracked by this client, it was the one that generated the summary in the first place.
             // Update the summaryGCVersion to the currentGCVersion of this client.
             if (result.wasSummaryTracked) {
-                this.summaryGCVersion = this.currentGCVersion;
+                this.latestSummaryGCVersion = this.currentGCVersion;
                 return;
             }
             // If the summary was not tracked by this client, update summaryGCVersion from the snapshot that was used
@@ -2220,10 +2240,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Updates the summary GC version as per the metadata blob in given snapshot.
      */
     private async updateSummaryGCVersionFromSnapshot(snapshot: ISnapshotTree) {
+        assert(this.gcEnabled, 0x25a /* "GC version should not be updated when GC is disabled" */);
         const metadataBlobId = snapshot.blobs[metadataBlobName];
         if (metadataBlobId) {
-            const metadata = await readAndParse<ReadContainerRuntimeMetadata>(this.storage, metadataBlobId);
-            this.summaryGCVersion = getGCVersion(metadata);
+            const metadata = await readAndParse<IContainerRuntimeMetadata>(this.storage, metadataBlobId);
+            this.latestSummaryGCVersion = getGCVersion(metadata);
         }
     }
 

@@ -6,7 +6,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IAudience, AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -52,20 +52,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
     public get initialObjects() {
         return this.rootDataObject.initialObjects;
-    }
-
-    /**
-    * @deprecated - Audience is being moved to the client packages
-    */
-    public get audience(): IAudience {
-        return this.container.audience;
-    }
-
-    /**
-    * @deprecated - clientId is being moved to the client packages
-    */
-    public get clientId() {
-        return this.container.clientId;
     }
 
     public async attach() {

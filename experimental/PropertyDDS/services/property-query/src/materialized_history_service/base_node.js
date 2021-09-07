@@ -374,7 +374,7 @@
         let previousSubId = parseNodeReference(in_nodeDefinition.previousNodeRefs[0]).subId;
 
         let reversedDeltaCs = new ChangeSet(in_nodeDefinition.deltaCS);
-        reversedDeltaCs._toInverseChangeSet();
+        reversedDeltaCs.toInverseChangeSet();
         stripReversibleChangeSet.call(reversedDeltaCs);
         // reversedDeltaCs._stripReversibleChangeSet()
 

@@ -36,12 +36,13 @@
   "dependencies": {
     "@fluidframework/azure-client": "^0.47.0",
     "@fluidframework/common-definitions": "^0.20.1",
+    "@fluidframework/test-runtime-utils": "^0.47.0",
     "fluid-framework": "^0.47.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluid-experimental/get-container": "^0.47.0",
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/fluid-static": "^0.47.0",
     "@fluidframework/test-tools": "^0.2.3074",

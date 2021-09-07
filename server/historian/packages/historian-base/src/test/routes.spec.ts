@@ -73,8 +73,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -145,8 +145,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -227,8 +227,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -298,8 +298,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -343,8 +343,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -382,8 +382,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -422,8 +422,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -486,8 +486,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -556,8 +556,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -636,8 +636,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -705,8 +705,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -748,8 +748,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -785,8 +785,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
@@ -823,8 +823,8 @@ describe("routes", () => {
                 app = historianApp.create(
                     defaultProvider,
                     defaultTenantService,
-                    defaultCache,
                     throttler,
+                    defaultCache,
                     asyncLocalStorage,
                 );
                 superTest = request(app);
