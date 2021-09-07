@@ -148,8 +148,8 @@ function buildHeirarchy(flatTree: IWholeFlatSummaryTree): ISnapshotTree {
             lookup[entryPath] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
-        } else if (entry.type === "commit") {
-            node.commits[decodeURIComponent(entryPathBase)] = entry.id;
+        } else {
+            throw new Error(`Unknown entry type!!`);
         }
     }
 

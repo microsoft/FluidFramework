@@ -87,8 +87,8 @@ export function buildHierarchy(
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
             blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
-        } else if (entry.type === "commit") {
-            node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
+        } else {
+            throw new Error("Unknown entry type!!");
         }
     }
 
