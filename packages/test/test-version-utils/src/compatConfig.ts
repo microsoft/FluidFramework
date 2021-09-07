@@ -8,6 +8,8 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
+import { pkgVersion } from "./packageVersion";
+import { resolveVersion } from "./versionUtils";
 
 /**
  * Different kind of compat version config
@@ -43,7 +45,8 @@ const LTSVersions = ["^0.39.0"];
 function genConfig(compatVersion: number | string): CompatConfig[] {
     if (compatVersion === 0) {
         return [{
-            name: `Non-Compat`,
+            // include the base version if it is not the same as the package version and it is not the test build
+            name: `Non-Compat${baseVersion !== pkgVersion ? ` v${baseVersion}` : ""}`,
             kind: CompatKind.None,
             compatVersion: 0,
         }];
@@ -144,6 +147,7 @@ const options = {
         choices: [
             CompatKind.None,
             CompatKind.Loader,
+            CompatKind.Driver,
             CompatKind.ContainerRuntime,
             CompatKind.DataRuntime,
             CompatKind.LoaderAndContainerRuntime,
@@ -176,6 +180,9 @@ const options = {
     r11sEndpointName: {
         type: "string",
     },
+    baseVersion: {
+        type: "string",
+    },
 };
 
 nconf.argv({
@@ -193,6 +200,7 @@ nconf.argv({
         "fluid__test__compatVersion",
         "fluid__test__driver",
         "fluid__test__r11sEndpointName",
+        "fluid__test__baseVersion",
     ],
     parseValues: true,
 }).defaults(
@@ -201,6 +209,8 @@ nconf.argv({
             test: {
                 compat: undefined,
                 driver: "local",
+                baseVersion: pkgVersion,
+                r11sEndpointName: "r11s",
             },
         },
     },
@@ -209,7 +219,8 @@ nconf.argv({
 const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
 const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
 const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
-const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string ?? "r11s";
+const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string;
+const baseVersion = resolveVersion(nconf.get("fluid:test:baseVersion") as string, false);
 
 // set it in the env for parallel workers
 process.env.fluid__test__compatKind = JSON.stringify(compatKind);
@@ -217,6 +228,7 @@ process.env.fluid__test__compatKind = JSON.stringify(compatKind);
 process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
 process.env.fluid__test__driver = driver;
 process.env.fluid__test__r11sEndpointName = r11sEndpointName;
+process.env.fluid__test__baseVersion = baseVersion;
 
 let configList: CompatConfig[] = [];
 if (!compatVersions || compatVersions.length === 0) {
@@ -256,6 +268,7 @@ function describeCompat(
                 let resetAfterEach: boolean;
                 before(async () => {
                     provider = await getVersionedTestObjectProvider(
+                        baseVersion,
                         config.loader,
                         {
                             type: driver,
@@ -310,12 +323,12 @@ export function describeFullCompat(
  * Mocha start up to ensure legacy versions are installed
  */
 export async function mochaGlobalSetup() {
-    const versions = new Set(configList.map((value) => value.compatVersion).filter((value) => value !== 0));
+    const versions = new Set(configList.map((value) => value.compatVersion));
     if (versions.size === 0) { return; }
 
     // Make sure we wait for all before returning, even if one of them has error.
     const installP = Array.from(versions.values()).map(
-        async (value) => ensurePackageInstalled(value, nconf.get("fluid:test:reinstall")));
+        async (value) => ensurePackageInstalled(baseVersion, value, nconf.get("fluid:test:reinstall")));
 
     let error: Error | undefined;
     for (const p of installP) {

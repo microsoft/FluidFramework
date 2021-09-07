@@ -36,7 +36,7 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes a `GET` request to your Azure Function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
@@ -49,7 +49,8 @@ const config = {
 
 const client = new AzureClient(config);
 ```
-The user object can also hold optional additional user details such as the gender, address, email, etc. For example:
+
+The user object can also hold optional additional user details. For example:
 
 ```javascript
 cont userDetails: ICustomUserDetails = {
@@ -65,6 +66,7 @@ const config = {
     storage: "https://myStorageUrl",
 };
 ```
+
 Your Azure Function will generate the token for the given user that is signed using the tenant's secret key and returned to the client without exposing the secret itself.
 
 ## Managing containers
@@ -87,9 +89,9 @@ await azureClient.createContainer({ id: "_unique-id_" }, schema);
 const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
 ```
 
-The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session just needs to call `getContainer` with the same container `id`.
+The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session needs to call `getContainer` with the same container `id`.
 
-For the further information on how to start recording logs being emitted by Fluid, please see [Telemetry]({{< relref "telemetry.md" >}})
+For the further information on how to start recording logs being emitted by Fluid, see [Telemetry]({{< relref "telemetry.md" >}}).
 
 The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling]({{< relref "data-modeling.md" >}}) to learn more about how to establish the schema and use the `FluidContainer` object.
 
@@ -164,7 +166,7 @@ A sample `AzureMember` object looks like the following:
 }
 ```
 
-Alongside the user ID, name and addiitonal details, `AzureMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients. The values in the `additionalDetails` field match up to the values provided in the `AzureFunctionTokenProvider` token generation.
+Alongside the user ID, name and additional details, `AzureMember` objects also hold an array of `connections`. If the user is logged into the session with only one client, `connections` will only have one value in it with the ID of the client and if is in read/write mode. However, if the same user is logged in from multiple clients (i.e. they are logged in from different devices or have multiple browser tabs open with the same container), `connections` here will hold multiple values for each client. In the example data above, we can see that a user with name "Test User" and ID "0e662aca-9d7d-4ff0-8faf-9f8672b70f15" currently has the container open from two different clients. The values in the `additionalDetails` field match up to the values provided in the `AzureFunctionTokenProvider` token generation.
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 
