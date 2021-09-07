@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TestEngine1, TestEngine2, TestLumberjack } from "./lumberjackCommonTestUtils";
+import { TestEngine1, TestEngine2, TestLumberjack } from "../lumberjackCommonTestUtils";
 import { LumberEventName } from "../lumberEventNames";
 import assert from "assert";
 
@@ -24,7 +24,7 @@ describe("Lumberjack", () => {
 
     it("Sets up a custom Lumberjack instance and creates a Lumber metric.", () => {
         const engine = new TestEngine1();
-        const customInstance = TestLumberjack.create([engine]);
+        const customInstance = TestLumberjack.createInstance([engine]);
         try {
             customInstance.newLumberMetric(LumberEventName.UnitTestEvent);
         } catch (err) {
@@ -37,7 +37,7 @@ describe("Lumberjack", () => {
         const engine2 = new TestEngine2();
         TestLumberjack.setup([engine1]);
         try {
-            TestLumberjack.create([engine2]);
+            TestLumberjack.createInstance([engine2]);
         } catch (err) {
             assert.fail("Creating a custom Lumberjack instance should not have failed since global and custom instances should be independent.");
         }

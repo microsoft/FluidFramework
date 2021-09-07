@@ -18,6 +18,8 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // (undocumented)
     enableRedeemFallback?: boolean;
+    fetchBinarySnapshotFormat?: boolean;
+    isolateSocketCache?: boolean;
     // (undocumented)
     opsBatchSize?: number;
     opsCaching?: IOpsCachingPolicy;
@@ -50,6 +52,9 @@ export interface IFileEntry {
     docId: string;
     resolvedUrl: IFluidResolvedUrl;
 }
+
+// @public (undocumented)
+export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
 // @public
 export interface IOdspError {
@@ -152,6 +157,8 @@ export enum OdspErrorType {
     fluidNotEnabled = "fluidNotEnabled",
     invalidFileNameError = "invalidFileNameError",
     outOfStorageError = "outOfStorageError",
+    // (undocumented)
+    serviceReadOnly = "serviceReadOnly",
     snapshotTooBig = "snapshotTooBig"
 }
 

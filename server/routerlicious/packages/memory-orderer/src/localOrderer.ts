@@ -64,6 +64,7 @@ const DefaultDeli: IDeliState = {
     term: 1,
     lastSentMSN: 0,
     nackMessages: undefined,
+    successfullyStartedLambdas: [],
 };
 
 class LocalSocketPublisher implements IPublisher {
@@ -285,7 +286,9 @@ export class LocalOrderer implements IOrderer {
                     checkpointManager,
                     this.deltasKafka,
                     this.rawDeltasKafka,
-                    this.serviceConfiguration);
+                    this.serviceConfiguration,
+                    undefined,
+                    undefined);
             });
 
         if (this.serviceConfiguration.moira.enable) {
@@ -331,9 +334,11 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             this.gitManager,
-            scribeMessagesCollection);
-        const summaryReader = new SummaryReader(this.documentId, this.gitManager);
+            scribeMessagesCollection,
+            false);
+        const summaryReader = new SummaryReader(this.documentId, this.gitManager, false);
         const checkpointManager = new CheckpointManager(
+            context,
             this.tenantId,
             this.documentId,
             documentCollection,
@@ -352,7 +357,8 @@ export class LocalOrderer implements IOrderer {
             protocolHandler,
             1, // TODO (Change when local orderer also ticks epoch)
             protocolHead,
-            scribeMessages.map((message) => message.operation));
+            scribeMessages.map((message) => message.operation),
+            undefined);
     }
 
     private startLambdas() {

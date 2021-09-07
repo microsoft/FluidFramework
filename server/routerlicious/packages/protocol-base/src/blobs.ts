@@ -59,19 +59,22 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  *
  * @param flatTree - a flat tree
  * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
+ * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
  * @returns the hierarchical tree
  */
 export function buildHierarchy(
     flatTree: git.ITree,
-    blobsShaToPathCache: Map<string, string> = new Map<string, string>()): ISnapshotTreeEx {
+    blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
+    removeAppTreePrefix = false): ISnapshotTreeEx {
     const lookup: { [path: string]: ISnapshotTreeEx } = {};
     const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, commits: {}, trees: {} };
     lookup[""] = root;
 
     for (const entry of flatTree.tree) {
-        const lastIndex = entry.path.lastIndexOf("/");
-        const entryPathDir = entry.path.slice(0, Math.max(0, lastIndex));
-        const entryPathBase = entry.path.slice(lastIndex + 1);
+        const entryPath = removeAppTreePrefix ? entry.path.replace(/^\.app\//, "") : entry.path;
+        const lastIndex = entryPath.lastIndexOf("/");
+        const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
+        const entryPathBase = entryPath.slice(lastIndex + 1);
 
         // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
         const node = lookup[entryPathDir];
@@ -80,10 +83,10 @@ export function buildHierarchy(
         if (entry.type === "tree") {
             const newTree = { id: entry.sha, blobs: {}, commits: {}, trees: {} };
             node.trees[decodeURIComponent(entryPathBase)] = newTree;
-            lookup[entry.path] = newTree;
+            lookup[entryPath] = newTree;
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
-            blobsShaToPathCache.set(entry.sha, `/${entry.path}`);
+            blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
         } else if (entry.type === "commit") {
             node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
         }

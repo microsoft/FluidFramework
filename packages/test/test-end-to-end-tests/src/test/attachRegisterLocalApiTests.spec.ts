@@ -20,7 +20,6 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
@@ -66,7 +65,6 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             [mapId1, SharedMap.getFactory()],
             [mapId2, SharedMap.getFactory()],
         ]);
-        const driver = provider.driver;
         const urlResolver = provider.urlResolver;
         const codeLoader = new LocalCodeLoader([[codeDetails, factory]]);
         const documentServiceFactory = provider.documentServiceFactory;
@@ -74,7 +72,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             urlResolver,
             documentServiceFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: driver.type}}),
+            logger: provider.logger,
         });
         loaderContainerTracker.add(testLoader);
         return testLoader;

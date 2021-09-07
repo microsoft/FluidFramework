@@ -1,6 +1,7 @@
 ---
 title: Anatomy of a distributed data structure
-menuPosition: 6
+menuPosition: 8
+draft: true
 ---
 
 Although each distributed data structure (DDS) has its own unique functionality, they all share some broad traits.

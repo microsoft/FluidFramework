@@ -14,9 +14,9 @@ import {
     IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
-    IContextSummarizeResult,
     IFluidDataStoreContext,
     IGarbageCollectionData,
+    ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
@@ -95,12 +95,12 @@ export abstract class LocalChannelContextBase implements IChannelContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<IContextSummarizeResult> {
+    public async summarize(fullTree: boolean = false, trackState: boolean = false): Promise<ISummarizeResult> {
         assert(this.isLoaded && this.channel !== undefined, 0x18c /* "Channel should be loaded to summarize" */);
         return summarizeChannel(this.channel, fullTree, trackState);
     }
 
-    public getAttachSummary(): IContextSummarizeResult {
+    public getAttachSummary(): ISummarizeResult {
         assert(this.isLoaded && this.channel !== undefined, 0x18d /* "Channel should be loaded to take snapshot" */);
         return summarizeChannel(this.channel, true /* fullTree */, false /* trackState */);
     }
@@ -128,7 +128,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
         return this.channel.getGCData(fullGC);
     }
 
-    public updateUsedRoutes(usedRoutes: string[]) {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         /**
          * Currently, DDSs are always considered referenced and are not garbage collected.
          * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
@@ -179,8 +179,10 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
     public async getChannel(): Promise<IChannel> {
         if (this.channel === undefined) {
             this.channel = await this.loadChannel()
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
-                .catch((err)=>{throw CreateProcessingError(err, undefined);});
+                .catch((err) => {
+                    // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                    throw CreateProcessingError(err, "rehydratedLocalChannelContextFailedToLoadChannel", undefined);
+                });
         }
         return this.channel;
     }

@@ -1,7 +1,7 @@
 ---
 title: Tinylicious
-menuPosition: 3
-status: placeholder
+menuPosition: 1
+status: unwritten
 ---
 
 ## What is Tinylicious?

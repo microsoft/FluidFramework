@@ -56,19 +56,8 @@ export class Document extends EventEmitter {
         return this.runtime.clientId;
     }
 
-    public get id(): string {
-        return this.runtime.documentId;
-    }
-
     public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
         return this.runtime.deltaManager;
-    }
-
-    /**
-     * Flag indicating whether the document already existed at the time of load
-     */
-    public get existing(): boolean {
-        return this.runtime.existing;
     }
 
     public get options(): ILoaderOptions {

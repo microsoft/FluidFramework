@@ -8,23 +8,17 @@ editor: tylerbutler
 
 The audience is the collection of users connected to a container.  When you create a container using a service-specific client package, you are provided a service-specific audience object for that container as well.  You can query the audience for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, `tinylicious-client` is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence. For anything service-specific, `tinylicious-client` is used.
 
 ## Working with the audience
 
-When creating a container, you are also provided a container services object which holds the audience.  This audience is backed by that same container.
+When creating a container, you are also provided a container services object which holds the audience. This audience is backed by that same container.
 
-```typescript
-const { container, containerServices } =
+```js
+const { fluidContainer, containerServices } =
     await tinyliciousClient.createContainer(serviceConfig, containerSchema);
 const audience = containerServices.audience;
 ```
-
-{{% callout tip %}}
-
-The backing container controls the audience by adding and removing members as part of processing [signals]({{< relref signals.md >}}).  This means audience membership reflects the container's processed signals rather than live information from the service, and delays in signal receipt or processing may also produce outdated audience information.
-
-{{% /callout %}}
 
 ### The IMember
 
@@ -37,7 +31,7 @@ export interface IMember {
 }
 ```
 
-An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique indentifier.
+An `IMember` represents a single user identity. `IMember` holds a list of `IConnection`s, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
 
 {{% callout tip %}}
 
@@ -47,7 +41,12 @@ Connections can be short-lived and are not reused. A client that disconnects fro
 
 ### Service-specific audience data
 
-The `ServiceAudience` class represents the base audience implementation, and individual services are expected to extend this class for their needs.  Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension.  For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
+The `ServiceAudience` class represents the base audience implementation, and Fluid services typically extend this class
+and `IMember` to provide service-specific user information.  These extensions are exposed through the service clients,
+and you don't need to do anything special to enable them.
+
+For example, when using `TinyliciousClient`, the audience is a `TinyliciousAudience` object, which contains
+`TinyliciousMember`s instead of `IMembers`.  `TinyliciousMember`s have an additional `userName` property.
 
 ```typescript
 export interface TinyliciousMember extends IMember {
@@ -55,21 +54,20 @@ export interface TinyliciousMember extends IMember {
 }
 ```
 
+{{% callout tip %}}
+Because audience data is service-specific, code that interacts with audience may be less portable to other services.
+{{% /callout %}}
+
 ### APIs
 
 #### getMembers
 
 The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` for that user ID.  You can further query the individual `IMember`s for its client connections.
 
-{{% callout tip %}}
+{{% callout tip "Tips" %}}
 
-Because `ServiceAudience` exists to facilitate user presence scenarios, it may exclude certain client connections it doesn't consider useful for this purpose.  By default, this includes non-interactive clients such as the summarizer client (also see [Summarization]({{< relref summarizer.md >}})).
-
-{{% /callout %}}
-
-{{% callout tip %}}
-
-The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, you should subscribe to `ServiceAudience`'s events for member changes.
+- Because `ServiceAudience` exists to facilitate user presence scenarios, it may exclude certain client connections it doesn't consider useful for this purpose.  By default, this includes non-interactive clients such as the summarizer client (also see [Summarization]({{< relref summarizer.md >}})).
+- The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, you should subscribe to `ServiceAudience`'s events for member changes.
 
 {{% /callout %}}
 
@@ -124,37 +122,21 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

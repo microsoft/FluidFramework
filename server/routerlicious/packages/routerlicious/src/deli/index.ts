@@ -19,6 +19,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
     const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
     const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+    const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
 
     const kafkaForwardClientId = config.get("deli:kafkaClientId");
     const kafkaReverseClientId = config.get("alfred:kafkaClientId");
@@ -47,7 +48,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         true,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaSslCACertFilePath);
     const reverseProducer = services.createProducer(
         kafkaLibrary,
         kafkaEndpoint,
@@ -56,7 +58,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         false,
         kafkaProducerPollIntervalMs,
         kafkaNumberOfPartitions,
-        kafkaReplicationFactor);
+        kafkaReplicationFactor,
+        kafkaSslCACertFilePath);
 
     const redisConfig = config.get("redis");
     const redisOptions: RedisOptions = {
@@ -77,7 +80,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const localContext = new LocalContext(winston);
 
     const localProducer = new LocalKafka();
-    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer]);
+    const combinedProducer = new core.CombinedProducer([forwardProducer, localProducer], true);
 
     const broadcasterLambda = new LocalLambdaController(
         localProducer,

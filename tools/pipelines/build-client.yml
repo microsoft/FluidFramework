@@ -22,6 +22,11 @@ parameters:
     - default
     - skip
     - force
+- name: nonScopedPackages
+  displayName: Non-scoped packages to publish
+  type: object
+  default: 
+  - fluid-framework
 
 trigger:
   branches:
@@ -43,6 +48,7 @@ trigger:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
 
@@ -71,6 +77,7 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildDirectory: .
     tagName: client
     poolBuild: Main

@@ -19,12 +19,10 @@ import {
     IDocumentService,
     IDocumentServiceFactory,
     IDocumentStorageService,
-    LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 // REVIEW: enable compat testing?
@@ -38,7 +36,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         const text = "hello world";
         const documentId = createDocumentId();
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
+        const logger = provider.logger;
 
         { // creating client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -90,10 +88,6 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                     mockDs.connectToStorage = async () => {
                         const realStorage = await realDs.connectToStorage();
                         const mockstorage = Object.create(realStorage) as IDocumentStorageService;
-                        (mockstorage as any).policies = {
-                            ...realStorage.policies,
-                            caching: LoaderCachingPolicy.NoCaching,
-                        };
                         mockstorage.readBlob = async (id) => {
                             const blob = await realStorage.readBlob(id);
                             const blobObj = await readAndParse<any>(realStorage, id);
@@ -142,7 +136,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
         const text = "hello world";
         const documentId = createDocumentId();
         const provider = getTestObjectProvider();
-        const logger = ChildLogger.create(getTestLogger?.(), undefined, {all: {driverType: provider.driver.type}});
+        const logger = provider.logger;
 
         let initialText = "";
         { // creating client

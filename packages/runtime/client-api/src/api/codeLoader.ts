@@ -45,7 +45,7 @@ export class Chaincode implements IFluidDataStoreFactory {
         private readonly dataStoreFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime)
     { }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const document = await routerP;
@@ -61,24 +61,28 @@ export class Chaincode implements IFluidDataStoreFactory {
             },
             this.dataStoreFactory);
 
-        const runtime = new runtimeClass(context, new Map([
-            map.SharedMap.getFactory(),
-            sequence.SharedString.getFactory(),
-            ink.Ink.getFactory(),
-            cell.SharedCell.getFactory(),
-            sequence.SharedObjectSequence.getFactory(),
-            sequence.SharedNumberSequence.getFactory(),
-            ConsensusQueue.getFactory(),
-            ConsensusRegisterCollection.getFactory(),
-            sequence.SparseMatrix.getFactory(),
-            map.SharedDirectory.getFactory(),
-            sequence.SharedIntervalCollection.getFactory(),
-            SharedMatrix.getFactory(),
-        ].map((factory) => [factory.type, factory])));
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                map.SharedMap.getFactory(),
+                sequence.SharedString.getFactory(),
+                ink.Ink.getFactory(),
+                cell.SharedCell.getFactory(),
+                sequence.SharedObjectSequence.getFactory(),
+                sequence.SharedNumberSequence.getFactory(),
+                ConsensusQueue.getFactory(),
+                ConsensusRegisterCollection.getFactory(),
+                sequence.SparseMatrix.getFactory(),
+                map.SharedDirectory.getFactory(),
+                sequence.SharedIntervalCollection.getFactory(),
+                SharedMatrix.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            existing,
+        );
 
         // Initialize core data structures
         let root: map.ISharedMap;
-        if (!runtime.existing) {
+        if (!existing) {
             root = map.SharedMap.create(runtime, rootMapId);
             root.bindToContext();
 

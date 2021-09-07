@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, EventForwarder } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
@@ -77,7 +77,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
 
     async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
         assert(
-            this._currentDeltaStream?.closed !== false,
+            this._currentDeltaStream?.disposed !== false,
             "Document service factory should only have one open connection");
         const internal = await this.internal.connectToDeltaStream(client);
         this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal);
@@ -86,13 +86,13 @@ export class FaultInjectionDocumentService implements IDocumentService {
 }
 
 export class FaultInjectionDocumentDeltaConnection
-extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection {
-    private _closed: boolean = false;
+extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
+    private _disposed: boolean = false;
     constructor(private readonly internal: IDocumentDeltaConnection) {
         super(internal);
     }
 
-    public get closed() {return this._closed;}
+    public get disposed() { return this._disposed; }
 
     public get clientId() { return this.internal.clientId;}
 
@@ -126,13 +126,23 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     /**
      * Disconnects the given delta connection
      */
-    close(): void {
-        this._closed = true;
-        this.internal.close();
+    dispose(): void {
+        this._disposed = true;
+        const disposable = this.internal as Partial<IDisposable>;
+        if (disposable.dispose !== undefined)
+        {
+            disposable.dispose();
+        } else {
+            // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+            this.internal.close();
+        }
     }
 
+    // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
+    public close(): void { this.dispose(); }
+
     public injectNack(docId: string, canRetry: boolean | undefined) {
-        assert(!this.closed, "cannot inject nack into closed delta connection");
+        assert(!this.disposed, "cannot inject nack into closed delta connection");
         const nack: Partial<INack> = {
             content:{
                 code:canRetry === true ? 500 : 403,
@@ -144,7 +154,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
     }
 
     public injectError(canRetry: boolean | undefined) {
-        assert(!this.closed, "cannot inject error into closed delta connection");
+        assert(!this.disposed, "cannot inject error into closed delta connection");
         // https://nodejs.org/api/events.html#events_error_events
         assert(this.listenerCount("error") > 0,"emitting error with no listeners will crash the process");
         this.emit(
@@ -152,7 +162,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
             new FaultInjectionError("FaultInjectionError", canRetry));
     }
     public injectDisconnect() {
-        assert(!this.closed, "cannot inject disconnect into closed delta connection");
+        assert(!this.disposed, "cannot inject disconnect into closed delta connection");
         this.emit("disconnect","FaultInjectionDisconnect");
     }
 }

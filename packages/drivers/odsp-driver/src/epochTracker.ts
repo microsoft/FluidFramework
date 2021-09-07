@@ -16,7 +16,7 @@ import {
     IPersistedCache,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent, annotateError } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, isValidLegacyError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
@@ -29,6 +29,8 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
     "treesLatest" | "uploadSummary" | "push" | "versions";
 
 export type FetchTypeInternal = FetchType | "cache";
+
+export const Odsp409Error = "Odsp409Error";
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -133,7 +135,7 @@ export class EpochTracker implements IPersistedFileCache {
      */
     public async fetchAndParseAsJSON<T>(
         url: string,
-        fetchOptions: {[index: string]: any},
+        fetchOptions: RequestInit,
         fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
@@ -194,14 +196,17 @@ export class EpochTracker implements IPersistedFileCache {
 
     private addEpochInRequest(
         url: string,
-        fetchOptions: {[index: string]: any},
+        fetchOptions: RequestInit,
         addInBody: boolean): {url: string, fetchOptions: {[index: string]: any}} {
         if (this.fluidEpoch !== undefined) {
             if (addInBody) {
                 // We use multi part form request for post body where we want to use this.
                 // So extract the form boundary to mark the end of form.
-                let body: string = fetchOptions.body;
-                const formBoundary = body.split("\r\n")[0].substring(2);
+                let body = fetchOptions.body;
+                assert(typeof body === "string", 0x21d /* "body is not string" */);
+                const firstLine = body.split("\r\n")[0];
+                assert(firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
+                const formBoundary = firstLine.substring(2);
                 body += `\r\nepoch=${this.fluidEpoch}\r\n`;
                 body += `\r\n--${formBoundary}--`;
                 fetchOptions.body = body;
@@ -252,7 +257,9 @@ export class EpochTracker implements IPersistedFileCache {
                 // This will only throw if it is an epoch error.
                 this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
             } catch (epochError) {
-                annotateError(epochError, {
+                assert(isValidLegacyError(epochError),
+                    0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
+                epochError.addTelemetryProperties({
                     fromCache,
                     clientEpoch: this.fluidEpoch,
                     fetchType,
@@ -266,8 +273,7 @@ export class EpochTracker implements IPersistedFileCache {
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
-            this.logger.sendErrorEvent({ eventName: "Coherency409" }, error);
-            throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1);
+            throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1, { [Odsp409Error]: true });
         }
     }
 

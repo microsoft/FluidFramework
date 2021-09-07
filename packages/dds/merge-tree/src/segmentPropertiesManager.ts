@@ -7,7 +7,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UnassignedSequenceNumber } from "./constants";
-import { CollaborationWindow } from "./mergeTree";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import * as Properties from "./properties";
 
@@ -41,12 +40,10 @@ export class PropertiesManager {
         newProps: Properties.PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collabWindow?: CollaborationWindow): Properties.PropertySet | undefined {
+        collaborating: boolean = false): Properties.PropertySet | undefined {
         if (!this.pendingKeyUpdateCount) {
             this.pendingKeyUpdateCount = Properties.createMap<number>();
         }
-
-        const collaborating = collabWindow && collabWindow.collaborating;
 
         // There are outstanding local rewrites, so block all non-local changes
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {

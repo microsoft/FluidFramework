@@ -12,7 +12,7 @@ services]({{< relref "service-options.md" >}}) for more information.
 
 ## Azure Fluid Relay service
 
-{{< include file="_includes/frs-onboarding.html" safeHTML=true >}}
+{{< include file="_includes/azureFluidRelay-onboarding.html" safeHTML=true >}}
 
 Each Azure Fluid Relay service tenant you create is assigned a *tenant ID* and its own unique *tenant secret key*.
 
@@ -27,7 +27,7 @@ Anyone with access to the secret can impersonate your application when communica
 {{% /callout %}}
 
 Now you have a mechanism to establish trust. You can sign some data, send it to the Azure Fluid Relay service, and the service can validate whether the
-data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard way method for encoding
+data is signed properly, and if so, it can trust it. Fortunately, there's an industry standard method for encoding
 authentication and user-related data with a signature for verification: JSON Web Tokens (JWTs).
 
 ## JWTs and Azure Fluid Relay service
@@ -81,9 +81,9 @@ tokens][custom] for more information.
 Every request to Azure Fluid Relay must be signed with a valid JWT. The Azure Fluid Relay documentation contains additional details about [how to
 sign the token][1]. Fluid delegates the responsibility of creating and signing these tokens to a *token provider.*
 
-[1]: (https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token)
+[1]: https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#how-can-you-generate-an-azure-fluid-relay-token
 
-{{% callout title="More information" %}}
+{{% callout note "More information" %}}
 
 * [Introduction to JWTs](https://jwt.io/introduction)
 * [Payload claims in Azure Fluid Relay](https://github.com/MicrosoftDocs/azure-fluid-preview-pr/blob/main/azure-fluid-relay-preview-pr/articles/howtos/fluid-jwtoken.md#payload-claims)
@@ -94,7 +94,7 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 ## The token provider
 
-A token provider is responsible for creating and signing tokens that the `@fluid-experimental/frs-client` uses to make
+A token provider is responsible for creating and signing tokens that the `@fluidframework/azure-client` uses to make
 requests to the Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
 However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret and returns signed tokens. This token
 provider is useful for testing, but in production scenarios you must use a secure token provider.
@@ -107,7 +107,7 @@ generate tokens rather than signing them locally like the `InsecureTokenProvider
 
 ## Adding custom data to tokens
 
-{{< unwritten-section >}}
+{{< placeholder >}}
 
 ## Connecting user auth to Fluid service auth
 
@@ -130,37 +130,21 @@ Relay service.
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

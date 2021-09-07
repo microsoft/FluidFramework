@@ -10,17 +10,15 @@ import {
 } from "@fluidframework/common-definitions";
 import {
     IFluidRouter,
-    IFluidRunnable,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
-    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryTree,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, ISummaryStats } from "@fluidframework/runtime-definitions";
-import { IConnectableRuntime } from "./runWhileConnectedCoordinator";
+import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 
 declare module "@fluidframework/core-interfaces" {
@@ -33,6 +31,23 @@ export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
 export interface IProvideSummarizer {
     readonly ISummarizer: ISummarizer;
 }
+
+/**
+ * Similar to AbortSignal, but using promise instead of events
+ * @param T - cancellation reason type
+ */
+export interface ICancellationToken<T> {
+    /** Tells if this cancellable token is cancelled */
+    readonly cancelled: boolean;
+    /**
+     * Promise that gets fulfilled when this cancellable token is cancelled
+     * @returns reason of cancellation
+     */
+    readonly waitCancelled: Promise<T>;
+}
+
+/* Similar to AbortSignal, but using promise instead of events */
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 export interface ISummarizerInternalsProvider {
     /** Encapsulates the work to walk the internals of the running container to generate a summary */
@@ -62,23 +77,54 @@ export interface ISummarizingWarning extends ContainerWarning {
     readonly logged: boolean;
 }
 
+export interface IConnectableRuntime {
+    readonly disposed: boolean;
+    readonly connected: boolean;
+    readonly clientId: string | undefined;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
+}
+
 export interface ISummarizerRuntime extends IConnectableRuntime {
     readonly logger: ITelemetryLogger;
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    on(event: "disconnected", listener: () => void): this;
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
-export interface ISubmitSummaryOptions {
+/** Options affecting summarize behavior. */
+export interface ISummarizeOptions {
     /** True to generate the full tree with no handle reuse optimizations; defaults to false */
-    fullTree?: boolean,
+    readonly fullTree?: boolean,
     /** True to ask the server what the latest summary is first; defaults to false */
-    refreshLatestAck?: boolean,
+    readonly refreshLatestAck?: boolean,
+}
+
+export interface ISubmitSummaryOptions extends ISummarizeOptions {
     /** Logger to use for correlated summary events */
-    summaryLogger: ITelemetryLogger,
+    readonly summaryLogger: ITelemetryLogger,
+    /** Tells when summary process should be cancelled */
+    readonly cancellationToken: ISummaryCancellationToken,
+}
+
+export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
+    /** Reason for generating summary. */
+    readonly reason: string;
+}
+
+/** Options to use when enqueueing a summarize attempt. */
+export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
+    /** If specified, The summarize attempt will not occur until after this sequence number. */
+    readonly afterSequenceNumber?: number;
+    /**
+     * True to override the existing enqueued summarize attempt if there is one.
+     * This will guarantee that this attempt gets enqueued. If override is false,
+     * than an existing enqueued summarize attempt will block a new one from being
+     * enqueued. There can only be one enqueued at a time. Defaults to false.
+     */
+    readonly override?: boolean;
 }
 
 /**
@@ -106,8 +152,6 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryTree: ISummaryTree;
     /** Stats for generated summary tree. */
     readonly summaryStats: IGeneratedSummaryStats;
-    /** Garbage collection data gathered while generating the summary. */
-    readonly gcData: IGarbageCollectionData;
     /** Time it took to generate the summary tree and stats. */
     readonly generateDuration: number;
 }
@@ -165,6 +209,7 @@ export type SummarizeResultPart<T> = {
     data: T | undefined;
     message: string;
     error: any;
+    retryAfterSeconds?: number;
 };
 
 export interface ISummarizeResults {
@@ -184,17 +229,33 @@ export type OnDemandSummarizeResult = (ISummarizeResults & {
     readonly alreadyRunning: Promise<void>;
 };
 
+export type EnqueueSummarizeResult = (ISummarizeResults & {
+    /**
+     * Indicates that another summarize attempt is not already enqueued,
+     * and this attempt has been enqueued.
+     */
+    readonly alreadyEnqueued?: undefined;
+}) | (ISummarizeResults & {
+    /** Indicates that another summarize attempt was already enqueued. */
+    readonly alreadyEnqueued: true;
+    /**
+     * Indicates that the other enqueued summarize attempt was abandoned,
+     * and this attempt has been enqueued enqueued.
+     */
+    readonly overridden: true;
+}) | {
+    /** Indicates that another summarize attempt was already enqueued. */
+    readonly alreadyEnqueued: true;
+    /**
+     * Indicates that the other enqueued summarize attempt remains enqueued,
+     * and this attempt has not been enqueued.
+     */
+    readonly overridden?: undefined;
+};
+
 export type SummarizerStopReason =
     /** Summarizer client failed to summarize in all 3 consecutive attempts. */
     | "failToSummarize"
-    /**
-     * Summarizer client detected that its parent is no longer elected the summarizer.
-     * Normally, the parent client would realize it is disconnected first and call stop
-     * giving a "parentNotConnected" stop reason. If the summarizer client attempts to
-     * generate a summary and realizes at that moment that the parent is not elected,
-     * only then will it stop itself with this message.
-     */
-    | "parentNoLongerSummarizer"
     /** Parent client reported that it is no longer connected. */
     | "parentNotConnected"
     /**
@@ -204,8 +265,10 @@ export type SummarizerStopReason =
      * tries to stop its spawned summarizer client.
      */
     | "parentShouldNotSummarize"
-    /** Parent client reported that it is disposed. */
-    | "disposed";
+    /** Summarizer client was disconnected */
+    | "summarizerClientDisconnected"
+    /* running summarizer threw an exception */
+    | "summarizerException";
 
 export interface ISummarizerEvents extends IEvent {
     /**
@@ -214,17 +277,33 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer
-    extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
-    stop(reason?: SummarizerStopReason): void;
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
-    updateOnBehalfOf(onBehalfOf: string): void;
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
+    stop(reason: SummarizerStopReason): void;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
-    /** Attempts to generate a summary on demand. */
-    summarizeOnDemand(
-        reason: string,
-        options: Omit<ISubmitSummaryOptions, "summaryLogger">,
-    ): OnDemandSummarizeResult;
+    /**
+     * Attempts to generate a summary on demand. If already running, takes no action.
+     * @param options - options controlling the summarize attempt
+     * @returns an alreadyRunning promise if a summarize attempt is already in progress,
+     * which will resolve when the current attempt completes. At that point caller can
+     * decide to try again or not. Otherwise, it will return an object containing promises
+     * that resolve as the summarize attempt progresses. They will resolve with success
+     * false if a failure is encountered.
+     */
+    summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
+    /**
+     * Enqueue an attempt to summarize after the specified sequence number.
+     * If afterSequenceNumber is provided, the summarize attempt is "enqueued"
+     * to run once an eligible op comes in with sequenceNumber \>= afterSequenceNumber.
+     * @param options - options controlling the summarize attempt
+     * @returns an object containing an alreadyEnqueued flag to indicate if another
+     * summarize attempt has already been enqueued. It also may contain an overridden flag
+     * when alreadyEnqueued is true, that indicates whether this attempt forced the
+     * previous attempt to abort. If this attempt becomes enqueued, it returns an object
+     * containing promises that resolve as the summarize attempt progresses. They will
+     * resolve with success false if a failure is encountered.
+     */
+    enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
 }
 
 /** Data about an attempt to summarize used for heuristics. */
@@ -274,7 +353,7 @@ export interface ISummarizeHeuristicRunner {
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
-    runOnClose(): boolean;
+    shouldRunLastSummary(): boolean;
 
     /** Disposes of resources */
     dispose(): void;

@@ -4,26 +4,22 @@
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, IPromiseTimerResult, PromiseTimer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { delay, TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { IFluidObject, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerContext, LoaderHeader } from "@fluidframework/container-definitions";
-import { ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
-import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
-import { Throttler } from "./throttler";
+import { ISummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
+import { IThrottler } from "./throttler";
 import { ISummarizer, ISummarizerOptions, ISummarizingWarning, SummarizerStopReason } from "./summarizerTypes";
+import { SummaryCollection } from "./summaryCollection";
 
 const defaultInitialDelayMs = 5000;
-const opsToBypassInitialDelay = 4000;
+const defaultOpsToBypassInitialDelay = 4000;
 
-const defaultThrottleDelayWindowMs = 60 * 1000;
-const defaultThrottleMaxDelayMs = 30 * 1000;
-// default throttling function increases exponentially (0ms, 20ms, 60ms, 140ms, etc)
-const defaultThrottleDelayFunction = (n: number) => 20 * (Math.pow(2, n) - 1);
-
-enum SummaryManagerState {
+export enum SummaryManagerState {
     Off = 0,
     Starting = 1,
     Running = 2,
@@ -33,7 +29,7 @@ enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize" | "disposed">;
+type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize">;
 type ShouldSummarizeState =
     | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
@@ -66,31 +62,44 @@ export interface ISummaryManagerEvents extends IEvent {
     (event: "summarizerWarning", listener: (warning: ISummarizingWarning) => void);
 }
 
+export interface ISummaryManagerConfig {
+    initialDelayMs: number;
+    opsToBypassInitialDelay: number;
+}
+
+/**
+ * SummaryManager is created by parent container (i.e. interactive container with clientType !== "summarizer") only.
+ * It observes changes in calculated summarizer and reacts to changes by either creating summarizer client or
+ * stopping existing summarizer client.
+ */
 export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> implements IDisposable {
     private readonly logger: ITelemetryLogger;
-    private readonly initialDelayP: Promise<IPromiseTimerResult | void>;
-    private readonly initialDelayTimer?: PromiseTimer;
+    private readonly opsToBypassInitialDelay: number;
+    private readonly initialDelayMs: number;
     private latestClientId: string | undefined;
     private state = SummaryManagerState.Off;
-    private runningSummarizer?: ISummarizer;
+    private summarizer?: ISummarizer;
     private _disposed = false;
-    private readonly startThrottler = new Throttler(
-        defaultThrottleDelayWindowMs,
-        defaultThrottleMaxDelayMs,
-        defaultThrottleDelayFunction,
-    );
-    private opsUntilFirstConnect = -1;
 
     public get disposed() {
         return this._disposed;
     }
 
+    public get currentState() { return this.state; }
+
     constructor(
-        private readonly context: IContainerContext,
-        private readonly clientElection: SummarizerClientElection,
+        private readonly clientElection: ISummarizerClientElection,
         private readonly connectedState: IConnectedState,
+        private readonly summaryCollection: Pick<SummaryCollection, "opsSinceLastAck">,
         parentLogger: ITelemetryLogger,
-        initialDelayMs: number = defaultInitialDelayMs,
+        /** Creates summarizer by asking interactive container to spawn summarizing container and
+         * get back its Summarizer instance. */
+        private readonly requestSummarizerFn: () => Promise<ISummarizer>,
+        private readonly startThrottler: IThrottler,
+        {
+            initialDelayMs = defaultInitialDelayMs,
+            opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
+        }: Readonly<Partial<ISummaryManagerConfig>> = {},
         private readonly summarizerOptions?: Readonly<Partial<ISummarizerOptions>>,
     ) {
         super();
@@ -104,17 +113,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         this.connectedState.on("disconnected", this.handleDisconnected);
         this.latestClientId = this.connectedState.clientId;
 
-        // Track ops until first (write) connect
-        const opsUntilFirstConnectHandler = (clientId: string, details: ISequencedClient) => {
-            if (this.opsUntilFirstConnect === -1 && clientId === this.connectedState.clientId) {
-                context.quorum.off("addMember", opsUntilFirstConnectHandler);
-                this.opsUntilFirstConnect = details.sequenceNumber - this.context.deltaManager.initialSequenceNumber;
-            }
-        };
-        context.quorum.on("addMember", opsUntilFirstConnectHandler);
-
-        this.initialDelayTimer = new PromiseTimer(initialDelayMs, () => { });
-        this.initialDelayP = this.initialDelayTimer?.start() ?? Promise.resolve();
+        this.opsToBypassInitialDelay = opsToBypassInitialDelay;
+        this.initialDelayMs = initialDelayMs;
     }
 
     /**
@@ -128,7 +128,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
 
     private readonly handleConnected = (clientId: string) => {
         this.latestClientId = clientId;
-        this.runningSummarizer?.updateOnBehalfOf(clientId);
+        // If we have a summarizer, it should have been either cancelled on disconnected by now.
+        // But because of lastSummary process, it can still hang around, so there is not much we can
+        // check or assert.
         this.refreshSummarizer();
     };
 
@@ -142,7 +144,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         } else if (this.connectedState.clientId !== this.clientElection.electedClientId) {
             return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
         } else if (this.disposed) {
-            return { shouldSummarize: false, stopReason: "disposed" };
+            assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
             return { shouldSummarize: true };
         }
@@ -182,69 +184,91 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     };
 
     private startSummarization() {
+        assert(this.state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
         this.state = SummaryManagerState.Starting;
 
-        // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
-        const delayMs = this.startThrottler.getDelay();
-        if (delayMs >= defaultThrottleMaxDelayMs) {
-            // we can't create a summarizer for some reason; raise error on container
-            this.emit(
-                "summarizerWarning",
-                createSummarizingWarning("SummaryManager: CreateSummarizer Max Throttle Delay", false),
-            );
-        }
+        assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
-        this.createSummarizer(delayMs).then((summarizer) => {
+        let reason = "unknown";
+
+        this.delayBeforeCreatingSummarizer().then(async (startWithInitialDelay: boolean) => {
+            // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
+            // but only if creation was delayed. If it was not, then we want to ensure we always create
+            // a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
+            // document out of broken state if it has too many ops and ordering service keeps nacking main
+            // container (and thus it goes into cycle of reconnects)
+            if (startWithInitialDelay && this.getShouldSummarizeState().shouldSummarize === false) {
+                return;
+            }
+
+            const summarizer = await this.requestSummarizerFn();
+
+            // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
+            const shouldSummarizeState = this.getShouldSummarizeState();
+            if (shouldSummarizeState.shouldSummarize === false) {
+                summarizer.stop(shouldSummarizeState.stopReason);
+                return;
+            }
+
+            assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
+            this.state = SummaryManagerState.Running;
+
             summarizer.on("summarizingError",
                 (warning: ISummarizingWarning) => this.emit("summarizerWarning", warning));
-            this.runSummarizer(summarizer);
-        }, (error) => {
-            this.logger.sendErrorEvent({
-                eventName: "CreateSummarizerError",
-                attempt: this.startThrottler.attempts,
-            }, error);
-            this.tryRestart();
-        });
-    }
+            this.summarizer = summarizer;
 
-    private runSummarizer(summarizer: ISummarizer) {
-        this.state = SummaryManagerState.Running;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const clientId = this.latestClientId!;
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const clientId = this.latestClientId!;
-        this.runningSummarizer = summarizer;
+            reason = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                { eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
+                async () => summarizer.run(clientId, this.summarizerOptions),
+            );
+        }).catch((error) => {
+            // Most of exceptions happen due to container being closed while loading it, due to
+            // summarizer container loosing connection while load.
+            // Not worth reporting such errors as errors. That said, we might miss some real errors if
+            // we ignore blindly, so try to narrow signature we are looking for - skip logging
+            // error only if this client should no longer be a summarizer (which in practice
+            // means it also lost connection), and error happened on load (we do not have summarizer).
+            // We could add error.fluidErrorCode !== "containerClosedWithoutErrorDuringLoad" check to narrow it down,
+            // but that does not seem to be necessary.
+            if (this.getShouldSummarizeState().shouldSummarize || this.summarizer !== undefined) {
+                this.logger.sendErrorEvent({ eventName: "SummarizerException" }, error);
+                this.emit("summarizerWarning", error);
 
-        PerformanceEvent.timedExecAsync(
-            this.logger,
-            { eventName: "RunningSummarizer", attempt: this.startThrottler.attempts },
-            async () => summarizer.run(clientId, this.summarizerOptions),
-        ).finally(() => {
-            this.runningSummarizer = undefined;
-            this.tryRestart();
-        });
-
-        const shouldSummarizeState = this.getShouldSummarizeState();
-        if (shouldSummarizeState.shouldSummarize === false) {
-            this.stop(shouldSummarizeState.stopReason);
-        }
-    }
-
-    private tryRestart(): void {
-        const shouldSummarizeState = this.getShouldSummarizeState();
-        if (shouldSummarizeState.shouldSummarize) {
-            this.startSummarization();
-        } else {
+                // Note that summarizer may keep going (like doing last summary).
+                // Ideally we await stopping process, but this code path is due to a bug
+                // that needs to be fixed either way.
+                this.stop("summarizerException");
+            }
+        }).finally(() => {
+            assert(this.state !== SummaryManagerState.Off, 0x264 /* "Expected: Not Off" */);
             this.state = SummaryManagerState.Off;
-        }
+
+            this.summarizer = undefined;
+
+            this.logger.sendTelemetryEvent({
+                eventName: "EndingSummarizer",
+                reason,
+            });
+
+            if (this.getShouldSummarizeState().shouldSummarize) {
+                this.startSummarization();
+            }
+        });
     }
 
     private stop(reason: SummarizerStopReason) {
+        assert(this.state === SummaryManagerState.Running || this.state === SummaryManagerState.Starting,
+            0x265 /* "Expected: Starting or Running" */);
         this.state = SummaryManagerState.Stopping;
 
-        if (this.runningSummarizer) {
+        if (this.summarizer !== undefined) {
             // Stopping the running summarizer client should trigger a change
             // in states when the running summarizer closes
-            this.runningSummarizer.stop(reason);
+            this.summarizer.stop(reason);
         } else {
             // Should not be possible to hit this case
             this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer", reason });
@@ -252,70 +276,106 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
     }
 
-    private async createSummarizer(delayMs: number): Promise<ISummarizer> {
+    /**
+     * Implements initial delay before creating summarizer
+     * @returns true, if creation is delayed due to heuristics (not many ops to summarize).
+     *          False if summarizer should start immediately due to too many unsummarized ops.
+     */
+    private async delayBeforeCreatingSummarizer(): Promise<boolean> {
+        // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
+        let delayMs = this.startThrottler.getDelay();
+        if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
+            this.emit(
+                "summarizerWarning",
+                createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
+            );
+        }
+
         // We have been elected the summarizer. Some day we may be able to summarize with a live document but for
         // now we play it safe and launch a second copy.
         this.logger.sendTelemetryEvent({
             eventName: "CreatingSummarizer",
-            delayMs,
-            opsUntilFirstConnect: this.opsUntilFirstConnect,
+            throttlerDelay: delayMs,
+            initialDelay: this.initialDelayMs,
+            opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
+            opsToBypassInitialDelay: this.opsToBypassInitialDelay,
         });
 
-        const shouldDelay = delayMs > 0;
-        const shouldInitialDelay = this.opsUntilFirstConnect < opsToBypassInitialDelay;
-        if (shouldDelay || shouldInitialDelay) {
-            await Promise.all([
-                shouldInitialDelay ? this.initialDelayP : Promise.resolve(),
-                shouldDelay ? delay(delayMs) : Promise.resolve(),
-            ]);
+        // This delay helps ensure that last summarizer that might be left from previous client
+        // has enough time to complete its last summary and thus new summarizer not conflict with previous one.
+        // If, however, there are too many unsummarized ops, try to resolve it as quickly as possible, with
+        // understanding that we may see nacks because of such quick action.
+        // A better design would be for summarizer election logic to always select current summarizer as
+        // summarizing client (i.e. clientType === "summarizer" can be elected) to ensure that nobody else can
+        // summarizer while it finishes its work and moves to exit.
+        // It also helps with pure boot scenario (single client) to offset expensive work a bit out from
+        // critical boot sequence.
+        let startWithInitialDelay = false;
+        if (this.summaryCollection.opsSinceLastAck < this.opsToBypassInitialDelay) {
+            startWithInitialDelay = true;
+            delayMs = Math.max(delayMs, this.initialDelayMs);
         }
 
-        const loader = this.context.loader;
-
-        // TODO eventually we may wish to spawn an execution context from which to run this
-        const request: IRequest = {
-            headers: {
-                [LoaderHeader.cache]: false,
-                [LoaderHeader.clientDetails]: {
-                    capabilities: { interactive: false },
-                    type: summarizerClientType,
-                },
-                [DriverHeader.summarizingClient]: true,
-                [LoaderHeader.reconnect]: false,
-                [LoaderHeader.sequenceNumber]: this.context.deltaManager.lastSequenceNumber,
-            },
-            url: "/_summarizer",
-        };
-
-        const response = await loader.request(request);
-
-        if (response.status !== 200 || response.mimeType !== "fluid/object") {
-            return Promise.reject(new Error("Invalid summarizer route"));
+        if (delayMs > 0) {
+            await delay(delayMs);
         }
-
-        const rawFluidObject = response.value as IFluidObject;
-        const summarizer = rawFluidObject.ISummarizer;
-
-        if (!summarizer) {
-            return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
-        }
-
-        return summarizer;
+        return startWithInitialDelay;
     }
 
     public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = (...args) => {
-        if (this.runningSummarizer === undefined) {
+        if (this.summarizer === undefined) {
             throw Error("No running summarizer client");
             // TODO: could spawn a summarizer client temporarily.
         }
-        return this.runningSummarizer.summarizeOnDemand(...args);
+        return this.summarizer.summarizeOnDemand(...args);
+    };
+
+    public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = (...args) => {
+        if (this.summarizer === undefined) {
+            throw Error("No running summarizer client");
+            // TODO: could spawn a summarizer client temporarily.
+        }
+        return this.summarizer.enqueueSummarize(...args);
     };
 
     public dispose() {
         this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
         this.connectedState.off("connected", this.handleConnected);
         this.connectedState.off("disconnected", this.handleDisconnected);
-        this.initialDelayTimer?.clear();
         this._disposed = true;
     }
 }
+
+/**
+ * Forms a function that will request a Summarizer.
+ * @param loaderRouter - the loader acting as an IFluidRouter
+ * @param deltaManager - delta manager to get last sequence number
+ */
+export const formRequestSummarizerFn = (
+    loaderRouter: IFluidRouter,
+    deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
+) => async () => {
+    // TODO eventually we may wish to spawn an execution context from which to run this
+    const request: IRequest = {
+        headers: {
+            [LoaderHeader.cache]: false,
+            [LoaderHeader.clientDetails]: {
+                capabilities: { interactive: false },
+                type: summarizerClientType,
+            },
+            [DriverHeader.summarizingClient]: true,
+            [LoaderHeader.reconnect]: false,
+            [LoaderHeader.sequenceNumber]: deltaManager.lastSequenceNumber,
+        },
+        url: "/_summarizer",
+    };
+
+    const fluidObject = await requestFluidObject(loaderRouter, request);
+    const summarizer = fluidObject.ISummarizer;
+
+    if (!summarizer) {
+        return Promise.reject(new Error("Fluid object does not implement ISummarizer"));
+    }
+
+    return summarizer;
+};

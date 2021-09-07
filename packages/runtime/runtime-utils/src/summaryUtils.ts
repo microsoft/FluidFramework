@@ -5,6 +5,7 @@
 
 import {
     assert,
+    bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
     Uint8ArrayToString,
@@ -262,12 +263,20 @@ export function convertSnapshotTreeToSummaryTree(
         0x19e /* "There should not be commit tree entries in snapshot" */);
 
     const builder = new SummaryTreeBuilder();
-    for (const [key, value] of Object.entries(snapshot.blobs)) {
-        // The entries in blobs are supposed to be blobPath -> blobId and blobId -> blobValue
-        // and we want to push blobPath to blobValue in tree entries.
-        if (snapshot.blobs[value] !== undefined) {
-            const decoded = fromBase64ToUtf8(snapshot.blobs[value]);
-            builder.addBlob(key, decoded);
+    for (const [path, id] of Object.entries(snapshot.blobs)) {
+        let decoded: string | undefined;
+        if ((snapshot as any).blobsContents !== undefined) {
+            const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
+            if (content !== undefined) {
+                decoded = bufferToString(content, "utf-8");
+            }
+        // 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
+        // only for blobPath -> blobId mapping and not for blobId -> blob value contents.
+        } else if (snapshot.blobs[id] !== undefined) {
+            decoded = fromBase64ToUtf8(snapshot.blobs[id]);
+        }
+        if (decoded !== undefined) {
+            builder.addBlob(path, decoded);
         }
     }
 

@@ -3,6 +3,7 @@ title: Hosts and the loader
 menuPosition: 4
 aliases:
   - "/docs/concepts/hosts"
+draft: true
 ---
 
 The **Fluid loader** is one of the key parts of the Fluid Framework. Developers use the Fluid loader within their
@@ -40,7 +41,7 @@ right plugins (drivers, handlers, resolvers), the Fluid loader will work for any
 implementation.
 
 The loader mimics existing web protocols. Similar to how the browser requests state and app logic (a website) from a
-web server, a Fluid host uses the loader to request a [Fluid container](./containers-runtime.md) from the Fluid service.
+web server, a Fluid host uses the loader to request a [Fluid container][] from the Fluid service.
 
 ## Fluid host responsibilities
 
@@ -115,3 +116,27 @@ object).
 
 The host is responsible for checking that this response is valid. Did the loader return a 200? Is the mimeType correct?
 As the Fluid Framework expands, we intend to make further use of these responses.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->
