@@ -168,8 +168,13 @@ async function runnerProcess(
             container.resume();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
-            scheduleContainerClose(container, runConfig);
-            scheduleFaultInjection(documentServiceFactory, container, runConfig);
+            // Inject fault by default unless explicitly disabled.
+            if (runConfig.testConfig.noFaultInjection === undefined
+                    || runConfig.testConfig.noFaultInjection === false) {
+                scheduleContainerClose(container, runConfig);
+                scheduleFaultInjection(documentServiceFactory, container, runConfig);
+            }
+
             try {
                 printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset);

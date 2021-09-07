@@ -27,6 +27,14 @@
             "numClients": 1,
             "totalSendCount": 30,
             "readWriteCycleMs": 10000
+        },
+        "ci_nofault": {
+            "opRatePerMin": 10,
+            "progressIntervalMs": 15000,
+            "numClients": 120,
+            "totalSendCount": 10000,
+            "readWriteCycleMs": 30000,
+            "noFaultInjection": true
         }
     }
 }
