@@ -37,9 +37,9 @@ export class Smde extends EventEmitter implements
     IFluidLoadable,
     IFluidRouter,
     IFluidHTMLView {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
         const collection = new Smde(runtime, context);
-        await collection.initialize();
+        await collection.initialize(existing);
 
         return collection;
     }
@@ -72,8 +72,8 @@ export class Smde extends EventEmitter implements
         return defaultFluidObjectRequestHandler(this, request);
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
+    private async initialize(existing: boolean) {
+        if (!existing) {
             this.root = SharedMap.create(this.runtime, "root");
             const text = SharedString.create(this.runtime);
 
@@ -212,18 +212,22 @@ class SmdeFactory implements IFluidDataStoreFactory {
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, new Map([
-            SharedMap.getFactory(),
-            SharedString.getFactory(),
-        ].map((factory) => [factory.type, factory])));
-        const routerP = Smde.load(runtime, context);
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                SharedMap.getFactory(),
+                SharedString.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            existing,
+        );
+        const routerP = Smde.load(runtime, context, existing);
 
         return runtime;
     }

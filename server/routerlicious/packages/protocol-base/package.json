@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-base",
-  "version": "0.1028.0",
+  "version": "0.1031.0",
   "description": "Fluid protocol base",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -54,13 +54,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.31.0",
-    "@fluidframework/gitresources": "^0.1028.0",
+    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/gitresources": "^0.1031.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/assert": "^1.5.1",

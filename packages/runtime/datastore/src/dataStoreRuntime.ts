@@ -43,7 +43,6 @@ import {
 import {
     CreateSummarizerNodeSource,
     IAttachMessage,
-    IChannelSummarizeResult,
     IEnvelope,
     IFluidDataStoreContext,
     IFluidDataStoreChannel,
@@ -103,14 +102,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * Loads the data store runtime
      * @param context - The data store context
      * @param sharedObjectRegistry - The registry of shared objects used by this data store
-     * @param activeCallback - The callback called when the data store runtime in active
-     * @param dataStoreRegistry - The registry of data store created and used by this data store
+     * @param existing - If loading from an existing file.
      */
     public static load(
         context: IFluidDataStoreContext,
         sharedObjectRegistry: ISharedObjectRegistry,
+        existing: boolean,
     ): FluidDataStoreRuntime {
-        return new FluidDataStoreRuntime(context, sharedObjectRegistry);
+        return new FluidDataStoreRuntime(context, sharedObjectRegistry, existing);
     }
 
     public get IFluidRouter() { return this; }
@@ -169,9 +168,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     private boundhandles: Set<IFluidHandle> | undefined;
     private _attachState: AttachState;
 
-    public readonly documentId: string;
     public readonly id: string;
-    public existing: boolean;
     public readonly options: ILoaderOptions;
     public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly quorum: IQuorum;
@@ -189,6 +186,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     public constructor(
         private readonly dataStoreContext: IFluidDataStoreContext,
         private readonly sharedObjectRegistry: ISharedObjectRegistry,
+        existing: boolean,
     ) {
         super();
 
@@ -198,9 +196,8 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             undefined,
             {all:{ dataStoreId: uuid() }},
         );
-        this.documentId = dataStoreContext.documentId;
+
         this.id = dataStoreContext.id;
-        this.existing = dataStoreContext.existing;
         this.options = dataStoreContext.options;
         this.deltaManager = dataStoreContext.deltaManager;
         this.quorum = dataStoreContext.getQuorum();
@@ -289,11 +286,11 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         this.attachListener();
         // If exists on storage or loaded from a snapshot, it should already be binded.
-        this.bindState = this.existing ? BindState.Bound : BindState.NotBound;
+        this.bindState = existing ? BindState.Bound : BindState.NotBound;
         this._attachState = dataStoreContext.attachState;
 
         // If it's existing we know it has been attached.
-        if (this.existing) {
+        if (existing) {
             this.deferredAttached.resolve();
         }
     }
@@ -556,7 +553,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             this.emit("op", message);
         } catch (error) {
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
-            throw CreateProcessingError(error, message);
+            throw CreateProcessingError(error, "fluidDataStoreRuntimeFailedToProcessMessage", message);
         }
     }
 
@@ -640,8 +637,10 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * After GC has run, called to notify this channel of routes that are used in it. It calls the child contexts to
      * update their used routes.
      * @param usedRoutes - The routes that are used in all contexts in this channel.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If any node becomes unreferenced
+     * as part of this GC run, this should be used to update the time when it happens.
      */
-    public updateUsedRoutes(usedRoutes: string[]) {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Get a map of channel ids to routes used in it.
         const usedContextRoutes = getChildNodesUsedRoutes(usedRoutes);
 
@@ -652,7 +651,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 
         // Update the used routes in each context. Used routes is empty for unused context.
         for (const [contextId, context] of this.contexts) {
-            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? []);
+            context.updateUsedRoutes(usedContextRoutes.get(contextId) ?? [], gcTimestamp);
         }
     }
 
@@ -685,8 +684,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
      * @param fullTree - true to bypass optimizations and force a full summary tree
      * @param trackState - This tells whether we should track state from this summary.
      */
-    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<IChannelSummarizeResult> {
-        const gcDataBuilder = new GCDataBuilder();
+    public async summarize(fullTree: boolean = false, trackState: boolean = true): Promise<ISummaryTreeWithStats> {
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Iterate over each data store and ask it to summarize
@@ -707,25 +705,14 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                 // This is temporal limitation that can be lifted in future once BlobAggregationStorage becomes smarter.
                 const contextSummary = await context.summarize(true /* fullTree */, trackState);
                 summaryBuilder.addWithStats(contextId, contextSummary);
-
-                if (contextSummary.gcData !== undefined) {
-                    // Prefix the child's id to the ids of its GC nodes. This gradually builds the id of each node
-                    // to be a path from the root.
-                    gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                }
             }));
 
-        this.updateGCNodes(gcDataBuilder);
-        return {
-            ...summaryBuilder.getSummaryTree(),
-            gcData: gcDataBuilder.getGCData(),
-        };
+        return summaryBuilder.getSummaryTree();
     }
 
-    public getAttachSummary(): IChannelSummarizeResult {
+    public getAttachSummary(): ISummaryTreeWithStats {
         this.attachGraph();
 
-        const gcDataBuilder = new GCDataBuilder();
         const summaryBuilder = new SummaryTreeBuilder();
 
         // Craft the .attributes file for each shared object
@@ -742,12 +729,6 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
                         contextSummary.summary.type === SummaryType.Tree,
                         0x180 /* "getAttachSummary should always return a tree" */);
                     summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-
-                    if (contextSummary.gcData !== undefined) {
-                        // Prefix the child's id to the ids of its GC nodest. This gradually builds the id of each node
-                        // to be a path from the root.
-                        gcDataBuilder.prefixAndAddNodes(contextId, contextSummary.gcData.gcNodes);
-                    }
                 } else {
                     // If this channel is not yet loaded, then there should be no changes in the snapshot from which
                     // it was created as it is detached container. So just use the previous snapshot.
@@ -759,11 +740,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
             }
         }
 
-        this.updateGCNodes(gcDataBuilder);
-        return {
-            ...summaryBuilder.getSummaryTree(),
-            gcData: gcDataBuilder.getGCData(),
-        };
+        return summaryBuilder.getSummaryTree();
     }
 
     public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {

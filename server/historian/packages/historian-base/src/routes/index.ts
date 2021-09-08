@@ -17,6 +17,7 @@ import * as trees from "./git/trees";
 import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
+import * as summaries from "./summaries";
 /* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
@@ -32,27 +33,29 @@ export interface IRoutes {
         contents: Router;
         headers: Router;
     };
+    summaries: Router;
 }
 
 // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
 export function create(
-    store: nconf.Provider,
+    config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            commits: commits.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            refs: refs.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            tags: tags.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            trees: trees.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            blobs: blobs.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            commits: commits.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            refs: refs.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            tags: tags.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            trees: trees.create(config, tenantService, throttler, cache, asyncLocalStorage),
         },
         repository: {
-            commits: repositoryCommits.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            contents: contents.create(store, tenantService, cache, throttler, asyncLocalStorage),
-            headers: headers.create(store, tenantService, cache, throttler, asyncLocalStorage),
+            commits: repositoryCommits.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            contents: contents.create(config, tenantService, throttler, cache, asyncLocalStorage),
+            headers: headers.create(config, tenantService, throttler, cache, asyncLocalStorage),
         },
+        summaries: summaries.create(config, tenantService, throttler, cache, asyncLocalStorage),
     };
 }

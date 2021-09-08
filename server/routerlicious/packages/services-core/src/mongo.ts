@@ -62,7 +62,7 @@ export class MongoManager {
                 });
 
                 db.on("close", (value) => {
-                    debug("DB Close", value);
+                    debug("DB Close");
                     this.reconnect(this.reconnectDelayMs);
                 });
 

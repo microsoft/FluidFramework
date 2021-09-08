@@ -12,6 +12,10 @@ const excludedTypography = [
     ["–", "-"],
 ];
 
+const excludedWords = [
+    "FRS",
+]
+
 const clamp = (number, min, max) => {
     return Math.max(min, Math.min(number, max));
 };
@@ -25,6 +29,26 @@ module.exports = {
     "customRules": [
         "markdownlint-rule-emphasis-style",
         "markdownlint-rule-github-internal-links",
+        {
+            "names": ["ban-words"],
+            "description": "Using a banned word",
+            "tags": ["style"],
+            "function": (params, onError) => {
+                forEachLine(getLineMetadata(params), (line, lineIndex) => {
+                    for (const word of excludedWords) {
+                        const column = line.indexOf(word);
+                        if (column >= 0) {
+                            onError({
+                                "lineNumber": lineIndex + 1,
+                                "detail": `Found banned word "${word}" at column ${column}`,
+                                "context": extractContext(line, column),
+                                "range": [column + 1, 1],
+                            });
+                        }
+                    }
+                });
+            }
+        },
         {
             "names": ["proper-typography"],
             "description": "Using improper typography",
@@ -85,13 +109,15 @@ module.exports = {
         "proper-names": { // MD044
             "code_blocks": false,
             "names": [
+                "Azure Fluid Relay service",
                 "Fluid Framework",
                 "JavaScript",
                 "JSON",
                 "Microsoft",
                 "npm",
                 "Routerlicious",
-                "Tinylicious"
+                "Tinylicious",
+                "tinylicious.md", // Without this entry, markdownlint incorrectly flags "tinylicious.md" as an improper spelling of "Tinylicious".
             ]
         }
     },

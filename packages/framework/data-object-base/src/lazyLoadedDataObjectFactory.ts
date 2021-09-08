@@ -47,19 +47,22 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext): Promise<FluidDataStoreRuntime> {
+    public async instantiateDataStore(
+        context: IFluidDataStoreContext,
+        existing: boolean,
+    ): Promise<FluidDataStoreRuntime> {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await instance;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, this.ISharedObjectRegistry);
+        const runtime = new runtimeClass(context, this.ISharedObjectRegistry, existing);
 
         // Note this may synchronously return an instance or a deferred LazyPromise,
         // depending of if a new store is being created or an existing store
         // is being loaded.
-        const instance = this.instantiate(context, runtime);
+        const instance = this.instantiate(context, runtime, existing);
 
         return runtime;
     }
@@ -71,10 +74,10 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
         return requestFluidObject(router, "/");
     }
 
-    private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime) {
+    private instantiate(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean) {
         // New data store instances are synchronously created.  Loading a previously created
         // store is deferred (via a LazyPromise) until requested by invoking `.then()`.
-        return runtime.existing
+        return existing
             ? new LazyPromise(async () => this.load(context, runtime))
             : this.createCore(context, runtime);
     }

@@ -23,8 +23,8 @@ export function execute(
         .arguments("<name> <lambda>")
         .action((name: string, lambda: string) => {
             configureLogging(configOrPath);
-
             action = true;
+
             runService(
                 factoryFn(name, lambda),
                 new KafkaRunnerFactory(),

@@ -10,7 +10,7 @@ import {
     IMember,
     IServiceAudience,
     SignalManager,
-} from "@fluid-experimental/fluid-framework";
+} from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;

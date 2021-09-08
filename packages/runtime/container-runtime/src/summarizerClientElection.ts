@@ -5,7 +5,7 @@
 
 import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
 import { IOrderedClientElection, ISerializedElection, ITrackedClient } from "./orderedClientElection";
 import { ISummaryCollectionOpEvents } from "./summaryCollection";
 
@@ -15,12 +15,18 @@ export interface ISummarizerClientElectionEvents extends IEvent {
     (event: "electedSummarizerChanged", handler: () => void): void;
 }
 
+export interface ISummarizerClientElection extends IEventProvider<ISummarizerClientElectionEvents> {
+    readonly electedClientId: string | undefined;
+}
+
 /**
  * This class encapsulates logic around tracking the elected summarizer client.
  * It will handle updated the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
- export class SummarizerClientElection extends TypedEventEmitter<ISummarizerClientElectionEvents> {
+export class SummarizerClientElection
+    extends TypedEventEmitter<ISummarizerClientElectionEvents>
+    implements ISummarizerClientElection {
     /**
      * Used to calculate number of ops since last summary ack for the current elected client.
      * This will be undefined if there is no elected summarizer, or no summary ack has been
@@ -113,7 +119,6 @@ export interface ISummarizerClientElectionEvents extends IEvent {
                 // If there are no eligible clients, just wait until a client joins
                 // and will be auto-elected.
                 this.clientElection.resetElectedClient(sequenceNumber);
-                return;
             }
             // Election can trigger a change in SummaryManager state.
             this.emit("electedSummarizerChanged");
@@ -134,6 +139,9 @@ export interface ISummarizerClientElectionEvents extends IEvent {
             // Very old clients back-compat
             return true;
         }
-        return details.capabilities.interactive && details.type !== summarizerClientType;
+        return SummarizerClientElection.clientDetailsPermitElection(details);
     }
+
+    public static readonly clientDetailsPermitElection = (details: IClientDetails): boolean =>
+        details.capabilities.interactive && details.type !== summarizerClientType;
 }

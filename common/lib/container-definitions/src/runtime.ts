@@ -64,15 +64,6 @@ export interface IRuntime extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string);
 
     /**
-     * @deprecated in 0.14 async stop()
-     * Use snapshot to get a snapshot for an IRuntimeState as needed, followed by dispose
-     *
-     * Stops the runtime. Once stopped no more messages will be delivered and the context passed to the runtime
-     * on creation will no longer be active
-     */
-    stop(): Promise<{snapshot?: never, state?: never}>;
-
-    /**
      * Processes the given op (message)
      */
     process(message: ISequencedDocumentMessage, local: boolean, context: any);
@@ -82,7 +73,14 @@ export interface IRuntime extends IDisposable {
      */
     processSignal(message: any, local: boolean);
 
-    createSummary(): ISummaryTree;
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
+    createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
 
     /**
      * Propagate the container state when container is attaching or attached.

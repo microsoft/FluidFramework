@@ -17,7 +17,6 @@ import {
     IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { debug } from "./debug";
 
 interface ISequencedOpInfo<TOp> {
     client: string;
@@ -106,9 +105,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 
     protected registerCore() {}
 
-    protected onDisconnect() {
-        debug(`OT ${this.id} is now disconnected`);
-    }
+    protected onDisconnect() { }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean) {
         // Discard any sequenced ops that are now below the minimum sequence number.

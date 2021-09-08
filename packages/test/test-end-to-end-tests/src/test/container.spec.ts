@@ -33,7 +33,6 @@ import {
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     getDataStoreFactory,
     ITestDataObject,
@@ -59,7 +58,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     });
     before(async ()=>{
         const loader = new Loader({
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            logger: provider.logger,
             urlResolver: provider.urlResolver,
             documentServiceFactory:
                 provider.documentServiceFactory,
@@ -75,7 +74,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     async function loadContainer(props?: Partial<ILoaderProps>) {
         const loader = new Loader({
             ...props,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            logger: provider.logger,
             urlResolver: props?.urlResolver ?? provider.urlResolver,
             documentServiceFactory:
                 props?.documentServiceFactory ?? provider.documentServiceFactory,
@@ -113,16 +112,17 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await documentServiceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
-                // eslint-disable-next-line prefer-promise-reject-errors
-                service.connectToStorage = async () => Promise.reject(false);
+                service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
                 return service;
             };
 
             await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
-            const err = error as IGenericError;
-            success = err.error as boolean;
+            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
+            const genericError = error as IGenericError;
+            assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
+            success = false;
         }
         assert.strictEqual(success, false);
     });
@@ -136,17 +136,17 @@ describeNoCompat("Container", (getTestObjectProvider) => {
             mockFactory.createDocumentService = async (resolvedUrl) => {
                 const service = await documentServiceFactory.createDocumentService(resolvedUrl);
                 // Issue typescript-eslint/typescript-eslint #1256
-                // eslint-disable-next-line prefer-promise-reject-errors
-                service.connectToDeltaStorage = async () => Promise.reject(false);
+                service.connectToDeltaStorage = async () => Promise.reject(new Error("expectedFailure"));
                 return service;
             };
             const container2 = await loadContainer({ documentServiceFactory: mockFactory });
             await waitContainerToCatchUp(container2);
             assert.fail("Error expected");
         } catch (error) {
-            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error is not a general error");
+            assert.strictEqual(error.errorType, ContainerErrorType.genericError, "Error should be a general error");
             const genericError = error as IGenericError;
-            success = genericError.error as boolean;
+            assert.equal(genericError.message, "expectedFailure", "Expected the injected error message");
+            success = false;
         }
         assert.strictEqual(success, false);
     });

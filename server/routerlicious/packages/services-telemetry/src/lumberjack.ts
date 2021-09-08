@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
+import * as path from "path-browserify";
 import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
 import {
@@ -17,10 +17,10 @@ import {
 // Lumberjack is a telemetry manager class that allows the collection of metrics and logs
 // throughout the service. A list of ILumberjackEngine must be provided to Lumberjack
 // by calling setup() before Lumberjack can be used - the engines process and emit the collected data.
-// An optional ILumberjackSchemaValidator can be provided to validate the schema of the data.
+// An optional ILumberjackSchemaValidator list can be provided to validate the schema of the data.
 export class Lumberjack {
     private readonly _engineList: ILumberjackEngine[] = [];
-    private _schemaValidator: ILumberjackSchemaValidator | undefined;
+    private _schemaValidators: ILumberjackSchemaValidator[] | undefined;
     private _isSetupCompleted: boolean = false;
     protected static _instance: Lumberjack | undefined;
 
@@ -34,18 +34,18 @@ export class Lumberjack {
         return Lumberjack._instance;
     }
 
-    public static create(
+    public static createInstance(
         engines: ILumberjackEngine[],
-        schemaValidator?: ILumberjackSchemaValidator) {
+        schemaValidators?: ILumberjackSchemaValidator[]) {
         const newInstance = new Lumberjack();
-        newInstance.setup(engines, schemaValidator);
+        newInstance.setup(engines, schemaValidators);
         return newInstance;
     }
 
     public static setup(
         engines: ILumberjackEngine[],
-        schemaValidator?: ILumberjackSchemaValidator) {
-        this.instance.setup(engines, schemaValidator);
+        schemaValidators?: ILumberjackSchemaValidator[]) {
+        this.instance.setup(engines, schemaValidators);
     }
 
     public static newLumberMetric<T extends string = LumberEventName>(
@@ -58,17 +58,49 @@ export class Lumberjack {
         message: string,
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
-        exception?: Error) {
+        exception?: any) {
         this.instance.log(message, level, properties, exception);
+    }
+
+    public static debug(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>) {
+        this.instance.log(message, LogLevel.Debug, properties);
+    }
+
+    public static verbose(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>) {
+        this.instance.log(message, LogLevel.Verbose, properties);
+    }
+
+    public static info(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>) {
+        this.instance.log(message, LogLevel.Info, properties);
+    }
+
+    public static warning(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Warning, properties, exception);
+    }
+
+    public static error(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.instance.log(message, LogLevel.Error, properties, exception);
     }
 
     public setup(
         engines: ILumberjackEngine[],
-        schemaValidator?: ILumberjackSchemaValidator) {
+        schemaValidators?: ILumberjackSchemaValidator[]) {
         if (this._isSetupCompleted) {
             handleError(
                 LumberEventName.LumberjackError,
-                "This Lumberjack was already setup with a list of engines and schema validator.",
+                "This Lumberjack was already setup with a list of engines and optional schema validator.",
                 this._engineList);
             return;
         }
@@ -82,7 +114,7 @@ export class Lumberjack {
         }
 
         this._engineList.push(...engines);
-        this._schemaValidator = schemaValidator;
+        this._schemaValidators = schemaValidators;
         this._isSetupCompleted = true;
     }
 
@@ -90,20 +122,24 @@ export class Lumberjack {
         eventName: T,
         properties?: Map<string, any> | Record<string, any>) {
         this.errorOnIncompleteSetup();
-        return new Lumber<T>(eventName, LumberType.Metric, this._engineList, this._schemaValidator, properties);
+        return new Lumber<T>(eventName, LumberType.Metric, this._engineList, this._schemaValidators, properties);
+    }
+
+    public static isSetupCompleted() {
+        return this.instance._isSetupCompleted;
     }
 
     public log(
         message: string,
         level: LogLevel,
         properties?: Map<string, any> | Record<string, any>,
-        exception?: Error) {
+        exception?: any) {
         this.errorOnIncompleteSetup();
         const lumber = new Lumber<string>(
             this.getLogCallerInfo(),
             LumberType.Log,
             this._engineList,
-            this._schemaValidator,
+            this._schemaValidators,
             properties);
 
         if (level === LogLevel.Warning || level === LogLevel.Error) {
@@ -111,6 +147,38 @@ export class Lumberjack {
         } else {
             lumber.success(message, level);
         }
+    }
+
+    public debug(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>) {
+        this.log(message, LogLevel.Debug, properties);
+    }
+
+    public verbose(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>) {
+        this.log(message, LogLevel.Verbose, properties);
+    }
+
+    public info(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>) {
+        this.log(message, LogLevel.Info, properties);
+    }
+
+    public warning(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Warning, properties, exception);
+    }
+
+    public error(
+        message: string,
+        properties?: Map<string, any> | Record<string, any>,
+        exception?: any) {
+        this.log(message, LogLevel.Error, properties, exception);
     }
 
     /**
@@ -127,6 +195,12 @@ export class Lumberjack {
         const defaultStackTracePreparer = Error.prepareStackTrace;
         try {
             Error.prepareStackTrace = (_, structuredStackTrace) => {
+                // Since we have a static log() and an instance log(), as well as convenience
+                // methods such as info(), error(), etc, we should discard the first entry
+                // in the call stack while it points to this Lumberjack file.
+                while (structuredStackTrace[0].getFileName() === __filename) {
+                    structuredStackTrace.shift();
+                }
                 const caller = structuredStackTrace[0];
                 const fileName = caller.getFileName() ?? "FilenameNotAvailable";
                 const functionName = caller.getFunctionName() ?? caller.getMethodName() ?? "FunctionNameNotAvailable";
@@ -149,7 +223,7 @@ export class Lumberjack {
         if (!this._isSetupCompleted) {
             handleError(
                 LumberEventName.LumberjackError,
-                "Lumberjack has not been setup yet. It requires an engine list and a schema validator.",
+                "Lumberjack has not been setup yet. It requires an engine list and an optional schema validator.",
                 this._engineList);
             return;
         }

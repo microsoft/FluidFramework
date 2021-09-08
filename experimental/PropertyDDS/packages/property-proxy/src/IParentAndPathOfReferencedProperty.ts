@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseProperty } from "@fluid-experimental/property-properties"
+import { BaseProperty } from "@fluid-experimental/property-properties";
 
 /**
  * Returned only from the [[PropertyProxy]].[[getParentOfReferencedProperty]] method.

@@ -3,6 +3,7 @@ title: The Fluid service
 menuPosition: 3
 aliases:
   - "/docs/concepts/service"
+draft: true
 ---
 
 The Fluid Framework contains a service component. A reference implementation of a Fluid service called *Routerlicious* is
@@ -34,7 +35,7 @@ to the client so that the client does not need to replay all ops locally to get 
 
 One of the connected clients is chosen to generate the summary. Once the summary is created it is sent to the service
 like any other operation. To learn more about summaries and how they are created, see the [advanced Summarizer
-topic](../advanced/summarizer.md).
+topic]({{< relref "summarizer.md" >}}).
 
 
 ## Drivers

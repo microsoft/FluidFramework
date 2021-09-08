@@ -5,6 +5,8 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { Response } from "express";
+import * as jwt from "jsonwebtoken";
+import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 
@@ -22,6 +24,8 @@ export function handleResponse<T>(
         (result) => {
             if (cache) {
                 response.setHeader("Cache-Control", "public, max-age=31536000");
+            } else {
+                response.setHeader("Cache-Control", "no-store, max-age=0");
             }
 
             response.status(status).json(result);
@@ -35,7 +39,7 @@ export async function createGitService(
     tenantId: string,
     authorization: string,
     tenantService: ITenantService,
-    cache: ICache,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Promise<RestGitService> {
     let token: string;
@@ -59,7 +63,14 @@ export async function createGitService(
     const details = await tenantService.getTenant(tenantId, token);
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = !!customData.externalStorageData;
-    const service = new RestGitService(details.storage, cache, writeToExternalStorage, asyncLocalStorage);
+    const decoded = jwt.decode(token) as ITokenClaims;
+     const service = new RestGitService(
+         details.storage,
+         writeToExternalStorage,
+         tenantId,
+         decoded.documentId,
+         cache,
+         asyncLocalStorage);
 
     return service;
 }

@@ -94,7 +94,11 @@ describe("Loader", () => {
                 );
 
                 const tracker = new CollabWindowTracker(
-                    (type: MessageType, contents: any) => deltaManager.submit(type, contents),
+                    (type: MessageType, contents: any) => {
+                        deltaManager.submit(type, contents);
+                        // CollabWindowTracker expects every op submitted (including noops) to result in this call:
+                        tracker.stopSequenceNumberUpdate();
+                    },
                     () => true,
                     expectedTimeout,
                     noopCountFrequency,
@@ -122,80 +126,46 @@ describe("Loader", () => {
                     assert.strictEqual(immediate ? "" : null, JSON.parse(messages[0].contents as string));
                 }
 
-                it("Should not update after timeout with op lesser the threshold", async () => {
+                it("Should update after op count threshold", async () => {
                     let runCount = 0;
                     await startDeltaManager();
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
                         assertOneValidNoOp(messages);
                         runCount++;
-                        assert.fail("Should not fire noop");
+                    });
+
+                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await tickClock(expectedTimeout - 1);
+                    assert.strictEqual(runCount, 0);
+
+                    await emitSequentialOps(MessageType.Operation, 1);
+                    assert.strictEqual(runCount, 1);
+
+                    await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
+                    await tickClock(expectedTimeout - 1);
+                    assert.strictEqual(runCount, 1);
+                });
+
+                it("Should update after time threshold reached", async () => {
+                    let runCount = 0;
+
+                    await startDeltaManager();
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assertOneValidNoOp(messages);
+                        runCount++;
                     });
 
                     await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
-
-                    await tickClock(expectedTimeout - 1);
-                    assert.strictEqual(runCount, 0);
-
-                    await tickClock(1);
-                    assert.strictEqual(runCount, 0);
-                });
-
-                it("Should not update after op count threshold but time lesser than timeout", async () => {
-                    let runCount = 0;
-                    await startDeltaManager();
-                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                        assertOneValidNoOp(messages);
-                        runCount++;
-                        assert.fail("Should not fire noop");
-                    });
-
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency);
-                    assert.strictEqual(runCount, 0);
-
-                    await tickClock(expectedTimeout - 1);
-                    assert.strictEqual(runCount, 0);
-                });
-
-                it("Should not update after ops freq until time threshold reached", async () => {
-                    let runCount = 0;
-
-                    await startDeltaManager();
-                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                        assertOneValidNoOp(messages);
-                        runCount++;
-                    });
-
-                    await emitSequentialOps(MessageType.Operation, noopCountFrequency);
-                    // should not run until timeout
                     await tickClock(expectedTimeout - 1);
                     assert.strictEqual(runCount, 0);
 
                     // should run after timeout
                     await tickClock(1);
-                    await emitSequentialOps();
                     assert.strictEqual(runCount, 1);
 
                     // Now timeout again should not cause noop
                     await tickClock(expectedTimeout);
-                    assert.strictEqual(runCount, 1);
-                });
-
-                it("Should update after timeout until ops threshold reached", async () => {
-                    let runCount = 0;
-
-                    await startDeltaManager();
-                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                        assertOneValidNoOp(messages);
-                        runCount++;
-                    });
-
                     await emitSequentialOps(MessageType.Operation, noopCountFrequency - 1);
-                    // should not run until ops count
-                    await tickClock(expectedTimeout);
-                    assert.strictEqual(runCount, 0);
-
-                    // should run after ops count
-                    await emitSequentialOps();
                     assert.strictEqual(runCount, 1);
                 });
 

@@ -110,7 +110,7 @@ export function createDataStoreFactory(
         type,
         get IFluidDataStoreFactory() { return this; },
         get IFluidDataStoreRegistry() { return this; },
-        instantiateDataStore: async (context) => (await factory).instantiateDataStore(context),
+        instantiateDataStore: async (context, existing) => (await factory).instantiateDataStore(context, existing),
         get: async (name: string) => (await factory).IFluidDataStoreRegistry?.get(name),
     };
 }

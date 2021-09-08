@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { IDeltasFetchResult, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import {
     requestOps,
@@ -23,7 +24,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspDeltaStorageService {
     constructor(
         private readonly deltaFeedUrl: string,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly epochTracker: EpochTracker,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -51,12 +52,21 @@ export class OdspDeltaStorageService {
                 "Content-Type": `multipart/form-data;boundary=${formBoundary}`,
             };
 
+            // Some request take a long time (1-2 minutes) to complete, where telemetry shows very small amount
+            // of time spent on server, and usually small payload sizes. I.e. all the time is spent somewhere in
+            // networking. Even bigger problem - a lot of requests timeout (based on cursory look - after 1-2 minutes)
+            // So adding some timeout to ensure we retry again in hope of faster success.
+            // Please see https://github.com/microsoft/FluidFramework/issues/6997 for details.
+            const abort = new AbortController();
+            setTimeout(() => abort.abort(), 30000);
+
             const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
                 baseUrl,
                 {
                     headers,
                     body: postBody,
                     method: "POST",
+                    signal: abort.signal,
                 },
                 "ops",
             );
@@ -71,7 +81,7 @@ export class OdspDeltaStorageService {
             this.logger.sendPerformanceEvent({
                 eventName: "OpsFetch",
                 headers: Object.keys(headers).length !== 0 ? true : undefined,
-                count: messages.length,
+                length: messages.length,
                 duration: response.duration, // this duration for single attempt!
                 ...response.commonSpoHeaders,
                 attempts: options.refresh ? 2 : 1,
@@ -106,6 +116,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             to: number,
             telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
         private readonly getCached: (from: number, to: number) => Promise<ISequencedDocumentMessage[]>,
+        private readonly requestFromSocket: (from: number, to: number) => void,
         private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
     ) {
     }
@@ -138,6 +149,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                     }
                     this.snapshotOps = undefined;
                 }
+
+                // Kick out request to PUSH for ops if it has them
+                this.requestFromSocket(from, to);
 
                 // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
                 // This saves a bit of processing time
@@ -173,7 +187,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         );
 
         return streamObserver(stream, (result) => {
-            if (result.done) {
+            if (result.done && opsFromSnapshot + opsFromCache + opsFromStorage !== 0) {
                 this.logger.sendPerformanceEvent({
                     eventName: "CacheOpsRetrieved",
                     opsFromSnapshot,

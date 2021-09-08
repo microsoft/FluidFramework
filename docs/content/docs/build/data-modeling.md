@@ -30,11 +30,11 @@ const schema = {
     }
 }
 
-const { container, containerServices } = await client.createContainer(/*service config*/, schema);
+const { fluidContainer, containerServices } = await client.createContainer(/*service config*/, schema);
 
-const initialObjects = container.initialObjects;
-const map = container.initialObjects.customMap;
-const cell = container.initialObjects["custom-cell"];
+const initialObjects = fluidContainer.initialObjects;
+const map = fluidContainer.initialObjects.customMap;
+const cell = fluidContainer.initialObjects["custom-cell"];
 ```
 
 ## Dynamic objects
@@ -53,10 +53,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell, SharedMap ],
 }
 
-const { container, containerServices } = await client.getContainer(/*service config*/, schema);
+const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
 
-const newCell = await container.create(SharedCell); // Create a new SharedCell
-const newMap = await container.create(SharedMap); // Create a new SharedMap
+const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
+const newMap = await fluidContainer.create(SharedMap); // Create a new SharedMap
 ```
 
 ### Using handles to store and retrieve Fluid objects
@@ -78,10 +78,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell ],
 }
 
-const { container, containerServices } = await client.getContainer(/*service config*/, schema);
-const map = container.initialObjects.map;
+const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const map = fluidContainer.initialObjects.map;
 
-const newCell = await container.create(SharedCell); // Create a new SharedCell
+const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
 map.set("cell-id", newCell.handle); // Attach the new SharedCell
 
 // ...
@@ -94,7 +94,6 @@ const cell = await cellHandle.get(); // Resolve the handle to get the object
 const cell = await map.get("cell-id").get(); // Get and resolve handle
 
 // Listening for new dynamic objects
-
 map.on("valueChanged", (changed) => {
     if (changed.key === "cell-id") {
         const handle = map.get(changed.key);
@@ -105,8 +104,34 @@ map.on("valueChanged", (changed) => {
 }
 ```
 
+For more information about handles see [Handles]({{< relref "handles.md" >}}).
+
 ### When to use dynamic objects
 
 Dynamic objects are more difficult to work with than `initialObjects`, but are especially important for large data sets where portions of the data are virtualized. Because dynamic objects are loaded into memory on demand, using them can reduce boot time of your application by delaying when the objects are loaded. Dynamic objects are also not strictly defined in the container schema. This enables you to create containers with flexible, user-generated schemas.
 
 An example where this is useful is building a collaborative storyboarding application. In this scenario you can have a large number of individual boards that make up the storyboard. By using a dynamic shared object for each board you can load them on demand as the user accesses them, instead of having to load them all in memory at once.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

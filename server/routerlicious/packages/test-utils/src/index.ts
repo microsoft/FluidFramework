@@ -5,6 +5,7 @@
 
 export * from "./logger";
 export * from "./messageFactory";
+export * from "./testCache";
 export * from "./testClientManager";
 export * from "./testCollection";
 export * from "./testContext";

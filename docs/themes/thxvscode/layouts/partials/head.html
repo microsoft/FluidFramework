@@ -49,6 +49,17 @@
         <script async src="/js/add-code-copy-button.js"></script>
     {{- end }}
 
+    {{- if .Params.skip_content_id -}}
+    <script lang="javascript">
+        function focus_iframe(id) {
+            var frame = document.getElementById("storybook-preview-iframe");
+            frame.contentWindow.focus();
+            //var el = frame.contentWindow.document.getElementById(id);
+            //el.focus();
+        }
+    </script>
+    {{- end }}
+
     <meta name=" description" content="{{ $summary }}" />
     <meta property="og:title" content="{{.Title}}" />
     <meta property="og:description" content="{{ $summary }}" />

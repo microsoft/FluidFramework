@@ -47,9 +47,9 @@ declare module "@fluidframework/core-interfaces" {
 }
 
 class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext) {
+    public static async load(runtime: IFluidDataStoreRuntime, _context: IFluidDataStoreContext, existing: boolean) {
         const kevValue = new KeyValue(runtime);
-        await kevValue.initialize();
+        await kevValue.initialize(existing);
 
         return kevValue;
     }
@@ -88,8 +88,8 @@ class KeyValue implements IKeyValue, IFluidObject, IFluidRouter {
         return defaultFluidObjectRequestHandler(this, request);
     }
 
-    private async initialize() {
-        if (!this.runtime.existing) {
+    private async initialize(existing: boolean) {
+        if (!existing) {
             this._root = SharedMap.create(this.runtime, "root");
             this._root.bindToContext();
         } else {
@@ -107,17 +107,21 @@ export class KeyValueFactoryComponent
     private readonly defaultComponentId = "default";
     public get IFluidDataStoreFactory() { return this; }
 
-    public async instantiateDataStore(context: IFluidDataStoreContext) {
+    public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
         const runtimeClass = mixinRequestHandler(
             async (request: IRequest) => {
                 const router = await routerP;
                 return router.request(request);
             });
 
-        const runtime = new runtimeClass(context, new Map([
-            SharedMap.getFactory(),
-        ].map((factory) => [factory.type, factory])));
-        const routerP = KeyValue.load(runtime, context);
+        const runtime = new runtimeClass(
+            context,
+            new Map([
+                SharedMap.getFactory(),
+            ].map((factory) => [factory.type, factory])),
+            existing,
+        );
+        const routerP = KeyValue.load(runtime, context, existing);
 
         return runtime;
     }

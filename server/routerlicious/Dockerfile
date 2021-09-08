@@ -9,7 +9,10 @@ RUN apt-get update && apt-get install -y \
     make \
     git \
     curl \
-    g++
+    g++ \
+    openssl \
+    libssl-dev \
+    ca-certificates
 
 # Add Tini
 ENV TINI_VERSION v0.18.0

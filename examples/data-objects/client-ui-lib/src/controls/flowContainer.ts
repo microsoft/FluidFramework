@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluid-internal/client-api";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import * as ui from "../ui";
 import { DockPanel } from "./dockPanel";
@@ -26,7 +27,8 @@ export class FlowContainer extends ui.Component {
     constructor(
         element: HTMLDivElement,
         title: string,
-        private readonly collabDocument: api.Document,
+        private readonly runtime: IFluidDataStoreRuntime,
+        private readonly context: IFluidDataStoreContext,
         private readonly sharedString: Sequence.SharedString,
         private readonly image: Image,
         private readonly options?: Record<string, any>) {
@@ -50,7 +52,14 @@ export class FlowContainer extends ui.Component {
         // FlowView holds the text
         const flowViewDiv = document.createElement("div");
         flowViewDiv.classList.add("flow-view");
-        this.flowView = new FlowView(flowViewDiv, this.collabDocument, this.sharedString, this.status, this.options);
+        this.flowView = new FlowView(
+            flowViewDiv,
+            this.runtime,
+            this.context,
+            this.sharedString,
+            this.status,
+            this.options,
+        );
 
         // Layer panel lets us put the canvas on top of the text
         const layerPanelDiv = document.createElement("div");
@@ -79,8 +88,6 @@ export class FlowContainer extends ui.Component {
         this.status.on("spellcheck", (value) => {
             this.initSpellcheck(value);
         });
-
-        this.status.addButton("Versions", `/sharedText/${this.collabDocument.id}/commits`, false);
 
         // Add flowView to the panel
         this.layerPanel.addChild(this.flowView);

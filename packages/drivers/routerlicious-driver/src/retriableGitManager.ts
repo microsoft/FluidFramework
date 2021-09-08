@@ -5,7 +5,12 @@
 
 import type * as git from "@fluidframework/gitresources";
 import type * as protocol from "@fluidframework/protocol-definitions";
-import { IGitManager, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
+import {
+    IGitManager,
+    IWholeFlatSummary,
+    IWholeSummaryPayload,
+    IWriteSummaryResponse,
+} from "@fluidframework/server-services-client";
 import { runWithRetry } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
@@ -132,6 +137,13 @@ export class RetriableGitManager implements IGitManager {
         return this.runWithRetry(
             async () => this.internalGitManager.createSummary(summary),
             "gitManager_createSummary",
+        );
+    }
+
+    public async getSummary(sha: string): Promise<IWholeFlatSummary> {
+        return this.runWithRetry(
+            async () => this.internalGitManager.getSummary(sha),
+            "gitManager_getSummary",
         );
     }
 

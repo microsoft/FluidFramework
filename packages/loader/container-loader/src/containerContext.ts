@@ -86,7 +86,16 @@ export class ContainerContext implements IContainerContext {
         return context;
     }
 
-    public readonly logger: ITelemetryLogger;
+    public readonly taggedLogger: ITelemetryLogger;
+
+    /**
+     * Subtlety: returns this.taggedLogger since vanilla this.logger is now deprecated. See IContainerContext for more
+     * details.
+    */
+    /** @deprecated See IContainerContext for more details. */
+    public get logger(): ITelemetryLogger {
+        return this.taggedLogger;
+    }
 
     public get id(): string {
         return this.container.id;
@@ -172,7 +181,7 @@ export class ContainerContext implements IContainerContext {
         public readonly pendingLocalState?: unknown,
 
     ) {
-        this.logger = container.subLogger;
+        this.taggedLogger = container.subLogger;
         this._fluidModuleP = new LazyPromise<IFluidModuleWithDetails>(
             async () => this.loadCodeModule(_codeDetails),
         );
@@ -202,8 +211,15 @@ export class ContainerContext implements IContainerContext {
         return this.container.attachState;
     }
 
-    public createSummary(): ISummaryTree {
-        return this.runtime.createSummary();
+    /**
+     * Create a summary. Used when attaching or serializing a detached container.
+     *
+     * @param blobRedirectTable - A table passed during the attach process. While detached, blob upload is supported
+     * using IDs generated locally. After attach, these IDs cannot be used, so this table maps the old local IDs to the
+     * new storage IDs so requests can be redirected.
+     */
+    public createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree {
+        return this.runtime.createSummary(blobRedirectTable);
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
@@ -301,7 +317,7 @@ export class ContainerContext implements IContainerContext {
 
     private async loadCodeModule(codeDetails: IFluidCodeDetails) {
         const loadCodeResult = await PerformanceEvent.timedExecAsync(
-            this.logger,
+            this.taggedLogger,
             { eventName: "CodeLoad" },
             async () => this.codeLoader.load(codeDetails),
         );

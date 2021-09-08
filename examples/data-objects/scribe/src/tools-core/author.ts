@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluid-internal/client-api";
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
@@ -16,24 +15,24 @@ import queue from "async/queue";
 // eslint-disable-next-line import/no-internal-modules
 import clone from "lodash/clone";
 
-import Counter = api.RateCounter;
+import { Histogram, RateCounter } from "./counters";
 
 let play: boolean = false;
 
 let metrics: IScribeMetrics;
 
-const ackCounter = new Counter();
-const latencyCounter = new Counter();
-const pingCounter = new Counter();
-const processCounter = new Counter();
-const typingCounter = new Counter();
-const serverOrderCounter = new Counter();
+const ackCounter = new RateCounter();
+const latencyCounter = new RateCounter();
+const pingCounter = new RateCounter();
+const processCounter = new RateCounter();
+const typingCounter = new RateCounter();
+const serverOrderCounter = new RateCounter();
 
 export interface IAuthor {
-    ackCounter: Counter;
-    latencyCounter: Counter;
-    typingCounter: Counter;
-    pingCounter: Counter;
+    ackCounter: RateCounter;
+    latencyCounter: RateCounter;
+    typingCounter: RateCounter;
+    pingCounter: RateCounter;
     metrics: IScribeMetrics;
     ss: ISharedString;
 }
@@ -157,24 +156,24 @@ export async function typeFile(
     };
 
     let author: IAuthor = {
-        ackCounter: new Counter(),
-        latencyCounter: new Counter(),
+        ackCounter: new RateCounter(),
+        latencyCounter: new RateCounter(),
         metrics: clone(m),
-        pingCounter: new Counter(),
+        pingCounter: new RateCounter(),
         ss,
-        typingCounter: new Counter(),
+        typingCounter: new RateCounter(),
     };
     const authors: IAuthor[] = [author];
 
     for (let i = 1; i < writers; i++) {
         const sharedString = await requestSharedString(loader, urlBase);
         author = {
-            ackCounter: new Counter(),
-            latencyCounter: new Counter(),
+            ackCounter: new RateCounter(),
+            latencyCounter: new RateCounter(),
             metrics: clone(m),
-            pingCounter: new Counter(),
+            pingCounter: new RateCounter(),
             ss: sharedString,
-            typingCounter: new Counter(),
+            typingCounter: new RateCounter(),
         };
         authors.push(author);
     }
@@ -247,7 +246,7 @@ export async function typeChunk(
         let totalOps = 0;
 
         const histogramRange = 5;
-        const histogram = new api.Histogram(histogramRange);
+        const histogram = new Histogram(histogramRange);
 
         // Trigger a new sample after a second has elapsed
         const samplingRate = 1000;
