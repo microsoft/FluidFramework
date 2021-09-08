@@ -6,9 +6,11 @@
  * @fileoverview In this file, we will test template syntax.
  */
 
+import { expect } from 'chai';
+import { SchemaValidator } from "../schemaValidator";
+
 (function() {
     describe("Simple Template Validation", function() {
-        const SchemaValidator = require("../schemaValidator");
         const schemaValidator = new SchemaValidator();
 
         it("should validate a simple file", function() {

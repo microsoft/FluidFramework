@@ -8,7 +8,7 @@
  *    functions described in /src/properties/path_helper.js
  */
 import _ from "lodash"
-import ChangeSet from "../changeset";
+import { ChangeSet } from "../changeset";
 
 describe("Reversible ChangeSets", function() {
     it("Inverting a string map insert", () => {
@@ -22,7 +22,7 @@ describe("Reversible ChangeSets", function() {
             },
         };
         const invertedCS = new ChangeSet(_.cloneDeep(originalCS));
-        invertedCS._toInverseChangeSet();
+        invertedCS.toInverseChangeSet();
 
         const combined = new ChangeSet(originalCS);
         combined.applyChangeSet(invertedCS);
@@ -39,7 +39,7 @@ describe("Reversible ChangeSets", function() {
             },
         };
         const invertedCS = new ChangeSet(_.cloneDeep(originalCS));
-        invertedCS._toInverseChangeSet();
+        invertedCS.toInverseChangeSet();
 
         const combined = new ChangeSet(originalCS);
         combined.applyChangeSet(invertedCS);
