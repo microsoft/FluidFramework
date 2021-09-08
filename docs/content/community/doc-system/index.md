@@ -247,7 +247,7 @@ build time.
 
 **Output**
 
-![An example ditaa diagram that has been converted to a PNG image](content/community/doc-system/example.png)
+![An example ditaa diagram that has been converted to a PNG image](example.png)
 
 
 [Read more about ditaa here.](https://github.com/stathissideris/ditaa) Note that we are using
