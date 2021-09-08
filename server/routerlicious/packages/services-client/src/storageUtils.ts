@@ -77,7 +77,11 @@ export function convertSummaryTreeToWholeSummaryTree(
                     if (!parentHandle) {
                         throw Error("Parent summary does not exist to reference by handle.");
                     }
-                    id = `${parentHandle}/${summaryObject.handle}`;
+                    let handlePath = summaryObject.handle;
+                    if (handlePath.length > 0 && !handlePath.startsWith("/")) {
+                        handlePath = `/${handlePath}`;
+                    }
+                    id = `${parentHandle}${handlePath}`;
                 }
                 break;
             }
