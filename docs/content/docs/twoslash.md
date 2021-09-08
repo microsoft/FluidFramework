@@ -6,4 +6,4 @@ title: Twoslash test page
 
 This is a test page for twoslash.
 
-{{< include file="output.html" safeHTML=true >}}
+{{< include file="twoslash-code.html" safeHTML=true >}}
