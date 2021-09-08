@@ -251,7 +251,7 @@ Paste the URL of the application into the address bar of another tab or even ano
 ## Next steps
 
 - Try extending the demo with more key/value pairs and a more complex UI
-- Consider using the [Fluent UI React controls](https://developer.microsoft.com/fluentui#/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
+- Consider using the [Fluent UI React controls](https://developer.microsoft.com/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
 - Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
 
 {{< callout tip >}}
