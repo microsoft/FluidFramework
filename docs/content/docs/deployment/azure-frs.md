@@ -36,12 +36,12 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes a `GET` request to your Azure Function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetAzureToken` along with the current user object. Later on, it makes a `GET` request to your Azure Function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetAzureToken", { userId:
     "UserId", userName: "Test User"}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
@@ -60,7 +60,7 @@ cont userDetails: ICustomUserDetails = {
 
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetAzureToken", { userId:
     "UserId", userName: "Test User", additionalDetails: userDetails}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
