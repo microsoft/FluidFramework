@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import BTree from 'sorted-btree';
 import { Payload } from './generic';
 
 const defaultFailMessage = 'Assertion failed';
@@ -338,6 +339,25 @@ export function copyPropertyIfDefined<TSrc, TDst>(source: TSrc, destination: TDs
 	if (value !== undefined) {
 		(destination as any)[property] = value;
 	}
+}
+
+function breakOnDifference(): { break: boolean } {
+	return { break: true };
+}
+
+/**
+ * Helper that returns whether two b-trees are equal.
+ * Accelerated when large portions of the tree are shared between the two.
+ */
+export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, compare: (valA: V, valB: V) => boolean) {
+	const diff = treeA.diffAgainst(treeB, breakOnDifference, breakOnDifference, (_, valA, valB) => {
+		if (!compare(valA, valB)) {
+			return { break: true };
+		}
+		return undefined;
+	});
+
+	return diff === undefined;
 }
 
 /**

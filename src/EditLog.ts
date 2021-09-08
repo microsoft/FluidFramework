@@ -387,7 +387,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	 */
 	public async getEditAtIndex(index: number): Promise<Edit<TChange>> {
 		if (index < this.numberOfSequencedEdits) {
-			const [startRevision, editChunk] = assertNotUndefined(this.editChunks.nextLowerPair(index + 1));
+			const [startRevision, editChunk] = assertNotUndefined(this.editChunks.getPairOrNextLower(index));
 			const { handle, edits } = editChunk;
 
 			if (edits === undefined) {
@@ -425,7 +425,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 		);
 
 		if (index < this.numberOfSequencedEdits) {
-			const [startRevision, editChunk] = assertNotUndefined(this.editChunks.nextLowerPair(index + 1));
+			const [startRevision, editChunk] = assertNotUndefined(this.editChunks.getPairOrNextLower(index));
 			const { edits } = editChunk;
 
 			return joinEditAndId(

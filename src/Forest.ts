@@ -4,7 +4,7 @@
  */
 
 import BTree from 'sorted-btree';
-import { fail, assert, comparePayloads, copyPropertyIfDefined } from './Common';
+import { fail, assert, comparePayloads, copyPropertyIfDefined, compareBtrees } from './Common';
 import { NodeData, Payload } from './generic';
 import { NodeId, TraitLabel } from './Identifiers';
 import { compareStrings } from './TreeViewUtilities';
@@ -440,10 +440,6 @@ export class Forest {
 		};
 	}
 
-	private static breakOnDifference(): { break: boolean } {
-		return { break: true };
-	}
-
 	/**
 	 * Compares two forests for equality.
 	 * @param forest - the other forest to compare to this one
@@ -459,19 +455,7 @@ export class Forest {
 			return false;
 		}
 
-		const diff = this.nodes.diffAgainst(
-			forest.nodes,
-			Forest.breakOnDifference,
-			Forest.breakOnDifference,
-			(_, nodeThis, nodeOther) => {
-				if (!compareForestNodes(nodeThis, nodeOther)) {
-					return { break: true };
-				}
-				return undefined;
-			}
-		);
-
-		return diff === undefined;
+		return compareBtrees(this.nodes, forest.nodes, compareForestNodes);
 	}
 
 	/**

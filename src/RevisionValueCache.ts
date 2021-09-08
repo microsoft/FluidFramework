@@ -116,7 +116,7 @@ export class RevisionValueCache<TValue> {
 		if (fromLRU !== undefined) {
 			return [requestedRevision, fromLRU];
 		}
-		return this.sortedEntries.nextLowerPair(requestedRevision + 1) ?? undefined;
+		return this.sortedEntries.getPairOrNextLower(requestedRevision) ?? undefined;
 	}
 
 	/**
