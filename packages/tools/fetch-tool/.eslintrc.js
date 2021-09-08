@@ -13,7 +13,4 @@ module.exports = {
         "no-null/no-null": "off",
         "prefer-arrow/prefer-arrow-functions": "off"
     },
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
 }
