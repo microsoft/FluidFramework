@@ -91,7 +91,7 @@ async function removeInstalled(version: string) {
     }
 }
 
-function resolveVersion(requested: string, installed: boolean) {
+export function resolveVersion(requested: string, installed: boolean) {
     const cachedVersion = resolutionCache.get(requested);
     if (cachedVersion) { return cachedVersion; }
     if (semver.valid(requested)) {
@@ -146,6 +146,7 @@ async function ensureModulePath(version: string, modulePath: string) {
 }
 
 export async function ensureInstalled(requested: string, packageList: string[], force: boolean) {
+    if (requested === pkgVersion) { return; }
     const version = resolveVersion(requested, false);
     const modulePath = getModulePath(version);
 
@@ -215,10 +216,10 @@ export const loadPackage = (modulePath: string, pkg: string) =>
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-require-imports
     require(path.join(modulePath, "node_modules", pkg));
 
-export function getRequestedRange(requested?: number | string): string {
-    if (requested === undefined || requested === 0) { return pkgVersion; }
+export function getRequestedRange(baseVersion: string, requested?: number | string): string {
+    if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
-    const version = new semver.SemVer(pkgVersion);
+    const version = new semver.SemVer(baseVersion);
     // ask for prerelease in case we just bumpped the version and haven't release the previous version yet.
     return `^${version.major}.${version.minor + requested}.0-0`;
 }

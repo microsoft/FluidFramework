@@ -39,6 +39,14 @@ jobs:
       value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
     - name: testPackagePathPattern
       value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
+    - name: skipComponentGovernanceDetection
+      value: true
+    - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+      - name: feed
+        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+    - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
+      - name: feed
+        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
     steps:
     # Setup
@@ -61,6 +69,7 @@ jobs:
           Pipeline Variables:
             testWorkspace=${{ parameters.testWorkspace }}
             testPackageFilePattern=${{ variables.testPackageFilePattern }}
+            feed=${{ variables.feed }}
           "
 
     # Install
@@ -70,10 +79,18 @@ jobs:
         version: 12.x
 
     # Download artifact
-    - download: client
+    - task: DownloadPipelineArtifact@2
       displayName: Download test package
-      artifact: pack
-      patterns: "**/${{ variables.testPackageFilePattern }}"
+      inputs:
+        source: specific
+        project: internal
+        pipeline: Build - client packages
+        preferTriggeringPipeline: true
+        runVersion: latestFromBranch
+        runBranch: $(Build.SourceBranch)
+        artifact: pack
+        patterns: "**/${{ variables.testPackageFilePattern }}"
+        path: $(Pipeline.Workspace)/client/pack
 
     - task: Bash@3
       displayName: Create test directory
@@ -96,9 +113,9 @@ jobs:
           echo "registry=https://registry.npmjs.org" >> ./.npmrc
           echo "always-auth=false" >> ./.npmrc
 
-          echo "@fluidframework:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@fluid-experimental:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@fluid-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+          echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
           echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
           echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
