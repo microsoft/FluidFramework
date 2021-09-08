@@ -35,7 +35,7 @@
     "@fluidframework/common-definitions": "^0.20.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/protocol-definitions-0.1024.0": "npm:@fluidframework/protocol-definitions@0.1024.0",
     "@microsoft/api-extractor": "^7.16.1",
@@ -57,41 +57,41 @@
   "typeValidation": {
     "version": "0.1025.0",
     "broken": {
-      "ICreateBlobResponse": {
+      "InterfaceDeclaration_ICreateBlobResponse": {
         "backCompat": false
       },
-      "IQuorum": {
+      "InterfaceDeclaration_IQuorum": {
         "forwardCompat": false
       },
-      "ISummaryAttachment": {
+      "InterfaceDeclaration_ISummaryAttachment": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "ISummaryBlob": {
+      "InterfaceDeclaration_ISummaryBlob": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "ISummaryHandle": {
+      "InterfaceDeclaration_ISummaryHandle": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "ISummaryTree": {
+      "InterfaceDeclaration_ISummaryTree": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "SummaryObject": {
+      "TypeAliasDeclaration_SummaryObject": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "SummaryTree": {
+      "TypeAliasDeclaration_SummaryTree": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "SummaryType": {
+      "EnumDeclaration_SummaryType": {
         "forwardCompat": false,
         "backCompat": false
       },
-      "SummaryTypeNoHandle": {
+      "TypeAliasDeclaration_SummaryTypeNoHandle": {
         "forwardCompat": false,
         "backCompat": false
       }

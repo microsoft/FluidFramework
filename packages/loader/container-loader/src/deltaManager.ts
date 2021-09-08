@@ -10,6 +10,7 @@ import {
     ITelemetryLogger,
     IEventProvider,
     ITelemetryProperties,
+    ITelemetryErrorEvent,
 } from "@fluidframework/common-definitions";
 import {
     IConnectionDetails,
@@ -452,18 +453,32 @@ export class DeltaManager
         }
     }
 
-    public triggerConnectionRecovery(reason: string, props: ITelemetryProperties) {
-            assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
-            this.logger.sendErrorEvent({
-                eventName: "ConnectionRecovery",
-                reason,
-                // This directly tells us if fetching ops is in flight, and thus likely the reason of
-                // stalled op processing
-                fetchReason: this.fetchReason,
-                ...props,
-            });
-            this.disconnectFromDeltaStream(reason);
-            this.triggerConnect({ reason, mode: "read", fetchOpsFromStorage: false });
+    /**
+     * Log error event with a bunch of internal to DeltaManager information about state of op processing
+     * Used to diagnose connectivity issues related to op processing (i.e. cases where for some reason
+     * we stop processing ops that results in no processing join op and thus moving to connected state)
+     * @param event - Event to log.
+     */
+    public logConnectionIssue(event: ITelemetryErrorEvent) {
+        assert(this.connection !== undefined, 0x238 /* "called only in connected state" */);
+
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        this.logger.sendErrorEvent({
+            ...event,
+            // This directly tells us if fetching ops is in flight, and thus likely the reason of
+            // stalled op processing
+            fetchReason: this.fetchReason,
+            // A bunch of useful sequence numbers to understand if we are holding some ops from processing
+            lastQueuedSequenceNumber: this.lastQueuedSequenceNumber, // last sequential op
+            lastProcessedSequenceNumber: this.lastProcessedSequenceNumber, // same as above, but after processing
+            lastObserved: this.lastObservedSeqNumber, // last sequence we ever saw; may have gaps with above.
+            // connection info
+            ...this.connectionStateProps,
+            pendingOps: this.pending.length, // Do we have any pending ops?
+            pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
+            haveHandler: this.handler !== undefined, // do we have handler installed?
+            closed: this.closed,
+        });
     }
 
     private set_readonlyPermissions(readonly: boolean) {
@@ -1024,14 +1039,6 @@ export class DeltaManager
             ? getNackReconnectInfo(message.content) :
             createGenericNetworkError(`Nack: unknown reason`, true);
 
-        if (this.reconnectMode !== ReconnectMode.Enabled) {
-            this.logger.sendErrorEvent({
-                eventName: "NackWithNoReconnect",
-                reason: reconnectInfo.message,
-                mode: this.connectionMode,
-            });
-        }
-
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             "write",
@@ -1498,6 +1505,10 @@ export class DeltaManager
         }
         this.lastProcessedSequenceNumber = message.sequenceNumber;
 
+        // a bunch of code assumes that this is true
+        assert(this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
+            0x267 /* "lastObservedSeqNumber should be updated first" */);
+
         // Back-compat for older server with no term
         if (message.term === undefined) {
             message.term = 1;
@@ -1510,6 +1521,9 @@ export class DeltaManager
         this.handler.process(message);
 
         const endTime = Date.now();
+
+        // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers
+        // test this.lastProcessedSequenceNumber instead of using op.sequenceNumber itself.
         this.emit("op", message, endTime - startTime);
     }
 
@@ -1536,7 +1550,7 @@ export class DeltaManager
         }
 
         if (this.closed) {
-            this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection" });
+            this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection", reason });
             return;
         }
 

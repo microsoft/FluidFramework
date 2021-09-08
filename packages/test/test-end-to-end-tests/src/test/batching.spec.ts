@@ -83,12 +83,14 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         // Create a Container for the first client.
         const container1 = await provider.makeTestContainer(testContainerConfig);
         dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        dataObject1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
         dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
         dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
         // Load the Container that was created by the first client.
         const container2 = await provider.loadTestContainer(testContainerConfig);
         dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        dataObject2.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
         dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
         dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 

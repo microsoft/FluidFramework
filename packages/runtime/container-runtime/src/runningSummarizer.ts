@@ -329,9 +329,6 @@ export class RunningSummarizer implements IDisposable {
         cancellationToken = this.cancellationToken): void
     {
         if (this.summarizingLock !== undefined) {
-            // This should not happen often, if at all (depends on how on-demand and enqueues summaries are used)
-            // Log an error to learn about these cases and assess if we need to change anything.
-            this.logger.sendTelemetryEvent({ eventName: "ConcurrentSummaryAttempt", reason: summarizeReason });
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
             this.tryWhileSummarizing = true;

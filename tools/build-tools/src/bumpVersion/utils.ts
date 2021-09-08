@@ -240,7 +240,7 @@ export class GitRepo {
 export async function runPolicyCheckWithFix(gitRepo: GitRepo){
     console.log("Running Policy Check with Resolution(fix)");
     await exec(
-        `node ${path.join(__dirname, '..', 'repoPolicyCheck', 'repoPolicyCheck.js')} -r -q`,
+        `node ${path.join(__dirname, '..', 'repoPolicyCheck', 'repoPolicyCheck.js')} -r`,
         gitRepo.resolvedRoot,
         "policy-check:fix failed");
 

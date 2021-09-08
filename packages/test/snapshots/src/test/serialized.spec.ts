@@ -80,7 +80,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
             assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
         });
 
-        it.skip(`Rehydrate container from ${filenameShort} round trip serialize/deserialize${
+        it(`Rehydrate container from ${filenameShort} round trip serialize/deserialize${
             disableIsolatedChannels ? " (disable isolated channels)" : ""}`, async () => {
             const snapshotTree = fs.readFileSync(filename, "utf8");
 

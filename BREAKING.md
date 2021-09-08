@@ -1,3 +1,9 @@
+## 0.48 Breaking changes
+- [client-api package removed](#client-api-package-removed)
+
+### client-api package removed
+The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
+
 ## 0.47 Breaking changes
 - [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
 - [Changes to IFluidDataStoreFactory](#Changes-to-IFluidDataStoreFactory)
