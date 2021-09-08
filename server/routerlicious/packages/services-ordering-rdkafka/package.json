@@ -29,7 +29,7 @@
     "@fluidframework/server-services-ordering-zookeeper": "^0.1031.0",
     "moniker": "^0.1.2",
     "nconf": "^0.11.0",
-    "node-rdkafka": "^2.10.1"
+    "node-rdkafka": "^2.11.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0-0",
