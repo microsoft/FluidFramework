@@ -10,6 +10,7 @@ import * as sinon from "sinon";
 import request from "supertest";
 import * as nconf from "nconf";
 import { TestThrottler } from "@fluidframework/server-test-utils";
+import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import * as historianApp from "../app";
 import { RestGitService } from "../services";
 import { TestTenantService, TestCache } from "./utils";
@@ -29,6 +30,11 @@ const defaultProvider = new nconf.Provider({}).defaults({
     },
 });
 const defaultTenantService = new TestTenantService();
+
+const lumberjackEngine = new TestEngine1();
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 /**
  * A helper method that will first send (limit) number of requests and assert they are not throttled,
