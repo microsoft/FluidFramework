@@ -5,10 +5,11 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
 
 ## Usage
 
-    Usage: fluid-fetch [options] URL
+    Usage: fluid-fetch [options] "URL"
     URL: <ODSP joinSession URL>|<Routerlicious URL>
     Options:
       --dump:rawmessage               : dump all messages
+      --dump:rawmessage:overwrite     : dump all messages and overwrite existing        messages.json
       --dump:snapshotVersion          : dump a list of snapshot version
       --dump:snapshotTree             : dump the snapshot trees
       --dump:snapshotBlob             : dump the contents of snapshot blobs
@@ -20,6 +21,7 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
       --filter:messageType <type>     : filter message by <type>
       --jwt <token>                   : token to be used for routerlicious URLs
       --numSnapshotVersions <number>  : Number of versions to load (default:10)
+      --overwrite                     : Overwrite existing messages.json
       --snapshotVersionIndex <number> : Index of the version to dump
       --saveDir <outdir>              : Save data of the snapshots and messages
 
@@ -93,3 +95,21 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
     [defaultDataStore]/root/header                                             | 300
     ----------------------------------------------------------------------------------------------------
     Total snapshot size                                                        | 3048
+
+## Debugging
+
+If you would like to debug fetch-tool, you can create a unit test. Remember to add tsconfig.json and list mocha in devDependencies.
+
+In the unit test, you can use `setArguments()` from fluidFetchArgs to pass in arguments you want to test. Then call the methods you want to run and you will be able to set breakpoints in vscode.
+
+**Example**
+```js
+describe("fetch tool", () => {
+    it("can fetch messages", async () => {
+        fluidFetchArgs.setArguments(your_args);
+        const documentService = await fluidFetchInit(your_paramURL);
+        await fluidFetchMessages(documentService, your_saveDir);
+    });
+});
+```
+

@@ -67,6 +67,8 @@ export function printUsage() {
     }
 }
 
+// Can be used in unit test to pass in customized argument values
+// More argument options can be added when needed
 export function setArguments(values: {
     saveDir: string,
     paramURL: string
@@ -78,6 +80,9 @@ export function setArguments(values: {
     paramSaveDir = values.saveDir;
     paramURL = values.paramURL;
     dumpMessages = values.dumpMessages ?? dumpMessages;
+    dumpMessageStats = values.dumpMessageStats ?? dumpMessageStats;
+    dumpSnapshotStats = values.dumpSnapshotStats ?? dumpSnapshotStats;
+    dumpSnapshotTrees = values.dumpSnapshotTrees ?? dumpSnapshotTrees;
     overWrite = values.overWrite ?? overWrite;
 }
 
@@ -88,7 +93,7 @@ export function parseArguments() {
             case "--dump:rawmessage":
                 dumpMessages = true;
                 break;
-                case "--dump:rawmessage:overwrite":
+            case "--dump:rawmessage:overwrite":
                 dumpMessages = true;
                 overWrite = true;
                 break;
