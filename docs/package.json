@@ -48,6 +48,7 @@
     "copyfiles": "^2.1.0",
     "download-cli": "^1.1.1",
     "glob": "^7.1.6",
+    "hast-util-to-html": "^8.0.2",
     "markdown-magic-package-json": "^2.0.2",
     "markdown-magic-package-scripts": "^1.2.1",
     "markdown-magic-template": "^1.0.0",
@@ -55,9 +56,19 @@
     "markdownlint-rule-emphasis-style": "^1.0.1",
     "markdownlint-rule-github-internal-links": "^0.0.2",
     "markdownlint-rule-helpers": "^0.14.0",
+    "mdast-util-to-hast": "^11.2.0",
+    "mdast-util-to-markdown": "^1.2.1",
+    "mdast-util-to-string": "^3.1.0",
     "node-fetch": "^2.6.1",
+    "remark": "^14.0.1",
+    "remark-html": "^14.0.1",
+    "remark-shiki-twoslash": "^3.0.3",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.5",
     "shelljs": "^0.8.4"
+  },
+  "devDependencies": {
+    "@fluidframework/tinylicious-client": "^0.47.0-0",
+    "fluid-framework": "^0.47.0-0"
   }
 }
