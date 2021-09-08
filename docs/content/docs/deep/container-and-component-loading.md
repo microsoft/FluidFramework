@@ -30,7 +30,7 @@ Keep reading as it's likely explained later.
 The Hosting Application is a webpage that loads a Fluid container. This has also been referred to as a "Fluid
 Enlightened Canvas" and currently consists of: the Fluid preview app, Teams, Outlook, and a handful more. To load any
 Fluid container, the Hosting Application needs the Fluid Loader Package. This is a small package whose only
-responsibility is to load Fluid Containers. The Fluid Loader has no knowledge of the `ContainerRuntime` or `Component`
+responsibility is to load Fluid containers. The Fluid Loader has no knowledge of the `ContainerRuntime` or `Component`
 specific code.
 
 The `Loader` object has a method `resolve(...)` **(1)** that can load a `Container` when provided the following:

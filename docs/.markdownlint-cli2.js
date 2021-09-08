@@ -111,6 +111,7 @@ module.exports = {
             "names": [
                 "Azure Fluid Relay service",
                 "Fluid container",
+                "Fluid containers",
                 "Fluid Framework",
                 "JavaScript",
                 "JSON",
