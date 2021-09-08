@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { convertProtocolAndAppSummaryToSnapshotTree } from "../utils";
 
@@ -54,13 +54,13 @@ describe("Dehydrate Container", () => {
         const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 2, "2 trees should be there");
-        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 4,
-            "2 protocol blobs should be there(4 mappings)");
+        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 2,
+            "2 protocol blobs should be there.");
 
         // Validate the ".component" blob.
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
         assert.strictEqual(
-            JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.blobs[defaultDataStoreBlobId])),
+            JSON.parse(bufferToString(snapshotTree.trees.default.blobsContents[defaultDataStoreBlobId], "utf8")),
            "defaultDataStore",
            "The .component blob's content is incorrect",
         );
@@ -68,7 +68,8 @@ describe("Dehydrate Container", () => {
         // Validate "root" sub-tree.
         const rootAttributesBlobId = snapshotTree.trees.default.trees.root.blobs.attributes;
         assert.strictEqual(
-            JSON.parse(fromBase64ToUtf8(snapshotTree.trees.default.trees.root.blobs[rootAttributesBlobId])),
+            JSON.parse(
+                bufferToString(snapshotTree.trees.default.trees.root.blobsContents[rootAttributesBlobId], "utf8")),
             "rootattributes",
             "The root sub-tree's content is incorrect",
         );
