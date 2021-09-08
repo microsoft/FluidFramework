@@ -186,7 +186,7 @@ export async function waitContainerToCatchUp(container: Container) {
 
             const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
             assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
-                "lastKnownSeqNumber should never be below last processed sequence number");
+                0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
                 accept(hasCheckpointSequenceNumber);
                 return;
