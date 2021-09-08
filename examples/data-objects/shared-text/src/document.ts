@@ -12,8 +12,8 @@ const rootMapId = "root";
 /**
  * A document is a collection of collaborative types.
  */
-export class Document {
-    public static async load(runtime: IFluidDataStoreRuntime, existing: boolean): Promise<Document> {
+export class SharedTextDocument {
+    public static async load(runtime: IFluidDataStoreRuntime, existing: boolean): Promise<SharedTextDocument> {
         let root: ISharedMap;
 
         if (!existing) {
@@ -23,7 +23,7 @@ export class Document {
             root = await runtime.getChannel(rootMapId) as ISharedMap;
         }
 
-        return new Document(runtime, root);
+        return new SharedTextDocument(runtime, root);
     }
 
     /**
