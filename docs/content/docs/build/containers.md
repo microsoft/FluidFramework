@@ -185,6 +185,12 @@ Use the `name` property on the container to help manage multiple containers.
 
 {{% /callout %}}
 
+## Container services
+
+When you load a container, the Fluid service will also return a service-specific *services* object. This object contains
+references to useful services you can use to build richer apps. An example of a container service is the
+[Audience]({{< relref "audience.md" >}}), which provides user information for clients that are connected to the container.
+
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
