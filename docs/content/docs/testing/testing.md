@@ -11,7 +11,7 @@ This document will explain how to use these tools to get started with writing au
 
 ## Automation against Tinylicious
 
-Automation against Tinylicious is useful for scenarios such as merge validation which want to be unaffected by service interruptions.  Your automation should be responsible for starting a local instance of Tinylicious along with terminating it once tests have completed.  This example uses the [`start-server-and-test` package](https://github.com/bahmutov/start-server-and-test) to do this.  You can substitute other libraries or implementations.
+Automation against Tinylicious is useful for scenarios such as merge validation which want to be unaffected by service interruptions.  Your automation should be responsible for starting a local instance of Tinylicious along with terminating it once tests have completed.  This example uses the [start-server-and-test package](https://github.com/bahmutov/start-server-and-test) to do this.  You can substitute other libraries or implementations.
 
 First install the packages or add them to your dependencies then install:
 
