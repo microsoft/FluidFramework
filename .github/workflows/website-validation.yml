@@ -5,7 +5,12 @@ on:
     paths:
       - "docs/**"
 
+defaults:
+  run:
+    working-directory: ./docs
+
 jobs:
+
   build_site:
     runs-on: ubuntu-latest
     name: Build site
@@ -18,7 +23,6 @@ jobs:
         node-version: "12"
     - name: Build site artifact
       run: |
-        cd $GITHUB_WORKSPACE/docs
         npm ci
         npm run download
         npm run build
@@ -48,39 +52,28 @@ jobs:
     - name: Install dependencies
       run: |
         npm install pm2 -g
-        cd $GITHUB_WORKSPACE/docs
         npm ci
     - name: Start server in background
-      run: |
-        cd $GITHUB_WORKSPACE/docs
-        pm2 start $GITHUB_WORKSPACE/docs/serve.js
+      run: pm2 start $GITHUB_WORKSPACE/docs/serve.js
     - name: Check internal links
       id: linkcheck
+      continue-on-error: true
+      run: npm run linkcheck
+
+    - name: Save PR number
       run: |
-        cd $GITHUB_WORKSPACE/docs
-        npm run linkcheck
-    - name: Report success
-      if: ${{ success() && steps.linkcheck.outcome == 'success' }}
-      uses: marocchino/sticky-pull-request-comment@v2
+        mkdir -p ./results
+        echo ${{ github.event.number }} > ./results/pr
+    - name: Save linkcheck report
+      # if: ${{ success() && steps.linkcheck.outcome == 'success' }}
+      run: |
+        cat $GITHUB_WORKSPACE/.github/workflows/data/linkcheck-${{ steps.linkcheck.outcome }}.md > ./results/linkcheck
+    # - if: ${{ failure() || steps.linkcheck.outcome != 'success' }}
+    #   run: |
+    #     echo ${{ github.event.number }} > ./results/linkcheck
+    - name: Upload results artifact
+      uses: actions/upload-artifact@v2
       with:
-        header: linkreport
-        recreate: true
-        message: |
-          ### Broken link report 👍🏻
-
-          🔗 No broken links found! ✅
-
-          Your attention to detail is admirable.
-    - name: Report failure
-      if: ${{ failure() || steps.linkcheck.outcome != 'success' }}
-      uses: marocchino/sticky-pull-request-comment@v2
-      with:
-        header: linkreport
-        recreate: true
-        message: |
-          ### Broken link report ⚠
-
-          🔗 Found some broken links! 💔
-
-          Run a link check locally to find them. See
-          <https://github.com/microsoft/FluidFramework/wiki/Checking-for-broken-links-in-the-documentation> for more information.
+        name: website-validation-results
+        path: ./docs/results
+        retention-days: 3
