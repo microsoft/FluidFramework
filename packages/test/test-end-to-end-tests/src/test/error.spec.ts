@@ -19,7 +19,7 @@ import {
 import {
     createOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
-import { ChildLogger, isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
     createDocumentId,
     LocalCodeLoader,
@@ -69,7 +69,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
             urlResolver,
             documentServiceFactory: mockFactory,
             codeLoader,
-            logger: ChildLogger.create(getTestLogger?.(), undefined, { all: { driverType: provider.driver.type } }),
+            logger: provider.logger,
         });
         loaderContainerTracker.add(loader);
 

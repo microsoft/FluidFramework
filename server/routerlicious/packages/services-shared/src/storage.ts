@@ -128,7 +128,7 @@ export class DocumentStorage implements IDocumentStorage {
         const uploadManager = this.enableWholeSummaryUpload ?
             new WholeSummaryUploadManager(gitManager) :
             new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
-        const handle = await uploadManager.writeSummaryTree(fullTree, "", "container");
+        const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
 
         winston.info(`Tree reference: ${JSON.stringify(handle)}`, { messageMetaData });
 

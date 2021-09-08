@@ -2,10 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FluidContainer, IMember, IServiceAudience } from "fluid-framework";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
+// Re-export so developers can build loggers without pulling in common-definitions
+export {
+    ITelemetryBaseEvent,
+    ITelemetryBaseLogger,
+} from "@fluidframework/common-definitions";
+
+/**
+ * Props for initializing a TinyliciousClient
+ */
+export interface TinyliciousClientProps {
+    /**
+     * Optional. Configuration for establishing a connection with the Tinylicious.
+     */
+    connection?: TinyliciousConnectionConfig,
+    /**
+     * Optional. A logger instance to receive diagnostic messages.
+     */
+    logger?: ITelemetryBaseLogger,
+}
+
+/**
+ * Parameters for establishing a connection with the a Tinylicious service.
+ */
 export interface TinyliciousConnectionConfig {
+    /**
+     * Optional. Override of the port
+     * @defaultValue - 7070
+     */
     port?: number;
+    /**
+     * Optional. Override of the domain
+     * @defaultValue - http://localhost
+     */
     domain?: string
 }
 
@@ -22,11 +54,6 @@ export interface TinyliciousContainerServices {
      * listeners for when the roster has any changes from users joining/leaving the session
      */
     audience: ITinyliciousAudience;
-}
-
-export interface TinyliciousResources {
-    fluidContainer: FluidContainer;
-    containerServices: TinyliciousContainerServices;
 }
 
 /**

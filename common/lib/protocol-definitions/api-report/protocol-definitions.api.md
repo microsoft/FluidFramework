@@ -329,6 +329,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
+    // @alpha
+    expHash1?: string;
     // (undocumented)
     metadata?: any;
     // (undocumented)
@@ -536,6 +538,8 @@ export interface ITokenClaims {
     exp: number;
     // (undocumented)
     iat: number;
+    // (undocumented)
+    jti?: string;
     // (undocumented)
     scopes: string[];
     // (undocumented)

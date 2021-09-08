@@ -161,6 +161,8 @@ export interface ITestObjectProvider {
     // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     // (undocumented)
+    logger: ITelemetryBaseLogger;
+    // (undocumented)
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader;
     // (undocumented)
@@ -250,7 +252,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
     // (undocumented)
     get IFluidDataStoreFactory(): this;
     // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing?: boolean): Promise<FluidDataStoreRuntime>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
     // (undocumented)
     readonly type: string;
 }
@@ -275,6 +277,8 @@ export class TestObjectProvider {
     // (undocumented)
     readonly LoaderConstructor: typeof Loader;
     loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<Container>;
+    // (undocumented)
+    get logger(): ITelemetryBaseLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): Loader;
     // (undocumented)

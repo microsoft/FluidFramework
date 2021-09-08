@@ -15,10 +15,10 @@ import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 
 export function create(
-    store: nconf.Provider,
+    config: nconf.Provider,
     tenantService: ITenantService,
-    cache: ICache,
     throttler: IThrottler,
+    cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>): Router {
     const router: Router = Router();
 

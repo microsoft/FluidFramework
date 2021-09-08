@@ -5,12 +5,6 @@
 
 import { ITelemetryProperties } from "@fluidframework/common-definitions";
 
-/** LoggingError interface providing both a getter and setter for telemetry props */
-export interface IWriteableLoggingError {
-    getTelemetryProperties(): ITelemetryProperties;
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
-}
-
 /**
  * All normalized errors flowing through the Fluid Framework adhere to this readonly interface.
  * It features errorType, fluidErrorCode, and message strings, plus Error's members as optional

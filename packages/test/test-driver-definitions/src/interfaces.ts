@@ -6,13 +6,18 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 
-export type TestDriverTypes = "tinylicious" | "routerlicious" | "odsp" | "local";
+export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 export interface ITestDriver{
     /**
      * The type of server the test driver executes against
      */
     readonly type: TestDriverTypes;
+
+    /**
+     * Specific endpoint name if there are any
+     */
+    readonly endpointName?: string;
 
     /**
      * The semantic version of the test drivers package.
@@ -37,7 +42,7 @@ export interface ITestDriver{
      * The test id may not map directly to any specific Fluid Framework concept.
      * If you need more control you should disambiguate the driver based on its
      * type, this should only be done it absolutely necessary for complex scenarios
-     * as the test may not  work against all supported servers if done.
+     * as the test may not work against all supported servers if done.
      */
     createCreateNewRequest(testId: string): IRequest;
 
@@ -47,7 +52,7 @@ export interface ITestDriver{
      * The test id may not map directly to any specific Fluid Framework concept.
      * If you need more control you should disambiguate the driver based on its
      * type, this should only be done it absolutely necessary for complex scenarios
-     * as the test may not  work against all supported servers if done.
+     * as the test may not work against all supported servers if done.
      */
     createContainerUrl(testId: string): Promise<string>;
 }

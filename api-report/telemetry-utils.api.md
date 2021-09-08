@@ -17,6 +17,7 @@ import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import { TelemetryEventCategory } from '@fluidframework/common-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -105,7 +106,7 @@ export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "fluidErr
 // @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
+    [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 
 // @public (undocumented)
@@ -114,14 +115,6 @@ export interface ITelemetryLoggerPropertyBags {
     all?: ITelemetryLoggerPropertyBag;
     // (undocumented)
     error?: ITelemetryLoggerPropertyBag;
-}
-
-// @public
-export interface IWriteableLoggingError {
-    // (undocumented)
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
-    // (undocumented)
-    getTelemetryProperties(): ITelemetryProperties;
 }
 
 // @public
@@ -187,6 +180,9 @@ export enum TelemetryDataTag {
     UserData = "UserData"
 }
 
+// @public (undocumented)
+export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+
 // @public
 export abstract class TelemetryLogger implements ITelemetryLogger {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
@@ -208,6 +204,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
     sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
+        category: TelemetryEventCategory;
+    }, error?: any): void;
 }
 
 // @public

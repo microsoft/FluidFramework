@@ -16,7 +16,6 @@ import {
     IFluidErrorBase,
     normalizeError,
     hasErrorInstanceId,
-    IWriteableLoggingError,
 } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -46,11 +45,12 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 /**
  * Warning emitted when requests to storage are being throttled.
  */
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
     readonly errorType = ContainerErrorType.throttlingError;
 
     constructor(
         message: string,
+        readonly fluidErrorCode: string,
         readonly retryAfterSeconds: number,
         props?: ITelemetryProperties,
     ) {
@@ -61,10 +61,14 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
      * Wrap the given error as a ThrottlingWarning, preserving any safe properties for logging
      * and prefixing the wrapped error message with messagePrefix.
      */
-    static wrap(error: any, prefix: string, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning {
+    static wrap(
+        error: any,
+        errorCode: string,
+        retryAfterSeconds: number,
+        logger: ITelemetryLogger,
+    ): IThrottlingWarning {
         const newErrorFn =
-            (errMsg: string) =>
-                new ThrottlingWarning(`${prefix}: ${errMsg}`, retryAfterSeconds);
+            (errMsg: string) => new ThrottlingWarning(errMsg, errorCode, retryAfterSeconds);
         return wrapErrorAndLog(error, newErrorFn, logger);
     }
 }
@@ -81,12 +85,15 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
     }
 }
 
-export class DataCorruptionError extends LoggingError implements IErrorBase {
+export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
     readonly errorType = ContainerErrorType.dataCorruptionError;
     readonly canRetry = false;
 
-    constructor(errorMessage: string, props: ITelemetryProperties) {
-        super(errorMessage, { ...props, dataProcessingError: 1 });
+    constructor(
+        readonly fluidErrorCode: string,
+        props: ITelemetryProperties,
+    ) {
+        super(fluidErrorCode, { ...props, dataProcessingError: 1 });
     }
 }
 
@@ -156,7 +163,7 @@ export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMess
  * @param newErrorFn - callback that will create a new error given the original error's message
  * @returns A new error object "wrapping" the given error
  */
-export function wrapError<T extends IWriteableLoggingError>(
+export function wrapError<T extends IFluidErrorBase>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
 ): T {
@@ -184,7 +191,7 @@ export function wrapError<T extends IWriteableLoggingError>(
 }
 
 /** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
-export function wrapErrorAndLog<T extends IWriteableLoggingError>(
+export function wrapErrorAndLog<T extends IFluidErrorBase>(
     innerError: unknown,
     newErrorFn: (message: string) => T,
     logger: ITelemetryLogger,
@@ -197,7 +204,6 @@ export function wrapErrorAndLog<T extends IWriteableLoggingError>(
     logger.sendTelemetryEvent({
         eventName: "WrapError",
         wrappedByErrorInstanceId,
-        category: "generic", // avoids it being an "error" category due to  supplied error
     }, innerError);
 
     return newError;
