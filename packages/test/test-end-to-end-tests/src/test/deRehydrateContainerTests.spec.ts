@@ -30,15 +30,20 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { getSnapshotTreeFromSerializedContainer, ISnapshotTreeWithBlobContents } from "@fluidframework/container-loader/dist/utils";
+import {
+    getSnapshotTreeFromSerializedContainer,
+    ISnapshotTreeWithBlobContents,
+    // eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
 
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
-    function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string): ISnapshotTreeWithBlobContents {
+    function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
+        ISnapshotTreeWithBlobContents
+    {
         const subTree = tree.trees[key];
         assert(subTree, msg ?? `${key} subtree not present`);
         return subTree;
