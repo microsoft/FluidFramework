@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
-import { assert, Lazy, stringToBuffer } from "@fluidframework/common-utils";
+import { assert, Lazy } from "@fluidframework/common-utils";
 import {
     createServiceEndpoints,
     IChannelContext,
@@ -156,12 +156,15 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         private readonly snapshotTree: ISnapshotTree,
     ) {
         super(id, registry, runtime, () => this.services);
-        let blobMap: Map<string, ArrayBufferLike> | undefined;
+        const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
         const clonedSnapshotTree = cloneDeep(this.snapshotTree);
-        if (clonedSnapshotTree !== undefined) {
-            blobMap = new Map<string, ArrayBufferLike>();
-            this.collectExtraBlobsAndSanitizeSnapshot(clonedSnapshotTree, blobMap);
+        // 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
+        // This is for older snapshot which still contains the contents within blobs.
+        // After a couple of revisions we can remove it.
+        if (this.checkNeedToSanitizeAndCollectBlobs(clonedSnapshotTree, blobMap)) {
+            this.sanitizeSnapshot(clonedSnapshotTree);
         }
+
         this.services = new Lazy(() => {
             return createServiceEndpoints(
                 this.id,
@@ -217,19 +220,35 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
         return this.channel;
     }
 
-    private collectExtraBlobsAndSanitizeSnapshot(snapshotTree: ISnapshotTree, blobMap: Map<string, ArrayBufferLike>) {
+    private checkNeedToSanitizeAndCollectBlobs(
+        snapshotTree: ISnapshotTree,
+        blobMap: Map<string, ArrayBufferLike>,
+    ): boolean {
+        let sanitize = false;
+        const blobsContents: {[path: string]: ArrayBufferLike} = (snapshotTree as any).blobsContents;
+        Object.entries(blobsContents).forEach(([key, value]) => {
+            blobMap.set(key, value);
+            if (snapshotTree.blobs[key] !== undefined) {
+                sanitize = true;
+            }
+        });
+        for (const value of Object.values(snapshotTree.trees)) {
+            sanitize = sanitize || this.checkNeedToSanitizeAndCollectBlobs(value, blobMap);
+        }
+        return sanitize;
+    }
+
+    private sanitizeSnapshot(snapshotTree: ISnapshotTree) {
         const blobMapInitial = new Map(Object.entries(snapshotTree.blobs));
         for (const [blobName, blobId] of blobMapInitial.entries()) {
             const blobValue = blobMapInitial.get(blobId);
-            if (blobValue !== undefined) {
-                blobMap.set(blobId, stringToBuffer(blobValue, "base64"));
-            } else {
+            if (blobValue === undefined) {
                 // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                 delete snapshotTree.blobs[blobName];
             }
         }
         for (const value of Object.values(snapshotTree.trees)) {
-            this.collectExtraBlobsAndSanitizeSnapshot(value, blobMap);
+            this.sanitizeSnapshot(value);
         }
     }
 }
