@@ -135,9 +135,9 @@ export class OpsCache {
                         break;
                     }
                     if (messages.length === 0) {
-                        if (op.sequenceNumber > from + 1) {
+                        if (op.sequenceNumber > from) {
                             break;
-                        } else if (op.sequenceNumber <= from) {
+                        } else if (op.sequenceNumber < from) {
                             continue;
                         }
                     }

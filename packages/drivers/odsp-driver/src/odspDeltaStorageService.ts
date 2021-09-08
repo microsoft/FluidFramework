@@ -137,44 +137,55 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         let opsFromCache = 0;
         let opsFromStorage = 0;
 
+        const requestCallback = async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
+            if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
+                const messages = this.snapshotOps.filter((op) =>
+                    op.sequenceNumber >= from && op.sequenceNumber < to);
+                if (messages.length > 0 && messages[0].sequenceNumber === from) {
+                    this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
+                    opsFromSnapshot = messages.length;
+                    return { messages, partialResult: true };
+                }
+                this.snapshotOps = undefined;
+            }
+
+            // Kick out request to PUSH for ops if it has them
+            this.requestFromSocket(from, to);
+
+            // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
+            // This saves a bit of processing time
+            if (from < this.firstCacheMiss) {
+                const messagesFromCache = await this.getCached(from, to);
+                if (messagesFromCache.length !== 0) {
+                    opsFromCache += messagesFromCache.length;
+                    return {
+                        messages: messagesFromCache,
+                        partialResult: true,
+                    };
+                }
+                this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
+            }
+
+            if (cachedOnly) {
+                return { messages: [], partialResult: false };
+            }
+
+            const ops = await this.getFromStorage(from, to, telemetryProps);
+            opsFromStorage += ops.messages.length;
+            this.opsReceived(ops.messages);
+            return ops;
+        };
+
         const stream = requestOps(
             async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
-                if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
-                    const messages = this.snapshotOps.filter((op) =>
-                        op.sequenceNumber >= from && op.sequenceNumber < to);
-                    if (messages.length > 0 && messages[0].sequenceNumber === from) {
-                        this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
-                        opsFromSnapshot = messages.length;
-                        return { messages, partialResult: true };
-                    }
-                    this.snapshotOps = undefined;
+                const result = await requestCallback(from, to, telemetryProps);
+                if (result.messages.length !== 0) {
+                    assert(result.messages[0].sequenceNumber === from, "ensure we do not have 1-off bugs");
+                    const length = result.messages.length;
+                    assert(result.messages[length - 1].sequenceNumber + 1 === from + length,
+                        "ensure we have sequential result");
                 }
-
-                // Kick out request to PUSH for ops if it has them
-                this.requestFromSocket(from, to);
-
-                // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
-                // This saves a bit of processing time
-                if (from < this.firstCacheMiss) {
-                    const messagesFromCache = await this.getCached(from, to);
-                    if (messagesFromCache.length !== 0) {
-                        opsFromCache += messagesFromCache.length;
-                        return {
-                            messages: messagesFromCache,
-                            partialResult: true,
-                        };
-                    }
-                    this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
-                }
-
-                if (cachedOnly) {
-                    return { messages: [], partialResult: false };
-                }
-
-                const ops = await this.getFromStorage(from, to, telemetryProps);
-                opsFromStorage += ops.messages.length;
-                this.opsReceived(ops.messages);
-                return ops;
+                return result;
             },
             // Staging: starting with no concurrency, listening for feedback first.
             // In future releases we will switch to actual concurrency

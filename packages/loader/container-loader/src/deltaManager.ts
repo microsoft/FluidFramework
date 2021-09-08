@@ -380,13 +380,17 @@ export class DeltaManager
      * about current or last connection (if there is no connection at the moment)
     */
     public connectionProps(): ITelemetryProperties {
+        const common = {
+            connectionMode: this.connectionMode,
+        };
         if (this.connection !== undefined) {
             return {
-                sequenceNumber: this.lastSequenceNumber,
+                ...common,
                 connectionMode: this.connectionMode,
             };
         } else {
             return {
+                ...common,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -578,15 +582,13 @@ export class DeltaManager
         // If so, it's time to process any accumulated ops, as there might be no other event that
         // will force these pending ops to be processed.
         // Or request OPs from snapshot / or point zero (if we have no ops at all)
-        if (this.pending.length > 0) {
-            this.processPendingOps("DocumentOpen");
-        }
+        this.processPendingOps("DocumentOpen");
     }
 
     public async preFetchOps(cacheOnly: boolean) {
         // Note that might already got connected to delta stream by now.
         // If we did, then we proactively fetch ops at the end of setupNewSuccessfulConnection to ensure
-        if (this.connection === undefined) {
+        if (this.connection === undefined && !this.closed) {
             return this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber, undefined);
         }
     }
@@ -664,7 +666,7 @@ export class DeltaManager
             this.handler !== undefined || !fetchOpsFromStorage,
             this.logger,
             "CantFetchWithoutBaseline"); // can't fetch if no baseline
-        if (fetchOpsFromStorage && this.handler !== undefined) {
+        if (fetchOpsFromStorage) {
             this.fetchMissingDeltas(args.reason, this.lastQueuedSequenceNumber);
         }
 
@@ -1539,8 +1541,9 @@ export class DeltaManager
      * Retrieves the missing deltas between the given sequence numbers
      */
      private fetchMissingDeltas(reasonArg: string, lastKnowOp: number, to?: number) {
-         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, lastKnowOp, to);
+         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, lastKnowOp, to).catch((error) => {
+             this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
+         });
      }
 
      /**
@@ -1559,6 +1562,12 @@ export class DeltaManager
 
         if (this.closed) {
             this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection", reason });
+            return;
+        }
+
+        if (this.handler === undefined) {
+            // We do not poses yet any information
+            assert(lastKnowOp === 0, "initial state");
             return;
         }
 
@@ -1603,12 +1612,37 @@ export class DeltaManager
      * Sorts pending ops and attempts to apply them
      */
     private processPendingOps(reason?: string): void {
-        if (this.handler !== undefined) {
-            const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-            this.pending = [];
-            // Given that we do not track where these ops came from any more, it's not very
-            // actionably to report gaps in this range.
-            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+        if (this.closed) {
+            return;
+        }
+
+        assert(this.handler !== undefined, "handler should be installed");
+
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        this.pending = [];
+        // Given that we do not track where these ops came from any more, it's not very
+        // actionably to report gaps in this range.
+        this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+
+        // See issue #7312 for more details
+        // We observe cases where client gets into situation where it is not aware of missing ops
+        // (i.e. client being behind), and as such, does not attempt to fetch them.
+        // In some cases client may not have enough signal (example - "read" connection that is silent -
+        // there is no easy way for client to realize it's behind, see a bit of commentary / logic at the
+        // end of setupNewSuccessfulConnection). In other cases it should be able to learn that info ("write"
+        // connection, learn by receiving its own join op), but data suggest it does not happen.
+        // In 50% of these cases we do know we are behind through checkpointSequenceNumber on connection object
+        // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
+        // (the other 50%), and thus these errors below should be looked at even if code below results in
+        // recovery.
+        if (this.fetchReason === undefined && this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
+            // connectionMode === "read" case is too noisy, so not log it.
+            // It happens because fetch in setupNewSuccessfulConnection get cancelled due to other fetch, and we
+            // never retry (other than here)
+            if (this.connectionMode === "write") {
+                this.logConnectionIssue({ eventName: "OpsBehind" });
+            }
+            this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
         }
     }
 
