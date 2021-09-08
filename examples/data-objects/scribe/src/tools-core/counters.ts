@@ -38,11 +38,11 @@ export class Histogram {
  * Simple class to help sample rate based counters
  */
 export class RateCounter {
-    private start: number;
+    private start: number = Date.now();
     private samples = 0;
     private value = 0;
-    private minimum: number;
-    private maximum: number;
+    private minimum: number | undefined;
+    private maximum: number | undefined;
 
     constructor() {
         this.reset();
@@ -80,14 +80,14 @@ export class RateCounter {
     /**
      * Minimum value seen
      */
-    public getMinimum(): number {
+    public getMinimum(): number | undefined {
         return this.minimum;
     }
 
     /**
      * Maximum value seen
      */
-    public getMaximum(): number {
+    public getMaximum(): number | undefined {
         return this.maximum;
     }
 
