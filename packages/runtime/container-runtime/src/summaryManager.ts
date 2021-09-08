@@ -318,31 +318,23 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
 
         if (delayMs > 0) {
-            // eslint-disable-next-line prefer-const
             let timer;
-            let resolveFn;
+            let resolveOpPromiseFn;
             // Create a listener that will break the delay if we've exceeded the initial delay ops count.
             const opsListenerFn = () => {
                 if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
                     clearTimeout(timer);
-                    resolveFn();
+                    resolveOpPromiseFn();
                 }
             };
-            // Create a Promise and capture its resolve function.
-            const delayPromise = new Promise<void>((resolve) => { resolveFn = resolve; }).catch(() => {
-                this.summaryCollection.removeOpListener(opsListenerFn);
-                if (timer) {
-                    clearTimeout(timer);
-                }
+            // Create a Promise that will resolve when the delay expires.
+            const delayPromise = new Promise<void>((resolve) => {
+                timer = setTimeout(() => resolve(), delayMs);
             });
-            // Start a timer to delay creating the summarizer.
-            timer =
-                setTimeout(() => {
-                    resolveFn();
-                },
-                delayMs);
+            // Create a Promise that will resolve if the ops count passes the threshold.
+            const opPromise = new Promise<void>((resolve) => { resolveOpPromiseFn = resolve; });
             this.summaryCollection.addOpListener(opsListenerFn);
-            await delayPromise;
+            await Promise.race([ delayPromise, opPromise ]);
             this.summaryCollection.removeOpListener(opsListenerFn);
         }
         return startWithInitialDelay;
