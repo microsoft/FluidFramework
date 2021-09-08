@@ -1039,14 +1039,6 @@ export class DeltaManager
             ? getNackReconnectInfo(message.content) :
             createGenericNetworkError(`Nack: unknown reason`, true);
 
-        if (this.reconnectMode !== ReconnectMode.Enabled) {
-            this.logger.sendErrorEvent({
-                eventName: "NackWithNoReconnect",
-                reason: reconnectInfo.message,
-                mode: this.connectionMode,
-            });
-        }
-
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             "write",
