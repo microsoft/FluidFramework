@@ -1,5 +1,25 @@
 # Change Log
 
+## 8.4.2
+
+* perf: use optimized btree lookup methods
+  * Associated pull request: [34106](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34106)
+  * Commit: [3046fa86d829a0c30c9e115a7b037a3ca5aa9cab](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/3046fa86d829a0c30c9e115a7b037a3ca5aa9cab)
+* build: updates package dependencies, fixes some leftover createObservable calls
+  * Associated pull request: [34101](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34101)
+  * Commit: [ea194a5f5d5d5570696374e54c1b6f71f3fd4a28](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/ea194a5f5d5d5570696374e54c1b6f71f3fd4a28)
+* build: upgrade typescript 4.3.5 -> 4.4.2
+  * Associated pull request: [34083](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34083)
+  * Commit: [1c94701483931ca384d5a2afe47bace26c0ef311](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1c94701483931ca384d5a2afe47bace26c0ef311)
+* Merge branch 'releases/2021.09.1' into user/riwon/MergeBackRelease2021.09.1
+  * Commit: [a4d54f3324a102d519bdd7b59db1227ee4780579](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a4d54f3324a102d519bdd7b59db1227ee4780579)
+* test: refactor the shared-tree and fluid-document-store tests to centralize the TestObjectProvider.reset logic
+  * Associated pull request: [33940](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33940)
+  * Commit: [1d793832e323f32bf14ceda4db468fbf94c40641](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/1d793832e323f32bf14ceda4db468fbf94c40641)
+* test: Add missing testObjectProvider.reset() calls
+  * Associated pull request: [33934](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33934)
+  * Commit: [570cbc4222f11d587f6a5cece7219ae7a6439bdc](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/570cbc4222f11d587f6a5cece7219ae7a6439bdc)
+
 ## 8.1.0
 
 * refactor: BREAKING CHANGE: clearer contract for `GenericTransaction` implementers
