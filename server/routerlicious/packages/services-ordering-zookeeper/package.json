@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@fluidframework/server-services-core": "^0.1031.0",
-    "zookeeper": "4.8.2"
+    "zookeeper": "^4.10.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0-0",
