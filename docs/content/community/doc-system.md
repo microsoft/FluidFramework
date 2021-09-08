@@ -3,6 +3,8 @@ title: "Using the documentation system effectively"
 menuPosition: 20
 aliases:
   - "/docs/advanced/doc-system"
+  - "/docs/deep/doc-system"
+  - "/docs/doc-system"
 ---
 
 <!-- markdownlint-disable MD036 -->

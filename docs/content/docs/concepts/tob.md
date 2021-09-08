@@ -1,6 +1,8 @@
 ---
 title: Total order broadcast & eventual consistency
 menuPosition: 2
+aliases:
+  - "/docs/deep/tob"
 ---
 
 ## Fluid Data: Operations all the way down

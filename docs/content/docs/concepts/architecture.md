@@ -2,7 +2,7 @@
 title: Architecture
 menuPosition: 1
 aliases:
-  - "/docs/concepts/architecture"
+  - "/docs/deep/architecture"
 ---
 
 The Fluid Framework can be broken into three broad parts: The *Fluid loader*, *Fluid containers*, and the *Fluid
