@@ -4,13 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedMap, SharedDirectory, ContainerSchema } from "fluid-framework";
 import { DiceRoller } from "@fluid-example/diceroller";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-    TinyliciousClient,
-    TinyliciousConnectionConfig,
-} from "..";
+import { ContainerSchema } from "@fluidframework/fluid-static";
+import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { TinyliciousClient } from "..";
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
@@ -47,8 +45,8 @@ describe("TinyliciousClient", () => {
      * be returned.
      */
     it("can create a container successfully with port number specification", async () => {
-        const clientConfig: TinyliciousConnectionConfig = { port: 7070 };
-        const clientWithPort = new TinyliciousClient(clientConfig);
+        const clientProps = { connection: { port: 7070 } };
+        const clientWithPort = new TinyliciousClient(clientProps);
 
         const containerAndServicesP = clientWithPort.createContainer(schema);
 

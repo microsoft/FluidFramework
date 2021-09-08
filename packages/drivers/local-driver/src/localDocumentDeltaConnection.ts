@@ -62,6 +62,15 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
           super(socket, documentId, new TelemetryNullLogger());
     }
 
+    protected submitCore(type: string, messages: IDocumentMessage[]) {
+        if (this.isBatchManagerDisabled) {
+            this.emitMessages(type, [messages]);
+        } else {
+            this.submitManager.add(type, messages);
+            this.submitManager.drain();
+        }
+    }
+
     /**
      * Submits a new delta operation to the server
      */
@@ -69,8 +78,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
         // We use a promise resolve to force a turn break given message processing is sync
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(() => {
-            this.submitManager.add("submitOp", messages);
-            this.submitManager.drain();
+            this.submitCore("submitOp", messages);
         });
     }
 
@@ -78,8 +86,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
      * Submits a new signal to the server
      */
     public submitSignal(message: any): void {
-        this.submitManager.add("submitSignal", message);
-        this.submitManager.drain();
+        this.submitCore("submitSignal", [message]);
     }
 
     /**

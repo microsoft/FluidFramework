@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/common-definitions";
 import {
     IFluidRouter,
-    IFluidRunnable,
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
@@ -83,7 +82,7 @@ export interface IConnectableRuntime {
     readonly connected: boolean;
     readonly clientId: string | undefined;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    once(event: "connected" | "disconnected", listener: () => void): this;
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
@@ -278,9 +277,9 @@ export interface ISummarizerEvents extends IEvent {
     (event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
     stop(reason: SummarizerStopReason): void;
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
 
     /**
      * Attempts to generate a summary on demand. If already running, takes no action.

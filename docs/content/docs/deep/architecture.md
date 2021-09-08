@@ -52,11 +52,10 @@ already a system for accessing app logic and app state, we mimicked existing web
 
 ## System overview
 
-Most developers will use the Fluid Framework to load Fluid content or create Fluid content. In our own words, developers
-are either loading Fluid containers using the Fluid loader or developers are creating Fluid containers to load.
+Most developers will use the Fluid Framework to create Fluid containers.
 
 Based on our two design principles of "Keep the server simple" and "Move logic to the client", the majority of the Fluid
-codebase is focused on building Containers.
+codebase is focused on building containers.
 
 ### Fluid containers
 
@@ -67,27 +66,6 @@ The Fluid container is the result of the principle "Move Logic to the Client." T
 used to replicate state across connected clients, but the container also includes app logic. The merge logic is
 incapsulated in our lowest level objects, **distributed data structures (DDS)**. App logic operating over this data is
 stored in **Fluid objects**.
-
-### Fluid loader
-
-The Fluid loader loads Fluid containers (and their child Fluid objects) by connecting to the Fluid service and fetching
-Fluid container code. In this way, the Fluid loader 'mimics the web.' The Fluid loader resolves a URL using **container
-resolver,** connects to the Fluid service using the **Fluid service driver**, and loads the correct app code using the
-**code loader.**
-
-<img src="../images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
-service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
-
-The **container lookup & resolver** identifies, by a URL, which service a container is bound to and where in that
-service it is located. The Fluid service driver consumes this information.
-
-The **Fluid service driver** connects to the Fluid service, requests space on the server for new Fluid containers, and
-creates the three objects, **DeltaConnection**, **DeltaStorageService**, and **DocumentStorageService**, that the Fluid
-container uses to communicate with the server and maintain an eventually consistent state.
-
-The **container code loader** fetches container code. Because all clients run the same code, clients use the code loader
-to fetch container code. The Loader executes this code to create Fluid containers.
-
 
 ### Fluid service
 

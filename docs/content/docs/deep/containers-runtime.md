@@ -3,6 +3,7 @@ title: "Containers and the container runtime"
 menuPosition: 5
 aliases:
   - "/docs/concepts/containers-runtime"
+draft: true
 ---
 
 A **Fluid container** is a foundational concept for creating anything with the Fluid Framework. All of the sample Fluid

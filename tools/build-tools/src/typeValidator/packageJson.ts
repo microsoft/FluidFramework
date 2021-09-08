@@ -12,13 +12,25 @@ export type PackageDetails ={
     readonly minorVersion: number;
     readonly patchVersion: string;
     readonly oldVersions: readonly string[];
+    readonly broken: BrokenCompatTypes;
 }
+
+export interface BrokenCompatSettings{
+    backCompat?: false;
+    forwardCompat?: false;
+}
+
+export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
+
 
 interface PackageJson{
     name:string,
     version: string,
     devDependencies: Record<string, string>;
-    typeValidationVersion: string,
+    typeValidation?: {
+        version: string,
+        broken: BrokenCompatTypes,
+    },
 }
 
 function createSortedObject<T>(obj:Record<string,T>): Record<string,T>{
@@ -39,14 +51,17 @@ export function getPackageDetails(packageDir: string): PackageDetails {
 
     const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
 
-    if(pkgJson.version !== pkgJson.typeValidationVersion){
-        if(pkgJson.typeValidationVersion !== undefined){
-            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidationVersion}`] =
-                `npm:${pkgJson.name}@${pkgJson.typeValidationVersion}`;
+    if(pkgJson.version !== pkgJson.typeValidation?.version){
+        if(pkgJson.typeValidation !== undefined){
+            pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
+                `npm:${pkgJson.name}@${pkgJson.typeValidation.version}`;
 
             pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
         }
-        pkgJson.typeValidationVersion = pkgJson.version;
+        pkgJson.typeValidation = {
+            version: pkgJson.version,
+            broken: {}
+        }
         fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
     }
 
@@ -63,6 +78,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
         majorVersion,
         minorVersion,
         patchVersion: versionParts[2],
-        oldVersions
+        oldVersions,
+        broken: pkgJson.typeValidation.broken
     }
 }

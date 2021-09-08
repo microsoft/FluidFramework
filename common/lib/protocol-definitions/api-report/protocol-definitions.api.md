@@ -539,6 +539,8 @@ export interface ITokenClaims {
     // (undocumented)
     iat: number;
     // (undocumented)
+    jti?: string;
+    // (undocumented)
     scopes: string[];
     // (undocumented)
     tenantId: string;

@@ -193,6 +193,7 @@ class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
 
 class WholeSummaryDocumentStorageService implements IDocumentStorageService {
     private readonly blobCache: Map<string, ArrayBufferLike> = new Map();
+    private readonly summaryCache: Map<string, IWholeFlatSummary> = new Map();
     private readonly summaryUploadManager: ISummaryUploadManager;
 
     public get repositoryUrl(): string {
@@ -209,7 +210,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
 
     public async getVersions(versionId: string, count: number): Promise<IVersion[]> {
         if (![this.id, undefined, null].includes(versionId)) {
-            // Blobs in this scenario will never have multiple versions, so return blobId as is with no treeId
+            // Blobs in this scenario will never have multiple versions, so return blobId as is
             return [{
                 id: versionId,
                 treeId: undefined!,
@@ -230,7 +231,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         return commits.map((commit) => ({
             date: commit.commit.author.date,
             id: commit.sha,
-            treeId: commit.commit.tree.sha,
+            treeId: undefined!,
         }));
     }
 
@@ -245,20 +246,24 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
             requestVersion = versions[0];
         }
 
-        const wholeFlatSummary: IWholeFlatSummary = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "getWholeFlatSummary",
-                treeId: requestVersion.treeId,
-            },
-            async (event) => {
-                const response = await this.manager.getSummary(requestVersion!.treeId);
-                event.end({
-                    size: response.trees[0]?.entries.length,
-                });
-                return response;
-            },
-        );
+        let wholeFlatSummary: IWholeFlatSummary | undefined = this.summaryCache.get(requestVersion.id);
+        if (!wholeFlatSummary) {
+            wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "getWholeFlatSummary",
+                    treeId: requestVersion.id,
+                },
+                async (event) => {
+                    const response = await this.manager.getSummary(requestVersion!.id);
+                    event.end({
+                        size: response.trees[0]?.entries.length,
+                    });
+                    return response;
+                },
+            );
+            this.summaryCache.set(requestVersion.id, wholeFlatSummary);
+        }
 
         const normalizedWholeSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 

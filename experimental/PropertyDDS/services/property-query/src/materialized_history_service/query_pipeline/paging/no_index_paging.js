@@ -190,7 +190,7 @@ class NoIndexPaging {
       preCallback: (context) => {
         if (_.isEqual(context._parentStack, tokenizedPagingPath)) {
           context.replaceNestedChangeSet({});
-          context.stopTraversal();
+          context._traversalStopped = true;
         }
       }
     });

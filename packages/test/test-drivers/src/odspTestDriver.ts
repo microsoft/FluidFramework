@@ -277,6 +277,7 @@ export class OdspTestDriver implements ITestDriver {
     createUrlResolver(): IUrlResolver {
         return new this.api.OdspDriverUrlResolver();
     }
+
     createCreateNewRequest(testId: string): IRequest {
         return this.api.createOdspCreateContainerRequest(
             `https://${this.config.server}`,
@@ -289,6 +290,7 @@ export class OdspTestDriver implements ITestDriver {
     private async getStorageToken(options: OdspResourceTokenFetchOptions) {
         return OdspTestDriver.getStorageToken(options, this.config);
     }
+
     private async getPushToken(options: OdspResourceTokenFetchOptions) {
         const tokens = await OdspTestDriver.odspTokenManager.getPushTokens(
             new URL(options.siteUrl).hostname,
@@ -298,5 +300,14 @@ export class OdspTestDriver implements ITestDriver {
         );
 
         return tokens.accessToken;
+    }
+
+    public getUrlFromItemId(itemId: string) {
+        return this.api.createOdspUrl({
+            siteUrl: `https://${this.config.server}`,
+            driveId: this.config.driveId,
+            itemId,
+            dataStorePath: "/",
+        });
     }
 }
