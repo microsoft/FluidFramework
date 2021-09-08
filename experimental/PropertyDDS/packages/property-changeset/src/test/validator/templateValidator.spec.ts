@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 /* eslint no-unused-expressions: 0 */
-/* eslint-disable no-unused-vars */
+/* eslint-disable no-unused-lets */
 /* eslint-disable no-undef */
 /* eslint-disable max-nested-callbacks */
 /**
  * @fileoverview In this file, we will test template validation.
  */
 
-(function() {
-    var _ = require('underscore');
-    var MSG = require('@fluid-experimental/property-common').constants.MSG;
-    var semver = require('semver');
-    var SchemaValidator = require('../schemaValidator');
-    var TemplateValidator= require('../../templateValidator');
+import { expect } from "chai";
+import { SchemaValidator } from "../schemaValidator";
+import { TemplateValidator } from "../../templateValidator";
 
-    var performValidation = function(async, template, templatePrevious, skipSemver, asyncErrorMessage) {
-        var schemaValidator = new SchemaValidator();
+(function() {
+    let MSG = require('@fluid-experimental/property-common').constants.MSG;
+    let semver = require('semver');
+
+    const performValidation = function(async, template, templatePrevious, skipSemver, asyncErrorMessage?) {
+        let schemaValidator = new SchemaValidator();
 
         if (async) {
+            // @ts-ignore
             return schemaValidator.validate(template, templatePrevious, async, skipSemver).catch((error) => {
                 expect(error.message).to.have.string(asyncErrorMessage);
             });
@@ -32,7 +34,7 @@
     };
 
     // Performs both synchronous and asynchronous validation
-    var validate = function(expectations, template, templatePrevious, skipSemver, asyncErrorMessage) {
+    let validate = function(expectations, template?, templatePrevious?, skipSemver?, asyncErrorMessage?) {
         return performValidation(false, template, templatePrevious, skipSemver)
             .then(expectations)
             .then(performValidation(true, template, templatePrevious, skipSemver, asyncErrorMessage))
@@ -43,7 +45,7 @@
         // --- INPUT ---
         describe('input validation', function() {
             it('fail: empty template', function() {
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.errors.length).to.be.at.least(1);
                     expect(result.errors[0].message).to.have.string(MSG.NO_TEMPLATE);
@@ -53,7 +55,7 @@
             });
 
             it('fail: template with no typeid', function() {
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.errors.length).to.be.at.least(1);
                     expect(result.errors[0].message).to.have.string(MSG.MISSING_TYPE_ID);
@@ -66,9 +68,9 @@
         // --- TYPEID ---
         describe('typeid validation', function() {
             it('pass: valid typeid', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                let template = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', true);
                     expect(result.typeid).to.equal(template.typeid);
                     expect(result.errors).to.be.empty;
@@ -80,8 +82,8 @@
             });
 
             it('fail: missing semver', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/badMissingSemverInTypeid')));
-                var expectations = function(result) {
+                let template = JSON.parse(JSON.stringify(require('../schemas/badMissingSemverInTypeid')));
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.typeid).to.equal(template.typeid);
                     expect(result.errors.length).to.be.at.least(1);
@@ -93,9 +95,9 @@
             });
 
             it('fail: invalid semver 1', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/badInvalidSemverInTypeid')));
+                let template = JSON.parse(JSON.stringify(require('../schemas/badInvalidSemverInTypeid')));
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.typeid).to.equal(template.typeid);
                     expect(result.errors.length).to.be.at.least(1);
@@ -107,9 +109,9 @@
             });
 
             it('fail: invalid semver 2', function() {
-                var template = JSON.parse(JSON.stringify(require('../schemas/badInvalidSemverInTypeid')));
+                let template = JSON.parse(JSON.stringify(require('../schemas/badInvalidSemverInTypeid')));
                 template.typeid = 'TeamLeoValidation2:PointID-1.0.01';
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.typeid).to.equal(template.typeid);
                     expect(result.errors.length).to.be.at.least(1);
@@ -120,11 +122,11 @@
             });
 
             it('fail: previous template: invalid semver', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                var template = JSON.parse(JSON.stringify(templatePrevious));
-                var badTypeId = 'TeamLeoValidation2:PointID-1.0.0.1';
+                let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                let template = JSON.parse(JSON.stringify(templatePrevious));
+                let badTypeId = 'TeamLeoValidation2:PointID-1.0.0.1';
                 templatePrevious.typeid = badTypeId;
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.typeid).to.equal(badTypeId);
                     expect(result.errors.length).to.be.at.least(1);
@@ -138,10 +140,10 @@
         // --- Template versioning ---
         describe('template versioning', function() {
             it('fail: version regression: 1.0.0 -> 0.9.9', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                var template = JSON.parse(JSON.stringify(templatePrevious));
+                let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                let template = JSON.parse(JSON.stringify(templatePrevious));
                 template.typeid = 'TeamLeoValidation2:PointID-0.9.9';
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.errors.length).to.be.at.least(1);
                     expect(result.errors[0].message).to.have.string(MSG.VERSION_REGRESSION_1);
@@ -152,9 +154,9 @@
 
             describe('same version', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
-                    var expectations = function(result) {
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -164,11 +166,11 @@
                 });
 
                 it("fail: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.annotation.description = 'Changed!';
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -179,12 +181,12 @@
                 });
 
                 it("fail: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     delete template.annotation;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -194,11 +196,11 @@
                 });
 
                 it("fail: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.annotation = { description: 'Test' };
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -208,11 +210,11 @@
                 });
 
                 it("fail: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties[0].value = 123456;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -222,11 +224,11 @@
                 });
 
                 it("fail: changed 'id'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties[0].id = 'xx';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -236,13 +238,13 @@
                 });
 
                 it("fail: changed 'inherits'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(
+                    let templatePrevious = JSON.parse(JSON.stringify(
                         require('../schemas/goodReservedTypes')
                     ));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -252,12 +254,12 @@
                 });
 
                 it('fail: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties.push({ 'id': 'newPropId', 'typeid': 'Float32' });
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -267,12 +269,12 @@
                 });
 
                 it('fail: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.properties[0].properties.pop();
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.at.least(1);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_SAME_VERSION_1);
@@ -284,11 +286,11 @@
 
             describe('incremented patch level', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -298,13 +300,13 @@
                 });
 
                 it('pass: unstable with major content change: 0.0.1 -> 0.0.2', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.typeid = 'TeamLeoValidation2:PointID-0.0.1';
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-0.0.2';
                     template.properties[1].typeid = 'TeamLeoValidation2:ColorID-9.0.0';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -314,13 +316,13 @@
                 });
 
                 it("pass: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.annotation.description = 'Changed!';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -330,13 +332,13 @@
                 });
 
                 it("pass: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     delete template.annotation;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -346,12 +348,12 @@
                 });
 
                 it("pass: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.annotation = { description: 'Test' };
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -361,12 +363,12 @@
                 });
 
                 it("warn: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties[0].value = 123456;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -377,12 +379,12 @@
                 });
 
                 it("warn: changed 'id' (delete, add)", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties[0].id = 'xx';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(2); // 1st for the delete and the 2nd for the add
@@ -393,14 +395,14 @@
                 });
 
                 it("warn: changed 'inherits'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(
+                    let templatePrevious = JSON.parse(JSON.stringify(
                         require('../schemas/goodReservedTypes')
                     ));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'patch');
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -411,13 +413,13 @@
                 });
 
                 it('warn: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties.push({ 'id': 'newPropId', 'typeid': 'Float32' });
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -428,13 +430,13 @@
                 });
 
                 it('warn: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'patch');
                     template.properties[0].properties.pop();
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -447,11 +449,11 @@
 
             describe('incremented minor level', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -461,13 +463,13 @@
                 });
 
                 it("pass: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.annotation.description = 'Changed!';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -477,13 +479,13 @@
                 });
 
                 it("pass: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     delete template.annotation;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -493,12 +495,12 @@
                 });
 
                 it("pass: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.annotation = { description: 'Test' };
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -508,12 +510,12 @@
                 });
 
                 it("pass: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties[0].value = 123456;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -523,12 +525,12 @@
                 });
 
                 it("warn: changed 'id' (delete, add)", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties[0].id = 'xx';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -539,14 +541,14 @@
                 });
 
                 it("warn: changed 'inherits'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(
+                    let templatePrevious = JSON.parse(JSON.stringify(
                         require('../schemas/goodReservedTypes')
                     ));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'minor');
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -557,13 +559,13 @@
                 });
 
                 it('pass: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties.push({ 'id': 'newPropId', 'typeid': 'Float32' });
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -573,13 +575,13 @@
                 });
 
                 it('warn: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'minor');
                     template.properties[0].properties.pop();
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings.length).to.be.at.least(1);
@@ -592,11 +594,11 @@
 
             describe('incremented major level', function() {
                 it('pass: same content', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -606,13 +608,13 @@
                 });
 
                 it("pass: changed 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.annotation.description = 'Changed!';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -622,13 +624,13 @@
                 });
 
                 it("pass: deleted 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     delete template.annotation;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -638,12 +640,12 @@
                 });
 
                 it("pass: added 'annotation'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.annotation = { description: 'Test' };
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -653,12 +655,12 @@
                 });
 
                 it("pass: changed 'value'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'Adsk.Core:UI.Border-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties[0].value = 123456;
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -668,12 +670,12 @@
                 });
 
                 it("pass: changed 'id' (delete, add)", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties[0].id = 'xx';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -683,14 +685,14 @@
                 });
 
                 it("pass: changed 'inherits'", function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(
+                    let templatePrevious = JSON.parse(JSON.stringify(
                         require('../schemas/goodReservedTypes')
                     ));
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:Example-' + semver.inc('1.0.0', 'major');
                     template.inherits = 'Reference<Adsk.Core:Math.Color-1.0.0>';
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -700,13 +702,13 @@
                 });
 
                 it('pass: added property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties.push({ 'id': 'newPropId', 'typeid': 'Float32' });
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -716,13 +718,13 @@
                 });
 
                 it('pass: deleted property', function() {
-                    var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                    let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
                     templatePrevious.annotation = { description: 'Test' };
-                    var template = JSON.parse(JSON.stringify(templatePrevious));
+                    let template = JSON.parse(JSON.stringify(templatePrevious));
                     template.typeid = 'TeamLeoValidation2:PointID-' + semver.inc('1.0.0', 'major');
                     template.properties[0].properties.pop();
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -735,9 +737,9 @@
 
         describe('skip semver validation', function() {
             it('pass: deep equal on scrambled arrays', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                var template = JSON.parse(JSON.stringify(templatePrevious));
-                var tmp = template.properties[0].properties[0];
+                let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                let template = JSON.parse(JSON.stringify(templatePrevious));
+                let tmp = template.properties[0].properties[0];
                 template.properties[0].properties[0] = template.properties[0].properties[2];
                 template.properties[0].properties[2] = tmp;
                 tmp = template.properties[1];
@@ -745,7 +747,7 @@
                 template.properties[2] = tmp;
                 // Skip semver validation to cause a deep compare
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', true);
                     expect(result.errors).to.be.empty;
                     expect(result.warnings).to.be.empty;
@@ -755,10 +757,10 @@
             });
 
             it('pass: deep equal with version regression', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                var template = JSON.parse(JSON.stringify(templatePrevious));
+                let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                let template = JSON.parse(JSON.stringify(templatePrevious));
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', true);
                     expect(result.errors).to.be.empty;
                     expect(result.warnings).to.be.empty;
@@ -768,15 +770,15 @@
             });
 
             it('pass: preserves input templates', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
-                var template = JSON.parse(JSON.stringify(templatePrevious));
+                let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodPointId')));
+                let template = JSON.parse(JSON.stringify(templatePrevious));
 
-                var copies = [
+                let copies = [
                     JSON.parse(JSON.stringify(templatePrevious)),
                     JSON.parse(JSON.stringify(template))
                 ];
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', true);
                     expect(result.errors).to.be.empty;
                     expect(result.warnings).to.be.empty;
@@ -788,11 +790,11 @@
             });
 
             it('fail: changed value', function() {
-                var templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
-                var template = JSON.parse(JSON.stringify(templatePrevious));
+                let templatePrevious = JSON.parse(JSON.stringify(require('../schemas/goodUIBorder')));
+                let template = JSON.parse(JSON.stringify(templatePrevious));
                 template.properties[0].properties[0].value = 123456;
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result).property('isValid', false);
                     expect(result.warnings).to.be.empty;
                     expect(result.errors.length).to.be.at.least(1);
@@ -806,9 +808,9 @@
 
         describe('syntax validation', function() {
             it('pass: validate a simple file', function() {
-                var template = require('../schemas/goodPointId');
+                let template = require('../schemas/goodPointId');
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(true);
                     return result;
                 };
@@ -816,9 +818,9 @@
             });
 
             it('fail: invalid file', function() {
-                var template = require('../schemas/badPrimitiveTypeid');
+                let template = require('../schemas/badPrimitiveTypeid');
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(false);
                     expect(result.errors.length).to.be.greaterThan(0);
                     expect(result.unresolvedTypes.length).to.equal(1);
@@ -828,12 +830,12 @@
             });
 
             it('should pass a schema with an empty array of properties', function() {
-                var EmptyPropertySchema = {
+                let EmptyPropertySchema = {
                     typeid: 'Test:EmptyPropertySchema-1.0.0',
                     properties: []
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(true);
                     return result;
                 };
@@ -844,12 +846,12 @@
         describe('bugs', function() {
             describe('@bugfix Template validation with multiple inheritance', function() {
                 it('pass: deep equal with multiple inheritance', function() {
-                    var templateString =
+                    let templateString =
                         '{"typeid":"autodesk.core:translation.controller-1.0.0","inherits":["NamedProperty","NodeProperty"]}';
-                    var templatePrevious = JSON.parse(templateString);
-                    var template = JSON.parse(templateString);
+                    let templatePrevious = JSON.parse(templateString);
+                    let template = JSON.parse(templateString);
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', true);
                         expect(result.errors).to.be.empty;
                         expect(result.warnings).to.be.empty;
@@ -859,14 +861,14 @@
                 });
 
                 it('fail: deep equal with out of order multiple inheritance', function() {
-                    var template = JSON.parse('{"typeid":"autodesk.core:translation.controller-1.0.0",' +
+                    let template = JSON.parse('{"typeid":"autodesk.core:translation.controller-1.0.0",' +
                         '"inherits":["NamedProperty","NodeProperty"]}'
                     );
-                    var templatePrevious = JSON.parse('{"typeid":"autodesk.core:translation.controller-1.0.0",' +
+                    let templatePrevious = JSON.parse('{"typeid":"autodesk.core:translation.controller-1.0.0",' +
                         '"inherits":["NodeProperty","NamedProperty"]}'
                     );
 
-                    var expectations = function(result) {
+                    let expectations = function(result) {
                         expect(result).property('isValid', false);
                         expect(result.errors.length).to.be.greaterThan(0);
                         expect(result.errors[0].message).to.have.string(MSG.MODIFIED_TEMPLATE_1);
@@ -879,16 +881,16 @@
             describe('@bugfix Local templates with \'abstract\' properties fail validation ' +
                 'with remote one.', () => {
                     describe('pass: deep equal between no properties and an empty properties array', () => {
-                        var templateArray = {
+                        let templateArray = {
                             typeid: 'SimpleTest:Shape-1.0.0',
                             properties: []
                         };
-                        var templateAbstract = {
+                        let templateAbstract = {
                             typeid: 'SimpleTest:Shape-1.0.0'
                         };
 
                         it('source is abstract and target is an empty properties array', function() {
-                            var expectations = function(result) {
+                            let expectations = function(result) {
                                 expect(result).property('isValid', true);
                                 expect(result.errors).to.be.empty;
                                 expect(result.warnings).to.be.empty;
@@ -899,7 +901,7 @@
                         });
 
                         it('target is abstract and source is an empty properties array', function() {
-                            var expectations = function(result) {
+                            let expectations = function(result) {
                                 expect(result).property('isValid', true);
                                 expect(result.errors).to.be.empty;
                                 expect(result.warnings).to.be.empty;
@@ -913,18 +915,17 @@
         });
 
         describe('Constants', function() {
-            var validator;
             before(function() {
-                var schemaValidator = new SchemaValidator();
+                let schemaValidator = new SchemaValidator();
 
-                validator = new TemplateValidator({
+                new TemplateValidator({
                     skipSemver: true,
-                    inheritsFrom: schemaValidator.inheritsFrom,
-                    hasSchema: schemaValidator.hasSchema
+                    inheritsFrom: schemaValidator.inheritsFrom as any,
+                    hasSchema: schemaValidator.hasSchema as any
                 });
             });
 
-            var expectationsGenerator = function(msg) {
+            let expectationsGenerator = function(msg) {
                 return function(result) {
                     expect(result.isValid).to.equal(false);
                     expect(result.errors.length).to.equal(1);
@@ -935,12 +936,12 @@
             };
 
             it('should pass a valid template', function() {
-                var ConstantValid = {
+                let ConstantValid = {
                     typeid: 'ConstantTest:ConstantValid-1.0.0',
                     constants: [{ id: 'valid', typeid: 'String', value: 'value' }]
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(true);
                     return result;
                 };
@@ -949,7 +950,7 @@
             });
 
             it('should fail if constants array has no elements', function() {
-                var ConstantEmptyArray = {
+                let ConstantEmptyArray = {
                     typeid: 'ConstantTest:ConstantEmptyArray-1.0.0',
                     constants: []
                 };
@@ -959,7 +960,7 @@
             });
 
             it('should fail if constant does not have an id', function() {
-                var ConstantNoId = {
+                let ConstantNoId = {
                     typeid: 'ConstantTest:ConstantNoId-1.0.0',
                     constants: [{ typeid: 'String', value: 'value' }]
                 };
@@ -969,7 +970,7 @@
             });
 
             it('should fail if constant does not have a typeid', function() {
-                var ConstantNoTypeid = {
+                let ConstantNoTypeid = {
                     typeid: 'ConstantTest:ConstantNoTypeid-1.0.0',
                     constants: [{ id: 'id', value: 'value' }]
                 };
@@ -988,13 +989,13 @@
             });
 
             it('should pass if constant does not have a typeid but maybe inherits from elsewhere', function() {
-                var ConstantNoTypeid = {
+                let ConstantNoTypeid = {
                     typeid: 'ConstantTest:ConstantNoTypeid-1.0.0',
                     inherits: 'ConstantTest:ConstantParentWithTypeid-1.0.0',
                     constants: [{ id: 'id', value: 'value' }]
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(true);
                     return result;
                 };
@@ -1003,12 +1004,12 @@
             });
 
             it('should not fail if constant does not have a value or typedValue', function() {
-                var ConstantNoValue = {
+                let ConstantNoValue = {
                     typeid: 'ConstantTest:ConstantNoValue-1.0.0',
                     constants: [{ id: 'id', typeid: 'String' }]
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(true);
                     return result;
                 };
@@ -1017,7 +1018,7 @@
             });
 
             it('should pass if constant map with context key type typeid has typeids as keys', function() {
-                var Constant = {
+                let Constant = {
                     typeid: 'ConstantTest:Constant-1.0.0',
                     constants: [{
                         id: 'map',
@@ -1028,7 +1029,7 @@
                     }]
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(true);
                     return result;
                 };
@@ -1037,7 +1038,7 @@
             });
 
             it('should fail if constant map with context key type that is not a valid value', function() {
-                var ConstantNoValue = {
+                let ConstantNoValue = {
                     typeid: 'ConstantTest:ConstantNoValue-1.0.0',
                     constants: [{
                         id: 'map',
@@ -1062,7 +1063,7 @@
             });
 
             it('should fail if constant map with context key type typeid has invalid typeids as keys', function() {
-                var ConstantMapWithBadKeys = {
+                let ConstantMapWithBadKeys = {
                     typeid: 'ConstantTest:ConstantMapWithBadKeys-1.0.0',
                     constants: [{
                         id: 'map',
@@ -1073,7 +1074,7 @@
                     }]
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     expect(result.isValid).to.equal(false);
                     expect(result.errors.length).to.equal(2);
                     expect(result.errors[0].message).to.include(
@@ -1088,7 +1089,7 @@
             });
 
             it('should fail if map with context key type typeid is not constant', function() {
-                var ConstantMapWithProperty = {
+                let ConstantMapWithProperty = {
                     typeid: 'ConstantTest:Outerprop-1.0.0',
                     properties: [{
                         id: 'map',
@@ -1099,10 +1100,10 @@
                     }]
                 };
 
-                var expectations = function(result) {
+                let expectations = function(result) {
                     throw new Error('This should not be called');
                 };
-                var failExpectations = function(error) {
+                let failExpectations = function(error) {
                     expect(error.toString()).to.include(
                         'SV-013: A map with typeids as keys must be constant');
                 };
@@ -1113,24 +1114,24 @@
 
         describe('Async validation', function() {
             it('can perform context validation asynchronously', function(done) {
-                var schemaValidator = new SchemaValidator();
+                let schemaValidator = new SchemaValidator();
 
-                var templateValidator = new TemplateValidator({
-                    inheritsFromAsync: schemaValidator.inheritsFromAsync,
-                    hasSchemaAsync: schemaValidator.hasSchemaAsync
+                let templateValidator = new TemplateValidator({
+                    inheritsFromAsync: schemaValidator.inheritsFromAsync as any,
+                    hasSchemaAsync: schemaValidator.hasSchemaAsync as any
                 });
 
                 // Doesn't inherit from 'NamedProperty'. Will cause an error
-                var grandParentSchema = {
+                let grandParentSchema = {
                     'typeid': 'test:grandparentschema-1.0.0'
                 };
 
-                var parentSchema = {
+                let parentSchema = {
                     'typeid': 'test:parentschema-1.0.0',
                     'inherits': ['test:grandparentschema-1.0.0']
                 };
 
-                var childSchema = {
+                let childSchema = {
                     'typeid': 'test:childchema-1.0.0',
                     properties: [{
                         id: 'set',
@@ -1142,7 +1143,7 @@
                 schemaValidator.register(grandParentSchema);
                 schemaValidator.register(parentSchema);
 
-                templateValidator.validateAsync(childSchema).then(
+                templateValidator.validateAsync(childSchema as any).then(
                     () => {
                         done(new Error('Should not be valid!'));
                     },

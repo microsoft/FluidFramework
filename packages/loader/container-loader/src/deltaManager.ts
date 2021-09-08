@@ -476,7 +476,7 @@ export class DeltaManager
             ...this.connectionStateProps,
             pendingOps: this.pending.length, // Do we have any pending ops?
             pendingFirst: pendingSorted[0]?.sequenceNumber, // is the first pending op the one that we are missing?
-            haveHandler: this.handler !== undefined, // do we have handler installed
+            haveHandler: this.handler !== undefined, // do we have handler installed?
             closed: this.closed,
         });
     }
@@ -1513,7 +1513,7 @@ export class DeltaManager
 
         // a bunch of code assumes that this is true
         assert(this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
-            "lastObservedSeqNumber should be updated first");
+            0x267 /* "lastObservedSeqNumber should be updated first" */);
 
         // Back-compat for older server with no term
         if (message.term === undefined) {
@@ -1527,6 +1527,9 @@ export class DeltaManager
         this.handler.process(message);
 
         const endTime = Date.now();
+
+        // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers
+        // test this.lastProcessedSequenceNumber instead of using op.sequenceNumber itself.
         this.emit("op", message, endTime - startTime);
     }
 
@@ -1553,7 +1556,7 @@ export class DeltaManager
         }
 
         if (this.closed) {
-            this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasClosedConnection" });
+            this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection", reason });
             return;
         }
 

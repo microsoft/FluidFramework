@@ -10,9 +10,11 @@
  * @fileoverview In this file, we will test typeid_helper functions.
  */
 
+import { expect } from "chai";
+import { TypeIdHelper } from '../../helpers/typeidHelper';
+
 (function() {
     describe('Typeid helper', function() {
-        var TypeIdHelper = require('../../helpers/typeidHelper');
         var MSG = require('@fluid-experimental/property-common').constants.MSG;
 
         it('getPrimitiveTypeId() should return all primitive typeids', () => {
@@ -33,7 +35,9 @@
         describe('nativeInheritsFrom() method', function() {
             it('should throw an error if the input is undefine', () => {
                 expect(() => { TypeIdHelper.nativeInheritsFrom(undefined, 'BaseProperty'); }).to.throw(MSG.TYPEID_NOT_DEFINED);
+                // @ts-ignore
                 expect(() => { TypeIdHelper.nativeInheritsFrom('NodeProperty'); }).to.throw(MSG.TYPEID_NOT_DEFINED);
+                // @ts-ignore
                 expect(() => { TypeIdHelper.nativeInheritsFrom(); }).to.throw(MSG.TYPEID_NOT_DEFINED);
             });
 

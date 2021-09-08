@@ -56,7 +56,7 @@ describe('Reversible ChangeSets', function () {
         }
         // now inverse the changeset
         var inverseCS = cs2.clone();
-        inverseCS._toInverseChangeSet();
+        inverseCS.toInverseChangeSet();
         if (expectedInverseCS) {
             expect(inverseCS.getSerializedChangeSet()).to.deep.equal(expectedInverseCS);
         }
@@ -1137,7 +1137,7 @@ describe('Reversible ChangeSets', function () {
         expect(cs.getSerializedChangeSet()).to.deep.equal({ 'insert': { 'Float32': { 'myFloat': 42 } } });
 
         var invCS = cs2Rev.clone();
-        invCS._toInverseChangeSet();
+        invCS.toInverseChangeSet();
         expect(invCS.getSerializedChangeSet()).to.deep.equal(
             { 'modify': { 'Float32': { 'myFloat': { 'value': 23, 'oldValue': 42 } } } });
 
@@ -1380,7 +1380,7 @@ describe('Reversible ChangeSets', function () {
             }
         });
 
-        changeSet._toInverseChangeSet();
+        changeSet.toInverseChangeSet();
 
         expect(changeSet.getSerializedChangeSet()).to.eql({
             'insert': {
@@ -1429,7 +1429,7 @@ describe('Reversible ChangeSets', function () {
         changeSet2._toReversibleChangeSet(parentChangeSet2);
 
         expect(changeSet2.getSerializedChangeSet()).to.eql(changeSet2.getSerializedChangeSet());
-        changeSet2._toInverseChangeSet();
+        changeSet2.toInverseChangeSet();
 
         expect(changeSet2.getSerializedChangeSet()).to.eql({
             'remove': {
@@ -1563,7 +1563,7 @@ describe('Reversible ChangeSets', function () {
             }
         });
 
-        changeSet._toInverseChangeSet();
+        changeSet.toInverseChangeSet();
 
         expect(changeSet.getSerializedChangeSet()).to.eql({
             'modify': {
@@ -1599,7 +1599,7 @@ describe('Reversible ChangeSets', function () {
                 }
             }
         });
-        CS._toInverseChangeSet();
+        CS.toInverseChangeSet();
         expect(CS.getSerializedChangeSet()).to.deep.equal({
             'remove': {
                 'String': {
@@ -1623,7 +1623,7 @@ describe('Reversible ChangeSets', function () {
                 }
             }
         });
-        CS._toInverseChangeSet();
+        CS.toInverseChangeSet();
         expect(CS.getSerializedChangeSet()).to.deep.equal({
             'modify': {
                 'NodeProperty': {

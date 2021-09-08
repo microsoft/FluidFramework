@@ -8,16 +8,14 @@
  *    functions described in /src/properties/path_helper.js
  */
 
-describe('PathHelper', function() {
-    var PathHelper;
+import { expect } from 'chai';
+import { PathHelper } from "../pathHelper";
 
-    before(function() {
-        PathHelper = require('../pathHelper');
-    });
+describe('PathHelper', function() {
 
     describe('tokenizePathString', function() {
         it('should work for simple paths separated by dots', function() {
-            var types = [];
+            let types = [];
             expect(PathHelper.tokenizePathString('', types)).to.deep.equal([]);
             expect(types).to.deep.equal([]);
 
@@ -36,7 +34,7 @@ describe('PathHelper', function() {
         });
 
         it('should work for arrays', function() {
-            var types = [];
+            let types = [];
             expect(PathHelper.tokenizePathString('[test]', types)).to.deep.equal(['test']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.ARRAY_TOKEN]);
 
@@ -51,7 +49,7 @@ describe('PathHelper', function() {
         });
 
         it('should work for combinations of arrays and paths separated by dots', function() {
-            var types = [];
+            let types = [];
             expect(PathHelper.tokenizePathString('map[test]', types)).to.deep.equal(['map', 'test']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN, PathHelper.TOKEN_TYPES.ARRAY_TOKEN]);
 
@@ -71,7 +69,7 @@ describe('PathHelper', function() {
         });
 
         it('should work for quoted tokens', function() {
-            var types = [];
+            let types = [];
             expect(PathHelper.tokenizePathString('"test"', types)).to.deep.equal(['test']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN]);
 
@@ -177,7 +175,7 @@ describe('PathHelper', function() {
         });
 
         it('should work for relative paths', function() {
-            var types = [];
+            let types = [];
             expect(PathHelper.tokenizePathString('../test', types)).to.deep.equal(['../', 'test']);
             expect(types).to.deep.equal([PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN,
                 PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN
@@ -258,6 +256,7 @@ describe('PathHelper', function() {
         });
 
         it('should throw on non strings', function() {
+            // @ts-ignore
             expect(() => PathHelper.unquotePathSegment(5)).to.throw();
         });
 
