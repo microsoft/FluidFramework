@@ -29,14 +29,14 @@ function filenameFromIndex(index: number): string {
 }
 
 let currSeq: number = 1;
-
+let seqNumMismatch = false;
+let readFromMessages = false;
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
     files?: string[]) {
     let lastSeq = 0;
 
-    let seqNumMismatch = false;
     // If we have local save, read ops from there first
     if (files !== undefined) {
         for (let i = 0; i < files.length; i++) {
@@ -47,9 +47,10 @@ async function* loadAllSequencedMessages(
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
                 seqNumMismatch = messages[0].sequenceNumber !== lastSeq + 1;
                 assert(!seqNumMismatch, 0x1b9 /* "Unexpected value for sequence number of first message in file" */);
-                yield messages;
                 lastSeq = messages[messages.length - 1].sequenceNumber;
                 currSeq = lastSeq + 1;
+                readFromMessages = true;
+                yield messages;
             } catch (e) {
                 if (seqNumMismatch) {
                     if (overWrite) {
@@ -59,10 +60,13 @@ async function* loadAllSequencedMessages(
                     console.error("There are deleted ops in the document being requested," +
                         " please back up the existing messages.json file and delete it from its directory." +
                         " Then try fetch tool again.");
+                    console.error(e);
+                    return;
+                } else {
+                    console.error(`Error reading / parsing messages from ${files}`);
+                    console.error(e);
+                    return;
                 }
-                console.error(`Error reading / parsing messages from ${files}`);
-                console.error(e);
-                return;
             }
         }
         if (lastSeq !== 0) {
@@ -91,6 +95,7 @@ async function* loadAllSequencedMessages(
     try {
         await teststream.read();
     } catch (error) {
+        seqNumMismatch = true;
         statusCode = error.getTelemetryProperties().statusCode;
         innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
         if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
@@ -172,18 +177,24 @@ async function* saveOps(
     dir: string,
     files: string[]) {
     // Split into 100K ops
-    const chunk = 100 * 1000;
+    const chunk = 1 * 1000;
 
+    let sequencedMessages: ISequencedDocumentMessage[] = [];
+    let curr = 1;
     // Figure out first file we want to write to
     let index = 0;
     if (files.length !== 0) {
-        index = (files.length - 1);
+        index = files.length - 1;
+        const name = filenameFromIndex(index);
+        const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
+        const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
+        curr = messages[messages.length - 1].sequenceNumber + 1;
     }
 
-    let sequencedMessages: ISequencedDocumentMessage[] = [];
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
-        let curr = index * chunk + currSeq;
+        curr = seqNumMismatch ? index * chunk + currSeq : curr;
+        index = readFromMessages ? Math.floor(curr / chunk) : index;
         if (!result.done) {
             let messages = result.value;
             yield messages;
