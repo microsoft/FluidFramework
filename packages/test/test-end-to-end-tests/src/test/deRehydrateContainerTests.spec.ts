@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { compare } from "semver";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -31,7 +31,7 @@ import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { getSnapshotTreeFromSerializedContainer } from "@fluidframework/container-loader/dist/utils";
+import { getSnapshotTreeFromSerializedContainer, ISnapshotTreeWithBlobContents } from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -47,7 +47,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     const assertChannelsTree = (rootOrDatastore: ISnapshotTree) => disableIsolatedChannels
         ? rootOrDatastore
         : assertSubtree(rootOrDatastore, ".channels");
-    const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
+    const assertProtocolTree = (root: ISnapshotTreeWithBlobContents) => assertSubtree(root, ".protocol");
 
     function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
         const channelsTree = assertChannelsTree(rootOrDatastore);
@@ -59,15 +59,15 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
     const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
         assertChannelTree(root, key, `${key} datastore not present`);
 
-    function assertBlobContents<T>(subtree: ISnapshotTree, key: string): T {
+    function assertBlobContents<T>(subtree: ISnapshotTreeWithBlobContents, key: string): T {
         const id = subtree.blobs[key];
         assert(id, `blob id for ${key} missing`);
-        const contents = subtree.blobs[id];
+        const contents = subtree.blobsContents[id];
         assert(contents, `blob contents for ${key} missing`);
-        return JSON.parse(fromBase64ToUtf8(contents)) as T;
+        return JSON.parse(bufferToString(contents, "utf8")) as T;
     }
 
-    const assertProtocolAttributes = (s: ISnapshotTree) =>
+    const assertProtocolAttributes = (s: ISnapshotTreeWithBlobContents) =>
         assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), "attributes");
 
     const codeDetails: IFluidCodeDetails = {
@@ -168,8 +168,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
-            assert.strictEqual(Object.keys(protocolTree.blobs).length, 8,
-                "4 protocol blobs should be there(8 mappings)");
+            assert.strictEqual(Object.keys(protocolTree.blobs).length, 4,
+                "4 protocol blobs should be there.");
 
             const protocolAttributes = assertProtocolAttributes(snapshotTree);
             assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
