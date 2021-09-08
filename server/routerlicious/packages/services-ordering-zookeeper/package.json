@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-zookeeper",
-  "version": "0.1024.1",
+  "version": "0.1024.2",
   "description": "Fluid server services zookeeper client implementation",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -24,13 +24,13 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/server-services-core": "^0.1024.1",
+    "@fluidframework/server-services-core": "^0.1024.2",
     "node-zookeeper-client": "1.1.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.22.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/server-test-utils": "^0.1024.1",
+    "@fluidframework/server-test-utils": "^0.1024.2",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",
     "@types/mocha": "^5.2.5",
