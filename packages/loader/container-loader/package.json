@@ -63,7 +63,7 @@
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/driver-definitions": "^0.39.6",
     "@fluidframework/driver-utils": "^0.47.0",
-    "@fluidframework/protocol-base": "^0.1030.0-0",
+    "@fluidframework/protocol-base": "^0.1030.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/telemetry-utils": "^0.47.0",
     "abort-controller": "^3.0.0",
