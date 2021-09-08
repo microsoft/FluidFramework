@@ -12,6 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { assert } from "@fluidframework/common-utils";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
@@ -168,8 +169,24 @@ async function runnerProcess(
             container.resume();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
-            scheduleContainerClose(container, runConfig);
-            scheduleFaultInjection(documentServiceFactory, container, runConfig);
+            // Control fault injection period through config.
+            // If undefined then no fault injection.
+            const faultInjectionMinMs = runConfig.testConfig.faultInjectionMinMs;
+            const faultInjectionMaxMs = runConfig.testConfig.faultInjectionMaxMs;
+            if (faultInjectionMaxMs !== undefined) {
+                assert(faultInjectionMinMs !== undefined, "Define faultInjectionMinMs.");
+                assert(faultInjectionMinMs >= 0, "faultInjectionMinMs must be greater than or equal to zero.");
+                assert(faultInjectionMaxMs > 0, "faultInjectionMaxMs must be greater than zero.");
+                assert(faultInjectionMaxMs >= faultInjectionMinMs,
+                    "faultInjectionMaxMs must be greater than or equal to faultInjectionMinMs.");
+
+                scheduleContainerClose(container, runConfig, faultInjectionMinMs, faultInjectionMaxMs);
+                scheduleFaultInjection(
+                    documentServiceFactory, container, runConfig, faultInjectionMinMs, faultInjectionMaxMs);
+            } else {
+                assert(faultInjectionMinMs === undefined, "Define faultInjectionMaxMs.");
+            }
+
             try {
                 printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset);
@@ -195,9 +212,11 @@ async function runnerProcess(
 function scheduleFaultInjection(
     ds: FaultInjectionDocumentServiceFactory,
     container: Container,
-    runConfig: IRunConfig) {
+    runConfig: IRunConfig,
+    faultInjectionMinMs: number,
+    faultInjectionMaxMs: number) {
     const schedule = () => {
-        const injectionTime = runConfig.testConfig.readWriteCycleMs * random.real(0, 5)(runConfig.randEng);
+        const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
         printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
             if (container.connected && container.resolvedUrl !== undefined) {
@@ -238,7 +257,11 @@ function scheduleFaultInjection(
     schedule();
 }
 
-function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
+function scheduleContainerClose(
+    container: Container,
+    runConfig: IRunConfig,
+    faultInjectionMinMs: number,
+    faultInjectionMaxMs: number) {
     new Promise<void>((res) => {
         // wait for the container to connect write
         container.once("closed", res);
@@ -266,7 +289,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
                 // this will bias toward the summarizer client which is always quorum index 0.
                 if (quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember", scheduleLeave);
-                    const leaveTime = runConfig.testConfig.readWriteCycleMs * random.real(0, 5)(runConfig.randEng);
+                    const leaveTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
                     printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0, 4)} min`);
                     setTimeout(
                         () => {

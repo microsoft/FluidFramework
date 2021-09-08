@@ -107,7 +107,7 @@ export interface IWholeFlatSummaryTree {
 
 export interface IWholeFlatSummaryBlob {
     content: string;
-    encoding: "base64" | "utf8";
+    encoding: "base64" | "utf-8";
     id: string;
     size: number;
 }

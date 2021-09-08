@@ -48,6 +48,9 @@ export enum CommonProperties {
     maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
     lastSummarySequenceNumber = "lastSummarySequenceNumber",
 
+    // Request properties
+    statusCode = "statusCode",
+
     // Miscellaneous properties
     restart = "restart",
     telemetryGroupName = "telemetryGroupName",
