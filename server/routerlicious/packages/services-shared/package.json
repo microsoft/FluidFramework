@@ -48,7 +48,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0-0",
+    "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/debug": "^4.1.5",
     "@types/formidable": "1.2.3",
