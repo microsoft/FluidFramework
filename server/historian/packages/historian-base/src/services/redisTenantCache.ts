@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Redis } from "ioredis";
 import * as winston from "winston";
-import { safelyLogError } from "../utils";
 import { IRedisParameters } from "./definitions";
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
@@ -27,7 +27,7 @@ export class RedisTenantCache {
 
         client.on("error", (error) => {
             winston.error("Redis Tenant Cache Error:", error);
-            safelyLogError("Redis Tenant Cache Error", error);
+            Lumberjack.error("Redis Tenant Cache Error", undefined, error);
         });
     }
 

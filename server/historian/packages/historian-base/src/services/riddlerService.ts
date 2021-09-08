@@ -9,8 +9,8 @@ import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
 import * as winston from "winston";
-import { BaseTelemetryProperties, LogLevel, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getRequestErrorTranslator, getTokenLifetimeInSec, safelyLogError } from "../utils";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
@@ -45,16 +45,16 @@ export class RiddlerService implements ITenantService {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         const cachedDetail = await this.cache.get(tenantId).catch((error) => {
             winston.error(`Error fetching tenant details from cache`, error);
-            safelyLogError(
+            Lumberjack.error(
                 `Error fetching tenant details from cache`,
-                error,
                 lumberProperties,
+                error,
             );
             return undefined;
         });
         if (cachedDetail) {
             winston.info(`Resolving tenant details from cache`);
-            Lumberjack.log(`Resolving tenant details from cache`, LogLevel.Info, lumberProperties);
+            Lumberjack.info(`Resolving tenant details from cache`, lumberProperties);
             return JSON.parse(cachedDetail) as ITenantConfig;
         }
         const tenantUrl = `/api/tenants/${tenantId}`;
@@ -62,10 +62,10 @@ export class RiddlerService implements ITenantService {
             .catch(getRequestErrorTranslator(tenantUrl, "GET"));
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
             winston.error(`Error caching tenant details to redis`, error);
-            safelyLogError(
+            Lumberjack.error(
                 `Error caching tenant details to redis`,
-                error,
                 lumberProperties,
+                error,
             );
         });
         return details;
@@ -75,17 +75,17 @@ export class RiddlerService implements ITenantService {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         const cachedToken = await this.cache.exists(token).catch((error) => {
             winston.error(`Error fetching token from cache`, error);
-            safelyLogError(
+            Lumberjack.error(
                 `Error fetching token from cache`,
-                error,
                 lumberProperties,
+                error,
             );
             return false;
         });
 
         if (cachedToken) {
             winston.info(`Resolving token from cache`);
-            Lumberjack.log(`Resolving token from cache`, LogLevel.Info, lumberProperties);
+            Lumberjack.info(`Resolving token from cache`, lumberProperties);
             return;
         }
 
@@ -102,10 +102,10 @@ export class RiddlerService implements ITenantService {
         }
         this.cache.set(token, "", tokenLifetimeInSec).catch((error) => {
             winston.error(`Error caching token to redis`, error);
-            safelyLogError(
+            Lumberjack.error(
                 `Error caching token to redis`,
-                error,
                 lumberProperties,
+                error,
             );
         });
     }
