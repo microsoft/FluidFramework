@@ -242,7 +242,7 @@ function scheduleContainerClose(container: Container, runConfig: IRunConfig) {
     new Promise<void>((res) => {
         // wait for the container to connect write
         container.once("closed", res);
-        if (!container.deltaManager.active) {
+        if (!container.connected && !container.closed) {
             container.once("connected", () => {
                 res();
                 container.off("closed", res);
