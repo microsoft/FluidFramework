@@ -5,28 +5,43 @@
             "progressIntervalMs": 15000,
             "numClients": 120,
             "totalSendCount": 10000,
-            "readWriteCycleMs": 30000
+            "readWriteCycleMs": 30000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 150000
         },
         "full": {
             "opRatePerMin": 1920,
             "progressIntervalMs": 1500000,
             "numClients": 60,
             "totalSendCount": 200000,
-            "readWriteCycleMs": 30000
+            "readWriteCycleMs": 30000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 150000
         },
         "mini": {
             "opRatePerMin": 60,
             "progressIntervalMs": 5000,
             "numClients": 2,
             "totalSendCount": 30,
-            "readWriteCycleMs": 10000
+            "readWriteCycleMs": 10000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 50000
         },
         "debug": {
             "opRatePerMin": 60,
             "progressIntervalMs": 5000,
             "numClients": 1,
             "totalSendCount": 30,
-            "readWriteCycleMs": 10000
+            "readWriteCycleMs": 10000,
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 50000
+        },
+        "ci_nofault": {
+            "opRatePerMin": 10,
+            "progressIntervalMs": 15000,
+            "numClients": 120,
+            "totalSendCount": 10000,
+            "readWriteCycleMs": 30000
         }
     }
 }

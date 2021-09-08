@@ -9,8 +9,8 @@ who've used common data structures before.
 
 {{% callout note %}}
 
-This article assumes that you are familiar with [Introducing distributed data structures]({{< relref
-"dds.md" >}}).
+This article assumes that you are familiar with
+[Introducing distributed data structures]({{< relref "dds.md" >}}).
 
 {{% /callout %}}
 

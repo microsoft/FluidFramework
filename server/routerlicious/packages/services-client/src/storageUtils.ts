@@ -77,7 +77,11 @@ export function convertSummaryTreeToWholeSummaryTree(
                     if (!parentHandle) {
                         throw Error("Parent summary does not exist to reference by handle.");
                     }
-                    id = `${parentHandle}/${summaryObject.handle}`;
+                    let handlePath = summaryObject.handle;
+                    if (handlePath.length > 0 && !handlePath.startsWith("/")) {
+                        handlePath = `/${handlePath}`;
+                    }
+                    id = `${parentHandle}${handlePath}`;
                 }
                 break;
             }
@@ -167,7 +171,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     const blobs = new Map<string, ArrayBuffer>();
     if (flatSummary.blobs) {
         flatSummary.blobs.forEach((blob) => {
-            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
+            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
         });
     }
     const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
