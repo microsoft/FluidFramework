@@ -107,6 +107,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("disconnected");
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
@@ -161,6 +162,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			}
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("rebalance", async (err, topicPartitions) => {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
