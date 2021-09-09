@@ -119,7 +119,7 @@ export class OpsCache {
 
     public async get(from: number, to?: number): Promise<IMessage[]> {
         const messages: IMessage[] = [];
-        let batchNumber = this.getBatchNumber(from + 1);
+        let batchNumber = this.getBatchNumber(from);
         const start = performance.now();
         // eslint-disable-next-line no-constant-condition
         while (true) {
