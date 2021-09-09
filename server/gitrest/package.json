@@ -28,7 +28,7 @@
     "@fluidframework/server-services-core": "^0.1025.0-0",
     "@fluidframework/server-services-shared": "^0.1025.0-0",
     "@fluidframework/server-services-utils": "^0.1025.0-0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
     "cors": "^2.8.5",

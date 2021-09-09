@@ -432,18 +432,26 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
             if (data !== undefined) {
                 this.getOpsMap.delete(result.nonce);
+                const common = {
+                    eventName: "GetOps",
+                    code: result.code,
+                    from: data.from,
+                    to: data.to,
+                    duration: performance.now() - data.start,
+                };
                 if (messages !== undefined && messages.length > 0) {
                     this.logger.sendPerformanceEvent({
-                        eventName: "GetOps",
+                        ...common,
                         first: messages[0].sequenceNumber,
                         last: messages[messages.length - 1].sequenceNumber,
-                        code: result.code,
-                        from: data.from,
-                        to: data.to,
-                        duration: performance.now() - data.start,
                         length: messages.length,
                     });
                     this.emit("op", this.documentId, messages);
+                } else {
+                    this.logger.sendPerformanceEvent({
+                        ...common,
+                        length: 0,
+                    });
                 }
             }
         });
