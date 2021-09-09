@@ -201,7 +201,7 @@ async function* saveOps(
         const name = filenameFromIndex(index);
         const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
         const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
-        //
+        // get current sequence number from the last op read, and plus one
         curr = messages[messages.length - 1].sequenceNumber + 1;
     }
 
