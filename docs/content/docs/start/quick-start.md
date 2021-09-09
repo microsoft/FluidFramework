@@ -9,9 +9,7 @@ aliases:
 
 ---
 
-[broken link][]
-
-Another [broken link](broken.md).
+Fixed a [broken link]({{< relref "dds.md" >}}).
 
 In this Quick Start you will be getting a dice roller Fluid application up and running first on your computer's
 localhost.
