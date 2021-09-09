@@ -84,14 +84,16 @@ steps:
       t1=0
       for f in *.tgz
       do
-          if ! npm publish $f $tag ${{ parameters.publishFlags }} &> log
+          if ! npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           then
-              if ! grep -q "You cannot publish over the previously published versions" "log"
+              if ! grep -q "You cannot publish over the previously published versions" "publish_log"
               then
                 let t1+=1
+              else
+                echo Package has already been published.
               fi
           fi
-          rm log
+          rm publish_log
       done
       rm ~/.npmrc
       exit $t1
