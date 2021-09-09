@@ -584,9 +584,14 @@ export class DeltaManager
     }
 
     public async preFetchOps(cacheOnly: boolean) {
-        // Note that might already got connected to delta stream by now.
-        // If we did, then we proactively fetch ops at the end of setupNewSuccessfulConnection to ensure
-        if (this.connection === undefined) {
+        // There should be never pending fetch!
+        // This API is called right after attachOpHandler by Container.load().
+        // We might have connection already and it might have called fetchMissingDeltas() from
+        // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
+        // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
+        assert(this.fetchReason === undefined, "");
+
+        if (!this.closed) {
             return this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber, undefined);
         }
     }
@@ -630,6 +635,8 @@ export class DeltaManager
     }
 
     private async connectCore(args: IConnectionArgs): Promise<IDocumentDeltaConnection> {
+        assert(!this.closed, "not closed");
+
         if (this.connection !== undefined) {
             return this.connection;
         }
@@ -664,7 +671,7 @@ export class DeltaManager
             this.handler !== undefined || !fetchOpsFromStorage,
             this.logger,
             "CantFetchWithoutBaseline"); // can't fetch if no baseline
-        if (fetchOpsFromStorage && this.handler !== undefined) {
+        if (fetchOpsFromStorage) {
             this.fetchMissingDeltas(args.reason, this.lastQueuedSequenceNumber);
         }
 
@@ -1562,6 +1569,12 @@ export class DeltaManager
             return;
         }
 
+        if (this.handler === undefined) {
+            // We do not poses yet any information
+            assert(lastKnowOp === 0, "initial state");
+            return;
+        }
+
         try {
             assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
             let from = lastKnowOp + 1;
@@ -1603,13 +1616,17 @@ export class DeltaManager
      * Sorts pending ops and attempts to apply them
      */
     private processPendingOps(reason?: string): void {
-        if (this.handler !== undefined) {
-            const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-            this.pending = [];
-            // Given that we do not track where these ops came from any more, it's not very
-            // actionably to report gaps in this range.
-            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+        if (this.closed) {
+            return;
         }
+
+        assert(this.handler !== undefined, "handler should be installed");
+
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        this.pending = [];
+        // Given that we do not track where these ops came from any more, it's not very
+        // actionably to report gaps in this range.
+        this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
     }
 
     private updateLatestKnownOpSeqNumber(seq: number) {
