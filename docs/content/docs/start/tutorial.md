@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial: Create a Fluid app'
+title: 'Tutorial: Hello World walkthrough'
 menuPosition: 2
 aliases:
   - "/docs/get-started/tutorial/"
