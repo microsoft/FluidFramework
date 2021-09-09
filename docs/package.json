@@ -12,7 +12,7 @@
     "build:api-documenter": "run-script-os",
     "build:api-documenter:default": "[ -e ../_api-extractor-temp/doc-models ] && api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/docs/apis/ ; exit 0",
     "build:api-documenter:win32": "if exist ../_api-extractor-temp/doc-models api-documenter generate --config api-documenter.json --input-folder ../_api-extractor-temp/doc-models/ --output-folder content/docs/apis/",
-    "build:diagrams": "node ditaa.js content/**/*.ditaa",
+    "build:diagrams": "concurrently \"node ditaa.js content/**/*.ditaa\" \"node ditaa.js static/images/*.ditaa\"",
     "build:md-magic": "node md.js",
     "clean": "rimraf public/** content/docs/apis/**",
     "copyfiles": "copyfiles _replacements/**/*.* content/ -V -u 1",

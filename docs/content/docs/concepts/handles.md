@@ -4,6 +4,7 @@ menuPosition: 5
 status: outdated
 aliases:
   - "/docs/advanced/handles/"
+  - "/docs/deep/handles/"
 ---
 
 A Fluid handle is an object that holds a reference to a collaborative object, such as a [DataObject][] or a distributed

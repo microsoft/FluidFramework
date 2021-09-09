@@ -1,7 +1,8 @@
 ---
 title: Using Fluid with React
 menuPosition: 1
-discussion: 5462
+aliases:
+  - "/start/react-tutorial/"
 ---
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/). The following image shows the time stamp application open in four browsers. Each has a button labelled **click** and beside it a UNIX Epoch time. The same time in all four. The cursor is on the button in one browser.
