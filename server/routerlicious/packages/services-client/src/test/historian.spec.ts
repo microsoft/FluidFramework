@@ -13,12 +13,13 @@ import { Historian, ICredentials, getAuthorizationTokenFromCredentials } from ".
 import { BasicRestWrapper, RestWrapper } from "../restWrapper";
 import { IWholeSummaryPayload, IWriteSummaryResponse } from "../storageContracts";
 
-describe.only("Historian", () => {
+describe("Historian", () => {
     const endpoint = "http://test:3000";
     const sha = "123456abcdef";
     const ref = "xyz789";
     const tag = "1a2b3c";
-    const axiosMock = new AxiosMockAdapter(Axios);
+    const axiosInstance = Axios.create();
+    const axiosMock = new AxiosMockAdapter(axiosInstance);
     const initialCredentials: ICredentials = {
         user: "test-user",
         password: "test-password",
@@ -143,7 +144,7 @@ describe.only("Historian", () => {
             undefined,
             undefined,
             initialHeaders,
-            undefined,
+            axiosInstance,
             undefined,
             () => newHeaders)
         historian = new Historian(
