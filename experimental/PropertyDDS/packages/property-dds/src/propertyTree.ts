@@ -656,7 +656,7 @@ export class SharedPropertyTree extends SharedObject {
 				applyAfterMetaInformation: rebaseMetaInformation,
 			});
 
-			copiedChangeSet._toInverseChangeSet();
+			copiedChangeSet.toInverseChangeSet();
 			copiedChangeSet.applyChangeSet(rebaseBaseChangeSet);
 			copiedChangeSet.applyChangeSet(this.localChanges[i].changeSet, {
 				applyAfterMetaInformation: rebaseMetaInformation,
@@ -670,7 +670,7 @@ export class SharedPropertyTree extends SharedObject {
 		const pendingChangesRebaseMetaInformation = new Map();
 		const deltaToTipCS = new ChangeSet(newTipDelta);
 		deltaToTipCS.applyChangeSet(pendingChanges);
-		deltaToTipCS._toInverseChangeSet();
+		deltaToTipCS.toInverseChangeSet();
 
 		// Perform a rebase of the pending changes
 		new ChangeSet(rebaseBaseChangeSet)._rebaseChangeSet(pendingChanges, conflicts, {

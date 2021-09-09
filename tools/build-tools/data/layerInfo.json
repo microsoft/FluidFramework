@@ -140,13 +140,12 @@
                     "Container-Utils"
                 ]
             },
-            "Hosts": {
+            "BaseHost": {
                 "packages": [
                     "@fluidframework/base-host"
                 ],
                 "deps": [
-                    "Loader",
-                    "Framework-Utils"
+                    "Loader"
                 ]
             },
             "HostUtils": {
@@ -164,9 +163,6 @@
                 ]
             },
             "Runtime": {
-                "packages": [
-                    "@fluidframework/agent-scheduler"
-                ],
                 "dirs": [
                     "experimental/dds/",
                     "packages/dds/",
@@ -180,7 +176,6 @@
             },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api",
                     "@fluid-experimental/data-objects",
                     "@fluidframework/fluid-static"
                 ],
@@ -190,7 +185,8 @@
                     "packages/framework/"
                 ],
                 "deps": [
-                    "Hosts",
+                    "Framework-Utils",
+                    "Loader",
                     "Runtime"
                 ]
             },
@@ -214,7 +210,6 @@
                 ],
                 "deps": [
                     "Framework",
-                    "Hosts",
                     "Runtime"
                 ]
             },

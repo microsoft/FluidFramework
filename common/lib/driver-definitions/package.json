@@ -70,8 +70,6 @@
       "InterfaceDeclaration_IDriverErrorBase": {"backCompat": false},
       "InterfaceDeclaration_IGenericNetworkError": {"backCompat": false},
       "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
-
-
     }
   }
 }

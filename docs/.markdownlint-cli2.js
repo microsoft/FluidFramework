@@ -110,6 +110,8 @@ module.exports = {
             "code_blocks": false,
             "names": [
                 "Azure Fluid Relay service",
+                "Fluid container",
+                "Fluid containers",
                 "Fluid Framework",
                 "JavaScript",
                 "JSON",
