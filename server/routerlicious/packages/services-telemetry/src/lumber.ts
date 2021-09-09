@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { performance } from "@fluidframework/common-utils";
 import { LumberEventName } from "./lumberEventNames";
@@ -101,7 +102,7 @@ export class Lumber<T extends string = LumberEventName> {
 
     public error(
         message: string,
-        exception?: Error,
+        exception?: any,
         logLevel: LogLevel = LogLevel.Error) {
         this.emit(message, logLevel, false, exception);
     }
@@ -114,7 +115,7 @@ export class Lumber<T extends string = LumberEventName> {
         message: string,
         logLevel: LogLevel,
         successful: boolean,
-        exception: Error | undefined) {
+        exception: any | undefined) {
         if (this._completed) {
             handleError(
                 LumberEventName.LumberjackError,
@@ -140,7 +141,13 @@ export class Lumber<T extends string = LumberEventName> {
         this._message = message;
         this._logLevel = logLevel;
         this._successful = successful;
-        this._exception = exception;
+
+        if (exception instanceof Error) {
+            this._exception = exception;
+        } else if (exception !== undefined) { // We want to log the exception even if its value is `false`
+            this._exception = new Error(safeStringify(exception));
+        }
+
         this._durationInMs = performance.now() - this._startTime;
 
         this._engineList.forEach((engine) => engine.emit(this));

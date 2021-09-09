@@ -174,15 +174,6 @@
                     "Container-Utils"
                 ]
             },
-            "ClientApi": {
-                "packages": [
-                    "@fluid-internal/client-api"
-                ],
-                "deps": [
-                    "Framework",
-                    "Runtime"
-                ]
-            },
             "Framework": {
                 "packages": [
                     "@fluid-experimental/data-objects",

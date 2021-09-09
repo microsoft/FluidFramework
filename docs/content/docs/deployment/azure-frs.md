@@ -3,7 +3,7 @@ title: Connect to an Azure Fluid Relay service
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid Container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of
 connecting your [Fluid container][] to the service while keeping the container object itself service-agnostic. You can
 use one instance of this client to manage multiple containers.
@@ -36,12 +36,12 @@ Now that you have an instance of `AzureClient`, you can start using it to create
 
 ### Token providers
 
-The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetFrsToken` along with the current user object. Later on, it makes a `GET` request to your Azure Function by passing in the tenantID, documentId and userID/userName as optional parameters.
+The [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) is an implementation of `ITokenProvider` which ensures your tenant key secret is not exposed in your client-side bundle code. The `AzureFunctionTokenProvider` takes in your Azure Function URL appended by `/api/GetAzureToken` along with the current user object. Later on, it makes a `GET` request to your Azure Function by passing in the tenantID, documentId and userID/userName as optional parameters.
 
 ```javascript
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetAzureToken", { userId:
     "UserId", userName: "Test User"}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",
@@ -60,7 +60,7 @@ cont userDetails: ICustomUserDetails = {
 
 const config = {
     tenantId: "myTenantId",
-    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetFrsToken", { userId:
+    tokenProvider: new AzureFunctionTokenProvider("myAzureFunctionUrl"+"/api/GetAzureToken", { userId:
     "UserId", userName: "Test User", additionalDetails: userDetails}),
     orderer: "https://myOrdererUrl",
     storage: "https://myStorageUrl",

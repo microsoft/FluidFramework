@@ -20,7 +20,7 @@ export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     value: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedCounterEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "incremented", listener: (incrementAmount: number, newValue: number) => void): any;
@@ -28,19 +28,21 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 
 // @public
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
+    // @internal
     protected applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter;
     static getFactory(): IChannelFactory;
     increment(incrementAmount: number): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // @internal
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
+    // @internal
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     get value(): number;
-    }
-
+}
 
 ```
