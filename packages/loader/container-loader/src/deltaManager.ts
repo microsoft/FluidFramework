@@ -380,13 +380,17 @@ export class DeltaManager
      * about current or last connection (if there is no connection at the moment)
     */
     public connectionProps(): ITelemetryProperties {
+        const common = {
+            sequenceNumber: this.lastSequenceNumber,
+        };
         if (this.connection !== undefined) {
             return {
-                sequenceNumber: this.lastSequenceNumber,
+                ...common,
                 connectionMode: this.connectionMode,
             };
         } else {
             return {
+                ...common,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -1531,8 +1535,9 @@ export class DeltaManager
      * Retrieves the missing deltas between the given sequence numbers
      */
      private fetchMissingDeltas(reasonArg: string, lastKnowOp: number, to?: number) {
-         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, lastKnowOp, to);
+         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, lastKnowOp, to).catch((error) => {
+             this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
+         });
      }
 
      /**
