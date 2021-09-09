@@ -586,7 +586,7 @@ export class DeltaManager
     }
 
     public async preFetchOps(cacheOnly: boolean) {
-        // There should be never pending fetch!
+        // There should be no pending fetch!
         // This API is called right after attachOpHandler by Container.load().
         // We might have connection already and it might have called fetchMissingDeltas() from
         // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
