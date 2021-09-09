@@ -48,7 +48,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-example/diceroller": "^0.48.0",
+    "@fluidframework/aqueduct": "^0.48.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
