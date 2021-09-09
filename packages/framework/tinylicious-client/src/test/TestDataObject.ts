@@ -6,13 +6,13 @@
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 import { IEvent } from "@fluidframework/common-definitions";
 
-export class DiceRoller extends DataObject {
-    public static get Name() { return "@fluid-example/dice-roller"; }
+export class TestDataObject extends DataObject {
+    public static get Name() { return "@fluid-example/test-data-object"; }
 
-    public static readonly factory = new DataObjectFactory<DiceRoller, undefined, undefined, IEvent>
+    public static readonly factory = new DataObjectFactory<TestDataObject, undefined, undefined, IEvent>
     (
-        DiceRoller.Name,
-        DiceRoller,
+        TestDataObject.Name,
+        TestDataObject,
         [],
         {},
     );
