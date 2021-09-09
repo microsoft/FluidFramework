@@ -171,7 +171,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
     const blobs = new Map<string, ArrayBuffer>();
     if (flatSummary.blobs) {
         flatSummary.blobs.forEach((blob) => {
-            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
+            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
         });
     }
     const flatSummaryTree = flatSummary.trees && flatSummary.trees[0];
