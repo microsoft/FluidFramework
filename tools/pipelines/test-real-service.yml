@@ -97,7 +97,7 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        timeoutInMinutes: 120
+        timeoutInMinutes: 240
         testSteps:
         - task: Npm@1
           displayName: '[end-to-end tests] npm run test:realsvc:frs:report'
