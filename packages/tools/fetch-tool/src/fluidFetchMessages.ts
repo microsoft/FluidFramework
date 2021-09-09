@@ -28,9 +28,13 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
+// current sequence number to fetch from
 let currSeq: number = 1;
+// flag for mismatch between last sequence number read and new one to be read
 let seqNumMismatch = false;
+// flag for if there are existing messages.json
 let readFromMessages = false;
+
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
@@ -45,6 +49,7 @@ async function* loadAllSequencedMessages(
                 console.log(`reading messages${file}.json`);
                 const fileContent = fs.readFileSync(`${dir}/messages${file}.json`, { encoding: "utf-8" });
                 const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
+                // check if there is mismatch
                 seqNumMismatch = messages[0].sequenceNumber !== lastSeq + 1;
                 assert(!seqNumMismatch, 0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 lastSeq = messages[messages.length - 1].sequenceNumber;
@@ -54,9 +59,11 @@ async function* loadAllSequencedMessages(
             } catch (e) {
                 if (seqNumMismatch) {
                     if (overWrite) {
+                        // with overWrite option on, we will delete exisintg message.json
                         fs.unlinkSync(`${dir}/messages${file}.json`);
                         break;
                     }
+                    // prompt user to back up and delete existing files
                     console.error("There are deleted ops in the document being requested," +
                         " please back up the existing messages.json file and delete it from its directory." +
                         " Then try fetch tool again.");
@@ -84,6 +91,7 @@ async function* loadAllSequencedMessages(
     let requests = 0;
     let opsStorage = 0;
 
+    // reading only 1 op to test if there is mismatch
     const teststream = deltaStorage.fetchMessages(
         lastSeq + 1,
         lastSeq + 2);
@@ -95,16 +103,20 @@ async function* loadAllSequencedMessages(
     try {
         await teststream.read();
     } catch (error) {
-        seqNumMismatch = true;
         statusCode = error.getTelemetryProperties().statusCode;
         innerMostErrorCode = error.getTelemetryProperties().innerMostErrorCode;
+        // if there is gap between ops, catch the error and check it is the error we need
         if (statusCode !== 410 || innerMostErrorCode !== "fluidDeltaDataNotAvailable") {
             throw error;
         }
+        // get firstAvailableDelta from the error response, and set current sequence number to that
         response = JSON.parse(error.getTelemetryProperties().response);
         currSeq = response.error.firstAvailableDelta;
         lastSeq = currSeq - 1;
+        seqNumMismatch = true;
     }
+
+    // continue reading rest of the ops
     const stream = deltaStorage.fetchMessages(
         lastSeq + 1, // inclusive left
         undefined, // to
@@ -177,9 +189,10 @@ async function* saveOps(
     dir: string,
     files: string[]) {
     // Split into 100K ops
-    const chunk = 1 * 1000;
+    const chunk = 100 * 1000;
 
     let sequencedMessages: ISequencedDocumentMessage[] = [];
+    // current sequence number to read from
     let curr = 1;
     // Figure out first file we want to write to
     let index = 0;
@@ -188,13 +201,18 @@ async function* saveOps(
         const name = filenameFromIndex(index);
         const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
         const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
+        //
         curr = messages[messages.length - 1].sequenceNumber + 1;
     }
 
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
+        // if there was gap in ops, change curr to currSeq,
+        // and index should be 0 anyways because we ask user to delete files
         curr = seqNumMismatch ? index * chunk + currSeq : curr;
+        // if there were exisintg files being read, change index so the new file has the correct name
         index = readFromMessages ? Math.floor(curr / chunk) : index;
+
         if (!result.done) {
             let messages = result.value;
             yield messages;
@@ -221,6 +239,7 @@ async function* saveOps(
             fs.writeFileSync(
                 `${dir}/messages${name}.json`,
                 JSON.stringify(write, undefined, paramActualFormatting ? 0 : 2));
+            // increment curr by chunk
             curr += chunk;
             assert(sequencedMessages.length === 0 || sequencedMessages[0].sequenceNumber === curr,
                 0x1bd /* "Stopped writing at unexpected sequence number" */);
