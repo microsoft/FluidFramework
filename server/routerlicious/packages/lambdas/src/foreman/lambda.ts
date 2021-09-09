@@ -12,7 +12,7 @@ import {
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
-import { LogLevel, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
 
 // TODO: Move this to config.
 const RequestWindowMS = 15000;
@@ -100,13 +100,19 @@ export class ForemanLambda implements core.IPartitionLambda {
                         type: "tasks:start",
                     },
                 );
-                Lumberjack.log(`Request to ${queueName}: ${clientId}:${JSON.stringify(tasks)}`, LogLevel.Info,
-                {
-                    messageMetaData: {
-                        documentId: docId,
-                        tenantId,
-                    },
-                });
+                this.context.log?.info(
+                    `Request to ${queueName}: ${clientId}:${JSON.stringify(tasks)}`,
+                    {
+                        messageMetaData: {
+                            documentId: docId,
+                            tenantId,
+                        },
+                    });
+                Lumberjack.info(`Request to ${queueName}: ${clientId}:${JSON.stringify(tasks)}`,
+                    {
+                        [BaseTelemetryProperties.tenantId]: tenantId,
+                        [BaseTelemetryProperties.documentId]: docId,
+                    });
             }
         }
     }
