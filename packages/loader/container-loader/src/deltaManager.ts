@@ -381,7 +381,7 @@ export class DeltaManager
     */
     public connectionProps(): ITelemetryProperties {
         const common = {
-            connectionMode: this.connectionMode,
+            sequenceNumber: this.lastSequenceNumber,
         };
         if (this.connection !== undefined) {
             return {
