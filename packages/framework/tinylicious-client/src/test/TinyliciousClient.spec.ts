@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DiceRoller } from "@fluid-example/diceroller";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { TinyliciousClient } from "..";
+import { DiceRoller } from "./DiceRoller";
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
