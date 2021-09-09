@@ -582,9 +582,7 @@ export class DeltaManager
         // If so, it's time to process any accumulated ops, as there might be no other event that
         // will force these pending ops to be processed.
         // Or request OPs from snapshot / or point zero (if we have no ops at all)
-        if (this.pending.length > 0) {
-            this.processPendingOps("DocumentOpen");
-        }
+        this.processPendingOps("DocumentOpen");
     }
 
     public async preFetchOps(cacheOnly: boolean) {
@@ -1600,12 +1598,38 @@ export class DeltaManager
      * Sorts pending ops and attempts to apply them
      */
     private processPendingOps(reason?: string): void {
-        if (this.handler !== undefined) {
-            const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-            this.pending = [];
-            // Given that we do not track where these ops came from any more, it's not very
-            // actionably to report gaps in this range.
-            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+        if (this.handler === undefined) {
+            return;
+        }
+
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        this.pending = [];
+        // Given that we do not track where these ops came from any more, it's not very
+        // actionably to report gaps in this range.
+        this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+
+        // Re-entrancy is ignored by fetchMissingDeltas, execution will come here when it's over
+        if (this.fetchReason === undefined) {
+            // See issue #7312 for more details
+            // We observe cases where client gets into situation where it is not aware of missing ops
+            // (i.e. client being behind), and as such, does not attempt to fetch them.
+            // In some cases client may not have enough signal (example - "read" connection that is silent -
+            // there is no easy way for client to realize it's behind, see a bit of commentary / logic at the
+            // end of setupNewSuccessfulConnection). In other cases it should be able to learn that info ("write"
+            // connection, learn by receiving its own join op), but data suggest it does not happen.
+            // In 50% of these cases we do know we are behind through checkpointSequenceNumber on connection object
+            // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
+            // (the other 50%), and thus these errors below should be looked at even if code below results in
+            // recovery.
+            if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
+                // connectionMode === "read" case is too noisy, so not log it.
+                // It happens because fetch in setupNewSuccessfulConnection get cancelled due to other fetch, and we
+                // never retry (other than here)
+                if (this.connectionMode === "write") {
+                    this.logConnectionIssue({ eventName: "OpsBehind" });
+                }
+                this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
+            }
         }
     }
 
