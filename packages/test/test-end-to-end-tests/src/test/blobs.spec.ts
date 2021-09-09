@@ -323,6 +323,34 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         assert.strictEqual(text, bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"));
     });
 
+    it("serialize/rehydrate multiple times then attach", async function() {
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        dataStore._root.set("my blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+
+        let snapshot;
+        for (const _ of Array(5)) {
+            snapshot = container.serialize();
+            container.close();
+            container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+        }
+
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+        }
+        await attachP;
+
+        const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
+        const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
+        const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
+        assert.strictEqual(text, bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"));
+    });
+
     it("rehydrating without detached blob storage results in error", async function() {
         const detachedBlobStorage = new MockDetachedBlobStorage();
         const loader = provider.makeTestLoader(testContainerConfig, detachedBlobStorage);
