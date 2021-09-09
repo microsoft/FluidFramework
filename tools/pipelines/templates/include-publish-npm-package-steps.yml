@@ -84,10 +84,14 @@ steps:
       t1=0
       for f in *.tgz
       do
-          if ! npm publish $f $tag ${{ parameters.publishFlags }}
+          if ! npm publish $f $tag ${{ parameters.publishFlags }} &> log
           then
-              let t1+=1
+              if ! grep -q "You cannot publish over the previously published versions" "log"
+              then
+                let t1+=1
+              fi
           fi
+          rm log
       done
       rm ~/.npmrc
       exit $t1
