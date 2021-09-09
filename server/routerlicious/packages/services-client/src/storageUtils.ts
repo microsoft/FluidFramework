@@ -63,8 +63,9 @@ export function convertSummaryTreeToWholeSummaryTree(
                 const result = convertSummaryTreeToWholeSummaryTree(
                     parentHandle,
                     summaryObject,
+                    currentPath,
                     rootNodeName,
-                    currentPath);
+                );
                 value = result;
                 unreferenced = summaryObject.unreferenced || undefined;
                 break;
