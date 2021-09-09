@@ -586,9 +586,14 @@ export class DeltaManager
     }
 
     public async preFetchOps(cacheOnly: boolean) {
-        // Note that might already got connected to delta stream by now.
-        // If we did, then we proactively fetch ops at the end of setupNewSuccessfulConnection to ensure
-        if (this.connection === undefined && !this.closed) {
+        // There should be never pending fetch!
+        // This API is called right after attachOpHandler by Container.load().
+        // We might have connection already and it might have called fetchMissingDeltas() from
+        // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
+        // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
+        assert(this.fetchReason === undefined, "");
+
+        if (!this.closed) {
             return this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber, undefined);
         }
     }
@@ -1624,25 +1629,28 @@ export class DeltaManager
         // actionably to report gaps in this range.
         this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
 
-        // See issue #7312 for more details
-        // We observe cases where client gets into situation where it is not aware of missing ops
-        // (i.e. client being behind), and as such, does not attempt to fetch them.
-        // In some cases client may not have enough signal (example - "read" connection that is silent -
-        // there is no easy way for client to realize it's behind, see a bit of commentary / logic at the
-        // end of setupNewSuccessfulConnection). In other cases it should be able to learn that info ("write"
-        // connection, learn by receiving its own join op), but data suggest it does not happen.
-        // In 50% of these cases we do know we are behind through checkpointSequenceNumber on connection object
-        // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
-        // (the other 50%), and thus these errors below should be looked at even if code below results in
-        // recovery.
-        if (this.fetchReason === undefined && this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
-            // connectionMode === "read" case is too noisy, so not log it.
-            // It happens because fetch in setupNewSuccessfulConnection get cancelled due to other fetch, and we
-            // never retry (other than here)
-            if (this.connectionMode === "write") {
-                this.logConnectionIssue({ eventName: "OpsBehind" });
+        // Re-entrancy is ignored by fetchMissingDeltas, execution will come here when it's over
+        if (this.fetchReason === undefined) {
+            // See issue #7312 for more details
+            // We observe cases where client gets into situation where it is not aware of missing ops
+            // (i.e. client being behind), and as such, does not attempt to fetch them.
+            // In some cases client may not have enough signal (example - "read" connection that is silent -
+            // there is no easy way for client to realize it's behind, see a bit of commentary / logic at the
+            // end of setupNewSuccessfulConnection). In other cases it should be able to learn that info ("write"
+            // connection, learn by receiving its own join op), but data suggest it does not happen.
+            // In 50% of these cases we do know we are behind through checkpointSequenceNumber on connection object
+            // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
+            // (the other 50%), and thus these errors below should be looked at even if code below results in
+            // recovery.
+            if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
+                // connectionMode === "read" case is too noisy, so not log it.
+                // It happens because fetch in setupNewSuccessfulConnection get cancelled due to other fetch, and we
+                // never retry (other than here)
+                if (this.connectionMode === "write") {
+                    this.logConnectionIssue({ eventName: "OpsBehind" });
+                }
+                this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
             }
-            this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
         }
     }
 

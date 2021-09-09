@@ -1256,19 +1256,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (loadMode.deltaConnection !== "none") {
                     // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this._deltaManager.preFetchOps(false);
+                    this._deltaManager.preFetchOps(false /* cacheOnly */);
                 }
                 break;
             case "cached":
-                opsBeforeReturnP = this._deltaManager.preFetchOps(true);
+                opsBeforeReturnP = this._deltaManager.preFetchOps(true /* cacheOnly */);
                 // Keep going with fetching ops from storage once we have all cached ops in.
                 // Ops processing will start once cached ops are in and and will stop when queue is empty
                 // (which in most cases will happen when we are done processing cached ops)
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false));
+                opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false /* cacheOnly */));
                 break;
             case "all":
-                opsBeforeReturnP = this._deltaManager.preFetchOps(false);
+                opsBeforeReturnP = this._deltaManager.preFetchOps(false /* cacheOnly */);
                 break;
             default:
                 unreachableCase(loadMode.opsBeforeReturn);
