@@ -49,13 +49,27 @@ export interface Place extends Anchor, PlaceData {
 export type NodeParent = Trait | DetachedRange;
 
 /**
- * A root of the forest.
+ * A root in the forest.
+ *
+ * The anchoring does not refer to any of the nodes contained in this range:
+ * instead `start` and `end` are anchored to the ends of this detached range, but its object identity.
+ * Thus any additional content inserted before or after contents of this range will be included in the range.
+ * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
+ *
+ * DetachedRanges, as well as their start and end, are not valid to use as anchors across edits:
+ * they are only valid within the edit in which they were created.
  */
 export interface DetachedRange extends Range {
 	readonly start: DetachedPlace;
 	readonly end: DetachedPlace;
 }
 
+/**
+ * Place at the end of a DetachedRange.
+ *
+ * DetachedPlaces are not valid to use as anchors across edits:
+ * they are only valid within the edit in which they were created.
+ */
 export interface DetachedPlace extends Place {
 	readonly parent: DetachedRange;
 }

@@ -79,8 +79,27 @@ export interface CommandContext extends IdSerializer, LogViewer {
 		anchors: DecontextualizedAnchorSet<TAnchorSet> // Anchors will be contextualized into the tree provided to the command.
 	): TResult;
 
+	/**
+	 * Construct a new {@link DetachedRange} containing descriptors.
+	 *
+	 * This range is externally anchored (it has an Id, allocated by create used to identity it).
+	 * This means the anchoring does not refer to any of the nodes contained in this range,
+	 * and any additional content inserted before or after contents of this range will be included in the range.
+	 * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
+	 *
+	 * Ranges created this way, as well as their start and end, are not valid to use as anchors across edits:
+	 * they are only valid within the edit in which they were created.
+	 *
+	 * TODO: should external anchoring and/or validity outside this transaction be encoded in the types?
+	 *
+	 * TODO: Allow DetachedRange inside TreeDescriptor?
+	 */
 	create(...descriptors: TreeDescriptor[]): DetachedRange;
 
+	/**
+	 * Remove `nodes` from their current location, and insert them at `destination`.
+	 * Any
+	 */
 	move(destination: PlaceData, ...nodes: (TreeNodeData | RangeData)[]): Range;
 
 	/**
@@ -99,9 +118,9 @@ export interface CommandContext extends IdSerializer, LogViewer {
 }
 
 // TODO: actually implement this as a NodeId based anchor using the standard root node id.
-export const root: TreeNodeData = (initialTree.identifier as unknown) as TreeNodeData;
+export const root: TreeNodeData = initialTree.identifier as unknown as TreeNodeData;
 // Root detached range.
-export const rootRange: RangeData = ('root' as unknown) as RangeData;
+export const rootRange: RangeData = 'root' as unknown as RangeData;
 
 /**
  * A view of a tree.
