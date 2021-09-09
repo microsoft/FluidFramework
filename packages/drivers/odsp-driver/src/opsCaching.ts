@@ -119,7 +119,7 @@ export class OpsCache {
 
     public async get(from: number, to?: number): Promise<IMessage[]> {
         const messages: IMessage[] = [];
-        let batchNumber = this.getBatchNumber(from + 1);
+        let batchNumber = this.getBatchNumber(from);
         const start = performance.now();
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -135,9 +135,9 @@ export class OpsCache {
                         break;
                     }
                     if (messages.length === 0) {
-                        if (op.sequenceNumber > from + 1) {
+                        if (op.sequenceNumber > from) {
                             break;
-                        } else if (op.sequenceNumber <= from) {
+                        } else if (op.sequenceNumber < from) {
                             continue;
                         }
                     }
