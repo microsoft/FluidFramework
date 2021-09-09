@@ -1,7 +1,6 @@
 ---
 title: Using Fluid with React
 menuPosition: 1
-status: written
 discussion: 5462
 ---
 
