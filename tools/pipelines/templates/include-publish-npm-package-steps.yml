@@ -24,10 +24,6 @@ parameters:
   type: string
   default:
 
-- name: tagName
-  type: string
-  default:
-
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
@@ -95,6 +91,3 @@ steps:
       done
       rm ~/.npmrc
       exit $t1
-- template: include-git-tag-steps.yml
-  parameters:
-    tagName: ${{ parameters.tagName }}
