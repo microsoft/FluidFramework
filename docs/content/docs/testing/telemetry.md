@@ -13,21 +13,21 @@ your other telemetry, and route the event data in whatever way you need.
 ## Collect Fluid Framework logs with a custom `ITelemetryBaseLogger`
 
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
-be implemented and passed into the client's `createContainer()` and `getContainer()` methods via the config parameter.
+be implemented and passed into the client's constructor via the props parameter.
 
-All Fluid service clients (for example, `AzureContainerConfig` and `TinyliciousContainerConfig`) allow passing a `logger?:
-ITelemetryBaseLogger` into the service client configuration. Both `createContainer()` and `getContainer()` methods will
-create an instance of a `Loader` class object, where the logger defined in the service client configuration is passed in
+All Fluid service clients (for example, `AzureClientProps` and `TinyliciousClientProps`) allow passing a `logger?: ITelemetryBaseLogger`
+into the service client props. Both `createContainer()` and `getContainer()` methods will
+create an instance of a `Loader` class object, where the logger defined in the service client props is passed in
 as an optional parameter, `ILoaderProps.logger`, in the `Loader` constructor argument.
 
-[TinyliciousContainerConfig](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/interfaces.ts#L9)
-interface definition takes an optional parameter `logger`. (The definition is similar to `AzureContainerConfig` interface)
+[TinyliciousClientProps](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/tinylicious-client/src/interfaces.ts#L17)
+interface definition takes an optional parameter `logger`. (The definition is similar to `AzureClientProps` interface)
 
-[createContainer()](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L50)
-interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
+[createContainer()](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/tinylicious-client/src/TinyliciousClient.ts#L56)
+interface definition takes a `TinyliciousClientProps` type as its `serviceContainerConfig` argument. (The
 `AzureClient` will take `AzureContainerConfig` for its respective methods)
 
-[getContainer()](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/tinylicious-client/src/TinyliciousClient.ts#L65)
+[getContainer()](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/tinylicious-client/src/TinyliciousClient.ts#L72)
 interface definition takes a `TinyliciousContainerConfig` type as its `serviceContainerConfig` argument. (The
 `AzureClient` will take `AzureContainerConfig` for its respective methods)
 
@@ -44,7 +44,7 @@ The `Loader` constructor is called by both `createContainer()` and `getContainer
 interface as its constructor argument. `ILoaderProps` interface has an optional logger parameter that will take the
 `ITelemetryBaseLogger` defined by the user.
 
-[ILoaderProps.logger](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/src/loader.ts#L309)
+[ILoaderProps.logger](https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/src/loader.ts#L313)
 is used by `Loader` to pipe to container's telemetry system.
 
 ### Properties and methods
@@ -109,6 +109,8 @@ public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
 
 Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties for the
 information to be piped to the container's telemetry system and sends the telemetry event.
+
+Another point worth noting is that with the customized logics, it is a great place where you can send these events to your external telemetry system to have them logged.
 
 ## ITelemetryBaseEvent interface
 
@@ -240,20 +242,28 @@ export class ConsoleLogger implements ITelemetryBaseLogger {
 }
 ```
 
-This custom logger is then created and passed into the `getContainer()` and `createContainer()` in a `TinyliciousClient`
-object. The custom logger is now hooked up to the container's telemetry system.
+This custom logger is then created in the `azureConfig` before being passed into `AzureClient`
+constructor. The custom logger is now hooked up to the container's telemetry system.
 
 ```ts
 async function start(): Promise<void> {
-    // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
-    // and hook to the Telemetry system
-    const consoleLogger: ConsoleLogger = new ConsoleLogger();
+  // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
+  // and hook to the Telemetry system
+  const azureConfig = {
+      connection: connectionProps,
+      logger: new ConsoleLogger(),
+  };
+  const client = new AzureClient(azureConfig);
+  let container: FluidContainer;
+  let services: AzureContainerServices;
+  let id: string;
 
-    // Get or create the document depending if we are running through the create new flow
-    const client = useAzure ? AzureClient :  new TinyliciousClient();
-    const [fluidContainer, containerServices] = createNew
-        ? await client.createContainer({ id: containerId, logger: consoleLogger }, containerSchema)
-        : await client.getContainer({ id: containerId, logger: consoleLogger }, containerSchema);
+  // Get or create the document depending if we are running through the create new flow
+  const createNew = !location.hash;
+  if (createNew) {
+      // The client will create a new detached container using the schema
+      // A detached container will enable the app to modify the container before attaching it to the client
+      ({container, services} = await client.createContainer(containerSchema));
 ```
 
 Now, whenever a telemetry event is encountered, the custom `send()` method gets called and will print out the entire
@@ -261,3 +271,25 @@ event object.
 
 <img src="https://fluidframework.blob.core.windows.net/static/images/consoleLogger_telemetry_in_action.png" alt="The
   ConsoleLogger sends telemetry events to the browser console for display.">
+
+{{% callout warning %}}
+
+The purpose of `ConsoleLogger` is purely to demonstrate how the `logger` interface should be implemented. The Fluid Framework provides `DebugLogger` by default if custom logger is not provided. For more information, please refer to [Using DebugLogger](#using-debuglogger) below instead of implementing something similar to `ConsoleLogger`.
+
+{{% /callout %}}
+
+### Using `DebugLogger`
+
+The `DebugLogger` offers a conveneient way to output all telemetry events to the console. Like mentioned previously, creating or getting a container creates a `Loader` object, which will then create a `DebugLogger` in its constructor. Hence, `DebugLogger` is already provided by default when creating/getting a container, and no extra steps is required to use the logger.
+
+Under the hood, `DebugLogger` make use of the [debug](https://github.com/visionmedia/debug) library. `Debug` allows a library to log messages to a namespace. By default these messages aren't displayed but can be enabled by the app that is making use of the library. Debug is a popular package used by most major node modules (express, socket.io, etc...). For our node apps enabling library logging is as simple as setting the DEBUG environment variable - i.e.
+
+`DEBUG=fluid:*,connect:compress,connect:session`
+
+This is already done in our docker compose files for our own internal libraries which are all under the routerlicous namespace.
+
+In the browser you can enable them by setting localStorage.debug variable.
+
+`localStorage.debug = 'fluid:*'`
+
+After which you will need to reload the page.

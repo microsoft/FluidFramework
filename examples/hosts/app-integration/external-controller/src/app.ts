@@ -15,7 +15,6 @@ import {
 } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 import { DiceRollerController } from "./controller";
-import { ConsoleLogger } from "./ConsoleLogger";
 import { makeAppView } from "./view";
 
 export interface ICustomUserDetails {
@@ -80,7 +79,6 @@ async function start(): Promise<void> {
     // and hook to the Telemetry system
     const azureConfig = {
         connection: connectionProps,
-        logger: new ConsoleLogger(),
     };
     const client = new AzureClient(azureConfig);
     let container: FluidContainer;
