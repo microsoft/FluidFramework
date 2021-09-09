@@ -19,6 +19,18 @@ import {
 } from "./storageContracts";
 
 /**
+ * Convert a list of nodes to a tree path.
+ * If a node is empty (blank) it will be removed.
+ * If a node's name begins and/or ends with a "/", it will be removed.
+ * @param nodeNames - node names in path
+ */
+export const buildTreePath = (...nodeNames: string[]): string =>
+    nodeNames
+        .map((nodeName) => nodeName.replace(/^\//, "").replace(/\/$/, ""))
+        .filter((nodeName) => !!nodeName)
+        .join("/");
+
+/**
  * Converts the summary tree to a whole summary tree to be uploaded. Always upload full whole summary tree.
  * @param parentHandle - Handle of the last uploaded summary or detach new summary.
  * @param tree - Summary Tree which will be converted to whole summary tree to be uploaded.
@@ -28,6 +40,7 @@ export function convertSummaryTreeToWholeSummaryTree(
     parentHandle: string | undefined,
     tree: ISummaryTree,
     path: string = "",
+    rootNodeName: string = "",
 ): IWholeSummaryTree {
     const wholeSummaryTree: IWholeSummaryTree = {
         type: "tree",
@@ -42,12 +55,15 @@ export function convertSummaryTreeToWholeSummaryTree(
         let value: WholeSummaryTreeValue | undefined;
         let unreferenced: true | undefined;
 
-        const currentPath = path === "" ? key : `${path}/${key}`;
+        const currentPath = path === ""
+            ? buildTreePath(rootNodeName, key)
+            : buildTreePath(path, key);
         switch (summaryObject.type) {
             case SummaryType.Tree: {
                 const result = convertSummaryTreeToWholeSummaryTree(
                     parentHandle,
                     summaryObject,
+                    rootNodeName,
                     currentPath);
                 value = result;
                 unreferenced = summaryObject.unreferenced || undefined;
@@ -77,11 +93,7 @@ export function convertSummaryTreeToWholeSummaryTree(
                     if (!parentHandle) {
                         throw Error("Parent summary does not exist to reference by handle.");
                     }
-                    let handlePath = summaryObject.handle;
-                    if (handlePath.length > 0 && !handlePath.startsWith("/")) {
-                        handlePath = `/${handlePath}`;
-                    }
-                    id = `${parentHandle}${handlePath}`;
+                    id = buildTreePath(parentHandle, rootNodeName, summaryObject.handle);
                 }
                 break;
             }
