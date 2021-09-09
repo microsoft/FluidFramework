@@ -121,6 +121,23 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
     ) {
     }
 
+    protected validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number) {
+        if (messages.length !== 0) {
+            const start = messages[0].sequenceNumber;
+            const length = messages.length;
+            const last = messages[length - 1].sequenceNumber;
+            if (start !== from) {
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                messages.length = 0;
+            }
+            if (last + 1 !== from + length) {
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                // we can do better here by finding consecutive sub-block and return it
+                messages.length = 0;
+            }
+        }
+    }
+
     public fetchMessages(
         fromTotal: number,
         toTotal: number | undefined,
@@ -143,6 +160,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                     op.sequenceNumber >= from && op.sequenceNumber < to);
                 if (messages.length > 0 && messages[0].sequenceNumber === from) {
                     this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
+                    this.validateMessages("cached", messages, from);
                     opsFromSnapshot = messages.length;
                     return { messages, partialResult: true };
                 }
@@ -157,6 +175,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             if (from < this.firstCacheMiss) {
                 const messagesFromCache = await this.getCached(from, to);
                 if (messagesFromCache.length !== 0) {
+                    this.validateMessages("cached", messagesFromCache, from);
                     opsFromCache += messagesFromCache.length;
                     return {
                         messages: messagesFromCache,
@@ -171,6 +190,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             }
 
             const ops = await this.getFromStorage(from, to, telemetryProps);
+            this.validateMessages("storage", ops.messages, from);
             opsFromStorage += ops.messages.length;
             this.opsReceived(ops.messages);
             return ops;
@@ -179,12 +199,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         const stream = requestOps(
             async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
                 const result = await requestCallback(from, to, telemetryProps);
-                if (result.messages.length !== 0) {
-                    assert(result.messages[0].sequenceNumber === from, "ensure we do not have 1-off bugs");
-                    const length = result.messages.length;
-                    assert(result.messages[length - 1].sequenceNumber + 1 === from + length,
-                        "ensure we have sequential result");
-                }
+                // Catch all case, just in case
+                this.validateMessages("catch all", result.messages, from);
                 return result;
             },
             // Staging: starting with no concurrency, listening for feedback first.
