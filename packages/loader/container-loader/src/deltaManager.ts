@@ -589,7 +589,7 @@ export class DeltaManager
         // We might have connection already and it might have called fetchMissingDeltas() from
         // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
         // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
-        assert(this.fetchReason === undefined, "");
+        assert(this.fetchReason === undefined, "There can't be pending fetch that early in boot sequence!");
 
         if (!this.closed) {
             return this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber, undefined);
