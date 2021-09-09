@@ -287,12 +287,13 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
+                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm --json >> package_list.json
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 else
-                  npm pack --unsafe-perm
+                  npm pack --unsafe-perm --json >> package_list.json
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
+                mv -t $(Build.ArtifactStagingDirectory)/pack/ package_list.json
 
           - ${{ if eq(variables.publishNonScopedPackages, true) }}:
             - ${{ each parameter in parameters.nonScopedPackages }}:
