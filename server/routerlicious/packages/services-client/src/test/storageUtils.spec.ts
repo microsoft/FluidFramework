@@ -28,5 +28,12 @@ describe("Storage Utils", () => {
                 "ABC/.app/.handle",
             );
         });
+
+        it("does not trim internal slashes", () => {
+            assert.strictEqual(
+                buildTreePath("ABC", ".app/", ".handle/component/"),
+                "ABC/.app/.handle/component",
+            );
+        });
     });
 });
