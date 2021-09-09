@@ -75,8 +75,8 @@ menu:
   - identifier: "DDS"
     name: "Data Structures"
     weight: -300
-  - identifier: "deep"
-    name: "The depths 🤿"
+  - identifier: "concepts"
+    name: "Concepts"
     weight: -200
   - identifier: "faq"
     name: "FAQ"
