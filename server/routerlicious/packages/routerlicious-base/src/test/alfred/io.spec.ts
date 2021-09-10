@@ -36,6 +36,7 @@ import {
     MongoManager,
     RawOperationType,
 } from "@fluidframework/server-services-core";
+import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     MessageFactory,
     TestClientManager,
@@ -46,6 +47,11 @@ import {
     TestThrottler,
 } from "@fluidframework/server-test-utils";
 import { OrdererManager } from "../../alfred";
+
+const lumberjackEngine = new TestEngine1();
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {

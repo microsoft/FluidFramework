@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial: Create a Fluid Framework application'
+title: 'Tutorial: Hello World walkthrough'
 menuPosition: 2
 aliases:
   - "/docs/get-started/tutorial/"
@@ -65,6 +65,7 @@ const createNewDice = async () => {
     return id;
   }
 ```
+
 ### Loading an existing container
 
 Loading a container is more straightforward than creating a new one. When loading, the container already contains data, and is already attached, so those steps are irrelevant. You need only to pass the `id` of the container you wish to load in the `getContainer()` function along with the same schema used when creating the container.

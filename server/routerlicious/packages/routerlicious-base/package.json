@@ -58,6 +58,7 @@
     "@fluidframework/server-services-core": "^0.1031.0",
     "@fluidframework/server-services-ordering-kafkanode": "^0.1031.0",
     "@fluidframework/server-services-ordering-rdkafka": "^0.1031.0",
+    "@fluidframework/server-services-telemetry": "^0.1031.0",
     "@fluidframework/server-services-utils": "^0.1031.0",
     "@types/node": "^12.19.0",
     "body-parser": "^1.17.1",

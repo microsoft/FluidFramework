@@ -645,6 +645,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
                     dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
                     dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+                    connectionState: () => ConnectionState[this.connectionState],
+                    connectionStateDuration:
+                        () => performance.now() - this.connectionTransitionTimes[this.connectionState],
                 },
             });
 
@@ -972,8 +975,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public setAutoReconnect(reconnect: boolean) {
-        if (reconnect && this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
+        if (this.closed) {
+            throw new Error("Attempting to setAutoReconnect() a closed Container");
         }
 
         this._deltaManager.setAutomaticReconnect(reconnect);
@@ -1236,42 +1239,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 
-        // Attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes);
-
-        // ...load in the existing quorum
-        // Initialize the protocol handler
-        const protocolHandlerP =
-            this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
-
         let opsBeforeReturnP: Promise<void> | undefined;
 
-        // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-        // the initial details
+        // Attach op handlers to finish initialization and be able to start processing ops
+        // Kick off any ops fetching if required.
         switch (loadMode.opsBeforeReturn) {
             case undefined:
-                if (loadMode.deltaConnection !== "none") {
-                    // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this._deltaManager.preFetchOps(false);
-                }
+                // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.attachDeltaManagerOpHandler(attributes, loadMode.deltaConnection !== "none" ? "all" : "none");
                 break;
             case "cached":
-                opsBeforeReturnP = this._deltaManager.preFetchOps(true);
-                // Keep going with fetching ops from storage once we have all cached ops in.
-                // Ops processing will start once cached ops are in and and will stop when queue is empty
-                // (which in most cases will happen when we are done processing cached ops)
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false));
+                opsBeforeReturnP = this.attachDeltaManagerOpHandler(attributes, "cached");
                 break;
             case "all":
-                opsBeforeReturnP = this._deltaManager.preFetchOps(false);
+                opsBeforeReturnP = this.attachDeltaManagerOpHandler(attributes, "all");
                 break;
             default:
                 unreachableCase(loadMode.opsBeforeReturn);
         }
 
-        this._protocolHandler = await protocolHandlerP;
+        // ...load in the existing quorum
+        // Initialize the protocol handler
+        this._protocolHandler =
+            await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
@@ -1352,7 +1343,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const proposals: [number, ISequencedProposal, string[]][] = [];
         const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
 
-        this.attachDeltaManagerOpHandler(attributes);
+        await this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this._protocolHandler = await this.initializeProtocolState(
@@ -1382,7 +1373,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
-        this.attachDeltaManagerOpHandler(attributes);
+        await this.attachDeltaManagerOpHandler(attributes);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -1656,8 +1647,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return deltaManager;
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.attachOpHandler(
+    private async attachDeltaManagerOpHandler(
+        attributes: IDocumentAttributes,
+        prefetchType?: "cached" | "all" | "none")
+    {
+        return this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term ?? 1,
@@ -1666,7 +1660,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 processSignal: (message) => {
                     this.processSignal(message);
                 },
-            });
+            },
+            prefetchType);
     }
 
     private logConnectionStateChangeTelemetry(

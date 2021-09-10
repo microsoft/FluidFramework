@@ -3,6 +3,8 @@ title: "Using the documentation system effectively"
 menuPosition: 20
 aliases:
   - "/docs/advanced/doc-system"
+  - "/docs/deep/doc-system"
+  - "/docs/doc-system"
 ---
 
 <!-- markdownlint-disable MD036 -->
@@ -240,12 +242,12 @@ build time.
 **Input**
 
 ```golang
-{{% include file="content/docs/deep/images/example.ditaa" safeHTML=true %}}
+{{% include file="content/community/doc-system/example.ditaa" safeHTML=true %}}
 ```
 
 **Output**
 
-![An example ditaa diagram that has been converted to a PNG image](/docs/deep/images/example.png)
+![An example ditaa diagram that has been converted to a PNG image](example.png)
 
 
 [Read more about ditaa here.](https://github.com/stathissideris/ditaa) Note that we are using

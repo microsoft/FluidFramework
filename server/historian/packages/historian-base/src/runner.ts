@@ -8,6 +8,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { IThrottler, IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICache, ITenantService } from "./services";
 import * as app from "./app";
 
@@ -74,10 +75,12 @@ export class HistorianRunner implements IRunner {
         switch (error.code) {
             case "EACCES":
                 winston.error(`${bind  } requires elevated privileges`);
+                Lumberjack.error(`${bind  } requires elevated privileges`);
                 process.exit(1);
                 break;
             case "EADDRINUSE":
                 winston.error(`${bind  } is already in use`);
+                Lumberjack.error(`${bind  } is already in use`);
                 process.exit(1);
                 break;
             default:
@@ -95,5 +98,6 @@ export class HistorianRunner implements IRunner {
             ? `pipe ${  addr}`
             : `port ${  addr.port}`;
         winston.info(`Listening on ${  bind}`);
+        Lumberjack.info(`Listening on ${  bind}`);
     }
 }

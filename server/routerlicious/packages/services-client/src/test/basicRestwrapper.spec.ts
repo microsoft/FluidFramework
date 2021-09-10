@@ -16,6 +16,7 @@ describe("BasicRestWrapper", () => {
     const headerCount = 1;
     const maxBodyLength = 1000 * 1024 * 1024;
     const maxContentLength = 1000 * 1024 * 1024;
+    const axiosInstance = Axios.create();
     let axiosMock: Partial<AxiosInstance>;
     let axiosErrorMock: Partial<AxiosInstance>;
     let axiosTooManyRequestsErrorZeroRetryAfterMock: Partial<AxiosInstance>;
@@ -132,7 +133,7 @@ describe("BasicRestWrapper", () => {
             ),
         };
 
-        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter  = new AxiosMockAdapter(Axios);
+        axiosMockAdapterTooManyRequestsErrorPositiveRetryAfter  = new AxiosMockAdapter(axiosInstance);
 
         // For axios mock for testing 429 throttled requests with a valid retryAfter value,
         // first request should return 429 and then a 200 should be returned
@@ -188,7 +189,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.get(requestUrl).then(
@@ -307,7 +308,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.post(requestUrl, {}).then(
@@ -427,7 +428,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.delete(requestUrl, {}).then(
@@ -547,7 +548,7 @@ describe("BasicRestWrapper", () => {
 
         it("429 Response Code should not reject Promise with positive retryAfter", async () => {
             // arrange
-            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, Axios);
+            const rw = new BasicRestWrapper(baseurl, {}, maxBodyLength, maxContentLength, {}, axiosInstance);
 
             // act/assert
             await rw.patch(requestUrl, {}).then(
