@@ -1022,7 +1022,7 @@ export class DeltaManager
         // check message.content for Back-compat with old service.
         const reconnectInfo = message.content !== undefined
             ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError(`Nack: unknown reason`, true);
+            createGenericNetworkError("nack:UnknownReason", true);
 
         if (this.reconnectMode !== ReconnectMode.Enabled) {
             this.logger.sendErrorEvent({
@@ -1402,7 +1402,7 @@ export class DeltaManager
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
                         const error = new NonRetryableError(
-                            "Two messages with same seq# and different payload!",
+                            "twoMessagesWithSameSeqNumAndDifferentPayload",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,

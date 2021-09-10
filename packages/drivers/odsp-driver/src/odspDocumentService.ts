@@ -268,7 +268,7 @@ export class OdspDocumentService implements IDocumentService {
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
-                throwOdspNetworkError("Push Token is null", fetchTokenErrorCode);
+                throwOdspNetworkError("pushTokenIsNull", fetchTokenErrorCode);
             }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(

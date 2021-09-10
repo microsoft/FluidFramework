@@ -285,7 +285,7 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("client closing connection", true /* canRetry */));
+            createGenericNetworkError("clientClosingConnection", true /* canRetry */));
     }
 
     // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
@@ -333,12 +333,12 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                fail(true, this.createErrorObject("connect_error", error));
+                fail(true, this.createErrorObject("connectError", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, this.createErrorObject("connect_timeout"));
+                fail(true, this.createErrorObject("connectTimeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -358,7 +358,7 @@ export class DocumentDeltaConnection
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
                         fail(false, this.createErrorObject(
-                            "connect_document_success",
+                            "connectDocumentSuccess",
                             "Connected in a different mode than was requested",
                             false,
                         ));
@@ -367,7 +367,7 @@ export class DocumentDeltaConnection
                 } else {
                     if (actualMode === "write") {
                         fail(false, this.createErrorObject(
-                            "connect_document_success",
+                            "connectDocumentSuccess",
                             "Connected in write mode without write permissions",
                             false,
                         ));
@@ -409,14 +409,14 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, this.createErrorObject("connect_document_error", error));
+                fail(false, this.createErrorObject("connectDocumentError", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                fail(false, this.createErrorObject("Timeout waiting for handshake from ordering service"));
+                fail(false, this.createErrorObject("timeoutWaitingForHandshakeFromOrderingService"));
             }, timeout + 2000);
         });
 
@@ -488,13 +488,12 @@ export class DocumentDeltaConnection
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
         //   over it.
-        let message = `socket.io: ${handler}`;
-        if (typeof error === "string") {
-            message = `${message}: ${error}`;
-        }
+        const message = `socket.io: ${handler}`;
         const errorObj = createGenericNetworkError(
             message,
             canRetry,
+            undefined,
+            { error: typeof error === "string" ? Object(error) : "" },
         );
 
         return errorObj;
