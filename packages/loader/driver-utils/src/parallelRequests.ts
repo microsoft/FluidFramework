@@ -482,7 +482,14 @@ export function requestOps(
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {
+            // Assert continuing and right start.
+            if (lastFetch === undefined) {
+                assert(deltas[0].sequenceNumber === fromTotal, "wrong start");
+            } else {
+                assert(deltas[0].sequenceNumber === lastFetch + 1, "wrong start");
+            }
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
+            assert(lastFetch - deltas[0].sequenceNumber + 1 === deltas.length, "continuous and no duplicates");
             length += deltas.length;
             queue.pushValue(deltas);
         });
@@ -510,6 +517,8 @@ export function requestOps(
             if (manager.canceled) {
                 telemetryEvent.cancel({ ...props, error: "ops request cancelled by client" });
             } else {
+                assert(toTotal === undefined || lastFetch !== undefined && lastFetch >= toTotal - 1,
+                    "All requested ops fetched");
                 telemetryEvent.end(props);
             }
             queue.pushDone();

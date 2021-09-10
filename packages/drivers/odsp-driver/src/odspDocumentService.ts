@@ -391,10 +391,10 @@ export class OdspDocumentService implements IDocumentService {
                 write: async (key: string, opsData: string) => {
                     return this.cache.persistedCache.put({...opsKey, key}, opsData);
                 },
-                read: async (batch: string) => undefined,
+                read: async (key: string) => this.cache.persistedCache.get({...opsKey, key}),
                 remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
-            this.hostPolicy.opsCaching?.batchSize ?? 100,
+            batchSize,
             this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
             this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
         );

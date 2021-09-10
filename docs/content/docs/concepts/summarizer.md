@@ -4,6 +4,7 @@ menuPosition: 10
 status: outdated
 aliases:
   - "/docs/advanced/summarizer/"
+  - "/docs/deep/summarizer/"
 ---
 
 Summaries are client-generated snapshots of the state of the document at a given sequence number. A summary is a
