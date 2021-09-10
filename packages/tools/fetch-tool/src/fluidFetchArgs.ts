@@ -97,9 +97,6 @@ export function parseArguments() {
                 dumpMessages = true;
                 overWrite = true;
                 break;
-            case "--overwrite":
-                overWrite = true;
-                break;
             case "--stat:message":
                 dumpMessageStats = true;
                 break;
@@ -118,6 +115,10 @@ export function parseArguments() {
                 break;
             case "--dump:snapshotTree":
                 dumpSnapshotTrees = true;
+                break;
+            case "--dump:snapshotTree:overwrite":
+                dumpSnapshotTrees = true;
+                overWrite = true;
                 break;
             case "--help":
                 printUsage();

@@ -59,8 +59,11 @@ async function* loadAllSequencedMessages(
             } catch (e) {
                 if (seqNumMismatch) {
                     if (overWrite) {
-                        // with overWrite option on, we will delete exisintg message.json
-                        fs.unlinkSync(`${dir}/messages${file}.json`);
+                        // with overWrite option on, we will delete all exisintg message.json files
+                        for (let index = 0; index < files.length; index++) {
+                            const name = filenameFromIndex(index);
+                            fs.unlinkSync(`${dir}/messages${name}.json`);
+                        }
                         break;
                     }
                     // prompt user to back up and delete existing files
@@ -192,7 +195,7 @@ async function* saveOps(
     const chunk = 100 * 1000;
 
     let sequencedMessages: ISequencedDocumentMessage[] = [];
-    // current sequence number to read from
+    // current sequence number to start writing from
     let curr = 1;
     // Figure out first file we want to write to
     let index = 0;
@@ -201,15 +204,15 @@ async function* saveOps(
         const name = filenameFromIndex(index);
         const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
         const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
-        // get current sequence number from the last op read, and plus one
-        curr = messages[messages.length - 1].sequenceNumber + 1;
+        // set curr to be the number of the first op in the last file and add one.
+        curr = messages[0].sequenceNumber + 1;
     }
 
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
         // if there was gap in ops, change curr to currSeq,
         // and index should be 0 anyways because we ask user to delete files
-        curr = seqNumMismatch ? index * chunk + currSeq : curr;
+        curr = seqNumMismatch ? currSeq : curr;
         // if there were exisintg files being read, change index so the new file has the correct name
         index = readFromMessages ? Math.floor(curr / chunk) : index;
 
