@@ -39,6 +39,13 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly initialObjects: LoadableObjectRecord;
 
     /**
+     * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
+     * new container to the service and connects to the collaborative service.
+     * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
+     */
+    attach(): Promise<string>;
+
+    /**
      * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
      * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
      * initialObjects.
@@ -96,6 +103,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         return this.rootDataObject.initialObjects;
     }
 
+    /**
+     * {@inheritDoc IFluidContainer.attach}
+     */
     public async attach() {
         if (this.attachState === AttachState.Detached) {
             return this.attachCallback();
