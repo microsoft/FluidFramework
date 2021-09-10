@@ -99,7 +99,7 @@ start().catch((error) => console.error(error));
 
 ## Write the dice view
 
-The Fluid Framework is view framework agnostic and works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see examples of the previously mentioned frameworks in the [Fluid Examples repo](https://github.com/microsoft/FluidExamples/tree/main/multi-framework-diceroller).
+The Fluid Framework is view framework agnostic and works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see examples of the previously mentioned frameworks in the [FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/multi-framework-diceroller).
 
 ### Start with a static view
 
