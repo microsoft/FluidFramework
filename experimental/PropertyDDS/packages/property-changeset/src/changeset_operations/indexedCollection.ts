@@ -184,7 +184,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
                             }
                         } else {
                             // There could be a modify entry for this key, which we have to remove
-                            const baseModifiedTypeids = Object.keys(baseModified);
+                            const baseModifiedTypeids = Object.keys(baseModified || {});
                             for (let j = 0; j < baseModifiedTypeids.length; j++) {
                                 if (baseModified[baseModifiedTypeids[j]][key]) {
                                     foundInTypeid = baseModifiedTypeids[j];
@@ -768,7 +768,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
         // First remove unused typeid sections
         if (in_containsTypeids) {
-            let typeidList = Object.keys(changes.insert);
+            let typeidList = Object.keys(changes.insert || {});
             for (let j = 0; j < typeidList.length; j++) {
                 if (_fastIsEmptyObject(changes.insert[typeidList[j]])) {
                     delete changes.insert[typeidList[j]];
@@ -783,7 +783,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
         // First remove unused typeid sections
         if (in_containsTypeids) {
-            let typeidList = Object.keys(changes.remove);
+            let typeidList = Object.keys(changes.remove || {});
             for (let j = 0; j < typeidList.length; j++) {
                 if (_fastIsEmptyObject(changes.remove[typeidList[j]])) {
                     delete changes.remove[typeidList[j]];
@@ -799,7 +799,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
         // First remove unused typeid sections
         if (in_containsTypeids) {
-            let typeidList = Object.keys(changes.modify);
+            let typeidList = Object.keys(changes.modify || {});
             for (let j = 0; j < typeidList.length; j++) {
                 const modifies = changes.modify[typeidList[j]];
                 const modifyKeys = Object.keys(modifies);
