@@ -39,6 +39,11 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly initialObjects: LoadableObjectRecord;
 
     /**
+     * The current attachment state of the container.  Once a container has been attached, it remains attached.
+     * When loading an existing container, it will already be attached.
+     */
+    readonly attachState: AttachState;
+    /**
      * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
      * new container to the service and connects to the collaborative service.
      * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
@@ -78,6 +83,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("disconnected", this.disconnectedHandler);
     }
 
+    /**
+     * {@inheritDoc IFluidContainer.attachState}
+     */
     public get attachState(): AttachState {
         return this.container.attachState;
     }
@@ -108,6 +116,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
      */
     public async attach() {
         if (this.attachState === AttachState.Detached) {
+            // Consider -- should we emit an attached event after the callback completes?
             return this.attachCallback();
         } else {
             throw new Error("Cannot attach container. Container is not in detached state");

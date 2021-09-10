@@ -5,8 +5,8 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
@@ -25,11 +25,11 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 export class AzureClient {
     constructor(props: AzureClientProps);
     createContainer(containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+        container: IFluidContainer;
         services: AzureContainerServices;
     }>;
     getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+        container: IFluidContainer;
         services: AzureContainerServices;
     }>;
     }

@@ -45,7 +45,6 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     constructor(container: Container, rootDataObject: RootDataObject, attachCallback: () => Promise<string>);
     attach(): Promise<string>;
-    // (undocumented)
     get attachState(): AttachState;
     get connected(): boolean;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
@@ -65,6 +64,7 @@ export interface IConnection {
 // @public
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     attach(): Promise<string>;
+    readonly attachState: AttachState;
     readonly connected: boolean;
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
