@@ -15,18 +15,18 @@ This article will explain:
 
 ## Creating & loading
 
-Your code creates containers using APIs provided by a service-specific client library. Each service-specific client library implements a common API for manipulating containers. For example, the Tinylicious library provides these APIs for the Tinylicious Fluid service. These common APIs enable your code to define the container schema (which specifies what kinds of Fluid objects are in the container) and retrieve the `FluidContainer` object.
+Your code creates containers using APIs provided by a service-specific client library. Each service-specific client library implements a common API for manipulating containers. For example, the Tinylicious library provides these APIs for the Tinylicious Fluid service. These common APIs enable your code to define the container schema (which specifies what kinds of shared objects are in the container) and retrieve the `FluidContainer` object.
 
 ### Container schema
 
 Your code must define a schema that represents the structure of the data within the container. A schema can specify:
 
-- Some initial Fluid objects that are created as soon as the container is, and are immediately and always available to all connected clients.
-- The types of Fluid objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
+- Some initial shared objects that are created as soon as the container is, and are immediately and always available to all connected clients.
+- The types of shared objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
 
 The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
 
-This example schema defines two initial objects, `layout` and `text`, and declares the distributed data structures (DDSes) `SharedCell` and `SharedString` as Fluid object types that can be created at runtime.
+This example schema defines two initial objects, `layout` and `text`, and declares the distributed data structures (DDSes) `SharedCell` and `SharedString` as shared object types that can be created at runtime.
 
 ```typescript
 const schema = {
@@ -116,8 +116,8 @@ container.on("disposed", () => {
 
 ### Initial objects
 
-Initial objects are Fluid objects that your code defines in a container's schema and which exist for the lifetime of the container.
-These Fluid objects are exposed via the `initialObjects` property on the container.
+Initial objects are shared objects that your code defines in a container's schema and which exist for the lifetime of the container.
+These shared objects are exposed via the `initialObjects` property on the container.
 
 ```typescript
 const schema = {
@@ -134,13 +134,13 @@ const layout = container.initialObjects.layout;
 const text = container.initialObjects.text;
 ```
 
-For more information about initial objects see [Data modeling](data-modeling.md).
+For more information about initial objects see [Data modeling]({{< relref "data-modeling.md" >}}).
 
 ### create
 
-The container also exposes a create function that enables creation of Fluid objects at runtime.
+The container also exposes a create function that enables creation of shared objects at runtime.
 
-For more information about dynamic object creation see [Data modeling](data-modeling.md).
+For more information about dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
 
 ## Patterns for managing container lifecycle
 
@@ -150,7 +150,7 @@ When creating and loading a container, it can be tempting to have a consistent c
 
 However, we generally recommend that creating and loading containers be separated. This provides a cleaner separation of responsibilities within the code itself. Also, in typical use-cases, a user will create a new container through some UI action that results in a redirect to another page whose sole responsibility is to load a container. All subsequent users will load the container by navigating directly to that page.
 
-The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process. For an example of a simple scenario in which it makes sense to combine the flows, see the [Tutorial: Create a Fluid Framework application with React]({{< relref "react-tutorial.md" >}}).
+The drawback of this approach is that when creating a container, the service connection needs to be established twice -- once for the container creation and once for the load. This can introduce latency in the container creation process. For an example of a simple scenario in which it makes sense to combine the flows, see [Using Fluid with React]({{< relref "react.md" >}}).
 
 ### Multi-container example
 

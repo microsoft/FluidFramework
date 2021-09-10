@@ -30,7 +30,7 @@ See [Service-specific client libraries](#service-specific-client-libraries) for 
 
 ### Container
 
-The container is the primary unit of encapsulation in Fluid. It consists of a collection of Fluid objects and supporting APIs to manage the lifecycle of the container and the objects within it. New containers must be created from a client, but are bound to the data stored on the supporting server. After a container has been created, it can be accessed by other clients.
+The container is the primary unit of encapsulation in Fluid. It consists of a collection of shared objects and supporting APIs to manage the lifecycle of the container and the objects within it. New containers must be created from a client, but are bound to the data stored on the supporting server. After a container has been created, it can be accessed by other clients.
 
 For more about containers see [Containers](./containers.md).
 
@@ -53,7 +53,7 @@ There are two primary libraries you'll use when building with Fluid. The basic F
 
 ### The Fluid Framework library
 
-The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the  built-in Fluid objects. The library is in the package `fluid-framework`.
+The Fluid Framework library is a collection of core Fluid APIs that make it easy to build and use applications. This library contains all the common type definitions as well as all the built-in shared objects. The library is in the package `fluid-framework`.
 
 ### Service-specific client libraries
 

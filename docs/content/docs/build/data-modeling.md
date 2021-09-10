@@ -46,15 +46,15 @@ const cell = fluidContainer.initialObjects["custom-cell"];
 ## Dynamic objects
 
 A shared object can be created by the container at runtime. **Dynamic objects** are both created and loaded
-dynamically. When your code creates an object dynamically, it must store a reference to the object within another Fluid object so that your code can later
+dynamically. When your code creates an object dynamically, it must store a reference to the object within another shared object so that your code can later
 retrieve it.
 
 ### Creating a dynamic object
 
-A `FluidContainer` object has a `create` function that takes a Fluid object type (that is, a distributed data structure (DDS) type
-or a Data Object type) and returns a new Fluid object. But only Fluid object types that are specified in the schema's `dynamicObjectTypes` array can be dynamically created.
+A `FluidContainer` object has a `create` function that takes a shared object type (that is, a distributed data structure (DDS) type
+or a Data Object type) and returns a new shared object. But only shared object types that are specified in the schema's `dynamicObjectTypes` array can be dynamically created.
 
-Dynamically created objects are local only (in-memory) and cannot be shared with other clients unless a reference to each of them is stored in a connected Fluid object.
+Dynamically created objects are local only (in-memory) and cannot be shared with other clients unless a reference to each of them is stored in a connected shared object.
 
 ```js
 const schema = {
@@ -75,13 +75,13 @@ With `initialObjects`, you're telling Fluid both the type of the object *and* th
 object. This is statically defined, so Fluid can create the object for you and ensure it's always available via the key
 your code defined.
 
-On the other hand, with dynamic objects, you're telling Fluid what object types it can create, but that's all. When your code creates a dynamic object using `container.create`, that objects is in-memory only. If you want to load that Fluid object again later, your code must store a reference to it within another Fluid object. In a
+On the other hand, with dynamic objects, you're telling Fluid what object types it can create, but that's all. When your code creates a dynamic object using `container.create`, that objects is in-memory only. If you want to load that shared object again later, your code must store a reference to it within another shared object. In a
 sense, you're defining the "key" to access that data again later, just as you did with `initialObjects`, but you define
 it dynamically at runtime.
 
 {{% /callout %}}
 
-### Using handles to store and retrieve Fluid objects
+### Using handles to store and retrieve shared objects
 
 All shared objects supported by Fluid have a `handle` property that can be used to store and retrieve them from other shared objects. Objects created dynamically must be stored before they are collaborative. As you will see below, the act of storing a handle is what links the new dynamic object to the underlying data model and is how other clients learn that it exists.
 

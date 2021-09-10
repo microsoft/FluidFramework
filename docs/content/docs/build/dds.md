@@ -102,7 +102,7 @@ objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism c
 serializable.
 
 When storing a DDS within another DDS, your code must store its handle, not the DDS itself. For examples of how to do this,
-see [Using handles to store and retrieve Fluid objects][handles-example].
+see [Using handles to store and retrieve shared objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
 see [Fluid handles]({{< relref "handles.md" >}}).
