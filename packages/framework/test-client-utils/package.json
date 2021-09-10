@@ -12,7 +12,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
@@ -25,12 +25,10 @@
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
-  "dependencies": {
-    "@fluidframework/test-runtime-utils": "0.47.0"
-  },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/test-runtime-utils": "0.47.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "eslint": "~7.18.0",
