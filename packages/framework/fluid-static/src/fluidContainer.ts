@@ -43,6 +43,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * When loading an existing container, it will already be attached.
      */
     readonly attachState: AttachState;
+
     /**
      * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
      * new container to the service and connects to the collaborative service.
