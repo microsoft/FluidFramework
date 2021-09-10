@@ -33,7 +33,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly disposed: boolean;
 
     /**
-     * The collection of data objects and DDSes that were specified by the schema. These data objects and DDSes exist for the lifetime of the container.
+     * The collection of data objects and DDSes that were specified by the schema. These data objects and DDSes exist
+     * for the lifetime of the container.
      */
     readonly initialObjects: LoadableObjectRecord;
 
