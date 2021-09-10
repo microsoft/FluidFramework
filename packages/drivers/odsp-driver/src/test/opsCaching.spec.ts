@@ -276,6 +276,49 @@ describe("OpsCache", () => {
             3,
             3);
     });
+
+    it("Gap in ops", async () => {
+        const mockCache = new MockCache();
+        const initialSeq = 100;
+
+        const mockData: MyDataInput[] = [
+            { sequenceNumber: 101, data: "101" },
+            { sequenceNumber: 102, data: "102" },
+            { sequenceNumber: 103, data: "103" },
+            { sequenceNumber: 104, data: "104" },
+            { sequenceNumber: 105, data: "105" },
+            { sequenceNumber: 106, data: "106" },
+            // Gap:
+            // { sequenceNumber: 107, data: "107" },
+            { sequenceNumber: 108, data: "108" },
+            { sequenceNumber: 109, data: "109" },
+            // Start a new butch - that's where we had bug!
+            { sequenceNumber: 110, data: "110" },
+            { sequenceNumber: 111, data: "111" },
+        ];
+
+        const cache = new OpsCache(
+            initialSeq,
+            new TelemetryUTLogger(),
+            mockCache,
+            5 /* batchSize */,
+            -1, // timerGranularity
+            100, // totalOpsToCache
+        );
+
+        cache.addOps(mockData);
+        cache.flushOps();
+
+        const result = await cache.get(initialSeq + 1, undefined);
+        assert.deepEqual(result, [
+            { sequenceNumber: 101, data: "101" },
+            { sequenceNumber: 102, data: "102" },
+            { sequenceNumber: 103, data: "103" },
+            { sequenceNumber: 104, data: "104" },
+            { sequenceNumber: 105, data: "105" },
+            { sequenceNumber: 106, data: "106" },
+        ]);
+    });
 });
 
 describe("OdspDeltaStorageWithCache", () => {

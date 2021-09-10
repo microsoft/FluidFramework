@@ -158,9 +158,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
                 const messages = this.snapshotOps.filter((op) =>
                     op.sequenceNumber >= from && op.sequenceNumber < to);
+                this.validateMessages("cached", messages, from);
                 if (messages.length > 0 && messages[0].sequenceNumber === from) {
                     this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
-                    this.validateMessages("cached", messages, from);
                     opsFromSnapshot = messages.length;
                     return { messages, partialResult: true };
                 }
@@ -174,8 +174,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
             // This saves a bit of processing time
             if (from < this.firstCacheMiss) {
                 const messagesFromCache = await this.getCached(from, to);
+                this.validateMessages("cached", messagesFromCache, from);
                 if (messagesFromCache.length !== 0) {
-                    this.validateMessages("cached", messagesFromCache, from);
                     opsFromCache += messagesFromCache.length;
                     return {
                         messages: messagesFromCache,
