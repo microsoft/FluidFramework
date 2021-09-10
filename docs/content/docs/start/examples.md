@@ -1,7 +1,6 @@
 ---
 title: Examples
 menuPosition: 4
-status: outdated
 aliases:
   - "/docs/get-started/examples/"
   - "/start/examples/"
