@@ -246,6 +246,15 @@ describe("PropertyTree", () => {
 
 				expect(count).to.equal(1);
 			});
+
+            it("getRebasedChanges should return empty array empty guid as start & end", async () => {
+                await opProcessingController.pauseProcessing();
+                sharedPropertyTree1.root.insert("test", PropertyFactory.create("String", undefined, "Magic"));
+				sharedPropertyTree1.commit();
+                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+                const result = sharedPropertyTree1.getRebasedChanges("", "");
+                expect(result.length).to.equal(0);
+            });
 		});
 	});
 });
