@@ -109,12 +109,7 @@ export async function fetchHelper(
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                "errorResponseNotOk",
-                response.status,
-                response,
-                await response.text(),
-                { responseStatus: response.status },
-            );
+                `Error ${response.status}`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
