@@ -43,7 +43,7 @@ types of shared objects:
 - **Data Objects:** A Data Object contains one or more DDSes that are organized to enable a particular collaborative use case.
 
 DDSes are low-level data structures, while Data Objects are composed of DDSes and other shared objects. Data Objects are
-used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data. 
+used to organize DDSes into semantically meaningful groupings for your scenario, as well as providing an API surface to your app's data.
 
 For more information about these types and the differences between them, see [Data modeling]({{< relref "data-modeling.md" >}}) and [Introducing distributed data structures]({{< relref "dds.md" >}}).
 

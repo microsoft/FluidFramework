@@ -10,7 +10,7 @@ This document will explain how to use the audience APIs and then provide example
 
 ## Working with the audience
 
-When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library. 
+When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library.
 
 ```js
 const { fluidContainer, containerServices } =
