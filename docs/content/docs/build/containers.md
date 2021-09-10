@@ -77,7 +77,7 @@ const containerId = await container.attach();
 
 ### Loading a container
 
-To load a container you must provide the service config as well as the exact same schema definition. The same container
+To load a container you must provide the `id` of the container to load as well as the exact same schema definition used when creating the container. The same container
 schema is required on all subsequent loads or the container will not be loaded correctly.
 
 Note that when loading an existing container, the container is already attached.
