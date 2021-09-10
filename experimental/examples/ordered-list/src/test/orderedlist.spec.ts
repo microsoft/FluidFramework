@@ -1,7 +1,7 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
 
 import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -16,7 +16,7 @@ class TestFixture<T> {
     constructor(private readonly actual: OrderedList<T>) {}
 
     public expect(expected?: T[]) {
-        const actualItems = this.actual.toArray();
+        const actualItems = this.actual.positions.map((position) => this.actual.get(position));
         assert.deepEqual(actualItems, this.expected.map((entry) => entry.item),
             "Actual items must be consistent with expected items computed by TestFixture.");
 

@@ -152,15 +152,13 @@ export class OrderedList<T> extends DataObject {
                 })));
     }
 
-    /** Returns an array containing the items in the list. */
-    public toArray() {
+    /** Returns an array containing the positions of all items in the list. */
+    public get positions() {
         const view = this.view;
+
         return view.getTrait({
             parent: view.root,
             label: itemsTrait,
-        }).map((nodeId) => {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return view.getSnapshotNode(nodeId)!.payload as Serializable<T>;
         });
     }
 }
