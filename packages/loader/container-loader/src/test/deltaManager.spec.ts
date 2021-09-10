@@ -68,7 +68,7 @@ describe("Loader", () => {
                 clock = useFakeTimers();
             });
 
-            beforeEach(() => {
+            beforeEach(async () => {
                 seq = 1;
                 logger = DebugLogger.create("fluid:testDeltaManager");
                 emitter = new EventEmitter();
@@ -104,7 +104,7 @@ describe("Loader", () => {
                     noopCountFrequency,
                 );
 
-                deltaManager.attachOpHandler(0, 0, 1, {
+                await deltaManager.attachOpHandler(0, 0, 1, {
                     process: (message) => tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
                     processSignal() { },
                 });

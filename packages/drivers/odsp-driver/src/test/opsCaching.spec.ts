@@ -48,7 +48,8 @@ class MockCache implements ICache {
 async function validate(
     mockCache: MockCache,
     expected: { [key: number]: (MyDataInput | undefined)[]; },
-    cache: OpsCache, initialSeq: number)
+    cache: OpsCache,
+    initialSeq: number)
 {
     assert.deepEqual(mockCache.data, JSON.parse(JSON.stringify(expected)));
 
@@ -61,22 +62,22 @@ async function validate(
         }
     }
 
-    let result = await cache.get(initialSeq, undefined);
+    let result = await cache.get(initialSeq + 1, undefined);
     assert.deepEqual(result, expectedArr);
 
     if (initialSeq >= 10) {
-        result = await cache.get(0, 10);
+        result = await cache.get(1, 10);
         assert(result.length === 0);
     }
 
     // Asking for one too early should result in empty result, as hit miss should result in no ops.
     if (initialSeq > 0) {
-        result = await cache.get(initialSeq - 1, undefined);
+        result = await cache.get(initialSeq, undefined);
         assert(result.length === 0);
     }
 
     if (expectedArr.length > 0) {
-        const last = expectedArr[expectedArr.length - 1].sequenceNumber;
+        const last = expectedArr[expectedArr.length - 1].sequenceNumber + 1;
 
         result = await cache.get(last, undefined);
         assert(result.length === 0);
@@ -84,11 +85,14 @@ async function validate(
         result = await cache.get(last + 10, undefined);
         assert(result.length === 0);
 
-        result = await cache.get(initialSeq + 1, last);
-        assert.deepEqual(result, expectedArr.slice(1, -1));
-
-        result = await cache.get(initialSeq + 1, last + 100000);
+        result = await cache.get(initialSeq + 2, last);
         assert.deepEqual(result, expectedArr.slice(1));
+
+        result = await cache.get(initialSeq + 2, last + 100000);
+        assert.deepEqual(result, expectedArr.slice(1));
+
+        result = await cache.get(initialSeq + 2, last - 1);
+        assert.deepEqual(result, expectedArr.slice(1, -1));
     }
 }
 
@@ -271,6 +275,49 @@ describe("OpsCache", () => {
             {},
             3,
             3);
+    });
+
+    it("Gap in ops", async () => {
+        const mockCache = new MockCache();
+        const initialSeq = 100;
+
+        const mockData: MyDataInput[] = [
+            { sequenceNumber: 101, data: "101" },
+            { sequenceNumber: 102, data: "102" },
+            { sequenceNumber: 103, data: "103" },
+            { sequenceNumber: 104, data: "104" },
+            { sequenceNumber: 105, data: "105" },
+            { sequenceNumber: 106, data: "106" },
+            // Gap:
+            // { sequenceNumber: 107, data: "107" },
+            { sequenceNumber: 108, data: "108" },
+            { sequenceNumber: 109, data: "109" },
+            // Start a new butch - that's where we had bug!
+            { sequenceNumber: 110, data: "110" },
+            { sequenceNumber: 111, data: "111" },
+        ];
+
+        const cache = new OpsCache(
+            initialSeq,
+            new TelemetryUTLogger(),
+            mockCache,
+            5 /* batchSize */,
+            -1, // timerGranularity
+            100, // totalOpsToCache
+        );
+
+        cache.addOps(mockData);
+        cache.flushOps();
+
+        const result = await cache.get(initialSeq + 1, undefined);
+        assert.deepEqual(result, [
+            { sequenceNumber: 101, data: "101" },
+            { sequenceNumber: 102, data: "102" },
+            { sequenceNumber: 103, data: "103" },
+            { sequenceNumber: 104, data: "104" },
+            { sequenceNumber: 105, data: "105" },
+            { sequenceNumber: 106, data: "106" },
+        ]);
     });
 });
 

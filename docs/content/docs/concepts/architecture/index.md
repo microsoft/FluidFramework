@@ -2,7 +2,7 @@
 title: Architecture
 menuPosition: 1
 aliases:
-  - "/docs/concepts/architecture"
+  - "/docs/deep/architecture"
 ---
 
 The Fluid Framework can be broken into three broad parts: The *Fluid loader*, *Fluid containers*, and the *Fluid
@@ -13,7 +13,7 @@ level, identify the important lower level concepts, and discuss some of our key 
 
 The Fluid loader connects to the Fluid service and loads a Fluid container.
 
-<img src="../images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+<img src="/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
 client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
 loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
 objects and distributed data structures.">
@@ -74,7 +74,7 @@ client, gives the op a sequential order number, and sends the ordered op back to
 structures use these ops to reconstruct state on each client. The Fluid service doesn't parse any of these ops; in fact,
 the service knows nothing about the contents of any Fluid container.
 
-<img src="../images/fluid-service.png" alt="Clients send operations to the Fluid service, which are assigned an order and
+<img src="/images/fluid-service.png" alt="Clients send operations to the Fluid service, which are assigned an order and
 then broadcast to the other connected clients. The client sending the operation also receives an acknowledgement from
 the service with the assigned order of the operation.">
 
