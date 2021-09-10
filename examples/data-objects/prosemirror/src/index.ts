@@ -5,7 +5,7 @@
 
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidDataStoreFactory, FlushMode } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
     innerRequestHandler,
     buildRuntimeRequestHandler,
@@ -41,8 +41,6 @@ class ProseMirrorFactory extends RuntimeFactoryHelper {
             existing,
         );
 
-        // Flush mode to manual to batch operations within a turn
-        runtime.setFlushMode(FlushMode.Manual);
         return runtime;
     }
 }

@@ -47,7 +47,7 @@ export interface IProvideContainerRuntime {
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
-        event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved",
+        event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved" | "attached",
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);

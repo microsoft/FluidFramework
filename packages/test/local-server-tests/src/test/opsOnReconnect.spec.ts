@@ -134,6 +134,8 @@ describe("Ops on Reconnect", () => {
         return container2Object1;
     }
 
+    const flush = (containerObject) => (containerObject.context.containerRuntime as IContainerRuntime).flush();
+
     beforeEach(async () => {
         urlResolver = new LocalResolver();
         deltaConnectionServer = LocalDeltaConnectionServer.create();
@@ -145,6 +147,8 @@ describe("Ops on Reconnect", () => {
         container1Object1 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
             container1,
             "default");
+
+        container1Object1.context.containerRuntime.setFlushMode(FlushMode.Immediate);
         container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
         container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
         container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(directoryId);
@@ -162,6 +166,7 @@ describe("Ops on Reconnect", () => {
         it("can resend ops on reconnection that were sent in disconnected state", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -177,6 +182,8 @@ describe("Ops on Reconnect", () => {
             container1Object1Map2.set("key4", "value4");
             container1Object1String.insertText(0, "value5");
 
+            flush(container1Object1);
+
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
 
@@ -184,19 +191,20 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", undefined /* batch */],
+                ["key1", "value1", true /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", undefined /* batch */],
-                [0, "value5", undefined /* batch */], // This is for the SharedString
+                [0, "value5", false /* batch */], // This is for the SharedString
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
         it("can resend ops on reconnection that were sent in Nack'd state", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Nack the client.
             assert(container1.clientId);
@@ -211,6 +219,8 @@ describe("Ops on Reconnect", () => {
             container1Object1Directory.set("key3", "value3");
             container1Object1Directory.set("key4", "value4");
 
+            flush(container1Object1);
+
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
 
@@ -218,13 +228,13 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", undefined /* batch */],
+                ["key1", "value1", true /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
-                ["key4", "value4", undefined /* batch */],
+                ["key4", "value4", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in Nack'd state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in Nack'd state");
         });
     });
 
@@ -232,6 +242,7 @@ describe("Ops on Reconnect", () => {
         it("can resend ops in a dataObject in right order on reconnect", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -248,6 +259,8 @@ describe("Ops on Reconnect", () => {
             container1Object1Map2.set("key5", "value5");
             container1Object1Directory.set("key6", "value6");
 
+            flush(container1Object1);
+
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
 
@@ -255,18 +268,20 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", undefined /* batch */],
+                ["key1", "value1", true /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", undefined /* batch */],
                 ["key5", "value5", undefined /* batch */],
-                ["key6", "value6", undefined /* batch */],
+                ["key6", "value6", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
         it("can resend ops in multiple dataObjects in right order on reconnect", async () => {
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+
             // Create dataObject2 in the first container.
             const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
                 await container1Object1.context.containerRuntime.createDataStore("dataObject2"),
@@ -278,6 +293,8 @@ describe("Ops on Reconnect", () => {
 
             // Set the new dataStore's handle in a map so that a new container has access to it.
             container1Object1Map1.set("dataStore2Key", container1Object2.handle);
+
+            flush(container1Object1);
 
             // Wait for the set above to get processed.
             await loaderContainerTracker.ensureSynchronized();
@@ -311,6 +328,8 @@ describe("Ops on Reconnect", () => {
             container1Object1Map2.set("key7", "value7");
             container1Object2Map2.set("key8", "value8");
 
+            flush(container1Object1);
+
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
 
@@ -318,17 +337,17 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", undefined /* batch */],
+                ["key1", "value1", true /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", undefined /* batch */],
                 ["key5", "value5", undefined /* batch */],
                 ["key6", "value6", undefined /* batch */],
                 ["key7", "value7", undefined /* batch */],
-                ["key8", "value8", undefined /* batch */],
+                ["key8", "value8", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
     });
 
@@ -367,10 +386,12 @@ describe("Ops on Reconnect", () => {
                 ["key6", "value6", undefined /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
         it("can resend ops in multiple dataObjects in right order on connect", async () => {
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+
             // Create dataObject2 in the first container.
             const container1Object2 = await requestFluidObject<ITestFluidObject & IFluidLoadable>(
                 await container1Object1.context.containerRuntime.createDataStore("dataObject2"),
@@ -382,6 +403,8 @@ describe("Ops on Reconnect", () => {
 
             // Set the new dataStore's handle in a map so that a new container has access to it.
             container1Object1Map1.set("dataStore2Key", container1Object2.handle);
+
+            flush(container1Object1);
 
             // Wait for the set above to get processed.
             await loaderContainerTracker.ensureSynchronized();
@@ -407,6 +430,8 @@ describe("Ops on Reconnect", () => {
             container1Object1Map2.set("key7", "value7");
             container1Object2Map2.set("key8", "value8");
 
+            flush(container1Object1);
+
             // Disconnect the client.
             assert(container1.clientId);
             documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
@@ -421,17 +446,17 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", undefined /* batch */],
+                ["key1", "value1", true /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", undefined /* batch */],
                 ["key5", "value5", undefined /* batch */],
                 ["key6", "value6", undefined /* batch */],
                 ["key7", "value7", undefined /* batch */],
-                ["key8", "value8", undefined /* batch */],
+                ["key8", "value8", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
     });
 
@@ -439,6 +464,7 @@ describe("Ops on Reconnect", () => {
         it("can resend batch ops in a dataObject in right order on connect", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -454,12 +480,18 @@ describe("Ops on Reconnect", () => {
                 container1Object1Directory.set("key3", "value3");
             });
 
+            // Manually flush the ops so that they are sent as a batch.
+            flush(container1Object1);
+
             container1Object1.context.containerRuntime.orderSequentially(() => {
                 container1Object1Map1.set("key4", "value4");
                 container1Object1Map2.set("key5", "value5");
                 container1Object1Directory.set("key6", "value6");
             });
 
+            // Manually flush the ops so that they are sent as a batch.
+            (container1Object1.context.containerRuntime as IContainerRuntime).flush();
+
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
 
@@ -475,12 +507,13 @@ describe("Ops on Reconnect", () => {
                 ["key6", "value6", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
         it("can resend consecutive manually flushed batches in right order on connect", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -489,24 +522,21 @@ describe("Ops on Reconnect", () => {
             // The Container should be in disconnected state.
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
-            // Set the FlushMode to Manual to send batch ops by manually flushing them.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Manual);
-
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
             container1Object1Map2.set("key2", "value2");
             container1Object1Directory.set("key3", "value3");
 
             // Manually flush the ops so that they are sent as a batch.
-            (container1Object1.context.containerRuntime as IContainerRuntime).flush();
+            flush(container1Object1);
 
             // Set values in the DDSes so that they are batched together in a second batch.
             container1Object1Map1.set("key4", "value4");
             container1Object1Map2.set("key5", "value5");
             container1Object1Directory.set("key6", "value6");
 
-            // Set the FlushMode back to Automatic so that the above batch is sent.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+            // Manually flush the ops so that they are sent as a batch.
+            flush(container1Object1);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -523,12 +553,13 @@ describe("Ops on Reconnect", () => {
                 ["key6", "value6", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
 
         it("can resend manually flushed batch in right order on connect", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Disconnect the client.
             assert(container1.clientId);
@@ -537,19 +568,13 @@ describe("Ops on Reconnect", () => {
             // The Container should be in disconnected state.
             assert.equal(container1.connectionState, ConnectionState.Disconnected);
 
-            // Set the FlushMode to Manual to send batch ops by manually flushing them.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Manual);
-
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
             container1Object1Map2.set("key2", "value2");
             container1Object1Directory.set("key3", "value3");
 
             // Manually flush the ops so that they are sent as a batch.
-            (container1Object1.context.containerRuntime as IContainerRuntime).flush();
-
-            // Set the FlushMode back to Automatic.
-            container1Object1.context.containerRuntime.setFlushMode(FlushMode.Automatic);
+            flush(container1Object1);
 
             // Wait for the Container to get reconnected.
             await waitForContainerReconnection(container1);
@@ -563,7 +588,7 @@ describe("Ops on Reconnect", () => {
                 ["key3", "value3", false /* batch */],
             ];
             assert.deepStrictEqual(
-                expectedValues, receivedValues, "Did not receive the ops that were sent in disconnected state");
+                receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
     });
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Redis } from "ioredis";
 import * as winston from "winston";
 import { ICache, IRedisParameters } from "./definitions";
@@ -27,6 +28,7 @@ export class RedisCache implements ICache {
 
         client.on("error", (error) => {
             winston.error("Redis Cache Error:", error);
+            Lumberjack.error("Redis Cache Error", undefined, error);
         });
     }
 

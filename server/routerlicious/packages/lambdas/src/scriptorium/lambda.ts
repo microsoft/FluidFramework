@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { inspect } from "util";
 import {
     extractBoxcar,
     ICollection,
@@ -12,6 +11,7 @@ import {
     IPartitionLambda,
     ISequencedOperationMessage,
     SequencedOperationType,
+    runWithRetry,
 } from "@fluidframework/server-services-core";
 
 export class ScriptoriumLambda implements IPartitionLambda {
@@ -100,17 +100,12 @@ export class ScriptoriumLambda implements IPartitionLambda {
             ...message,
             mongoTimestamp: new Date(message.operation.timestamp),
         }));
-        return this.opCollection
-            .insertMany(dbOps, false)
-            .catch(async (error) => {
-                this.context.log?.error(`Error inserting operation in the database: ${inspect(error)}`);
-
-                // Duplicate key errors are ignored since a replay may cause us to insert twice into Mongo.
-                // All other errors result in a rejected promise.
-                if (error.code !== 11000) {
-                    // Needs to be a full rejection here
-                    return Promise.reject(error);
-                }
-            });
+        return runWithRetry(
+            async () => this.opCollection.insertMany(dbOps, false),
+            "insertOpScriptorium",
+            3 /* maxRetries */,
+            1000 /* retryAfterMs */,
+            this.context.log,
+            (error) => error.code === 11000 /* shouldIgnoreError */);
     }
 }

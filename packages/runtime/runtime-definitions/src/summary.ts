@@ -156,12 +156,6 @@ export interface ISummarizerNode {
  * - updateUsedRoutes - Used to notify this node of routes that are currently in use in it.
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
-    /** The routes in this node that are currently in use. */
-    readonly usedRoutes: string[];
-
-    /** The garbage collection data of the node. */
-    readonly gcData: IGarbageCollectionData | undefined;
-
     summarize(fullTree: boolean, trackState?: boolean): Promise<ISummarizeResult>;
     createChild(
         /** Summarize function */
@@ -202,8 +196,15 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      * After GC has run, called to notify this node of routes that are used in it. These are used for the following:
      * 1. To identify if this node is being referenced in the document or not.
      * 2. To identify if this node or any of its children's used routes changed since last summary.
+     *
+     * @param usedRoutes - The routes that are used in this node.
+     * @param gcTimestamp - The time when GC was run that generated these used routes. If a node becomes unreferenced
+     * as part of this GC run, this timestamp is used to update the time when it happens.
      */
-    updateUsedRoutes(usedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+
+    /** Returns the GC details that may be added to this node's summary. */
+    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
 }
 
 export const channelsTreeName = ".channels";

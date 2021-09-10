@@ -4,20 +4,16 @@
 
 ```ts
 
-import { ContainerSchema } from 'fluid-framework';
-import { FluidContainer } from 'fluid-framework';
+import { ContainerSchema } from '@fluidframework/fluid-static';
+import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
-import { IMember } from 'fluid-framework';
-import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { IServiceAudience } from 'fluid-framework';
+import { IMember } from '@fluidframework/fluid-static';
+import { IServiceAudience } from '@fluidframework/fluid-static';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
-import { ServiceAudience } from 'fluid-framework';
+import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
@@ -27,20 +23,28 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 
 // @public
 export class AzureClient {
-    constructor(connectionConfig: AzureConnectionConfig, logger?: ITelemetryBaseLogger | undefined);
-    createContainer(containerSchema: ContainerSchema): Promise<AzureResources>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<AzureResources>;
+    constructor(props: AzureClientProps);
+    createContainer(containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: AzureContainerServices;
+    }>;
+    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+        container: FluidContainer;
+        services: AzureContainerServices;
+    }>;
     }
 
-// @public (undocumented)
+// @public
+export interface AzureClientProps {
+    readonly connection: AzureConnectionConfig;
+    readonly logger?: ITelemetryBaseLogger;
+}
+
+// @public
 export interface AzureConnectionConfig {
-    // (undocumented)
     orderer: string;
-    // (undocumented)
     storage: string;
-    // (undocumented)
     tenantId: "local" | string;
-    // (undocumented)
     tokenProvider: ITokenProvider;
 }
 
@@ -49,7 +53,7 @@ export interface AzureContainerServices {
     audience: IAzureAudience;
 }
 
-// @public (undocumented)
+// @public
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
@@ -66,29 +70,12 @@ export interface AzureMember<T = any> extends IMember {
     userName: string;
 }
 
-// @public (undocumented)
-export interface AzureResources {
-    // (undocumented)
-    containerServices: AzureContainerServices;
-    // (undocumented)
-    fluidContainer: FluidContainer;
-}
-
-// @public (undocumented)
-export class AzureUrlResolver implements IUrlResolver {
-    constructor(tenantId: string, orderer: string, storage: string, tokenProvider: ITokenProvider);
-    // (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
-    // (undocumented)
-    resolve(request: IRequest): Promise<IFluidResolvedUrl>;
-    }
-
-// @public (undocumented)
+// @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
-export { InsecureTokenProvider }
+export { ITelemetryBaseEvent }
 
-export { ITokenProvider }
+export { ITelemetryBaseLogger }
 
 
 // (No @packageDocumentation comment for this package)

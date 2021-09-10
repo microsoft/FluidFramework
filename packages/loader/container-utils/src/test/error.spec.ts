@@ -101,20 +101,20 @@ describe("Errors", () => {
         it("Copy message and stack", () => {
             const innerError = new LoggingError("hello");
             innerError.stack = "extra special stack";
-            const newError = wrapError(innerError, (message) => new LoggingError(message));
+            const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", "errorType": ContainerErrorType.genericError });
             assert.equal(newError.message, innerError.message, "messages should match");
             assert.equal(newError.stack, innerError.stack, "stacks should match");
         });
         it("Include innerErrorInstanceId in telemetry props", () => {
             const innerError = new LoggingError("hello");
-            const newError = wrapError(innerError, (message) => new LoggingError(message));
+            const newError = wrapError(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", "errorType": ContainerErrorType.genericError });
             assert(newError.getTelemetryProperties().innerErrorInstanceId === innerError.errorInstanceId);
         });
     });
     describe("wrapErrorAndLog", () => {
         const mockLogger = new MockLogger();
         const innerError = new LoggingError("hello");
-        const newError = wrapErrorAndLog(innerError, (message) => new LoggingError(message), mockLogger);
+        const newError = wrapErrorAndLog(innerError, (message) => (new LoggingError(message)) as LoggingError & { fluidErrorCode: "fluidErrorCode", "errorType": ContainerErrorType.genericError }, mockLogger);
         assert(mockLogger.matchEvents([{
             eventName: "WrapError",
             wrappedByErrorInstanceId: newError.errorInstanceId,

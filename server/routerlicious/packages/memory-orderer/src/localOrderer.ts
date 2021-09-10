@@ -336,8 +336,9 @@ export class LocalOrderer implements IOrderer {
             this.gitManager,
             scribeMessagesCollection,
             false);
-        const summaryReader = new SummaryReader(this.documentId, this.gitManager);
+        const summaryReader = new SummaryReader(this.documentId, this.gitManager, false);
         const checkpointManager = new CheckpointManager(
+            context,
             this.tenantId,
             this.documentId,
             documentCollection,

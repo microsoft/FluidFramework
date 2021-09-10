@@ -157,8 +157,9 @@ export class Collection<T> implements ICollection<T> {
         const indexLen = isRange ? indexes.length - 1 : indexes.length;
         const queryValues = [];
         for (let i = 0; i < indexLen; ++i) {
-            if (query[indexes[i]] !== undefined) {
-                queryValues.push(query[indexes[i]]);
+            const queryValue = query[indexes[i]];
+            if (queryValue !== undefined) {
+                queryValues.push(isNaN(queryValue) ? queryValue : charwise.encode(Number(queryValue)));
             }
         }
         const key = queryValues.join("!");

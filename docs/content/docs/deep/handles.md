@@ -73,101 +73,26 @@ const text2 = await myMap2.get("my-text").get();
 console.log(text === text2) // true
 ```
 
-## Scenarios in Practice
-
-The following examples outline the uses of handles to retrieve the underlying object in different scenarios.
-
-### Storing DDSes on the DataObject `root`
-
-When developing a Fluid object from a `DataObject` you will often find yourself wanting to create and store new DDSes.
-In the scenario below we want to create a new `SharedMap` that all users have access to, and we also want to ensure it
-is only created once. We can do that by creating a new SharedMap in our `initializingFirstTime` lifecycle method and
-storing it on our `root` SharedDirectory. The `initializingFirstTime` function in the `DataObject` only runs the first
-time our `MyFluidObject` is ever created. The `hasInitialized` lifecycle method runs every time `MyFluidObject` instance
-is initialized and we can use this to get and store our SharedMap locally in the class.
-
-```typescript
-export class MyFluidObject extends DataObject {
-  public myMap;
-
-  protected async initializingFirstTime() {
-      const map = await SharedMap.create(this.runtime)
-      this.root.set("map-id", map.handle);
-  }
-
-  protected async hasInitialized() {
-      this.myMap = await this.root.get<IFluidHandle<SharedMap>>("map-id").get();
-  }
-}
-```
-
-### Storing other DataObjects
-
-One of the advanced uses of a Fluid handle is creating and storing other DataObjects within the DataObject `root`. We
-can do this the same as a DDS by storing the handle to the Fluid object then later using that to retrieve the handle and
-`get` the object.
-
-The following code snippet from the
-[Pond](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/pond/src/index.tsx) DataObject
-demonstrates this. It creates a Clicker object (which is a DataObject) during first time initialization and stores its
-handle in the root SharedDirectory. By following the convention of using the Fluid object's name as the key for the
-handle, you enable any remote client to retrieve the handle from the root and get the Clicker by calling `get()` on the
-handle:
-
-```typescript
-// ...
-
-protected async initializingFirstTime() {
-    // The first client creates `Clicker` and stores the handle in the `root` DDS.
-    const clickerObject = await Clicker.getFactory().createChildInstance(this.context);
-    this.root.set(Clicker.Name, clickerObject.handle);
-}
-
-protected async hasInitialized() {
-    // The remote clients retrieve the handle from the `root` DDS and get the `Clicker`.
-    const clicker = await this.root.get<IFluidHandle>(Clicker.Name).get();
-    this.clickerView = new HTMLViewAdapter(clicker);
-}
-
-// ...
-```
-
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

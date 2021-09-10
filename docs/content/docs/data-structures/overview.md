@@ -9,8 +9,8 @@ who've used common data structures before.
 
 {{% callout note %}}
 
-This article assumes that you are familiar with [Introducing distributed data structures]({{< relref
-"dds.md" >}}).
+This article assumes that you are familiar with
+[Introducing distributed data structures]({{< relref "dds.md" >}}).
 
 {{% /callout %}}
 
@@ -38,25 +38,12 @@ DDSes vary from each other by three characteristics:
 
 Below we've enumerated the data structures and described when they may be most useful.
 
-## Simple data object
-
-Use the [SharedCell][] DDS when you simply need to wrap a data object, whether it is a number, string, or any other data
-type. You can also use a complex data type, such as an array or JavaScript object, in a SharedCell, but the value of a
-SharedCell can be changed only whole-for-whole; so this is not an appropriate choice if the application's clients will
-be changing subparts of the value, such as specific properties of an object or specific items in an array. In the latter
-scenarios, consider separating the data items with one of the key-value DDSes.
-
-This DDS is optimistic and uses a last-writer-wins merge policy, which means that every change is accepted and all
-clients ultimately get the value set by the most recent change made on any client.
-
 ## Key-value data
 
 These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although
 the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
 - [SharedMap][] -- a basic key-value data structure.
-- [SharedDirectory][] -- a SharedMap with hierarchical paths instead
-  of simple keys.
 
 ### Key Value Scenarios
 
@@ -82,7 +69,6 @@ sequences have a sequential order and can handle simultaneous inserts from multi
 
 - [SharedNumberSequence][] -- a sequence of numbers.
 - [SharedObjectSequence][] -- a sequence of plain objects.
-- [SharedMatrix][] -- a data structure to efficiently use two-dimensional tabular data.
 
 ### Sequence scenarios
 
@@ -114,10 +100,6 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
   clients simultaneously setting the same key can cause issues. By contrast, clients can increase or decrease the
   SharedCounter value by a specified amount, but they can't set it to a specified value. It is optimistic.
 
-- [Ink][] -- a specialized data structure for ink data.
-
-  Ink is a form of an append only list. It's intended for capturing ink strokes. It is optimistic.
-
 ## Consensus data structures
 
 Consensus data structures have one or both of these characteristics:
@@ -128,10 +110,7 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [ConsensusQueue][] -- An ordered queue of items, but each item is pulled off the queue by only one client. If multiple
-  clients pull, they each get a different item.
-- [ConsensusRegisterCollection][] -- Stores "registers" (i.e., key-value pairs), but changes are made only when all
-  clients acknowledge the change. Also, it keeps a record of all changes to each register.
+- [TaskManager][] -- Tracks queues of clients that want to exclusively run a task.
 
 ### Consensus scenarios
 
@@ -165,37 +144,21 @@ DDS will be available over time.
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

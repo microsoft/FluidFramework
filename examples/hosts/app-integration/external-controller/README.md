@@ -47,10 +47,9 @@ Dice Roller uses the following distributed data structures:
 
 - SharedDirectory - root
 
-## Backed Locally and running with live Azure Fluid Relay service (FRS) instance
+## Backed Locally and running with live Azure Fluid Relay service instance
 
-We can connect to both a live FRS instance by passing in the tenant ID, orderer and storage, as well as using the tenant
-ID as "local" for running against Tinylicious for development purpose.
+We can connect to a live Azure Fluid Relay instance by passing in the tenant ID, orderer, and storage, or we can connect to a local Tinylicious server for development purposes by passing in "local" for the tenant ID.
 
 To run the the `AzureClient` against our local Tinylicious instance, we pass the `tenantId` as "local" and make use of
 `InsecureTokenProvider`. For the latter, we pass in two values to its constructor: a key string, which can be anything
@@ -59,7 +58,7 @@ the orderer and storage URLs would point to the Tinylicious instance on the defa
 
 To launch the local Tinylicious service instance, run `npx tinylicious` from your terminal window.
 
-When running the live FRS Instance, we would require the tenant ID, orderer and storage URLs. We make use of
+When running the live Azure Fluid Relay Instance, we would require the tenant ID, orderer and storage URLs. We make use of
 `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
 making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and
 userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
@@ -68,7 +67,7 @@ to generate and sign the token such that the service will accept it.
 ```typescript
 const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
+    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetAzureToken", { userId: "test-user", userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 } : {
@@ -80,5 +79,5 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
 ```
 
 In this way, we can toggle between remote and local mode using the same config format. We make use of
-`AzureFunctionTokenProvider` for running against live FRS instance since it is more secured, without exposing the tenant
+`AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.

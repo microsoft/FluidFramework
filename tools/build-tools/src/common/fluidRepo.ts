@@ -70,7 +70,7 @@ export class FluidRepo {
         }
 
         if (!clientMonoRepo) {
-            throw new Error("client entry not exist in package.json")
+            throw new Error("client entry does not exist in package.json")
         }
         this.clientMonoRepo = clientMonoRepo;
         this.packages = new Packages(loadedPackages);

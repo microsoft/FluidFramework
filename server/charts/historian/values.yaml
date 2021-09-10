@@ -25,6 +25,8 @@ historian:
     maxRequestBurst: 1000000
     minCooldownIntervalInMs: 1000000
     minThrottleIntervalInMs: 1000000
+  restGitService:
+    disableGitCache: false
 
 gitrest:
   name: gitrest

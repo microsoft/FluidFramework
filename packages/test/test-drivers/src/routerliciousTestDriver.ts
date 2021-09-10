@@ -17,55 +17,83 @@ export interface IServiceEndpoint {
     deltaStorageUrl: string;
 }
 
-export class RouterliciousTestDriver implements ITestDriver {
-    public static createFromEnv(api: RouterliciousDriverApiType = RouterliciousDriverApi) {
-        let bearerSecret = process.env.fluid__webpack__bearerSecret;
-        let tenantSecret = process.env.fluid__webpack__tenantSecret;
-        const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
+const dockerConfig = {
+    serviceEndpoint: {
+        hostUrl: "http://localhost:3000",
+        ordererUrl: "http://localhost:3003",
+        deltaStorageUrl: "http://localhost:3001",
+    },
+    tenantId: "fluid",
+    tenantSecret: "create-new-tenants-if-going-to-production",
+};
+
+function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string) {
+    assert(fluidHost, "Missing Fluid host");
+    assert(tenantId, "Missing tenantId");
+    assert(tenantSecret, "Missing tenant secret");
+    return {
+        serviceEndpoint: {
+            hostUrl: fluidHost,
+            ordererUrl: fluidHost.replace("www", "alfred"),
+            deltaStorageUrl: fluidHost.replace("www", "historian"),
+        },
+        tenantId,
+        tenantSecret,
+    };
+}
+
+function getLegacyConfigFromEnv() {
+    const fluidHost = process.env.fluid__webpack__fluidHost;
+    const tenantSecret = process.env.fluid__webpack__tenantSecret;
+    const tenantId = process.env.fluid__webpack__tenantId ?? "fluid";
+    return getConfig(fluidHost, tenantId, tenantSecret);
+}
+
+function getEndpointConfigFromEnv(r11sEndpointName: string) {
+    const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
+    if (r11sEndpointName === "r11s" && configStr === undefined) {
+        // Allow legacy setting from fluid__webpack__ for r11s for now
+        return getLegacyConfigFromEnv();
+    }
+    assert(configStr, `Missing config for ${r11sEndpointName}`);
+    const config = JSON.parse(configStr);
+    return getConfig(config.host, config.tenantId, config.tenantSecret);
+}
+
+function getConfigFromEnv(r11sEndpointName?: string) {
+    if (r11sEndpointName === undefined) {
         const fluidHost = process.env.fluid__webpack__fluidHost;
-
-        assert(fluidHost, "Missing Fluid host");
-        assert(tenantId, "Missing tenantId");
-
-        let serviceEndpoint: IServiceEndpoint;
-
-        if (fluidHost.includes("localhost")) {
-            serviceEndpoint = {
-                hostUrl: "http://localhost:3000",
-                ordererUrl: "http://localhost:3003",
-                deltaStorageUrl: "http://localhost:3001",
-            };
-            bearerSecret = "create-new-tenants-if-going-to-production";
-            tenantSecret = "create-new-tenants-if-going-to-production";
+        if (fluidHost === undefined) {
+            // default to get it with the per service env for r11s
+            return getEndpointConfigFromEnv("r11s");
         }
-        else {
-            assert(bearerSecret, "Missing bearer secret");
-            assert(tenantSecret, "Missing tenant secret");
+        return fluidHost.includes("localhost") ? dockerConfig : getLegacyConfigFromEnv();
+    }
+    return r11sEndpointName === "docker" ? dockerConfig : getEndpointConfigFromEnv(r11sEndpointName);
+}
 
-            serviceEndpoint = {
-                hostUrl: fluidHost,
-                ordererUrl: fluidHost.replace("www", "alfred"),
-                deltaStorageUrl: fluidHost.replace("www", "historian"),
-            };
-        }
-
+export class RouterliciousTestDriver implements ITestDriver {
+    public static createFromEnv(config?: { r11sEndpointName?: string },
+        api: RouterliciousDriverApiType = RouterliciousDriverApi,
+    ) {
+        const { serviceEndpoint, tenantId, tenantSecret } = getConfigFromEnv(config?.r11sEndpointName);
         return new RouterliciousTestDriver(
-            bearerSecret,
             tenantId,
             tenantSecret,
             serviceEndpoint,
             api,
+            config?.r11sEndpointName,
         );
     }
 
     public readonly type = "routerlicious";
     public get version() { return this.api.version; }
     constructor(
-        private readonly bearerSecret: string,
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
         private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
+        public readonly endpointName?: string,
     ) {
     }
 
@@ -92,7 +120,7 @@ export class RouterliciousTestDriver implements ITestDriver {
             this.serviceEndpoints.ordererUrl,
             this.serviceEndpoints.deltaStorageUrl,
             this.tenantId,
-            this.bearerSecret,
+            "", // Don't need the bearer secret for NodeTest
             true);
     }
 

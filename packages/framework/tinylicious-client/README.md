@@ -19,8 +19,8 @@ In the example below we are connecting to a locally running instance of our Tiny
 ```javascript
 import { TinyliciousClient, TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
 
-const config: TinyliciousConnectionConfig = { port: 7070 };
-const tinyliciousClient = new TinyliciousClient(config);
+const clientProps = { connection: { port: 7070 } };
+const tinyliciousClient = new TinyliciousClient(clientProps);
 ```
 
 ## Fluid Containers
@@ -37,16 +37,18 @@ See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) fo
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         /* ... */
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
 const tinyliciousClient = new TinyliciousClient();
-const { fluidContainer, containerServices } = await tinyliciousClient.createContainer(schema);
-```
+const { container, services } = await tinyliciousClient.createContainer(schema);
 
+// Set any default data on the container's `initialObjects` before attaching
+// Returned ID can be used to fetch the container via `getContainer` below
+const id = await container.attach();
+```
 ## Using Fluid Containers
 
 Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
@@ -54,8 +56,8 @@ Using the default `TinyliciousClient` object the developer can create and get Fl
 ```javascript
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
-const tinyliciousClient = new TinyliciousClient(config);
-const { fluidContainer, containerServices } = await tinyliciousClient.getContainer("_unique-id_", schema);
+const tinyliciousClient = new TinyliciousClient(props);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
 ```
 
 ## Using initial objects
@@ -68,18 +70,17 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         map1: SharedMap,
-        pair1: KeyValueDataObject,
+        text1: SharedString,
     }
 }
 const tinyliciousClient = new TinyliciousClient();
-const { fluidContainer, containerServices } = await tinyliciousClient.getContainer("_unique-id_", schema);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
 
 const initialObjects = container.initialObjects;
 const map1 = initialObjects.map1;
-const pair1 = initialObjects["pair1"];
+const text1 = initialObjects["text1"];
 ```
 
 ## Using dynamic objects
@@ -92,27 +93,26 @@ Dynamic objects are loaded on-demand to optimize for data virtualization. To get
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         map1: SharedMap,
     },
-    dynamicObjectTypes: [ KeyValueDataObject ],
+    dynamicObjectTypes: [ SharedString ],
 }
 const tinyliciousClient = new TinyliciousClient();
-const { fluidContainer, containerServices } = await tinyliciousClient.getContainer("_unique-id_", schema);
+const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
 const map1 = container.initialObjects.map1;
 
-const newPair = await container.create(KeyValueDataObject);
-map1.set("pair-unique-id", newPair.handle);
+const newText = await container.create(SharedString);
+map1.set("text-unique-id", newText.handle);
 
 // ...
 
-const pairHandle = map1.get("pair-unique-id"); // Get the handle
-const pair = await map1.get(); // Resolve the handle to get the object
+const textHandle = map1.get("text-unique-id"); // Get the handle
+const text = await map1.get(); // Resolve the handle to get the object
 
 // or
 
-const pair = await map1.get("pair-unique-id").get();
+const text = await map1.get("text-unique-id").get();
 ```
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
