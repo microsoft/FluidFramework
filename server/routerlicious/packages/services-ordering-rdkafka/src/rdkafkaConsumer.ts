@@ -83,6 +83,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			"offset_commit_cb": true,
 			"rebalance_cb": this.consumerOptions.optimizedRebalance ? this.rebalance.bind(this) : true,
 			...this.consumerOptions.additionalOptions,
+			...this.sslOptions,
 		};
 
 		const consumer: kafkaTypes.KafkaConsumer = this.consumer =
@@ -106,6 +107,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			this.emit("disconnected");
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("connection.failure", async (error) => {
 			await this.close(true);
 
@@ -160,6 +162,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			}
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		consumer.on("rebalance", async (err, topicPartitions) => {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {

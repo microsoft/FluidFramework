@@ -64,17 +64,23 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // The GC details of this node in the initial summary.
     private readonly gcDetailsInInitialSummaryP: LazyPromise<IGarbageCollectionSummaryDetails>;
 
-    private _gcData: IGarbageCollectionData | undefined;
-    public get gcData(): IGarbageCollectionData | undefined {
-        return this._gcData;
-    }
+    private gcData: IGarbageCollectionData | undefined;
 
     // Set used routes to have self route by default. This makes the node referenced by default. This is done to ensure
     // that this node is not marked as collected when running GC has been disabled. Once, the option to disable GC is
     // removed (from runGC flag in IContainerRuntimeOptions), this should be changed to be have no routes by default.
-    private _usedRoutes: string[] = [""];
-    public get usedRoutes(): string[] {
-        return this._usedRoutes;
+    private usedRoutes: string[] = [""];
+
+    // If this node is marked as unreferenced, the time when it marked as such.
+    private unreferencedTimestamp: number | undefined;
+
+    // Returns the GC details that my be added to this node's summary.
+    public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
+        return {
+            gcData: this.gcData,
+            usedRoutes: this.usedRoutes,
+            unrefTimestamp: this.unreferencedTimestamp,
+        };
     }
 
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
@@ -139,8 +145,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
         // If the GC details has GC data, initialize our GC data from it.
         if (gcDetailsInInitialSummary.gcData !== undefined) {
-            this._gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
+            this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
+        this.unreferencedTimestamp = gcDetailsInInitialSummary.unrefTimestamp;
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
@@ -172,12 +179,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         // If there is no new data since last summary and we have GC data from the previous run, return it. We may not
         // have data from previous GC run for clients with older summary format before GC was added. They won't have
         // GC details in their initial summary.
-        if (!fullGC && !this.hasDataChanged() && this._gcData !== undefined) {
-            return cloneGCData(this._gcData);
+        if (!fullGC && !this.hasDataChanged() && this.gcData !== undefined) {
+            return cloneGCData(this.gcData);
         }
 
         const gcData = await this.getGCDataFn(fullGC);
-        this._gcData = cloneGCData(gcData);
+        this.gcData = cloneGCData(gcData);
         return gcData;
     }
 
@@ -357,10 +364,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
     }
 
-    public updateUsedRoutes(usedRoutes: string[]) {
+    public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         // Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
         // are in the same order.
-        this._usedRoutes = usedRoutes.sort();
+        this.usedRoutes = usedRoutes.sort();
+
+        // If this node is referenced, clear unreferencedTimestamp, if any.
+        // If this node is not referenced and unreferencedTimestamp is undefined, it just became unreferenced. Update
+        // unreferencedTimestamp to the gcTimestamp.
+        if (this.isReferenced()) {
+            this.unreferencedTimestamp = undefined;
+        } else if (this.unreferencedTimestamp === undefined) {
+            this.unreferencedTimestamp = gcTimestamp;
+        }
 
         // If GC is not disabled and we are tracking a summary, update the work-in-progress used routes so that it can
         // be tracked for this summary.

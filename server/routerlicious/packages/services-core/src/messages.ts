@@ -166,7 +166,20 @@ export interface IUpdateDSNControlMessageContents {
     clearCache: boolean;
 }
 
+/**
+ * Nack messages types
+ */
+export enum NackMessagesType {
+    // Used when ops should be nacked because a summary hasn't been made for a while
+    SummaryMaxOps = "summaryMaxOps",
+}
+
 export interface INackMessagesControlMessageContents {
+    /**
+     * Identifier for the type/reason for this nack messages
+     */
+    identifier: NackMessagesType | undefined;
+
     /**
      * The INackContent to send when nacking the message
      */

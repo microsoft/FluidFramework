@@ -3,6 +3,7 @@ title: Hosts and the loader
 menuPosition: 4
 aliases:
   - "/docs/concepts/hosts"
+draft: true
 ---
 
 The **Fluid loader** is one of the key parts of the Fluid Framework. Developers use the Fluid loader within their
@@ -30,7 +31,7 @@ You may also want to host your Fluid container on a standalone website.
 The Fluid loader loads Fluid containers by connecting to the Fluid service and fetching Fluid container code. From a
 system architecture perspective, the Fluid loader sits in between the Fluid service and a Fluid container.
 
-<img src="/docs/deep/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+<img src="/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
 client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
 loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
 objects and distributed data structures.">
@@ -40,7 +41,7 @@ right plugins (drivers, handlers, resolvers), the Fluid loader will work for any
 implementation.
 
 The loader mimics existing web protocols. Similar to how the browser requests state and app logic (a website) from a
-web server, a Fluid host uses the loader to request a [Fluid container](./containers-runtime.md) from the Fluid service.
+web server, a Fluid host uses the loader to request a [Fluid container][] from the Fluid service.
 
 ## Fluid host responsibilities
 
@@ -48,7 +49,7 @@ A Fluid host creates a Fluid loader with a URL resolver, Fluid service driver, a
 Fluid container from the loader. Finally, the host *does something* with the Fluid containers. A host can request
 multiple containers from the loader.
 
-<img src="/docs/deep/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
+<img src="/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
 service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
 
 We'll talk about each of these parts, starting with the request and loader dependencies, over the next sections.
@@ -115,3 +116,27 @@ object).
 
 The host is responsible for checking that this response is valid. Did the loader return a 200? Is the mimeType correct?
 As the Fluid Framework expands, we intend to make further use of these responses.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Classes and interfaces -->
+
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
+
+<!-- AUTO-GENERATED-CONTENT:END -->

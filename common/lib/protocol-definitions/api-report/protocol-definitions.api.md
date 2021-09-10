@@ -76,6 +76,7 @@ export interface IClient {
     permission: string[];
     // (undocumented)
     scopes: string[];
+    timestamp?: number;
     // (undocumented)
     user: IUser;
 }
@@ -144,6 +145,7 @@ export interface IConnected {
     serviceConfiguration: IClientConfiguration;
     supportedFeatures?: Record<string, any>;
     supportedVersions: string[];
+    timestamp?: number;
     version: string;
 }
 
@@ -327,6 +329,8 @@ export interface ISequencedDocumentMessage {
     clientSequenceNumber: number;
     // (undocumented)
     contents: any;
+    // @alpha
+    expHash1?: string;
     // (undocumented)
     metadata?: any;
     // (undocumented)
@@ -534,6 +538,8 @@ export interface ITokenClaims {
     exp: number;
     // (undocumented)
     iat: number;
+    // (undocumented)
+    jti?: string;
     // (undocumented)
     scopes: string[];
     // (undocumented)

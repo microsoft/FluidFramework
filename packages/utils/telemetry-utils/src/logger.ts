@@ -12,6 +12,8 @@ import {
     ITelemetryPerformanceEvent,
     ITelemetryProperties,
     TelemetryEventPropertyType,
+    ITaggedTelemetryPropertyType,
+    TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { BaseTelemetryNullLogger, performance } from "@fluidframework/common-utils";
 import {
@@ -31,8 +33,10 @@ import {
     UserData = "UserData",
 }
 
+export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
+
 export interface ITelemetryLoggerPropertyBag {
-    [index: string]: TelemetryEventPropertyType | (() => TelemetryEventPropertyType);
+    [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
 export interface ITelemetryLoggerPropertyBags{
     all?: ITelemetryLoggerPropertyBag,
@@ -120,13 +124,29 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        const newEvent: ITelemetryBaseEvent = {
-            ...event,
-            category: event.category ?? (error === undefined ?  "generic" : "error"),
-        };
+        this.sendTelemetryEventCore({ ...event, category: "generic"}, error);
+    }
+
+    /**
+     * Send a telemetry event with the logger
+     *
+     * @param event - the event to send
+     * @param error - optional error object to log
+     */
+     protected sendTelemetryEventCore(
+        event: ITelemetryGenericEvent & { category: TelemetryEventCategory },
+        error?: any)
+    {
+        const newEvent = { ...event };
         if (error !== undefined) {
             TelemetryLogger.prepareErrorObject(newEvent, error, false);
         }
+
+        // Will include Nan & Infinity, but probably we do not care
+        if (typeof newEvent.duration === "number") {
+            newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
+        }
+
         this.send(newEvent);
     }
 
@@ -137,7 +157,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        this.sendTelemetryEvent({ ...event, category: "error" }, error);
+        this.sendTelemetryEventCore({ ...event, category: "error" }, error);
     }
 
     /**
@@ -147,19 +167,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-        const perfEvent: ITelemetryBaseEvent = {
+        const perfEvent = {
             ...event,
             category: event.category ? event.category : "performance",
         };
-        if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(perfEvent, error, false);
-        }
 
-        if (event.duration) {
-            perfEvent.duration = TelemetryLogger.formatTick(event.duration);
-        }
-
-        this.send(perfEvent);
+        this.sendTelemetryEventCore(perfEvent, error);
     }
 
     protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {

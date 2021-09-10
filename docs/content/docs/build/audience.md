@@ -4,7 +4,6 @@ menuPosition: 5
 editor: tylerbutler
 ---
 
-
 The audience is the collection of users connected to a container.  When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
 
 This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the [Tinylicious]({{< relref "tinylicious.md" >}}) Fluid service is used.
@@ -30,18 +29,18 @@ export interface IMember {
 }
 ```
 
-An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection` objects, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections.  An audience member will always have at least one connection.  Each user and each connection will both have a unique identifier.
+An `IMember` represents a single user identity.  `IMember` holds a list of `IConnection` objects, which represent that audience member's active connections to the container.  Typically a user will only have one connection, but scenarios such as loading the container in multiple web contexts or on multiple computers will also result in as many connections. An audience member will always have at least one connection. Each user and each connection will both have a unique identifier.
 
 {{% callout tip %}}
 
-Connections can be short-lived and are not reused. A client that disconnects from the container and immediately reconnects will receive an entirely new connection.  The audience will reflect through its [member leaving and member joining events](#events).
+Connections can be short-lived and are not reused. A client that disconnects from the container and immediately reconnects will receive an entirely new connection. The audience will reflect through its [member leaving and member joining events](#events).
 
 {{% /callout %}}
 
 ### Service-specific audience data
 
 
-The `ServiceAudience` class represents the base audience implementation, and individual Fluid services are expected to extend this class for their needs.  Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension.  For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
+The `ServiceAudience` class represents the base audience implementation, and individual Fluid services are expected to extend this class for their needs. Typically this is through extending `IMember` to provide richer user information and then extending `ServiceAudience` to use the `IMember` extension. For `TinyliciousAudience`, this is the only change, and it defines a `TinyliciousMember` to add a user name.
 
 ```typescript
 export interface TinyliciousMember extends IMember {
@@ -57,21 +56,21 @@ Because audience data is service-specific, code that interacts with audience may
 
 #### getMembers
 
-The `getMembers` method returns a map of the audience's current members.  The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` objects for the corresponding user IDs.  Your code can further query the individual `IMember` objects for their client connections.
+The `getMembers` method returns a map of the audience's current members. The map keys are user IDs (i.e. the `IMember.userId` property), and values are the `IMember` objects for the corresponding user IDs. Your code can further query the individual `IMember` objects for their client connections.
 
 {{% callout tip "Tips" %}}
 
-The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience.  Instead of holding onto the return value, your code should subscribe to `ServiceAudience`'s events for member changes.
+The map returned by `getMembers` represents a snapshot in time and will not update internally as members enter and leave the audience. Instead of holding onto the return value, your code should subscribe to `ServiceAudience`'s events for member changes.
 
 {{% /callout %}}
 
 #### getMyself
 
-The `getMyself` method returns the `IMember` object from the audience corresponding to the current user calling the method.  It does so by matching the container's current client connection ID with one from the audience.
+The `getMyself` method returns the `IMember` object from the audience corresponding to the current user calling the method. It does so by matching the container's current client connection ID with one from the audience.
 
 {{% callout tip %}}
 
-Connection transitions can result in short timing windows where `getMyself` returns `undefined`.  This is because the current client connection will not have been added to the audience yet, so a matching connection ID cannot be found.  Similarly, offline scenarios may produce the same behavior.
+Connection transitions can result in short timing windows where `getMyself` returns `undefined`. This is because the current client connection will not have been added to the audience yet, so a matching connection ID cannot be found. Similarly, offline scenarios may produce the same behavior.
 
 {{% /callout %}}
 
@@ -79,33 +78,33 @@ Connection transitions can result in short timing windows where `getMyself` retu
 
 #### membersChanged
 
-The `membersChanged` event is emitted whenever a change to the audience members' client connections is made and will always be paired with a `memberAdded` or `memberRemoved` event.  Listeners may call the `getMembers` method to get the new list of members and their connections.  Listeners that need the specific changed member or connection should use the `memberAdded` and `memberRemoved` events instead.
+The `membersChanged` event is emitted whenever a change to the audience members' client connections is made and will always be paired with a `memberAdded` or `memberRemoved` event. Listeners may call the `getMembers` method to get the new list of members and their connections. Listeners that need the specific changed member or connection should use the `memberAdded` and `memberRemoved` events instead.
 
 #### memberAdded
 
-The `memberAdded` event is emitted whenever a client connection is added to the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` object may be queried for more information on the new connection using the provided connection client ID.  Depending on if it already had previous connections, the `IMember` object may be either new or existing.
+The `memberAdded` event is emitted whenever a client connection is added to the audience. The event also provides the connection client ID and the `IMember` object for this change. The `IMember` object may be queried for more information on the new connection using the provided connection client ID. Depending on if it already had previous connections, the `IMember` object may be either new or existing.
 
 #### memberRemoved
 
-The `memberRemoved` event is emitted whenever a client connection leaves the audience.  The event also provides the connection client ID and the `IMember` object for this change.  The `IMember` object reflects its state in the audience before the connection's removal, and may be queried for more information on the removed connection using the provided connection client ID.
+The `memberRemoved` event is emitted whenever a client connection leaves the audience. The event also provides the connection client ID and the `IMember` object for this change. The `IMember` object reflects its state in the audience before the connection's removal, and may be queried for more information on the removed connection using the provided connection client ID.
 
 ## Using audience to build presence features
 
 ### Data management and inter-user communication
 
-While the audience is the foundation for user presence features, the list of connected users does not provide a compelling experience on its own.  Building compelling presence features will involve working with additional user data. These data typically fit into one or more of the categories below.
+While the audience is the foundation for user presence features, the list of connected users does not provide a compelling experience on its own. Building compelling presence features will involve working with additional user data. These data typically fit into one or more of the categories below.
 
 #### Shared persisted data
 
-Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members. Some of those scenarios will require the app to save data for each user for future sessions. For example, consider a scenario where you want to display how long each user has spent in your application.  An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect.  This means that the time each user has spent must be persisted so it can survive disconnections.
+Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members. Some of those scenarios will require the app to save data for each user for future sessions. For example, consider a scenario where you want to display how long each user has spent in your application. An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect. This means that the time each user has spent must be persisted so it can survive disconnections.
 
-One option is to use a `SharedMap` object with a `SharedCounter` object as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})).  All other connected users will then receive changes to that SharedMap automatically.  Your app's UI can display data from the map for only users present in the audience.  A returning user can find themselves in the map and resume from the latest state.
+One option is to use a `SharedMap` object with a `SharedCounter` object as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures]({{< relref dds.md >}})). All other connected users will then receive changes to that SharedMap automatically. Your app's UI can display data from the map for only users present in the audience. A returning user can find themselves in the map and resume from the latest state.
 
 #### Shared transient data
 
-Many presence scenarios involve data that are short-lived and do not need to be persisted.  For example, consider a scenario where you want to display what each user has selected in the UI.  Each user will need to tell other users their own information -- where they clicked -- but the past data are irrelevant.
+Many presence scenarios involve data that are short-lived and do not need to be persisted. For example, consider a scenario where you want to display what each user has selected in the UI. Each user will need to tell other users their own information -- where they clicked -- but the past data are irrelevant.
 
-You can address this scenario using DDSes in the same way as with the persisted data scenario.  However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients.  [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation.  Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally.  Newly connected users can request other connected users to send their selection data using another signal.  When a user disconnects, the local data are discarded.
+You can address this scenario using DDSes in the same way as with the persisted data scenario. However, using DDSes results in storage of data that are neither useful long term nor in contention among multiple users or clients. [Signals]({{< relref signals.md >}}) are designed for sending transient data and would be more appropriate in this situation. Each user can broadcast a signal containing their selection data to all connected users, and those users can store the data locally. Newly connected users can request other connected users to send their selection data using another signal. When a user disconnects, the local data are discarded.
 
 #### Unshared data
 
@@ -116,37 +115,21 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

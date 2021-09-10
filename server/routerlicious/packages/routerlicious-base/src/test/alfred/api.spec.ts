@@ -13,6 +13,7 @@ import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
+import { TestCache } from "@fluidframework/server-test-utils";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -73,6 +74,7 @@ describe("Routerlicious", () => {
                 appTenant1,
                 appTenant2,
             ];
+            const defaultSingleUseTokenCache = new TestCache();
             const scopes= [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]
             const tenantToken1 =`Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
             const tenantToken2 =`Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
@@ -87,6 +89,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
+                        defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
@@ -94,18 +97,19 @@ describe("Routerlicious", () => {
                     supertest = request(app);
                 });
 
-                const assertThrottle = async (url: string, token: string, body: any, method: "get" | "post" | "patch" = "get"): Promise<void> => {
+                const assertThrottle = async (url: string, token: string | (() => string), body: any, method: "get" | "post" | "patch" = "get"): Promise<void> => {
+                    const tokenProvider = typeof token === "function" ? token : () => token;
                     for (let i = 0; i < limit; i++) {
                         // we're not interested in making the requests succeed with 200s, so just assert that not 429
                         await supertest[method](url)
-                            .set('Authorization', token)
+                            .set('Authorization', tokenProvider())
                             .send(body)
                             .expect((res) => {
                                 assert.notStrictEqual(res.status, 429);
                             });
                     };
                     await supertest[method](url)
-                        .set('Authorization', token)
+                        .set('Authorization', tokenProvider())
                         .send(body)
                         .expect(429);
                 };
@@ -131,7 +135,8 @@ describe("Routerlicious", () => {
                             .expect(429);
                     });
                     it("/:tenantId", async () => {
-                        await assertThrottle(`/documents/${appTenant1.id}`, tenantToken1, {id: document1._id}, "post");
+                        const token = () => `Basic ${generateToken(appTenant1.id, "", appTenant1.key, scopes)}`;
+                        await assertThrottle(`/documents/${appTenant1.id}`, token, {id: ""}, "post");
                     });
                 });
 
@@ -175,6 +180,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
+                        defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
@@ -239,6 +245,7 @@ describe("Routerlicious", () => {
                         defaultProvider,
                         defaultTenantManager,
                         throttler,
+                        defaultSingleUseTokenCache,
                         defaultStorage,
                         defaultAppTenants,
                         defaultMongoManager,
@@ -270,7 +277,7 @@ describe("Routerlicious", () => {
                     it("/:tenantId/:id", async () => {
                         await assertCorrelationId(`/documents/${appTenant1.id}/${document1._id}`);
                     });
-                    it("/:tenantId/:id/blobs", async () => {
+                    it("/:tenantId", async () => {
                         await assertCorrelationId(`/documents/${appTenant1.id}`, "post");
                     });
                 });
@@ -287,6 +294,40 @@ describe("Routerlicious", () => {
                     });
                     it("/:tenantId/:id/v1", async () => {
                         await assertCorrelationId(`/deltas/${appTenant1.id}/${document1._id}/v1`);
+                    });
+                });
+            });
+
+            describe("single-use JWTs", () => {
+                const limit = 1000000;
+                beforeEach(() => {
+                    const throttler = new TestThrottler(limit);
+                    app = alfredApp.create(
+                        defaultProvider,
+                        defaultTenantManager,
+                        throttler,
+                        new TestCache(),
+                        defaultStorage,
+                        defaultAppTenants,
+                        defaultMongoManager,
+                        defaultProducer);
+                    supertest = request(app);
+                });
+                describe("/documents", () => {
+                    it("/:tenantId", async () => {
+                        const url = `/documents/${appTenant1.id}`;
+                        await supertest.post(url)
+                            .set('Authorization', tenantToken1)
+                            .send({id: ""})
+                            .expect((res) => {
+                                assert.notStrictEqual(res.status, 401);
+                                assert.notStrictEqual(res.status, 403);
+                            });
+
+                        await supertest.post(url)
+                            .set('Authorization', tenantToken1)
+                            .send({id: ""})
+                            .expect(403);
                     });
                 });
             });

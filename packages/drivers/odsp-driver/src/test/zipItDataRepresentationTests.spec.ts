@@ -4,12 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { ReadBuffer } from "../ReadBufferUtils";
 import { TreeBuilderSerializer } from "../WriteBufferUtils";
 import {
     TreeBuilder,
     BlobCore,
     NodeCore,
     NodeTypes,
+    BlobShallowCopy,
+    assertBlobCoreInstance,
+    assertNodeCoreInstance,
+    assertNumberInstance,
 } from "../zipItDataRepresentationUtils";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes) {
@@ -138,5 +143,47 @@ describe("Tree Representation tests", () => {
         const node2 = node.addNode();
         node2.addString("fourth");
         validate(2 + 5 + 2 + 2 + 6 + 2 + 5 + 2 + 2 + 6);
+    });
+
+    it("blob instance test", async () => {
+        const blobNode = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        assertBlobCoreInstance(blobNode, "should be a blob");
+
+        let success = true;
+        const nonBlobNode: NodeTypes = 5;
+        try {
+            assertBlobCoreInstance(nonBlobNode, "should be a blob");
+        } catch (err) {
+            success = false;
+        }
+        assert(!success, "Error should have occured");
+    });
+
+    it("node instance test", async () => {
+        const node = new NodeCore();
+        assertNodeCoreInstance(node, "should be a node");
+
+        let success = true;
+        const nonNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        try {
+            assertNodeCoreInstance(nonNode, "should be a node");
+        } catch (err) {
+            success = false;
+        }
+        assert(!success, "Error should have occured");
+    });
+
+    it("number instance test", async () => {
+        const numNode = 5;
+        assertNumberInstance(numNode, "should be a number");
+
+        let success = true;
+        const nonNumberNode: NodeTypes = new BlobShallowCopy(new ReadBuffer(new Uint8Array()), 0, 0);
+        try {
+            assertNumberInstance(nonNumberNode, "should be a number");
+        } catch (err) {
+            success = false;
+        }
+        assert(!success, "Error should have occured");
     });
 });

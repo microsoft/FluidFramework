@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { performance } from "@fluidframework/common-utils";
 import { LumberEventName } from "./lumberEventNames";
@@ -65,7 +66,7 @@ export class Lumber<T extends string = LumberEventName> {
         public readonly eventName: T,
         public readonly type: LumberType,
         private readonly _engineList: ILumberjackEngine[],
-        private readonly _schemaValidator?: ILumberjackSchemaValidator,
+        private readonly _schemaValidators?: ILumberjackSchemaValidator[],
         properties?: Map<string, any> | Record<string, any>) {
             if (properties) {
                 this.setProperties(properties);
@@ -101,7 +102,7 @@ export class Lumber<T extends string = LumberEventName> {
 
     public error(
         message: string,
-        exception?: Error,
+        exception?: any,
         logLevel: LogLevel = LogLevel.Error) {
         this.emit(message, logLevel, false, exception);
     }
@@ -114,7 +115,7 @@ export class Lumber<T extends string = LumberEventName> {
         message: string,
         logLevel: LogLevel,
         successful: boolean,
-        exception: Error | undefined) {
+        exception: any | undefined) {
         if (this._completed) {
             handleError(
                 LumberEventName.LumberjackError,
@@ -124,21 +125,29 @@ export class Lumber<T extends string = LumberEventName> {
             return;
         }
 
-        if (this._schemaValidator) {
-            const validation = this._schemaValidator.validate(this.properties);
-            if (!validation.validationPassed) {
-                handleError(
-                    LumberEventName.LumberjackSchemaValidationFailure,
-                    `Schema validation failed for properties: ${validation.validationFailedForProperties.toString()}.\
-                    [eventName: ${this.eventName}][id: ${this.id}]`,
-                    this._engineList);
+        if (this._schemaValidators) {
+            for (const schemaValidator of this._schemaValidators) {
+                const validation = schemaValidator.validate(this.properties);
+                if (!validation.validationPassed) {
+                    handleError(
+                        LumberEventName.LumberjackSchemaValidationFailure,
+                        `Schema validation failed for props: ${validation.validationFailedForProperties.toString()}.\
+                        [eventName: ${this.eventName}][id: ${this.id}]`,
+                        this._engineList);
+                }
             }
         }
 
         this._message = message;
         this._logLevel = logLevel;
         this._successful = successful;
-        this._exception = exception;
+
+        if (exception instanceof Error) {
+            this._exception = exception;
+        } else if (exception !== undefined) { // We want to log the exception even if its value is `false`
+            this._exception = new Error(safeStringify(exception));
+        }
+
         this._durationInMs = performance.now() - this._startTime;
 
         this._engineList.forEach((engine) => engine.emit(this));

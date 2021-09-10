@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { Container } from '@fluidframework/container-loader';
 import { DataObject } from '@fluidframework/aqueduct';
@@ -26,7 +27,6 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
-    name: string;
 }
 
 // @public
@@ -43,11 +43,11 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public (undocumented)
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject);
-    // @deprecated (undocumented)
-    get audience(): IAudience;
-    // @deprecated (undocumented)
-    get clientId(): string | undefined;
+    constructor(container: Container, rootDataObject: RootDataObject, attachCallback: () => Promise<string>);
+    // (undocumented)
+    attach(): Promise<string>;
+    // (undocumented)
+    get attachState(): AttachState;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)

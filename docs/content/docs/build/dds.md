@@ -43,17 +43,17 @@ that the merge behavior should match what users intend or expect as they are edi
 In Fluid, the merge behavior is defined by the DDS. The simplest merge strategy, employed by key-value distributed data
 structures like SharedMap, is *last writer wins* (LWW). With this merge strategy, when multiple clients write different
 values to the same key, the value that was written last will overwrite the others. Refer to the
-[API documentation]({{< relref "/docs/apis" >}}) for each DDS for more details about the merge strategy it uses.
+[documentation for each DDS]({{< relref "/docs/data-structures/overview.md" >}}) for more details about the merge
+strategy it uses.
 
 ## Performance characteristics
 
 Fluid DDSes exhibit different performance characteristics based on how they interact with the Fluid service. The DDSes
 generally fall into two broad categories: *optimistic* and *consensus-based*.
 
-{{% callout tip "See also" %}}
+{{% callout note "See also" %}}
 
-* [Fluid Framework architecture]({{< relref "architecture" >}})
-* [Fluid service]({{< relref "service" >}})
+* [Fluid Framework architecture]({{< relref "architecture.md" >}})
 
 {{% /callout %}}
 
@@ -63,8 +63,7 @@ Optimistic DDSes apply Fluid operations locally before they are sequenced by the
 changes are said to be applied *optimistically*, hence the name *optimistic DDSes*. The DDSes also apply remote
 operations as they are made in a consistent way.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], [SharedMatrix][], and
-[SharedString][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], and [SharedString][].
 
 ### Consensus-based data structures
 
@@ -75,6 +74,8 @@ be used when you need atomicity or synchronous behavior.
 These behavioral guarantees cannot be implemented in an optimistic way. The cost is performance; optimistic DDSes are
 part of what makes Fluid so fast, so using optimistic DDSes is almost always preferred, but you can trade performance
 for behavioral guarantees.
+
+An example of a consensus-based DDS in Fluid Framework is the [TaskManager]][].
 
 #### Why consensus-based DDSes are useful
 
@@ -94,38 +95,18 @@ sequence number to the operation before applying it locally. With this approach,
 local changes until they get back a sequenced op from the server. Once they do, they apply the ops in order, which
 results in consistent behavior across all remote clients.
 
-## Creating and storing distributed data structures
-
-A distributed data structure object is created using its type's static `create` method.
-
-```typescript
-const myMap = SharedMap.create(this.runtime);
-```
-
-Your code must pass in an `IFluidDataStoreRuntime` object that will manage the DDS. We'll cover the runtime in more detail in
-the [Encapsulating data with DataObject](./dataobject-aqueduct.md) section.
-
 ### Storing a DDS within another DDS
 
 Distributed data structures can store primitive values like numbers and strings, and *JSON serializable* objects. For
 objects that are not JSON-serializable, like DDSes, Fluid provides a mechanism called *handles*, which *are*
 serializable.
 
-When storing a DDS within another DDS, your code must store its handle, not the DDS itself. For example, consider this code:
-
-```ts
-// Create a new map for our Fluid data
-const myMap = SharedMap.create(this.runtime);
-
-// Create a new counter
-const myCounter = SharedCounter.create(this.runtime);
-
-// Store the handle in the map
-myMap.set("counter", myCounter.handle);
-```
+When storing a DDS within another DDS, your code must store its handle, not the DDS itself. For examples of how to do this,
+see [Using handles to store and retrieve Fluid objects][handles-example].
 
 That's all you need to know about handles in order to use DDSes effectively. If you want to learn more about handles,
-see [Fluid handles]({{< relref "handles.md" >}}) in the Advanced section.
+see [Fluid handles]({{< relref "handles.md" >}}).
+[handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-fluid-objects" >}}
 
 ## Events
 
@@ -198,16 +179,11 @@ etc. With this data model, users can change individual properties of the shape w
 You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
 store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
-To learn more about how to use DDSes to create more complex Fluid objects, see the [Encapsulating data with
-DataObject](./dataobject-aqueduct.md) section.
-
 ### Key-value data
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 * [SharedMap][] -- a basic key-value distributed data structure.
-* [SharedDirectory][] -- a SharedMap with an API more suited to hierarchical data.
-* [SharedCell][] -- a "single-object SharedMap"; useful for wrapping objects.
 
 ### Sequences
 
@@ -215,50 +191,32 @@ These DDSes are used for storing sequential data. They are all optimistic.
 
 * [SharedNumberSequence][] -- a distributed sequence of numbers.
 * [SharedObjectSequence][] -- a distributed sequence of objects.
-* [SharedMatrix][] -- a distributed data structure to efficiently use two-dimensional tabular data.
 
 ### Specialized data structures
 
 * [SharedCounter][] -- a distributed counter.
 * [SharedString][] -- a specialized data structure for handling collaborative text.
-* [Ink][] -- a specialized data structure for ink data.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
 
 <!-- Concepts -->
 
-[Fluid container]: {{< relref "containers-runtime.md" >}}
-
-<!-- Packages -->
-
-[Aqueduct]: {{< relref "/docs/apis/aqueduct.md" >}}
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[Fluid container]: {{< relref "containers.md" >}}
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "/docs/apis/aqueduct/containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "/docs/apis/aqueduct/dataobject.md" >}}
-[DataObjectFactory]: {{< relref "/docs/apis/aqueduct/dataobjectfactory.md" >}}
-[Ink]: {{< relref "/docs/apis/ink/ink.md" >}}
-[PureDataObject]: {{< relref "/docs/apis/aqueduct/puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "/docs/apis/aqueduct/puredataobjectfactory.md" >}}
-[Quorum]: {{< relref "/docs/apis/protocol-base/quorum.md" >}}
-[SharedCell]: {{< relref "/docs/apis/cell/sharedcell.md" >}}
-[SharedCounter]: {{< relref "SharedCounter" >}}
-[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory.md" >}}
-[SharedMap]: {{< relref "/docs/apis/map/sharedmap.md" >}}
-[SharedMatrix]: {{< relref "SharedMatrix" >}}
-[SharedNumberSequence]: {{< relref "SharedNumberSequence" >}}
-[SharedObjectSequence]: {{< relref "/docs/apis/sequence/sharedobjectsequence.md" >}}
-[SharedSequence]: {{< relref "SharedSequence" >}}
-[SharedString]: {{< relref "SharedString" >}}
-
-<!-- Sequence methods -->
-
-[sequence.insert]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-insert-Method" >}}
-[sequence.getItems]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequence.remove]: {{< relref "/docs/apis/sequence/sharedsequence.md#sequence-sharedsequence-getitems-Method" >}}
-[sequenceDeltaEvent]: {{< relref "/docs/apis/sequence/sequencedeltaevent.md" >}}
+[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
+[DataObject]: {{< relref "dataobject.md" >}}
+[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[PureDataObject]: {{< relref "puredataobject.md" >}}
+[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

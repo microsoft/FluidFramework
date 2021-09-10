@@ -1,12 +1,126 @@
+## 0.48 Breaking changes
+- [client-api package removed](#client-api-package-removed)
+
+### client-api package removed
+The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
+
+## 0.47 Breaking changes
+- [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
+- [Changes to IFluidDataStoreFactory](#Changes-to-IFluidDataStoreFactory)
+- [FlushMode enum values renamed](#FlushMode-enum-values-renamed)
+- [name removed from ContainerSchema](#name-removed-from-ContainerSchema)
+- [Anonymous return types for container calls in client packages](#Anonymous-return-types-for-container-calls-in-client-packages)
+- [createContainer and getContainer response objects properties renamed](#createContainer-and-getContainer-response-objects-properties-renamed)
+- [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
+- [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
+- [AzureClient initialization as a singular config](#AzureClient-initialization-as-a-singular-config)
+
+### Property removed from IFluidDataStoreContext
+- the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
+
+### Changes to IFluidDataStoreFactory
+- The `existing` parameter from the `instantiateDataStore` function is now mandatory to differentiate creating vs loading.
+
+### `FlushMode` enum values renamed
+`FlushMode` enum values from `@fluidframework/runtime-definitions` have ben renamed as following:
+- `FlushMode.Manual` to `FlushMode.TurnBased`
+- `FlushMode.Automatic` to `FlushMode.Immediate`
+
+### `name` removed from ContainerSchema
+The `name` property on the ContainerSchema was used for multi-container scenarios but has not materialized to be a useful schema property. The feedback has been negative to neutral so it is being removed before it becomes formalized. Support for multi-container scenarios, if any is required, will be addressed as a future change.
+
+### Anonymous return types for container calls in client packages
+`createContainer` and `getContainer` in `@fluidframework/azure-client` and `@fluidframework/tinylicious-client` will no longer return typed objects but instead will return an anonymous type. This provide the flexibility that comes with tuple deconstruction with the strong typing of property names.
+
+```javascript
+// `@fluidframework/azure-client`
+createContainer(containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: AzureContainerServices;
+}>;
+getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: AzureContainerServices;
+}>;
+
+// `@fluidframework/tinylicious-client`
+createContainer(containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: TinyliciousContainerServices;
+}>;
+getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+    container: FluidContainer;
+    services: TinyliciousContainerServices;
+}>;
+```
+
+### createContainer and getContainer response objects properties renamed
+For all `*-client` packages `createContainer` and `getContainer` would return an object with `fluidContainer` and `containerServices`. These have been renamed to the following for brevity.
+
+- fluidContainer => container
+- containerServices => services
+
+```javascript
+// old
+const { fluidContainer, containerServices } = client.getContainer(...);
+
+// new
+const { container, services } = client.getContainer(...);
+```
+
+### tinylicious and azure clients createContainer now detached
+Creating a new container now requires and explicit attach step. All changes made in between container creation, and attaching, will be persisted as part of creation and guaranteed to always be available to users. This allows developers to initialize `initialObjects` with state before the container is connected to the service. It also enables draft creation modes.
+
+```javascript
+// old
+const { fluidContainer } = client.createContainer(...);
+
+// new
+const { container } = client.createContainer(...);
+const id = container.attach();
+```
+
+### container id is returned from new attach() and not exposed on the container
+Because we now have an explicit attach flow, the container id is part of that flow as well. The id is returned from the `attach()` call.
+
+```javascript
+// old
+const { fluidContainer } = client.createContainer(...);
+const containerId = fluidContainer.id;
+
+// new
+const { container } = client.createContainer(...);
+const containerId = container.attach();
+```
+
+### AzureClient initialization as a singular config
+AzureClient now takes a singular config instead of multiple parameters. This enables easier scaling of config properties as we introduce new functionality.
+
+```js
+// old
+const connectionConfig = {...};
+const logger = new MyLogger();
+const client = new AzureClient(connectionConfig, logger);
+
+// new
+const config = {
+    connection: {...},
+    logger: new MyLogger(...)
+}
+const client = new AzureClient(config);
+```
+
 ## 0.46 Breaking changes
 - [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
 - [FrsClient has been renamed to AzureClient and moved out of experimental state](#FrsClient-has-been-renamed-to-AzureClient-and-moved-out-of-experimental-state)
 - [documentId removed from IFluidDataStoreRuntime and IFluidDataStoreContext](#documentId-removed-from-IFluidDataStoreRuntime-and-IFluidDataStoreContext)
 - [@fluid-experimental/tinylicious-client package name changed](#fluid-experimentaltinylicious-client-package-name-changed)
 - [@fluid-experimental/fluid-static package name changed](#fluid-experimentalfluid-static-package-name-changed)
+- [TinyliciousClient and AzureClient container API changed](#tinyliciousclient-and-azureclient-container-api-changed)
 
 ### `@fluid-experimental/fluid-framework` package name changed
 The `@fluid-experimental/fluid-framework` package has been renamed to now be `fluid-framework`. The scope has been removed.
+
 
 ### FrsClient has been renamed to AzureClient and moved out of experimental state
 The `@fluid-experimental/frs-client` package for connecting with the Azure Fluid Relay service has been renamed to now be `@fluidframework/azure-client`. This also comes with the following name changes for the exported classes and interfaces from the package:
@@ -28,6 +142,23 @@ The `@fluid-experimental/tinylicious-client` package has been renamed to now be 
 
 ### `@fluid-experimental/fluid-static` package name changed
 The `@fluid-experimental/fluid-static` package has been renamed to now be `@fluidframework/fluid-static`.
+
+### TinyliciousClient and AzureClient container API changed
+
+Tinylicious and Azure client API changed to comply with the new container creation flow. From now on,
+the new container ID will be generated by the framework. In addition to that, the `AzureContainerConfig`
+parameter's got decommissioned and the logger's moved to the client's constructor.
+
+```ts
+// Create a client using connection settings and an optional logger
+const client = new AzureClient(connectionConfig, logger);
+// Create a new container
+const { fluidContainer, containerServices } = await client.createContainer(containerSchema);
+// Retrieve the new container ID
+const containerId = fluidContainer.id;
+// Access the existing container
+const { fluidContainer, containerServices }= await client.getContainer(containerId, containerSchema);
+```
 
 ## 0.45 Breaking changes
 - [Changes to local testing in insecure environments and associated bundle size increase](#changes-to-local-testing-in-insecure-environments-and-associated-bundle-size-increase)

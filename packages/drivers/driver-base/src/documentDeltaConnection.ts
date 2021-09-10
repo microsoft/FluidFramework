@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -24,6 +24,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+
+// Local storage key to disable the BatchManager
+const batchManagerDisabledKey = "FluidDisableBatchManager";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -71,7 +74,7 @@ export class DocumentDeltaConnection
     }
 
     public get disposed() {
-        assert(this._disposed || this.socket.connected, "Socket is closed, but connection is not!");
+        assert(this._disposed || this.socket.connected, 0x244 /* "Socket is closed, but connection is not!" */);
         return this._disposed;
     }
     /**
@@ -80,6 +83,7 @@ export class DocumentDeltaConnection
      */
     protected _disposed: boolean = false;
     protected readonly logger: ITelemetryLogger;
+    protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -102,21 +106,14 @@ export class DocumentDeltaConnection
         this.logger = ChildLogger.create(logger, "DeltaConnection");
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                // Although the implementation here disconnects the socket and does not reuse it, other subclasses
-                // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
-                // on the still-live socket.
-                if (!this.disposed) {
-                    this.socket.emit(submitType, this.clientId, work);
-                }
-            });
+            (submitType, work) => this.emitMessages(submitType, work));
 
         this.on("newListener", (event, listener) => {
             assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
             // Some events are already forwarded - see this.addTrackedListener() calls in initialize().
             if (DocumentDeltaConnection.eventsAlwaysForwarded.includes(event)) {
-                assert(this.trackedListeners.has(event), "tracked listener");
+                assert(this.trackedListeners.has(event), 0x245 /* "tracked listener" */);
                 return;
             }
 
@@ -138,6 +135,8 @@ export class DocumentDeltaConnection
                     });
             }
         });
+
+        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
     }
 
     /**
@@ -259,6 +258,32 @@ export class DocumentDeltaConnection
         return this.details.initialClients;
     }
 
+    protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+        // Although the implementation here disconnects the socket and does not reuse it, other subclasses
+        // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
+        // on the still-live socket.
+        if (!this.disposed) {
+            this.socket.emit(type, this.clientId, messages);
+        }
+    }
+
+    private static get disabledBatchManagerFeatureGate() {
+        try {
+            return localStorage !== undefined
+                && typeof localStorage === "object"
+                && localStorage.getItem(batchManagerDisabledKey) === "1";
+        } catch (e) { }
+        return false;
+    }
+
+    protected submitCore(type: string, messages: IDocumentMessage[]) {
+        if (this.isBatchManagerDisabled) {
+            this.emitMessages(type, [messages]);
+        } else {
+            this.submitManager.add(type, messages);
+        }
+    }
+
     /**
      * Submits a new delta operation to the server
      *
@@ -266,7 +291,7 @@ export class DocumentDeltaConnection
      */
     public submit(messages: IDocumentMessage[]): void {
         this.checkNotClosed();
-        this.submitManager.add("submitOp", messages);
+        this.submitCore("submitOp", messages);
     }
 
     /**
@@ -276,7 +301,7 @@ export class DocumentDeltaConnection
      */
     public submitSignal(message: IDocumentMessage): void {
         this.checkNotClosed();
-        this.submitManager.add("submitSignal", [message]);
+        this.submitCore("submitSignal", [message]);
     }
 
     /**
@@ -420,7 +445,7 @@ export class DocumentDeltaConnection
             }, timeout + 2000);
         });
 
-        assert(!this.disposed, "checking consistency of socket & _disposed flags");
+        assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
     }
 
     protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -441,8 +466,10 @@ export class DocumentDeltaConnection
     }
 
     private addConnectionListener(event: string, listener: (...args: any[]) => void) {
-        assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event), "Use addTrackedListener instead");
-        assert(!DocumentDeltaConnection.eventsToForward.includes(event), "should not subscribe to forwarded events");
+        assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event),
+            0x247 /* "Use addTrackedListener instead" */);
+        assert(!DocumentDeltaConnection.eventsToForward.includes(event),
+            0x248 /* "should not subscribe to forwarded events" */);
         this.socket.on(event, listener);
         assert(!this.connectionListeners.has(event), 0x20d /* "double connection listener" */);
         this.connectionListeners.set(event, listener);

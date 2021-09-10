@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import {
     IDocumentStorageService,
@@ -33,7 +34,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     public get policies(): IDocumentStorageServicePolicies | undefined {
         return this.internalStorageService.policies;
     }
-    public get disposed() {return this._disposed;}
+    public get disposed() { return this._disposed; }
     public dispose() {
         this._disposed = true;
     }
@@ -71,6 +72,22 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
+        // Not using retry loop here. Couple reasons:
+        // 1. If client lost connectivity, then retry loop will result in uploading stale summary
+        //    by stale summarizer after connectivity comes back. It will cause failures for this client and for
+        //    real (new) summarizer. This problem in particular should be solved in future by supplying abort handle
+        //    on all APIs and caller (ContainerRuntime.submitSummary) aborting call on loss of connectivity
+        // 2. Similar, if we get 429 with retryAfter = 10 minutes, it's likely not the right call to retry summary
+        //    upload in 10 minutes - it's better to keep processing ops and retry later. Though caller needs to take
+        //    retryAfter into account!
+        // But retry loop is required for creation flow (Container.attach)
+        assert((context.referenceSequenceNumber === 0) === (context.ackHandle === undefined),
+            0x251 /* "creation summary has to have seq=0 && handle === undefined" */);
+        if (context.referenceSequenceNumber !== 0) {
+            return this.internalStorageService.uploadSummaryWithContext(summary, context);
+        }
+
+        // Creation flow with attachment blobs - need to do retries!
         return this.runWithRetry(
             async () => this.internalStorageService.uploadSummaryWithContext(summary, context),
             "storage_uploadSummaryWithContext",
@@ -93,12 +110,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 
     private checkStorageDisposed() {
         if (this._disposed) {
-            return {
-                retry: false,
-                error: new GenericError("storageServiceDisposedCannotRetry"),
-            };
+            throw new GenericError("storageServiceDisposedCannotRetry", { canRetry: false });
         }
-        return { retry: true, error: undefined };
+        return undefined;
     }
 
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {

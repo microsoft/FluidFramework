@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/tinylicious-driver",
-  "version": "0.46.0",
+  "version": "0.48.0",
   "description": "Driver for tinylicious",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -29,15 +29,15 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/driver-definitions": "^0.39.6",
-    "@fluidframework/driver-utils": "^0.46.0",
+    "@fluidframework/driver-utils": "^0.48.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/routerlicious-driver": "^0.46.0",
-    "@fluidframework/server-services-client": "^0.1029.0-0",
+    "@fluidframework/routerlicious-driver": "^0.48.0",
+    "@fluidframework/server-services-client": "^0.1031.0-0",
     "jsrsasign": "^10.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@types/jsrsasign": "^8.0.8",

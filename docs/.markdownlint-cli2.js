@@ -110,13 +110,16 @@ module.exports = {
             "code_blocks": false,
             "names": [
                 "Azure Fluid Relay service",
+                "Fluid container",
+                "Fluid containers",
                 "Fluid Framework",
                 "JavaScript",
                 "JSON",
                 "Microsoft",
                 "npm",
                 "Routerlicious",
-                "Tinylicious"
+                "Tinylicious",
+                "tinylicious.md", // Without this entry, markdownlint incorrectly flags "tinylicious.md" as an improper spelling of "Tinylicious".
             ]
         }
     },

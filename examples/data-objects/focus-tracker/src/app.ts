@@ -3,23 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerSchema, SignalManager } from "@fluidframework/fluid-static";
-import { TinyliciousClient, TinyliciousMember } from "@fluidframework/tinylicious-client";
+import {
+    FluidContainer,
+    ContainerSchema,
+    SignalManager,
+} from "fluid-framework";
+import {
+    TinyliciousClient,
+    TinyliciousMember,
+    TinyliciousContainerServices,
+} from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
-
-let createNew = false;
-if (location.hash.length === 0) {
-    createNew = true;
-    location.hash = Date.now().toString();
-}
-const containerId = location.hash.substring(1);
-document.title = containerId;
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the container is first created.
-export const containerSchema: ContainerSchema = {
-    name: "focus-tracker-container",
+const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
         signalManager: SignalManager,
@@ -51,18 +50,34 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const client = new TinyliciousClient();
-    const { fluidContainer, containerServices } = createNew
-        ? await client.createContainer({ id: containerId }, containerSchema)
-        : await client.getContainer({ id: containerId }, containerSchema);
+    let container: FluidContainer;
+    let services: TinyliciousContainerServices;
+    let containerId: string;
+
+    // Get or create the document depending if we are running through the create new flow
+    const createNew = !location.hash;
+    if (createNew) {
+        // The client will create a new container using the schema
+        ({container, services} = await client.createContainer(containerSchema));
+        containerId = await container.attach();
+        // The new container has its own unique ID that can be used to access it in another session
+        location.hash = containerId;
+    } else {
+        containerId = location.hash.substring(1);
+        // Use the unique container ID to fetch the container created earlier
+        ({container, services} = await client.getContainer(containerId, containerSchema));
+    }
+    // create/get container API returns a combination of the container and associated container services
+    document.title = containerId;
 
     // Render page focus information for audience members
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     const focusTracker = new FocusTracker(
-        fluidContainer,
-        containerServices.audience,
-        fluidContainer.initialObjects.signalManager as SignalManager,
+        container,
+        services.audience,
+        container.initialObjects.signalManager as SignalManager,
     );
     renderFocusPresence(focusTracker, contentDiv);
 }
 
-start().catch((error) => console.error(error));
+start().catch(console.error);

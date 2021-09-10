@@ -25,6 +25,7 @@ import {
     TokenFetchOptions,
     IEntry,
     HostStoragePolicy,
+    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -36,6 +37,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
+import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 
 // Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
 function gatesBinaryFormatSnapshot() {
@@ -68,16 +70,18 @@ export class OdspDocumentService implements IDocumentService {
      * @param cache - This caches response for joinSession.
      * @param hostPolicy - This host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by returned service instance.
+     * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
      */
     public static async create(
         resolvedUrl: IResolvedUrl,
-        getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        getStorageToken: InstrumentedStorageTokenFetcher,
         getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
+        socketReferenceKeyPrefix?: string,
     ): Promise<IDocumentService> {
         return new OdspDocumentService(
             getOdspResolvedUrl(resolvedUrl),
@@ -88,6 +92,7 @@ export class OdspDocumentService implements IDocumentService {
             cache,
             hostPolicy,
             epochTracker,
+            socketReferenceKeyPrefix,
         );
     }
 
@@ -113,18 +118,20 @@ export class OdspDocumentService implements IDocumentService {
      * @param logger - a logger that can capture performance and diagnostic information
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
-     * @param hostPolicy - This host constructed policy which customizes service behavior.
+     * @param hostPolicy - host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by this service instance.
+     * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
      */
-    constructor(
+    private constructor(
         public readonly odspResolvedUrl: IOdspResolvedUrl,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
         logger: ITelemetryLogger,
         private readonly socketIoClientFactory: () => Promise<SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
         private readonly epochTracker: EpochTracker,
+        private readonly socketReferenceKeyPrefix?: string,
     ) {
         this._policies = {
             // load in storage-only mode if a file version is specified
@@ -179,7 +186,7 @@ export class OdspDocumentService implements IDocumentService {
             );
         }
 
-        return this.storageManager;
+        return new RetryErrorsStorageAdapter(this.storageManager, this.logger);
     }
 
     /**
@@ -334,6 +341,7 @@ export class OdspDocumentService implements IDocumentService {
             this.logger,
             60000,
             this.epochTracker,
+            this.socketReferenceKeyPrefix,
         );
         const duration = performance.now() - startTime;
         // This event happens rather often, so it adds up to cost of telemetry.
@@ -351,7 +359,7 @@ export class OdspDocumentService implements IDocumentService {
     public dispose(error?: any) {
         // Error might indicate mismatch between client & server knowlege about file
         // (DriverErrorType.fileOverwrittenInStorage).
-        // For exaple, file might have been overwritten in storage without generating new epoch
+        // For example, file might have been overwritten in storage without generating new epoch
         // In such case client cached info is stale and has to be removed.
         if (error !== undefined) {
             this.epochTracker.removeEntries().catch(() => {});
@@ -383,10 +391,10 @@ export class OdspDocumentService implements IDocumentService {
                 write: async (key: string, opsData: string) => {
                     return this.cache.persistedCache.put({...opsKey, key}, opsData);
                 },
-                read: async (batch: string) => undefined,
+                read: async (key: string) => this.cache.persistedCache.get({...opsKey, key}),
                 remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
-            this.hostPolicy.opsCaching?.batchSize ?? 100,
+            batchSize,
             this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
             this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
         );

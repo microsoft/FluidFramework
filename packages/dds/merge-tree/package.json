@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/merge-tree",
-  "version": "0.46.0",
+  "version": "0.48.0",
   "description": "Merge tree",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -11,7 +11,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint",
+    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "echo \"Skipping @fluidframework/merge-tree; see https://github.com/microsoft/FluidFramework/issues/2543\"",
@@ -57,15 +57,15 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/datastore-definitions": "^0.46.0",
+    "@fluidframework/datastore-definitions": "^0.48.0",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/telemetry-utils": "^0.46.0"
+    "@fluidframework/telemetry-utils": "^0.48.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0-0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.46.0",
-    "@fluidframework/test-runtime-utils": "^0.46.0",
+    "@fluidframework/mocha-test-setup": "^0.48.0",
+    "@fluidframework/test-runtime-utils": "^0.48.0",
     "@types/diff": "^3.5.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",

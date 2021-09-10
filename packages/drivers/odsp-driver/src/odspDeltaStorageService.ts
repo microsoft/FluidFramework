@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { TokenFetchOptions } from "@fluidframework/odsp-driver-definitions";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { IDeltasFetchResult, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import {
     requestOps,
@@ -24,7 +24,7 @@ import { getWithRetryForTokenRefresh } from "./odspUtils";
 export class OdspDeltaStorageService {
     constructor(
         private readonly deltaFeedUrl: string,
-        private readonly getStorageToken: (options: TokenFetchOptions, name: string) => Promise<string | null>,
+        private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly epochTracker: EpochTracker,
         private readonly logger: ITelemetryLogger,
     ) {
@@ -121,6 +121,23 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
     ) {
     }
 
+    protected validateMessages(reason: string, messages: ISequencedDocumentMessage[], from: number) {
+        if (messages.length !== 0) {
+            const start = messages[0].sequenceNumber;
+            const length = messages.length;
+            const last = messages[length - 1].sequenceNumber;
+            if (start !== from) {
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                messages.length = 0;
+            }
+            if (last + 1 !== from + length) {
+                this.logger.sendErrorEvent({ eventName: "OpsFetchViolation", reason, from, start, last, length});
+                // we can do better here by finding consecutive sub-block and return it
+                messages.length = 0;
+            }
+        }
+    }
+
     public fetchMessages(
         fromTotal: number,
         toTotal: number | undefined,
@@ -137,44 +154,54 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
         let opsFromCache = 0;
         let opsFromStorage = 0;
 
+        const requestCallback = async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
+            if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
+                const messages = this.snapshotOps.filter((op) =>
+                    op.sequenceNumber >= from && op.sequenceNumber < to);
+                this.validateMessages("cached", messages, from);
+                if (messages.length > 0 && messages[0].sequenceNumber === from) {
+                    this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
+                    opsFromSnapshot = messages.length;
+                    return { messages, partialResult: true };
+                }
+                this.snapshotOps = undefined;
+            }
+
+            // Kick out request to PUSH for ops if it has them
+            this.requestFromSocket(from, to);
+
+            // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
+            // This saves a bit of processing time
+            if (from < this.firstCacheMiss) {
+                const messagesFromCache = await this.getCached(from, to);
+                this.validateMessages("cached", messagesFromCache, from);
+                if (messagesFromCache.length !== 0) {
+                    opsFromCache += messagesFromCache.length;
+                    return {
+                        messages: messagesFromCache,
+                        partialResult: true,
+                    };
+                }
+                this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
+            }
+
+            if (cachedOnly) {
+                return { messages: [], partialResult: false };
+            }
+
+            const ops = await this.getFromStorage(from, to, telemetryProps);
+            this.validateMessages("storage", ops.messages, from);
+            opsFromStorage += ops.messages.length;
+            this.opsReceived(ops.messages);
+            return ops;
+        };
+
         const stream = requestOps(
             async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
-                if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
-                    const messages = this.snapshotOps.filter((op) =>
-                        op.sequenceNumber >= from && op.sequenceNumber < to);
-                    if (messages.length > 0 && messages[0].sequenceNumber === from) {
-                        this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
-                        opsFromSnapshot = messages.length;
-                        return { messages, partialResult: true };
-                    }
-                    this.snapshotOps = undefined;
-                }
-
-                // Kick out request to PUSH for ops if it has them
-                this.requestFromSocket(from, to);
-
-                // Cache in normal flow is continuous. Once there is a miss, stop consulting cache.
-                // This saves a bit of processing time
-                if (from < this.firstCacheMiss) {
-                    const messagesFromCache = await this.getCached(from, to);
-                    if (messagesFromCache.length !== 0) {
-                        opsFromCache += messagesFromCache.length;
-                        return {
-                            messages: messagesFromCache,
-                            partialResult: true,
-                        };
-                    }
-                    this.firstCacheMiss = Math.min(this.firstCacheMiss, from);
-                }
-
-                if (cachedOnly) {
-                    return { messages: [], partialResult: false };
-                }
-
-                const ops = await this.getFromStorage(from, to, telemetryProps);
-                opsFromStorage += ops.messages.length;
-                this.opsReceived(ops.messages);
-                return ops;
+                const result = await requestCallback(from, to, telemetryProps);
+                // Catch all case, just in case
+                this.validateMessages("catch all", result.messages, from);
+                return result;
             },
             // Staging: starting with no concurrency, listening for feedback first.
             // In future releases we will switch to actual concurrency

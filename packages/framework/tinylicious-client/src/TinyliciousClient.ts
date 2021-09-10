@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import { v4 as uuid } from "uuid";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     IDocumentServiceFactory,
@@ -14,18 +14,15 @@ import {
     InsecureTinyliciousTokenProvider,
     InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
     RootDataObject,
-} from "fluid-framework";
+} from "@fluidframework/fluid-static";
 import {
-    TinyliciousConnectionConfig,
-    TinyliciousContainerConfig,
+    TinyliciousClientProps,
     TinyliciousContainerServices,
-    TinyliciousResources,
 } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
@@ -33,58 +30,66 @@ import { TinyliciousAudience } from "./TinyliciousAudience";
  * TinyliciousClient provides the ability to have a Fluid object backed by a Tinylicious service
  */
 export class TinyliciousClient {
-    public readonly documentServiceFactory: IDocumentServiceFactory;
-    public readonly urlResolver: IUrlResolver;
+    private readonly documentServiceFactory: IDocumentServiceFactory;
+    private readonly urlResolver: IUrlResolver;
 
-    constructor(serviceConnectionConfig?: TinyliciousConnectionConfig) {
+    /**
+     * Creates a new client instance using configuration parameters.
+     * @param props - Optional. Properties for initializing a new TinyliciousClient instance
+     */
+    constructor(private readonly props?: TinyliciousClientProps) {
         const tokenProvider = new InsecureTinyliciousTokenProvider();
         this.urlResolver = new InsecureTinyliciousUrlResolver(
-            serviceConnectionConfig?.port,
-            serviceConnectionConfig?.domain,
+            this.props?.connection?.port,
+            this.props?.connection?.domain,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             tokenProvider,
         );
     }
 
+    /**
+     * Creates a new detached container instance in Tinylicious server.
+     * @param containerSchema - Container schema for the new container.
+     * @returns New detached container instance along with associated services.
+     */
     public async createContainer(
-        serviceContainerConfig: TinyliciousContainerConfig,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
-        const runtimeFactory = new DOProviderContainerRuntimeFactory(
-            containerSchema,
-        );
-        const container = await this.getContainerCore(
-            serviceContainerConfig,
-            runtimeFactory,
-            true,
-        );
-        return this.getFluidContainerAndServices(container);
+    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
+        // temporarily we'll generate the new container ID here
+        // until container ID changes are settled in lower layers.
+        const id = uuid();
+        const container = await this.getContainerCore(id, containerSchema, true);
+        return this.getFluidContainerAndServices(id, container);
     }
 
+    /**
+     * Accesses the existing container given its unique ID in the tinylicious server.
+     * @param id - Unique ID of the container.
+     * @param containerSchema - Container schema used to access data objects in the container.
+     * @returns Existing container instance along with associated services.
+     */
     public async getContainer(
-        serviceContainerConfig: TinyliciousContainerConfig,
+        id: string,
         containerSchema: ContainerSchema,
-    ): Promise<TinyliciousResources> {
-        const runtimeFactory = new DOProviderContainerRuntimeFactory(
-            containerSchema,
-        );
-        const container = await this.getContainerCore(
-            serviceContainerConfig,
-            runtimeFactory,
-            false,
-        );
-        return this.getFluidContainerAndServices(container);
+    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
+        const container = await this.getContainerCore(id, containerSchema, false);
+        return this.getFluidContainerAndServices(id, container);
     }
 
+    // #region private
     private async getFluidContainerAndServices(
+        id: string,
         container: Container,
-    ): Promise<TinyliciousResources>  {
+    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject);
-        const containerServices: TinyliciousContainerServices = this.getContainerServices(container);
-        const tinyliciousResources: TinyliciousResources = { fluidContainer, containerServices };
-        return tinyliciousResources;
+        const attach = async () => {
+            await container.attach({ url: id });
+            return id;
+        };
+        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
+        const services: TinyliciousContainerServices = this.getContainerServices(container);
+        return { container: fluidContainer, services };
     }
 
     private getContainerServices(
@@ -96,10 +101,13 @@ export class TinyliciousClient {
     }
 
     private async getContainerCore(
-        tinyliciousContainerConfig: TinyliciousContainerConfig,
-        containerRuntimeFactory: IRuntimeFactory,
+        id: string,
+        containerSchema: ContainerSchema,
         createNew: boolean,
     ): Promise<Container> {
+        const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
+            containerSchema,
+        );
         const module = { fluidExport: containerRuntimeFactory };
         const codeLoader = { load: async () => module };
 
@@ -107,7 +115,7 @@ export class TinyliciousClient {
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: tinyliciousContainerConfig.logger,
+            logger: this.props?.logger,
         });
 
         let container: Container;
@@ -120,11 +128,11 @@ export class TinyliciousClient {
                 package: "no-dynamic-package",
                 config: {},
             });
-            await container.attach({ url: tinyliciousContainerConfig.id });
         } else {
             // Request must be appropriate and parseable by resolver.
-            container = await loader.resolve({ url: tinyliciousContainerConfig.id });
+            container = await loader.resolve({ url: id });
         }
         return container;
     }
+    // #endregion
 }

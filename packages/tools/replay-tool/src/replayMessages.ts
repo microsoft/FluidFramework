@@ -399,7 +399,9 @@ export class ReplayTool {
         }
 
         if (this.args.fromVersion !== undefined) {
-            console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.mainDocument.currentOp}`);
+            if (this.args.verbose) {
+                console.log(`Starting from ${this.args.fromVersion}, seq# = ${this.mainDocument.currentOp}`);
+            }
             if (this.mainDocument.currentOp > this.args.to) {
                 return Promise.reject(new Error("--to argument is below snapshot starting op. Nothing to do!"));
             }
@@ -492,7 +494,7 @@ export class ReplayTool {
                         this.documentsFromStorageSnapshots.push(doc);
                     }
                 } catch (error) {
-                    doc.logger.sendTelemetryEvent({ eventName: "FailedToLoadSnapshot" }, error);
+                    doc.logger.sendErrorEvent({ eventName: "FailedToLoadSnapshot" }, error);
                 }
             }
             this.documentsFromStorageSnapshots.sort((a: Document, b: Document) => a.fromOp > b.fromOp ? 1 : -1);
