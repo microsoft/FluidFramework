@@ -112,4 +112,6 @@ export interface IDocument {
 
     // Deli state
     deli: string;
+
+    lastSummarizedSequenceNumber: number;
 }

@@ -136,6 +136,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
+                lastSummarizedSequenceNumber: -1,
             });
 
         return result;
@@ -191,6 +192,7 @@ export class TestDocumentStorage implements IDocumentStorage {
                 scribe: undefined,
                 tenantId,
                 version: "0.1",
+                lastSummarizedSequenceNumber: -1,
             });
 
         return result;

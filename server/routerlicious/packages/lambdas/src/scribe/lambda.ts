@@ -311,6 +311,7 @@ export class ScribeLambda implements IPartitionLambda {
                                     operation.sequenceNumber,
                                     false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
+                                this.updateProtocolHead(operation.sequenceNumber);
                                 lumberJackMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: true });
                                 this.context.log?.info(
                                     `Service summary success @${operation.sequenceNumber}`,
