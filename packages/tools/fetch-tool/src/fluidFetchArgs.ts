@@ -116,10 +116,6 @@ export function parseArguments() {
             case "--dump:snapshotTree":
                 dumpSnapshotTrees = true;
                 break;
-            case "--dump:snapshotTree:overwrite":
-                dumpSnapshotTrees = true;
-                overWrite = true;
-                break;
             case "--help":
                 printUsage();
                 process.exit(0);
