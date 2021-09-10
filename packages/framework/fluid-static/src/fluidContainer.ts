@@ -33,7 +33,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly disposed: boolean;
 
     /**
-     * The collection of data objects and DDSs that were specified by the schema used to create or load the container.
+     * The collection of data objects and DDSes that were specified by the schema. These data objects and DDSes exist for the lifetime of the container.
      */
     readonly initialObjects: LoadableObjectRecord;
 
@@ -46,7 +46,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
 
     /**
-     * Dispose of the container, permanently disabling it.
+     * Dispose of the container instance, permanently disabling it.
      */
     dispose(): void;
 }
