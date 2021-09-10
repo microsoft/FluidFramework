@@ -5,7 +5,7 @@ author: skylerjokiel
 editor: tylerbutler
 ---
 
-Fluid offers flexible ways to model your collaborative data. Your application can declaratively define a set of Fluid objects
+Fluid offers flexible ways to model your collaborative data. Your application can declaratively define a set of shared objects
 that are immediately and always available to all clients; or, for more complex scenarios, your application can create shared objects at runtime only when a user takes a particular path through the application.
 
 ## Defining initial objects

@@ -42,8 +42,7 @@ Responsible for connecting to a Fluid service and loading a Fluid container.
 
 ## Fluid object
 
-Any object type that supports collaboration (simultaneous editing). Fluid Framework contains two types of Fluid objects:
-distributed data structures (DDSes) and `DataObject`s.
+Any JavaScript object that implements Fluid feature interfaces.
 
 ## Fluid service
 
@@ -52,6 +51,10 @@ A service endpoint that is responsible for receiving, processing, storing, and b
 ## Fluid service driver
 
 Client code responsible for connecting to the Fluid service.
+
+## Shared object
+
+A distributed data structure (DDS) or `DataObject`.
 
 ## URL resolver
 
