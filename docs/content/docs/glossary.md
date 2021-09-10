@@ -11,6 +11,11 @@ The `@fluidframework/aqueduct` package is a library for building Fluid objects a
 Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
 to get started quickly. [Learn more.](https://fluidframework.com/docs/apis/aqueduct/)
 
+## Attached
+
+A Fluid container can be *attached* or *detached*. An attached container is connected to a Fluid service and can be
+loaded by other clients. Also see [Detached](#detached).
+
 ## Code loader
 
 If your app is bundled separately from your container code, Fluid can use a code loader to download
@@ -30,6 +35,12 @@ You'll write container code to define which Fluid objects your scenario uses and
 DataObjects are higher-level Fluid objects, compared to distributed data structures, which are low-level Fluid objects.
 DataObjects are used to organize distributed data structures into semantically meaningful groupings for your scenario,
 as well as providing an API surface to your data.
+
+## Detached
+
+A Fluid container can be *attached* or *detached*. A detached container is not connected to a Fluid service and cannot
+be loaded by other clients. Newly created containers begin in a detached state, which allows developers to add initial
+data if needed before attaching the container. Also see [Attached](#attached).
 
 ## Distributed data structures (DDSes)
 

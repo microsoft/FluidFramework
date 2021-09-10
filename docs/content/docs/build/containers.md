@@ -32,11 +32,11 @@ This example schema defines two initial objects, `layout` and `text`, and declar
 const schema = {
     name: "example-container",
     initialObjects: {
-        layout: SharedDirectory,
+        layout: SharedMap,
         text: SharedString
     },
     dynamicObjectTypes: [ SharedCell, SharedString ],
-}
+};
 ```
 
 ### Creating a container
@@ -46,35 +46,59 @@ Containers are created from the service-specific client's `createContainer` func
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 - It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
-```typescript {hl_lines=[10]}
+```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
     },
-}
-const { container, containerServices} =
-    await client.createContainer(/*service config*/, schema);
-```
+};
 
-### Loading a container
+const { container, services } =
+    await client.createContainer(schema);
 
-To load the container created in the above section your code calls the client's `getContainer` method. The call must pass the service configuration as well as the exact same schema definition. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
-
-```typescript {hl_lines=[10]}
-const schema = {
-    name: "example-container",
-    initialObjects: {
-        layout: SharedMap,
-    },
-}
-const { container, containerServices} =
-    await client.getContainer(/*service config*/, schema);
+const containerId = await container.attach();
 ```
 
 ### Attaching a container
 
-Once the `createContainer` or `loadContainer` function call completes, the returned container is *attached* -- that is, it is connected to the Fluid service -- and ready to power collaboration.
+A newly created container is in a *detached* state. This is the point where you can create initial data to populate your
+shared objects if needed. A detached container is not connected to the Fluid service and no data is shared with other clients.
+
+In order to attach the container to a service, call its `attach` function. Once *attached*, the Fluid container is
+connected to the Fluid service and can be loaded by other clients.
+
+Note that once attached, a container cannot be detached. Attach is a one-way operation. When loading an existing
+container, the loaded container is always attached.
+
+```typescript {linenos=inline,hl_lines=[10]}
+const schema = {
+    initialObjects: {
+        layout: SharedMap,
+    },
+};
+
+const { container, services } =
+    await client.createContainer(schema);
+
+const containerId = await container.attach();
+```
+
+### Loading a container
+
+To load the container created in the above section your code calls the client's `getContainer` method. The call must pass the `id` of the container to load as well as the exact same schema definition used when creating the container. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
+schema is required on all subsequent loads or the container will not be loaded correctly.
+
+Note that when loading an existing container, the container is already attached.
+
+```typescript {linenos=inline}
+const schema = {
+    initialObjects: {
+        layout: SharedMap,
+    },
+};
+const { container, services } =
+    await client.getContainer(/*container id*/, schema);
+```
 
 ### Deleting a container
 
@@ -82,11 +106,16 @@ Deleting a container is a service-specific feature, so you should refer to the d
 
 ## Container lifecycle and manipulation
 
+### attached/detached
+
+Newly created containers begin in a *detached* state. A detached container is not connected to the Fluid service and no
+data is shared with other clients. This is an ideal time to create initial data in your Fluid data model.
+
 ### connected/disconnected
 
 The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
 
-```typescript
+```typescript {linenos=inline}
 const connected = container.connected();
 
 container.on("disconnected", () => {
@@ -104,7 +133,7 @@ container.on("connected", () => {
 
 The container object may be disposed to remove any server connections and clean up registered events. Once a container is disposed, your code must call `getContainer` again if it needs to  be reloaded.
 
-```typescript
+```typescript {linenos=inline}
 container.dispose();
 
 const disposed = container.disposed();
@@ -119,7 +148,7 @@ container.on("disposed", () => {
 Initial objects are shared objects that your code defines in a container's schema and which exist for the lifetime of the container.
 These shared objects are exposed via the `initialObjects` property on the container.
 
-```typescript
+```typescript {linenos=inline}
 const schema = {
     name: "example-container",
     initialObjects: {
@@ -158,7 +187,7 @@ Multiple Fluid containers can be loaded from an application or on a Web page at 
 
 First, if your application loads two different experiences that have different underlying data structures. *Experience 1* may require a `SharedMap` and *Experience 2* may require a `SharedString`. To minimize the memory footprint of your application, your code can create two different container schemas and load only the schema that is needed. In this case your app has the capability of loading two different containers (two different schemas) but only loads one for a given user.
 
-A more complex scenario involves loading two containers at once. Containers serve as a permissioning boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
+A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
 {{% callout tip %}}
@@ -166,6 +195,12 @@ For example, consider an education application where multiple teachers collabora
 Use the `name` property on the container to help manage multiple containers.
 
 {{% /callout %}}
+
+## Container services
+
+When you load a container, the Fluid service will also return a service-specific *services* object. This object contains
+references to useful services you can use to build richer apps. An example of a container service is the
+[Audience]({{< relref "audience.md" >}}), which provides user information for clients that are connected to the container.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
