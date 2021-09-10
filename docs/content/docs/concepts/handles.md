@@ -15,12 +15,12 @@ This section covers how to consume and use Fluid handles.
 
 ## Why use Fluid handles?
 
-- Collaborative objects, such as Fluid objects or DDSes, cannot be stored directly in another DDS. There are two primary
+- Shared objects, such as Data Objects or DDSes, cannot be stored directly in another DDS. There are two primary
   reasons for this:
 
   1. Content stored in a DDS needs to be serializable. Complex objects and classes should never be directly stored in
      a DDS.
-  2. Frequently the same collaborative object (not merely a copy) has to be available in different DDSes. The only
+  2. Frequently the same shared object (not merely a copy) has to be available in different DDSes. The only
      way to make this possible is to store *references* (which is what a handle is) to the collaborative objects in
      the DDSes.
 
