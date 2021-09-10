@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
@@ -74,32 +73,31 @@ export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserve
 
 // @public
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     abandon(taskId: string): void;
-    // (undocumented)
-    applyStashedOp(): void;
+    // @internal (undocumented)
+    protected applyStashedOp(): void;
+    // @internal
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
+    // @internal
     static getFactory(): IChannelFactory;
-    // (undocumented)
-    _getTaskQueues(): Map<string, string[]>;
-    // (undocumented)
+    // @internal
+    protected _getTaskQueues(): Map<string, string[]>;
     haveTaskLock(taskId: string): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     protected initializeLocalCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     lockTask(taskId: string): Promise<void>;
-    // (undocumented)
+    // @internal (undocumented)
     protected onDisconnect(): void;
+    // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     queued(taskId: string): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
-    // (undocumented)
+    // @internal
     protected reSubmitCore(): void;
+    // @internal
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     }
 

@@ -33,6 +33,9 @@ export class TaskManagerFactory implements IChannelFactory {
         return TaskManagerFactory.Attributes;
     }
 
+    constructor(private readonly newTaskManager:
+        (id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) => TaskManager) {}
+
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
      */
@@ -41,13 +44,13 @@ export class TaskManagerFactory implements IChannelFactory {
         id: string,
         services: IChannelServices,
         attributes: IChannelAttributes): Promise<ITaskManager> {
-        const taskQueue = new TaskManager(id, runtime, attributes);
+        const taskQueue = this.newTaskManager(id, runtime, attributes);
         await taskQueue.load(services);
         return taskQueue;
     }
 
     public create(document: IFluidDataStoreRuntime, id: string): ITaskManager {
-        const taskQueue = new TaskManager(id, document, this.attributes);
+        const taskQueue = this.newTaskManager(id, document, this.attributes);
         taskQueue.initializeLocal();
         return taskQueue;
     }

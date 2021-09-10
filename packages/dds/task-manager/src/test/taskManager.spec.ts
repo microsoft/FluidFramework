@@ -15,7 +15,7 @@ import { TaskManager } from "../taskManager";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
 
-function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+async function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     // Create and connect a TaskManager.
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
     const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -24,13 +24,13 @@ function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRun
         objectStorage: new MockStorage(),
     };
 
-    const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
-    taskManager.connect(services);
-    return taskManager;
+    const factory = TaskManager.getFactory();
+    const taskManager = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+    return taskManager as TaskManager;
 }
 
 const createLocalTaskManager = (id: string) =>
-    new TaskManager(id, new MockFluidDataStoreRuntime(), TaskManagerFactory.Attributes);
+    TaskManager.getFactory().create(new MockFluidDataStoreRuntime(),id) as TaskManager;
 
 describe("TaskManager", () => {
     describe("Local state", () => {
@@ -52,10 +52,10 @@ describe("TaskManager", () => {
         let taskManager2: ITaskManager;
         let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
-            taskManager1 = createConnectedTaskManager("taskManager1", containerRuntimeFactory);
-            taskManager2 = createConnectedTaskManager("taskManager2", containerRuntimeFactory);
+            taskManager1 = await createConnectedTaskManager("taskManager1", containerRuntimeFactory);
+            taskManager2 = await createConnectedTaskManager("taskManager2", containerRuntimeFactory);
         });
 
         it("Can lock a task", async () => {
@@ -240,8 +240,8 @@ describe("TaskManager", () => {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            taskManager1 = new TaskManager("task-manager-1", dataStoreRuntime1, TaskManagerFactory.Attributes);
-            taskManager1.connect(services1);
+            taskManager1 = await TaskManager.getFactory()
+                .load(dataStoreRuntime1, "task-manager-1", services1, TaskManagerFactory.Attributes) as TaskManager;
 
             // Create the second TaskManager.
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
@@ -250,7 +250,8 @@ describe("TaskManager", () => {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
             };
-            taskManager2 = new TaskManager("task-manager-2", dataStoreRuntime2, TaskManagerFactory.Attributes);
+            taskManager2 = await TaskManager.getFactory()
+                .load(dataStoreRuntime2, "task-manager-2", services2, TaskManagerFactory.Attributes) as TaskManager;
             taskManager2.connect(services2);
         });
 

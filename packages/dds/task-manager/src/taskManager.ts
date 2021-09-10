@@ -53,14 +53,6 @@ const snapshotFileName = "header";
  * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.
  *
  * @remarks
- * ### Creation
- *
- * To create a `TaskManager`, call the static create method:
- *
- * ```typescript
- * const taskManager = TaskManager.create(this.runtime, id);
- * ```
- *
  * ### Usage
  *
  * To volunteer for a task, use the `lockTask()` method.  This returns a Promise that will resolve once the client
@@ -111,11 +103,12 @@ const snapshotFileName = "header";
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     /**
-     * Create a new TaskManager
+     * Create a new TaskManager given an existing data store runtime
      *
      * @param runtime - data store runtime the new task queue belongs to
      * @param id - optional name of the task queue
      * @returns newly create task queue (but not attached yet)
+     * @internal
      */
     public static create(runtime: IFluidDataStoreRuntime, id?: string) {
         return runtime.createChannel(id, TaskManagerFactory.Type) as TaskManager;
@@ -125,9 +118,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * Get a factory for TaskManager to register with the data store.
      *
      * @returns a factory that creates and load TaskManager
+     * @internal
      */
     public static getFactory(): IChannelFactory {
-        return new TaskManagerFactory();
+        // To keep the constructor private we need to wrap this so the factory can create a new TaskManger instance
+        // with attributes but it's not on the public API.
+        const newTaskManager = (id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) => {
+            return new TaskManager(id, runtime, attributes);
+        };
+        return new TaskManagerFactory(newTaskManager);
     }
 
     /**
@@ -159,7 +158,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @param runtime - data store runtime the task queue belongs to
      * @param id - optional name of the task queue
      */
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
+    private constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
         super(id, runtime, attributes);
 
         this.opWatcher.on("volunteer", (taskId: string, clientId: string, local: boolean, messageId: number) => {
@@ -227,37 +226,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         });
     }
 
-    // TODO Remove or hide from interface, this is just for debugging
-    public _getTaskQueues() {
-        return this.taskQueues;
-    }
-
-    private submitVolunteerOp(taskId: string) {
-        const op: ITaskManagerVolunteerOperation = {
-            type: "volunteer",
-            taskId,
-        };
-        const pendingOp: IPendingOp = {
-            type: "volunteer",
-            messageId: ++this.messageId,
-        };
-        this.submitLocalMessage(op, pendingOp.messageId);
-        this.latestPendingOps.set(taskId, pendingOp);
-    }
-
-    private submitAbandonOp(taskId: string) {
-        const op: ITaskManagerAbandonOperation = {
-            type: "abandon",
-            taskId,
-        };
-        const pendingOp: IPendingOp = {
-            type: "abandon",
-            messageId: ++this.messageId,
-        };
-        this.submitLocalMessage(op, pendingOp.messageId);
-        this.latestPendingOps.set(taskId, pendingOp);
-    }
-
+    /**
+     * {@inheritDoc ITaskManager.lockTask}
+     */
     public async lockTask(taskId: string) {
         // If we have the lock, resolve immediately
         if (this.haveTaskLock(taskId)) {
@@ -316,6 +287,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         return lockAcquireP;
     }
 
+    /**
+     * {@inheritDoc ITaskManager.abandon}
+     */
     public abandon(taskId: string) {
         if (!this.connected) {
             throw new Error(`Attempted to abandon in disconnected state: ${taskId}`);
@@ -334,6 +308,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.abandonWatcher.emit("abandon", taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.haveTaskLock}
+     */
     public haveTaskLock(taskId: string) {
         if (!this.connected) {
             return false;
@@ -345,6 +322,9 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             && !this.latestPendingOps.has(taskId);
     }
 
+    /**
+     * {@inheritDoc ITaskManager.queued}
+     */
     public queued(taskId: string) {
         if (!this.connected) {
             return false;
@@ -364,9 +344,17 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     /**
+     * @internal
+     */
+     protected applyStashedOp() {
+        throw new Error("not implemented");
+    }
+
+    /**
      * Create a snapshot for the task manager
      *
      * @returns the snapshot of the current state of the task manager
+     * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         // TODO filter out tasks with no clients, some are still getting in.
@@ -392,6 +380,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
@@ -401,16 +390,28 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.scrubClientsNotInQuorum();
     }
 
+    /**
+     * @internal
+     */
     protected initializeLocalCore() { }
 
+    /**
+     * @internal
+     */
     protected registerCore() { }
 
+    /**
+     * @internal
+     */
     protected onDisconnect() {
         this.disconnectWatcher.emit("disconnect");
     }
 
-    // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
-    // queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+    /**
+     * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
+     * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+     * @internal
+     */
     protected reSubmitCore() { }
 
     /**
@@ -420,6 +421,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @param local - whether the message was sent by the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
@@ -439,6 +441,40 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     throw new Error("Unknown operation");
             }
         }
+    }
+
+    /**
+     * To be used for testing only
+     * @internal
+     */
+    protected _getTaskQueues() {
+        return this.taskQueues;
+    }
+
+    private submitVolunteerOp(taskId: string) {
+        const op: ITaskManagerVolunteerOperation = {
+            type: "volunteer",
+            taskId,
+        };
+        const pendingOp: IPendingOp = {
+            type: "volunteer",
+            messageId: ++this.messageId,
+        };
+        this.submitLocalMessage(op, pendingOp.messageId);
+        this.latestPendingOps.set(taskId, pendingOp);
+    }
+
+    private submitAbandonOp(taskId: string) {
+        const op: ITaskManagerAbandonOperation = {
+            type: "abandon",
+            taskId,
+        };
+        const pendingOp: IPendingOp = {
+            type: "abandon",
+            messageId: ++this.messageId,
+        };
+        this.submitLocalMessage(op, pendingOp.messageId);
+        this.latestPendingOps.set(taskId, pendingOp);
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
@@ -505,9 +541,5 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 this.queueWatcher.emit("queueChange", taskId);
             }
         }
-    }
-
-    public applyStashedOp() {
-        throw new Error("not implemented");
     }
 }
