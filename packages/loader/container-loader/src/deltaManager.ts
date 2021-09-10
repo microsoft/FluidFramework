@@ -556,11 +556,12 @@ export class DeltaManager
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(
+    public async attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
         term: number,
         handler: IDeltaHandlerStrategy,
+        prefetchType: "cached" | "all" | "none" = "none",
     ) {
         this.initSequenceNumber = sequenceNumber;
         this.lastProcessedSequenceNumber = sequenceNumber;
@@ -575,17 +576,6 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!!(this.handler as any), 0x0e3 /* "Newly set op handler is null/undefined!" */);
 
-        this._inbound.resume();
-        this._inboundSignal.resume();
-
-        // We could have connected to delta stream before getting here
-        // If so, it's time to process any accumulated ops, as there might be no other event that
-        // will force these pending ops to be processed.
-        // Or request OPs from snapshot / or point zero (if we have no ops at all)
-        this.processPendingOps("DocumentOpen");
-    }
-
-    public async preFetchOps(cacheOnly: boolean) {
         // There should be no pending fetch!
         // This API is called right after attachOpHandler by Container.load().
         // We might have connection already and it might have called fetchMissingDeltas() from
@@ -593,9 +583,29 @@ export class DeltaManager
         // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
         assert(this.fetchReason === undefined, "There can't be pending fetch that early in boot sequence!");
 
-        if (!this.closed) {
-            return this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber, undefined);
+        if (this.closed) {
+            return;
         }
+
+        this._inbound.resume();
+        this._inboundSignal.resume();
+
+        if (prefetchType !== "none") {
+            const cacheOnly = prefetchType === "cached";
+            await this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber);
+
+            // Keep going with fetching ops from storage once we have all cached ops in.
+            // But do not block load and make this request async / not blocking this api.
+            // Ops processing will start once cached ops are in and and will stop when queue is empty
+            // (which in most cases will happen when we are done processing cached ops)
+            if (cacheOnly) {
+                // fire and forget
+                this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
+            }
+        }
+
+        // Ensure there is no need to call this.processPendingOps() at the end of boot sequence
+        assert(this.fetchReason !== undefined || this.pending.length === 0, "pending ops are not dropped");
     }
 
     private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
