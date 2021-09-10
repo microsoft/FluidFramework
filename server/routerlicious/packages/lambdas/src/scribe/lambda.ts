@@ -66,6 +66,9 @@ export class ScribeLambda implements IPartitionLambda {
     // Ref of the last client generated summary
     private lastClientSummaryHead: string | undefined;
 
+    // Seqeunce number of the last summarised op
+    private lastSummarySequenceNumber: number | undefined;
+
     // Indicates whether cache needs to be cleaned after processing a message
     private clearCache: boolean = false;
 
@@ -234,6 +237,7 @@ export class ScribeLambda implements IPartitionLambda {
                                     await this.sendSummaryAck(summaryResponse.message as ISummaryAck);
                                     await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
                                     this.updateProtocolHead(this.protocolHandler.sequenceNumber);
+                                    this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
                                     lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: true });
                                     this.context.log?.info(
                                         `Client summary success @${value.operation.sequenceNumber}`,
@@ -311,7 +315,7 @@ export class ScribeLambda implements IPartitionLambda {
                                     operation.sequenceNumber,
                                     false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
-                                this.updateProtocolHead(operation.sequenceNumber);
+                                this.updateLastSummarySequenceNumber(operation.sequenceNumber);
                                 lumberJackMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: true });
                                 this.context.log?.info(
                                     `Service summary success @${operation.sequenceNumber}`,
@@ -353,6 +357,7 @@ export class ScribeLambda implements IPartitionLambda {
                     // back to the stream.
                     if (this.summaryWriter.isExternal) {
                         this.updateProtocolHead(content.summaryProposal.summarySequenceNumber);
+                        this.updateLastSummarySequenceNumber(content.summaryProposal.summarySequenceNumber);
                     }
                 }
             }
@@ -446,6 +451,7 @@ export class ScribeLambda implements IPartitionLambda {
     private generateCheckpoint(logOffset: number): IScribe {
         const protocolState = this.protocolHandler.getProtocolState();
         const checkpoint: IScribe = {
+            lastSummarySequenceNumber: this.lastSummarySequenceNumber,
             lastClientSummaryHead: this.lastClientSummaryHead,
             logOffset,
             minimumSequenceNumber: this.minSequenceNumber,
@@ -515,6 +521,15 @@ export class ScribeLambda implements IPartitionLambda {
         this.protocolHead = protocolHead;
     }
 
+    /**
+     * lastSummarySequenceNumber is the sequence number of the last summary
+     * This method updates it to the latest summary sequence number
+     * @param summarySequenceNumber The sequence number of the latest summary
+     */
+    private updateLastSummarySequenceNumber(summarySequenceNumber: number) {
+        this.lastSummarySequenceNumber = summarySequenceNumber;
+    }
+
     private async sendSummaryAck(contents: ISummaryAck) {
         const operation: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
@@ -572,5 +587,6 @@ export class ScribeLambda implements IPartitionLambda {
         this.sequenceNumber = scribe.sequenceNumber;
         this.minSequenceNumber = scribe.minimumSequenceNumber;
         this.lastClientSummaryHead = scribe.lastClientSummaryHead;
+        this.lastSummarySequenceNumber = scribe.lastSummarySequenceNumber;
     }
 }

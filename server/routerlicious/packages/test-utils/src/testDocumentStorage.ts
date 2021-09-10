@@ -121,6 +121,7 @@ export class TestDocumentStorage implements IDocumentStorage {
             },
             sequenceNumber,
             lastClientSummaryHead: undefined,
+            lastSummarySequenceNumber: -1,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
@@ -136,7 +137,6 @@ export class TestDocumentStorage implements IDocumentStorage {
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
-                lastSummarizedSequenceNumber: -1,
             });
 
         return result;
@@ -192,7 +192,6 @@ export class TestDocumentStorage implements IDocumentStorage {
                 scribe: undefined,
                 tenantId,
                 version: "0.1",
-                lastSummarizedSequenceNumber: -1,
             });
 
         return result;

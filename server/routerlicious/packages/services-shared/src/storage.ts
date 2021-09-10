@@ -174,6 +174,7 @@ export class DocumentStorage implements IDocumentStorage {
             },
             sequenceNumber,
             lastClientSummaryHead: undefined,
+            lastSummarySequenceNumber: -1,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();
@@ -189,7 +190,6 @@ export class DocumentStorage implements IDocumentStorage {
                 scribe: JSON.stringify(scribe),
                 tenantId,
                 version: "0.1",
-                lastSummarizedSequenceNumber: -1,
             });
 
         return result;
@@ -272,8 +272,7 @@ export class DocumentStorage implements IDocumentStorage {
         tenantId: string,
         documentId: string,
         deli?: string,
-        scribe?: string,
-        lastSummarizedSequenceNumber?: number): Promise<IDocument> {
+        scribe?: string): Promise<IDocument> {
         const value: IDocument = {
             createTime: Date.now(),
             deli,
@@ -281,7 +280,6 @@ export class DocumentStorage implements IDocumentStorage {
             scribe,
             tenantId,
             version: "0.1",
-            lastSummarizedSequenceNumber,
         };
         await collection.insertOne(value);
         return value;
@@ -304,9 +302,8 @@ export class DocumentStorage implements IDocumentStorage {
             const inSummary = await foundInSummaryP;
 
             // Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
-            // Setting lastSummarizedSequenceNumber to -1 indicates it should be loaded from summary
             const value = inSummary ?
-                await this.createObject(collection, tenantId, documentId, "", "", -1) :
+                await this.createObject(collection, tenantId, documentId, "", "") :
                 await this.createObject(collection, tenantId, documentId);
 
             return {

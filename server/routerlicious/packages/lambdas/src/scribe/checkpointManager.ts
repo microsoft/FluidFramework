@@ -68,7 +68,6 @@ export class CheckpointManager implements ICheckpointManager {
                 // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
                 // given some data is user generated.
                 scribe: JSON.stringify(checkpoint),
-                lastSummarizedSequenceNumber: protocolHead,
             },
             null);
 

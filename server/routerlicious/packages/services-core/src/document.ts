@@ -94,6 +94,9 @@ export interface IScribe {
 
     // Ref of the last client generated summary
     lastClientSummaryHead: string | undefined;
+
+    // Sequence number of the last summarized op
+    lastSummarySequenceNumber: number | undefined;
 }
 
 export interface IDocument {
@@ -112,6 +115,4 @@ export interface IDocument {
 
     // Deli state
     deli: string;
-
-    lastSummarizedSequenceNumber: number;
 }
