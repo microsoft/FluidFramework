@@ -33,7 +33,12 @@ const makePositionNode = <T>(value: Serializable<T>): ChangeNode => ({
 
 export type Position = NodeId;
 
-export class OrderedList<T> extends DataObject implements Iterable<Serializable<T>> {
+const treeKey = "" as const;
+
+/**
+ * Example DataObject demonstrating how to model an ordered list using the SharedTree DDS.
+ */
+export class OrderedList<T> extends DataObject {
     public static get Name() { return "@fluid-experimental/ordered-set"; }
 
     public static readonly factory = new DataObjectFactory<OrderedList<unknown>, undefined, undefined, IEvent>(
@@ -45,12 +50,12 @@ export class OrderedList<T> extends DataObject implements Iterable<Serializable<
     private maybeTree?: SharedTree;
 
     protected async initializingFirstTime() {
-        this.root.set("", SharedTree.create(this.runtime).handle);
+        this.root.set(treeKey, SharedTree.create(this.runtime).handle);
     }
 
     protected async hasInitialized() {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("")!.get();
+        this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>(treeKey)!.get();
     }
 
     private get tree() {
@@ -72,60 +77,72 @@ export class OrderedList<T> extends DataObject implements Iterable<Serializable<
         return StablePlace.after(this.view.getSnapshotNode(position).identifier);
     }
 
+    private move(destination: StablePlace, source: StableRange) {
+        this.tree.applyEdit(...Move.create(source, destination));
+    }
+
     private insert(place: StablePlace, item: Serializable<T>): Position {
         const newNode = makePositionNode(item);
         this.tree.applyEdit(...Insert.create([newNode], place));
         return newNode.identifier;
     }
 
-    public insertBefore(position: Position, item: Serializable<T>): Position {
-        return this.insert(this.placeBefore(position), item);
-    }
-
-    public insertAfter(position: Position, item: Serializable<T>): Position {
-        return this.insert(this.placeAfter(position), item);
-    }
-
+    /** Inserts the given `item` at the beginning of the list. */
     public insertFirst(item: Serializable<T>): Position {
         return this.insert(this.firstPlace, item);
     }
 
+    /** Inserts the given `item` at the end of the list. */
     public insertLast(item: Serializable<T>): Position {
         return this.insert(this.lastPlace, item);
     }
 
-    private move(destination: StablePlace, source: StableRange) {
-        this.tree.applyEdit(...Move.create(source, destination));
+    /** Inserts the given `item` before the item at `nextSibling`. */
+    public insertBefore(nextSibling: Position, item: Serializable<T>): Position {
+        return this.insert(this.placeBefore(nextSibling), item);
     }
 
-    public moveFirst(item: Position) {
-        this.move(this.firstPlace, StableRange.only(item));
+    /** Inserts the given `item` after the item at `prevSibling`. */
+    public insertAfter(prevSibling: Position, item: Serializable<T>): Position {
+        return this.insert(this.placeAfter(prevSibling), item);
     }
 
-    public moveLast(item: Position)  {
-        this.move(this.lastPlace,  StableRange.only(item));
+    /** Moves the item at `position` to the beginning of the list. */
+    public moveFirst(position: Position) {
+        this.move(this.firstPlace, StableRange.only(position));
     }
 
-    public moveBefore(successor: Position, position: Position) {
-        this.move(this.placeBefore(successor), StableRange.only(position));
+    /** Moves the item at `position` to the end of the list. */
+    public moveLast(position: Position)  {
+        this.move(this.lastPlace,  StableRange.only(position));
     }
 
-    public moveAfter(predecessor: Position, position: Position) {
-        this.move(this.placeAfter(predecessor), StableRange.only(position));
+    /** Moves the item at `position` before the item at `nextSibling`. */
+    public moveBefore(nextSibling: Position, position: Position) {
+        this.move(this.placeBefore(nextSibling), StableRange.only(position));
     }
 
+    /** Moves the item at `position` after the item at `prevSibling`. */
+    public moveAfter(prevSibling: Position, position: Position) {
+        this.move(this.placeAfter(prevSibling), StableRange.only(position));
+    }
+
+    /** Removes the item at `position`. */
     public remove(position: Position) {
         this.tree.applyEdit(Delete.create(StableRange.only(position)));
     }
 
+    /** Returns the item at `position`. */
     public get(position: Position): Serializable<T> {
         return this.view.getSnapshotNode(position).payload as Serializable<T>;
     }
 
+    /** Sets the item at `position` to the given `value`. */
     public set(position: Position, value: Serializable<T>) {
         this.view.setNodeValue(position, value);
     }
 
+    /** Removes all items from the list. */
     public clear() {
         this.tree.applyEdit(
             Delete.create(
@@ -135,6 +152,7 @@ export class OrderedList<T> extends DataObject implements Iterable<Serializable<
                 })));
     }
 
+    /** Returns an array containing the items in the list. */
     public toArray() {
         const view = this.view;
         return view.getTrait({
@@ -144,10 +162,6 @@ export class OrderedList<T> extends DataObject implements Iterable<Serializable<
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return view.getSnapshotNode(nodeId)!.payload as Serializable<T>;
         });
-    }
-
-    [Symbol.iterator](): IterableIterator<Serializable<T>> {
-        return this.toArray()[Symbol.iterator]();
     }
 }
 
