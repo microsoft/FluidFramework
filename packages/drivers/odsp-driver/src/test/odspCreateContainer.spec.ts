@@ -132,7 +132,7 @@ describe("Odsp Create Container Test", () => {
             assert.strictEqual(error.statusCode, fetchIncorrectResponse, "Wrong error code");
             assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
                 "Error type should be correct");
-            assert.strictEqual(error.message, "Could not parse item from Vroom response", "Message should be correct");
+            assert.strictEqual(error.message, "couldNotParseItemFromVroomResponse", "Message should be correct");
         }
     });
 });
