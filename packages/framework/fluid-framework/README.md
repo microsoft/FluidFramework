@@ -8,7 +8,7 @@ The `fluid-framework` package consists primarily of two portions:  the `IFluidCo
 
 ### IFluidContainer
 
-The `IFluidContainer` interface is the one of the types returned by calls to `createContainer()` and `getContainer()` on the service clients such as `AzureClient`.  It includes functionality to retrieve the Fluid data contained within, as well as to inspect the state of the collaboration session connection.
+The **[IFluidContainer](https://fluidframework.com/docs/apis/fluid-static/ifluidcontainer/)** interface is the one of the types returned by calls to `createContainer()` and `getContainer()` on the service clients such as `AzureClient`.  It includes functionality to retrieve the Fluid data contained within, as well as to inspect the state of the collaboration session connection.
 
 ### DDS packages
 
