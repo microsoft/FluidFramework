@@ -32,8 +32,9 @@ You'll write container code to define which Fluid objects your scenario uses and
 
 ## DataObject
 
-Aqueduct's implementation of a Fluid object. Designed to organize distributed data structures into
-semantically meaningful groupings for your scenario, as well as, providing an API surface to your data.
+DataObjects are higher-level Fluid objects, compared to distributed data structures, which are low-level Fluid objects.
+DataObjects are used to organize distributed data structures into semantically meaningful groupings for your scenario,
+as well as providing an API surface to your data.
 
 ## Detached
 
