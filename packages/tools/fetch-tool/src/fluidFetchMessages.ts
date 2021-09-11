@@ -28,18 +28,13 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
-// current sequence number to fetch from
-let currSeq: number = 1;
-// flag for mismatch between last sequence number read and new one to be read
-let seqNumMismatch = false;
-// flag for if there are existing messages.json
-let readFromMessages = false;
-
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
     files?: string[]) {
     let lastSeq = 0;
+    // flag for mismatch between last sequence number read and new one to be read
+    let seqNumMismatch = false;
 
     // If we have local save, read ops from there first
     if (files !== undefined) {
@@ -53,8 +48,6 @@ async function* loadAllSequencedMessages(
                 seqNumMismatch = messages[0].sequenceNumber !== lastSeq + 1;
                 assert(!seqNumMismatch, 0x1b9 /* "Unexpected value for sequence number of first message in file" */);
                 lastSeq = messages[messages.length - 1].sequenceNumber;
-                currSeq = lastSeq + 1;
-                readFromMessages = true;
                 yield messages;
             } catch (e) {
                 if (seqNumMismatch) {
@@ -114,9 +107,7 @@ async function* loadAllSequencedMessages(
         }
         // get firstAvailableDelta from the error response, and set current sequence number to that
         response = JSON.parse(error.getTelemetryProperties().response);
-        currSeq = response.error.firstAvailableDelta;
-        lastSeq = currSeq - 1;
-        seqNumMismatch = true;
+        lastSeq = response.error.firstAvailableDelta - 1;
     }
 
     // continue reading rest of the ops
@@ -195,26 +186,17 @@ async function* saveOps(
     const chunk = 100 * 1000;
 
     let sequencedMessages: ISequencedDocumentMessage[] = [];
-    // current sequence number to start writing from
-    let curr = 1;
+
     // Figure out first file we want to write to
     let index = 0;
     if (files.length !== 0) {
         index = files.length - 1;
-        const name = filenameFromIndex(index);
-        const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
-        const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
-        // set curr to be the number of the first op in the last file and add one.
-        curr = messages[0].sequenceNumber + 1;
     }
+    // current sequence number to start writing from
+    let curr = index * chunk + 1;
 
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
-        // if there was gap in ops, change curr to currSeq,
-        // and index should be 0 anyways because we ask user to delete files
-        curr = seqNumMismatch ? currSeq : curr;
-        // if there were exisintg files being read, change index so the new file has the correct name
-        index = readFromMessages ? Math.floor(curr / chunk) : index;
 
         if (!result.done) {
             let messages = result.value;
@@ -227,11 +209,11 @@ async function* saveOps(
                 messages = messages.filter((msg) => msg.sequenceNumber >= curr);
             }
             sequencedMessages = sequencedMessages.concat(messages);
-            assert(sequencedMessages[0].sequenceNumber === curr,
-                0x1bb /* "Unexpected sequence number on first of messages to save" */);
-            assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
-                === curr + sequencedMessages.length - 1,
-                0x1bc /* "Unexpected sequence number on last of messages to save" */);
+            // assert(sequencedMessages[0].sequenceNumber === curr,
+            //    0x1bb /* "Unexpected sequence number on first of messages to save" */);
+            // assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
+            //    === curr + sequencedMessages.length - 1,
+            //    0x1bc /* "Unexpected sequence number on last of messages to save" */);
         }
 
         // Time to write it out?
