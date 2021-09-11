@@ -8,12 +8,16 @@
 const { existsSync } = require("fs");
 const path = require("path");
 
-function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
-
+function getFluidTestVariant() {
     const testDriver = process.env.fluid__test__driver ? process.env.fluid__test__driver : "local";
     const r11sEndpointName = process.env.fluid__test__r11sEndpointName;
     const testVariant = (testDriver === "r11s" || testDriver === "routerlicious")
         && (r11sEndpointName !== undefined && r11sEndpointName !== "r11s") ? `r11s-${r11sEndpointName}` : testDriver;
+    return testVariant;
+}
+
+function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
+
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
@@ -52,6 +56,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
     }
 
     if (process.env.FLUID_TEST_REPORT === "1") {
+        const testVariant = getFluidTestVariant();
         const packageJson = require(`${packageDir}/package.json`);
         config["reporter"] = `xunit`;
         config["reporter-options"] = [
@@ -63,4 +68,4 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
     return config;
 }
 
-module.exports = getFluidTestMochaConfig;
+module.exports = { getFluidTestMochaConfig, getFluidTestVariant };

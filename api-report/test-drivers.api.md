@@ -23,7 +23,7 @@ import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicio
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 
 // @public (undocumented)
-export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<ITestDriver>;
+export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver>;
 
 // @public (undocumented)
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> = T extends (config: infer P, ...args: any) => any ? P : never;
