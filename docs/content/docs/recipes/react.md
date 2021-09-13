@@ -94,7 +94,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     let container;
-    const containerId = location.hash;
+    const containerId = location.hash.substring(1);
     if (!containerId) {
         ({ container } = await client.createContainer(containerSchema));
         const id = await container.attach();
