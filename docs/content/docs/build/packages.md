@@ -11,21 +11,18 @@ public API for the Fluid Framework, and a service-specific client package, such 
 
 ## Primary API: fluid-framework
 
-The `fluid-framework` package bundles a collection of Fluid Framework client packages for easy use when paired with a
-corresponding service client package, such as the `@fluidframework/azure-client` package. The `fluid-framework` package
-consists primarily of two portions: the `IFluidContainer` interface and a selection of distributed data structures
-(DDSes).
+The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` interface and a selection of distributed data structures (DDSes).
 
 ### IFluidContainer
 
 The [IFluidContainer][] interface is the one of
 the types returned by calls to `createContainer()` and `getContainer()` on the service clients such as `AzureClient`. It
-includes functionality to retrieve the Fluid data contained within a container, as well as to inspect the state of the
+includes functionality to retrieve the Fluid data contained within itself, as well as to inspect the state of the
 collaboration session connection.
 
-### DDS packages
+### Shared object packages
 
-You'll use one or more DDSes in your container to model your collaborative data.  The `fluid-framework` package includes
+You'll use one or more shared objects in your container to model your collaborative data.  The `fluid-framework` package includes
 three data structures that cover a broad range of scenarios:
 
 1. [SharedMap][], a map-like data structure for storing key/value pair data.
@@ -41,7 +38,9 @@ Fluid Framework packages are published under one of the following npm scopes:
 - @fluid-internal
 - @fluid-tools
 
-Unless you are contributing to the Fluid Framework, you should only need packages from the **@fluidframework** scope.
+In addition to the scoped packages, two unscoped packages are published: the `fluid-framework` package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}
+
+Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
 You can [read more about the scopes and their intent][scopes] in the Fluid Framework wiki.
 
 [scopes]: https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes
