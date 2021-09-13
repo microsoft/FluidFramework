@@ -157,7 +157,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
                 { eventName: "GetSharingLinkToken" },
                 async (event) => tokenFetcher(options).then((tokenResponse) => {
                     if (tokenResponse === null) {
-                        throwOdspNetworkError("Share link Token is null", fetchTokenErrorCode);
+                        throwOdspNetworkError("shareLinkTokenIsNull", fetchTokenErrorCode);
                     }
                     event.end({ fromCache: isTokenFromCache(tokenResponse) });
                     return tokenResponse;
