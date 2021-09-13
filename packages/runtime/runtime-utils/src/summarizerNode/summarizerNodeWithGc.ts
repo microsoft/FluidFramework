@@ -129,7 +129,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         });
     }
 
-    // Returns the GC details that my be added to this node's summary.
+    // Returns the GC details that may be added to this node's summary.
     public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
         return {
             gcData: this.gcData,
