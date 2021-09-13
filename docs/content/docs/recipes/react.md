@@ -103,7 +103,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     }
     ```
 
-2. Replace `TODO 3` with the following code.
+1. Replace `TODO 3` with the following code.
 
     ```js
     return container.initialObjects;
