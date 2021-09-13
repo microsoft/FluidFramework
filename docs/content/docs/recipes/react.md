@@ -5,17 +5,20 @@ aliases:
   - "/start/react-tutorial/"
 ---
 
-In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other connected clients. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/).
+In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/). The following image shows the time stamp application open in four browsers. Each has a button labelled **click** and beside it a UNIX Epoch time. The same time in all four. The cursor is on the button in one browser.
 
-The following image shows finished application loaded into four browsers. Each browser contains a button and a timestamp. When the button is pressed in any of the browsers, the timestamp is updated in all four browsers.
+![Four browsers with the Timestamp app open in them.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-1.PNG)
 
-![cra](https://user-images.githubusercontent.com/1434956/111496992-faf2dc00-86fd-11eb-815d-5cc539d8f3c8.gif)
+The following image shows the same four clients one second after the **click** button was pressed. Note that the timestamp has updated to the very same time in all four browsers.
+
+![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-2.PNG)
 
 {{< callout note >}}
 
 This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
 
 {{< /callout >}}
+
 
 Concepts you will learn:
 1. How to integrate Fluid into a React application
