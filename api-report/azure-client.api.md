@@ -11,8 +11,11 @@ import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { IUser } from '@fluidframework/protocol-definitions';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
@@ -76,6 +79,16 @@ export type IAzureAudience = IServiceAudience<AzureMember>;
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
+
+export { ITokenClaims }
+
+export { ITokenProvider }
+
+export { ITokenResponse }
+
+export { IUser }
+
+export { ScopeType }
 
 
 // (No @packageDocumentation comment for this package)
