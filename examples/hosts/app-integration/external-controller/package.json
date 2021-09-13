@@ -36,7 +36,7 @@
   "dependencies": {
     "@fluidframework/azure-client": "^0.48.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-runtime-utils": "^0.48.0",
+    "@fluidframework/test-client-utils": "^0.48.0",
     "fluid-framework": "^0.48.0",
     "uuid": "^8.3.1"
   },
