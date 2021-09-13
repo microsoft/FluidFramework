@@ -63,7 +63,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import React from "react";
-    import { AzureClient, InsecureTokenProvider } from "@fluidframework/azure-client";;
+    import { AzureClient } from "@fluidframework/azure-client";
+    import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
     import { SharedMap } from "fluid-framework";
     ```
 

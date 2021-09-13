@@ -255,6 +255,7 @@
                 "packages": [
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
+                    "@fluidframework/test-client-utils",
                     "@fluidframework/test-runtime-utils",
                     "@fluid-tools/webpack-fluid-loader"
                 ],
