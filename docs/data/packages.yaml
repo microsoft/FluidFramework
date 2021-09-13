@@ -9,10 +9,20 @@ distributed-data-structures:
 libraries:
 - "fluid-framework"
 - "@fluidframework/aqueduct"
+- "@fluidframework/datastore"
+- "@fluidframework/synthesize"
 definitions:
 - "@fluidframework/common-definitions"
 - "@fluidframework/container-definitions"
+- "@fluidframework/container-runtime-definitions"
 - "@fluidframework/core-interfaces"
 - "@fluidframework/driver-definitions"
 - "@fluidframework/protocol-base"
 - "@fluidframework/protocol-definitions"
+utilities:
+- "@fluidframework/container-loader"
+- "@fluidframework/container-runtime"
+- "@fluidframework/common-utils"
+- "@fluidframework/request-handler"
+- "@fluidframework/runtime-utils"
+- "@fluidframework/telemetry-utils"
