@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
+import { MockLogger } from "@fluid-internal/mock-logger";
 import { Deferred } from "@fluidframework/common-utils";
 import {
     ISequencedDocumentMessage,
@@ -15,7 +16,7 @@ import {
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { neverCancelledSummaryToken } from  "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { ISummarizerOptions } from "../summarizerTypes";
