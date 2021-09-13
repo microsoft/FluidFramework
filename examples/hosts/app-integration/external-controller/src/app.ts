@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
-    FluidContainer,
+    IFluidContainer,
     SharedMap,
 } from "fluid-framework";
 import { v4 as uuid } from "uuid";
@@ -65,7 +65,7 @@ const containerSchema = {
     },
 };
 
-async function initializeNewContainer(container: FluidContainer): Promise<void> {
+async function initializeNewContainer(container: IFluidContainer): Promise<void> {
     // Initialize both of our SharedMaps for usage with a DiceRollerController
     const sharedMap1 = container.initialObjects.map1 as SharedMap;
     const sharedMap2 = container.initialObjects.map2 as SharedMap;
@@ -83,7 +83,7 @@ async function start(): Promise<void> {
         logger: new ConsoleLogger(),
     };
     const client = new AzureClient(azureConfig);
-    let container: FluidContainer;
+    let container: IFluidContainer;
     let services: AzureContainerServices;
     let id: string;
 

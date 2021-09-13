@@ -6,10 +6,10 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
+import { MockLogger } from "@fluid-internal/mock-logger";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { CreateProcessingError, DataProcessingError, GenericError, wrapError, wrapErrorAndLog } from "../error";
 
 // NOTE about this (temporary) alias:

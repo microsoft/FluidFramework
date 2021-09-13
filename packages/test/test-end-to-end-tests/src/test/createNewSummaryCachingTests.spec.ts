@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { MockLogger } from "@fluid-internal/mock-logger";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -12,7 +13,6 @@ import {
 import { ISummaryConfiguration } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { AttachState } from "@fluidframework/container-definitions";

@@ -252,13 +252,15 @@ export function throwOdspNetworkError(
     statusCode: number,
     response?: Response,
     responseText?: string,
+    props?: ITelemetryProperties,
 ): never {
     const networkError = createOdspNetworkError(
         response && response.statusText !== "" ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */
         response,
-        responseText);
+        responseText,
+        props);
 
     throw networkError;
 }

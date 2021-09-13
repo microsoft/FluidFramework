@@ -5,8 +5,8 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
@@ -30,11 +30,11 @@ export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> impl
 class TinyliciousClient {
     constructor(props?: TinyliciousClientProps | undefined);
     createContainer(containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+        container: IFluidContainer;
         services: TinyliciousContainerServices;
     }>;
     getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+        container: IFluidContainer;
         services: TinyliciousContainerServices;
     }>;
     }
