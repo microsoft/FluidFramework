@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial: Hello World walkthrough'
+title: 'Tutorial: DiceRoller application'
 menuPosition: 2
 aliases:
   - "/docs/get-started/tutorial/"
