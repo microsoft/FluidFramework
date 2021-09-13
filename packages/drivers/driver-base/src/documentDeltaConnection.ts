@@ -416,7 +416,7 @@ export class DocumentDeltaConnection
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                fail(false, this.createErrorObject("timeoutWaitingForHandshakeFromOrderingService"));
+                fail(false, this.createErrorObject("orderingServiceHandshakeTimeout"));
             }, timeout + 2000);
         });
 
