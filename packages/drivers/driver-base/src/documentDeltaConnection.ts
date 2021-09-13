@@ -495,7 +495,6 @@ export class DocumentDeltaConnection
         const errorObj = createGenericNetworkError(
             message,
             canRetry,
-            undefined,
         );
 
         return errorObj;
