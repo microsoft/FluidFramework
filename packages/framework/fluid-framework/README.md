@@ -4,7 +4,7 @@ The `fluid-framework` package bundles a collection of Fluid Framework client pac
 
 ## Contents
 
-The `fluid-framework` package consists primarily of two portions:  the `IFluidContainer` and a selection of DDS packages.
+The `fluid-framework` package consists primarily of two portions:  the `IFluidContainer` and a selection of distributed data structures (DDSes).
 
 ### IFluidContainer
 
