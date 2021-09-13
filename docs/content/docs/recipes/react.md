@@ -84,7 +84,6 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
       const client = new TinyliciousClient();
-
       const containerSchema = {
           initialObjects: { sharedTimestamp: SharedMap }
       };
