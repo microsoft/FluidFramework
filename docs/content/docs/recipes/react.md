@@ -63,7 +63,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import React from "react";
-    import { TinyliciousClient } from "@fluidframework/tinylicious-client";;
+    import { TinyliciousClient } from "@fluidframework/tinylicious-client";
     import { SharedMap } from "fluid-framework";
     ```
 
