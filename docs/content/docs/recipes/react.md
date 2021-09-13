@@ -29,63 +29,39 @@ Concepts you will learn:
 
 \* Just want to see the code? Jump to the [finished tutorial.](https://github.com/microsoft/FluidExamples/blob/main/cra-demo/src/App.js).
 
-## Demo introduction
+## What to expect
 
 In this example you will do the following:
 
-  - [Use Create React App](#use-create-react-app)
+  - [Create the project](#create-the-project)
   - [Install Fluid package dependencies](#install-fluid-package-dependencies)
   - [Import and initialize Fluid dependencies](#import-and-initialize-fluid-dependencies)
   - [Get the Fluid SharedMap](#get-the-fluid-sharedmap)
   - [Update the view](#update-the-view)
 
-## Use Create React App
+## Create the project
 
-### Using NPM
-```bash
-npx create-react-app my-app-name --use-npm
-cd my-app-name
-```
+1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Fluid Projects`.
+1. Run the following command at the prompt. (Note that the CLI is np**x**, not npm. It was installed when you installed Node.js.)
 
-### Using Yarn
-```bash
-npx create-react-app my-app-name
-cd my-app-name
-```
+    ```dotnetcli
+    npx create-react-app fluid-react-tutorial --use-npm
+    ```
 
-### Start the app
+1. The project is created in a subfolder named `fluid-react-tutorial`. Navigate to it with the command `cd fluid-react-tutorial`.
+1. The project uses two Fluid libraries:
 
-The `tinylicious` server will be needed to run this demo locally.
+    |Library |Description |
+    |---|---|
+    |fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    |fluidframework/tinylicious&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]|
+    &nbsp;
 
-```bash
-npx tinylicious
-```
+    Run the following command to install the libraries.
 
-Open up a new terminal tab and start up the React app
-
-```bash
-npm run start
-```
-
-## Install Fluid package dependencies
-
-There are two packages to install to get started with Fluid:
-
-`fluid-framework` -- The primary Fluid package that contains the SharedMap we'll use to sync data.
-
-`@fluidframework/tinylicious-client` -- Defines the client used to get the Fluid [container](https://fluidframework.com/docs/glossary/#container) for local development.
-
-### Using NPM
-```bash
-npm install fluid-framework @fluidframework/tinylicious-client
-```
-
-### Using Yarn
-```bash
-yarn add fluid-framework @fluidframework/tinylicious-client
-```
-
-Lastly, open up the `App.js` file, as that will be the only file edited.
+    ```dotnetcli
+    npm install @fluidframework/tinylicious-client fluid-framework
+    ```
 
 ## Import and initialize Fluid dependencies
 
