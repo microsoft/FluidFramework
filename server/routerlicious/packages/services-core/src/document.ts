@@ -95,7 +95,7 @@ export interface IScribe {
     // Ref of the last client generated summary
     lastClientSummaryHead: string | undefined;
 
-    // Sequence number of the last summarized op
+    // Sequence number of the last operation that was part of latest summary
     lastSummarySequenceNumber: number | undefined;
 }
 

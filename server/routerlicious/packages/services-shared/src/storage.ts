@@ -174,7 +174,7 @@ export class DocumentStorage implements IDocumentStorage {
             },
             sequenceNumber,
             lastClientSummaryHead: undefined,
-            lastSummarySequenceNumber: -1,
+            lastSummarySequenceNumber: 0,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();

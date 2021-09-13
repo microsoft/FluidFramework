@@ -522,9 +522,9 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     /**
-     * lastSummarySequenceNumber is the sequence number of the last summary
-     * This method updates it to the latest summary sequence number
-     * @param summarySequenceNumber The sequence number of the latest summary
+     * lastSummarySequenceNumber tracks the sequence number that was part of the latest summary
+     * This method updates it to the sequence number that was part of the latest summary
+     * @param summarySequenceNumber The sequence number of the operation that was part of the latest summary
      */
     private updateLastSummarySequenceNumber(summarySequenceNumber: number) {
         this.lastSummarySequenceNumber = summarySequenceNumber;
