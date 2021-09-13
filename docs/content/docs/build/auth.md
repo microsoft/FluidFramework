@@ -101,14 +101,12 @@ provider is useful for testing, but in production scenarios you must use a secur
 
 ### A secure serverless token provider
 
-One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
-provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to
-generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
+One option for building a secure token provider is to create a serverless Azure Function and expose it. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
 
-You can create the `token provider` class say `AzureFunctionTokenProvider` which extends the `ITokenProvider` interface without exposing the tenant key secret in client-side code. This class would be responsible for fetching the token from your very own backend. It accepts the url to Azure function endpoint and an optional user object.
+You can create the token provider class say `AzureFunctionTokenProvider` which extends the `ITokenProvider` interface without exposing the tenant key secret in client-side code. This class would be responsible for fetching the token from your very own backend. It accepts the url to Azure function and an optional user object.
 
 ```typescript
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import { ITokenProvider, ITokenResponse } from "@fluidframework/azure-client";
 
 export class AzureFunctionTokenProvider implements ITokenProvider {
   constructor(
@@ -146,7 +144,7 @@ private async getToken(tenantId: string, documentId: string): Promise<string> {
 
 ## Adding custom data to tokens
 
-{{< placeholder >}}
+You can add custom data such as email id, gender, address, etc for your token generation. See [Connect to an Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) for more information.
 
 ## Connecting user auth to Fluid service auth
 
