@@ -22,3 +22,9 @@ You'll use one or more DDS data structures in your container to model your colla
 Check out the Hello World tutorial using the `fluid-framework` package [here](https://fluidframework.com/docs/start/tutorial/).
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+
+<!-- Links -->
+[IFluidContainer]: https://fluidframework.com/docs/apis/fluid-static/ifluidcontainer/
+[SharedMap]: https://fluidframework.com/docs/apis/map/sharedmap/
+[SharedDirectory]: https://fluidframework.com/docs/apis/map/shareddirectory/
+[SharedString]: https://fluidframework.com/docs/apis/sequence/sharedstring/
