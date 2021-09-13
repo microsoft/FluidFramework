@@ -4,7 +4,7 @@
  */
 
 import commander from "commander";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -129,7 +129,7 @@ async function runnerProcess(
         const loaderOptions = generateLoaderOptions(seed);
         const containerOptions = generateRuntimeOptions(seed);
 
-        const testDriver = await createTestDriver(driver, seed, runConfig.runId);
+        const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
             {
