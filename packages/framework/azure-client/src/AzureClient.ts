@@ -11,6 +11,7 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
@@ -47,7 +48,7 @@ export class AzureClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.createDetachedContainer({
             package: "no-dynamic-package",
@@ -68,7 +69,7 @@ export class AzureClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
         return this.getFluidContainerAndServices(id, container);
@@ -78,13 +79,13 @@ export class AzureClient {
     private async getFluidContainerAndServices(
         id: string,
         container: Container,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: AzureContainerServices }> {
         const attach = async () => {
             await container.attach({ url: id });
             return id;
         };
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
-        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
+        const fluidContainer: IFluidContainer = new FluidContainer(container, rootDataObject, attach);
         const services: AzureContainerServices = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }

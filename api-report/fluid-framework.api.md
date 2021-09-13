@@ -4,6 +4,10 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
+
+export { AttachState }
+
 
 export * from "@fluidframework/fluid-static";
 export * from "@fluidframework/map";
