@@ -64,7 +64,6 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               official: ${{ parameters.official }}
               publishFlags: ${{ parameters.publishFlags }}
-              tagName: ${{ parameters.tagName }}
           - ${{ if eq(parameters.publishNonScopedPackages, true) }}:  
             - template: include-publish-npm-package-steps.yml
               parameters:
@@ -74,4 +73,6 @@ jobs:
                 official: ${{ parameters.official }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}
-                tagName: ${{ parameters.tagName }}
+          - template: include-git-tag-steps.yml
+            parameters:
+              tagName: ${{ parameters.tagName }}

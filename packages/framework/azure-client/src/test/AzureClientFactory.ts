@@ -4,7 +4,7 @@
  */
 
 import { generateUser } from "@fluidframework/server-services-client";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
     AzureClient,
 } from "..";

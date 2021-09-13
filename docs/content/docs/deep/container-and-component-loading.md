@@ -39,12 +39,12 @@ The `Loader` object has a method `resolve(...)` **(1)** that can load a `Contain
 - `Driver` **(1.1)** - used for talking to the Fluid Server
 - `CodeLoader` **(1.2)** - used for resolving the `ContainerRuntime` code
 
-![Image 1](../images/container-and-component-loading-1.jpg)
+![Image 1](/images/container-and-component-loading-1.jpg)
 
 In the case of resolving a `Container` that has not been loaded locally, the `Loader` will create a new `Container`
 object **(2)**.
 
-![Image 2](../images/container-and-component-loading-2.jpg)
+![Image 2](/images/container-and-component-loading-2.jpg)
 
 The `Container` will use the provided `url` and `Driver` to connect, and start processing, the op stream **(3)**.
 
@@ -68,7 +68,7 @@ understands **(3.1)**.
 The Fluid Core (`Loader` + `Runtime`) is agnostic to how the Fluid Server is implemented. It instead uses
 a `Driver` model to allow for different servers to optimize for their own infrastructure.
 
-![Image 3](../images/container-and-component-loading-3.jpg)
+![Image 3](/images/container-and-component-loading-3.jpg)
 
 The `Container` object itself does not actually do much. Once it has established a connection via the `Driver` its other
 responsibility is to listen specifically for one event emitted from the `Quorum`. This is the `"code"` proposal.
@@ -96,7 +96,7 @@ from some source (CDN) or in some cases the code already exists on the page. Eit
 include the code on the page and return a pointer to that code to the `Container`. In the Browser, this pointer
 is an entry point to a webpacked bundle that is usually on the `window` object. In Node.js, it's a pointer to a package.
 
-![Image 4](../images/container-and-component-loading-4.jpg)
+![Image 4](/images/container-and-component-loading-4.jpg)
 
 At this point the `Container` has a pointer to the `ContainerRuntime` code and it uses that code to create a new
 `ContainerContext` **(5)** and executes the `instantiateRuntime` **(6.1)** on the webpack bundle with the `ContainerContext`.
@@ -107,7 +107,7 @@ op stream. **This is powerful because it allows the Hosting Applications to load
 knowing the underlying code.** This is how Teams and Outlook can easily load the Fluid preview app `Container` and
 `Components`.
 
-![Image 5](../images/container-and-component-loading-5.jpg)
+![Image 5](/images/container-and-component-loading-5.jpg)
 
 The implementer of `instantiateRuntime` is what we refer to as a "Container Developer". As you can see, the term is slightly
 overloaded since they are not actually writing the `Container` object, but simply implementing a function. This function
@@ -125,7 +125,7 @@ The `instantiateRuntime` function can perform any number of functions but has be
     - Defines what Components can be created in the `Container`
 4. Creating the default `Component`
 
-![Image 6](../images/container-and-component-loading-6.jpg)
+![Image 6](/images/container-and-component-loading-6.jpg)
 
 Containers can exist without Components but they are not very functional. The paradigm we've created is for the
 Container Developer (`instantiateRuntime` implementer) to create a default `Component`. The default `Component` is simply
@@ -141,7 +141,7 @@ A `Component` is created by calling `createComponent("packageName")` on the `Con
 `ContainerRuntime` uses its `ComponentRegistry` to look for the entry of `"packageName"`. When it's found it creates a
 `ComponentContext` **(7)** and executes the corresponding `instantiateComponent` with the `ComponentContext` **(8.1)**.
 
-![Image 7](../images/container-and-component-loading-7.jpg)
+![Image 7](/images/container-and-component-loading-7.jpg)
 
 You might notice a lot of similarities between the `ContainerRuntime` creation flow and the `ComponentRuntime`
 creation flow.
@@ -156,7 +156,7 @@ In the `instantiateComponent` call **(8.1)** the following is performed:
     - This can be used to create new Components that are not defined in the `ContainerRegistry`
 4. Create the `Component` object **(8.3)**
 
-![Image 8](../images/container-and-component-loading-8.jpg)
+![Image 8](/images/container-and-component-loading-8.jpg)
 
 The `Component`, and the `instantiateComponent`, are what a "Component Developer" writes and contain all the business
 specific logic. In most cases the `instantiateComponent` call will provide the `Component` with references to the
@@ -165,7 +165,7 @@ specific logic. In most cases the `instantiateComponent` call will provide the `
 The `Component` should use the `ComponentContext` to talk upwards to the `ContainerRuntime` **(8.3.1)**, and should use
 the `ComponentRuntime` to manage Fluid state of itself; mainly creating DDSs **(8.3.2)**.
 
-![Image 9](../images/container-and-component-loading-9.jpg)
+![Image 9](/images/container-and-component-loading-9.jpg)
 
 The `Component` will use the DDS objects directly **(9.1)** and will persist/`attach` them using the
 `ComponentRuntime` **(9.2)**. When storing a DDS `handle` on another already attached DDS, the `ComponentRuntime`
@@ -178,7 +178,7 @@ will automatically `attach` the new DDS.
 
 :::
 
-![Image 10](../images/container-and-component-loading-10.jpg)
+![Image 10](/images/container-and-component-loading-10.jpg)
 
 At this point you might have noticed that the `ComponentRuntime` does not actually know anything about the `Component`
 object itself. In the `ContainerRuntime` all `ComponentRuntimes` are treated equally without hierarchy. But then how do Components
@@ -192,7 +192,7 @@ Calling `createComponent` causes the `ContainerRuntime` to look at the `Componen
 `ComponentContext` **(7)**, which will call a new `instantiateComponent` **(8.1)**, which will create a second
 `ComponentRuntime` **(8.2)**, and second `Component` object **(8.3)**.
 
-![Appendix 1](../images/container-and-component-loading-11.jpg)
+![Appendix 1](/images/container-and-component-loading-11.jpg)
 
 Great! Now we've loaded our entire `Container` plus our two Components. But we don't actually have anything rendered on
 the page. All these objects just exist in memory.
@@ -246,4 +246,4 @@ object of Component2 **(8.3.2)**. The `Component` object will return itself and 
 
 ## Appendix 1
 
-![Appendix 1](../images/container-and-component-loading-11.jpg)
+![Appendix 1](/images/container-and-component-loading-11.jpg)
