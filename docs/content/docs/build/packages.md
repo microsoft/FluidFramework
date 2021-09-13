@@ -11,14 +11,14 @@ public API for the Fluid Framework, and a service-specific client package, such 
 
 ## Primary API: fluid-framework
 
-The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` interface and a selection of distributed data structures (DDSes).
+The `fluid-framework` package consists primarily of two portions: the [FluidContainer][] object and a selection of
+distributed data structures (DDSes).
 
-### IFluidContainer
+### FluidContainer
 
-The [IFluidContainer][] interface is the one of
-the types returned by calls to `createContainer()` and `getContainer()` on the service clients such as `AzureClient`. It
-includes functionality to retrieve the Fluid data contained within itself, as well as to inspect the state of the
-collaboration session connection.
+The [FluidContainer][] object is the one of the object types returned by calls to `createContainer()` and
+`getContainer()` on the service clients such as `AzureClient`. It includes functionality to retrieve the Fluid data
+contained within itself, as well as to inspect the state of the collaboration session connection.
 
 ### Shared object packages
 
@@ -38,7 +38,7 @@ Fluid Framework packages are published under one of the following npm scopes:
 - @fluid-internal
 - @fluid-tools
 
-In addition to the scoped packages, two unscoped packages are published: the `fluid-framework` package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}
+In addition to the scoped packages, two unscoped packages are published: the `fluid-framework` package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}.
 
 Unless you are contributing to the Fluid Framework, you should only need the unscoped packages and packages from the **@fluidframework** scope.
 You can [read more about the scopes and their intent][scopes] in the Fluid Framework wiki.
@@ -57,6 +57,7 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
