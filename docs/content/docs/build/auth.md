@@ -105,6 +105,45 @@ One option for building a secure token provider is to create a serverless Azure 
 provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to
 generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
 
+You can create the `token provider` class say `AzureFunctionTokenProvider` which extends the `ITokenProvider` interface without exposing the tenant key secret in client-side code. This class would be responsible for fetching the token from your very own backend. It accepts the url to Azure function endpoint and an optional user object.
+
+```typescript
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+
+export class AzureFunctionTokenProvider implements ITokenProvider {
+  constructor(
+    private readonly azFunctionUrl: string,
+    private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
+  );
+
+  fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+
+  fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+}
+```
+
+`fetchOrdererToken` and `fetchStorageToken` are responsible for fetching the orderer and storgae url from the host respectively. They return `TokenResponse` object representing token value along with flag indicating whether token came from cache.
+
+To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. One of the possible way to fetch the token is making an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
+
+```typescript
+private async getToken(tenantId: string, documentId: string): Promise<string> {
+  return axios.get(this.azFunctionUrl, {
+      params: {
+          tenantId,
+          documentId,
+          userId: this.user?.userId,
+          userName: this.user?.userName,
+          additionalDetails: this.user?.additionalDetails,
+      },
+    }).then((response) => {
+        return response.data as string;
+    }).catch((err) => {
+        return err as string;
+  });
+}
+```
+
 ## Adding custom data to tokens
 
 {{< placeholder >}}
