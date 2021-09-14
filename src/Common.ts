@@ -365,3 +365,86 @@ export function compareBtrees<K, V>(treeA: BTree<K, V>, treeB: BTree<K, V>, comp
  * TODO: better error system.
  */
 export type ErrorString = string;
+
+/**
+ * Discriminated union instance that wraps either a result of type `TOk` or an error of type `TError`.
+ */
+export type Result<TOk, TError> = Result.Ok<TOk> | Result.Error<TError>;
+
+export namespace Result {
+	/**
+	 * Factory function for making a successful Result.
+	 * @param result - The result to wrap in the Result.
+	 */
+	export function ok<TOk>(result: TOk): Ok<TOk> {
+		return { type: ResultType.Ok, result };
+	}
+	/**
+	 * Factory function for making a unsuccessful Result.
+	 * @param error - The error to wrap in the Result.
+	 */
+	export function error<TError>(error: TError): Error<TError> {
+		return { type: ResultType.Error, error };
+	}
+	/**
+	 * Type guard for successful Result.
+	 * @returns True if `result` is successful.
+	 */
+	export function isOk<TOk, TError>(result: Result<TOk, TError>): result is Ok<TOk> {
+		return result.type === ResultType.Ok;
+	}
+	/**
+	 * Type guard for unsuccessful Result.
+	 * @returns True if `result` is unsuccessful.
+	 */
+	export function isError<TOk, TError>(result: Result<TOk, TError>): result is Error<TError> {
+		return result.type === ResultType.Error;
+	}
+	/**
+	 * Maps the given result with the given function when the result is ok.
+	 * @param result - The result to map.
+	 * @param map - The function to apply to derive the new result.
+	 * @returns The given result if it is not ok, the mapped result otherwise.
+	 */
+	export function mapOk<TOkIn, TOkOut, TError>(
+		result: Result<TOkIn, TError>,
+		map: (TOkIn) => TOkOut
+	): Result<TOkOut, TError> {
+		return isOk(result) ? ok(map(result.result)) : result;
+	}
+	/**
+	 * Maps the given result with the given function when the result is an error.
+	 * @param result - The result to map.
+	 * @param map - The function to apply to derive the new error.
+	 * @returns The given result if it is ok, the mapped result otherwise.
+	 */
+	export function mapError<TOk, TErrorIn, TErrorOut>(
+		result: Result<TOk, TErrorIn>,
+		map: (TErrorIn) => TErrorOut
+	): Result<TOk, TErrorOut> {
+		return isError(result) ? error(map(result.error)) : result;
+	}
+	/**
+	 * Tag value use to differentiate the members of the `Result` discriminated union.
+	 */
+	export enum ResultType {
+		/** Signals a successful result. */
+		Ok,
+		/** Signals an unsuccessful result. */
+		Error,
+	}
+	/**
+	 * Wraps a result of type `TOk`.
+	 */
+	export interface Ok<TOk> {
+		readonly type: ResultType.Ok;
+		readonly result: TOk;
+	}
+	/**
+	 * Wraps an error of type `TError`.
+	 */
+	export interface Error<TError> {
+		readonly type: ResultType.Error;
+		readonly error: TError;
+	}
+}

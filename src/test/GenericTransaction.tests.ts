@@ -17,13 +17,13 @@ describe('GenericTransaction', () => {
 				return target[prop];
 			},
 		});
-		const transaction = new MockTransaction<unknown>(initialRevisionViewWithValidation);
+		const transaction = MockTransaction.factory<unknown>(initialRevisionViewWithValidation);
 		transaction.applyChanges([{}, {}], trappedPath);
 		expect(transaction.status).equals(EditStatus.Applied);
 	});
 
 	it('reflects failure status when validateOnClose is not successful', () => {
-		const transaction = new MockTransaction<unknown>(initialRevisionViewWithValidation, {
+		const transaction = MockTransaction.factory<unknown>(initialRevisionViewWithValidation, {
 			statusOnClose: EditStatus.Invalid,
 		});
 		const result = transaction.close();

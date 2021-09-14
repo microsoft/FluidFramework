@@ -17,7 +17,7 @@ describe('TransactionWithAnchors', () => {
 				return target[prop];
 			},
 		});
-		const transaction = new TransactionWithAnchors(simpleRevisionViewWithValidation);
+		const transaction = TransactionWithAnchors.factory(simpleRevisionViewWithValidation);
 		transaction.applyChanges(
 			[
 				AnchoredChange.detach(RangeAnchor.only(left, PlaceAnchorSemanticsChoice.BoundToNode)),

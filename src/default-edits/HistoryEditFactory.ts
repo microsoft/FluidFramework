@@ -29,7 +29,7 @@ export function revert(changes: readonly Change[], before: RevisionView): Change
 	const detachedNodes = new Map<DetachedSequenceId, NodeId[]>();
 
 	// Open edit on revision to update it as changes are walked through
-	const editor = new Transaction(before);
+	const editor = Transaction.factory(before);
 	// Apply `edit`, generating an inverse as we go.
 	for (const change of changes) {
 		// Generate an inverse of each change

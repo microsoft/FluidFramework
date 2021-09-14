@@ -37,9 +37,15 @@ export {
 export { newEdit, newEditId } from './GenericEditUtilities';
 export {
 	GenericTransaction,
+	GenericTransactionPolicy,
 	EditingResult,
+	EditingResultBase,
+	FailedEditingResult,
 	ValidEditingResult,
 	TransactionState,
+	TransactionFailure,
+	SucceedingTransactionState,
+	FailingTransactionState,
 	ChangeResult,
 } from './GenericTransaction';
 export {

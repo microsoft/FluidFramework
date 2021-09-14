@@ -61,12 +61,7 @@ export const Change: {
 export type ChangeNode = TreeNode<ChangeNode>;
 
 // @public
-export type ChangeResult = {
-    view: TransactionView;
-    status: EditStatus.Applied;
-} | {
-    status: EditStatus.Invalid | EditStatus.Malformed;
-};
+export type ChangeResult = Result<TransactionView, TransactionFailure>;
 
 // @public
 export enum ChangeType {
@@ -215,12 +210,15 @@ export type EditId = UuidString & {
 };
 
 // @public
-export type EditingResult<TChange> = {
-    readonly status: EditStatus.Invalid | EditStatus.Malformed;
-    readonly changes: readonly TChange[];
-    readonly steps?: undefined;
+export type EditingResult<TChange> = FailedEditingResult<TChange> | ValidEditingResult<TChange>;
+
+// @public
+export interface EditingResultBase<TChange> {
     readonly before: RevisionView;
-} | ValidEditingResult<TChange>;
+    readonly changes: readonly TChange[];
+    readonly status: EditStatus;
+    readonly steps: readonly ReconciliationChange<TChange>[];
+}
 
 // Warning: (ae-internal-missing-underscore) The name "EditLogSummary" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -250,6 +248,20 @@ export enum EditValidationResult {
 // @public
 export interface EditWithoutId<TChange> extends EditBase<TChange> {
     readonly id?: never;
+}
+
+// @public
+export interface FailedEditingResult<TChange> extends EditingResultBase<TChange> {
+    readonly changes: readonly TChange[];
+    readonly status: EditStatus.Invalid | EditStatus.Malformed;
+    readonly steps: readonly ReconciliationChange<TChange>[];
+}
+
+// @public
+export interface FailingTransactionState<TChange> extends TransactionFailure {
+    readonly changes: readonly TChange[];
+    readonly steps: readonly ReconciliationChange<TChange>[];
+    readonly view: TransactionView;
 }
 
 // @public
@@ -297,8 +309,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 }
 
 // @public
-export abstract class GenericTransaction<TChange> implements TransactionState<TChange> {
-    constructor(view: RevisionView);
+export class GenericTransaction<TChange> {
+    constructor(view: RevisionView, policy: GenericTransactionPolicy<TChange>);
     applyChange(change: TChange, path?: ReconciliationPath<TChange>): this;
     applyChanges(changes: Iterable<TChange>, path?: ReconciliationPath<TChange>): this;
     // (undocumented)
@@ -306,17 +318,19 @@ export abstract class GenericTransaction<TChange> implements TransactionState<TC
     get changes(): readonly TChange[];
     // (undocumented)
     close(): EditingResult<TChange>;
-    // (undocumented)
-    protected abstract dispatchChange(change: TChange): ChangeResult;
     get status(): EditStatus;
     get steps(): readonly {
         readonly resolvedChange: TChange;
         readonly after: TransactionView;
     }[];
-    // (undocumented)
-    protected tryResolveChange(change: TChange, path: ReconciliationPath<TChange>): TChange | undefined;
-    protected abstract validateOnClose(): EditStatus;
     get view(): TransactionView;
+}
+
+// @public
+export interface GenericTransactionPolicy<TChange> {
+    dispatchChange(state: SucceedingTransactionState<TChange>, change: TChange): ChangeResult;
+    tryResolveChange(state: SucceedingTransactionState<TChange>, change: TChange, path: ReconciliationPath<TChange>): Result<TChange, TransactionFailure>;
+    validateOnClose(state: SucceedingTransactionState<TChange>): ChangeResult;
 }
 
 // @public
@@ -446,6 +460,35 @@ export interface ReconciliationEdit<TChange> {
 export interface ReconciliationPath<TChange> {
     readonly [index: number]: ReconciliationEdit<TChange>;
     readonly length: number;
+}
+
+// @public
+export type Result<TOk, TError> = Result.Ok<TOk> | Result.Error<TError>;
+
+// @public (undocumented)
+export namespace Result {
+    export interface Error<TError> {
+        // (undocumented)
+        readonly error: TError;
+        // (undocumented)
+        readonly type: ResultType.Error;
+    }
+    export function error<TError>(error: TError): Error<TError>;
+    export function isError<TOk, TError>(result: Result<TOk, TError>): result is Error<TError>;
+    export function isOk<TOk, TError>(result: Result<TOk, TError>): result is Ok<TOk>;
+    export function mapError<TOk, TErrorIn, TErrorOut>(result: Result<TOk, TErrorIn>, map: (TErrorIn: any) => TErrorOut): Result<TOk, TErrorOut>;
+    export function mapOk<TOkIn, TOkOut, TError>(result: Result<TOkIn, TError>, map: (TOkIn: any) => TOkOut): Result<TOkOut, TError>;
+    export interface Ok<TOk> {
+        // (undocumented)
+        readonly result: TOk;
+        // (undocumented)
+        readonly type: ResultType.Ok;
+    }
+    export function ok<TOk>(result: TOk): Ok<TOk>;
+    export enum ResultType {
+        Error = 1,
+        Ok = 0
+    }
 }
 
 // @public
@@ -607,6 +650,14 @@ export const StableRange: {
 };
 
 // @public
+export interface SucceedingTransactionState<TChange> {
+    readonly changes: readonly TChange[];
+    readonly status: EditStatus.Applied;
+    readonly steps: readonly ReconciliationChange<TChange>[];
+    readonly view: TransactionView;
+}
+
+// @public
 export type TraitLabel = UuidString & {
     readonly TraitLabel: '613826ed-49cc-4df3-b2b8-bfc6866af8e3';
 };
@@ -631,28 +682,31 @@ export type TraitNodeIndex = number & {
 };
 
 // @public
-export class Transaction extends GenericTransaction<Change> {
-    protected createViewNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: TreeViewNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
+export namespace Transaction {
+    export function factory(view: RevisionView): GenericTransaction<Change>;
+    export class Policy implements GenericTransactionPolicy<Change> {
+        protected createViewNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: TreeViewNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
+        // (undocumented)
+        protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
+        // (undocumented)
+        dispatchChange(state: ValidState, change: Change): ChangeResult;
+        // (undocumented)
+        tryResolveChange(state: ValidState, change: Change): Result.Ok<Change>;
+        // (undocumented)
+        validateOnClose(state: ValidState): ChangeResult;
+    }
     // (undocumented)
-    protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
-    // (undocumented)
-    protected dispatchChange(change: Change): ChangeResult;
-    // (undocumented)
-    static factory(view: RevisionView): Transaction;
-    // (undocumented)
-    protected validateOnClose(): EditStatus;
+    export type ValidState = SucceedingTransactionState<Change>;
+        {};
 }
 
 // @public
-export interface TransactionState<TChange> {
-    readonly changes: readonly TChange[];
-    readonly status: EditStatus;
-    readonly steps: readonly {
-        readonly resolvedChange: TChange;
-        readonly after: TransactionView;
-    }[];
-    readonly view: TransactionView;
+export interface TransactionFailure {
+    status: EditStatus.Invalid | EditStatus.Malformed;
 }
+
+// @public
+export type TransactionState<TChange> = SucceedingTransactionState<TChange> | FailingTransactionState<TChange>;
 
 // @public
 export class TransactionView extends TreeView {
@@ -781,20 +835,9 @@ export function validateStablePlace(view: TreeView, place: StablePlace): EditVal
 export function validateStableRange(view: TreeView, range: StableRange): EditValidationResult;
 
 // @public
-export interface ValidEditingResult<TChange> {
-    // (undocumented)
+export interface ValidEditingResult<TChange> extends EditingResultBase<TChange> {
     readonly after: RevisionView;
-    // (undocumented)
-    readonly before: RevisionView;
-    // (undocumented)
-    readonly changes: readonly TChange[];
-    // (undocumented)
     readonly status: EditStatus.Applied;
-    // (undocumented)
-    readonly steps: readonly {
-        readonly resolvedChange: TChange;
-        readonly after: TransactionView;
-    }[];
 }
 
 ```

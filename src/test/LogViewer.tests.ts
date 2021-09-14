@@ -61,7 +61,7 @@ function getViewsForLog(log: EditLog<Change>, baseView: RevisionView): RevisionV
 	const views: RevisionView[] = [baseView];
 	for (let i = 0; i < log.length; i++) {
 		const edit = log.getEditInSessionAtIndex(i);
-		const result = new Transaction(views[i]).applyChanges(edit.changes).close();
+		const result = Transaction.factory(views[i]).applyChanges(edit.changes).close();
 		if (result.status === EditStatus.Applied) {
 			views.push(result.after);
 		} else {

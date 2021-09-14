@@ -26,7 +26,7 @@ import {
 describe('Transaction', () => {
 	describe('Constraints', () => {
 		it('can be met', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -40,7 +40,7 @@ describe('Transaction', () => {
 			end: { side: Side.Before },
 		};
 		it('can be unmet', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: invalidStableRange,
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -49,7 +49,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Invalid);
 		});
 		it('effect can apply anyway', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: invalidStableRange,
 				effect: ConstraintEffect.ValidRetry,
@@ -58,7 +58,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('length can be met', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -68,7 +68,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('length can be unmet', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -78,7 +78,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Invalid);
 		});
 		it('parent can be met', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -88,7 +88,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('parent can be unmet', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -98,7 +98,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Invalid);
 		});
 		it('label can be met', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -108,7 +108,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Applied);
 		});
 		it('label can be unmet', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
@@ -121,7 +121,7 @@ describe('Transaction', () => {
 
 	describe('SetValue', () => {
 		it('can be invalid', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, // Arbitrary id not equal to initialRevision.root
 				payload: {}, // Arbitrary payload.
@@ -131,7 +131,7 @@ describe('Transaction', () => {
 		});
 
 		it('can change payload', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const payload = { foo: {} };
 			transaction.applyChange({
 				nodeToModify: initialRevisionView.root,
@@ -145,7 +145,7 @@ describe('Transaction', () => {
 		// 'null' is not included here since it means clear the payload in setValue.
 		for (const payload of [0, '', [], {}]) {
 			it(`can set payload to ${JSON.stringify(payload)}`, () => {
-				const transaction = new Transaction(initialRevisionViewWithValidation);
+				const transaction = Transaction.factory(initialRevisionViewWithValidation);
 				transaction.applyChange({
 					nodeToModify: initialRevisionView.root,
 					payload,
@@ -157,7 +157,7 @@ describe('Transaction', () => {
 		}
 
 		it('can clear an unset payload', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange(Change.clearPayload(initialRevisionView.root));
 			expect(transaction.status).equals(EditStatus.Applied);
 			expect({}.hasOwnProperty.call(transaction.view.getViewNode(initialRevisionView.root), 'payload')).false;
@@ -165,7 +165,7 @@ describe('Transaction', () => {
 		});
 
 		it('can clear a set payload', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			transaction.applyChange({
 				nodeToModify: initialRevisionView.root,
 				payload: {},
@@ -186,7 +186,7 @@ describe('Transaction', () => {
 		const builtNodeId = uuidv4() as NodeId;
 		const newNode = makeEmptyNode(builtNodeId);
 		it('can be malformed', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			transaction.applyChange(Change.build([newNode], buildId));
 			transaction.applyChange(
 				Change.insert(
@@ -198,7 +198,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Malformed);
 		});
 		it('can be invalid', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			transaction.applyChange(Change.build([newNode], buildId));
 			transaction.applyChange(
 				Change.insert(
@@ -211,7 +211,7 @@ describe('Transaction', () => {
 		});
 		[Side.Before, Side.After].forEach((side) => {
 			it(`can insert a node at the ${side === Side.After ? 'beginning' : 'end'} of a trait`, () => {
-				const transaction = new Transaction(simpleRevisionViewWithValidation);
+				const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 				transaction.applyChanges(
 					Insert.create(
 						[newNode],
@@ -225,7 +225,7 @@ describe('Transaction', () => {
 				);
 			});
 			it(`can insert a node ${side === Side.Before ? 'before' : 'after'} another node`, () => {
-				const transaction = new Transaction(simpleRevisionViewWithValidation);
+				const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 				transaction.applyChanges(Insert.create([newNode], { referenceSibling: left.identifier, side }));
 				expect(transaction.view.getTrait(leftTraitLocation)).deep.equals(
 					side === Side.Before ? [builtNodeId, left.identifier] : [left.identifier, builtNodeId]
@@ -236,7 +236,7 @@ describe('Transaction', () => {
 
 	describe('Build', () => {
 		it('can be malformed due to detached ID collision', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			// Apply two Build_s with the same detached id
 			transaction.applyChange(Change.build([makeEmptyNode()], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
@@ -244,7 +244,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Malformed);
 		});
 		it('can be malformed due to duplicate node identifiers', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			// Build two nodes with the same identifier, one of them nested
 			const newNode = makeEmptyNode();
 			transaction.applyChange(
@@ -262,7 +262,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Malformed);
 		});
 		it('can be invalid', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			// Build two nodes with the same identifier
 			const identifier = uuidv4() as NodeId;
 			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 0 as DetachedSequenceId));
@@ -271,7 +271,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Invalid);
 		});
 		it('can build a detached node', () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const identifier = uuidv4() as NodeId;
 			const newNode = makeEmptyNode(identifier);
 			transaction.applyChange(Change.build([newNode], 0 as DetachedSequenceId));
@@ -281,7 +281,7 @@ describe('Transaction', () => {
 			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
 		});
 		it("is malformed if detached node id doesn't exist", () => {
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const detachedSequenceId = 0 as DetachedSequenceId;
 			transaction.applyChange({
 				destination: 1 as DetachedSequenceId,
@@ -297,7 +297,7 @@ describe('Transaction', () => {
 			const emptyTrait: NodeId[] = [];
 			traits.set(leftTraitLabel, emptyTrait);
 
-			const transaction = new Transaction(initialRevisionViewWithValidation);
+			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const detachedSequenceId = 0 as DetachedSequenceId;
 			transaction.applyChange(Change.build([nodeWithEmpty], detachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
@@ -308,7 +308,7 @@ describe('Transaction', () => {
 
 	describe('Detach', () => {
 		it('can be malformed', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			// Supplied StableRange is malformed
 			transaction.applyChange(
 				Change.detach({
@@ -319,7 +319,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Malformed);
 		});
 		it('can be invalid', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			// Start place is before end place
 			transaction.applyChange(
 				Change.detach({
@@ -330,7 +330,7 @@ describe('Transaction', () => {
 			expect(transaction.status).equals(EditStatus.Invalid);
 		});
 		it('can delete a node', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			transaction.applyChange(Change.detach(StableRange.only(left)));
 			expect(transaction.view.hasNode(left.identifier)).is.false;
 		});
@@ -338,7 +338,7 @@ describe('Transaction', () => {
 
 	describe('Composite changes', () => {
 		it('can form a node move', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			const detachedId = 0 as DetachedSequenceId;
 			transaction.applyChange(Change.detach(StableRange.only(left), detachedId));
 			transaction.applyChange(Change.insert(detachedId, StablePlace.after(right)));
@@ -348,7 +348,7 @@ describe('Transaction', () => {
 		it('can form a wrap insert', () => {
 			// A wrap insert is an edit that inserts a new node between a subtree and its parent atomically.
 			// Ex: given A -> B -> C, a wrap insert of D around B would produce A -> D -> B -> C
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			const leftNodeDetachedId = 0 as DetachedSequenceId;
 			const parentDetachedId = 1 as DetachedSequenceId;
 			transaction.applyChange(Change.detach(StableRange.only(left), leftNodeDetachedId));
@@ -373,7 +373,7 @@ describe('Transaction', () => {
 			expect(wrappingTrait).deep.equals([left.identifier]);
 		});
 		it('can build and insert a tree that contains detached subtrees', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			const leftNodeDetachedId = 0 as DetachedSequenceId;
 			const rightNodeDetachedId = 1 as DetachedSequenceId;
 			const detachedIdSubtree = 2 as DetachedSequenceId;
@@ -398,7 +398,7 @@ describe('Transaction', () => {
 			});
 		});
 		it('can build and insert a tree with the same identity as that of a detached subtree', () => {
-			const transaction = new Transaction(simpleRevisionViewWithValidation);
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			transaction.applyChange(Change.detach(StableRange.only(left)));
 			const idOfDetachedNodeToInsert = 1 as DetachedSequenceId;
 			expect(transaction.view.getTrait(leftTraitLocation)).deep.equals([]);

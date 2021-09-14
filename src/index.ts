@@ -19,7 +19,7 @@
 export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
 export { Delta } from './Forest';
-export { sharedTreeAssertionErrorType, isSharedTreeEvent, comparePayloads } from './Common';
+export { sharedTreeAssertionErrorType, isSharedTreeEvent, comparePayloads, Result } from './Common';
 export * from './Identifiers';
 export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';
 export {
@@ -86,9 +86,15 @@ export {
 	EditStatus,
 	TraitLocation,
 	GenericTransaction,
+	GenericTransactionPolicy,
+	TransactionFailure,
 	TransactionState,
+	SucceedingTransactionState,
+	FailingTransactionState,
+	FailedEditingResult,
 	ChangeResult,
 	EditingResult,
+	EditingResultBase,
 	ValidEditingResult,
 	SharedTreeFactoryOptions,
 	SharedTreeSummarizer,

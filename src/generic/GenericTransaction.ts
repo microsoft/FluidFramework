@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from '../Common';
-import { ReconciliationPath } from '../ReconciliationPath';
+import { assert, fail, Result } from '../Common';
+import { ReconciliationChange, ReconciliationPath } from '../ReconciliationPath';
 import { RevisionView, TransactionView } from '../TreeView';
 import { EditStatus } from './PersistedTypes';
 
@@ -12,36 +12,87 @@ import { EditStatus } from './PersistedTypes';
  * Result of applying a transaction.
  * @public
  */
-export type EditingResult<TChange> =
-	| {
-			readonly status: EditStatus.Invalid | EditStatus.Malformed;
-			readonly changes: readonly TChange[];
-			readonly steps?: undefined;
-			readonly before: RevisionView;
-	  }
-	| ValidEditingResult<TChange>;
+export type EditingResult<TChange> = FailedEditingResult<TChange> | ValidEditingResult<TChange>;
+
+/**
+ * Basic result of applying a transaction.
+ * @public
+ */
+export interface EditingResultBase<TChange> {
+	/**
+	 * The final status of the transaction.
+	 */
+	readonly status: EditStatus;
+	/**
+	 * The valid changes applied as part of the transaction.
+	 */
+	readonly changes: readonly TChange[];
+	/**
+	 * The editing steps applied as part of the transaction.
+	 */
+	readonly steps: readonly ReconciliationChange<TChange>[];
+	/**
+	 * The revision preceding the transaction.
+	 */
+	readonly before: RevisionView;
+}
+
+/**
+ * Result of applying an invalid or malformed transaction.
+ * @public
+ */
+export interface FailedEditingResult<TChange> extends EditingResultBase<TChange> {
+	/**
+	 * {@inheritdoc EditingResultBase.status}
+	 */
+	readonly status: EditStatus.Invalid | EditStatus.Malformed;
+	/**
+	 * The valid changes applied as part of the transaction.
+	 * Those were ultimately rolled back due to the transaction failure.
+	 */
+	readonly changes: readonly TChange[];
+	/**
+	 * The editing steps applied as part of the transaction.
+	 * Those were ultimately rolled back due to the transaction failure.
+	 */
+	readonly steps: readonly ReconciliationChange<TChange>[];
+}
 
 /**
  * Result of applying a valid transaction.
  * @public
  */
-export interface ValidEditingResult<TChange> {
+export interface ValidEditingResult<TChange> extends EditingResultBase<TChange> {
+	/**
+	 * {@inheritdoc EditingResultBase.status}
+	 */
 	readonly status: EditStatus.Applied;
-	readonly changes: readonly TChange[];
-	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: TransactionView }[];
-	readonly before: RevisionView;
+	/**
+	 * The new revision produced by the transaction.
+	 */
 	readonly after: RevisionView;
 }
+
+/**
+ * The result of applying a change within a transaction.
+ * @public
+ */
+export type ChangeResult = Result<TransactionView, TransactionFailure>;
 
 /**
  * The ongoing state of a transaction.
  * @public
  */
-export interface TransactionState<TChange> {
+export type TransactionState<TChange> = SucceedingTransactionState<TChange> | FailingTransactionState<TChange>;
+
+/**
+ * The state of a transaction that has not encountered an error.
+ */
+export interface SucceedingTransactionState<TChange> {
 	/**
 	 * The current status of the transaction.
 	 */
-	readonly status: EditStatus;
+	readonly status: EditStatus.Applied;
 	/**
 	 * The view reflecting the latest applied change.
 	 */
@@ -53,24 +104,36 @@ export interface TransactionState<TChange> {
 	/**
 	 * The editing steps applied so far.
 	 */
-	readonly steps: readonly { readonly resolvedChange: TChange; readonly after: TransactionView }[];
+	readonly steps: readonly ReconciliationChange<TChange>[];
 }
 
 /**
- * The result of applying a change within a transaction.
- * @public
+ * The state of a transaction that has encountered an error.
  */
-export type ChangeResult =
-	| {
-			/**
-			 * The new view resulting from a change being applied.
-			 */
-			view: TransactionView;
-			status: EditStatus.Applied;
-	  }
-	| {
-			status: EditStatus.Invalid | EditStatus.Malformed;
-	  };
+export interface FailingTransactionState<TChange> extends TransactionFailure {
+	/**
+	 * The view reflecting the latest applied change.
+	 */
+	readonly view: TransactionView;
+	/**
+	 * The applied changes so far.
+	 */
+	readonly changes: readonly TChange[];
+	/**
+	 * The editing steps applied so far.
+	 */
+	readonly steps: readonly ReconciliationChange<TChange>[];
+}
+
+/**
+ * The failure state of a transaction.
+ */
+export interface TransactionFailure {
+	/**
+	 * The status of the transaction.
+	 */
+	status: EditStatus.Invalid | EditStatus.Malformed;
+}
 
 /**
  * A mutable transaction for applying sequences of changes to a TreeView.
@@ -85,7 +148,8 @@ export type ChangeResult =
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
  */
-export abstract class GenericTransaction<TChange> implements TransactionState<TChange> {
+export class GenericTransaction<TChange> {
+	private readonly policy: GenericTransactionPolicy<TChange>;
 	protected readonly before: RevisionView;
 	private state: TransactionState<TChange>;
 	private isOpen = true;
@@ -94,8 +158,9 @@ export abstract class GenericTransaction<TChange> implements TransactionState<TC
 	 * Create and open an edit of the provided `TreeView`. After applying 0 or more changes, this editor should be closed via `close()`.
 	 * @param view - the `TreeView` at which this edit begins. The first change will be applied against this view.
 	 */
-	public constructor(view: RevisionView) {
+	public constructor(view: RevisionView, policy: GenericTransactionPolicy<TChange>) {
 		this.before = view;
+		this.policy = policy;
 		this.state = {
 			view: view.openForTransaction(),
 			status: EditStatus.Applied,
@@ -136,28 +201,35 @@ export abstract class GenericTransaction<TChange> implements TransactionState<TC
 	public close(): EditingResult<TChange> {
 		assert(this.isOpen, 'transaction has already been closed');
 		this.isOpen = false;
-		const finalStatus = this.status === EditStatus.Applied ? this.validateOnClose() : this.status;
-		if (finalStatus === EditStatus.Applied) {
+		if (this.state.status === EditStatus.Applied) {
+			const validation = this.policy.validateOnClose(this.state);
+			if (Result.isOk(validation)) {
+				if (validation.result !== this.view) {
+					this.state = { ...this.state, view: validation.result };
+				}
+				return {
+					status: EditStatus.Applied,
+					steps: this.steps,
+					changes: this.changes,
+					before: this.before,
+					after: this.view.close(),
+				};
+			}
+			this.state = { ...this.state, ...validation.error };
 			return {
-				...this.state,
-				status: EditStatus.Applied,
+				...validation.error,
+				steps: this.steps,
+				changes: this.changes,
 				before: this.before,
-				after: this.view.close(),
 			};
 		}
-		this.state = { ...this.state, status: finalStatus };
 		return {
-			status: finalStatus,
+			status: this.state.status,
+			steps: this.steps,
 			changes: this.changes,
 			before: this.before,
 		};
 	}
-
-	/**
-	 * Override to provide additional transaction validation when the transaction is closed.
-	 * Only invoked when a transaction is otherwise valid.
-	 */
-	protected abstract validateOnClose(): EditStatus;
 
 	/**
 	 * A helper to apply a sequence of changes. Changes will be applied one after the other. If a change fails to apply,
@@ -220,10 +292,6 @@ export abstract class GenericTransaction<TChange> implements TransactionState<TC
 		return this;
 	}
 
-	protected tryResolveChange(change: TChange, path: ReconciliationPath<TChange>): TChange | undefined {
-		return change;
-	}
-
 	/**
 	 * Attempt to apply the given change as part of this edit. This method should not be called if a previous change in this edit failed to
 	 * apply.
@@ -233,31 +301,72 @@ export abstract class GenericTransaction<TChange> implements TransactionState<TC
 	 */
 	public applyChange(change: TChange, path: ReconciliationPath<TChange> = []): this {
 		assert(this.isOpen, 'Editor must be open to apply changes.');
-		if (this.status !== EditStatus.Applied) {
+		if (this.state.status !== EditStatus.Applied) {
 			fail('Cannot apply change to an edit unless all previous changes have applied');
 		}
-		const resolvedChange = this.tryResolveChange(change, path);
-		if (resolvedChange === undefined) {
-			this.state = { ...this.state, status: EditStatus.Invalid };
+		const resolutionResult = this.policy.tryResolveChange(this.state, change, path);
+		if (Result.isError(resolutionResult)) {
+			this.state = { ...this.state, ...resolutionResult.error };
 			return this;
 		}
-
-		const changeResult = this.dispatchChange(resolvedChange);
-		if (changeResult.status === EditStatus.Applied) {
+		const resolvedChange = resolutionResult.result;
+		const changeResult = this.policy.dispatchChange(this.state, resolvedChange);
+		if (Result.isOk(changeResult)) {
 			this.state = {
 				status: EditStatus.Applied,
-				view: changeResult.view,
+				view: changeResult.result,
 				changes: this.changes.concat(change),
-				steps: this.steps.concat({ resolvedChange, after: changeResult.view }),
+				steps: this.steps.concat({ resolvedChange, after: changeResult.result }),
 			};
 		} else {
 			this.state = {
 				...this.state,
-				...changeResult,
+				...changeResult.error,
 			};
 		}
 		return this;
 	}
+}
 
-	protected abstract dispatchChange(change: TChange): ChangeResult;
+/**
+ * An object that encapsulates the rules and state pertaining to a specific subclass of {@link GenericTransaction}.
+ * The characteristics that define such a subclass (and an implementation of this interface) are:
+ * - The type of change that can be applied
+ * - How those changes impact the state of the tree
+ * - How those changes are resolved in the face of concurrent changes
+ * - What makes a transaction valid
+ * - The kind of situations that might lead to a transaction failure
+ *
+ * Instances of this type are passed to the {@link GenericTransaction} constructor.
+ */
+export interface GenericTransactionPolicy<TChange> {
+	/**
+	 * Given a change, attempts to derive an equivalent change which can be applied to the current state even if the given change was issued
+	 * over a different state. This can be used to apply a sequence of changes that were issued concurrently, i.e., without knowledge of
+	 * each other.
+	 * @param state - The current state on which the returned change will be applied.
+	 * @param change - The original change issued.
+	 * @param path - The reconciliation path for the change.
+	 * @returns The change to be applied to the current state, or a failure if the change cannot be resolved.
+	 */
+	tryResolveChange(
+		state: SucceedingTransactionState<TChange>,
+		change: TChange,
+		path: ReconciliationPath<TChange>
+	): Result<TChange, TransactionFailure>;
+
+	/**
+	 * Provides a new state given the current state and a change to apply.
+	 * @param state - The current state on which the change is applied.
+	 * @param change - The change to apply to the current state.
+	 * @returns The new state reflecting the applied change, or a failure.
+	 */
+	dispatchChange(state: SucceedingTransactionState<TChange>, change: TChange): ChangeResult;
+
+	/**
+	 * Additional transaction validation when the transaction is closed.
+	 * @param state - The current state of the transaction.
+	 * @returns The new state reflecting the closed transaction, or a failure if the transaction cannot be closed.
+	 */
+	validateOnClose(state: SucceedingTransactionState<TChange>): ChangeResult;
 }

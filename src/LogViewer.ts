@@ -67,18 +67,6 @@ export interface SequencedEditResult<TChange> {
 }
 
 /**
- * Result of applying an identified transaction.
- * @public
- */
-export type EditingResultWithId<TChange> = EditingResult<TChange> & {
-	/**
-	 * Unique identifier for this edit. Must never be reused.
-	 * Used for referencing and de-duplicating edits.
-	 */
-	readonly id: EditId;
-};
-
-/**
  * The data cached by `CachingLogViewer` for an edit.
  */
 export type EditCacheEntry<TChange> =
@@ -134,6 +122,16 @@ export interface SummarizedEditResultCacheEntry {
 	readonly view: RevisionView;
 	readonly status?: undefined;
 }
+
+export type CachedEditingResult<TChange> = AttemptedEditResultCacheEntry<TChange> & {
+	/**
+	 * Unique identifier for this edit. Must never be reused.
+	 * Used for referencing and de-duplicating edits.
+	 */
+	readonly id: EditId;
+	readonly before: RevisionView;
+	readonly changes: readonly TChange[];
+};
 
 /**
  * A revision corresponds to an index in an `EditLog`.
@@ -549,7 +547,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 											reconciliationPath.push({
 												...firstEdit.steps,
 												before: firstEdit.before,
-												after: firstEdit.after,
+												after: firstEdit.view,
 												length: firstEdit.steps.length,
 											});
 										}
@@ -562,7 +560,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 											reconciliationPath.push({
 												...edit.steps,
 												before: edit.before,
-												after: edit.after,
+												after: edit.view,
 												length: edit.steps.length,
 											});
 										}
@@ -596,7 +594,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	/**
 	 * @returns Edit result information for the edit at the given `index`.
 	 */
-	private getEditResultFromIndex(index: number): EditingResultWithId<TChange> {
+	private getEditResultFromIndex(index: number): CachedEditingResult<TChange> {
 		const edit = this.log.getEditInSessionAtIndex(index);
 		const before = this.getRevisionViewInSession(index);
 		const resultAfter = this.getEditResultInSession(index + 1);
@@ -609,13 +607,14 @@ export class CachingLogViewer<TChange> implements LogViewer {
 					status: EditStatus.Applied,
 					before,
 					changes: edit.changes,
-					after: resultAfter.view,
+					view: resultAfter.view,
 					steps: resultAfter.steps,
 			  }
 			: {
 					id: edit.id,
 					status: resultAfter.status,
 					before,
+					view: resultAfter.view,
 					changes: edit.changes,
 			  };
 	}
@@ -625,7 +624,7 @@ export class CachingLogViewer<TChange> implements LogViewer {
 	 * @returns Edit result information for the edit with the given sequence number or the nearest sequenced edit before that.
 	 * Undefined if no sequenced edit occurred at or prior to the given sequenceNumber.
 	 */
-	public getEditResultFromSequenceNumber(sequenceNumber: number): EditingResultWithId<TChange> | undefined {
+	public getEditResultFromSequenceNumber(sequenceNumber: number): CachedEditingResult<TChange> | undefined {
 		const earliestSequenced = this.earliestSequencedEditInSession();
 		if (earliestSequenced !== undefined && sequenceNumber >= earliestSequenced.sequenceNumber) {
 			const lowestIndex = this.log.getIndexOfId(earliestSequenced.edit.id);
@@ -651,13 +650,14 @@ export class CachingLogViewer<TChange> implements LogViewer {
 								status: EditStatus.Applied,
 								before,
 								changes: edit.changes,
-								after: resultAfter.view,
+								view: resultAfter.view,
 								steps: resultAfter.steps,
 						  }
 						: {
 								id: edit.id,
 								status: resultAfter.status,
 								before,
+								view: resultAfter.view,
 								changes: edit.changes,
 						  };
 				}

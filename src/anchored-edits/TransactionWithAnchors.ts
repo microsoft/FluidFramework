@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId, DetachedSequenceId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
 import { ReconciliationPath } from '../ReconciliationPath';
 import { Transaction } from '../default-edits';
+import { Result } from '../Common';
+import {
+	ChangeResult,
+	EditStatus,
+	GenericTransaction,
+	GenericTransactionPolicy,
+	SucceedingTransactionState,
+	TransactionFailure,
+} from '../generic';
 import { AnchoredChange } from './PersistedTypes';
 import { resolveChangeAnchors } from './AnchorResolution';
 
@@ -23,17 +31,37 @@ import { resolveChangeAnchors } from './AnchorResolution';
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
  */
-export class TransactionWithAnchors extends Transaction {
-	protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]> = new Map();
-
-	public static factory(view: RevisionView): TransactionWithAnchors {
-		return new TransactionWithAnchors(view);
+export namespace TransactionWithAnchors {
+	/**
+	 * Makes a new {@link GenericTransaction} that follows the {@link TransactionWithAnchors.Policy} policy.
+	 */
+	export function factory(view: RevisionView): GenericTransaction<AnchoredChange> {
+		return new GenericTransaction(view, new Policy());
 	}
 
-	protected tryResolveChange(
-		change: AnchoredChange,
-		path: ReconciliationPath<AnchoredChange>
-	): AnchoredChange | undefined {
-		return resolveChangeAnchors(change, this.view, path);
+	type ValidState = SucceedingTransactionState<AnchoredChange>;
+
+	/**
+	 * The policy followed by a {@link TransactionWithAnchors}.
+	 */
+	export class Policy implements GenericTransactionPolicy<AnchoredChange> {
+		private readonly basePolicy = new Transaction.Policy();
+
+		public tryResolveChange(
+			state: ValidState,
+			change: AnchoredChange,
+			path: ReconciliationPath<AnchoredChange>
+		): Result<AnchoredChange, TransactionFailure> {
+			const resolved = resolveChangeAnchors(change, state.view, path);
+			return resolved === undefined ? Result.error({ status: EditStatus.Invalid }) : Result.ok(resolved);
+		}
+
+		public validateOnClose(state: ValidState): ChangeResult {
+			return this.basePolicy.validateOnClose(state);
+		}
+
+		public dispatchChange(state: ValidState, change: AnchoredChange): ChangeResult {
+			return this.basePolicy.dispatchChange(state, change);
+		}
 	}
 }

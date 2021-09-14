@@ -3,39 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeResult, EditStatus, GenericTransaction } from '../../generic';
+import { Result } from '../../Common';
+import { ChangeResult, EditStatus, GenericTransaction, GenericTransactionPolicy } from '../../generic';
 import { RevisionView } from '../../TreeView';
 
 /**
- * A mock implementation of `GenericTransaction` for use in tests.
  * @internal
  */
-// eslint-disable-next-line import/export
-export class MockTransaction<TChange> extends GenericTransaction<TChange> {
-	public options: MockTransaction.Options;
-
-	public constructor(view: RevisionView, options: MockTransaction.Options = MockTransaction.defaultOptions) {
-		super(view);
-		this.options = options;
-	}
-
-	public static factory<TChange>(view: RevisionView): MockTransaction<TChange> {
-		return new MockTransaction<TChange>(view);
-	}
-
-	protected validateOnClose(): EditStatus {
-		return this.options.statusOnClose;
-	}
-
-	protected dispatchChange(): ChangeResult {
-		return this;
-	}
-}
-
-/**
- * @internal
- */
-// eslint-disable-next-line import/export
 export namespace MockTransaction {
 	export interface Options {
 		statusOnClose: EditStatus;
@@ -44,4 +18,42 @@ export namespace MockTransaction {
 	export const defaultOptions: Options = {
 		statusOnClose: EditStatus.Applied,
 	};
+
+	/**
+	 * Makes a new {@link GenericTransaction} that follows the {@link MockTransaction.Policy} policy.
+	 *
+	 * @internal
+	 */
+	export function factory<TChange>(
+		view: RevisionView,
+		options: Options = defaultOptions
+	): GenericTransaction<TChange> {
+		return new GenericTransaction(view, new Policy<TChange>(options));
+	}
+
+	/**
+	 * A mock implementation of `GenericTransaction` for use in tests.
+	 * @internal
+	 */
+	export class Policy<TChange> implements GenericTransactionPolicy<TChange> {
+		public options: Options;
+
+		public constructor(options: Options) {
+			this.options = options;
+		}
+
+		public tryResolveChange(state, change: TChange): Result.Ok<TChange> {
+			return Result.ok(change);
+		}
+
+		public validateOnClose(state): ChangeResult {
+			return this.options.statusOnClose === EditStatus.Applied
+				? Result.ok(state.view)
+				: Result.error({ status: this.options.statusOnClose });
+		}
+
+		public dispatchChange(state): ChangeResult {
+			return Result.ok(state.view);
+		}
+	}
 }
