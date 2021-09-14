@@ -60,7 +60,7 @@
 		"@fluidframework/test-drivers": "^0.42.4",
 		"@fluidframework/test-runtime-utils": "^0.42.4",
 		"@fluidframework/test-utils": "^0.42.4",
-		"@microsoft/api-extractor": "^7.18.7",
+		"@microsoft/api-extractor": "^7.18.8",
 		"@types/lru-cache": "^5.1.1",
 		"@types/socket.io-client": "^1.4.36",
 		"@typescript-eslint/parser": "^4.31.0",
@@ -71,7 +71,7 @@
 		"eslint": "^7.32.0",
 		"mocha": "^8.4.0",
 		"nyc": "^15.1.0",
-		"prettier": "^2.3.2",
+		"prettier": "^2.4.0",
 		"rimraf": "^3.0.2"
 	},
 	"publishConfig": {
