@@ -437,6 +437,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
+        // If the node is changed after it has expired, log an error as this may mean use-after-delete.
         this.logErrorIfExpired("expiredObjectChanged");
         super.recordChange(op);
     }
