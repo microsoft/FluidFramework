@@ -325,7 +325,6 @@ async function setUpLocalServerTestSharedTreeGeneric<
 	];
 	const runtimeFactory = () =>
 		new TestContainerRuntimeFactory(TestDataStoreType, new TestFluidObjectFactory(registry), {
-			addGlobalAgentSchedulerAndLeaderElection: false,
 			summaryOptions: { initialSummarizerDelayMs: 0 },
 		});
 

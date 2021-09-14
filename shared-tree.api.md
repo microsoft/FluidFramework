@@ -5,6 +5,7 @@
 ```ts
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -14,7 +15,6 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
@@ -570,7 +570,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean): SharedTree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedObject>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
     // (undocumented)
     static Type: string;
     // (undocumented)

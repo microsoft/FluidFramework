@@ -8,8 +8,8 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelFactory,
+	IChannel,
 } from '@fluidframework/datastore-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
 import { SharedTreeFactoryOptions } from '../generic';
 import { SharedTree } from './SharedTree';
 
@@ -60,7 +60,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
-	): Promise<ISharedObject> {
+	): Promise<IChannel> {
 		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
