@@ -33,7 +33,7 @@ export interface IFluidPackageEnvironment {
  * Fluid-specific properties expected on a package to be loaded by the code loader.
  * While compatible with the npm package format it is not necessary that that package is an
  * npm package:
- * https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid
+ * {@link https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid}
  */
 export interface IFluidPackage {
     /**
@@ -112,7 +112,7 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
      * Determines if the `candidate` code details satisfy the constraints specified in `constraint` code details.
      *
      * Similar semantics to:
-     *      https://github.com/npm/node-semver#usage
+     * {@link https://github.com/npm/node-semver#usage}
      */
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 
@@ -124,7 +124,7 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
      *      `undefined` if `a` is not comparable to `b`.
      *
      * Similar semantics to:
-     *      https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description
+     * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description}
      */
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
 }
