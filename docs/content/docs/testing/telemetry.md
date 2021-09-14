@@ -13,12 +13,10 @@ your other telemetry, and route the event data in whatever way you need.
 ## Collect Fluid Framework logs with a custom `ITelemetryBaseLogger`
 
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
-be implemented and passed into the client's constructor via the props parameter.
+be implemented and passed into the service client's constructor via the `props` parameter.
 
 All Fluid service clients (for example, `AzureClient` and `TinyliciousClient`) allow passing a `logger?: ITelemetryBaseLogger`
-into the service client props. Both `createContainer()` and `getContainer()` methods will
-create an instance of a `Loader` class object, where the logger defined in the service client props is passed in
-as an optional parameter, `ILoaderProps.logger`, to the `Loader` constructor.
+into the service client props. Both `createContainer()` and `getContainer()` methods will then create an instance of the `logger`.
 
 [TinyliciousClientProps](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/tinylicious-client/src/interfaces.ts#L17)
 interface definition takes an optional parameter `logger`. (The definition is similar to
@@ -212,8 +210,7 @@ this.logger.sendTelemetryEvent({
 });
 ```
 
-Another point worth noting is that with the customized logics, it is a great place where you can send these events to
-your external telemetry system to have them logged.
+Because you can customize the logic, you can send these events to your own external telemetry system to have them logged. This enables you to integrate Fluid Framework logging with your other telemetry.
 
 ## Code example
 
@@ -236,8 +233,7 @@ export class ConsoleLogger implements ITelemetryBaseLogger {
 }
 ```
 
-This custom logger should be provided in the service client constructor and will be created when creating or getting
-the container. Once the container is returned, the custom logger is now hooked up to the container's telemetry system.
+This custom logger should be provided in the service client constructor. Fluid will create an instance of the logger when creating or getting the container. The custom logger is hooked up to the container's telemetry system by the time the container is returned.
 
 ```ts
 async function start(): Promise<void> {
@@ -268,23 +264,23 @@ event object.
 
 {{% callout warning %}}
 
-The purpose of `ConsoleLogger` is purely to demonstrate how the `ITelemetryBaseLogger` interface should be implemented. The
-Fluid Framework provides `DebugLogger` by default if a custom logger is not provided. For more information, please refer to
-[Using DebugLogger](#using-debuglogger) below instead of implementing something similar to `ConsoleLogger`.
+The purpose of `ConsoleLogger` is to demonstrate how the `ITelemetryBaseLogger` interface should be implemented. In typical usage, developers should instead use the `DebugLogger`, which is provided by default by the Fluid Framework. See [Using DebugLogger](#using-debuglogger) below instead of implementing something similar to `ConsoleLogger`.
 
 {{% /callout %}}
 
 ### Using `DebugLogger`
 
-The `DebugLogger` offers a convenient way to output all telemetry events to the console. Like mentioned previously, creating
-or getting a container creates a `Loader` object, which then also provides a `DebugLogger` as a mixin in its constructor. Hence,
-`DebugLogger` is already present by default when creating/getting a container, and no extra steps are required to use it.
+The `DebugLogger` offers a convenient way to output all telemetry events to the console. `DebugLogger` is present by default when creating/getting a container, and no extra steps are required to use it.
 
-Under the hood, `DebugLogger` uses the [debug](https://github.com/visionmedia/debug) library. `Debug` allows a library to log
-messages to a namespace. By default these messages aren't displayed but can be enabled by the app that is using the library. For
-our node apps enabling library logging can be done by setting the DEBUG environment variable - i.e.
+```suggestion
+Under the hood, `DebugLogger` uses the [debug](https://github.com/visionmedia/debug) library. The `debug` library enables Fluid to send to a unique 'namespace,' `fluid`. By default these messages are hidden but they can be enabled
+in both Node.js and a web browser.
 
-In the browser you can enable them by setting `localStorage.debug` variable, after which you will need to reload the page.
+**To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console, after which you will need to reload the page.
 
-`localStorage.debug = 'fluid:*'`
+\`\`\`js
+localStorage.debug = 'fluid:*'
+\`\`\`
+
+**To enable Fluid Framework logging in a Node.js application,** set the `DEBUG` environment variable when running the app.
 
