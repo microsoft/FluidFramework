@@ -25,7 +25,6 @@ const encodeHeader = (
  * POST <path> HTTP/<1.1|2>
  * HOST <hostname>
  * Content-Type: application/x-www-form-urlencoded
- * Content-Length: <length>
  *
  * <url-encoded-headers-body-and-method>
  */
@@ -58,7 +57,6 @@ export class RestLessClient {
         newRequest.headers = {
             // TODO: when we support blob/file uploads, we should potentially add compatibility with multipart/form-data
             "Content-Type": "application/x-www-form-urlencoded",
-            "Content-Length": body.toString().length,
         };
 
         return newRequest;
