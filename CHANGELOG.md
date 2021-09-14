@@ -1,5 +1,20 @@
 # Change Log
 
+## 10.0.0
+
+* build: BREAKING CHANGE: update Fluid dependencies 0.42 -> 0.47
+  * Associated pull request: [33329](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33329)
+  * Commit: [2264b2f26c96527c254131c511bd1206cf212e9b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/2264b2f26c96527c254131c511bd1206cf212e9b)
+* refactor: BREAKING CHANGE: clearer contract between generic transaction code and concrete transaction classes
+  * Associated pull request: [34208](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34208)
+  * Commit: [12c76bd12186f44b585e87d2774a92a1d1a21ff4](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/12c76bd12186f44b585e87d2774a92a1d1a21ff4)
+* build: updates package dependencies
+  * Associated pull request: [34247](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34247)
+  * Commit: [269edee1e5757ed21b1b477cbcecceea41252c0f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/269edee1e5757ed21b1b477cbcecceea41252c0f)
+* merge: `releases/2021.09.2` into `master`
+  * Associated pull request: [34131](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34131)
+  * Commit: [196837cc4318ea2fb79ed440f3559afd900bd6cb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/196837cc4318ea2fb79ed440f3559afd900bd6cb)
+
 ## 8.4.2
 
 * perf: use optimized btree lookup methods
