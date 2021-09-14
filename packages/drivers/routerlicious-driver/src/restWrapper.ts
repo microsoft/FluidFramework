@@ -8,6 +8,7 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
     getAuthorizationTokenFromCredentials,
+    RestLessClient,
     RestWrapper,
 } from "@fluidframework/server-services-client";
 import Axios, { AxiosError, AxiosRequestConfig } from "axios";
@@ -20,6 +21,7 @@ type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefin
 
 export class RouterliciousRestWrapper extends RestWrapper {
     private authorizationHeader: string | undefined;
+    private readonly restLess = new RestLessClient();
 
     constructor(
         private readonly logger: ITelemetryLogger,
@@ -36,10 +38,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
-        const config = {
+        const config = this.restLess.translate({
             ...requestConfig,
             headers: this.generateHeaders(requestConfig.headers),
-        };
+        });
 
         try {
             const response = await this.rateLimiter.schedule(async () => Axios.request<T>(config));
