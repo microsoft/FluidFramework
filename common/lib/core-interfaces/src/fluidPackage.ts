@@ -124,7 +124,7 @@ export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsCompa
      *      `undefined` if `a` is not comparable to `b`.
      *
      * Similar semantics to:
-     * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description}
+     * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#Description | Array.sort}
      */
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
 }
