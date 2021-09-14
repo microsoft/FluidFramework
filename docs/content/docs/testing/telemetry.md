@@ -18,9 +18,9 @@ be implemented and passed into the service client's constructor via the `props` 
 All Fluid service clients (for example, `AzureClient` and `TinyliciousClient`) allow passing a `logger?: ITelemetryBaseLogger`
 into the service client props. Both `createContainer()` and `getContainer()` methods will then create an instance of the `logger`.
 
-[TinyliciousClientProps](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/tinylicious-client/src/interfaces.ts#L17)
+`TinyliciousClientProps`
 interface definition takes an optional parameter `logger`. (The definition is similar to
-[AzureClientProps](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/interfaces.ts#L22) interface)
+`AzureClientProps` interface)
 
 ```ts
 const loader = new Loader({
