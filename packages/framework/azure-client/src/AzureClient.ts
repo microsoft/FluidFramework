@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Container, Loader } from "@fluidframework/container-loader";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
     IDocumentServiceFactory, IUrlResolver,
 } from "@fluidframework/driver-definitions";
@@ -15,11 +14,12 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
 
 import {
-    AzureConnectionConfig,
+    AzureClientProps,
     AzureContainerServices,
 } from "./interfaces";
 import { AzureAudience } from "./AzureAudience";
@@ -35,20 +35,16 @@ export class AzureClient {
 
     /**
      * Creates a new client instance using configuration parameters.
-     * @param connectionConfig - Configuration parameters needed to establish a connection with the Azure Relay Service.
-     * @param logger - Optional. A logger instance to receive diagnostic messages.
+     * @param props - Properties for initializing a new AzureClient instance
      */
-    constructor(
-        connectionConfig: AzureConnectionConfig,
-        private readonly logger?: ITelemetryBaseLogger,
-    ) {
+    constructor(private readonly props: AzureClientProps) {
         this.urlResolver = new AzureUrlResolver(
-            connectionConfig.tenantId,
-            connectionConfig.orderer,
-            connectionConfig.storage,
+            this.props.connection.tenantId,
+            this.props.connection.orderer,
+            this.props.connection.storage,
         );
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-            connectionConfig.tokenProvider,
+            this.props.connection.tokenProvider,
         );
     }
 
@@ -59,7 +55,7 @@ export class AzureClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
 
         const container = await loader.createDetachedContainer({
@@ -87,7 +83,7 @@ export class AzureClient {
     }
 
     /**
-     * Acesses the existing container given its unique ID in the Azure Fluid Relay service.
+     * Accesses the existing container given its unique ID in the Azure Fluid Relay service.
      * @param id - Unique ID of the container in Azure Fluid Relay service
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
@@ -95,10 +91,9 @@ export class AzureClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: AzureContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: AzureContainerServices }> {
         const loader = this.createLoader(containerSchema);
         const container = await loader.resolve({ url: id });
-
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer = new FluidContainer(container, rootDataObject);
         const services = this.getContainerServices(container);
@@ -121,12 +116,11 @@ export class AzureClient {
         );
         const module = { fluidExport: runtimeFactory };
         const codeLoader = { load: async () => module };
-
         return new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,
             codeLoader,
-            logger: this.logger,
+            logger: this.props.logger,
         });
     }
     // #endregion

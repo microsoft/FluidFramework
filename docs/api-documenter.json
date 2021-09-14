@@ -10,6 +10,7 @@
     "@fluidframework/container-definitions",
     "@fluidframework/datastore-definitions",
     "@fluidframework/driver-definitions",
+    "@fluidframework/fluid-static",
     "@fluidframework/protocol-base",
     "@fluidframework/protocol-definitions",
     "@fluidframework/cell",

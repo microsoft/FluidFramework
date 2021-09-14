@@ -41,26 +41,15 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     }
 
-// @public (undocumented)
+// @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     constructor(container: Container, rootDataObject: RootDataObject);
-    // (undocumented)
     attach(): Promise<string>;
-    // (undocumented)
     get attachState(): AttachState;
-    // @deprecated (undocumented)
-    get audience(): IAudience;
-    // @deprecated (undocumented)
-    get clientId(): string | undefined;
-    // (undocumented)
     get connected(): boolean;
-    // (undocumented)
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    // (undocumented)
     dispose(): void;
-    // (undocumented)
     get disposed(): boolean;
-    // (undocumented)
     get initialObjects(): Record<string, IFluidLoadable>;
     }
 
@@ -72,21 +61,18 @@ export interface IConnection {
     mode: "write" | "read";
 }
 
-// @public (undocumented)
+// @public
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
-    // (undocumented)
+    attach(): Promise<string>;
+    readonly attachState: AttachState;
     readonly connected: boolean;
-    // (undocumented)
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    // (undocumented)
     dispose(): void;
-    // (undocumented)
     readonly disposed: boolean;
-    // (undocumented)
     readonly initialObjects: LoadableObjectRecord;
 }
 
-// @public (undocumented)
+// @public
 export interface IFluidContainerEvents extends IEvent {
     // (undocumented)
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;

@@ -273,7 +273,6 @@ export class EpochTracker implements IPersistedFileCache {
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
-            this.logger.sendErrorEvent({ eventName: "Coherency409" }, error);
             throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1, { [Odsp409Error]: true });
         }
     }
@@ -283,7 +282,7 @@ export class EpochTracker implements IPersistedFileCache {
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-            throwOdspNetworkError(message ?? "Epoch Mismatch", fluidEpochMismatchError);
+            throwOdspNetworkError(message ?? "epochMismatch", fluidEpochMismatchError);
         }
     }
 

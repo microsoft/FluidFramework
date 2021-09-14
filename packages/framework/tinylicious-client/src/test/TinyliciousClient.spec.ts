@@ -4,14 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DiceRoller } from "@fluid-example/diceroller";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import {
-    TinyliciousClient,
-    TinyliciousConnectionConfig,
-} from "..";
+import { TinyliciousClient } from "..";
+import { TestDataObject } from "./TestDataObject";
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
@@ -48,8 +45,8 @@ describe("TinyliciousClient", () => {
      * be returned.
      */
     it("can create a container successfully with port number specification", async () => {
-        const clientConfig: TinyliciousConnectionConfig = { port: 7070 };
-        const clientWithPort = new TinyliciousClient(clientConfig);
+        const clientProps = { connection: { port: 7070 } };
+        const clientWithPort = new TinyliciousClient(clientProps);
 
         const containerAndServicesP = clientWithPort.createContainer(schema);
 
@@ -217,7 +214,7 @@ describe("TinyliciousClient", () => {
             initialObjects: {
                 map1: SharedMap,
             },
-            dynamicObjectTypes: [DiceRoller],
+            dynamicObjectTypes: [TestDataObject],
         };
 
         const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).container;
@@ -227,7 +224,7 @@ describe("TinyliciousClient", () => {
             });
         });
 
-        const newPair = await createFluidContainer.create(DiceRoller);
+        const newPair = await createFluidContainer.create(TestDataObject);
         assert.ok(newPair?.handle);
 
         const map1 = createFluidContainer.initialObjects.map1 as SharedMap;

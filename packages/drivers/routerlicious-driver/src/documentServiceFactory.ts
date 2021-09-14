@@ -97,7 +97,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
                 `All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`);
         }
         const parsedDeltaStorageUrl = new URL(deltaStorageUrl);
-        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
+        parsedDeltaStorageUrl.pathname = replaceDocumentIdInPath(parsedDeltaStorageUrl.pathname, documentId);
 
         return this.createDocumentService(
             {

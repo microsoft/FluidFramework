@@ -11,6 +11,11 @@ import { pkgName } from "./packageVersion";
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent) {
+        // TODO: Remove when issue #7061 is resolved.
+        // Don't log this event as we generate too much.
+        if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
+            return;
+        }
         if (this.testName !== undefined) {
             event.testName = this.testName;
         }

@@ -926,11 +926,11 @@ class DataBinding {
         var arrayIterator = new ArrayChangeSetIterator(nestedChangeSet);
         var index, i;
         while (!arrayIterator.atEnd()) {
-          switch (arrayIterator.type) {
+          switch (arrayIterator.opDescription.type) {
             case ArrayChangeSetIterator.types.INSERT:
             case ArrayChangeSetIterator.types.MODIFY:
-              for (i = 0; i < arrayIterator.operation[1].length; ++i) {
-                index = arrayIterator.operation[0] + i + arrayIterator.offset;
+              for (i = 0; i < arrayIterator.opDescription.operation[1].length; ++i) {
+                index = arrayIterator.opDescription.operation[0] + i + arrayIterator.opDescription.offset;
                 this._registerCallbacksForSingleReferenceProperty(
                   in_tokenizedPath,
                   in_tokenizedFullPath,
@@ -945,11 +945,11 @@ class DataBinding {
               }
               break;
             case ArrayChangeSetIterator.types.REMOVE:
-              for (i = 0; i < arrayIterator.operation[1]; ++i) {
+              for (i = 0; i < arrayIterator.opDescription.operation[1]; ++i) {
               // We don't have a changeset for this. Since we assume that the previous elements have already
               // been removed, we don't add the range index i in this call
               // Provide context (even w/o a valid changeset) to make writing callbacks easier
-                index = arrayIterator.operation[0] + arrayIterator.offset;
+                index = arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset;
                 referenceInformation = getInNestedObjects.apply(undefined, [in_referencePropertySubTable].concat(
                   escapeTokenizedPathForMap(in_tokenizedPath.concat(index))));
                 // we only need to call _handleRemovals if we actually had a reference there (we might have deleted
@@ -957,7 +957,7 @@ class DataBinding {
                 if (referenceInformation) {
                   nestedRegisteredPath = in_nestedRegisteredPath[index] ? in_nestedRegisteredPath[index] :
                     in_nestedRegisteredPath;
-                  tokenizedAbsolutePath.push(arrayIterator.offset);
+                  tokenizedAbsolutePath.push(arrayIterator.opDescription.offset);
                   this._handleRemovals(
                     tokenizedAbsolutePath,
                     nestedRegisteredPath,
@@ -975,7 +975,7 @@ class DataBinding {
               }
               break;
             default:
-              throw new Error('ArrayChangeSetIterator: unknown operator ' + arrayIterator.type);
+              throw new Error('ArrayChangeSetIterator: unknown operator ' + arrayIterator.opDescription.type);
           }
           arrayIterator.next();
         }

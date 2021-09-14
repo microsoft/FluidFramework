@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert , BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, BatchManager, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IDocumentDeltaConnection,
     IDocumentDeltaConnectionEvents,
@@ -24,6 +24,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+
+// Local storage key to disable the BatchManager
+const batchManagerDisabledKey = "FluidDisableBatchManager";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -80,6 +83,7 @@ export class DocumentDeltaConnection
      */
     protected _disposed: boolean = false;
     protected readonly logger: ITelemetryLogger;
+    protected readonly isBatchManagerDisabled: boolean = false;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -102,14 +106,7 @@ export class DocumentDeltaConnection
         this.logger = ChildLogger.create(logger, "DeltaConnection");
 
         this.submitManager = new BatchManager<IDocumentMessage[]>(
-            (submitType, work) => {
-                // Although the implementation here disconnects the socket and does not reuse it, other subclasses
-                // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
-                // on the still-live socket.
-                if (!this.disposed) {
-                    this.socket.emit(submitType, this.clientId, work);
-                }
-            });
+            (submitType, work) => this.emitMessages(submitType, work));
 
         this.on("newListener", (event, listener) => {
             assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
@@ -138,6 +135,8 @@ export class DocumentDeltaConnection
                     });
             }
         });
+
+        this.isBatchManagerDisabled = DocumentDeltaConnection.disabledBatchManagerFeatureGate;
     }
 
     /**
@@ -259,6 +258,32 @@ export class DocumentDeltaConnection
         return this.details.initialClients;
     }
 
+    protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+        // Although the implementation here disconnects the socket and does not reuse it, other subclasses
+        // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
+        // on the still-live socket.
+        if (!this.disposed) {
+            this.socket.emit(type, this.clientId, messages);
+        }
+    }
+
+    private static get disabledBatchManagerFeatureGate() {
+        try {
+            return localStorage !== undefined
+                && typeof localStorage === "object"
+                && localStorage.getItem(batchManagerDisabledKey) === "1";
+        } catch (e) { }
+        return false;
+    }
+
+    protected submitCore(type: string, messages: IDocumentMessage[]) {
+        if (this.isBatchManagerDisabled) {
+            this.emitMessages(type, [messages]);
+        } else {
+            this.submitManager.add(type, messages);
+        }
+    }
+
     /**
      * Submits a new delta operation to the server
      *
@@ -266,7 +291,7 @@ export class DocumentDeltaConnection
      */
     public submit(messages: IDocumentMessage[]): void {
         this.checkNotClosed();
-        this.submitManager.add("submitOp", messages);
+        this.submitCore("submitOp", messages);
     }
 
     /**
@@ -276,7 +301,7 @@ export class DocumentDeltaConnection
      */
     public submitSignal(message: IDocumentMessage): void {
         this.checkNotClosed();
-        this.submitManager.add("submitSignal", [message]);
+        this.submitCore("submitSignal", [message]);
     }
 
     /**
@@ -285,7 +310,7 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("client closing connection", true /* canRetry */));
+            createGenericNetworkError("clientClosingConnection", true /* canRetry */));
     }
 
     // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
@@ -333,12 +358,12 @@ export class DocumentDeltaConnection
 
             // Listen for connection issues
             this.addConnectionListener("connect_error", (error) => {
-                fail(true, this.createErrorObject("connect_error", error));
+                fail(true, this.createErrorObject("connectError", error));
             });
 
             // Listen for timeouts
             this.addConnectionListener("connect_timeout", () => {
-                fail(true, this.createErrorObject("connect_timeout"));
+                fail(true, this.createErrorObject("connectTimeout"));
             });
 
             this.addConnectionListener("connect_document_success", (response: IConnected) => {
@@ -358,7 +383,7 @@ export class DocumentDeltaConnection
                     // In this case we will get "read", even if we requested "write"
                     if (actualMode !== requestedMode) {
                         fail(false, this.createErrorObject(
-                            "connect_document_success",
+                            "connectDocumentSuccess",
                             "Connected in a different mode than was requested",
                             false,
                         ));
@@ -367,7 +392,7 @@ export class DocumentDeltaConnection
                 } else {
                     if (actualMode === "write") {
                         fail(false, this.createErrorObject(
-                            "connect_document_success",
+                            "connectDocumentSuccess",
                             "Connected in write mode without write permissions",
                             false,
                         ));
@@ -409,14 +434,14 @@ export class DocumentDeltaConnection
 
                 // This is not an socket.io error - it's Fluid protocol error.
                 // In this case fail connection and indicate that we were unable to create connection
-                fail(false, this.createErrorObject("connect_document_error", error));
+                fail(false, this.createErrorObject("connectDocumentError", error));
             }));
 
             this.socket.emit("connect_document", connectMessage);
 
             // Give extra 2 seconds for handshake on top of socket connection timeout
             this.socketConnectionTimeout = setTimeout(() => {
-                fail(false, this.createErrorObject("Timeout waiting for handshake from ordering service"));
+                fail(false, this.createErrorObject("orderingServiceHandshakeTimeout"));
             }, timeout + 2000);
         });
 

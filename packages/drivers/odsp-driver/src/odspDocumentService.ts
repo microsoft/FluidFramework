@@ -37,7 +37,7 @@ import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
-import { RetryCoherencyErrorsStorageAdapter } from "./retryCoherencyErrorsStorageAdapter";
+import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 
 // Gate that when set to "1", instructs to fetch the binary format snapshot from the spo.
 function gatesBinaryFormatSnapshot() {
@@ -186,7 +186,7 @@ export class OdspDocumentService implements IDocumentService {
             );
         }
 
-        return new RetryCoherencyErrorsStorageAdapter(this.storageManager, this.logger);
+        return new RetryErrorsStorageAdapter(this.storageManager, this.logger);
     }
 
     /**
@@ -268,7 +268,7 @@ export class OdspDocumentService implements IDocumentService {
 
             const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
             if (finalWebsocketToken === null) {
-                throwOdspNetworkError("Push Token is null", fetchTokenErrorCode);
+                throwOdspNetworkError("pushTokenIsNull", fetchTokenErrorCode);
             }
             try {
                 const connection = await this.connectToDeltaStreamWithRetry(
@@ -391,10 +391,10 @@ export class OdspDocumentService implements IDocumentService {
                 write: async (key: string, opsData: string) => {
                     return this.cache.persistedCache.put({...opsKey, key}, opsData);
                 },
-                read: async (batch: string) => undefined,
+                read: async (key: string) => this.cache.persistedCache.get({...opsKey, key}),
                 remove: () => { this.cache.persistedCache.removeEntries().catch(() => {}); },
             },
-            this.hostPolicy.opsCaching?.batchSize ?? 100,
+            batchSize,
             this.hostPolicy.opsCaching?.timerGranularity ?? 5000,
             this.hostPolicy.opsCaching?.totalOpsToCache ?? 5000,
         );

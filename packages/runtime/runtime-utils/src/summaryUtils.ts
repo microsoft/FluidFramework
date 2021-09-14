@@ -5,6 +5,7 @@
 
 import {
     assert,
+    bufferToString,
     fromBase64ToUtf8,
     IsoBuffer,
     Uint8ArrayToString,
@@ -214,9 +215,6 @@ export function convertToSummaryTreeWithStats(
                 break;
             }
 
-            case TreeEntry.Commit:
-                throw new Error("Should not have Commit TreeEntry in summary");
-
             default:
                 throw new Error("Unexpected TreeEntry type");
         }
@@ -266,11 +264,11 @@ export function convertSnapshotTreeToSummaryTree(
 
     const builder = new SummaryTreeBuilder();
     for (const [path, id] of Object.entries(snapshot.blobs)) {
-        let decoded: string | Uint8Array | undefined;
+        let decoded: string | undefined;
         if ((snapshot as any).blobsContents !== undefined) {
             const content: ArrayBufferLike = (snapshot as any).blobsContents[id];
             if (content !== undefined) {
-                decoded = new Uint8Array(content);
+                decoded = bufferToString(content, "utf-8");
             }
         // 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
         // only for blobPath -> blobId mapping and not for blobId -> blob value contents.

@@ -11,19 +11,20 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { IWriteableLoggingError } from '@fluidframework/telemetry-utils';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
 export const CreateProcessingError: typeof DataProcessingError.wrapIfUnrecognized;
 
 // @public (undocumented)
-export class DataCorruptionError extends LoggingError implements IErrorBase {
-    constructor(errorMessage: string, props: ITelemetryProperties);
+export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
+    constructor(fluidErrorCode: string, props: ITelemetryProperties);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
     readonly errorType = ContainerErrorType.dataCorruptionError;
+    // (undocumented)
+    readonly fluidErrorCode: string;
 }
 
 // @public (undocumented)
@@ -60,13 +61,15 @@ export class GenericError extends LoggingError implements IGenericError, IFluidE
 }
 
 // @public
-export class ThrottlingWarning extends LoggingError implements IThrottlingWarning {
-    constructor(message: string, retryAfterSeconds: number, props?: ITelemetryProperties);
+export class ThrottlingWarning extends LoggingError implements IThrottlingWarning, IFluidErrorBase {
+    constructor(message: string, fluidErrorCode: string, retryAfterSeconds: number, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType = ContainerErrorType.throttlingError;
     // (undocumented)
+    readonly fluidErrorCode: string;
+    // (undocumented)
     readonly retryAfterSeconds: number;
-    static wrap(error: any, prefix: string, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
+    static wrap(error: any, errorCode: string, retryAfterSeconds: number, logger: ITelemetryLogger): IThrottlingWarning;
 }
 
 // @public
@@ -79,10 +82,10 @@ export class UsageError extends LoggingError implements IFluidErrorBase {
 }
 
 // @public
-export function wrapError<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;
+export function wrapError<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T): T;
 
 // @public
-export function wrapErrorAndLog<T extends IWriteableLoggingError>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
+export function wrapErrorAndLog<T extends IFluidErrorBase>(innerError: unknown, newErrorFn: (message: string) => T, logger: ITelemetryLogger): T;
 
 
 // (No @packageDocumentation comment for this package)

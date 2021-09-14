@@ -10,7 +10,7 @@ import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-defi
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
 import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { createOdspNetworkError, invalidFileNameStatusCode, enrichOdspError, IFacetCodes } from "../odspErrorUtils";
+import { createOdspNetworkError, invalidFileNameStatusCode, enrichOdspError } from "../odspErrorUtils";
 
 describe("OdspErrorUtils", () => {
     function assertCustomPropertySupport(err: any) {
@@ -132,9 +132,14 @@ describe("OdspErrorUtils", () => {
             assert(typeof error.getTelemetryProperties().online === "string");
         });
         it("enriched with facetCodes", () => {
-            const error = new GenericNetworkError("Some message", false) as GenericNetworkError & IFacetCodes;
             const responseText = '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }';
-            enrichOdspError(error, undefined /* response */, responseText);
+            const error = createOdspNetworkError(
+                "Some message",
+                400,
+                undefined,
+                undefined, /* response */
+                responseText,
+            );
 
             assert.deepStrictEqual(error.facetCodes, ["bar", "foo"]);
             assert(isILoggingError(error));
@@ -150,8 +155,12 @@ describe("OdspErrorUtils", () => {
                     return `mock header ${id}`;
                 },
             };
-            const error = new GenericNetworkError("Some message", false);
-            enrichOdspError(error, { type: "fooType", headers: mockHeaders } as unknown as Response /* response */, "non-standard response text");
+            const error = createOdspNetworkError(
+                "Some message",
+                400,
+                undefined,
+                { type: "fooType", headers: mockHeaders } as unknown as Response, /* response */
+                "non-standard response text");
 
             assert(isILoggingError(error));
             assert.equal(error.getTelemetryProperties().response, undefined, "If response text is not standard don't log it");

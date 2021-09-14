@@ -132,6 +132,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
+            context.log?.info(`Restoring checkpoint from db. Seq no: ${lastCheckpoint.sequenceNumber}`);
         }
 
         // Filter and keep ops after protocol state
@@ -181,7 +182,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
-            opMessages,
+            opsSinceLastSummary,
             scribeSessionMetric);
 
         await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});

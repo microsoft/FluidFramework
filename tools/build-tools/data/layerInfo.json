@@ -99,6 +99,7 @@
             },
             "Telemetry-Utils": {
                 "packages": [
+                    "@fluid-internal/mock-logger",
                     "@fluidframework/telemetry-utils"
                 ],
                 "deps": [
@@ -140,13 +141,12 @@
                     "Container-Utils"
                 ]
             },
-            "Hosts": {
+            "BaseHost": {
                 "packages": [
                     "@fluidframework/base-host"
                 ],
                 "deps": [
-                    "Loader",
-                    "Framework-Utils"
+                    "Loader"
                 ]
             },
             "HostUtils": {
@@ -164,9 +164,6 @@
                 ]
             },
             "Runtime": {
-                "packages": [
-                    "@fluidframework/agent-scheduler"
-                ],
                 "dirs": [
                     "experimental/dds/",
                     "packages/dds/",
@@ -180,7 +177,6 @@
             },
             "Framework": {
                 "packages": [
-                    "@fluid-internal/client-api",
                     "@fluid-experimental/data-objects",
                     "@fluidframework/fluid-static"
                 ],
@@ -190,7 +186,8 @@
                     "packages/framework/"
                 ],
                 "deps": [
-                    "Hosts",
+                    "Framework-Utils",
+                    "Loader",
                     "Runtime"
                 ]
             },
@@ -214,7 +211,6 @@
                 ],
                 "deps": [
                     "Framework",
-                    "Hosts",
                     "Runtime"
                 ]
             },
@@ -225,8 +221,7 @@
                     "examples/",
                     "experimental/examples/",
                     "experimental/PropertyDDS/examples/",
-                    "experimental/PropertyDDS/services/",
-                    "packages/agents/"
+                    "experimental/PropertyDDS/services/"
                 ],
                 "deps": [
                     "Framework",
@@ -261,6 +256,7 @@
                 "packages": [
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
+                    "@fluidframework/test-client-utils",
                     "@fluidframework/test-runtime-utils",
                     "@fluid-tools/webpack-fluid-loader"
                 ],

@@ -25,12 +25,12 @@ import { IFluidConfiguration } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidRunnable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -205,7 +205,7 @@ export interface ContainerRuntimeMessage {
 }
 
 // @public (undocumented)
-export const createSummarizingWarning: (details: string, logged: boolean) => SummarizingWarning;
+export const createSummarizingWarning: (errorCode: string, logged: boolean) => SummarizingWarning;
 
 // @public
 export class DeltaScheduler {
@@ -307,7 +307,7 @@ export interface IConnectableRuntime {
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
-    once(event: "connected" | "disconnected", listener: () => void): this;
+    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 // @public
@@ -462,10 +462,10 @@ export interface ISummarizeOptions {
 export const ISummarizer: keyof IProvideSummarizer;
 
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidRunnable, IFluidLoadable {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRouter, IFluidLoadable {
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     // (undocumented)
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): OnDemandSummarizeResult;
@@ -652,7 +652,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void>;
+    run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
@@ -689,16 +689,18 @@ export type SummarizerStopReason =
  | "summarizerClientDisconnected" | "summarizerException";
 
 // @public (undocumented)
-export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
-    constructor(errorMessage: string, logged?: boolean);
+export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
+    constructor(errorMessage: string, fluidErrorCode: string, logged?: boolean);
     // (undocumented)
     readonly canRetry = true;
     // (undocumented)
     readonly errorType = "summarizingError";
     // (undocumented)
+    readonly fluidErrorCode: string;
+    // (undocumented)
     readonly logged: boolean;
     // (undocumented)
-    static wrap(error: any, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
+    static wrap(error: any, errorCode: string, logged: boolean | undefined, logger: ITelemetryLogger): SummarizingWarning;
 }
 
 // @public

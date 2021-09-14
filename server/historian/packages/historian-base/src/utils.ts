@@ -8,6 +8,7 @@ import { Params } from "express-serve-static-core";
 import { getParam } from "@fluidframework/server-services-utils";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import winston from "winston";
 import safeStringify from "json-stringify-safe";
@@ -59,21 +60,22 @@ export function getTenantIdFromRequest(params: Params) {
 export function getRequestErrorTranslator(
     url: string,
     method: string): (error: any) => never {
-    const getStandardLogErrorMessage = (message: string) =>
-        `[${method}] Request to [${url}] failed: ${message}`;
+    const standardLogErrorMessage = `[${method}] Request to [${url}] failed`;
     const requestErrorTranslator = (error: any): never => {
         // BasicRestWrapper only throws `AxiosError.response.status` when available.
         // Only bubble the error code, but log additional details for debugging purposes
         if (typeof error === "number" || !Number.isNaN(Number.parseInt(error, 10)))  {
             const errorCode = typeof error === "number" ? error : Number.parseInt(error, 10);
-            winston.error(getStandardLogErrorMessage(`${errorCode}`));
+            winston.error(`${standardLogErrorMessage}: ${errorCode}`);
+            Lumberjack.error(`${standardLogErrorMessage}: ${errorCode}`);
             throw new NetworkError(
                 errorCode,
                 "Internal Service Request Failed",
             );
         }
         // Treat anything else as an internal error, but log for debugging purposes
-        winston.error(getStandardLogErrorMessage(safeStringify(error)));
+        winston.error(`${standardLogErrorMessage}: ${safeStringify(error)}`);
+        Lumberjack.error(standardLogErrorMessage, undefined, error);
         throw new NetworkError(500, "Internal Server Error");
     };
     return requestErrorTranslator;

@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IRequest,
     IResponse,
@@ -35,22 +35,26 @@ import { SummarizeHeuristicData } from "./summarizerHeuristics";
 
 const summarizingError = "summarizingError";
 
-export class SummarizingWarning extends LoggingError implements ISummarizingWarning {
+export class SummarizingWarning extends LoggingError implements ISummarizingWarning, IFluidErrorBase {
     readonly errorType = summarizingError;
     readonly canRetry = true;
 
-    constructor(errorMessage: string, readonly logged: boolean = false) {
+    constructor(
+        errorMessage: string,
+        readonly fluidErrorCode: string,
+        readonly logged: boolean = false,
+    ) {
         super(errorMessage);
     }
 
-    static wrap(error: any, logged: boolean = false, logger: ITelemetryLogger) {
-        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
+    static wrap(error: any, errorCode: string, logged: boolean = false, logger: ITelemetryLogger) {
+        const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, errorCode, logged);
         return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
     }
 }
 
 export const createSummarizingWarning =
-    (details: string, logged: boolean) => new SummarizingWarning(details, logged);
+    (errorCode: string, logged: boolean) => new SummarizingWarning(errorCode, errorCode, logged);
 
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
@@ -92,12 +96,15 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.innerHandle = new SummarizerHandle(this, url, handleContext);
     }
 
-    public async run(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
+    public async run(
+        onBehalfOf: string,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
+    {
         try {
-            await this.runCore(onBehalfOf, options);
+            return await this.runCore(onBehalfOf, options);
         } catch (error) {
             this.stop("summarizerException");
-            throw SummarizingWarning.wrap(error, false /* logged */, this.logger);
+            throw SummarizingWarning.wrap(error, "summarizerRun", false /* logged */, this.logger);
         } finally {
             this.dispose();
             this.runtime.closeFn();
@@ -124,7 +131,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         return create404Response(request);
     }
 
-    private async runCore(onBehalfOf: string, options?: Readonly<Partial<ISummarizerOptions>>): Promise<void> {
+    private async runCore(
+        onBehalfOf: string,
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
+    {
         // Initialize values and first ack (time is not exact)
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
@@ -145,7 +155,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         });
 
         if (runCoordinator.cancelled) {
-            return;
+            return runCoordinator.waitCancelled;
         }
 
         // Summarizing container ID (with clientType === "summarizer")
@@ -166,9 +176,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     summaryTime: Date.now(),
                 } as const,
             ),
-            (description: string) => {
+            (errorCode: string) => {
                 if (!this._disposed) {
-                    this.emit("summarizingError", createSummarizingWarning(`Summarizer: ${description}`, true));
+                    this.emit("summarizingError", createSummarizingWarning(errorCode, true));
                 }
             },
             this.summaryCollection,
@@ -215,6 +225,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
         // Propagate reason and ensure that if someone is waiting for cancellation token, they are moving to exit
         runCoordinator.stop(stopReason);
+
+        return stopReason;
     }
 
     /**

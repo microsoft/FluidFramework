@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { compare } from "semver";
-import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
 import { Container, Loader } from "@fluidframework/container-loader";
 import {
     LocalCodeLoader,
@@ -17,7 +17,7 @@ import {
     ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IntervalType } from "@fluidframework/merge-tree";
@@ -30,44 +30,49 @@ import { SharedCounter } from "@fluidframework/counter";
 import { IRequest, IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { getSnapshotTreeFromSerializedContainer } from "@fluidframework/container-loader/dist/utils";
+import {
+    getSnapshotTreeFromSerializedContainer,
+    ISnapshotTreeWithBlobContents,
+    // eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-loader/dist/utils";
 
 const detachedContainerRefSeqNumber = 0;
 
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {
     let disableIsolatedChannels = false;
 
-    function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
+    function assertSubtree(tree: ISnapshotTreeWithBlobContents, key: string, msg?: string):
+        ISnapshotTreeWithBlobContents
+    {
         const subTree = tree.trees[key];
         assert(subTree, msg ?? `${key} subtree not present`);
         return subTree;
     }
 
-    const assertChannelsTree = (rootOrDatastore: ISnapshotTree) => disableIsolatedChannels
+    const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) => disableIsolatedChannels
         ? rootOrDatastore
         : assertSubtree(rootOrDatastore, ".channels");
-    const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
+    const assertProtocolTree = (root: ISnapshotTreeWithBlobContents) => assertSubtree(root, ".protocol");
 
-    function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
+    function assertChannelTree(rootOrDatastore: ISnapshotTreeWithBlobContents, key: string, msg?: string) {
         const channelsTree = assertChannelsTree(rootOrDatastore);
         return {
             channelsTree,
             datastoreTree: assertSubtree(channelsTree, key, msg ?? `${key} channel not present`),
         };
     }
-    const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
+    const assertDatastoreTree = (root: ISnapshotTreeWithBlobContents, key: string, msg?: string) =>
         assertChannelTree(root, key, `${key} datastore not present`);
 
-    function assertBlobContents<T>(subtree: ISnapshotTree, key: string): T {
+    function assertBlobContents<T>(subtree: ISnapshotTreeWithBlobContents, key: string): T {
         const id = subtree.blobs[key];
         assert(id, `blob id for ${key} missing`);
-        const contents = subtree.blobs[id];
+        const contents = subtree.blobsContents[id];
         assert(contents, `blob contents for ${key} missing`);
-        return JSON.parse(fromBase64ToUtf8(contents)) as T;
+        return JSON.parse(bufferToString(contents, "utf8")) as T;
     }
 
-    const assertProtocolAttributes = (s: ISnapshotTree) =>
+    const assertProtocolAttributes = (s: ISnapshotTreeWithBlobContents) =>
         assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), "attributes");
 
     const codeDetails: IFluidCodeDetails = {
@@ -168,8 +173,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
-            assert.strictEqual(Object.keys(protocolTree.blobs).length, 8,
-                "4 protocol blobs should be there(8 mappings)");
+            assert.strictEqual(Object.keys(protocolTree.blobs).length, 4,
+                "4 protocol blobs should be there.");
 
             const protocolAttributes = assertProtocolAttributes(snapshotTree);
             assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
@@ -285,6 +290,44 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             // Check for default data store
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
+            const defaultDataStore = response.value as TestFluidObject;
+            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
+
+            // Check for dds
+            const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+            const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+            const sharedString = await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
+            const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
+            const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+            const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
+            const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
+            const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
+            const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+            const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
+            assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
+            assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
+            assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
+            assert.strictEqual(sharedCell.id, sharedCellId, "Shared cell should exist!!");
+            assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
+            assert.strictEqual(crc.id, crcId, "CRC should exist!!");
+            assert.strictEqual(coc.id, cocId, "COC should exist!!");
+            assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
+            assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
+            assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
+        });
+
+        it("Rehydrate container multiple times round trip serialize/deserialize", async () => {
+            const { container } =
+                await createDetachedContainerAndGetRootDataStore();
+            let container1 = container;
+            for (let i = 0; i < 5; ++i) {
+                const snapshotTree1 = container1.serialize();
+                container1 = await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree1);
+            }
+
+            // Check for default data store
+            const response = await container1.request({ url: "/" });
+            assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
             assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 

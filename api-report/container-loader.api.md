@@ -44,6 +44,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
@@ -150,7 +151,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     constructor(serviceProvider: () => IDocumentService | undefined, client: IClient, logger: ITelemetryLogger, reconnectAllowed: boolean, _active: () => boolean);
     // (undocumented)
     get active(): boolean;
-    attachOpHandler(minSequenceNumber: number, sequenceNumber: number, term: number, handler: IDeltaHandlerStrategy): void;
+    attachOpHandler(minSequenceNumber: number, sequenceNumber: number, term: number, handler: IDeltaHandlerStrategy, prefetchType?: "cached" | "all" | "none"): Promise<void>;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     close(error?: ICriticalContainerError): void;
@@ -181,14 +182,13 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     get lastMessage(): ISequencedDocumentMessage | undefined;
     // (undocumented)
     get lastSequenceNumber(): number;
+    logConnectionIssue(event: ITelemetryErrorEvent): void;
     // (undocumented)
     get maxMessageSize(): number;
     // (undocumented)
     get minimumSequenceNumber(): number;
     // (undocumented)
     get outbound(): IDeltaQueue<IDocumentMessage[]>;
-    // (undocumented)
-    preFetchOps(cacheOnly: boolean): Promise<void>;
     // @deprecated
     get readonly(): boolean | undefined;
     // (undocumented)
@@ -212,8 +212,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     submit(type: MessageType, contents: any, batch?: boolean, metadata?: any): number;
     // (undocumented)
     submitSignal(content: any): void;
-    // (undocumented)
-    triggerConnectionRecovery(reason: string, props: ITelemetryProperties): void;
     // (undocumented)
     get version(): string;
 }
