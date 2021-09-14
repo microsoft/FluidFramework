@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@tylerbu/bin-installer": "^0.0.2",
-    "@tylerbu/custom-api-documenter": "0.3.3-tylerbu-3",
+    "@tylerbu/custom-api-documenter": "0.3.3-tylerbu-4",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "broken-link-checker": "^0.7.8",
     "concurrently": "^5.2.0",
