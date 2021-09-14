@@ -1,3 +1,6 @@
+## Adding breaking change notes
+Published changelogs may be found on the docs site at fluidframework.com.  They are reviewed and published from the main branch accompanying each release.  To add any change notes, please edit the new file located at [./docs/content/docs/changelogs/CHANGELOG.md](./docs/content/docs/changelogs/CHANGELOG.md).
+
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
 
