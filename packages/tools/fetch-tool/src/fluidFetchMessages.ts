@@ -28,6 +28,7 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
+let currSeq = 1;
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
@@ -108,6 +109,7 @@ async function* loadAllSequencedMessages(
         // get firstAvailableDelta from the error response, and set current sequence number to that
         response = JSON.parse(error.getTelemetryProperties().response);
         lastSeq = response.error.firstAvailableDelta - 1;
+        currSeq = lastSeq + 1;
     }
 
     // continue reading rest of the ops
@@ -189,15 +191,20 @@ async function* saveOps(
 
     // Figure out first file we want to write to
     let index = 0;
+    let curr: number;
     if (files.length !== 0) {
         index = files.length - 1;
+        const name = filenameFromIndex(index);
+        const fileContent = fs.readFileSync(`${dir}/messages${name}.json`, { encoding: "utf-8" });
+        const messages: ISequencedDocumentMessage[] = JSON.parse(fileContent);
+        curr = messages[0].sequenceNumber;
     }
-    // current sequence number to start writing from
-    let curr = index * chunk + 1;
 
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
-
+        if (files.length === 0) {
+            curr = currSeq;
+        }
         if (!result.done) {
             let messages = result.value;
             yield messages;
@@ -209,11 +216,11 @@ async function* saveOps(
                 messages = messages.filter((msg) => msg.sequenceNumber >= curr);
             }
             sequencedMessages = sequencedMessages.concat(messages);
-            // assert(sequencedMessages[0].sequenceNumber === curr,
-            //    0x1bb /* "Unexpected sequence number on first of messages to save" */);
-            // assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
-            //    === curr + sequencedMessages.length - 1,
-            //    0x1bc /* "Unexpected sequence number on last of messages to save" */);
+            assert(sequencedMessages[0].sequenceNumber === curr,
+                0x1bb /* "Unexpected sequence number on first of messages to save" */);
+            assert(sequencedMessages[sequencedMessages.length - 1].sequenceNumber
+                === curr + sequencedMessages.length - 1,
+                0x1bc /* "Unexpected sequence number on last of messages to save" */);
         }
 
         // Time to write it out?
