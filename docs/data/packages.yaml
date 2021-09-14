@@ -10,7 +10,9 @@ libraries:
 - "fluid-framework"
 - "@fluidframework/aqueduct"
 - "@fluidframework/datastore"
-- "@fluidframework/synthesize"
+serviceClients:
+- "@fluidframework/azure-client"
+- "@fluidframework/tinylicious-client"
 definitions:
 - "@fluidframework/common-definitions"
 - "@fluidframework/container-definitions"
@@ -25,4 +27,5 @@ utilities:
 - "@fluidframework/common-utils"
 - "@fluidframework/request-handler"
 - "@fluidframework/runtime-utils"
+- "@fluidframework/synthesize"
 - "@fluidframework/telemetry-utils"

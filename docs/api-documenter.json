@@ -7,6 +7,7 @@
     "tinylicious",
     "@fluid-experimental/task-manager",
     "@fluidframework/aqueduct",
+    "@fluidframework/azure-client",
     "@fluidframework/cell",
     "@fluidframework/common-definitions",
     "@fluidframework/common-utils",
@@ -29,6 +30,7 @@
     "@fluidframework/sequence",
     "@fluidframework/shared-object-base",
     "@fluidframework/synthesize",
-    "@fluidframework/telemetry-utils"
+    "@fluidframework/telemetry-utils",
+    "@fluidframework/tinylicious-client"
   ]
 }
