@@ -5,12 +5,6 @@ aliases:
 
 ---
 
-## Aqueduct
-
-The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
-Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
-to get started quickly. [Learn more.]({{< relref "aqueduct.md" >}})
-
 ## Attached
 
 A Fluid container can be *attached* or *detached*. An attached container is connected to a Fluid service and can be
