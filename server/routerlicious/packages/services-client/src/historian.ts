@@ -31,7 +31,8 @@ export const getAuthorizationTokenFromCredentials = (credentials: ICredentials):
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private readonly defaultQueryString: Record<string, unknown> = {};
+    private readonly defaultQueryString: Record<string, string | number | boolean | readonly string[] |
+        readonly number[] | readonly boolean[] | undefined | null> = {};
     private readonly cacheBust: boolean;
 
     constructor(
@@ -163,7 +164,8 @@ export class Historian implements IHistorian {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
-    private getQueryString(queryString?: {}): Record<string, unknown> {
+    private getQueryString(queryString?: {}): Record<string, string | number | boolean | readonly string[] |
+        readonly number[] | readonly boolean[] | undefined | null> {
         if (this.cacheBust) {
             return {
                 cacheBust: Date.now(),

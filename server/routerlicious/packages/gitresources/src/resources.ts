@@ -97,7 +97,7 @@ export interface ICreateBlobParams {
     content: string;
 
     // The encoding of the content. Either utf8 or base64.
-    encoding: string;
+    encoding: BufferEncoding;
 }
 
 /**
