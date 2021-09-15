@@ -145,11 +145,11 @@ export class DataStores implements IDisposable {
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
                 "Duplicate data store created with existing ID",
-                { 
+                {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
                         value: attachMessage.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.PackageData
                     },
                 }
             );

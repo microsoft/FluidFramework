@@ -171,7 +171,7 @@ export class RemoteChannelContext implements IChannelContext {
                     channelId: this.id,
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.PackageData
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                 });
@@ -183,7 +183,7 @@ export class RemoteChannelContext implements IChannelContext {
                     channelId: this.id,
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.PackageData
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: this.attachMessageType,
@@ -198,7 +198,7 @@ export class RemoteChannelContext implements IChannelContext {
                     channelId: this.id,
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.PackageData
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: attributes.type,
