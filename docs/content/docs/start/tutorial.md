@@ -18,7 +18,7 @@ In the DiceRoller app, users are shown a die with a button to roll it. When the 
 3. Write the dice view.
 4. Connect the view to Fluid data.
 
-All of the work in this demo will be done in the [app.ts](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts) file.
+All of the work in this demo will be done in the [app.js](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.js) file.
 
 ## Set up the application
 
