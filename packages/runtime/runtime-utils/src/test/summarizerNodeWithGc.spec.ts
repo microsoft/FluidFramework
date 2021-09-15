@@ -201,8 +201,8 @@ describe("SummarizerNodeWithGC Tests", () => {
     });
 
     describe("Unreferenced timeout expiry", () => {
-        const expiredObjectRevivedEvent = "expiredObjectRevived";
-        const expiredObjectChangedEvent = "expiredObjectChanged";
+        const inactiveObjectRevivedEvent = "inactiveObjectRevived";
+        const inactiveObjectChangedEvent = "inactiveObjectChanged";
 
         async function waitForTimeout(timeout: number): Promise<void> {
             await new Promise<void>((resolve) => {
@@ -210,67 +210,67 @@ describe("SummarizerNodeWithGC Tests", () => {
             });
         }
 
-        function validateNoExpiredEvents() {
+        function validateNoInactiveEvents() {
             assert(
                 !mockLogger.matchAnyEvent([
-                    { eventName: expiredObjectRevivedEvent },
-                    { eventName: expiredObjectChangedEvent },
+                    { eventName: inactiveObjectRevivedEvent },
+                    { eventName: inactiveObjectChangedEvent },
                 ]),
-                "expired object events should not have been logged",
+                "inactive object events should not have been logged",
             );
         }
 
-        it("generates expired events when expired node is changed or revived", async () => {
+        it("generates inactive events when inactive node is changed or revived", async () => {
             // Mark node as unreferenced by updating it with empty used routes.
             summarizerNode.updateUsedRoutes([], Date.now());
 
-            // Validate that no expired events are generated yet.
-            validateNoExpiredEvents();
+            // Validate that no inactive events are generated yet.
+            validateNoInactiveEvents();
 
             // The configured maxUnrefencedTime is 1000 ms. Wait for 1100 ms so that the unreferenced timer expires.
             await waitForTimeout(1100);
 
-            // Record a new op. This should result in an expiredObjectChanged event since the object expired.
+            // Record a new op. This should result in an inactiveObjectChanged event since the object inactive.
             const op: Partial<ISequencedDocumentMessage> = { sequenceNumber: 1 };
             summarizerNode.recordChange(op as ISequencedDocumentMessage);
             assert(
-                mockLogger.matchEvents([{ eventName: expiredObjectChangedEvent, maxUnreferencedDurationMs }]),
-                "expiredObjectChanged event not generated as expected",
+                mockLogger.matchEvents([{ eventName: inactiveObjectChangedEvent, maxUnreferencedDurationMs }]),
+                "inactiveObjectChanged event not generated as expected",
             );
 
             // Mark node as referenced by updating it with self route (""). This should result in an
-            // expiredObjectRevived event since the object expired.
+            // inactiveObjectRevived event since the object inactive.
             summarizerNode.updateUsedRoutes([""], Date.now());
             assert(
-                mockLogger.matchEvents([{ eventName: expiredObjectRevivedEvent, maxUnreferencedDurationMs }]),
-                "expiredObjectRevived event not generated as expected",
+                mockLogger.matchEvents([{ eventName: inactiveObjectRevivedEvent, maxUnreferencedDurationMs }]),
+                "inactiveObjectRevived event not generated as expected",
             );
 
-            // Record a new op. There shouldn't be any more expired events since the object is referenced now.
+            // Record a new op. There shouldn't be any more inactive events since the object is referenced now.
             const op2: Partial<ISequencedDocumentMessage> = { sequenceNumber: 2 };
             summarizerNode.recordChange(op2 as ISequencedDocumentMessage);
-            validateNoExpiredEvents();
+            validateNoInactiveEvents();
         });
 
-        it("does not generate expired events while node is not expired", async () => {
+        it("does not generate inactive events while node is active", async () => {
             // Mark node as unreferenced by updating it with empty used routes.
             summarizerNode.updateUsedRoutes([], Date.now());
 
-            // Validate that no expired events are generated yet.
-            validateNoExpiredEvents();
+            // Validate that no inactive events are generated yet.
+            validateNoInactiveEvents();
 
             // The configured maxUnrefencedTime is 1000 ms. Wait for 500 ms so the unreferenced timer does not expire.
             await waitForTimeout(500);
 
-            // Record a new op. This should not result in any expired events since the object has not expired.
+            // Record a new op. This should not result in any inactive events since the object has not inactive.
             const op: Partial<ISequencedDocumentMessage> = { sequenceNumber: 1 };
             summarizerNode.recordChange(op as ISequencedDocumentMessage);
-            validateNoExpiredEvents();
+            validateNoInactiveEvents();
 
-            // Mark node as referenced by updating it with self route (""). This should not result in any expired
-            // events since the object has not expired.
+            // Mark node as referenced by updating it with self route (""). This should not result in any inactive
+            // events since the object has not inactive.
             summarizerNode.updateUsedRoutes([""], Date.now());
-            validateNoExpiredEvents();
+            validateNoInactiveEvents();
         });
     });
 });

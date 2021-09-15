@@ -27,7 +27,7 @@ class TestDataObject extends DataObject {
     }
 }
 
-describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProvider) => {
+describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
         TestDataObject,
@@ -48,8 +48,8 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
         runtimeOptions,
     );
     const summaryLogger = new TelemetryNullLogger();
-    const expiredObjectRevivedEvent = "fluid:telemetry:expiredObjectRevived";
-    const expiredObjectChangedEvent = "fluid:telemetry:expiredObjectChanged";
+    const inactiveObjectRevivedEvent = "fluid:telemetry:inactiveObjectRevived";
+    const inactiveObjectChangedEvent = "fluid:telemetry:inactiveObjectChanged";
 
     let provider: ITestObjectProvider;
     let containerRuntime: ContainerRuntime;
@@ -65,14 +65,14 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
         });
     }
 
-    /** Validates that none of the expired events have been logged since the last run. */
-    function validateNoExpiredEvents() {
+    /** Validates that none of the inactive events have been logged since the last run. */
+    function validateNoInactiveEvents() {
         assert(
             !mockLogger.matchAnyEvent([
-                { eventName: expiredObjectRevivedEvent },
-                { eventName: expiredObjectChangedEvent },
+                { eventName: inactiveObjectRevivedEvent },
+                { eventName: inactiveObjectChangedEvent },
             ]),
-            "expired object events should not have been logged",
+            "inactive object events should not have been logged",
         );
     }
 
@@ -92,7 +92,7 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
         containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
     });
 
-    it("can generate events when unreferenced data store is accessed after timeout expires", async () => {
+    it("can generate events when unreferenced data store is accessed after it's inactive", async () => {
         const dataStore1 = await dataObjectFactory.createInstance(containerRuntime);
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
 
@@ -104,7 +104,7 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
             trackState: false,
             summaryLogger,
         });
-        validateNoExpiredEvents();
+        validateNoInactiveEvents();
 
         // Mark dataStore1 as unreferenced, summarize and validate that no unreferenced errors were logged.
         defaultDataStore._root.delete("dataStore1");
@@ -115,21 +115,21 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
             trackState: false,
             summaryLogger,
         });
-        validateNoExpiredEvents();
+        validateNoInactiveEvents();
 
         // Wait for 3000 ms which is > the configured maxUnreferencedDurationMs (2000). This will ensure that the
-        // unreferenced data store is expired.
+        // unreferenced data store is inactive.
         await waitForTimeout(3000);
 
-        // Make changes to the expired data store and validate that we get the expiredObjectChanged event.
+        // Make changes to the inactive data store and validate that we get the inactiveObjectChanged event.
         dataStore1._root.set("key", "value");
         await provider.ensureSynchronized();
         assert(
-            mockLogger.matchEvents([{ eventName: expiredObjectChangedEvent, maxUnreferencedDurationMs }]),
-            "expiredObjectChanged event not generated as expected",
+            mockLogger.matchEvents([{ eventName: inactiveObjectChangedEvent, maxUnreferencedDurationMs }]),
+            "inactiveObjectChanged event not generated as expected",
         );
 
-        // Revive the expired data store and validate that we get the expiredObjectRevivedEvent event.
+        // Revive the inactive data store and validate that we get the inactiveObjectRevivedEvent event.
         defaultDataStore._root.set("dataStore1", dataStore1.handle);
         await provider.ensureSynchronized();
         await containerRuntime.summarize({
@@ -139,8 +139,8 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
             summaryLogger,
         });
         assert(
-            mockLogger.matchEvents([{ eventName: expiredObjectRevivedEvent, maxUnreferencedDurationMs }]),
-            "expiredObjectRevived event not generated as expected",
+            mockLogger.matchEvents([{ eventName: inactiveObjectRevivedEvent, maxUnreferencedDurationMs }]),
+            "inactiveObjectRevived event not generated as expected",
         );
     }).timeout(10000);
 });

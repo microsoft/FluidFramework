@@ -76,14 +76,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // If this node is marked as unreferenced, the time when it marked as such.
     private unreferencedTimestampMs: number | undefined;
 
-    // The max amount of time this node can be unreferenced before it is eligible for deletion.
+    // The max duration for which this node can be unreferenced before it is eligible for deletion.
     private readonly maxUnreferencedDurationMs: number;
 
     // The timer that runs when the node is marked unreferenced.
     private readonly unreferencedTimer: Timer;
 
-    // Tracks whether this node has expired after being unreferenced for maxUnreferencedDurationMs.
-    private expired: boolean = false;
+    // Tracks whether this node is inactive after being unreferenced for maxUnreferencedDurationMs.
+    private inactive: boolean = false;
 
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
@@ -125,7 +125,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         });
 
         this.unreferencedTimer = new Timer(this.maxUnreferencedDurationMs, () => {
-            this.expired = true;
+            this.inactive = true;
         });
     }
 
@@ -390,20 +390,20 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (this.isReferenced()) {
             // If this node has been unreferenced for longer than maxUnreferencedDurationMs and is being referenced,
             // log an error as this may mean the maxUnreferencedDurationMs is not long enough.
-            this.logErrorIfExpired("expiredObjectRevived", gcTimestamp);
+            this.logErrorIfInactive("inactiveObjectRevived", gcTimestamp);
 
-            // Clear unreferenced / expired state, if any.
-            this.expired = false;
+            // Clear unreferenced / inactive state, if any.
+            this.inactive = false;
             this.unreferencedTimestampMs = undefined;
             this.unreferencedTimer.clear();
             return;
         }
 
-        // This node is unreferenced. We need to check if this node has expired or if we need to start the unreferenced
-        // timer which would mark the node as expired.
+        // This node is unreferenced. We need to check if this node is inative or if we need to start the unreferenced
+        // timer which would mark the node as inactive.
 
         // If there is no timestamp when GC was run, we don't have enough information to determine whether this content
-        // should be expired.
+        // should become inactive.
         if (gcTimestamp === undefined) {
             return;
         }
@@ -421,32 +421,32 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         // If we are here, this node was unreferenced earlier.
 
-        // If it has already expired or has an unreferenced timer running, there is no more work to be done.
-        if (this.expired || this.unreferencedTimer.hasTimer) {
+        // If it is already inactive or has an unreferenced timer running, there is no more work to be done.
+        if (this.inactive || this.unreferencedTimer.hasTimer) {
             return;
         }
 
-        // If it has been unreferenced longer than maxUnreferencedDurationMs, mark it as expired. Otherwise, start the
+        // If it has been unreferenced longer than maxUnreferencedDurationMs, mark it as inactive. Otherwise, start the
         // unreferenced timer for the duration left for it to reach maxUnreferencedDurationMs.
         const currentUnreferencedDurationMs = gcTimestamp - this.unreferencedTimestampMs;
         if (currentUnreferencedDurationMs >= this.maxUnreferencedDurationMs) {
-            this.expired = true;
+            this.inactive = true;
         } else {
             this.unreferencedTimer.start(this.maxUnreferencedDurationMs - currentUnreferencedDurationMs);
         }
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
-        // If the node is changed after it has expired, log an error as this may mean use-after-delete.
-        this.logErrorIfExpired("expiredObjectChanged");
+        // If the node is changed after it is inactive, log an error as this may mean use-after-delete.
+        this.logErrorIfInactive("inactiveObjectChanged");
         super.recordChange(op);
     }
 
-    private logErrorIfExpired(eventName: string, currentTimestampMs?: number) {
-        if (this.expired) {
+    private logErrorIfInactive(eventName: string, currentTimestampMs?: number) {
+        if (this.inactive) {
             assert(
                 this.unreferencedTimestampMs !== undefined,
-                "Node should not expire without setting unreferencedTimestampMs first");
+                "Node should not become inactive without setting unreferencedTimestampMs first");
             this.defaultLogger.sendErrorEvent({
                 eventName,
                 unreferencedDuratonMs: (currentTimestampMs ?? Date.now()) - this.unreferencedTimestampMs,
