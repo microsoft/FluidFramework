@@ -1,6 +1,6 @@
 ---
 title: Working changelog
-draft: true
+draft: true # Don't publish this!
 description: Explanations of breaking and notable changes go here.  Images should live in docs/static/images.  The contents of this file are moved to a release notes page as parts of building docs for each release.
 ---
 
