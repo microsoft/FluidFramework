@@ -20,6 +20,7 @@
     "@fluidframework/datastore",
     "@fluidframework/datastore-definitions",
     "@fluidframework/driver-definitions",
+    "@fluidframework/driver-utils",
     "@fluidframework/fluid-static",
     "@fluidframework/map",
     "@fluidframework/protocol-base",

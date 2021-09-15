@@ -24,6 +24,7 @@ definitions:
 utilities:
 - "@fluidframework/container-loader"
 - "@fluidframework/container-runtime"
+- "@fluidframework/driver-utils"
 - "@fluidframework/common-utils"
 - "@fluidframework/request-handler"
 - "@fluidframework/routerlicious-driver"
