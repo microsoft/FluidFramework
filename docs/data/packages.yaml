@@ -9,5 +9,5 @@ libraries:
 serviceClients:
 - "@fluidframework/azure-client"
 - "@fluidframework/tinylicious-client"
-utilities:
-- "@fluidframework/fluid-static"
+# utilities:
+# - "@fluidframework/fluid-static"

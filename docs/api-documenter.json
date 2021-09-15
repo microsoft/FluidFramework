@@ -6,7 +6,6 @@
     "fluid-framework",
     "tinylicious",
     "@fluidframework/azure-client",
-    "@fluidframework/fluid-static",
     "@fluidframework/map",
     "@fluidframework/sequence",
     "@fluidframework/tinylicious-client"
