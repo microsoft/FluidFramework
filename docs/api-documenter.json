@@ -25,6 +25,7 @@
     "@fluidframework/protocol-base",
     "@fluidframework/protocol-definitions",
     "@fluidframework/request-handler",
+    "@fluidframework/routerlicious-driver",
     "@fluidframework/runtime-definitions",
     "@fluidframework/runtime-utils",
     "@fluidframework/sequence",

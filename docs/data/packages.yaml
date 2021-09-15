@@ -26,6 +26,7 @@ utilities:
 - "@fluidframework/container-runtime"
 - "@fluidframework/common-utils"
 - "@fluidframework/request-handler"
+- "@fluidframework/routerlicious-driver"
 - "@fluidframework/runtime-utils"
 - "@fluidframework/synthesize"
 - "@fluidframework/telemetry-utils"
