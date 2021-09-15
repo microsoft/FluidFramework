@@ -166,7 +166,7 @@ export class RemoteChannelContext implements IChannelContext {
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                 // TODO: dataStoreId may require a different tag from PackageData #7488
+                // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("Channel type not available", {
                     channelId: this.id,
                     dataStoreId: {
