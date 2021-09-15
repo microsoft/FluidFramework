@@ -166,7 +166,7 @@ export class RemoteChannelContext implements IChannelContext {
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                // TODO: Strip out potential PII content #1920
+                 // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("Channel type not available", {
                     channelId: this.id,
                     dataStoreId: {
@@ -178,7 +178,7 @@ export class RemoteChannelContext implements IChannelContext {
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
-                // TODO: Strip out potential PII content #1920
+                // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError(`Channel Factory ${this.attachMessageType} for attach not registered`, {
                     channelId: this.id,
                     dataStoreId: {
@@ -193,7 +193,7 @@ export class RemoteChannelContext implements IChannelContext {
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
-                // TODO: Strip out potential PII content #1920
+                // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError(`Channel Factory ${attributes.type} not registered`, {
                     channelId: this.id,
                     dataStoreId: {
