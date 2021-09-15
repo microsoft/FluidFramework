@@ -5,7 +5,6 @@ description: Explanations of breaking and notable changes go here.  Images shoul
 ---
 
 ## 0.48 Breaking and notable changes
-This release is the Public Preview!
 
 - [client-api package removed](#client-api-package-removed)
 - [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
