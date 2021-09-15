@@ -9,7 +9,7 @@ aliases:
 
 The `@fluidframework/aqueduct` package is a library for building Fluid objects and Fluid containers within the Fluid
 Framework. Its goal is to provide a thin base layer over the existing Fluid Framework interfaces that allows developers
-to get started quickly. [Learn more.](https://fluidframework.com/docs/apis/aqueduct/)
+to get started quickly. [Learn more.]({{< relref "aqueduct.md" >}})
 
 ## Attached
 
