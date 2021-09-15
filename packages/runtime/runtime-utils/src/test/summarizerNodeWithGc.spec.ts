@@ -27,7 +27,7 @@ describe("SummarizerNodeWithGC Tests", () => {
     const subNode1Id = "/gcNode1/subNode";
     const subNode2Id = "/gcNode2/subNode";
 
-    const maxUnreferencedTime = 1000;
+    const maxUnreferencedDurationMs = 1000;
 
     let internalGCData: IGarbageCollectionData;
     let initialGCSummaryDetails: IGarbageCollectionSummaryDetails;
@@ -48,7 +48,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             summarizeInternal,
             summarizerNodeId,
             { type: CreateSummarizerNodeSource.FromSummary },
-            { maxUnreferencedTime },
+            { maxUnreferencedDurationMs },
             getInternalGCData,
             getinitialGCSummaryDetails,
         );
@@ -234,7 +234,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             const op: Partial<ISequencedDocumentMessage> = { sequenceNumber: 1 };
             summarizerNode.recordChange(op as ISequencedDocumentMessage);
             assert(
-                mockLogger.matchEvents([{ eventName: expiredObjectChangedEvent, maxUnreferencedTime }]),
+                mockLogger.matchEvents([{ eventName: expiredObjectChangedEvent, maxUnreferencedDurationMs }]),
                 "expiredObjectChanged event not generated as expected",
             );
 
@@ -242,7 +242,7 @@ describe("SummarizerNodeWithGC Tests", () => {
             // expiredObjectRevived event since the object expired.
             summarizerNode.updateUsedRoutes([""], Date.now());
             assert(
-                mockLogger.matchEvents([{ eventName: expiredObjectRevivedEvent, maxUnreferencedTime }]),
+                mockLogger.matchEvents([{ eventName: expiredObjectRevivedEvent, maxUnreferencedDurationMs }]),
                 "expiredObjectRevived event not generated as expected",
             );
 

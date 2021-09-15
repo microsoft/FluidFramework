@@ -33,10 +33,10 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
         TestDataObject,
         [],
         []);
-    const maxUnreferencedTime = 2000;
+    const maxUnreferencedDurationMs = 2000;
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: { generateSummaries: false },
-        gcOptions: { gcAllowed: true, maxUnreferencedTime },
+        gcOptions: { gcAllowed: true, maxUnreferencedDurationMs },
     };
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         dataObjectFactory,
@@ -117,7 +117,7 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
         });
         validateNoExpiredEvents();
 
-        // Wait for 3000 ms which is > the configured maxUnreferencedTime (2000). This will ensure that the
+        // Wait for 3000 ms which is > the configured maxUnreferencedDurationMs (2000). This will ensure that the
         // unreferenced data store is expired.
         await waitForTimeout(3000);
 
@@ -125,7 +125,7 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
         dataStore1._root.set("key", "value");
         await provider.ensureSynchronized();
         assert(
-            mockLogger.matchEvents([{ eventName: expiredObjectChangedEvent, maxUnreferencedTime }]),
+            mockLogger.matchEvents([{ eventName: expiredObjectChangedEvent, maxUnreferencedDurationMs }]),
             "expiredObjectChanged event not generated as expected",
         );
 
@@ -139,7 +139,7 @@ describeNoCompat("GC unreferenced data store timeout expiry", (getTestObjectProv
             summaryLogger,
         });
         assert(
-            mockLogger.matchEvents([{ eventName: expiredObjectRevivedEvent, maxUnreferencedTime }]),
+            mockLogger.matchEvents([{ eventName: expiredObjectRevivedEvent, maxUnreferencedDurationMs }]),
             "expiredObjectRevived event not generated as expected",
         );
     }).timeout(10000);

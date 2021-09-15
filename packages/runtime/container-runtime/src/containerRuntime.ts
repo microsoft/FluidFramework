@@ -873,8 +873,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
                 // If GC is disabled, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.shouldRunGC,
-                // The max time for which objects can be unreferenced before they are eligible for deletion.
-                maxUnreferencedTime: this.runtimeOptions.gcOptions.maxUnreferencedTime,
+                // The max duration for which objects can be unreferenced before they are eligible for deletion.
+                maxUnreferencedDurationMs: this.runtimeOptions.gcOptions.maxUnreferencedDurationMs,
             },
         );
 

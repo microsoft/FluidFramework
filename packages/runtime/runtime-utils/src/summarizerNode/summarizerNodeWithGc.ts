@@ -27,7 +27,7 @@ import {
     SummaryNode,
 } from "./summarizerNodeUtils";
 
-const defaultmaxUnreferencedTime = 7 * 24 * 60 * 60 * 1000; // 7 days
+const defaultMaxUnreferencedDurationMs = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {}
 
@@ -74,15 +74,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     private usedRoutes: string[] = [""];
 
     // If this node is marked as unreferenced, the time when it marked as such.
-    private unreferencedTimestamp: number | undefined;
+    private unreferencedTimestampMs: number | undefined;
 
     // The max amount of time this node can be unreferenced before it is eligible for deletion.
-    private readonly maxUnreferencedTime: number;
+    private readonly maxUnreferencedDurationMs: number;
 
     // The timer that runs when the node is marked unreferenced.
     private readonly unreferencedTimer: Timer;
 
-    // Tracks whether this node has expired after being unreferenced for maxUnreferencedTime.
+    // Tracks whether this node has expired after being unreferenced for maxUnreferencedDurationMs.
     private expired: boolean = false;
 
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
@@ -115,7 +115,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         );
 
         this.gcDisabled = config.gcDisabled === true;
-        this.maxUnreferencedTime = config.maxUnreferencedTime ?? defaultmaxUnreferencedTime;
+        this.maxUnreferencedDurationMs = config.maxUnreferencedDurationMs ?? defaultMaxUnreferencedDurationMs;
 
         this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
             // back-compat: 0.32. getInitialGCSummaryDetailsFn() returns undefined in 0.31. Remove undefined check
@@ -124,7 +124,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             return gcSummaryDetails ?? { usedRoutes: [] };
         });
 
-        this.unreferencedTimer = new Timer(this.maxUnreferencedTime, () => {
+        this.unreferencedTimer = new Timer(this.maxUnreferencedDurationMs, () => {
             this.expired = true;
         });
     }
@@ -134,7 +134,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         return {
             gcData: this.gcData,
             usedRoutes: this.usedRoutes,
-            unrefTimestamp: this.unreferencedTimestamp,
+            unrefTimestamp: this.unreferencedTimestampMs,
         };
     }
 
@@ -158,7 +158,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             this.gcData = cloneGCData(gcDetailsInInitialSummary.gcData);
         }
         this.referenceUsedRoutes = gcDetailsInInitialSummary.usedRoutes;
-        this.unreferencedTimestamp = gcDetailsInInitialSummary.unrefTimestamp;
+        this.unreferencedTimestampMs = gcDetailsInInitialSummary.unrefTimestamp;
     }
 
     public async summarize(fullTree: boolean, trackState: boolean = true): Promise<ISummarizeResult> {
@@ -337,7 +337,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 ...config,
                 // Propagate our gcDisabled state to the child if its not explicity specified in child's config.
                 gcDisabled: config.gcDisabled ?? this.gcDisabled,
-                maxUnreferencedTime: config.maxUnreferencedTime ?? this.maxUnreferencedTime,
+                maxUnreferencedDurationMs: config.maxUnreferencedDurationMs ?? this.maxUnreferencedDurationMs,
             },
             createDetails.changeSequenceNumber,
             createDetails.latestSummary,
@@ -388,13 +388,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         }
 
         if (this.isReferenced()) {
-            // If this node has been unreferenced for longer than maxUnreferencedTime and is being referenced,
-            // log an error as this may mean the maxUnreferencedTime is not long enough.
+            // If this node has been unreferenced for longer than maxUnreferencedDurationMs and is being referenced,
+            // log an error as this may mean the maxUnreferencedDurationMs is not long enough.
             this.logErrorIfExpired("expiredObjectRevived", gcTimestamp);
 
             // Clear unreferenced / expired state, if any.
             this.expired = false;
-            this.unreferencedTimestamp = undefined;
+            this.unreferencedTimestampMs = undefined;
             this.unreferencedTimer.clear();
             return;
         }
@@ -408,13 +408,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             return;
         }
 
-        // If unreferencedTimestamp is not present, this node just became unreferenced. Update unreferencedTimestamp and
-        // start the unreferenced timer.
-        // Note that it's possible this node has been unreferenced before but the unreferencedTimestamp was not added.
+        // If unreferencedTimestampMs is not present, this node just became unreferenced. Update unreferencedTimestampMs
+        // and start the unreferenced timer.
+        // Note that it's possible this node has been unreferenced before but the unreferencedTimestampMs was not added.
         // For example, older versions where this concept did not exist or if gcTimestamp wasn't available. In such
         // cases, we track them as if the content just became unreferenced.
-        if (this.unreferencedTimestamp === undefined) {
-            this.unreferencedTimestamp = gcTimestamp;
+        if (this.unreferencedTimestampMs === undefined) {
+            this.unreferencedTimestampMs = gcTimestamp;
             this.unreferencedTimer.start();
             return;
         }
@@ -426,13 +426,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             return;
         }
 
-        // If it has been unreferenced longer than maxUnreferencedTime, mark it as expired. Otherwise, start the
-        // unreferenced timer for the duration left for it to reach maxUnreferencedTime.
-        const currentUnreferencedTime = gcTimestamp - this.unreferencedTimestamp;
-        if (currentUnreferencedTime >= this.maxUnreferencedTime) {
+        // If it has been unreferenced longer than maxUnreferencedDurationMs, mark it as expired. Otherwise, start the
+        // unreferenced timer for the duration left for it to reach maxUnreferencedDurationMs.
+        const currentUnreferencedDurationMs = gcTimestamp - this.unreferencedTimestampMs;
+        if (currentUnreferencedDurationMs >= this.maxUnreferencedDurationMs) {
             this.expired = true;
         } else {
-            this.unreferencedTimer.start(this.maxUnreferencedTime - currentUnreferencedTime);
+            this.unreferencedTimer.start(this.maxUnreferencedDurationMs - currentUnreferencedDurationMs);
         }
     }
 
@@ -442,13 +442,15 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         super.recordChange(op);
     }
 
-    private logErrorIfExpired(eventName: string, currentTimestamp?: number) {
+    private logErrorIfExpired(eventName: string, currentTimestampMs?: number) {
         if (this.expired) {
-            assert(this.unreferencedTimestamp !== undefined, "Node should not expire without unreferencedTimestamp");
+            assert(
+                this.unreferencedTimestampMs !== undefined,
+                "Node should not expire without setting unreferencedTimestampMs first");
             this.defaultLogger.sendErrorEvent({
                 eventName,
-                unreferencedTime: currentTimestamp ?? Date.now() - this.unreferencedTimestamp,
-                maxUnreferencedTime: this.maxUnreferencedTime,
+                unreferencedDuratonMs: (currentTimestampMs ?? Date.now()) - this.unreferencedTimestampMs,
+                maxUnreferencedDurationMs: this.maxUnreferencedDurationMs,
             });
         }
     }
