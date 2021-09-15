@@ -169,7 +169,10 @@ export class RemoteChannelContext implements IChannelContext {
                 // TODO: Properly Tag potential PII content #1920
                 throw new DataCorruptionError("channelTypeNotAvailable", {
                     channelId: this.id,
-                    dataStoreId: this.dataStoreContext.id,
+                    dataStoreId: {
+                        value: this.dataStoreContext.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                 });
             }
@@ -178,7 +181,10 @@ export class RemoteChannelContext implements IChannelContext {
                 // TODO: Properly Tag potential PII content #1920
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
                     channelId: this.id,
-                    dataStoreId: this.dataStoreContext.id,
+                    dataStoreId: {
+                        value: this.dataStoreContext.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: this.attachMessageType,
                 });
@@ -190,7 +196,10 @@ export class RemoteChannelContext implements IChannelContext {
                 // TODO: Properly Tag potential PII content #1920
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
                     channelId: this.id,
-                    dataStoreId: this.dataStoreContext.id,
+                    dataStoreId: {
+                        value: this.dataStoreContext.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: attributes.type,
                 });

@@ -34,7 +34,7 @@ import {
      responseToException,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
@@ -145,7 +145,13 @@ export class DataStores implements IDisposable {
         if (this.contexts.has(attachMessage.id)) {
             const error = new DataCorruptionError(
                 "duplicateDataStoreCreatedWithExistingId",
-                extractSafePropertiesFromMessage(message),
+                { 
+                    ...extractSafePropertiesFromMessage(message),
+                    dataStoreId: {
+                        value: attachMessage.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                }
             );
             throw error;
         }
