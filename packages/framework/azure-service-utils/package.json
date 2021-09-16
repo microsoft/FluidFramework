@@ -31,6 +31,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "@fluidframework/protocol-definitions": "^0.1024.0",
     "@fluidframework/server-services-client": "^0.1031.0-37526"
   },
   "devDependencies": {
