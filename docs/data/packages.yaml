@@ -1,13 +1,15 @@
-distributed-data-structures:
-- "@fluidframework/map"
-- "@fluidframework/sequence"
-- custom:
-    title: "SharedString"
-    url: "/docs/apis/sequence/sharedstring/"
 libraries:
 - "fluid-framework"
+# distributed-data-structures:
+# - "@fluidframework/map"
+# - "@fluidframework/sequence"
+# - custom:
+#     title: "SharedString"
+#     url: "/docs/apis/sequence/sharedstring/"
 serviceClients:
 - "@fluidframework/azure-client"
+- "@fluidframework/azure-service-utils"
 - "@fluidframework/tinylicious-client"
-# utilities:
+utilities:
 # - "@fluidframework/fluid-static"
+- "@fluidframework/test-client-utils"

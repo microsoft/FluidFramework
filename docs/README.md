@@ -203,13 +203,14 @@ The site theme/template lives in `themes/thxvscode`.
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
+| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
 | `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and interation. |
 | `build:md-magic` | Updates generated content in Markdown files. |
-| `build:prep` | Prepare input files for the build. |
+| `build:prep` | Copy files from _api-extractor-temp/doc-models in the root of the repo to a staging location for the docs build. |
 | `build:uber-package` | `node ../rollup-api-json.js ../_api-extractor-temp/doc-models` |
 | `clean` | Remove all generated files. |
 | `copyfiles` | `copyfiles _replacements/ content/` |

@@ -16,7 +16,7 @@
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
     "build:genver": "lerna run build:genver --stream --parallel",
-    "build:uber-package": "node rollup-api-json.js _api-extractor-temp/doc-models",
+    "build:uber-package": "node ./docs/rollup-api-json.js ./_api-extractor-temp/doc-models",
     "bump-version": "fluid-bump-version --root .",
     "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
     "bundle-analysis:run": "fluid-run-bundle-analyses",
