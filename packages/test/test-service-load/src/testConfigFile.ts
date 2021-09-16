@@ -17,4 +17,13 @@ export interface ILoadTestConfig {
     readWriteCycleMs: number,
     faultInjectionMaxMs?: number,
     faultInjectionMinMs?: number,
+    /**
+     * Number of clients sending blobs. Each of these will send one blob per cycle.
+     */
+    numBlobClients?: number,
+    /**
+     * Size of blob to upload in bytes. Note that some services may limit the maximum uploadable blob size (e.g. 4MB in
+     * ODSP). Also, keep in mind that large blob uploads will likely dwarf other observable effects.
+     */
+    blobSize?: number,
 }

@@ -36,6 +36,7 @@ const counterKey = "counter";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
+const defaultBlobSize = 1024;
 
 /**
  * Encapsulate the data model and to not expose raw DDS to the main loop.
@@ -130,7 +131,7 @@ class LoadTestDataStoreModel {
 
         if (!runDir.has(counterKey)) {
             runDir.set(counterKey, SharedCounter.create(runtime).handle);
-            runDir.set(startTimeKey,Date.now());
+            runDir.set(startTimeKey, Date.now());
         }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
         const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
@@ -170,7 +171,10 @@ class LoadTestDataStoreModel {
 
     private readonly taskId: string;
     private readonly partnerId: number;
-    private taskStartTime: number =0;
+    private taskStartTime: number = 0;
+    private blobCount = 0;
+
+    public readonly isBlobWriter: boolean = false;
 
     private constructor(
         private readonly root: ISharedDirectory,
@@ -194,6 +198,20 @@ class LoadTestDataStoreModel {
         };
         this.taskManager.on("lost", changed);
         this.taskManager.on("assigned", changed);
+
+        if (this.config.testConfig.numBlobClients !== undefined) {
+            this.isBlobWriter = this.config.runId < this.config.testConfig.numBlobClients;
+
+            // if our partner uploads a blob, download it
+            if (this.partnerId < this.config.testConfig.numBlobClients) {
+                this.root.on("valueChanged", (v) => {
+                    if (v.key === this.blobKey(this.partnerId)) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        this.root.get<IFluidHandle>(v.key)?.get();
+                    }
+                });
+            }
+        }
     }
 
     public get startTime(): number {
@@ -204,6 +222,17 @@ class LoadTestDataStoreModel {
     }
     public get currentTaskTime(): number {
         return Date.now() - (this.haveTaskLock() ?  this.taskStartTime : this.startTime);
+    }
+
+    private blobKey(id): string { return `blob_${id}`; }
+
+    public async writeBlob() {
+        const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
+        // upload a unique blob, since they may be deduped otherwise
+        const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${this.blobCount++}:`);
+        assert(buffer.byteLength === blobSize, "incorrect buffer size");
+        const handle = await this.runtime.uploadBlob(buffer);
+        this.root.set(this.blobKey(this.config.runId), handle);
     }
 
     public async getPartnerCounter() {
@@ -276,7 +305,12 @@ class LoadTestDataStoreModel {
     }
 
     public printStatus() {
-        if(this.config.verbose) {
+        if (this.config.verbose) {
+            const formatBytes = (bytes: number, decimals = 1): string => {
+                if (bytes === 0) { return "0 B"; }
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return `${(bytes / Math.pow(1024, i)).toFixed(decimals)} ${" KMGTPEZY"[i]}B`;
+            };
             const now = Date.now();
             const totalMin = (now - this.startTime) / 60000;
             const taskMin = this.totalTaskTime / 60000;
@@ -284,13 +318,17 @@ class LoadTestDataStoreModel {
             const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
             const sendRate = Math.floor(this.counter.value / taskMin);
             const disposed = this.runtime.disposed;
+            const blobsEnabled = (this.config.testConfig.numBlobClients ?? 0) > 0;
+            const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
             console.log(
                 `${this.config.runId.toString().padStart(3)}>` +
                 ` seen: ${opCount.toString().padStart(8)} (${opRate.toString().padStart(4)}/min),` +
                 ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
                 ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
                 ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
-                `hasTask: ${this.haveTaskLock()}`,
+                `hasTask: ${this.haveTaskLock().toString().padStart(5)}`,
+                blobsEnabled ? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}` : "",
+                blobsEnabled ? `blobs uploaded: ${formatBytes(this.blobCount * blobSize).padStart(8)}` : "",
                 !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
                 !disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
             );
@@ -328,6 +366,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
         try {
+            let blobP: Promise<void> | undefined;
             while (dataModel.counter.value < clientSendCount && !this.disposed) {
                 // this enables a quick ramp down. due to restart, some clients can lag
                 // leading to a slow ramp down. so if there are fewer than half the clients
@@ -339,13 +378,22 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
                 if (dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
+
+                    // write a blob once per cycle
+                    if (dataModel.isBlobWriter && !blobP) {
+                        blobP = dataModel.writeBlob();
+                    }
                     if (dataModel.counter.value % opsPerCycle === 0) {
+                        if (blobP) {
+                            await blobP;
+                            blobP = undefined;
+                        }
                         dataModel.abandonTask();
                         // give our partner a half cycle to get the task
                         await delay(cycleMs / 2);
                     } else {
                         // Random jitter of +- 50% of opWaitMs
-                        await delay(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
+                        await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                     }
                 } else {
                     await dataModel.lockTask();
