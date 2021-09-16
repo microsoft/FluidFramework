@@ -11,12 +11,13 @@ import {
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
     IFluidContainer,
-    SharedMap,
+    map,
 } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 import { DiceRollerController } from "./controller";
 import { makeAppView } from "./view";
 
+// const SharedMap = map.SharedMap;
 export interface ICustomUserDetails {
     gender: string;
     email: string;
@@ -59,15 +60,15 @@ const connectionProps: AzureConnectionConfig = useAzure ? {
 const containerSchema = {
     initialObjects: {
         /* [id]: DataObject */
-        map1: SharedMap,
-        map2: SharedMap,
+        map1: map.SharedMap,
+        map2: map.SharedMap,
     },
 };
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
     // Initialize both of our SharedMaps for usage with a DiceRollerController
-    const sharedMap1 = container.initialObjects.map1 as SharedMap;
-    const sharedMap2 = container.initialObjects.map2 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1 as map.SharedMap;
+    const sharedMap2 = container.initialObjects.map2 as map.SharedMap;
     await Promise.all([
         DiceRollerController.initializeModel(sharedMap1),
         DiceRollerController.initializeModel(sharedMap2),
@@ -109,8 +110,8 @@ async function start(): Promise<void> {
     document.title = id;
 
     // Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
-    const sharedMap1 = container.initialObjects.map1 as SharedMap;
-    const sharedMap2 = container.initialObjects.map2 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1 as map.SharedMap;
+    const sharedMap2 = container.initialObjects.map2 as map.SharedMap;
     const diceRollerController1 = new DiceRollerController(sharedMap1);
     const diceRollerController2 = new DiceRollerController(sharedMap2);
 

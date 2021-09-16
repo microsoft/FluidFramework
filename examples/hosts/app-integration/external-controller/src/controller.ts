@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { IValueChanged } from "fluid-framework";
+import { map } from "fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
@@ -32,8 +32,8 @@ const diceValueKey = "diceValue";
 interface DiceRollerControllerProps {
     get: (key: string) => any;
     set: (key: string, value: any) => void;
-    on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
-    off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
+    on(event: "valueChanged", listener: (args: map.IValueChanged) => void): this;
+    off(event: "valueChanged", listener: (args: map.IValueChanged) => void): this;
 }
 
 /**

@@ -7,7 +7,7 @@
 
 import { DOProviderContainerRuntimeFactory, FluidContainer } from "@fluidframework/fluid-static";
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { SharedMap } from "fluid-framework";
+import { map } from "fluid-framework";
 
 import { DiceRollerController } from "../src/controller";
 import { makeAppView } from "../src/view";
@@ -25,15 +25,15 @@ export const containerConfig = {
     name: "dice-roller-container",
     initialObjects: {
         /* [id]: DataObject */
-        map1: SharedMap,
-        map2: SharedMap,
+        map1: map.SharedMap,
+        map2: map.SharedMap,
     },
 };
 
 async function initializeNewContainer(container: FluidContainer): Promise<void> {
     // We now get the first SharedMap from the container
-    const sharedMap1 = container.initialObjects.map1 as SharedMap;
-    const sharedMap2 = container.initialObjects.map2 as SharedMap;
+    const sharedMap1 = container.initialObjects.map1 as map.SharedMap;
+    const sharedMap2 = container.initialObjects.map2 as map.SharedMap;
     await Promise.all([
         DiceRollerController.initializeModel(sharedMap1),
         DiceRollerController.initializeModel(sharedMap2),
@@ -59,8 +59,8 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
         await initializeNewContainer(fluidContainer);
     }
 
-    const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
-    const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
+    const sharedMap1 = fluidContainer.initialObjects.map1 as map.SharedMap;
+    const sharedMap2 = fluidContainer.initialObjects.map2 as map.SharedMap;
     const diceRollerController = new DiceRollerController(sharedMap1);
     const diceRollerController2 = new DiceRollerController(sharedMap2);
 
