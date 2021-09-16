@@ -22,7 +22,7 @@ const _ = require('lodash');
  * @alias property-properties.PropertyTemplateWrapper
  * @category Properties
  */
-export default class PropertyTemplateWrapper {
+class PropertyTemplateWrapper {
     constructor(in_remoteTemplate, in_scope) {
         /** The property template this object is wrapping */
         this._propertyTemplate = in_remoteTemplate;
