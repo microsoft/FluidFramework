@@ -1,5 +1,12 @@
 ## Adding breaking change notes
-Published changelogs may be found on the docs site at fluidframework.com.  They are reviewed and published from the main branch accompanying each release.  To add any change notes, please edit the new file located at [./docs/content/docs/changelogs/CHANGELOG.md](./docs/content/docs/changelogs/CHANGELOG.md).
+Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+
+### Writing a change note
+There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
+- Provide a concise title.  It should make clear what the topic of the change is.
+- Ensure the affected packages are named or clearly identifiable within the body.
+- Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
+- Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
