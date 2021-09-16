@@ -1,7 +1,9 @@
 ## Adding breaking change notes
+
 Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
 
 ### Writing a change note
+
 There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
 - Provide a concise title.  It should make clear what the topic of the change is.
 - Ensure the affected packages are named or clearly identifiable within the body.
