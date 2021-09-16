@@ -130,6 +130,16 @@ export class LoggingError extends Error implements ILoggingError, Pick<IFluidErr
 export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
 // @public
+export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
+    constructor();
+    // (undocumented)
+    events: ITelemetryBaseEvent[];
+    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
 export class MultiSinkLogger extends TelemetryLogger {
     constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags);
     addLogger(logger?: ITelemetryBaseLogger): void;
