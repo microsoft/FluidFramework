@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -18,6 +17,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
