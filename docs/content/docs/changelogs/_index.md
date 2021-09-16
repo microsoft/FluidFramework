@@ -1,5 +1,5 @@
 ---
-title: "Changelogs"
+title: "What's new"
 draft: false
 area: changelogs
 cascade:
