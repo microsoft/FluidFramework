@@ -191,7 +191,7 @@ async function* saveOps(
 
     // Figure out first file we want to write to
     let index = 0;
-    let curr: number;
+    let curr: number = 1;
     if (files.length !== 0) {
         index = files.length - 1;
         const name = filenameFromIndex(index);
