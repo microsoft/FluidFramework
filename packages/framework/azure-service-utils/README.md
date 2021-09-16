@@ -1,6 +1,6 @@
 # @fluidframework/azure-service-utils
 
-Helper utilities for use when developing BE APIs for use with applications built using the `AzureClient`
+A set of helper utilities for building backend APIs for use with Azure Fluid Relay service.
 
 ## generateToken
 
