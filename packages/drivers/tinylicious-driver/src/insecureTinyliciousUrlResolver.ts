@@ -32,6 +32,8 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
     }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl> {
+        // determine whether the request is for creating of a new container.
+        // such request has the `createNew` header set to true and doesn't have a container ID.
         if (request.headers && request.headers[DriverHeader.createNew] === true) {
             return {
                 endpoints: {
@@ -39,12 +41,15 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
                     ordererUrl: this.tinyliciousEndpoint,
                     storageUrl: `${this.tinyliciousEndpoint}/repos/tinylicious`,
                 },
+                // id is a mandatory attribute, but it's ignored by the driver for new container requests.
                 id: "",
+                // tokens attribute is redundant as all tokens are generated via ITokenProvider
                 tokens: {},
                 type: "fluid",
                 url: `${this.fluidProtocolEndpoint}/tinylicious/new`,
             };
         }
+        // for an existing container we'll parse the request URL to determine the document ID.
         const url = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
         const documentId = url.split("/")[0];
         const encodedDocId = encodeURIComponent(documentId);

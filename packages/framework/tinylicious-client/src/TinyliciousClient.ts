@@ -58,7 +58,7 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{ container: FluidContainer; services: TinyliciousContainerServices }> {
+    ): Promise<{ container: IFluidContainer; services: TinyliciousContainerServices }> {
         const loader = this.createLoader(containerSchema);
 
         // We're not actually using the code proposal (our code loader always loads the same module
@@ -121,7 +121,6 @@ export class TinyliciousClient {
         );
         const module = { fluidExport: containerRuntimeFactory };
         const codeLoader = { load: async () => module };
-
         const loader = new Loader({
             urlResolver: this.urlResolver,
             documentServiceFactory: this.documentServiceFactory,

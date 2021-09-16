@@ -23,6 +23,8 @@ export class AzureUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
+        // determine whether the request is for creating of a new container.
+        // such request has the `createNew` header set to true and doesn't have a container ID.
         if (request.headers && request.headers[DriverHeader.createNew] === true) {
             return {
                 endpoints: {
@@ -30,12 +32,15 @@ export class AzureUrlResolver implements IUrlResolver {
                     ordererUrl: this.orderer,
                     storageUrl: `${this.storage}/repos/${this.tenantId}`,
                 },
+                // id is a mandatory attribute, but it's ignored by the driver for new container requests.
                 id: "",
+                // tokens attribute is redundant as all tokens are generated via ITokenProvider
                 tokens: {},
                 type: "fluid",
                 url: `${this.orderer}/${this.tenantId}/new`,
             };
         }
+        // for an existing container we'll parse the request URL to determine the document ID.
         const containerId = request.url.split("/")[0];
         const documentUrl = `${this.orderer}/${this.tenantId}/${containerId}`;
         return Promise.resolve({
