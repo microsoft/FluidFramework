@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluid-scale-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: fluid-scale-test
+  template:
+    metadata:
+      labels:
+        name: fluid-scale-test
+    spec:
+      nodeSelector:
+        agentpool: fluid
+      containers:
+      - name: fluid-scale-test
+        image: loadgeneration.azurecr.io/odspwirefluid/fluid-scale-test-main:code
+        imagePullPolicy: Always
+        command: ["/bin/sh"]
+        args: ["-c", "sh testRunner.sh > testRunner.log"]
+        env:
+        - name: FLUID_TEST_UID
+          value: "{{FLUID_TEST_UID}}"
+        - name: TEST_PROFILE
+          value: "{{TEST_PROFILE}}"
+        - name: login__microsoft__clientId
+          value: "{{CLIENT_ID}}"
+        - name: login__microsoft__secret
+          value: "{{CLIENT_SECRET}}"
+        - name: APPINSIGHTS_INSTRUMENTATIONKEY
+          value: "{{INSTRUMENTATION_KEY}}"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1000M
+          limits:
+            cpu: 500m
+            memory: 1000M
+        volumeMounts:
+        - name: azurestoragefileshare
+          mountPath: /fluid-config-store
+      volumes:
+      - name: azurestoragefileshare
+        azureFile:
+          secretName: fluid-config-store-secret
+          shareName: fluid-config-store
+          readOnly: true

@@ -4,6 +4,7 @@ dist
 nyc
 *.log
 .DS_Store
+lib/
 
 # TypeScript incremental build cache
 *.tsbuildinfo

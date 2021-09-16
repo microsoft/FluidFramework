@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "loadtestaks1-3b03"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "loadtestaks1-3b03"
+  template:
+    metadata:
+      labels:
+        app: "loadtestaks1-3b03"
+    spec:
+      containers:
+        - name: "loadtestaks1-3b03"
+          image: "loadgeneration.azurecr.io/loadtestaks1"
+          ports:
+          - containerPort: 80

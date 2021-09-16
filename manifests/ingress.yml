@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: "loadtestaks1-3b03"
+    labels:
+        app: "loadtestaks1-3b03"
+    annotations:
+        kubernetes.io/ingress.class: addon-http-application-routing
+spec:
+    rules:
+        - host: fluid_load_test-loadtestaks1-3b03.6025978a97f44d1c97af.westus2.aksapp.io
+          http:
+            paths:
+            - path: /
+              backend:
+                serviceName: "loadtestaks1-3b03"
+                servicePort: 80

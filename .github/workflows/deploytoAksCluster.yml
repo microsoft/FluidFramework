@@ -1,0 +1,19 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: loadgeneration.azurecr.io
+        username: ${{ secrets.acr_loadgeneration_username }}
+        password: ${{ secrets.acr_loadgeneration_password }}
+
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/" -f "packages/test/test-service-load/Dockerfile" -t loadgeneration.azurecr.io/odspwirefluid/fluid-scale-test-main:code --label dockerfile-path=Dockerfile
+        docker push loadgeneration.azurecr.io/odspwirefluid/fluid-scale-test-main:code
+

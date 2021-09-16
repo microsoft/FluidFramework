@@ -18,6 +18,8 @@ import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } fro
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
 
+import { setAppInsightsTelemetry } from "./appinsightslogger";
+
 function printStatus(runConfig: IRunConfig, message: string) {
     if (runConfig.verbose) {
         console.log(`${runConfig.runId.toString().padStart(3)}> ${message}`);
@@ -125,6 +127,8 @@ async function runnerProcess(
     url: string,
     seed: number,
 ): Promise<number> {
+    let telementryCleanup: () => void;
+
     try {
         const loaderOptions = generateLoaderOptions(seed);
         const containerOptions = generateRuntimeOptions(seed);
@@ -169,6 +173,8 @@ async function runnerProcess(
             container.resume();
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
+            telementryCleanup = await setAppInsightsTelemetry(container, runConfig, url);
+
             // Control fault injection period through config.
             // If undefined then no fault injection.
             const faultInjectionMinMs = runConfig.testConfig.faultInjectionMinMs;
@@ -198,6 +204,7 @@ async function runnerProcess(
                 if (!container.closed) {
                     container.close();
                 }
+                telementryCleanup();
                 await baseLogger.flush({ url, runId: runConfig.runId });
             }
         }
