@@ -9,10 +9,25 @@ distributed-data-structures:
 libraries:
 - "fluid-framework"
 - "@fluidframework/aqueduct"
+- "@fluidframework/datastore"
+serviceClients:
+- "@fluidframework/azure-client"
+- "@fluidframework/tinylicious-client"
 definitions:
 - "@fluidframework/common-definitions"
 - "@fluidframework/container-definitions"
+- "@fluidframework/container-runtime-definitions"
 - "@fluidframework/core-interfaces"
 - "@fluidframework/driver-definitions"
 - "@fluidframework/protocol-base"
 - "@fluidframework/protocol-definitions"
+utilities:
+- "@fluidframework/container-loader"
+- "@fluidframework/container-runtime"
+- "@fluidframework/driver-utils"
+- "@fluidframework/common-utils"
+- "@fluidframework/request-handler"
+- "@fluidframework/routerlicious-driver"
+- "@fluidframework/runtime-utils"
+- "@fluidframework/synthesize"
+- "@fluidframework/telemetry-utils"
