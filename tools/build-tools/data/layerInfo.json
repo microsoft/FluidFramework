@@ -270,7 +270,8 @@
         "layers": {
             "Server-Shared-Utils": {
                 "packages": [
-                    "@fluidframework/server-services-client"
+                    "@fluidframework/server-services-client",
+                    "@fluidframework/azure-service-utils"
                 ],
                 "deps": [
                     "Protocol-Utils"
