@@ -4,10 +4,11 @@
 
 ```ts
 
-import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from '@fluidframework/server-services-client';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 
 export { generateToken }
+
 export { ScopeType }
 
 
