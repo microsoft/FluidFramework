@@ -16,7 +16,6 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -57,7 +56,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mockLogger: MockLogger;

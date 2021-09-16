@@ -17,7 +17,6 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 /**
  * This data store creates only one DDS (root SharedDirectory created by DataObject). Each of these has 2 GC nodes:
@@ -50,7 +49,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
     const logger = new TelemetryNullLogger();
 
