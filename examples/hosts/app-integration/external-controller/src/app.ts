@@ -17,7 +17,6 @@ import { v4 as uuid } from "uuid";
 import { DiceRollerController } from "./controller";
 import { makeAppView } from "./view";
 
-// const SharedMap = map.SharedMap;
 export interface ICustomUserDetails {
     gender: string;
     email: string;
