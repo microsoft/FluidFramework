@@ -80,11 +80,13 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-doclib-utils"
+                    "@fluidframework/odsp-doclib-utils",
+                    "@fluidframework/azure-service-utils"
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Server-Shared-Utils"
                 ]
             },
             "Tool-Utils": {
