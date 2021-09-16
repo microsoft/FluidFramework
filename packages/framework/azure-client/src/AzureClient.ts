@@ -38,6 +38,7 @@ export class AzureClient {
     constructor(private readonly props: AzureClientProps) {
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
+            { enableWholeSummaryUpload: true },
         );
     }
 

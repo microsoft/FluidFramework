@@ -14,6 +14,7 @@ The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been
 - [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
 - [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
 - [AzureClient initialization as a singular config](#AzureClient-initialization-as-a-singular-config)
+- [MockLogger removed from @fluidframework/test-runtime-utils](#MockLogger-removed-from-@fluidframework/test-runtime-utils)
 
 ### Property removed from IFluidDataStoreContext
 - the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
@@ -109,6 +110,9 @@ const config = {
 }
 const client = new AzureClient(config);
 ```
+
+## MockLogger removed from @fluidframework/test-runtime-utils
+MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
 
 ## 0.46 Breaking changes
 - [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)

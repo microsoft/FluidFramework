@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import { MockLogger } from "@fluid-internal/mock-logger";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentMessage,
@@ -12,7 +13,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
-import { MockDeltaManager, MockLogger, MockQuorum } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {

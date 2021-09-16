@@ -28,7 +28,7 @@
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
     "postinstall": "npm run postinstall:lerna",
-    "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json",
+    "layer-check": "fluid-layer-check --info tools/build-tools/data/layerInfo.json --md",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
     "policy-check": "fluid-repo-policy-check",
