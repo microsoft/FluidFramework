@@ -356,7 +356,7 @@ PropertyTemplateWrapper.prototype.loadConstants = function (in_property) {
  */
 PropertyTemplateWrapper.prototype._saveConstants = function (in_property) {
     this._saveConstantsRecursive(in_property, {});
-    Object.freeze(this.constantTree);
+    // Object.freeze(this.constantTree);
 };
 
 /**
@@ -387,7 +387,7 @@ PropertyTemplateWrapper.prototype._saveConstantsRecursive = function (in_propert
                         child._parent = undefined;
                     }
                     out_property._constantChildren[key] = child;
-                    Object.freeze(out_property._constantChildren[key]);
+                    // Object.freeze(out_property._constantChildren[key]);
                     isConstant = true;
                     delete in_property._staticChildren[key];
                 } else {
