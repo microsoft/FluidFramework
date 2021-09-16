@@ -284,7 +284,7 @@ const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
 // Local storage key to turn GC sweep on / off.
-const runSweep = "FluidRunSweep";
+const runSweepKey = "FluidRunSweep";
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
 
@@ -857,7 +857,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
         // localStorage flag.
         this.shouldRunSweep = this.shouldRunGC &&
-            (getLocalStorageFeatureGate(runSweep) ?? this.runtimeOptions.gcOptions.runSweep === true);
+            (getLocalStorageFeatureGate(runSweepKey) ?? this.runtimeOptions.gcOptions.runSweep === true);
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
