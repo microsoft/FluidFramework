@@ -1,6 +1,8 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+// /*!
+//  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+//  * Licensed under the MIT License.
+//  */
 
-export * from  "@fluidframework/sequence";
+// import * as sequence from "@fluidframework/sequence";
+
+// export { sequence };

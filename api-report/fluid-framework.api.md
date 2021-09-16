@@ -5,13 +5,17 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import * as map from '@fluidframework/map';
+import * as sequence from '@fluidframework/sequence';
 
 export { AttachState }
 
+export { map }
+
+export { sequence }
+
 
 export * from "@fluidframework/fluid-static";
-export * from "@fluidframework/map";
-export * from "@fluidframework/sequence";
 
 // (No @packageDocumentation comment for this package)
 
