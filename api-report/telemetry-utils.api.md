@@ -134,6 +134,7 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
     // (undocumented)
     events: ITelemetryBaseEvent[];
+    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
