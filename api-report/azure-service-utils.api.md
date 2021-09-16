@@ -4,9 +4,11 @@
 
 ```ts
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from '@fluidframework/server-services-client';
 
 export { generateToken }
+export { ScopeType }
 
 
 // (No @packageDocumentation comment for this package)
