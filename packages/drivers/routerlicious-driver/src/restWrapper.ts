@@ -86,9 +86,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
         const correlationId = requestHeaders?.["x-correlation-id"] || uuid();
 
         return {
+            ...requestHeaders,
             "x-correlation-id": correlationId,
             "Authorization": this.authorizationHeader,
-            ...requestHeaders,
         };
     }
 }
