@@ -99,7 +99,7 @@ const schema = {
   ],
 };
 const azureClient = new AzureClient(clientProps);
-const { fluidContainer, containerServices } = await azureClient.createContainer(
+const { container, services } = await azureClient.createContainer(
   schema
 );
 const id = await fluidContainer.attach();
