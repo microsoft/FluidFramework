@@ -9,7 +9,7 @@ In this tutorial, you'll learn about using the Fluid Framework by building a sim
 
 To jump ahead into the finished demo, check out the [Create React App demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/cra-demo).
 
-The following image shows the time stamp application open in four browsers. Each has a button labelled **click** and beside it a UNIX Epoch time. The same time in all four. The cursor is on the button in one browser.
+The following image shows the time stamp application open in four browsers. Each has a button labeled **click** and beside it a Unix epoch time. The same time is in all four. The cursor is on the button in one browser.
 
 ![Four browsers with the Timestamp app open in them.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-1.PNG)
 
