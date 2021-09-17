@@ -30,7 +30,6 @@ This example schema defines two initial objects, `layout` and `text`, and declar
 
 ```typescript
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -44,7 +43,7 @@ const schema = {
 Containers are created from the service-specific client's `createContainer` function. Your code must provide a configuration that is specific to the service and a schema object that defines the container schema. About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
@@ -150,7 +149,6 @@ These shared objects are exposed via the `initialObjects` property on the contai
 
 ```typescript {linenos=inline}
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString

@@ -78,15 +78,14 @@ The `AzureClient` API exposes `createContainer` and `getContainer` functions to 
 
 ```javascript
 const schema = {
-    name: "my-container",
     initialObjects: {
         /* ... */
     },
     dynamicObjectTypes: [ /*...*/ ],
 }
 const azureClient = new AzureClient(config);
-await azureClient.createContainer({ id: "_unique-id_" }, schema);
-const { fluidContainer, containerServices } = await azureClient.getContainer({ id: "_unique-id_" }, schema);
+await azureClient.createContainer(schema);
+const { container, services } = await azureClient.getContainer("_unique-id_", schema);
 ```
 
 The `id` being passed into the container config is a unique identifier to a container instance. Any client that wants to join the same collaborative session needs to call `getContainer` with the same container `id`.
@@ -97,16 +96,16 @@ The container being fetched back will hold the `initialObjects` as defined in th
 
 ## Getting audience details
 
-Calls to `createContainer` and `getContainer` return an `AzureResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
+Calls to `createContainer` and `getContainer` return an `AzureResources` object that contains a `FluidContainer` -- described above -- and a `services` object.
 
 The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `FrsClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the shared objects within the Fluid container can be reused when moving to using `FrsClient`.
 
-The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
+The `services` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 
 Let's take a look at how you can use the `audience` object to maintain an updated view of all the members currently in a container.
 
 ``` javascript
-const { audience } = containerServices;
+const { audience } = services;
 const audienceDiv = document.createElement("div");
 
 const onAudienceChanged = () => {

@@ -25,22 +25,21 @@ The example below creates a new container with a `SharedMap` and a `SharedCell` 
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 - The placeholder `/*service config*/` stands for a service-specific configuration object.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript
 const schema = {
-    name: "example-container",
     initialObjects: {
         customMap: SharedMap,
         "custom-cell": SharedCell,
     }
 }
 
-const { fluidContainer, containerServices } = await client.createContainer(/*service config*/, schema);
+const { container, services } = await client.createContainer(schema);
 
-const initialObjects = fluidContainer.initialObjects;
-const map = fluidContainer.initialObjects.customMap;
-const cell = fluidContainer.initialObjects["custom-cell"];
+const initialObjects = container.initialObjects;
+const map = container.initialObjects.customMap;
+const cell = container.initialObjects["custom-cell"];
 ```
 
 ## Dynamic objects
@@ -62,10 +61,10 @@ const schema = {
     dynamicObjectTypes: [ SharedCell, SharedMap ],
 }
 
-const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(/*service config*/, schema);
 
-const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
-const newMap = await fluidContainer.create(SharedMap); // Create a new SharedMap
+const newCell = await container.create(SharedCell); // Create a new SharedCell
+const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
 
 {{% callout tip %}}
@@ -95,17 +94,16 @@ using the handle. It also demonstrates retrieving the `SharedCell` object from t
 
 ```typescript
 const schema = {
-    name: "example-container",
     initialObjects: {
         map: SharedMap,
     },
     dynamicObjectTypes: [ SharedCell ],
 }
 
-const { fluidContainer, containerServices } = await client.getContainer(/*service config*/, schema);
-const map = fluidContainer.initialObjects.map;
+const { container, services } = await client.getContainer(/*service config*/, schema);
+const map = container.initialObjects.map;
 
-const newCell = await fluidContainer.create(SharedCell); // Create a new SharedCell
+const newCell = await container.create(SharedCell); // Create a new SharedCell
 map.set("cell-id", newCell.handle); // Attach the new SharedCell
 
 // ...
