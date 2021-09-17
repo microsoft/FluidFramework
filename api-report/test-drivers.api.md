@@ -153,7 +153,7 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
-    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api?: RouterliciousDriverApiType, endpointName?: string | undefined);
+    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, useWholeSummary: boolean, api?: RouterliciousDriverApiType, endpointName?: string | undefined);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
