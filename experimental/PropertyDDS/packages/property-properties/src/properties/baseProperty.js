@@ -363,7 +363,7 @@ BaseProperty.prototype.applyChangeSet = function (in_changeSet) {
  *    control property creation, to prevent properties from being created outside the checked out
  *    paths. It does not validate that a value inside the ChangeSet is outside those paths.
  */
-BaseProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView) {
+BaseProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions = undefined) {
     var typeids = _.keys(in_changeSet);
     for (var i = 0; i < typeids.length; i++) {
         var typeid = typeids[i];
