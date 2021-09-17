@@ -25,6 +25,7 @@ const dockerConfig = {
     },
     tenantId: "fluid",
     tenantSecret: "create-new-tenants-if-going-to-production",
+    useWholeSummary: false,
 };
 
 function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string, useWholeSummary: boolean = false) {
