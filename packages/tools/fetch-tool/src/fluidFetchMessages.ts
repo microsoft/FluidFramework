@@ -28,7 +28,7 @@ function filenameFromIndex(index: number): string {
     return index === 0 ? "" : index.toString(); // support old tools...
 }
 
-let currSeq = 1;
+let firstAvailableDelta = 1;
 async function* loadAllSequencedMessages(
     documentService?: IDocumentService,
     dir?: string,
@@ -108,8 +108,8 @@ async function* loadAllSequencedMessages(
         }
         // get firstAvailableDelta from the error response, and set current sequence number to that
         response = JSON.parse(error.getTelemetryProperties().response);
-        lastSeq = response.error.firstAvailableDelta - 1;
-        currSeq = lastSeq + 1;
+        firstAvailableDelta = response.error.firstAvailableDelta;
+        lastSeq = firstAvailableDelta - 1;
     }
 
     // continue reading rest of the ops
@@ -203,7 +203,7 @@ async function* saveOps(
     while (true) {
         const result: IteratorResult<ISequencedDocumentMessage[]> = await gen.next();
         if (files.length === 0) {
-            curr = currSeq;
+            curr = firstAvailableDelta;
         }
         if (!result.done) {
             let messages = result.value;

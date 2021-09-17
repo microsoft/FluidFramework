@@ -21,7 +21,6 @@ In order to connect to ODSP, the clientID and clientSecret must be set as enviro
       --filter:messageType <type>     : filter message by <type>
       --jwt <token>                   : token to be used for routerlicious URLs
       --numSnapshotVersions <number>  : Number of versions to load (default:10)
-      --overwrite                     : Overwrite existing messages.json
       --snapshotVersionIndex <number> : Index of the version to dump
       --saveDir <outdir>              : Save data of the snapshots and messages
 
