@@ -12,6 +12,7 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -169,8 +170,14 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     keys(): IterableIterator<string>;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // Warning: (ae-forgotten-export) The symbol "LocalValueMaker" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    readonly localValueMaker: LocalValueMaker;
     // (undocumented)
     protected onDisconnect(): void;
+    // @internal
+    protected populate(data: IDirectoryDataObject): void;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
@@ -182,6 +189,10 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+    // Warning: (ae-forgotten-export) The symbol "IDirectoryOperation" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
+    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     values(): IterableIterator<any>;
     wait<T = any>(key: string): Promise<T>;
 }
@@ -191,7 +202,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
+    // @internal (undocumented)
     protected applyStashedOp(content: any): unknown;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
@@ -202,19 +213,19 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
+    // @internal (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
     get size(): number;
-    // (undocumented)
+    // @internal (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     values(): IterableIterator<any>;
     wait<T = any>(key: string): Promise<T>;
