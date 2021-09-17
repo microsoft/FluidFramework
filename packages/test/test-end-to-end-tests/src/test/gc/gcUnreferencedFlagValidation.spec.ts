@@ -4,31 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore, DataObjectFactory } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { Container } from "@fluidframework/container-loader";
-import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
-    ISummaryConfiguration,
-    ISummaryTree,
-    SummaryType,
-} from "@fluidframework/protocol-definitions";
+    ContainerRuntime,
+    IAckedSummary,
+    IContainerRuntimeOptions,
+    SummaryCollection,
+} from "@fluidframework/container-runtime";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
-
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
+import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
 describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -38,22 +30,10 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
         [],
         []);
 
-    const IdleDetectionTime = 100;
-    const summaryConfigOverrides: Partial<ISummaryConfiguration> = {
-        idleTime: IdleDetectionTime,
-        maxTime: IdleDetectionTime * 12,
-    };
     const runtimeOptions: IContainerRuntimeOptions = {
-        summaryOptions: {
-            generateSummaries: true,
-            initialSummarizerDelayMs: 10,
-            summaryConfigOverrides,
-        },
-        gcOptions: {
-            gcAllowed: true,
-        },
+        summaryOptions: { generateSummaries: false },
+        gcOptions: { gcAllowed: true },
     };
-
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
         factory,
         [
@@ -64,41 +44,41 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
         runtimeOptions,
     );
 
+    const logger = new TelemetryNullLogger();
     let mainContainer: Container;
     let mainDataStore: TestDataObject;
     let documentStorage: IDocumentStorageService;
-    let summaryCollection: SummaryCollection;
 
     let latestUploadedSummary: ISummaryTree | undefined;
     let latestSummaryContext: ISummaryContext | undefined;
+    // Stores the latest acked summary for the document.
+    let latestAckedSummary: IAckedSummary | undefined;
 
     const createContainer = async (): Promise<Container> => {
         return await provider.createContainer(runtimeFactory) as Container;
     };
 
-    /**
-     * Waits for a summary with the current state of the document (including all in-flight changes). It basically
-     * synchronizes all containers and waits for a summary that contains the last processed sequence number.
-     * @returns the version of this summary that be used to download it from the server.
-     */
-     async function waitForSummary() {
-        await provider.ensureSynchronized();
-        const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
-        const ackedSummary: IAckedSummary =
-            await summaryCollection.waitSummaryAck(sequenceNumber);
-        return {
-            summaryVersion: ackedSummary.summaryAck.contents.handle,
-            sequenceNumber,
-        };
-    }
+    const getNewSummarizer = async () => {
+        return loadSummarizer(provider, runtimeFactory, mainContainer.deltaManager.lastSequenceNumber);
+    };
 
     /**
      * Callback that will be called by the document storage service whenever a summary is uploaded by the client.
+     * Update the summary context to include the summary proposal and ack handle as per the latest ack for the
+     * document.
      */
-    function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext): ISummaryContext {
+     function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext): ISummaryContext {
         latestUploadedSummary = summaryTree;
         latestSummaryContext = context;
-        return context;
+        const newSummaryContext = { ...context };
+        // If we received an ack for this document, update the summary context with its information. The
+        // server rejects the summary if it doesn't have the proposal and ack handle of the previous
+        // summary.
+        if (latestAckedSummary !== undefined) {
+            newSummaryContext.ackHandle = latestAckedSummary.summaryAck.contents.handle;
+            newSummaryContext.proposalHandle = latestAckedSummary.summaryOp.contents.handle;
+        }
+        return newSummaryContext;
     }
 
     /**
@@ -109,13 +89,14 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
      * @param summaryVersion - The version of the summary that got uploaded to be used to download it from the server.
      */
     async function validateUnreferencedFlag(
-        summarySequenceNumber: number,
+        summarizerClient: { containerRuntime: ContainerRuntime, summaryCollection: SummaryCollection },
         unreferencedDataStoreIds: string[],
-        summaryVersion: string,
     ) {
+        const summaryResult = await submitAndAckSummary(provider, summarizerClient, logger);
+        latestAckedSummary = summaryResult.ackedSummary;
         assert(
-            latestSummaryContext && latestSummaryContext.referenceSequenceNumber >= summarySequenceNumber,
-            `Did not get expected summary. Expected: ${summarySequenceNumber}. ` +
+            latestSummaryContext && latestSummaryContext.referenceSequenceNumber >= summaryResult.summarySequenceNumber,
+            `Did not get expected summary. Expected: ${summaryResult.summarySequenceNumber}. ` +
             `Actual: ${latestSummaryContext?.referenceSequenceNumber}.`,
         );
         assert(latestUploadedSummary !== undefined, "Did not get a summary");
@@ -142,7 +123,7 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
         // Validate the snapshot downloaded from the server.
         {
             // Download the snapshot corresponding to the above summary from the server.
-            const versions = await documentStorage.getVersions(summaryVersion, 1);
+            const versions = await documentStorage.getVersions(latestAckedSummary.summaryAck.contents.handle, 1);
             const snapshot = await documentStorage.getSnapshotTree(versions[0]);
             // eslint-disable-next-line no-null/no-null
             assert(snapshot !== null, "Snapshot could not be downloaded from server");
@@ -183,23 +164,22 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
 
         mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
 
-        // Create and setup a summary collection that will be used to track and wait for summaries.
-        summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
+        await provider.ensureSynchronized();
     });
 
     afterEach(() => {
-        mainContainer.close();
-        provider.reset();
+        latestAckedSummary = undefined;
         latestSummaryContext = undefined;
         latestUploadedSummary = undefined;
     });
 
     it("should return the unreferenced flag correctly in snapshot for deleted data stores", async () => {
         const deletedDataStoreIds: string[] = [];
+        const summarizerClient = await getNewSummarizer();
 
         // Create couple of data stores.
-        const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
-        const dataStore3 = await factory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await factory.createInstance(mainDataStore.containerRuntime);
+        const dataStore3 = await factory.createInstance(mainDataStore.containerRuntime);
 
         // Add the handles of the above dataStores to mark them as referenced.
         {
@@ -208,12 +188,7 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
 
             // Wait for the summary that contains the above. Also, get this summary's version so that we can download
             // it from the server.
-            const summaryResult = await waitForSummary();
-            await validateUnreferencedFlag(
-                summaryResult.sequenceNumber,
-                deletedDataStoreIds,
-                summaryResult.summaryVersion,
-            );
+            await validateUnreferencedFlag(summarizerClient, deletedDataStoreIds);
         }
 
         // Remove one of the data store handle to mark it as unreferenced.
@@ -223,12 +198,7 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
 
             // Wait for the summary that contains the above. Also, get this summary's version so that we can download
             // it from the server.
-            const summaryResult = await waitForSummary();
-            await validateUnreferencedFlag(
-                summaryResult.sequenceNumber,
-                deletedDataStoreIds,
-                summaryResult.summaryVersion,
-            );
+            await validateUnreferencedFlag(summarizerClient, deletedDataStoreIds);
         }
 
         // Remove the other data store handle so that both data stores are marked as unreferenced.
@@ -238,35 +208,30 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
 
             // Wait for the summary that contains the above. Also, get this summary's version so that we can load
             // a new container with it.
-            const summaryResult = await waitForSummary();
-            await validateUnreferencedFlag(
-                summaryResult.sequenceNumber,
-                deletedDataStoreIds,
-                summaryResult.summaryVersion,
-            );
+            await validateUnreferencedFlag(summarizerClient, deletedDataStoreIds);
         }
-    });
+    // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
+    // waits for those summaries to be ack'd. This may take a while.
+    }).timeout(20000);
 
-    it("should return the unreferenced flag correctly in snapshot for un-deleted data stores", async () => {
+    it("should return the unreferenced flag correctly in snapshot for revived data stores", async () => {
         let deletedDataStoreIds: string[] = [];
+        const summarizerClient = await getNewSummarizer();
 
         // Create couple of data stores.
-        const dataStore2 = await factory.createInstance(mainDataStore._context.containerRuntime);
-        const dataStore3 = await factory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await factory.createInstance(mainDataStore.containerRuntime);
+        const dataStore3 = await factory.createInstance(mainDataStore.containerRuntime);
 
         // Add the handles of the above dataStores to mark them as referenced.
         {
             mainDataStore._root.set("dataStore2", dataStore2.handle);
             mainDataStore._root.set("dataStore3", dataStore3.handle);
 
+            console.log("waiting for summary 1");
+
             // Wait for the summary that contains the above. Also, get this summary's version so that we can download
             // it from the server.
-            const summaryResult = await waitForSummary();
-            await validateUnreferencedFlag(
-                summaryResult.sequenceNumber,
-                deletedDataStoreIds,
-                summaryResult.summaryVersion,
-            );
+            await validateUnreferencedFlag(summarizerClient, deletedDataStoreIds);
         }
 
         // Remove the handles of the data stores to mark them as unreferenced.
@@ -276,14 +241,11 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
             deletedDataStoreIds.push(dataStore2.id);
             deletedDataStoreIds.push(dataStore3.id);
 
+            console.log("waiting for summary 2");
+
             // Wait for the summary that contains the above. Also, get this summary's version so that we can download
             // it from the server.
-            const summaryResult = await waitForSummary();
-            await validateUnreferencedFlag(
-                summaryResult.sequenceNumber,
-                deletedDataStoreIds,
-                summaryResult.summaryVersion,
-            );
+            await validateUnreferencedFlag(summarizerClient, deletedDataStoreIds);
         }
 
         // Add the handles of the data stores back to mark them as referenced again.
@@ -292,14 +254,15 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
             mainDataStore._root.set("dataStore3", dataStore3.handle);
             deletedDataStoreIds = [];
 
+            console.log("waiting for summary 3");
+
             // Wait for the summary that contains the above. Also, get this summary's version so that we can load
             // a new container with it.
-            const summaryResult = await waitForSummary();
-            await validateUnreferencedFlag(
-                summaryResult.sequenceNumber,
-                deletedDataStoreIds,
-                summaryResult.summaryVersion,
-            );
+            await validateUnreferencedFlag(summarizerClient, deletedDataStoreIds);
+
+            console.log("waiting for summary done");
         }
-    });
+    // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
+    // waits for those summaries to be ack'd. This may take a while.
+    }).timeout(20000);
 });

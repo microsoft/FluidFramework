@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -17,20 +16,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
-
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _runtime() {
-        return this.runtime;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
+import { TestDataObject } from "./mockSummarizerClient";
 
 describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -114,7 +100,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
@@ -149,7 +135,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
@@ -193,7 +179,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.

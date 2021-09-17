@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -17,20 +16,7 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-
-/**
- * This data store creates only one DDS (root SharedDirectory created by DataObject). Each of these has 2 GC nodes:
- * 1 for the data store itself and 1 for its DDS.
- */
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
+import { TestDataObject } from "./mockSummarizerClient";
 
 describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
@@ -88,7 +74,7 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        containerRuntime = defaultDataStore.containerRuntime;
     });
 
     /**
