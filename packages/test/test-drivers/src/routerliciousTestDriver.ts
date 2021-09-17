@@ -27,7 +27,7 @@ const dockerConfig = {
     tenantSecret: "create-new-tenants-if-going-to-production",
 };
 
-function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string) {
+function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string, useWholeSummary: boolean = false) {
     assert(fluidHost, "Missing Fluid host");
     assert(tenantId, "Missing tenantId");
     assert(tenantSecret, "Missing tenant secret");
@@ -39,6 +39,7 @@ function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string)
         },
         tenantId,
         tenantSecret,
+        useWholeSummary,
     };
 }
 
@@ -57,7 +58,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: string) {
     }
     assert(configStr, `Missing config for ${r11sEndpointName}`);
     const config = JSON.parse(configStr);
-    return getConfig(config.host, config.tenantId, config.tenantSecret);
+    return getConfig(config.host, config.tenantId, config.tenantSecret, config.useWholeSummary);
 }
 
 function getConfigFromEnv(r11sEndpointName?: string) {
@@ -76,11 +77,12 @@ export class RouterliciousTestDriver implements ITestDriver {
     public static createFromEnv(config?: { r11sEndpointName?: string },
         api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
-        const { serviceEndpoint, tenantId, tenantSecret } = getConfigFromEnv(config?.r11sEndpointName);
+        const { serviceEndpoint, tenantId, tenantSecret, useWholeSummary } = getConfigFromEnv(config?.r11sEndpointName);
         return new RouterliciousTestDriver(
             tenantId,
             tenantSecret,
             serviceEndpoint,
+            useWholeSummary,
             api,
             config?.r11sEndpointName,
         );
@@ -92,6 +94,7 @@ export class RouterliciousTestDriver implements ITestDriver {
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
+        private readonly useWholeSummary: boolean,
         private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
         public readonly endpointName?: string,
     ) {
@@ -111,6 +114,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
         return new this.api.RouterliciousDocumentServiceFactory(
             tokenProvider,
+            { enableWholeSummaryUpload: this.useWholeSummary },
         );
     }
 
