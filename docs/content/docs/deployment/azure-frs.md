@@ -110,7 +110,7 @@ The `container.attach()` call is when the container actually becomes connected t
 Any client that wants to join the same collaborative session needs to call `getContainer` with the same container `id`.
 
 ```javascript
-const { fluidContainer, containerServices } = await azureClient.getContainer(
+const { container, services } = await azureClient.getContainer(
   id,
   schema
 );
