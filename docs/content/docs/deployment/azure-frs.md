@@ -124,7 +124,7 @@ The container being fetched back will hold the `initialObjects` as defined in th
 
 Calls to `createContainer` and `getContainer` return two values: a `container` -- described above -- and a `services` object.
 
-The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the shared objects within the Fluid container can be reused when moving to using `AzureClient`.
+The `container` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the shared objects within the Fluid container can be reused when moving to using `AzureClient`.
 
 The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 
