@@ -94,6 +94,15 @@
       "TypeAliasDeclaration_SummaryTypeNoHandle": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "InterfaceDeclaration_IBlob": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ITree": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_ITreeEntry": {
+        "forwardCompat": false
       }
     }
   }
