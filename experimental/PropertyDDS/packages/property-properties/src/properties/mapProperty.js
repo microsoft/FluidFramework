@@ -202,9 +202,9 @@ MapProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
  * Resolves a direct child node based on the given path segment
  *
  * @param {String} in_segment                                   - The path segment to resolve
- * @param {property-properties.PathHelper.TOKEN_uTYPES} in_segmentType - The type of segment in the tokenized path
- *u
- * @return {property-properties.BasePruoperty|undefined} The child property that has been resolved
+ * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
+ *
+ * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
  * @protected
  */
 MapProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {

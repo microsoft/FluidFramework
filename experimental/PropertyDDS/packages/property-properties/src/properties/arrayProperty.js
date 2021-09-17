@@ -842,12 +842,7 @@ ArrayProperty.prototype.getLength = function () {
 };
 
 /**
- * Modifies the property according to the given changeset
- *
- * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
- * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
- *                                             and trigger a modified event there. When batching updates, this
- *                                             can be prevented via this flag.
+ * @inheritdoc
  */
 ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView) {
     this._checkIsNotReadOnly(false);
