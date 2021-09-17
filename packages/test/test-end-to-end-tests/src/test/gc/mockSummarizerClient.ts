@@ -29,7 +29,7 @@ export class TestDataObject extends DataObject {
 }
 
 /**
-  * Loads a summarizer client with the given version (if any) and returns its container runtime.
+  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
   */
 export async function loadSummarizer(
     provider: ITestObjectProvider,
@@ -66,7 +66,7 @@ export async function loadSummarizer(
 /**
  * Generates, uploads, submits a summary on the given container runtime and waits for the summary to be ack'd
  * by the server.
- * @returns The last sequence number contained in the summary that is generated.
+ * @returns The acked summary and the last sequence number contained in the summary that is submitted.
  */
 export async function submitAndAckSummary(
     provider: ITestObjectProvider,
