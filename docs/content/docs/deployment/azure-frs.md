@@ -102,7 +102,7 @@ const azureClient = new AzureClient(clientProps);
 const { container, services } = await azureClient.createContainer(
   schema
 );
-const id = await fluidContainer.attach();
+const id = await container.attach();
 ```
 
 The `container.attach()` call is when the container actually becomes connected to the service and is recorded in its blob storage. It returns an `id` which is the unique identifier to this container instance.
