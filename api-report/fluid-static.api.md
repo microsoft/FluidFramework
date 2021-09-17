@@ -38,7 +38,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 // @public
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
-    constructor(container: Container, rootDataObject: RootDataObject, attachCallback: () => Promise<string>);
+    constructor(container: Container, rootDataObject: RootDataObject);
     attach(): Promise<string>;
     get attachState(): AttachState;
     get connected(): boolean;

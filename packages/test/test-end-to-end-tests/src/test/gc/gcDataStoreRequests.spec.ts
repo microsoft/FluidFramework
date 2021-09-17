@@ -17,7 +17,6 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -63,7 +62,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mainContainer: IContainer;
@@ -226,7 +225,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            flattenRuntimeOptions(gcDisabledRuntimeOptions),
+            gcDisabledRuntimeOptions,
         );
         const container2 = await loadContainer(summaryVersion, gcDisabledRuntimeFactory);
 

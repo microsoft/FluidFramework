@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import { GenericError, DataCorruptionError } from "../error";
 
 describe("Check if the errorType field matches after sending/receiving via Container error classes", () => {

@@ -155,7 +155,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 
     public static async load(
         tenantId: string,
-        documentId: string,
+        documentId: string | undefined,
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,

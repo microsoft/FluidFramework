@@ -24,7 +24,6 @@ import { channelsTreeName, IGarbageCollectionSummaryDetails } from "@fluidframew
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 
 class TestDataObject extends DataObject {
@@ -61,7 +60,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     const logger = new TelemetryNullLogger();

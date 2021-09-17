@@ -288,13 +288,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         };
                     }
                 }
+
+                sequencedMessageCount++;
             }
 
             // Update the msn last sent.
             this.lastSentMSN = ticketedMessage.msn;
             this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
-
-            sequencedMessageCount++;
         }
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);

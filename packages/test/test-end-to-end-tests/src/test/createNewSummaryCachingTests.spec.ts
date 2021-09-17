@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
@@ -16,7 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { AttachState } from "@fluidframework/container-definitions";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -57,7 +56,7 @@ describeNoCompat("Cache CreateNewSummary", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mockLogger: MockLogger;

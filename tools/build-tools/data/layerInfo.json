@@ -101,7 +101,6 @@
             },
             "Telemetry-Utils": {
                 "packages": [
-                    "@fluid-internal/mock-logger",
                     "@fluidframework/telemetry-utils"
                 ],
                 "deps": [
