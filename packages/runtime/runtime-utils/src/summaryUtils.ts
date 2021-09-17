@@ -300,7 +300,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
         switch (value.type) {
             case SummaryType.Blob: {
                 let parsedContent: string;
-                let encoding: string = "utf-8";
+                let encoding: BufferEncoding = "utf-8";
                 if (typeof value.content === "string") {
                     parsedContent = value.content;
                 } else {
