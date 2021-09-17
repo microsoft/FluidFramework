@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SignalManager } from "@fluid-experimental/signal-manager";
+import { SignalManager } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
