@@ -43,6 +43,7 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
             parentHandle,
             tree,
             "",
+            type === "channel" ? ".app" : "",
         );
         const snapshotPayload: IWholeSummaryPayload = {
             entries: snapshotTree.entries,

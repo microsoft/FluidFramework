@@ -14,7 +14,7 @@ The sections below will explain how to use `AzureClient` in your own application
 
 ## Connecting to the service
 
-To connect to an Azure Fluid Relay instance you first need to create an `AzureClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `azure-client` package provides an `InsecureTokenProvider` that can be used for development purposes.
+To connect to an Azure Fluid Relay instance you first need to create an `AzureClient`. You must provide some configuration parameters including the the tenant ID, orderer and storage URLs, and a token provider to generate the JSON Web Token (JWT) that will be used to authorize the current user against the service. The `@fluidframework/test-client-utils` package provides an `InsecureTokenProvider` that can be used for development purposes.
 
 {{< callout danger >}}
 The `InsecureTokenProvider` should only be used for development purposes because **using it exposes the tenant key secret in your client-side code bundle.** This must be replaced with an implementation of `ITokenProvider` that fetches the token from your own backend service that is responsible for signing it with the tenant key.
@@ -99,7 +99,7 @@ The container being fetched back will hold the `initialObjects` as defined in th
 
 Calls to `createContainer` and `getContainer` return an `AzureResources` object that contains a `FluidContainer` -- described above -- and a `containerServices` object.
 
-The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the Fluid shared objects within the container can be reused when moving to using `AzureClient`.
+The `FluidContainer` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `FrsClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the shared objects within the Fluid container can be reused when moving to using `FrsClient`.
 
 The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 

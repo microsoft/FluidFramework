@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
-import { MockDeltaManager, MockLogger, MockQuorum } from "@fluidframework/test-runtime-utils";
+import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
 import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
 
 describe("Runtime", () => {

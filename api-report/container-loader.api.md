@@ -151,7 +151,7 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     constructor(serviceProvider: () => IDocumentService | undefined, client: IClient, logger: ITelemetryLogger, reconnectAllowed: boolean, _active: () => boolean);
     // (undocumented)
     get active(): boolean;
-    attachOpHandler(minSequenceNumber: number, sequenceNumber: number, term: number, handler: IDeltaHandlerStrategy): void;
+    attachOpHandler(minSequenceNumber: number, sequenceNumber: number, term: number, handler: IDeltaHandlerStrategy, prefetchType?: "cached" | "all" | "none"): Promise<void>;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     close(error?: ICriticalContainerError): void;
@@ -189,8 +189,6 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     get minimumSequenceNumber(): number;
     // (undocumented)
     get outbound(): IDeltaQueue<IDocumentMessage[]>;
-    // (undocumented)
-    preFetchOps(cacheOnly: boolean): Promise<void>;
     // @deprecated
     get readonly(): boolean | undefined;
     // (undocumented)

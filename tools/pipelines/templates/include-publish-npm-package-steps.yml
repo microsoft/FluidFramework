@@ -24,10 +24,6 @@ parameters:
   type: string
   default:
 
-- name: tagName
-  type: string
-  default:
-
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
@@ -88,13 +84,30 @@ steps:
       t1=0
       for f in *.tgz
       do
-          if ! npm publish $f $tag ${{ parameters.publishFlags }}
+          npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+          if grep -q "npm ERR!" "publish_log"
           then
-              let t1+=1
+              if ! grep -q "You cannot publish over the previously published versions" "publish_log"
+              then
+                let t1+=1
+              else
+                echo Package has already been published.
+                local_f="${f}_local"
+                mv "$f" "$local_f"
+                package_name=$(grep -oP 'npm notice package: \K.*' "publish_log")
+                npm pack $package_name
+                if cmp -s "$f" "$local_f"
+                then
+                  echo Continuing as published package matches the current one that was attempting to be released.
+                else
+                  echo ERROR: Published package does not match the current one attempting to be released for the same version.
+                  let t1+=1
+                fi
+                rm "$f"
+                mv "$local_f" "$f"
+              fi
           fi
+          rm publish_log
       done
       rm ~/.npmrc
       exit $t1
-- template: include-git-tag-steps.yml
-  parameters:
-    tagName: ${{ parameters.tagName }}

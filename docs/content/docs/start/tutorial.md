@@ -1,5 +1,5 @@
 ---
-title: 'Tutorial: Create a Fluid Framework application'
+title: 'Tutorial: DiceRoller application'
 menuPosition: 2
 aliases:
   - "/docs/get-started/tutorial/"
@@ -18,7 +18,7 @@ In the DiceRoller app, users are shown a die with a button to roll it. When the 
 3. Write the dice view.
 4. Connect the view to Fluid data.
 
-The first two steps can be viewed in the DiceRoller's [app.ts](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.ts), while the last two are done in [jsView.ts](https://github.com/microsoft/FluidHelloWorld/blob/main/src/view/jsView.ts).
+All of the work in this demo will be done in the [app.js](https://github.com/microsoft/FluidHelloWorld/blob/main/src/app.js) file.
 
 ## Set up the application
 
@@ -99,24 +99,30 @@ start().catch((error) => console.error(error));
 
 ## Write the dice view
 
-The Fluid Framework is view framework agnostic and works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see this example, as well as examples of the previously mentioned frameworks, in our [HelloWorld repo](https://github.com/microsoft/FluidHelloWorld).
+The Fluid Framework is view framework agnostic and works well with React, Vue, Angular and web components. This example uses standard HTML/DOM methods to render a view. You can see examples of the previously mentioned frameworks in the [FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/multi-framework-diceroller).
 
 ### Start with a static view
 
 It is simplest to create the view using local data without Fluid, then add Fluid by changing some key pieces of the app. This tutorial uses this approach.
 
-The `renderDiceRoller` function below takes an HTML element to attach to, and displays a working dice roller with a random dice value each time the "Roll" button is clicked. Note that the included code snippets omit the styles for brevity.
+The `renderDiceRoller` function appends the `diceTemplate` to the passed in HTML element, and creates a working dice roller with a random dice value each time the "Roll" button is clicked. The `diceMap` will be used in the next few steps.
 
 ```js
-function renderDiceRoller(diceMap, elem) {
-    const dice = document.createElement("div");
+const diceTemplate = document.createElement("template");
 
-    const rollButton = document.createElement("button");
-    rollButton.textContent = "Roll";
+diceTemplate.innerHTML = `
+  <div class="wrapper">
+    <div class="dice"></div>
+    <button class="roll"> Roll </button>
+  </div>
+`
+function renderDiceRoller(diceMap, elem) {
+    elem.appendChild(template.content.cloneNode(true));
+    const rollButton = elem.querySelector(".roll");
+    const dice = elem.querySelector(".dice");
+
     rollButton.onclick = () => updateDice(Math.floor(Math.random() * 6)+1);
     
-    elem.append(dice, rollButton);
-
     const updateDice = (value) => {
         // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
         dice.textContent = String.fromCodePoint(0x267f + value);

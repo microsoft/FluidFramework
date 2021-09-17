@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger } from "./logger";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
@@ -21,13 +20,33 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     }
 
     /**
-     * Search events logged since the last time matchEvents was called,
-     * looking for the given expected events in order.
+     * Search events logged since the last time matchEvents was called, looking for the given expected
+     * events in order.
      * @param expectedEvents - events in order that are expected to appear in the recorded log.
      * These event objects may be subsets of the logged events.
      * Note: category is ommitted from the type because it's usually uninteresting and tedious to type.
      */
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
+        const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
+        // How many expected events were left over? Hopefully none.
+        const unmatchedExpectedEventCount = expectedEvents.length - matchedExpectedEventCount;
+        return unmatchedExpectedEventCount === 0;
+    }
+
+    /**
+     * Search events logged since the last time matchEvents was called, looking for any of the given
+     * expected events.
+     * @param expectedEvents - events that are expected to appear in the recorded log.
+     * These event objects may be subsets of the logged events.
+     * Note: category is ommitted from the type because it's usually uninteresting and tedious to type.
+     * @returns if any of the expected events is found.
+     */
+    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean {
+        const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
+        return matchedExpectedEventCount > 0;
+    }
+
+    private getMatchedEventsCount(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): number {
         let iExpectedEvent = 0;
         this.events.forEach((event) => {
             if (iExpectedEvent < expectedEvents.length &&
@@ -41,10 +60,8 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
         // Remove the events so far; next call will just compare subsequent events from here
         this.events = [];
 
-        // How many expected events were left over? Hopefully none.
-        const unmatchedExpectedEventCount = expectedEvents.length - iExpectedEvent;
-        assert(unmatchedExpectedEventCount >= 0);
-        return unmatchedExpectedEventCount === 0;
+        // Return the count of matched events.
+        return iExpectedEvent;
     }
 
     /**

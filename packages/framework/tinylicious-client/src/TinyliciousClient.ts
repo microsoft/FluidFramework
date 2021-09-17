@@ -18,6 +18,7 @@ import {
     ContainerSchema,
     DOProviderContainerRuntimeFactory,
     FluidContainer,
+    IFluidContainer,
     RootDataObject,
 } from "@fluidframework/fluid-static";
 import {
@@ -55,7 +56,7 @@ export class TinyliciousClient {
      */
     public async createContainer(
         containerSchema: ContainerSchema,
-    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
+    ): Promise<{container: IFluidContainer; services: TinyliciousContainerServices}> {
         // temporarily we'll generate the new container ID here
         // until container ID changes are settled in lower layers.
         const id = uuid();
@@ -72,7 +73,7 @@ export class TinyliciousClient {
     public async getContainer(
         id: string,
         containerSchema: ContainerSchema,
-    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
+    ): Promise<{container: IFluidContainer; services: TinyliciousContainerServices}> {
         const container = await this.getContainerCore(id, containerSchema, false);
         return this.getFluidContainerAndServices(id, container);
     }
@@ -81,13 +82,13 @@ export class TinyliciousClient {
     private async getFluidContainerAndServices(
         id: string,
         container: Container,
-    ): Promise<{container: FluidContainer; services: TinyliciousContainerServices}> {
+    ): Promise<{container: IFluidContainer; services: TinyliciousContainerServices}> {
         const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const attach = async () => {
             await container.attach({ url: id });
             return id;
         };
-        const fluidContainer: FluidContainer = new FluidContainer(container, rootDataObject, attach);
+        const fluidContainer: IFluidContainer = new FluidContainer(container, rootDataObject, attach);
         const services: TinyliciousContainerServices = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }

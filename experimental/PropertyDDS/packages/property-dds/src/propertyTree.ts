@@ -614,7 +614,7 @@ export class SharedPropertyTree extends SharedObject {
 
 	getRebasedChanges(startGuid: string, endGuid?: string) {
 		const startIndex = _.findIndex(this.remoteChanges, (c) => c.guid === startGuid);
-		if (endGuid) {
+		if (endGuid !== undefined) {
 			const endIndex = _.findIndex(this.remoteChanges, (c) => c.guid === endGuid);
 			return this.remoteChanges.slice(startIndex + 1, endIndex + 1);
 		}

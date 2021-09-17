@@ -61,7 +61,7 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
+        throwOdspNetworkError("invalidFilename", invalidFileNameStatusCode);
     }
 
     let itemId: string;
@@ -132,7 +132,7 @@ export async function createNewEmptyFluidFile(
 
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
-                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
@@ -186,7 +186,7 @@ export async function createNewFluidFileFromSummary(
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
-                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,

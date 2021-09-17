@@ -485,10 +485,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwOdspNetworkError("getVersions returned no response", 400);
+                throwOdspNetworkError("getVersionsReturnedNoResponse", 400);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwOdspNetworkError("getVersions returned non-array response", 400);
+                throwOdspNetworkError("getVersionsReturnedNonArrayResponse", 400);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -660,19 +660,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400);
+            throwOdspNetworkError("methodNotSupportedBecauseNoSnapshotUrlWasProvided", 400);
         }
     }
 
     private checkAttachmentPOSTUrl() {
         if (!this.attachmentPOSTUrl) {
-            throwOdspNetworkError("Method not supported because no attachmentPOSTUrl was provided", 400);
+            throwOdspNetworkError("methodNotSupportedBecauseNoAttachmentPOSTUrlWasProvided", 400);
         }
     }
 
     private checkAttachmentGETUrl() {
         if (!this.attachmentGETUrl) {
-            throwOdspNetworkError("Method not supported because no attachmentGETUrl was provided", 400);
+            throwOdspNetworkError("methodNotSupportedBecauseNoAttachmentGETUrlWasProvided", 400);
         }
     }
 
