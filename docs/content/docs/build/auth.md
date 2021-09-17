@@ -96,55 +96,13 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 A token provider is responsible for creating and signing tokens that the `@fluidframework/azure-client` uses to make
 requests to the Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
-However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret, then locally generates and returns a signed token. This token
-provider is useful for testing, but in production scenarios you must use a secure token provider.
+However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret, then locally generates and returns a signed token. This token provider is useful for testing, but in production scenarios you must use a secure token provider.
 
 ### A secure serverless token provider
 
-One option for building a secure token provider is to create a serverless Azure Function and expose it. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
-
-You can create the token provider class say `AzureFunctionTokenProvider` which extends the `ITokenProvider` interface without exposing the tenant key secret in client-side code. This class would be responsible for fetching the token from your very own backend. It accepts the url to Azure function and an optional user object.
-
-```typescript
-import { ITokenProvider, ITokenResponse } from "@fluidframework/azure-client";
-
-export class AzureFunctionTokenProvider implements ITokenProvider {
-  constructor(
-    private readonly azFunctionUrl: string,
-    private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
-  );
-
-  fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
-
-  fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
-}
-```
-
-`fetchOrdererToken` and `fetchStorageToken` are responsible for fetching the orderer and storgae url from the host respectively. They return `TokenResponse` object representing token value along with flag indicating whether token came from cache.
-
-To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. One of the possible way to fetch the token is making an axios `GET` request call to your Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
-
-```typescript
-private async getToken(tenantId: string, documentId: string): Promise<string> {
-  return axios.get(this.azFunctionUrl, {
-      params: {
-          tenantId,
-          documentId,
-          userId: this.user?.userId,
-          userName: this.user?.userName,
-          additionalDetails: this.user?.additionalDetails,
-      },
-    }).then((response) => {
-        return response.data as string;
-    }).catch((err) => {
-        return err as string;
-  });
-}
-```
-
-## Adding custom data to tokens
-
-You can add custom data such as email id, gender, address, etc for your token generation. See [Connect to an Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) for more information.
+One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
+provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to
+generate tokens rather than signing them locally like the `InsecureTokenProvider` does. You can find more information regarding secure token generation on [Tutorial: Writing a TokenProvider with an Azure Function]({{< relref "tokenproviders.md" >}}).
 
 ## Connecting user auth to Fluid service auth
 
