@@ -267,6 +267,7 @@ export class DocumentDeltaConnection
         }
     }
 
+    // to be removed #7365
     private static get disabledBatchManagerFeatureGate() {
         try {
             return localStorage !== undefined
@@ -276,11 +277,20 @@ export class DocumentDeltaConnection
         return false;
     }
 
-    protected submitCore(type: string, messages: IDocumentMessage[]) {
+    protected submitCore(type: string, messages: IDocumentMessage[], immediate: boolean = false) {
         if (this.isBatchManagerDisabled) {
-            this.emitMessages(type, [messages]);
-        } else {
-            this.submitManager.add(type, messages);
+            setTimeout(
+                () => {
+                    this.emitMessages(type, [messages]);
+                },
+                0);
+            return;
+        }
+
+        // to be removed #7365
+        this.submitManager.add(type, messages);
+        if (immediate) {
+            this.submitManager.drain();
         }
     }
 

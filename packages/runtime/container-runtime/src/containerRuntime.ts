@@ -789,6 +789,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /** The message in the metadata of the base summary this container is loaded from. */
     private readonly baseSummaryMessage: ISummaryMetadataMessage | undefined;
 
+    // To be removed. Default FlushMode should be TurnBased. See #7365
     private static get defaultFlushMode(): FlushMode {
         return getLocalStorageFeatureGate(turnBasedFlushModeKey) ? FlushMode.TurnBased : FlushMode.Immediate;
     }

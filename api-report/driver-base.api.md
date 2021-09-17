@@ -76,7 +76,7 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected readonly socket: SocketIOClient.Socket;
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
-    protected submitCore(type: string, messages: IDocumentMessage[]): void;
+    protected submitCore(type: string, messages: IDocumentMessage[], immediate?: boolean): void;
     // (undocumented)
     protected readonly submitManager: BatchManager<IDocumentMessage[]>;
     submitSignal(message: IDocumentMessage): void;
