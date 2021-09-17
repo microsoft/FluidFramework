@@ -127,7 +127,6 @@ var _createTemplateValidator = function (skipSemver) {
  * @constructor
  * @protected
  * @alias property-properties.PropertyFactory
- * @category HFDM
  */
 var PropertyFactory = function () {
     // Unfortunately, PropertyFactory can't inherit from EventEmitter class as
@@ -418,7 +417,7 @@ var registerLocal = function (in_template) {
 };
 
 /**
- * Register HFDM template which are used to instantiate properties. To find out more about templates,
+ * Register a template which are used to instantiate properties. To find out more about templates,
  * see https://docs.google.com/document/d/1-7kXkKTu3AZLjKyKl7XK2VuAJRSbUxo3ZuPA8bzWocs/edit
  *
  * In addition to json structures
@@ -946,12 +945,8 @@ PropertyFactory.prototype._setInitialValue = function (property, valueParsed) {
  * @throws if the property has a typeid that is not registered.
  * @return {property-properties.BaseProperty|undefined} the property instance
  */
-PropertyFactory.prototype.create = function (in_typeid, in_context, in_initialProperties, in_options) {
-    in_options = in_options || {};
-    var scope = in_options.workspace ?
-        in_options.workspace.getRoot()._getCheckedOutRepositoryInfo().getScope() :
-        null;
-    return this._createProperty(in_typeid, in_context, in_initialProperties, scope, true);
+PropertyFactory.prototype.create = function (in_typeid, in_context, in_initialProperties) {
+    return this._createProperty(in_typeid, in_context, in_initialProperties, null, true);
 };
 
 /**
