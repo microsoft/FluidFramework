@@ -26,7 +26,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
         private readonly rateLimiter: RateLimiter,
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
         baseurl?: string,
-        defaultQueryString: Record<string, unknown> = {},
+        defaultQueryString: Record<string, string | number | boolean | readonly string[] |
+            readonly number[] | readonly boolean[] | undefined | null> = {},
     ) {
         super(baseurl, defaultQueryString);
     }
@@ -99,7 +100,8 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         baseurl?: string,
-        defaultQueryString: Record<string, unknown> = {},
+        defaultQueryString: Record<string, string | number | boolean | readonly string[] |
+            readonly number[] | readonly boolean[] | undefined | null> = {},
     ) {
         super(logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
     }
@@ -148,7 +150,8 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
         baseurl?: string,
-        defaultQueryString: Record<string, unknown> = {},
+        defaultQueryString: Record<string, string | number | boolean | readonly string[] |
+            readonly number[] | readonly boolean[] | undefined | null> = {},
     ) {
         super(logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
     }
