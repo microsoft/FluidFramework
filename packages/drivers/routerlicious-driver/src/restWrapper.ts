@@ -27,6 +27,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         private readonly logger: ITelemetryLogger,
         private readonly rateLimiter: RateLimiter,
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
+        private readonly useRestLess: boolean,
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
     ) {
@@ -38,13 +39,15 @@ export class RouterliciousRestWrapper extends RestWrapper {
     }
 
     protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
-        const config = this.restLess.translate({
+        const config = {
             ...requestConfig,
             headers: this.generateHeaders(requestConfig.headers),
-        });
+        };
+
+        const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
 
         try {
-            const response = await this.rateLimiter.schedule(async () => Axios.request<T>(config));
+            const response = await this.rateLimiter.schedule(async () => Axios.request<T>(translatedConfig));
             return response.data;
         } catch (reason: any) {
             if (!reason || !reason?.isAxiosError) {
@@ -100,10 +103,11 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
+        useRestLess: boolean,
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
     ) {
-        super(logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
+        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -112,6 +116,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
+        useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousStorageRestWrapper> {
         const defaultQueryString = {
@@ -131,7 +136,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         };
 
         const restWrapper = new RouterliciousStorageRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
+            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
         try {
             await restWrapper.load();
         } catch (e) {
@@ -149,10 +154,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
         getAuthorizationHeader: AuthorizationHeaderGetter,
+        useRestLess: boolean,
         baseurl?: string,
         defaultQueryString: Record<string, unknown> = {},
     ) {
-        super(logger, rateLimiter, getAuthorizationHeader, baseurl, defaultQueryString);
+        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
 
     public static async load(
@@ -161,6 +167,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         tokenProvider: ITokenProvider,
         logger: ITelemetryLogger,
         rateLimiter: RateLimiter,
+        useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
         const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
@@ -171,7 +178,8 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             return `Basic ${ordererToken.jwt}`;
         };
 
-        const restWrapper = new RouterliciousOrdererRestWrapper(logger, rateLimiter, getAuthorizationHeader, baseurl);
+        const restWrapper = new RouterliciousOrdererRestWrapper(
+            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl);
         try {
             await restWrapper.load();
         } catch (e) {
