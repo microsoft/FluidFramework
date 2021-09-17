@@ -90,7 +90,6 @@ In the container creation scenario, you can use the following pattern:
 
 ```javascript
 const schema = {
-  name: "my-container",
   initialObjects: {
     /* ... */
   },
@@ -118,7 +117,7 @@ const { container, services } = await azureClient.getContainer(
 
 For the further information on how to start recording logs being emitted by Fluid, see [Telemetry]({{< relref "telemetry.md" >}}).
 
-The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling]({{< relref "data-modeling.md" >}}) to learn more about how to establish the schema and use the `FluidContainer` object.
+The container being fetched back will hold the `initialObjects` as defined in the container schema. See [Data modeling]({{< relref "data-modeling.md" >}}) to learn more about how to establish the schema and use the `container` object.
 
 ## Getting audience details
 
