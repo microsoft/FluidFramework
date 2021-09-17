@@ -188,6 +188,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         trackState?: boolean;
         runGC?: boolean;
         fullGC?: boolean;
+        runSweep?: boolean;
     }): Promise<ISummaryTreeWithStats>;
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
@@ -332,6 +333,7 @@ export interface IGCRuntimeOptions {
     disableGC?: boolean;
     gcAllowed?: boolean;
     runFullGC?: boolean;
+    runSweep?: boolean;
 }
 
 // @public
