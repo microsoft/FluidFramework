@@ -30,7 +30,6 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 
 class TestDataObject extends DataObject {
@@ -80,7 +79,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     const logger = new TelemetryNullLogger();
@@ -266,7 +265,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            flattenRuntimeOptions(runtimeOptions),
+            runtimeOptions,
         );
 
         assert(latestSummaryAck !== undefined, "Summary ack isn't available as expected");
@@ -297,7 +296,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            flattenRuntimeOptions(runtimeOptions),
+            runtimeOptions,
         );
 
         assert(latestSummaryAck !== undefined, "Summary ack isn't available as expected");

@@ -18,7 +18,6 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 
 class TestDataObject extends DataObject {
@@ -62,7 +61,7 @@ describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObject
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mainContainer: Container;
