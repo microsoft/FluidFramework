@@ -319,6 +319,7 @@ const getCodeProposal =
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
+    public timestamp: number = 1;
 
     /**
      * Load an existing container.
@@ -1229,7 +1230,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             startConnectionP = this.connectToDeltaStream(connectionArgs);
             startConnectionP.catch((error) => { });
         }
-
+        const connection = await startConnectionP;
+        this.timestamp = connection?.maxMessageSize ?? 1;
         await this.connectStorageService();
         this._attachState = AttachState.Attached;
 

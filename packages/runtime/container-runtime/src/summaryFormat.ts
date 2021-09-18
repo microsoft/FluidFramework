@@ -145,6 +145,11 @@ export function getGCVersion(metadata?: IContainerRuntimeMetadata): GCVersion {
     return metadata.gcFeature ?? 0;
 }
 
+// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+export function getRuntimeVersion(metadata?: IContainerRuntimeMetadata): string {
+    return metadata?.runtimeVersion ?? "0";
+}
+
 export const protocolTreeName = ".protocol";
 
 /**

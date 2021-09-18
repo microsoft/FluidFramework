@@ -619,6 +619,7 @@ export class DeltaManager
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
+            // timestamp: connection.timestamp,
         };
     }
 
