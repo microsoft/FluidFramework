@@ -18,7 +18,6 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -64,7 +63,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mainContainer: IContainer;

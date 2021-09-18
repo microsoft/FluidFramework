@@ -16,15 +16,14 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: flattenRuntimeOptions({
+    runtimeOptions: {
         summaryOptions: {
             initialSummarizerDelayMs: 20,
             summaryConfigOverrides: { maxOps: 1 },
         },
-    }),
+    },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 

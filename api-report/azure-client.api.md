@@ -60,7 +60,7 @@ export interface AzureContainerServices {
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
-    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
