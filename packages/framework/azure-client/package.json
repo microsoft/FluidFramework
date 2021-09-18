@@ -58,6 +58,7 @@
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
     "concurrently": "^5.2.0",
+    "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~7.18.0",
     "mocha": "^8.4.0",
