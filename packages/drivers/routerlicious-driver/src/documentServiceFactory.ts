@@ -31,6 +31,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     maxConcurrentOrdererRequests: 100,
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
+    enableRestLess: false,
 };
 
 /**
@@ -80,6 +81,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             logger2,
             rateLimiter,
+            this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
         const documentId = await ordererRestWrapper.post<string>(
