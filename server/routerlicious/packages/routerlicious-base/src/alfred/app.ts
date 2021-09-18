@@ -22,7 +22,6 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -52,18 +51,6 @@ export function create(
 
     // Express app configuration
     const app: express.Express = express();
-
-    // initialize RestLess server translation
-    const restLessMiddleware: () => express.RequestHandler = () => {
-        const restLessServer = new RestLessServer();
-        return (req, res, next) => {
-            restLessServer
-                .translate(req)
-                .then(() => next())
-                .catch(next);
-        };
-    };
-    app.use(restLessMiddleware());
 
     // Running behind iisnode
     app.set("trust proxy", 1);
