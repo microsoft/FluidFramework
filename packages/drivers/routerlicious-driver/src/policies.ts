@@ -32,9 +32,4 @@ export interface IRouterliciousDriverPolicies {
      * Default: false
      */
     enableWholeSummaryUpload: boolean;
-    /**
-     * Enable using RestLess which avoids CORS preflight requests.
-     * Default: false
-     */
-    enableRestLess: boolean;
 }

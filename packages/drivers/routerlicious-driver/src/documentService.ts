@@ -57,7 +57,6 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider,
             this.logger,
             rateLimiter,
-            this.driverPolicies.enableRestLess,
             this.gitUrl,
         );
         const historian = new Historian(
@@ -94,13 +93,7 @@ export class DocumentService implements api.IDocumentService {
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-            this.tenantId,
-            this.documentId,
-            this.tokenProvider,
-            this.logger,
-            rateLimiter,
-            this.driverPolicies.enableRestLess,
-        );
+            this.tenantId, this.documentId, this.tokenProvider, this.logger, rateLimiter);
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);
