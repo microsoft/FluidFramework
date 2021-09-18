@@ -7,8 +7,9 @@ import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 export interface IServiceEndpoint {
@@ -25,10 +26,14 @@ const dockerConfig = {
     },
     tenantId: "fluid",
     tenantSecret: "create-new-tenants-if-going-to-production",
-    useWholeSummary: false,
+    driverPolicies: undefined,
 };
 
-function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string, useWholeSummary: boolean = false) {
+function getConfig(
+    fluidHost?: string,
+    tenantId?: string,
+    tenantSecret?: string,
+    driverPolicies?: IRouterliciousDriverPolicies) {
     assert(fluidHost, "Missing Fluid host");
     assert(tenantId, "Missing tenantId");
     assert(tenantSecret, "Missing tenant secret");
@@ -40,7 +45,7 @@ function getConfig(fluidHost?: string, tenantId?: string, tenantSecret?: string,
         },
         tenantId,
         tenantSecret,
-        useWholeSummary,
+        driverPolicies,
     };
 }
 
@@ -59,7 +64,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: string) {
     }
     assert(configStr, `Missing config for ${r11sEndpointName}`);
     const config = JSON.parse(configStr);
-    return getConfig(config.host, config.tenantId, config.tenantSecret, config.useWholeSummary);
+    return getConfig(config.host, config.tenantId, config.tenantSecret, config.driverPolicies);
 }
 
 function getConfigFromEnv(r11sEndpointName?: string) {
@@ -78,13 +83,13 @@ export class RouterliciousTestDriver implements ITestDriver {
     public static createFromEnv(config?: { r11sEndpointName?: string },
         api: RouterliciousDriverApiType = RouterliciousDriverApi,
     ) {
-        const { serviceEndpoint, tenantId, tenantSecret, useWholeSummary } = getConfigFromEnv(config?.r11sEndpointName);
+        const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(config?.r11sEndpointName);
         return new RouterliciousTestDriver(
             tenantId,
             tenantSecret,
             serviceEndpoint,
-            useWholeSummary,
             api,
+            driverPolicies,
             config?.r11sEndpointName,
         );
     }
@@ -95,8 +100,8 @@ export class RouterliciousTestDriver implements ITestDriver {
         private readonly tenantId: string,
         private readonly tenantSecret: string,
         private readonly serviceEndpoints: IServiceEndpoint,
-        private readonly useWholeSummary: boolean,
         private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
+        private readonly driverPolicies: IRouterliciousDriverPolicies | undefined,
         public readonly endpointName?: string,
     ) {
     }
@@ -115,7 +120,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
         return new this.api.RouterliciousDocumentServiceFactory(
             tokenProvider,
-            { enableWholeSummaryUpload: this.useWholeSummary },
+            this.driverPolicies,
         );
     }
 
