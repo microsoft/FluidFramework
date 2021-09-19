@@ -5,7 +5,16 @@
 //@ts-ignore
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
 import { eachOfSeries, eachSeries, ErrorCallback, series, timesSeries, whilst } from "async";
-import _, { cloneDeep } from "lodash";
+
+import cloneDeep from "lodash/cloneDeep";
+import isNumber from "lodash/isNumber";
+import isString from "lodash/isString";
+import isEmpty from "lodash/isEmpty";
+import extend from "lodash/extend";
+import each from "lodash/each";
+import isEqual from "lodash/isEqual";
+import find from "lodash/find";
+
 import { SerializedChangeSet } from "./changeset";
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
 import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper";
@@ -151,7 +160,7 @@ export namespace Utils {
                             try {
                                 // Update the path
                                 in_context._lastSegment = in_segment;
-                                const escapedSegment = in_escape && _.isString(in_segment) ? PathHelper.quotePathSegmentIfNeeded(in_segment) : in_segment;
+                                const escapedSegment = in_escape && isString(in_segment) ? PathHelper.quotePathSegmentIfNeeded(in_segment) : in_segment;
                                 let nextSegmentToPushInParentStack = in_context.getLastSegment();
                                 // Note: we don't quote the path string here, since the paths
                                 // in a ChangeSet are already quoted, if necessary
@@ -172,7 +181,7 @@ export namespace Utils {
                                 in_context._arrayLocalIndex = in_arrayLocalIndex;
                                 in_context._arrayOperationOffset = in_arrayOperationOffset;
                                 in_context._arrayIteratorOffset = in_arrayIteratorOffset;
-                                if (in_arrayIteratorOffset !== undefined && _.isNumber(in_segment)) {
+                                if (in_arrayIteratorOffset !== undefined && isNumber(in_segment)) {
                                     if (in_context._operationType === "remove") {
                                         nextSegmentToPushInParentStack =
                                             in_context.getLastSegment() as number + in_arrayIteratorOffset - in_arrayLocalIndex;
@@ -333,7 +342,7 @@ export namespace Utils {
                                         oldOperationType = in_context._operationType;
                                         in_context._operationType = "remove";
                                         let paths = nestedChangeSet.remove;
-                                        if (_.isArray(paths)) {
+                                        if (Array.isArray(paths)) {
                                             timesSeries(paths.length, function(i, n5) {
                                                 // For removals in irreversible CSs, we don't have a typeid and we use the ChangeSet of the
                                                 // removal operation as nested ChangeSet
@@ -355,10 +364,10 @@ export namespace Utils {
                                             });
                                         } else {
                                             // for removals in reversible changesets we have an object containing the types
-                                            const typeids = _.keys(nestedChangeSet.remove);
+                                            const typeids = Object.keys(nestedChangeSet.remove);
                                             timesSeries(typeids.length, function(i, n5) {
                                                 const typeid = typeids[i];
-                                                paths = _.keys(nestedChangeSet.remove[typeid]);
+                                                paths = Object.keys(nestedChangeSet.remove[typeid]);
                                                 timesSeries(paths.length, function(j, n6) {
                                                     processChange(
                                                         paths[j],
@@ -388,11 +397,11 @@ export namespace Utils {
                                         oldOperationType = in_context._operationType;
                                         in_context._operationType = "insert";
                                         // Maps and NodeProperties group the insertions by type
-                                        const typeids = _.keys(nestedChangeSet.insert);
+                                        const typeids = Object.keys(nestedChangeSet.insert);
 
                                         timesSeries(typeids.length, function(i, n5) {
                                             const typeid = typeids[i];
-                                            const paths = _.keys(nestedChangeSet.insert[typeid]);
+                                            const paths = Object.keys(nestedChangeSet.insert[typeid]);
 
                                             timesSeries(paths.length, function(j, n6) {
                                                 processChange(
@@ -420,10 +429,10 @@ export namespace Utils {
                                 function(n4) {
                                     if (nestedChangeSet.modify) {
                                         // Maps and NodeProperties group modifications by type
-                                        const typeids = _.keys(nestedChangeSet.modify);
+                                        const typeids = Object.keys(nestedChangeSet.modify);
                                         timesSeries(typeids.length, function(i, n5) {
                                             const typeid = typeids[i];
-                                            const paths = _.keys(nestedChangeSet.modify[typeid]);
+                                            const paths = Object.keys(nestedChangeSet.modify[typeid]);
 
                                             timesSeries(paths.length, function(j, n6) {
                                                 processChange(
@@ -448,12 +457,12 @@ export namespace Utils {
                                 function(n4) {
                                     // Process nested properties
                                     if (splitTypeId.context === "single") {
-                                        const typeids = _.keys(nestedChangeSet);
+                                        const typeids = Object.keys(nestedChangeSet);
 
                                         timesSeries(typeids.length, function(i, n5) {
                                             const typeid = typeids[i];
                                             if (!isReservedKeyword(typeid)) {
-                                                const paths = _.keys(nestedChangeSet[typeid]);
+                                                const paths = Object.keys(nestedChangeSet[typeid]);
 
                                                 timesSeries(paths.length, function(j, n6) {
                                                     processChange(
@@ -519,7 +528,7 @@ export namespace Utils {
             in_context.getPropertyContainerType() === "map" ||
             in_context.getPropertyContainerType() === "set") {
             if (in_context.getOperationType() === "remove") {
-                if (_.isArray(in_context.getNestedChangeSet())) {
+                if (Array.isArray(in_context.getNestedChangeSet())) {
                     in_objectToPopulate.remove = in_objectToPopulate.remove || [];
                     in_objectToPopulate.remove.push(in_context.getLastSegment());
                 } else {
@@ -528,7 +537,7 @@ export namespace Utils {
                     in_objectToPopulate.remove[in_context.getTypeid()] =
                         in_objectToPopulate.remove[in_context.getTypeid()] || {};
                     in_objectToPopulate.remove[in_context.getTypeid()][in_context.getLastSegment()] =
-                        _.cloneDeep(in_context.getNestedChangeSet());
+                        cloneDeep(in_context.getNestedChangeSet());
                 }
             } else {
                 in_objectToPopulate[in_context.getOperationType()] = in_objectToPopulate[in_context.getOperationType()] || {};
@@ -537,7 +546,7 @@ export namespace Utils {
 
                 if (TypeIdHelper.isPrimitiveType(in_context.getTypeid()) || in_isLeaf) {
                     in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()][in_context.getLastSegment()] =
-                        _.cloneDeep(in_context.getNestedChangeSet());
+                        cloneDeep(in_context.getNestedChangeSet());
                 } else {
                     in_objectToPopulate[in_context.getOperationType()][in_context.getTypeid()][in_context.getLastSegment()] =
                         nestedChangeSet;
@@ -547,7 +556,7 @@ export namespace Utils {
             in_objectToPopulate[in_context.getTypeid()] = in_objectToPopulate[in_context.getTypeid()] || {};
             if (TypeIdHelper.isPrimitiveType(in_context.getTypeid()) || in_isLeaf) {
                 in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] =
-                    _.cloneDeep(in_context.getNestedChangeSet());
+                    cloneDeep(in_context.getNestedChangeSet());
             } else {
                 in_objectToPopulate[in_context.getTypeid()][in_context.getLastSegment()] =
                     nestedChangeSet;
@@ -626,7 +635,7 @@ export namespace Utils {
             in_arrayIteratorOffset?: number) {
             // Update the path
             in_context._lastSegment = in_segment;
-            const escapedSegment = in_escape && _.isString(in_segment) ? PathHelper.quotePathSegmentIfNeeded(in_segment) : in_segment;
+            const escapedSegment = in_escape && isString(in_segment) ? PathHelper.quotePathSegmentIfNeeded(in_segment) : in_segment;
             let nextSegmentToPushInParentStack = in_context._lastSegment;
             // Note: we don't quote the path string here, since the paths in a ChangeSet are already quoted, if necessary
             if (currentTypeIdContext === "map" ||
@@ -741,7 +750,7 @@ export namespace Utils {
                 oldOperationType = in_context._operationType;
                 in_context._operationType = "remove";
                 paths = nestedChangeSet.remove;
-                if (_.isArray(paths)) {
+                if (Array.isArray(paths)) {
                     for (i = 0; i < paths.length; i++) {
                         // For removals in irreversible CSs, we don't have a typeid and we use the ChangeSet of the
                         // removal operation as nested ChangeSet
@@ -749,10 +758,10 @@ export namespace Utils {
                     }
                 } else {
                     // for removals in reversible changesets we have an object containing the types
-                    typeids = _.keys(nestedChangeSet.remove);
+                    typeids = Object.keys(nestedChangeSet.remove);
                     for (i = 0; i < typeids.length; i++) {
                         typeid = typeids[i];
-                        paths = _.keys(nestedChangeSet.remove[typeid]);
+                        paths = Object.keys(nestedChangeSet.remove[typeid]);
                         for (j = 0; j < paths.length; j++) {
                             processChange(paths[j], nestedChangeSet.remove[typeid][paths[j]], typeid, true, propertyContainerType);
                         }
@@ -767,10 +776,10 @@ export namespace Utils {
                 oldOperationType = in_context._operationType;
                 in_context._operationType = "insert";
                 // Maps and NodeProperties group the insertions by type
-                typeids = _.keys(nestedChangeSet.insert);
+                typeids = Object.keys(nestedChangeSet.insert);
                 for (i = 0; i < typeids.length; i++) {
                     typeid = typeids[i];
-                    paths = _.keys(nestedChangeSet.insert[typeid]);
+                    paths = Object.keys(nestedChangeSet.insert[typeid]);
                     for (j = 0; j < paths.length; j++) {
                         processChange(paths[j], nestedChangeSet.insert[typeid][paths[j]], typeid, true, propertyContainerType);
                     }
@@ -780,10 +789,10 @@ export namespace Utils {
 
             if (nestedChangeSet.modify) {
                 // Maps and NodeProperties group modifications by type
-                typeids = _.keys(nestedChangeSet.modify);
+                typeids = Object.keys(nestedChangeSet.modify);
                 for (i = 0; i < typeids.length; i++) {
                     typeid = typeids[i];
-                    paths = _.keys(nestedChangeSet.modify[typeid]);
+                    paths = Object.keys(nestedChangeSet.modify[typeid]);
                     for (j = 0; j < paths.length; j++) {
                         processChange(paths[j], nestedChangeSet.modify[typeid][paths[j]], typeid, true, propertyContainerType);
                     }
@@ -793,11 +802,11 @@ export namespace Utils {
 
         // Process nested properties
         if (splitTypeId.context === "single") {
-            typeids = _.keys(nestedChangeSet);
+            typeids = Object.keys(nestedChangeSet);
             for (i = 0; i < typeids.length; i++) {
                 typeid = typeids[i];
                 if (!isReservedKeyword(typeid)) {
-                    paths = _.keys(nestedChangeSet[typeid]);
+                    paths = Object.keys(nestedChangeSet[typeid]);
                     for (j = 0; j < paths.length; j++) {
                         processChange(paths[j], nestedChangeSet[typeid][paths[j]], typeid, false, "template");
                     }
@@ -935,7 +944,7 @@ export namespace Utils {
          * @returns Wether the object is empty
          */
         _isEmptyObject(in_context: TraversalContext) {
-            return Object(in_context._nestedChangeSet) && _.isEmpty(in_context._nestedChangeSet);
+            return Object(in_context._nestedChangeSet) && isEmpty(in_context._nestedChangeSet);
         }
 
         /**
@@ -956,7 +965,7 @@ export namespace Utils {
          * @returns The last segment index
          */
         getPostLastSegment(): number | string {
-            if (this._propertyContainerType === "array" && _.isNumber(this._lastSegment) && this._arrayIteratorOffset !== undefined) {
+            if (this._propertyContainerType === "array" && isNumber(this._lastSegment) && this._arrayIteratorOffset !== undefined) {
                 if (this._operationType === "remove") {
                     return this._lastSegment + this._arrayIteratorOffset - this._arrayLocalIndex;
                 } else {
@@ -1283,7 +1292,7 @@ export namespace Utils {
             },
             userData: result,
         });
-        return _.keys(result);
+        return Object.keys(result);
     }
 
     /**
@@ -1371,10 +1380,10 @@ export namespace Utils {
         });
 
         // Remove all existing keys from the ChangeSet
-        _.forEach(_.keys(io_changeSet), function(key) { delete io_changeSet[key]; });
+        Object.keys(io_changeSet).forEach(function(key) { delete io_changeSet[key]; });
 
         // Assign from the result user data
-        _.extend(io_changeSet, result);
+        extend(io_changeSet, result);
     }
 
     /**
@@ -1403,15 +1412,15 @@ export namespace Utils {
 
         // Exclude typeids if requested by the caller
         if (in_excludeTypeids) {
-            const insertKeys = _.keys(result.insert);
+            const insertKeys = Object.keys(result.insert);
             for (let i = 0; i < insertKeys.length; i++) {
-                result.insert[insertKeys[i]] = _.cloneDeep(result.insert[insertKeys[i]]);
+                result.insert[insertKeys[i]] = cloneDeep(result.insert[insertKeys[i]]);
                 Utils._stripTypeids(result.insert[insertKeys[i]]);
             }
 
-            const modifyKeys = _.keys(result.modify);
+            const modifyKeys = Object.keys(result.modify);
             for (let i = 0; i < modifyKeys.length; i++) {
-                result.modify[modifyKeys[i]] = _.cloneDeep(result.modify[modifyKeys[i]]);
+                result.modify[modifyKeys[i]] = cloneDeep(result.modify[modifyKeys[i]]);
                 Utils._stripTypeids(result.modify[modifyKeys[i]]);
             }
         }
@@ -1484,7 +1493,7 @@ export namespace Utils {
 
                             let currentChangeSet = in_context.getNestedChangeSet();
                             if (in_excludetypeids) {
-                                currentChangeSet = _.cloneDeep(currentChangeSet);
+                                currentChangeSet = cloneDeep(currentChangeSet);
                                 Utils._stripTypeids(currentChangeSet);
                             }
                             result[in_context.getOperationType()][in_context.getFullPath()] = currentChangeSet;
@@ -1757,7 +1766,7 @@ export namespace Utils {
     export function getFilteredChangeSetByPaths(in_changeSet: SerializedChangeSet, in_paths: PathsType): SerializedChangeSet {
         let pathsToObj;
 
-        if (_.isArray(in_paths)) {
+        if (Array.isArray(in_paths)) {
             pathsToObj = Utils.convertPathArrayToTree(in_paths);
         } else if (in_paths instanceof Map) {
             pathsToObj = in_paths;
@@ -1799,7 +1808,7 @@ export namespace Utils {
                 let currentEntryInPathsToObj = pathsToObj;
 
                 const pathsToDelete = [];
-                _.each(tokenizedPath, function(segment, index) {
+                tokenizedPath.forEach((segment, index) => {
                     if (index === 0) {
                         parentPath += PathHelper.quotePathSegmentIfNeeded(segment);
                         changeSetToPopulate = pathToChangeSet[parentPath] || changeSetToPopulate;
@@ -1916,9 +1925,9 @@ export namespace Utils {
 
         // Delete entries from the change set that we do not want.
         // We can enter this case when dealing with folded paths.
-        _.each(toPurge, function(item, fullPath) {
+        each(toPurge, function(item, fullPath) {
             delete item.changeSet[item.typeid][item.pathToPurge];
-            if (_.isEmpty(item.changeSet[item.typeid])) {
+            if (isEmpty(item.changeSet[item.typeid])) {
                 delete item.changeSet[item.typeid];
             }
         });
@@ -1937,17 +1946,17 @@ export namespace Utils {
                     const operationCS = CS[operation];
                     let typeidCS = CS[operation][removalInformation.typeid];
                     delete typeidCS[removalInformation.lastSegment];
-                    if (_.isEmpty(typeidCS)) {
+                    if (isEmpty(typeidCS)) {
                         delete operationCS[removalInformation.typeid];
                     }
-                    if (_.isEmpty(CS[operation])) {
+                    if (isEmpty(CS[operation])) {
                         delete CS[operation];
                     }
                 }
             } else {
                 let typeidCS = CS[removalInformation.typeid];
                 delete typeidCS[removalInformation.lastSegment];
-                if (_.isEmpty(typeidCS)) {
+                if (isEmpty(typeidCS)) {
                     delete CS[removalInformation.typeid];
                 }
             }
@@ -1964,7 +1973,7 @@ export namespace Utils {
      *     passed to getChangesToTokenizedPaths and getFilteredChangeSetByPaths.
      */
     export function convertPathArrayToTree(in_paths: string[]): PathTree {
-        in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
+        in_paths = Array.isArray(in_paths) ? in_paths : [in_paths];
         const pathsToProcess = new Set(in_paths);
 
         // create an array of arrays splitting by .
@@ -1973,7 +1982,7 @@ export namespace Utils {
         // Create a tree representation of the paths that are passed as an input so that
         // we can leverage getChangesToTokenizedPaths and only be notified on paths
         // that we care about.
-        const pathsToObj = _.reduce(tokenizedPaths, function(memo, tokenizedPath) {
+        const pathsToObj = tokenizedPaths.reduce(function(memo, tokenizedPath) {
             let obj = memo;
             let path = "";
             let segment;
@@ -2035,19 +2044,19 @@ export namespace Utils {
      * @returns - Filtered ChangeSet
      */
     export function excludePathsFromChangeSet(in_changeSet: SerializedChangeSet, in_paths: string[]): SerializedChangeSet {
-        if (!in_changeSet || !in_paths || _.isEmpty(in_paths)) {
+        if (!in_changeSet || !in_paths || isEmpty(in_paths)) {
             return in_changeSet;
         }
 
-        in_paths = _.isArray(in_paths) ? in_paths : [in_paths];
+        in_paths = Array.isArray(in_paths) ? in_paths : [in_paths];
         // create an array of arrays splitting by .
-        const tokenizedPaths = _.map(in_paths, (path) => PathHelper.tokenizePathString(path));
+        const tokenizedPaths = in_paths.map((path) => PathHelper.tokenizePathString(path));
 
-        const rootChangeSet = _.cloneDeep(in_changeSet);
+        const rootChangeSet = cloneDeep(in_changeSet);
 
         Utils.traverseChangeSetRecursively(rootChangeSet, {
             preCallback: (in_context) => {
-                const shouldExclude = _.find(tokenizedPaths, (val) => { return _.isEqual(val, in_context.getParentStack()); });
+                const shouldExclude = find(tokenizedPaths, (val) => { return isEqual(val, in_context.getParentStack()); });
                 if (shouldExclude) {
                     const operationType = in_context.getOperationType();
                     const typeId = in_context.getTypeid();

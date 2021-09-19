@@ -52,7 +52,6 @@ data:
         "storage": {
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }}
         },
-        {{- end }}
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
