@@ -130,6 +130,14 @@ export interface IValueChanged {
     previousValue: any;
 }
 
+// @public
+export class LocalValueMaker {
+    constructor(serializer: IFluidSerializer);
+    fromInMemory(value: any): ILocalValue;
+    // Warning: (ae-forgotten-export) The symbol "ILocalValue" needs to be exported by the entry point index.d.ts
+    fromSerializable(serializable: ISerializableValue): ILocalValue;
+    }
+
 // @public @sealed
 export class MapFactory implements IChannelFactory {
     // (undocumented)
@@ -170,8 +178,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     keys(): IterableIterator<string>;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // Warning: (ae-forgotten-export) The symbol "LocalValueMaker" needs to be exported by the entry point index.d.ts
-    //
     // @internal (undocumented)
     readonly localValueMaker: LocalValueMaker;
     // (undocumented)

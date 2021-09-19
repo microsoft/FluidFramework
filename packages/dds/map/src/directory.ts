@@ -189,7 +189,7 @@ type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | I
 /**
  * Any operation on a directory
  */
-type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
