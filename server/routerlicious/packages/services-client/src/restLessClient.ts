@@ -22,8 +22,10 @@ const encodeHeader = (
  * Client for communicating with a "RestLess" server.
  * Translates a typical RESTful HTTP request into "RestLess" HTTP format:
  *
- * POST <path> HTTP/<1.1|2>
- * HOST <hostname>
+ * POST \<path\> HTTP/\<1.1|2\>
+ *
+ * HOST \<hostname\>
+ *
  * Content-Type: application/x-www-form-urlencoded
  *
  * <url-encoded-headers-body-and-method>
