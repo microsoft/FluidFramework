@@ -9,56 +9,85 @@
  * @param {Set<string>} set
  * @param {string[]} add
  */
- const addToSet = (set, add) => {
+const addToSet = (set, add) => {
     for (item of add) {
         set.add(item);
     }
 }
 
+/**
+ * Calculate the difference of two sets. Implementation is from
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#implementing_basic_set_operations
+ * @param {Set} setA
+ * @param {Set} setB
+ */
+function difference(setA, setB) {
+    const _difference = new Set(setA);
+    for (const elem of setB) {
+        _difference.delete(elem);
+    }
+    return _difference;
+}
+
 // exports.addToSet = addToSet;
 const memberCombineInstructions = [
+    {
+        package: "@fluidframework/azure-service-utils",
+        sourceImports: new Map([
+            ["@fluidframework/server-services-client", ["GenerateToken"]],
+            ["@fluidframework/protocol-definitions", ["ScopeType"]],
+        ])
+    },
     {
         package: "@fluidframework/fluid-static",
         sourceImports: new Map([
             ["@fluidframework/container-definitions", ["AttachState", "IAudience"]]
-        ]),
-        finalPackage: "@fluidframework/fluid-static",
+        ])
     },
-    // {
-    //     package: "@fluidframework/fluid-static",
-    //     finalPackage: "fluid-framework",
-    // },
 ];
 exports.memberCombineInstructions = memberCombineInstructions;
 
 const packageRollupMap = new Map([
     // fluid-framework re-exports all of fluid-static
-    ["fluid-framework", ["@fluidframework/fluid-static"]],
+    ["fluid-framework", [
+        "@fluidframework/fluid-static",
+        "@fluidframework/map",
+        "@fluidframework/sequence",
+    ]],
 ]);
 exports.packageRollupMap = packageRollupMap;
 
 const websitePackages = [
     "fluid-framework",
-    // "tinylicious",
-    // "@fluidframework/azure-client",
-    // "@fluidframework/azure-service-utils",
+    "tinylicious",
+    "@fluidframework/azure-client",
+    "@fluidframework/azure-service-utils",
     // "@fluidframework/map",
     // "@fluidframework/sequence",
-    // "@fluidframework/test-client-utils",
-    // "@fluidframework/tinylicious-client",
+    "@fluidframework/test-client-utils",
+    "@fluidframework/tinylicious-client",
 ];
 exports.websitePackages = websitePackages;
 
-const relevantPackages = new Set(websitePackages);
-for (const {package, sourceImports } of memberCombineInstructions) {
-    relevantPackages.add(package);
-    addToSet(relevantPackages, Array.from(sourceImports.keys()));
+/** A Set containing all the packages that are needed to do the API rollup. */
+const allStagingPackages = new Set(websitePackages);
+for (const { package, sourceImports } of memberCombineInstructions) {
+    allStagingPackages.add(package);
+    addToSet(allStagingPackages, Array.from(sourceImports.keys()));
 }
 for (const [k, arr] of packageRollupMap) {
-    relevantPackages.add(k);
-    addToSet(relevantPackages, arr);
+    allStagingPackages.add(k);
+    addToSet(allStagingPackages, arr);
 }
+exports.allStagingPackages = Array.from(allStagingPackages);
 // const relevantPackagePaths = Array.from(relevantPackages).map(
 //     (p) => path.join(originalPath, `${packageName(p)}.api.json`)
 // );
-exports.relevantPackages = relevantPackages;
+
+// const processedPackages = new Set();
+// for (const { package, sourceImports } of memberCombineInstructions) {
+//     processedPackages.add(package);
+//     addToSet(processedPackages, Array.from(sourceImports.keys()));
+// }
+// const unprocessedPackages = difference(new Set(websitePackages), processedPackages);
+// exports.unprocessedPackages = unprocessedPackages;

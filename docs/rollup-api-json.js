@@ -13,11 +13,11 @@
  * create copies.
  */
 
-const fs = require("fs");
+// const fs = require("fs");
 const path = require("path");
 const copyfiles = require("copyfiles");
 const findValue = require("deepdash/findValueDeep");
-const mapValue = require("deepdash/mapValuesDeep");
+const fs = require("fs-extra");
 const data = require("./data");
 
 const originalPath = process.argv[2];
@@ -152,7 +152,6 @@ const rollupPackage = (package, sources, workingPath) => {
         json.members[0].members = rollup;
         console.log(`AFTER: ${package} has ${json.members[0].members.length} members`);
         const updated = JSON.stringify(json);
-        console.log(json);
 
         // rewire every re-exported package
         let results = updated;
@@ -166,78 +165,17 @@ const rollupPackage = (package, sources, workingPath) => {
     }
 };
 
-// const websitePackages = [
-//     "fluid-framework",
-//     // "tinylicious",
-//     // "@fluidframework/azure-client",
-//     // "@fluidframework/azure-service-utils",
-//     // "@fluidframework/map",
-//     // "@fluidframework/sequence",
-//     // "@fluidframework/test-client-utils",
-//     // "@fluidframework/tinylicious-client",
-// ];
+const start = () => {
+    // Clear output folders.
+    fs.emptyDirSync(stagingPath);
+    fs.emptyDirSync(outputPath);
 
-// const rewriteImportMap = [
-//     // Rewrite fluid-static imports from container-definitions
-//     ["@fluidframework/fluid-static", ["@fluidframework/container-definitions"]],
-
-//     // Rewrite imports from protocol-definitions and server-services-client
-//     ["@fluidframework/azure-service-utils", ["@fluidframework/protocol-definitions", "@fluidframework/server-services-client"]],
-// ];
-
-// const packageRollupMap = new Map([
-//     // fluid-framework re-exports all of fluid-static
-//     ["fluid-framework", ["@fluidframework/fluid-static"]],
-// ]);
-
-// const relevantPackages = new Set(websitePackages);
-// for (const [k, arr] of rewriteImportMap) {
-//     relevantPackages.add(k);
-//     addToSet(relevantPackages, arr);
-// }
-// for (const [k, arr] of packageRollupMap) {
-//     relevantPackages.add(k);
-//     addToSet(relevantPackages, arr);
-// }
-// const relevantPackagePaths = Array.from(relevantPackages).map(
-//     (p) => path.join(originalPath, `${packageName(p)}.api.json`)
-// );
-
-
-const phase1 = () => {
-    console.log(`1 START`);
-    // Copy all the files that need to be present for rollup processing
-    // copyfiles(
-    //     [...relevantPackagePaths, stagingPath],
-    //     { verbose: true, up: true },
-    //     (err) => {
-    //         if (err) {
-    //             console.error(err);
-    //             process.exit(1);
-    //         }
-    //     });
-    console.log(`1 REWRITE`);
-
-    // Rewrite imports
-    combineMembers(originalPath, stagingPath, data.memberCombineInstructions);
-
-
-    console.log(`1 ROLLUP`);
-    // Rollup packages
-    for (const [package, sourcePackages] of data.packageRollupMap) {
-        rollupPackage(package, sourcePackages, stagingPath);
-    }
-    console.log(`1 END`);
-};
-
-const phase2 = () => {
-    console.log(`2 START`);
-    // Copy all processed files that should be on the site to the output dir
-    const websitePackageSourcePaths = data.websitePackages.map(
-        (p) => path.join(stagingPath, `${packageName(p)}.api.json`)
+    // Copy all the files to staging that need to be present for member processing.
+    const relevantPackagePaths = data.allStagingPackages.map(
+        (p) => path.join(originalPath, `${packageName(p)}.api.json`)
     );
     copyfiles(
-        [...websitePackageSourcePaths, outputPath],
+        [...relevantPackagePaths, stagingPath],
         { verbose: true, up: true },
         (err) => {
             if (err) {
@@ -245,20 +183,28 @@ const phase2 = () => {
                 process.exit(1);
             }
         });
-    console.log(`2 END`);
-};
 
-const start = () => {
-    // Clear output folder
-    // emptyDirectory(outputPath);
-    if (process.argv.length <= 4 || process.argv.length > 4 && process.argv[4] === "1") {
-        phase1();
+    // Combine members.
+    combineMembers(originalPath, stagingPath, data.memberCombineInstructions);
+
+    // Rollup packages.
+    for (const [package, sourcePackages] of data.packageRollupMap) {
+        rollupPackage(package, sourcePackages, stagingPath);
     }
 
-    if (process.argv.length <= 4 || process.argv.length > 4 && process.argv[4] === "2") {
-        phase2();
-    }
-    console.log(`DONE`);
+    // Copy all processed files that should be published on the site to the output dir.
+    const websitePackageSourcePaths = data.websitePackages.map(
+        (p) => path.join(stagingPath, `${packageName(p)}.api.json`)
+    );
+    copyfiles(
+        [...websitePackageSourcePaths, outputPath],
+        { verbose: false, up: true },
+        (err) => {
+            if (err) {
+                console.error(err);
+                process.exit(1);
+            }
+        });
 };
 
 start();
