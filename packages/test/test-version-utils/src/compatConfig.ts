@@ -17,10 +17,14 @@ import { resolveVersion } from "./versionUtils";
 enum CompatKind {
     None = "None",
     Loader = "Loader",
+    NewLoader = "NewLoader",
     Driver = "Driver",
+    NewDriver = "NewDriver",
     ContainerRuntime = "ContainerRuntime",
+    NewContainerRuntime = "NewContainerRuntime",
     DataRuntime = "DataRuntime",
-    LoaderAndContainerRuntime = "LoaderAndContainerRuntime",
+    NewDataRuntime = "NewDataRuntime",
+    LoaderDriver = "LoaderDriver",
 }
 
 /*
@@ -59,55 +63,56 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
         dataRuntime: compatVersion,
     };
 
+    const compatVersionStr = typeof compatVersion === "string" ? compatVersion : `N${compatVersion}`;
     return [
         {
-            name: `compat N${compatVersion} - old loader`,
+            name: `compat ${compatVersionStr} - old loader`,
             kind: CompatKind.Loader,
             compatVersion,
             loader: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new loader`,
-            kind: CompatKind.Loader,
+            name: `compat ${compatVersionStr} - new loader`,
+            kind: CompatKind.NewLoader,
             compatVersion,
             ...allOld,
             loader: undefined,
         },
         {
-            name: `compat N${compatVersion} - old driver`,
-            kind: CompatKind.Loader,
+            name: `compat ${compatVersionStr} - old driver`,
+            kind: CompatKind.Driver,
             compatVersion,
             driver: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new driver`,
-            kind: CompatKind.Loader,
+            name: `compat ${compatVersionStr} - new driver`,
+            kind: CompatKind.NewDriver,
             compatVersion,
             ...allOld,
             driver: undefined,
         },
         {
-            name: `compat N${compatVersion} - old container runtime`,
+            name: `compat ${compatVersionStr} - old container runtime`,
             kind: CompatKind.ContainerRuntime,
             compatVersion,
             containerRuntime: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new container runtime`,
-            kind: CompatKind.ContainerRuntime,
+            name: `compat ${compatVersionStr} - new container runtime`,
+            kind: CompatKind.NewContainerRuntime,
             compatVersion,
             ...allOld,
             containerRuntime: undefined,
         },
         {
-            name: `compat N${compatVersion} - old data runtime`,
+            name: `compat ${compatVersionStr} - old data runtime`,
             kind: CompatKind.DataRuntime,
             compatVersion,
             dataRuntime: compatVersion,
         },
         {
-            name: `compat N${compatVersion} - new data runtime`,
-            kind: CompatKind.LoaderAndContainerRuntime,
+            name: `compat ${compatVersionStr} - new data runtime`,
+            kind: CompatKind.NewDataRuntime,
             compatVersion,
             ...allOld,
             dataRuntime: undefined,
@@ -125,7 +130,7 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
         },
         {
             name: `compat LTS ${compatVersion} - old loader + old driver`,
-            kind: CompatKind.Loader,
+            kind: CompatKind.LoaderDriver,
             compatVersion,
             driver: compatVersion,
             loader: compatVersion,
@@ -147,10 +152,14 @@ const options = {
         choices: [
             CompatKind.None,
             CompatKind.Loader,
+            CompatKind.NewLoader,
             CompatKind.Driver,
+            CompatKind.NewDriver,
             CompatKind.ContainerRuntime,
+            CompatKind.NewContainerRuntime,
             CompatKind.DataRuntime,
-            CompatKind.LoaderAndContainerRuntime,
+            CompatKind.NewDataRuntime,
+            CompatKind.LoaderDriver,
         ],
         requiresArg: true,
         array: true,
@@ -159,7 +168,7 @@ const options = {
         description: "Compat version to run",
         requiresArg: true,
         array: true,
-        type: "number",
+        type: "string",
     },
     reinstall: {
         default: false,
@@ -202,7 +211,20 @@ nconf.argv({
         "fluid__test__r11sEndpointName",
         "fluid__test__baseVersion",
     ],
-    parseValues: true,
+    transform: (obj: { key: string, value: string }) => {
+        if (!obj.key.startsWith("fluid__test__")) {
+            return obj;
+        }
+        const key = obj.key.substring("fluid__test__".length);
+        if (options[key] !== undefined && options[key].array) {
+            try {
+                obj.value = JSON.parse(obj.value);
+            } catch {
+                // ignore
+            }
+        }
+        return obj;
+    },
 }).defaults(
     {
         fluid: {
@@ -216,16 +238,19 @@ nconf.argv({
     },
 );
 
-const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[];
-const compatVersions = nconf.get("fluid:test:compatVersion") as number[];
+const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[] | undefined;
+const compatVersions = nconf.get("fluid:test:compatVersion") as string[] | undefined;
 const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
 const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string;
 const baseVersion = resolveVersion(nconf.get("fluid:test:baseVersion") as string, false);
 
 // set it in the env for parallel workers
-process.env.fluid__test__compatKind = JSON.stringify(compatKind);
-// Number arrays needs quote so that single element array can be interpret as array.
-process.env.fluid__test__compatVersion = `"${JSON.stringify(compatVersions)}"`;
+if (compatKind) {
+    process.env.fluid__test__compatKind = JSON.stringify(compatKind);
+}
+if (compatVersions) {
+    process.env.fluid__test__compatVersion = JSON.stringify(compatVersions);
+}
 process.env.fluid__test__driver = driver;
 process.env.fluid__test__r11sEndpointName = r11sEndpointName;
 process.env.fluid__test__baseVersion = baseVersion;
@@ -240,7 +265,18 @@ if (!compatVersions || compatVersions.length === 0) {
     });
 } else {
     compatVersions.forEach((value) => {
-        configList.push(...genConfig(value));
+        if (value === "LTS") {
+            LTSVersions.forEach((lts) => {
+                configList.push(...genLTSConfig(lts));
+            });
+        } else {
+            const num = parseInt(value, 10);
+            if (num.toString() === value) {
+                configList.push(...genConfig(num));
+            } else {
+                configList.push(...genConfig(value));
+            }
+        }
     });
 }
 

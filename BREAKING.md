@@ -1,12 +1,28 @@
+## Adding breaking change notes
+
+Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+
+### Writing a change note
+
+There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
+- Provide a concise title.  It should make clear what the topic of the change is.
+- Ensure the affected packages are named or clearly identifiable within the body.
+- Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
+- Consider providing code examples as part of guidance for non-trivial changes.
+
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
 - [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
+- [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
 
 ### client-api package removed
 The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
 
 ### SignalManager removed from fluid-framework export
 The `SignalManager` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package.  This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`.  Users should instead import the classes from the `@fluid-experimental/data-objects` package.
+
+### MockLogger removed from @fluidframework/test-runtime-utils
+MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
 
 ## 0.47 Breaking changes
 - [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
@@ -18,7 +34,6 @@ The `SignalManager` and `Signaler` classes have been removed from the `@fluid-fr
 - [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
 - [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
 - [AzureClient initialization as a singular config](#AzureClient-initialization-as-a-singular-config)
-- [MockLogger removed from @fluidframework/test-runtime-utils](#MockLogger-removed-from-@fluidframework/test-runtime-utils)
 
 ### Property removed from IFluidDataStoreContext
 - the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
@@ -114,9 +129,6 @@ const config = {
 }
 const client = new AzureClient(config);
 ```
-
-## MockLogger removed from @fluidframework/test-runtime-utils
-MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
 
 ## 0.46 Breaking changes
 - [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
