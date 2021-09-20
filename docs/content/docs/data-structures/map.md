@@ -49,7 +49,7 @@ const schema = {
     }
 }
 
-const { container, services } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
 const map = container.initialObjects.customMap;
 ```
@@ -62,7 +62,7 @@ const schema = {
     dynamicObjectTypes: [ SharedMap ]
 }
 
-const { container, services } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
 const newMap = await container.create(SharedMap); // Create a new SharedMap
 ```
@@ -312,7 +312,7 @@ const schema = {
 Now, you can dynamically create additional `SharedMap` instances and store their handles into the initial map that is always provided in the container.
 
 ```javascript
-const { container, services } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
 const initialMap = container.initialObjects.initialMap;
 
@@ -415,7 +415,7 @@ const schema = {
     dynamicObjectTypes: [SharedMap]
 }
 
-const { container, services } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 
 const initialMap = container.initialObjects.initialMap;
 

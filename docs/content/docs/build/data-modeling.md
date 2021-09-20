@@ -100,7 +100,7 @@ const schema = {
     dynamicObjectTypes: [ SharedCell ],
 }
 
-const { container, services } = await client.getContainer(/*service config*/, schema);
+const { container, services } = await client.getContainer(id, schema);
 const map = container.initialObjects.map;
 
 const newCell = await container.create(SharedCell); // Create a new SharedCell
