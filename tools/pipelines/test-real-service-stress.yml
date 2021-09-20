@@ -46,3 +46,4 @@ stages:
             command: 'custom'
             workingDir: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-service-load
             customCommand: 'run start'
+            verbose: true

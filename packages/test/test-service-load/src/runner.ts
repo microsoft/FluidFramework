@@ -38,7 +38,7 @@ async function main() {
         .requiredOption("-u --url <url>", "Load an existing data store from the url")
         .requiredOption("-r, --runId <runId>",
             "run a child process with the given id. Requires --url option.", parseIntArg)
-        .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
+        .requiredOption("-s, --seed <number>", "Seed for this runners random number generator", parseIntArg)
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
@@ -50,7 +50,7 @@ async function main() {
     const log: string | undefined = commander.log;
     const verbose: boolean = commander.verbose ?? false;
     const seed: number = commander.seed;
-    console.log(typeof runId);
+    console.log(typeof runId, typeof seed);
 
     const profile = getProfile(profileArg);
 

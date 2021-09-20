@@ -28,7 +28,7 @@
     "full": "node ./dist/nodeStressTest.js --profile full",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "start": "node ./dist/nodeStressTest.js",
+    "start": "node ./dist/nodeStressTest.js -v",
     "start:mini": "node ./dist/nodeStressTest.js  --profile mini",
     "start:reauth": "node ./dist/nodeStressTest.js --profile mini --browserAuth",
     "start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
