@@ -235,15 +235,13 @@ MapProperty.prototype.insert = function (in_key, in_property) {
         throw new Error(MSG.PROPERTY_ALREADY_EXISTS + in_key);
     }
     if (in_property instanceof BaseProperty) {
-        if (in_property._canInsert(this)) {
-            // Set the ID of the entry, to make sure it corresponds to the used key
-            in_property._setId(in_key);
+        in_property._validateInsertIn(this);
+        // Set the ID of the entry, to make sure it corresponds to the used key
+        in_property._setId(in_key);
 
-            // Insert the entry into the collection
-            this._insert(in_key, in_property, true);
-        } else {
-            throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-        }
+        // Insert the entry into the collection
+        this._insert(in_key, in_property, true);
+
     } else {
         throw new Error(MSG.NONVALUE_MAP_INSERT_PROP);
     }

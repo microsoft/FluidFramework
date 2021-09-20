@@ -1199,14 +1199,13 @@ BaseProperty.prototype._setDirtyTree = function (in_reportToView) {
 };
 
 /**
- * Returns the boolean to determine whether a property can be inserted to another property
- * @return {boolean} True if the property can be inserted. False if the property is already inserted
+ * Determines whether a property can be inserted as a child of another property
+ * This does NOT validate if the parent can accept the child property, it only validates if
+ * the child property can be inserted in the parent.
+ * @param {property-properties.BaseProperty} in_targetParent - The parent property
+ * @throws if the property can not be inserted
  */
-BaseProperty.prototype._canInsert = function (in_targetParent) {
-    // Already a child?
-    if (this._parent !== undefined) {
-        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-    }
+BaseProperty.prototype._validateInsertIn = function (in_targetParent) {
 
     // A root?
     if (this._getCheckedOutRepositoryInfo() !== undefined) {
@@ -1222,7 +1221,10 @@ BaseProperty.prototype._canInsert = function (in_targetParent) {
         parent = parent._parent;
     }
 
-    return (this._parent === undefined && this._getCheckoutView() === undefined);
+    // Already a child?
+    if (this._parent !== undefined || this._getCheckoutView() !== undefined) {
+        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
+    }
 };
 
 /**
