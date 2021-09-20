@@ -31,6 +31,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     maxConcurrentOrdererRequests: 100,
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
+    enableRestLess: false,
 };
 
 /**
@@ -63,7 +64,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
-        const [, tenantId, id] = parsedUrl.pathname.split("/");
+        const [, tenantId] = parsedUrl.pathname.split("/");
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {
@@ -76,16 +77,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
-            id,
+            undefined,
             this.tokenProvider,
             logger2,
             rateLimiter,
+            this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
         const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
-                id,
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,

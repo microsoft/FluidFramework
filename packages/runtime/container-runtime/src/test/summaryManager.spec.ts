@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IFluidRouter } from "@fluidframework/core-interfaces";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
     IConnectedEvents,
     IConnectedState,
