@@ -89,7 +89,8 @@ data:
             "socketIoAdapter" : {
                 "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
                 "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
-            }
+            },
+            "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }}
         },
         "client": {
             "type": "browser",
