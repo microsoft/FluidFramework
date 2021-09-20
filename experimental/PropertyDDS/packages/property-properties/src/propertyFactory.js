@@ -1057,6 +1057,9 @@ PropertyFactory.prototype._ensurePropertyParentExists = function (in_typeid, in_
         case 'NodeProperty':
             ConstructorFunction = NodeProperty;
             break;
+        case 'NamedProperty':
+            ConstructorFunction = NamedProperty;
+            break;
         default:
             ConstructorFunction = ContainerProperty;
     }
