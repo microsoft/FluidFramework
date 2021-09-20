@@ -50,7 +50,6 @@ class SummaryNodeWithGC extends SummaryNode {
  * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
  * - Adds a new API `getGCData` to return GC data of this node.
  * - Caches the result of `getGCData` to be used if nothing changes between summaries.
- * - Adds GC data to the result of summarize.
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
  *   and to determine if the node's used state changed since last summary.
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
@@ -118,8 +117,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         this.maxUnreferencedDurationMs = config.maxUnreferencedDurationMs ?? defaultMaxUnreferencedDurationMs;
 
         this.gcDetailsInInitialSummaryP = new LazyPromise(async () => {
-            // back-compat: 0.32. getInitialGCSummaryDetailsFn() returns undefined in 0.31. Remove undefined check
-            // when N > 34.
             const gcSummaryDetails = await getInitialGCSummaryDetailsFn?.();
             return gcSummaryDetails ?? { usedRoutes: [] };
         });
@@ -208,10 +205,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             assert(
                 this.wipSerializedUsedRoutes === undefined,
                 0x1b4 /* "We should not already be tracking used routes when to track a new summary" */);
-
-            // back-compat: 0.33 - This will be done in `updateUsedRoutes`. Older clients do not have that method, so
-            // keeping this one for now.
-            this.wipSerializedUsedRoutes = JSON.stringify(this.usedRoutes);
         }
         super.startSummary(referenceSequenceNumber, summaryLogger);
     }
@@ -347,9 +340,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             getInitialGCSummaryDetailsFn,
         );
 
-        // back-compat: 0.33 - If a child is created during summarize, its wip used routes will updated in
-        // `updateUsedRoutes` method. For older clients, do it here since that method does not exist.
-
         // There may be additional state that has to be updated in this child. For example, if a summary is being
         // tracked, the child's summary tracking state needs to be updated too.
         this.maybeUpdateChildState(child);
@@ -482,18 +472,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
         return this.referenceUsedRoutes === undefined ||
             JSON.stringify(this.usedRoutes) !== JSON.stringify(this.referenceUsedRoutes);
-    }
-
-    /**
-     * Updates the work-in-progress state of the child if summary is in progress.
-     * @param child - The child node to be updated.
-     */
-    protected maybeUpdateChildState(child: SummarizerNodeWithGC) {
-        if (this.isTrackingInProgress()) {
-            // Update the child's work-in-progress used routes.
-            child.updateUsedRoutes(child.usedRoutes);
-        }
-        super.maybeUpdateChildState(child);
     }
 }
 
