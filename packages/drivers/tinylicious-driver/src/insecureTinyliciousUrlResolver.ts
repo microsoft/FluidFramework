@@ -35,18 +35,23 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
         // determine whether the request is for creating of a new container.
         // such request has the `createNew` header set to true and doesn't have a container ID.
         if (request.headers && request.headers[DriverHeader.createNew] === true) {
+            // honor the document ID passed by the application via the create request
+            // otherwise use the reserved keyword to let the driver generate the ID.
+            // TODO: deprecate this capability for tinylicious as the r11s driver will stop using the document ID
+            // in create requests.
+            const newDocumentId = request.url ?? "new";
             return {
                 endpoints: {
-                    deltaStorageUrl: `${this.tinyliciousEndpoint}/deltas/tinylicious/new`,
+                    deltaStorageUrl: `${this.tinyliciousEndpoint}/deltas/tinylicious/${newDocumentId}`,
                     ordererUrl: this.tinyliciousEndpoint,
                     storageUrl: `${this.tinyliciousEndpoint}/repos/tinylicious`,
                 },
                 // id is a mandatory attribute, but it's ignored by the driver for new container requests.
-                id: "",
+                id: request.url,
                 // tokens attribute is redundant as all tokens are generated via ITokenProvider
                 tokens: {},
                 type: "fluid",
-                url: `${this.fluidProtocolEndpoint}/tinylicious/new`,
+                url: `${this.fluidProtocolEndpoint}/tinylicious/${newDocumentId}`,
             };
         }
         // for an existing container we'll parse the request URL to determine the document ID.
