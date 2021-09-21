@@ -43,7 +43,7 @@ export interface EditingResultBase<TChange> {
  */
 export interface FailedEditingResult<TChange> extends EditingResultBase<TChange> {
 	/**
-	 * {@inheritdoc EditingResultBase.status}
+	 * {@inheritDoc EditingResultBase.status}
 	 */
 	readonly status: EditStatus.Invalid | EditStatus.Malformed;
 	/**
@@ -64,7 +64,7 @@ export interface FailedEditingResult<TChange> extends EditingResultBase<TChange>
  */
 export interface ValidEditingResult<TChange> extends EditingResultBase<TChange> {
 	/**
-	 * {@inheritdoc EditingResultBase.status}
+	 * {@inheritDoc EditingResultBase.status}
 	 */
 	readonly status: EditStatus.Applied;
 	/**
