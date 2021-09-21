@@ -17,6 +17,10 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
 
+/**
+ * Validates this scenario: When a data store becomes inactive (has been unreferenced for a given amount of time),
+ * using that data store results in an error telemetry.
+ */
 describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",

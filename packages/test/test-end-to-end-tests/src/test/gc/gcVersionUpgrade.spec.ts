@@ -44,6 +44,11 @@ class ContainerRuntimeFactoryWithGC extends ContainerRuntimeFactoryWithDefaultDa
     }
 }
 
+/**
+ * Validates that when the runtime GC version changes, we re-run GC and summary. Basically, when we update the GC
+ * version due to either bugs or changes in the implementation, we re-run GC and regenerate summary based on the
+ * new GC code.
+ */
 describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(

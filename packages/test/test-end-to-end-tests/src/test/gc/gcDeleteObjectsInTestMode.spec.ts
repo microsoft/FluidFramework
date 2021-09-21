@@ -16,7 +16,10 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
 
-describeFullCompat("Garbage Collection", (getTestObjectProvider) => {
+/**
+ * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
+ */
+describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => {
     // If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
     // deleted after each GC run.
     const tests = (deleteUnreferencedContent: boolean = false) => {

@@ -25,6 +25,10 @@ import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
+/**
+ * Validates that the unreferenced timestamp is correctly set in the summary tree of unreferenced data stores. Also,
+ * the timestamp is removed when an unreferenced data store becomes referenced again.
+ */
 // REVIEW: Enable full compat after runtime version >= 0.48.0
 describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;

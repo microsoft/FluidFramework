@@ -22,7 +22,12 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { wrapDocumentServiceFactory } from "./gcDriverWrappers";
 import { loadSummarizer, TestDataObject, submitAndAckSummary } from "./mockSummarizerClient";
 
-describeFullCompat("GC unreferenced flag validation in snapshot", (getTestObjectProvider) => {
+/**
+ * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present
+ * as expected in the snapshot downloaded from server. Basically, the 'unreferenced' property is preserved
+ * across summary upload and download.
+ */
+describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
         "TestDataObject",

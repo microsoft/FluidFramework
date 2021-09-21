@@ -62,6 +62,16 @@ class TestDataObject extends DataObject {
     }
 }
 
+/**
+ * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
+ * in the next summary. When a reference to the data store is re-added, it is marked as referenced in the next summary.
+ * Basically, if the handle to a data store is not stored in any DDS, its summary tree will have the "unreferenced"
+ * property set to true. If the handle to a data store exists or it's a root data store, its summary tree does not have
+ * the "unreferenced" property.
+ *
+ * The difference between these tests and the ones in the file 'gcReferenceUpdatesInLocalSummary' is that here we submit
+ * summaries to the server, load new containers from the summary downloaded from server and validate them.
+ */
 describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(

@@ -62,6 +62,13 @@ class TestDataObject extends DataObject {
     }
 }
 
+/**
+ * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced
+ * in the next summary. When a reference to the data store is re-added, it is marked as referenced in the next summary.
+ * Basically, if the handle to a data store is not stored in any DDS, its summary tree will have the "unreferenced"
+ * property set to true. If the handle to a data store exists or it's a root data store, its summary tree does not have
+ * the "unreferenced" property.
+ */
 describeFullCompat("GC reference updates in local summary", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const factory = new DataObjectFactory(
@@ -127,8 +134,16 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
 
-    beforeEach(async () => {
+    before(function() {
         provider = getTestObjectProvider();
+        // These tests validate the GC state in summary by calling summarize directly on the container runtime.
+        // They do not post these summaries or download them. So, it doesn't need to run against real services.
+        if (provider.driver.type !== "local") {
+            this.skip();
+        }
+    });
+
+    beforeEach(async () => {
         const container = await createContainer();
         mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;

@@ -18,6 +18,12 @@ import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
 import { TestDataObject } from "./mockSummarizerClient";
 
+/**
+ * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced
+ * by the time it is requested via this external app, we return a failure (404).
+ * Basically, for data stores that are unreferenced in the base snapshot that a container loads from, we return a
+ * failure (404) when they are requested with "externalRequest" flag in the request header.
+ */
 describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(

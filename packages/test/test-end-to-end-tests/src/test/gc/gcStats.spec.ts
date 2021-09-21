@@ -18,6 +18,10 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { TestDataObject } from "./mockSummarizerClient";
 
+/**
+ * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
+ * nodes, number of unreferenced data stores, etc.
+ */
 describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
