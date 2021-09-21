@@ -12,9 +12,6 @@ parameters:
   type: string
   default: "@fluidframework/test-end-to-end-tests"
 
-- name: testSteps
-  type: stepList
-
 - name: testWorkspace
   type: string
 
@@ -77,6 +74,7 @@ jobs:
             testWorkspace=${{ parameters.testWorkspace }}
             testPackageFilePattern=${{ variables.testPackageFilePattern }}
             feed=${{ variables.feed }}
+            target=${{ parameters.target }}
           "
 
     # Install
@@ -159,15 +157,14 @@ jobs:
 
     # run the test
     - task: Npm@1
-      displayName: '[end-to-end tests] npm run test:realsvc:${{ parameter.target }}:report'
+      displayName: '[end-to-end tests] npm run test:realsvc:${{ parameters.target }}:report'
       continueOnError: true
       env:
         ${{ parameters.env }}
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ parameters.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
       inputs:
         command: 'custom'
         workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-        customCommand: 'run test:realsvc:${{ parameter.target }}:report'
+        customCommand: 'run test:realsvc:${{ parameters.target }}:report'
 
     # Upload results
     - task: PublishTestResults@2

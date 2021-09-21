@@ -34,6 +34,8 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         target: local
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests tinylicious
   - stage:
@@ -46,6 +48,8 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         target: tinylicious
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests routerlicious
   - stage:
@@ -60,6 +64,7 @@ stages:
         target: routerlicious
         env:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests frs
   - stage:
@@ -75,6 +80,7 @@ stages:
         target: frs
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests odsp
   - stage:
@@ -92,3 +98,4 @@ stages:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
