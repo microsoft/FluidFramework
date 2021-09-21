@@ -41,13 +41,14 @@ export class InsecureUrlResolver implements IUrlResolver {
     ) { }
 
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-        const hasCreateHeader = request.headers?.[DriverHeader.createNew] !== undefined;
-        if (hasCreateHeader) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (request.headers?.[DriverHeader.createNew]) {
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
             const fileName = searchParams.get("fileName");
-            if (typeof(fileName) !== "string") {
+            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+            if (!fileName) {
                 throw new Error("FileName should be there!!");
             }
             return this.resolveHelper(fileName, "");
@@ -117,8 +118,8 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
-        const validDocumentId = documentId !== undefined;
-        assert(validDocumentId, "Invalid document id from parsed URL");
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        assert(!!documentId, "Invalid document id from parsed URL");
 
         let url = relativeUrl;
         if (url.startsWith("/")) {

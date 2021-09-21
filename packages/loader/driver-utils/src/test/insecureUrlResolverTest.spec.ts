@@ -33,8 +33,8 @@ describe("Insecure Url Resolver Test", () => {
     });
 
     it("Create New Request", async () => {
-        const hasCreateHeader = request.headers?.[DriverHeader.createNew] !== undefined;
-        assert(hasCreateHeader,
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        assert(!!request.headers?.[DriverHeader.createNew],
             "Request should contain create new header");
         const url = `${hostUrl}?fileName=${fileName}`;
         assert.strictEqual(request.url, url, "Request url should match");
