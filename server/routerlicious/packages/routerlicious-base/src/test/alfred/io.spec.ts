@@ -170,7 +170,7 @@ describe("Routerlicious", () => {
                         const socket = webSocketServer.createConnection();
                         const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
                         assert.ok(connectMessage.clientId);
-                        assert.equal(connectMessage.existing, false);
+                        assert.equal(connectMessage.existing, true);
 
                         // Verify a connection message was sent
                         const message = deliKafka.getLastMessage();
@@ -182,12 +182,12 @@ describe("Routerlicious", () => {
                         assert.equal(JoinMessage.clientId, connectMessage.clientId);
                     });
 
-                    it("Should connect to and set existing flag to true when connecting to an existing document",
+                    it("Should support multiple connections to an existing document",
                         async () => {
                             const firstSocket = webSocketServer.createConnection();
                             const firstConnectMessage = await connectToServer(
                                 testId, testTenantId, testSecret, firstSocket);
-                            assert.equal(firstConnectMessage.existing, false);
+                            assert.equal(firstConnectMessage.existing, true);
 
                             const secondSocket = webSocketServer.createConnection();
                             const secondConnectMessage = await connectToServer(
@@ -202,7 +202,7 @@ describe("Routerlicious", () => {
                             const socket = webSocketServer.createConnection();
                             const connectMessage = await connectToServer(id, testTenantId, testSecret, socket);
                             assert.ok(connectMessage.clientId);
-                            assert.equal(connectMessage.existing, false);
+                            assert.equal(connectMessage.existing, true);
 
                             // Verify a connection message was sent
                             const message = deliKafka.getLastMessage();
