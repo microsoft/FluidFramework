@@ -47,7 +47,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 
             const searchParams = new URLSearchParams(queryString);
             const fileName = searchParams.get("fileName");
-            if (fileName !== undefined) {
+            if (typeof(fileName) !== "string") {
                 throw new Error("FileName should be there!!");
             }
             return this.resolveHelper(fileName, "");
