@@ -171,11 +171,11 @@ const start = () => {
     fs.emptyDirSync(outputPath);
 
     // Copy all the files to staging that need to be present for member processing.
-    const relevantPackagePaths = data.allStagingPackages.map(
+    const stagedPackagePaths = data.allStagingPackages.map(
         (p) => path.join(originalPath, `${packageName(p)}.api.json`)
     );
     copyfiles(
-        [...relevantPackagePaths, stagingPath],
+        [...stagedPackagePaths, stagingPath],
         { verbose: true, up: true },
         (err) => {
             if (err) {
