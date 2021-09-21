@@ -491,8 +491,7 @@ export function requestOps(
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
             assert(
                 lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
-                0x26f /* "continuous and no duplicates" */,
-            );
+                0x26f /* "continuous and no duplicates" */);
             length += deltas.length;
             queue.pushValue(deltas);
         });
