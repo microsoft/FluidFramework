@@ -16,12 +16,13 @@
 // const fs = require("fs");
 const path = require("path");
 const copyfiles = require("copyfiles");
+const cpy = require("cpy");
 const findValue = require("deepdash/findValueDeep");
 const fs = require("fs-extra");
 const data = require("./data");
 
-const originalPath = process.argv[2];
-const targetPath = process.argv.length > 3 ? process.argv[3] : originalPath;
+const originalPath = path.resolve(process.argv[2]);
+const targetPath = path.resolve(process.argv.length > 3 ? process.argv[3] : originalPath);
 const stagingPath = path.join(targetPath, "_staging");
 const outputPath = path.join(targetPath, "_build");
 
@@ -55,12 +56,12 @@ const extractMembersFromApiObject = (sourceApiObj, members) =>
  */
 const extractMembers = (sourceFile, members) => {
     // First load the source API file...
-    console.log(`Loading ${sourceFile}`);
+    console.log(`Reading ${sourceFile}`);
     const sourceApiObj = JSON.parse(fs.readFileSync(sourceFile, { encoding: "utf8" }));
     // console.log(jsonStr.includes("@fluidframework/container-definitions"));
 
     // ... then check if all members should be extracted, and if so, return them all...
-    if(members.length === 1 && members[0] === "*") {
+    if (members.length === 1 && members[0] === "*") {
         return sourceApiObj.members[0].members;
     }
 
@@ -108,18 +109,14 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         }
 
         // Load the input API JSON file (the one that will be rewritten).
-        console.log(`Loading ${inputPackagePath}`);
+        console.log(`Reading ${inputPackagePath}`);
         jsonStr = fs.readFileSync(inputPackagePath, { encoding: "utf8" });
         const rewrittenApiObj = JSON.parse(jsonStr);
         // console.log(jsonStr.includes("@fluidframework/container-definitions"));
 
-        console.log(`EXTRACTED: ${extractedMembers.length} members`);
-        console.log(`BEFORE: ${package} has ${rewrittenApiObj.members[0].members.length} members`);
-
         // Append the members extracted earlier.
         const combinedMembers = rewrittenApiObj.members[0].members.concat(extractedMembers);
         rewrittenApiObj.members[0].members = combinedMembers;
-        console.log(`AFTER: ${package} has ${rewrittenApiObj.members[0].members.length} members`);
 
         // Convert API object back to a string to more replace the package names using string replace.
         jsonStr = JSON.stringify(rewrittenApiObj);
@@ -128,98 +125,36 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
             jsonStr = replaceAll(jsonStr, sourcePackage, package);
         }
 
+        console.log(`Writing ${outputPackagePath}`);
         fs.writeFileSync(outputPackagePath, jsonStr);
     }
 };
 
-/**
- * @param {string} package the name of a package that rolls up exported APIs from another package.
- * @param {string} sources an array of package names whose contents should be rolled up into `package`.
- */
-const rollupPackage = (package, sources, workingPath) => {
-    const rollup = [];
-    for (const sourcePackage of sources) {
-        try {
-            const filePath = path.join(workingPath, `${packageName(sourcePackage)}.api.json`);
-            console.log(`Rolling up ${sourcePackage} into ${package}`);
-            const apiJson = JSON.parse(fs.readFileSync(filePath, { encoding: "utf8" }));
-            rollup.push(...apiJson.members[0].members);
-        } catch (ex) {
-            console.log(ex);
-        }
-    }
-
-    try {
-        const filePath = path.join(workingPath, `${packageName(package)}.api.json`);
-        const jsonStr = fs.readFileSync(filePath, { encoding: "utf8" });
-        const json = JSON.parse(jsonStr);
-        console.log(`BEFORE: ${package} has ${json.members[0].members.length} members`);
-        json.members[0].members = rollup;
-        console.log(`AFTER: ${package} has ${json.members[0].members.length} members`);
-        const updated = JSON.stringify(json);
-
-        // rewire every re-exported package
-        let results = updated;
-        for (const from of sources) {
-            results = replaceAll(results, from, package);
-        }
-        fs.writeFileSync(filePath, results);
-        console.log(`Wrote ${filePath}`);
-    } catch (ex) {
-        console.log(ex);
-    }
-};
-
-const start = () => {
+const main = async () => {
     // Clear output folders.
     fs.emptyDirSync(stagingPath);
     fs.emptyDirSync(outputPath);
 
     // Copy all the files to staging that need to be present for member processing.
-    const stagedPackagePaths = data.allStagingPackages.map(
-        (p) => path.join(originalPath, `${packageName(p)}.api.json`)
+    const stagedPackageFiles = data.allStagingPackages.map(
+        (p) => `${packageName(p)}.api.json`
     );
-    copyfiles(
-        [...stagedPackagePaths, stagingPath],
-        { verbose: false, up: true },
-        (err) => {
-            if (err) {
-                console.error(err);
-                process.exit(1);
-            }
-        });
+    await cpy(stagedPackageFiles, stagingPath, { cwd: originalPath });
 
     // Combine members.
     combineMembers(originalPath, stagingPath, data.memberCombineInstructions);
 
-    // Rollup packages.
-    // for (const [package, sourcePackages] of data.packageRollupMap) {
-    //     rollupPackage(package, sourcePackages, stagingPath);
-    // }
-
     // Copy all processed files that should be published on the site to the output dir.
-    const websitePackageSourcePaths = data.websitePackages.map(
-        (p) => path.join(stagingPath, `${packageName(p)}.api.json`)
+    const websitePackageFiles = data.websitePackages.map(
+        (p) => `${packageName(p)}.api.json`
     );
-    copyfiles(
-        [...websitePackageSourcePaths, outputPath],
-        { verbose: true, up: true },
-        (err) => {
-            if (err) {
-                console.error(err);
-                process.exit(1);
+    console.log(`Copying final files from ${stagingPath} to ${outputPath}`)
+    await cpy(websitePackageFiles, outputPath, { cwd: stagingPath })
+        .on("progress", (progress) => {
+            if(progress.completedFiles > 0) {
+                console.log(`\tCopied ${websitePackageFiles[progress.completedFiles]}`);
             }
         });
-
-    for(const p of data.processOnlyPackages) {
-        console.log(fs.readdirSync(stagingPath));
-        const packagePath = path.join(stagingPath, `${packageName(p)}.api.json`);
-        console.log(`Removing ${packagePath}`)
-        fs.remove(packagePath, err => {
-            if (err) return console.error(err);
-            console.log("Success!");
-          });
-    }
 };
 
-start();
+main();

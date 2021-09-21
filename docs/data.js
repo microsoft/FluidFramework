@@ -3,37 +3,22 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Adds an array of strings to a set individually.
- *
- * @param {Set<string>} set
- * @param {string[]} add
- */
-const addToSet = (set, add) => {
-    for (item of add) {
-        set.add(item);
-    }
-}
+/** An array of all packages whose TSDocs should be published to website. */
+const websitePackages = [
+    "fluid-framework",
+    "tinylicious",
+    "@fluidframework/azure-client",
+    "@fluidframework/azure-service-utils",
+    "@fluidframework/test-client-utils",
+    "@fluidframework/tinylicious-client",
+];
 
-/**
- * Calculate the difference of two sets. Implementation is from
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set#implementing_basic_set_operations
- * @param {Set} setA
- * @param {Set} setB
- */
-function difference(setA, setB) {
-    const _difference = new Set(setA);
-    for (const elem of setB) {
-        _difference.delete(elem);
-    }
-    return _difference;
-}
-
-// exports.addToSet = addToSet;
+/** An array of objects describing how members should be combined. */
 const memberCombineInstructions = [
     {
         package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
+            // TODO: #7530
             // ["@fluidframework/server-services-client", ["GenerateToken"]],
             ["@fluidframework/protocol-definitions", ["ScopeType"]],
         ])
@@ -54,19 +39,17 @@ const memberCombineInstructions = [
         ])
     },
 ];
-exports.memberCombineInstructions = memberCombineInstructions;
-
-const websitePackages = [
-    "fluid-framework",
-    "tinylicious",
-    "@fluidframework/azure-client",
-    "@fluidframework/azure-service-utils",
-    // "@fluidframework/map",
-    // "@fluidframework/sequence",
-    "@fluidframework/test-client-utils",
-    "@fluidframework/tinylicious-client",
-];
-exports.websitePackages = websitePackages;
+/**
+ * Adds an array of strings to a set individually.
+ *
+ * @param {Set<string>} set
+ * @param {string[]} add
+ */
+ const addToSet = (set, add) => {
+    for (item of add) {
+        set.add(item);
+    }
+}
 
 /** A Set containing all the packages that are needed to do the API rollup. */
 const allStagingPackages = new Set(websitePackages);
@@ -74,22 +57,7 @@ for (const { package, sourceImports } of memberCombineInstructions) {
     allStagingPackages.add(package);
     addToSet(allStagingPackages, Array.from(sourceImports.keys()));
 }
-// for (const [k, arr] of packageRollupMap) {
-//     allStagingPackages.add(k);
-//     addToSet(allStagingPackages, arr);
-// }
-exports.allStagingPackages = Array.from(allStagingPackages);
-// const relevantPackagePaths = Array.from(relevantPackages).map(
-//     (p) => path.join(originalPath, `${packageName(p)}.api.json`)
-// );
 
-const processOnlyPackages = Array.from(difference(allStagingPackages, new Set(websitePackages)));
-exports.processOnlyPackages = processOnlyPackages;
-console.log(processOnlyPackages);
-// const processedPackages = new Set();
-// for (const { package, sourceImports } of memberCombineInstructions) {
-//     processedPackages.add(package);
-//     addToSet(processedPackages, Array.from(sourceImports.keys()));
-// }
-// const unprocessedPackages = difference(new Set(websitePackages), processedPackages);
-// exports.unprocessedPackages = unprocessedPackages;
+exports.allStagingPackages = Array.from(allStagingPackages);
+exports.memberCombineInstructions = memberCombineInstructions;
+exports.websitePackages = websitePackages;
