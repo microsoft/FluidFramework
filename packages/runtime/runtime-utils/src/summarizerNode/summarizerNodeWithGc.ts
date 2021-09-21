@@ -446,7 +446,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         if (this.inactive) {
             assert(
                 this.unreferencedTimestampMs !== undefined,
-                "Node should not become inactive without setting unreferencedTimestampMs first");
+                0x271 /* "Node should not become inactive without setting unreferencedTimestampMs first" */);
             this.defaultLogger.sendErrorEvent({
                 eventName,
                 unreferencedDuratonMs: (currentTimestampMs ?? Date.now()) - this.unreferencedTimestampMs,

@@ -581,7 +581,7 @@ export class DeltaManager
         // We might have connection already and it might have called fetchMissingDeltas() from
         // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
         // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
-        assert(this.fetchReason === undefined, "There can't be pending fetch that early in boot sequence!");
+        assert(this.fetchReason === undefined, 0x268 /* "There can't be pending fetch that early in boot sequence!" */);
 
         if (this.closed) {
             return;
@@ -605,7 +605,7 @@ export class DeltaManager
         }
 
         // Ensure there is no need to call this.processPendingOps() at the end of boot sequence
-        assert(this.fetchReason !== undefined || this.pending.length === 0, "pending ops are not dropped");
+        assert(this.fetchReason !== undefined || this.pending.length === 0, 0x269 /* "pending ops are not dropped" */);
     }
 
     private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
@@ -647,7 +647,7 @@ export class DeltaManager
     }
 
     private async connectCore(args: IConnectionArgs): Promise<IDocumentDeltaConnection> {
-        assert(!this.closed, "not closed");
+        assert(!this.closed, 0x26a /* "not closed" */);
 
         if (this.connection !== undefined) {
             return this.connection;
@@ -1576,7 +1576,7 @@ export class DeltaManager
 
         if (this.handler === undefined) {
             // We do not poses yet any information
-            assert(lastKnowOp === 0, "initial state");
+            assert(lastKnowOp === 0, 0x26b /* "initial state" */);
             return;
         }
 
@@ -1625,7 +1625,7 @@ export class DeltaManager
             return;
         }
 
-        assert(this.handler !== undefined, "handler should be installed");
+        assert(this.handler !== undefined, 0x26c /* "handler should be installed" */);
 
         const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
         this.pending = [];
