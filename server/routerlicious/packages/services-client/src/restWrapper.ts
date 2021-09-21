@@ -11,8 +11,7 @@ import { debug } from "./debug";
 export abstract class RestWrapper {
     constructor(
         protected readonly baseurl?: string,
-        protected defaultQueryString: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null> = {},
+        protected defaultQueryString: querystring.ParsedUrlQueryInput = {},
         protected readonly maxBodyLength = 1000 * 1024 * 1024,
         protected readonly maxContentLength = 1000 * 1024 * 1024,
     ) {
@@ -20,10 +19,8 @@ export abstract class RestWrapper {
 
     public async get<T>(
         url: string,
-        queryString?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
-        headers?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
+        queryString?: querystring.ParsedUrlQueryInput,
+        headers?: querystring.ParsedUrlQueryInput,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -39,10 +36,8 @@ export abstract class RestWrapper {
     public async post<T>(
         url: string,
         requestBody: any,
-        queryString?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
-        headers?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
+        queryString?: querystring.ParsedUrlQueryInput,
+        headers?: querystring.ParsedUrlQueryInput,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -58,10 +53,8 @@ export abstract class RestWrapper {
 
     public async delete<T>(
         url: string,
-        queryString?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
-        headers?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
+        queryString?: querystring.ParsedUrlQueryInput,
+        headers?: querystring.ParsedUrlQueryInput,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -77,10 +70,8 @@ export abstract class RestWrapper {
     public async patch<T>(
         url: string,
         requestBody: any,
-        queryString?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
-        headers?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
+        queryString?: querystring.ParsedUrlQueryInput,
+        headers?: querystring.ParsedUrlQueryInput,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -96,8 +87,7 @@ export abstract class RestWrapper {
 
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 
-    protected generateQueryString(queryStringValues: Record<string, string | number | boolean |
-            readonly string[] | readonly number[] | readonly boolean[] | undefined | null>) {
+    protected generateQueryString(queryStringValues: querystring.ParsedUrlQueryInput) {
         if (this.defaultQueryString || queryStringValues) {
             const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
 
@@ -114,17 +104,13 @@ export abstract class RestWrapper {
 export class BasicRestWrapper extends RestWrapper {
     constructor(
         baseurl?: string,
-        defaultQueryString: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null> = {},
+        defaultQueryString: querystring.ParsedUrlQueryInput = {},
         maxBodyLength = 1000 * 1024 * 1024,
         maxContentLength = 1000 * 1024 * 1024,
-        private defaultHeaders: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null> = {},
+        private defaultHeaders: querystring.ParsedUrlQueryInput = {},
         private readonly axios: AxiosInstance = Axios,
-        private readonly refreshDefaultQueryString?: () => Record<string, string | number | boolean |
-            readonly string[] | readonly number[] | readonly boolean[] | undefined | null>,
-        private readonly refreshDefaultHeaders?: () => Record<string, string | number | boolean |
-            readonly string[] | readonly number[] | readonly boolean[] | undefined | null>,
+        private readonly refreshDefaultQueryString?: () => querystring.ParsedUrlQueryInput,
+        private readonly refreshDefaultHeaders?: () => querystring.ParsedUrlQueryInput,
         private readonly getCorrelationId?: () => string | undefined,
     ) {
         super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
@@ -171,11 +157,9 @@ export class BasicRestWrapper extends RestWrapper {
     }
 
     private generateHeaders(
-        headers?: Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null>,
+        headers?: querystring.ParsedUrlQueryInput,
         fallbackCorrelationId?: string,
-    ): Record<string, string | number | boolean | readonly string[] |
-            readonly number[] | readonly boolean[] | undefined | null> {
+    ): querystring.ParsedUrlQueryInput {
         let result = headers ?? {};
         if (this.defaultHeaders) {
             result = { ...this.defaultHeaders, ...headers };
