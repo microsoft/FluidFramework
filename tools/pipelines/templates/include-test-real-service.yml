@@ -26,152 +26,159 @@ parameters:
   type: object
   default:
 
+- name: splitTestVariants
+  type: object
+  default:
+  - ""
+
 jobs:
-  - job: run
-    displayName: Run Tests
-    pool: ${{ parameters.poolBuild }}
-    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
-    variables:
-    # We use 'chalk' to colorize output, which auto-detects color support in the
-    # running terminal.  The log output shown in Azure DevOps job runs only has
-    # basic ANSI color support though, so force that in the pipeline
-    - name: FORCE_COLOR
-      value: 1
-    - name: testPackageDir
-      value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
-    - name: testPackageFilePattern
-      value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
-    - name: testPackagePathPattern
-      value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
-    - name: skipComponentGovernanceDetection
-      value: true
-    - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-      - name: feed
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-    - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
-      - name: feed
-        value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+  - ${{ each variant in parameters.splitTestVariants }}:
+    - job:
+      displayName: Run ${{ variant }}
+      pool: ${{ parameters.poolBuild }}
+      timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
+      variables:
+      # We use 'chalk' to colorize output, which auto-detects color support in the
+      # running terminal.  The log output shown in Azure DevOps job runs only has
+      # basic ANSI color support though, so force that in the pipeline
+      - name: FORCE_COLOR
+        value: 1
+      - name: testPackageDir
+        value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
+      - name: testPackageFilePattern
+        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+      - name: testPackagePathPattern
+        value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
+      - name: skipComponentGovernanceDetection
+        value: true
+      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+        - name: feed
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
+        - name: feed
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
 
-    steps:
-    # Setup
-    - checkout: none
-      clean: true
+      steps:
+      # Setup
+      - checkout: none
+        clean: true
 
-    # Print parameters/Vars
-    - task: Bash@3
-      displayName: Print Parameters and Variables
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Show all task group conditions
+      # Print parameters/Vars
+      - task: Bash@3
+        displayName: Print Parameters and Variables
+        inputs:
+          targetType: 'inline'
+          script: |
+            # Show all task group conditions
 
-          echo "
-          Pipeline Parameters:
-            poolBuild=${{ parameters.poolBuild }}
-            testPackage=${{ parameters.testPackage }}
+            echo "
+            Pipeline Parameters:
+              poolBuild=${{ parameters.poolBuild }}
+              testPackage=${{ parameters.testPackage }}
 
-          Pipeline Variables:
-            testWorkspace=${{ parameters.testWorkspace }}
-            testPackageFilePattern=${{ variables.testPackageFilePattern }}
-            feed=${{ variables.feed }}
-            target=${{ parameters.target }}
-          "
+            Pipeline Variables:
+              testWorkspace=${{ parameters.testWorkspace }}
+              testPackageFilePattern=${{ variables.testPackageFilePattern }}
+              feed=${{ variables.feed }}
+              target=${{ parameters.target }}
+              variant=${{ variant }}
+            "
 
-    # Install
-    - task: UseNode@1
-      displayName: Use Node 12.x
-      inputs:
-        version: 12.x
+      # Install
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
 
-    # Download artifact
-    - task: DownloadPipelineArtifact@2
-      displayName: Download test package
-      inputs:
-        source: specific
-        project: internal
-        pipeline: Build - client packages
-        preferTriggeringPipeline: true
-        runVersion: latestFromBranch
-        runBranch: $(Build.SourceBranch)
-        artifact: pack
-        patterns: "**/${{ variables.testPackageFilePattern }}"
-        path: $(Pipeline.Workspace)/client/pack
+      # Download artifact
+      - task: DownloadPipelineArtifact@2
+        displayName: Download test package
+        inputs:
+          source: specific
+          project: internal
+          pipeline: Build - client packages
+          preferTriggeringPipeline: true
+          runVersion: latestFromBranch
+          runBranch: $(Build.SourceBranch)
+          artifact: pack
+          patterns: "**/${{ variables.testPackageFilePattern }}"
+          path: $(Pipeline.Workspace)/client/pack
 
-    - task: Bash@3
-      displayName: Create test directory
-      inputs:
-        targetType: 'inline'
-        script: |
-          mkdir ${{ parameters.testWorkspace }}
+      - task: Bash@3
+        displayName: Create test directory
+        inputs:
+          targetType: 'inline'
+          script: |
+            mkdir ${{ parameters.testWorkspace }}
 
-    - task: Bash@3
-      name: Initialize
-      displayName: Initialize
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.testWorkspace }}
-        script: |
-          echo Initialize package
-          npm init --yes
+      - task: Bash@3
+        name: Initialize
+        displayName: Initialize
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ parameters.testWorkspace }}
+          script: |
+            echo Initialize package
+            npm init --yes
 
-          echo Generating .npmrc
-          echo "registry=https://registry.npmjs.org" >> ./.npmrc
-          echo "always-auth=false" >> ./.npmrc
+            echo Generating .npmrc
+            echo "registry=https://registry.npmjs.org" >> ./.npmrc
+            echo "always-auth=false" >> ./.npmrc
 
-          echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-          echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
+            echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+            echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+            echo "always-auth=true" >> ./.npmrc
+            cat .npmrc
 
-          if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
-            echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
-          else
-            ls -1 ${{ variables.testPackagePathPattern }}
-            echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
-          fi
+            if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
+              echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
+            else
+              ls -1 ${{ variables.testPackagePathPattern }}
+              echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+            fi
 
-    # Auth to internal feed
-    - task: npmAuthenticate@0
-      displayName: 'npm authenticate (internal feed)'
-      inputs:
-        workingFile: ${{ parameters.testWorkspace }}/.npmrc
+      # Auth to internal feed
+      - task: npmAuthenticate@0
+        displayName: 'npm authenticate (internal feed)'
+        inputs:
+          workingFile: ${{ parameters.testWorkspace }}/.npmrc
 
-    # Auth to Office feed
-    - task: npmAuthenticate@0
-      displayName: 'npm authenticate (office feed)'
-      inputs:
-        workingFile: ${{ parameters.testWorkspace }}/.npmrc
-        customEndpoint: 'Office Packages - Readonly'
+      # Auth to Office feed
+      - task: npmAuthenticate@0
+        displayName: 'npm authenticate (office feed)'
+        inputs:
+          workingFile: ${{ parameters.testWorkspace }}/.npmrc
+          customEndpoint: 'Office Packages - Readonly'
 
-    # Install test and logger package
-    - task: Npm@1
-      displayName: 'npm install'
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.testWorkspace }}
-        customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
-        customRegistry: 'useNpmrc'
+      # Install test and logger package
+      - task: Npm@1
+        displayName: 'npm install'
+        inputs:
+          command: 'custom'
+          workingDir: ${{ parameters.testWorkspace }}
+          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
+          customRegistry: 'useNpmrc'
 
-    # run the test
-    - task: Npm@1
-      displayName: '[end-to-end tests] npm run test:realsvc:${{ parameters.target }}:report'
-      continueOnError: true
-      env:
-        ${{ parameters.env }}
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-        customCommand: 'run test:realsvc:${{ parameters.target }}:report'
+      # run the test
+      - task: Npm@1
+        displayName: '[end-to-end tests] npm run test:realsvc:${{ parameters.target }}:report ${{ variant }}'
+        continueOnError: true
+        env:
+          ${{ parameters.env }}
+        inputs:
+          command: 'custom'
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+          customCommand: 'run test:realsvc:${{ parameters.target }}:report -- ${{ variant }}'
 
-    # Upload results
-    - task: PublishTestResults@2
-      displayName: Publish Test Results
-      inputs:
-        testResultsFormat: 'JUnit'
-        testResultsFiles: '**/*junit-report.xml'
-        searchFolder: ${{ variables.testPackageDir }}/nyc
-        mergeTestResults: false
-      condition: succeededOrFailed()
+      # Upload results
+      - task: PublishTestResults@2
+        displayName: Publish Test Results
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*junit-report.xml'
+          searchFolder: ${{ variables.testPackageDir }}/nyc
+          mergeTestResults: false
+        condition: succeededOrFailed()
