@@ -48,7 +48,7 @@ const memberCombineInstructions = [
 exports.memberCombineInstructions = memberCombineInstructions;
 
 const packageRollupMap = new Map([
-    // fluid-framework re-exports all of fluid-static
+    // fluid-framework re-exports all the paired packages
     ["fluid-framework", [
         "@fluidframework/fluid-static",
         "@fluidframework/map",
