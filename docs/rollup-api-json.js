@@ -59,7 +59,12 @@ const extractMembers = (sourceFile, members) => {
     const sourceApiObj = JSON.parse(fs.readFileSync(sourceFile, { encoding: "utf8" }));
     // console.log(jsonStr.includes("@fluidframework/container-definitions"));
 
-    // ...then extract the imported members and return them.
+    // ... then check if all members should be extracted, and if so, return them all...
+    if(members.length === 1 && members[0] === "*") {
+        return sourceApiObj.members[0].members;
+    }
+
+    // ...otherwise extract the requested members and return them.
     return extractMembersFromApiObject(sourceApiObj, members);
 };
 
@@ -176,7 +181,7 @@ const start = () => {
     );
     copyfiles(
         [...stagedPackagePaths, stagingPath],
-        { verbose: true, up: true },
+        { verbose: false, up: true },
         (err) => {
             if (err) {
                 console.error(err);
@@ -188,9 +193,9 @@ const start = () => {
     combineMembers(originalPath, stagingPath, data.memberCombineInstructions);
 
     // Rollup packages.
-    for (const [package, sourcePackages] of data.packageRollupMap) {
-        rollupPackage(package, sourcePackages, stagingPath);
-    }
+    // for (const [package, sourcePackages] of data.packageRollupMap) {
+    //     rollupPackage(package, sourcePackages, stagingPath);
+    // }
 
     // Copy all processed files that should be published on the site to the output dir.
     const websitePackageSourcePaths = data.websitePackages.map(
@@ -198,13 +203,23 @@ const start = () => {
     );
     copyfiles(
         [...websitePackageSourcePaths, outputPath],
-        { verbose: false, up: true },
+        { verbose: true, up: true },
         (err) => {
             if (err) {
                 console.error(err);
                 process.exit(1);
             }
         });
+
+    for(const p of data.processOnlyPackages) {
+        console.log(fs.readdirSync(stagingPath));
+        const packagePath = path.join(stagingPath, `${packageName(p)}.api.json`);
+        console.log(`Removing ${packagePath}`)
+        fs.remove(packagePath, err => {
+            if (err) return console.error(err);
+            console.log("Success!");
+          });
+    }
 };
 
 start();

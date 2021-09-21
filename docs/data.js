@@ -34,28 +34,27 @@ const memberCombineInstructions = [
     {
         package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
-            ["@fluidframework/server-services-client", ["GenerateToken"]],
+            // ["@fluidframework/server-services-client", ["GenerateToken"]],
             ["@fluidframework/protocol-definitions", ["ScopeType"]],
         ])
     },
     {
         package: "@fluidframework/fluid-static",
         sourceImports: new Map([
-            ["@fluidframework/container-definitions", ["AttachState", "IAudience"]]
+            ["@fluidframework/container-definitions", ["IAudience"]],
+        ])
+    },
+    {
+        package: "fluid-framework",
+        sourceImports: new Map([
+            ["@fluidframework/container-definitions", ["AttachState"]],
+            ["@fluidframework/fluid-static", ["*"]],
+            ["@fluidframework/map", ["*"]],
+            ["@fluidframework/sequence", ["*"]],
         ])
     },
 ];
 exports.memberCombineInstructions = memberCombineInstructions;
-
-const packageRollupMap = new Map([
-    // fluid-framework re-exports all the paired packages
-    ["fluid-framework", [
-        "@fluidframework/fluid-static",
-        "@fluidframework/map",
-        "@fluidframework/sequence",
-    ]],
-]);
-exports.packageRollupMap = packageRollupMap;
 
 const websitePackages = [
     "fluid-framework",
@@ -75,15 +74,18 @@ for (const { package, sourceImports } of memberCombineInstructions) {
     allStagingPackages.add(package);
     addToSet(allStagingPackages, Array.from(sourceImports.keys()));
 }
-for (const [k, arr] of packageRollupMap) {
-    allStagingPackages.add(k);
-    addToSet(allStagingPackages, arr);
-}
+// for (const [k, arr] of packageRollupMap) {
+//     allStagingPackages.add(k);
+//     addToSet(allStagingPackages, arr);
+// }
 exports.allStagingPackages = Array.from(allStagingPackages);
 // const relevantPackagePaths = Array.from(relevantPackages).map(
 //     (p) => path.join(originalPath, `${packageName(p)}.api.json`)
 // );
 
+const processOnlyPackages = Array.from(difference(allStagingPackages, new Set(websitePackages)));
+exports.processOnlyPackages = processOnlyPackages;
+console.log(processOnlyPackages);
 // const processedPackages = new Set();
 // for (const { package, sourceImports } of memberCombineInstructions) {
 //     processedPackages.add(package);
