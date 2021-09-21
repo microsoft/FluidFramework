@@ -1,5 +1,13 @@
 # Change Log
 
+## 10.2.0
+
+* feat: Add StringInterner
+  * Associated pull request: [34341](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34341)
+  * Commit: [855088dad7105a0287e2812080f8595e363360fe](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/855088dad7105a0287e2812080f8595e363360fe)
+* merge: `releases/2021.09.3` into `master`
+  * Commit: [a37b1674de428bcb82ce7da10a48ec00ed79bc7e](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a37b1674de428bcb82ce7da10a48ec00ed79bc7e)
+
 ## 10.0.0
 
 * build: BREAKING CHANGE: update Fluid dependencies 0.42 -> 0.47
