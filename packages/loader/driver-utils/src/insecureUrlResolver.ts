@@ -40,13 +40,14 @@ export class InsecureUrlResolver implements IUrlResolver {
         private readonly isForNodeTest: boolean = false,
     ) { }
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl> {
-        if (request.headers?.[DriverHeader.createNew]) {
+    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+        const hasCreateHeader = request.headers?.[DriverHeader.createNew] !== undefined;
+        if (hasCreateHeader) {
             const [, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);
             const fileName = searchParams.get("fileName");
-            if (!fileName) {
+            if (fileName !== undefined) {
                 throw new Error("FileName should be there!!");
             }
             return this.resolveHelper(fileName, "");
@@ -65,7 +66,6 @@ export class InsecureUrlResolver implements IUrlResolver {
             return this.resolveHelper(documentId, documentRelativePath);
         } else {
             const maybeResolvedUrl = this.cache.get(request.url);
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             if (maybeResolvedUrl) {
                 return maybeResolvedUrl;
             }
@@ -117,7 +117,8 @@ export class InsecureUrlResolver implements IUrlResolver {
 
         const parsedUrl = parse(fluidResolvedUrl.url);
         const [, , documentId] = parsedUrl.pathname?.split("/");
-        assert(!!documentId, "Invalid document id from parsed URL");
+        const validDocumentId = documentId !== undefined;
+        assert(validDocumentId, "Invalid document id from parsed URL");
 
         let url = relativeUrl;
         if (url.startsWith("/")) {
