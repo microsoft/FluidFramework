@@ -74,8 +74,16 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         return summaryStats;
     }
 
-    beforeEach(async () => {
+    before(function() {
         provider = getTestObjectProvider();
+        // These tests validate the GC stats in summary by calling summarize directly on the container runtime.
+        // They do not post these summaries or download them. So, it doesn't need to run against real services.
+        if (provider.driver.type !== "local") {
+            this.skip();
+        }
+    });
+
+    beforeEach(async () => {
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = defaultDataStore.containerRuntime;
