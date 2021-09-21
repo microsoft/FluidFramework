@@ -129,7 +129,7 @@ describe("Routerlicious", () => {
                     const connectMessage: IConnect = {
                         client: undefined,
                         id,
-                        mode: "read",
+                        mode: "write",
                         tenantId,
                         token,
                         versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
@@ -240,7 +240,7 @@ describe("Routerlicious", () => {
                         // There is no ack for the disconnect, but the message will be ordered with future messages.
                         await connectToServer(testId, testTenantId, testSecret, webSocketServer.createConnection());
 
-                        assert.equal(deliKafka.getRawMessages().length, 2);
+                        assert.equal(deliKafka.getRawMessages().length, 3);
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;
