@@ -33,16 +33,7 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        testSteps:
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run test:realsvc:local:report'
-          continueOnError: true
-          env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-            customCommand: 'run test:realsvc:local:report'
+        target: local
 
   # end-to-end tests tinylicious
   - stage:
@@ -54,16 +45,7 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        testSteps:
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run test:realsvc:tinylicious:report'
-          continueOnError: true
-          env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-            customCommand: 'run test:realsvc:tinylicious:report'
+        target: tinylicious
 
   # end-to-end tests routerlicious
   - stage:
@@ -75,17 +57,9 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        testSteps:
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run test:realsvc:routerlicious:report'
-          continueOnError: true
-          env:
-            fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-            customCommand: 'run test:realsvc:routerlicious:report'
+        target: routerlicious
+        env:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
 
   # end-to-end tests frs
   - stage:
@@ -98,17 +72,9 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 360
-        testSteps:
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run test:realsvc:frs:report'
-          continueOnError: true
-          env:
-            fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-            customCommand: 'run test:realsvc:frs:report'
+        target: frs
+        env:
+          fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
 
   # end-to-end tests odsp
   - stage:
@@ -121,16 +87,8 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 360
-        testSteps:
-        - task: Npm@1
-          displayName: '[end-to-end tests] npm run test:realsvc:odsp:report'
-          continueOnError: true
-          env:
-            login__microsoft__clientId: $(login-microsoft-clientId)
-            login__microsoft__secret: $(login-microsoft-secret)
-            login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-            customCommand: 'run test:realsvc:odsp:report'
+        target: odsp
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)

@@ -22,6 +22,13 @@ parameters:
   type: number
   default: 60
 
+- name: target
+  type: string
+
+- name: env
+  type: object
+  default:
+
 jobs:
   - job: run
     displayName: Run Tests
@@ -151,7 +158,16 @@ jobs:
         customRegistry: 'useNpmrc'
 
     # run the test
-    - ${{ parameters.testSteps }}
+    - task: Npm@1
+      displayName: '[end-to-end tests] npm run test:realsvc:${{ parameter.target }}:report'
+      continueOnError: true
+      env:
+        ${{ parameters.env }}
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ parameters.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+      inputs:
+        command: 'custom'
+        workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
+        customCommand: 'run test:realsvc:${{ parameter.target }}:report'
 
     # Upload results
     - task: PublishTestResults@2
