@@ -489,7 +489,10 @@ export function requestOps(
                 assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
             }
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
-            assert(lastFetch - deltas[0].sequenceNumber + 1 === deltas.length, 0x26f /* "continuous and no duplicates" */);
+            assert(
+                lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
+                0x26f /* "continuous and no duplicates" */,
+            );
             length += deltas.length;
             queue.pushValue(deltas);
         });
