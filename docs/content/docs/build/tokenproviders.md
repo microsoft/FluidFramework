@@ -1,7 +1,7 @@
 ---
 title: "Tutorial: Writing a TokenProvider with an Azure Function"
 menuPosition: 3
-editor: tylerbutler
+editor: sdeshpande3
 ---
 
 The token provider is responsible for creating and signing tokens that the `@fluidframework/azure-client` uses to make
