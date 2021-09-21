@@ -257,7 +257,7 @@ export class GitManager implements IGitManager {
                         entryAsBlob.contents = this.translateSymlink(entryAsBlob.contents, depth);
                     }
 
-                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
+                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding as BufferEncoding);
                     entriesP.push(blobP);
                     break;
 
