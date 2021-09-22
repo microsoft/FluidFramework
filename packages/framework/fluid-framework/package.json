@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "0.48.0",
+  "version": "0.48.1",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -30,9 +30,9 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.39.8",
-    "@fluidframework/fluid-static": "^0.48.0",
-    "@fluidframework/map": "^0.48.0",
-    "@fluidframework/sequence": "^0.48.0"
+    "@fluidframework/fluid-static": "^0.48.1",
+    "@fluidframework/map": "^0.48.1",
+    "@fluidframework/sequence": "^0.48.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
