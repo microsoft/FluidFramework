@@ -125,7 +125,7 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @public (undocumented)
+// @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
     constructor(container: Container);
     // (undocumented)

@@ -69,6 +69,43 @@ export interface ContainerSchema {
  * Events that trigger when the roster of members in the Fluid session change.
  * Only changes that would be reflected in the returned map of IServiceAudience's getMembers method
  * will emit events.
+ *
+ * ### "membersChanged"
+ *
+ * The membersChanged event is emitted when a member is either added or removed.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "memberAdded"
+ *
+ * The memberAdded event is emitted when a member joins the audience.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (clientId: string, member: M) => void;
+ * ```
+ * - `clientId` - A unique identifier for the client
+ *
+ * - `member` - The service-specific member object for the client
+ *
+ * ### "memberRemoved"
+ *
+ * The memberRemoved event is emitted when a member leaves the audience.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (clientId: string, member: M) => void;
+ * ```
+ * - `clientId` - A unique identifier for the client
+ *
+ * - `member` - The service-specific member object for the client
+ * @typeParam M - A service-specific member type.
  */
 export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
     (event: "membersChanged", listener: () => void): void;
@@ -78,7 +115,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 /**
  * Base interface to be implemented to fetch each service's audience. The generic M allows consumers to further
  * extend the client object with service-specific details about the connecting client, such as device information,
- * environme
+ * environment, or a username.
  */
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
