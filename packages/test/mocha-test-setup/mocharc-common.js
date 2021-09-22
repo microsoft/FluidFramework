@@ -58,7 +58,6 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
             ];
         } else {
             config["reporter-options"] = [
-                // give the report file a unique name based on testReportPrefix
                 `output=${packageDir}/nyc/junit-report.xml`,
                 `suiteName=${packageJson.name}`
             ];
