@@ -109,7 +109,7 @@ export class BlobTreeEntry {
      * @param contents - blob contents
      * @param encoding - encoding of contents; defaults to utf-8
      */
-    constructor(public readonly path: string, contents: string, encoding: string = "utf-8") {
+    constructor(public readonly path: string, contents: string, encoding: BufferEncoding = "utf-8") {
         this.value = { contents, encoding };
     }
 }

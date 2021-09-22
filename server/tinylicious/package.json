@@ -29,9 +29,9 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/gitresources": "^0.1028.1",
+    "@fluidframework/gitresources": "^0.1031.0-38246",
     "@fluidframework/protocol-base": "^0.1028.1",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-38244",
     "@fluidframework/server-lambdas": "^0.1028.1",
     "@fluidframework/server-local-server": "^0.1028.1",
     "@fluidframework/server-memory-orderer": "^0.1028.1",
