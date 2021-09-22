@@ -48,6 +48,7 @@ const DefaultScribe: IScribe = {
         values: [],
     },
     sequenceNumber: 0,
+    lastSummarySequenceNumber: 0,
 };
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
