@@ -1,6 +1,6 @@
 # azure-local-service
 
-Azure Local service is a minimal, self-contained, test implementation of the Azure Fluid Relay service that can be run locally and used for development/testing Fluid functionality in conjunction with the `TinyliciousClient` and `AzureClient` in local mode.
+Azure Local service is a minimal, self-contained, test implementation of the Azure Fluid Relay service that can be run locally and used for development/testing Fluid functionality in conjunction with the `AzureClient` in local mode.
 
 ## What is this for?
 
