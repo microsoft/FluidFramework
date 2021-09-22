@@ -89,7 +89,15 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     hashedDocumentId: string;
     // (undocumented)
     odspResolvedUrl: true;
-    // (undocumented)
+    shareLinkInfo: {
+        createLink?: {
+            type?: string;
+            link?: string;
+            error?: any;
+        };
+        sharingLinkToRedeem?: string;
+    };
+    // @deprecated (undocumented)
     sharingLinkToRedeem?: string;
     // (undocumented)
     summarizer: boolean;

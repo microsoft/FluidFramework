@@ -66,7 +66,8 @@ export async function createNewFluidFile(
 
     let itemId: string;
     let summaryHandle: string = "";
-
+    let sharingLink: string = "";
+    let sharingLinkErrorReason: string = "";
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
     } else {
@@ -74,13 +75,22 @@ export async function createNewFluidFile(
             getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
         itemId = content.itemId;
         summaryHandle = content.id;
+        sharingLink = content.sharingLink || "";
+        sharingLinkErrorReason = content.sharingLinkErrorReason || "";
     }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
-    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
-    fileEntry.resolvedUrl = odspResolvedUrl;
+    if(sharingLink || sharingLinkErrorReason) {
+        odspResolvedUrl.shareLinkInfo = {
+            createLink: {
+                type: newFileInfo.createLinkType,
+                link: sharingLink,
+                error: sharingLinkErrorReason,
+            },
+        };
+    }
 
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
@@ -89,7 +99,6 @@ export async function createNewFluidFile(
         // caching the converted summary
         await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
-
     return odspResolvedUrl;
 }
 
@@ -158,7 +167,8 @@ export async function createNewFluidFileFromSummary(
         `${filePath}/${encodedFilename}`;
 
     const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${newFileInfo.createLinkType ?
+        `?createLinkType=${newFileInfo.createLinkType}` : ""}`;
 
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");

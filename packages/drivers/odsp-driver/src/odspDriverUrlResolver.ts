@@ -67,6 +67,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             const driveID = searchParams.get("driveId");
             const filePath = searchParams.get("path");
             const packageName = searchParams.get("containerPackageName");
+            const createLinkType = searchParams.get("createLinkType");
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
                 throw new Error("Proper new file params should be there!!");
             }
@@ -92,6 +93,11 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     containerPackageName: packageName ? packageName : undefined,
                 },
                 fileVersion: undefined,
+                shareLinkInfo: {
+                    createLink: {
+                        type: createLinkType || "",
+                    },
+                },
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
@@ -133,6 +139,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 containerPackageName,
             },
             fileVersion,
+            shareLinkInfo: {},
         };
     }
 

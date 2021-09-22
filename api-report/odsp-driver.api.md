@@ -25,8 +25,8 @@ import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 // @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
-// @public (undocumented)
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
+// @public
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: string): IRequest;
 
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;

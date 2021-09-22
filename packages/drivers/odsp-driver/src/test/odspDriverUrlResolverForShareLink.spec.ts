@@ -183,6 +183,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
                 { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
         assert(resolvedUrl.sharingLinkToRedeem !== undefined, "Sharing link should be set in resolved url");
+        assert.strictEqual(resolvedUrl.shareLinkInfo?.sharingLinkToRedeem, url.toString(), "Sharing link should be set in resolved url");
     });
 
     it("Encode and decode nav param", async () => {

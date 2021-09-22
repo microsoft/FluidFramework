@@ -146,6 +146,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             // when redeeming the share link during the redeem fallback for trees latest call becomes greater than
             // the eligible length.
             odspResolvedUrl.sharingLinkToRedeem = this.removeNavParam(request.url);
+            odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem = request.url;
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.

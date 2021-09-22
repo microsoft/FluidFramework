@@ -210,6 +210,12 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+    /**
+     * application can request creation of a share link along with the creation of a new file
+     * by passing in an optional param to specify the kind of sharing link
+     * (at the time of adding this comment 9/21/2021), odsp only supports csl
+     */
+    createLinkType?: string;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
