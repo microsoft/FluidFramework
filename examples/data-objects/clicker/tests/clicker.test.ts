@@ -4,19 +4,22 @@
  */
 
 import { globals } from "../jest.config";
+import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("clicker", () => {
-    const getValue = async (index: number) => {
-        return page.evaluate((i: number) => {
-            const clickerElements = document.getElementsByClassName("clicker-value-class");
-            const clicker = clickerElements[i] as HTMLDivElement;
-            if (clicker) {
-                return clicker.innerText;
-            }
+    const getValue = async (index: number, expectedValue: string) =>
+        retryWithEventualValue(
+            () => page.evaluate((i: number) => {
+                const clickerElements = document.getElementsByClassName("clicker-value-class");
+                const clicker = clickerElements[i] as HTMLDivElement;
+                if (clicker) {
+                    return clicker.innerText;
+                }
 
-            return "";
-        }, index);
-    };
+                return "";
+            }, index),
+            expectedValue,
+            "" /* defaultValue */);
 
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
@@ -35,9 +38,9 @@ describe("clicker", () => {
 
     it("Clicking the button updates both users", async () => {
         // Validate both users have 0 as their value
-        const preValue = await getValue(0);
+        const preValue = await getValue(0, "0");
         expect(preValue).toEqual("0");
-        const preValue2 = await getValue(1);
+        const preValue2 = await getValue(1, "0");
         expect(preValue2).toEqual("0");
 
         // Click the button
@@ -48,9 +51,9 @@ describe("clicker", () => {
         );
 
         // Validate both users have 1 as their value
-        const postValue = await getValue(0);
+        const postValue = await getValue(0, "1");
         expect(postValue).toEqual("1");
-        const postValue2 = await getValue(1);
+        const postValue2 = await getValue(1, "1");
         expect(postValue2).toEqual("1");
     });
 
@@ -59,9 +62,9 @@ describe("clicker", () => {
         await page.waitFor(() => window["fluidStarted"]);
 
         // Validate both users have 0 as their value
-        const preValue = await getValue(0);
+        const preValue = await getValue(0, "0");
         expect(preValue).toEqual("0");
-        const preValue2 = await getValue(1);
+        const preValue2 = await getValue(1, "0");
         expect(preValue2).toEqual("0");
 
         // Click the button
@@ -72,9 +75,9 @@ describe("clicker", () => {
         );
 
         // Validate both users have 1 as their value
-        const postValue = await getValue(0);
+        const postValue = await getValue(0, "1");
         expect(postValue).toEqual("1");
-        const postValue2 = await getValue(1);
+        const postValue2 = await getValue(1, "1");
         expect(postValue2).toEqual("1");
     });
 });
