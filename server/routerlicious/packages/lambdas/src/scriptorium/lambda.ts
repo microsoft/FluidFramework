@@ -13,6 +13,7 @@ import {
     SequencedOperationType,
     runWithRetry,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class ScriptoriumLambda implements IPartitionLambda {
     private pending = new Map<string, ISequencedOperationMessage[]>();
@@ -106,6 +107,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
             3 /* maxRetries */,
             1000 /* retryAfterMs */,
             this.context.log,
+            Lumberjack,
             (error) => error.code === 11000 /* shouldIgnoreError */);
     }
 }

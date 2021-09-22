@@ -4,6 +4,7 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILogger } from "./lambdas";
 
 export async function runWithRetry<T>(
@@ -12,6 +13,7 @@ export async function runWithRetry<T>(
     maxRetries: number,
     retryAfterMs: number,
     logger?: ILogger,
+    lumberjack?: typeof Lumberjack,
     shouldIgnoreError?: (error) => boolean,
     shouldRetry?: (error) => boolean,
 ): Promise<T | undefined> {
@@ -26,14 +28,17 @@ export async function runWithRetry<T>(
             logger?.info(`Error running ${callName}: retryCount ${retryCount}, error ${error}`);
             if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
                 logger?.info(`Should ignore error for ${callName}`);
+                Lumberjack?.info(`Should ignore error for ${callName}`);
                 break;
             } else if (shouldRetry !== undefined && shouldRetry(error) === false)
             {
                 logger?.info(`Should not retry ${callName}`);
+                Lumberjack?.info(`Should not retry ${callName}`);
                 return Promise.reject(error);
             }
             if (retryCount >= maxRetries) {
                 logger?.info(`Error after retrying ${retryCount} times, rejecting`);
+                Lumberjack?.info(`Error after retrying ${retryCount} times, rejecting`);
                 // Needs to be a full rejection here
                 return Promise.reject(error);
             }
