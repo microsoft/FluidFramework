@@ -13,7 +13,6 @@ import {
     ISequencedOperationMessage,
     runWithRetry,
 } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
 
 /**
@@ -56,7 +55,6 @@ export class CheckpointManager implements ICheckpointManager {
                 3 /* maxRetries */,
                 1000 /* retryAfterMs */,
                 this.context.log,
-                Lumberjack,
                 (error) => error.code === 11000 /* shouldIgnoreError */);
         }
 
