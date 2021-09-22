@@ -52,7 +52,7 @@ menu:
     weight: -600
 
   # this menu supplements one generated in the apiNav partial
-  section:
+  docs:
   - identifier: "start"
     name: "Getting started"
     weight: -800
