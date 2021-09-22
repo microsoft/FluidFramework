@@ -18,7 +18,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public (undocumented)
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -98,13 +98,13 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
-// @public (undocumented)
+// @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-// @public (undocumented)
+// @public
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public (undocumented)

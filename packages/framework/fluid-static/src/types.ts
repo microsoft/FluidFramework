@@ -8,8 +8,15 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
+/**
+ * A mapping of string identifiers to instantiated DataObjects or SharedObjects.
+ */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
+/**
+ * A mapping of string identifiers to classes that will later be used to instantiate a corresponding DataObject
+ * or SharedObject in a LoadableObjectRecord.
+ */
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 /**
@@ -36,6 +43,11 @@ export type SharedObjectClass<T extends IFluidLoadable>
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
+/**
+ * The ContainerSchema declares the Fluid objects that will be available in the container.  It includes both the
+ * instances of objects that are initially available upon container creation, as well as the types of objects that may
+ * be dynamically created throughout the lifetime of the container.
+ */
 export interface ContainerSchema {
     /**
      * initialObjects defines loadable objects that will be created when the Container
