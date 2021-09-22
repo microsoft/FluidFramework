@@ -72,7 +72,7 @@ describeFullCompat("GC unreferenced flag in downloaded snapshot", (getTestObject
      * Update the summary context to include the summary proposal and ack handle as per the latest ack for the
      * document.
      */
-     function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext): ISummaryContext {
+    function uploadSummaryCb(summaryTree: ISummaryTree, context: ISummaryContext): ISummaryContext {
         latestUploadedSummary = summaryTree;
         latestSummaryContext = context;
         const newSummaryContext = { ...context };

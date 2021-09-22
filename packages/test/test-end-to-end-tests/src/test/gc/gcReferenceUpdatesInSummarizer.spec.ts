@@ -115,7 +115,7 @@ describeFullCompat("GC reference updates in summarizer", (getTestObjectProvider)
      * @returns the version of this summary. This version can be used to load a Container with the summary associated
      * with it.
      */
-     async function waitForSummary(): Promise<string> {
+    async function waitForSummary(): Promise<string> {
         await provider.ensureSynchronized();
         const ackedSummary: IAckedSummary =
             await summaryCollection.waitSummaryAck(mainContainer.deltaManager.lastSequenceNumber);
