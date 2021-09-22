@@ -9,6 +9,7 @@ export * from "./loaderContainerTracker";
 export * from "./localLoader";
 export * from "./localCodeLoader";
 export * from "./opProcessingController";
+export * from "./retry";
 export * from "./testContainerRuntimeFactory";
 export * from "./testFluidObject";
 export * from "./timeoutUtils";

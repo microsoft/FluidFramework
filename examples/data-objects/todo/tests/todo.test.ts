@@ -4,8 +4,28 @@
  */
 
 import { globals } from "../jest.config";
+import { retry } from "@fluidframework/test-utils";
 
 describe("ToDo", () => {
+    const getItemUrl = async (index: number) =>
+        retry(async () => {
+            const val = await page.evaluate((i: number) => {
+                const subComponentButton = document.getElementsByName("OpenSubComponent");
+                const button = subComponentButton[i] as HTMLDivElement;
+                if (button) {
+                    return button.id;
+                }
+
+                return "";
+            }, index);
+
+            if (val.length === 0) {
+                throw Error("Not ready");
+            }
+
+            return val;
+        }, "" /* defaultValue */);
+
     beforeAll(async () => {
         // Wait for the page to load first before running any tests
         // so this time isn't attributed to the first test
@@ -83,18 +103,6 @@ describe("ToDo", () => {
         await expect(page).toFill("input[name=itemName]", "ToDoItem2");
         await expect(page).toClick("button[name=createItem]");
 
-        const getItemUrl = async (index: number) => {
-            return page.evaluate((i: number) => {
-                const subComponentButton = document.getElementsByName("OpenSubComponent");
-                const button = subComponentButton[0] as HTMLDivElement;
-                if (button) {
-                    return button.id;
-                }
-
-                return "";
-            }, index);
-        };
-
         const itemUrl = await getItemUrl(0);
         await page.goto(itemUrl, { waitUntil: "load" });
         await page.waitFor(() => window["fluidStarted"]);
@@ -115,18 +123,6 @@ describe("ToDo", () => {
         // Expand subitems and add another todo item
         await expect(page).toClick("button[name=toggleInnerVisible]");
         await expect(page).toClick("button", { text: "todo" });
-
-        const getItemUrl = async (index: number) => {
-            return page.evaluate((i: number) => {
-                const subComponentButton = document.getElementsByName("OpenSubComponent");
-                const button = subComponentButton[1] as HTMLDivElement;
-                if (button) {
-                    return button.id;
-                }
-
-                return "";
-            }, index);
-        };
 
         const itemUrl = await getItemUrl(0);
         await page.goto(itemUrl, { waitUntil: "load" });
