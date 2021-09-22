@@ -26,16 +26,20 @@ export interface ITokenResponse {
  */
 export interface ITokenProvider {
     /**
-     * Fetches the orderer token from host
-     * @param refresh - Optional flag indicating whether token fetch must bypass local cache
+     * Fetches the orderer token from host.
+     * @param tenantId - Tenant ID.
+     * @param documentId - Optional. Document ID is only required for document-scoped requests.
+     * @param refresh - Optional flag indicating whether token fetch must bypass local cache.
      * @returns TokenResponse object representing token value along with flag indicating
      * whether token came from cache.
      */
-    fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
 
     /**
-     * Fetches the storage token from host
-     * @param refresh - Optional flag indicating whether token fetch must bypass local cache
+     * Fetches the storage token from host.
+     * @param tenantId - Tenant ID.
+     * @param documentId - Document ID.
+     * @param refresh - Optional flag indicating whether token fetch must bypass local cache.
      * @returns TokenResponse object representing token value along with flag indicating
      * whether token came from cache.
      */

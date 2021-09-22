@@ -484,12 +484,13 @@ export function requestOps(
         (deltas: ISequencedDocumentMessage[]) => {
             // Assert continuing and right start.
             if (lastFetch === undefined) {
-                assert(deltas[0].sequenceNumber === fromTotal, "wrong start");
+                assert(deltas[0].sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
             } else {
-                assert(deltas[0].sequenceNumber === lastFetch + 1, "wrong start");
+                assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
             }
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
-            assert(lastFetch - deltas[0].sequenceNumber + 1 === deltas.length, "continuous and no duplicates");
+            assert(lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
+                0x26f /* "continuous and no duplicates" */);
             length += deltas.length;
             queue.pushValue(deltas);
         });
@@ -518,7 +519,7 @@ export function requestOps(
                 telemetryEvent.cancel({ ...props, error: "ops request cancelled by client" });
             } else {
                 assert(toTotal === undefined || lastFetch !== undefined && lastFetch >= toTotal - 1,
-                    "All requested ops fetched");
+                    0x270 /* "All requested ops fetched" */);
                 telemetryEvent.end(props);
             }
             queue.pushDone();

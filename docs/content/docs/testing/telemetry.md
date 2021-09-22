@@ -18,9 +18,7 @@ be implemented and passed into the service client's constructor via the `props` 
 All Fluid service clients (for example, `AzureClient` and `TinyliciousClient`) allow passing a `logger?: ITelemetryBaseLogger`
 into the service client props. Both `createContainer()` and `getContainer()` methods will then create an instance of the `logger`.
 
-`TinyliciousClientProps`
-interface definition takes an optional parameter `logger`. (The definition is similar to
-`AzureClientProps` interface)
+`TinyliciousClientProps` interface definition takes an optional parameter `logger`.
 
 ```ts
 const loader = new Loader({
@@ -239,20 +237,20 @@ This custom logger should be provided in the service client constructor. Fluid w
 async function start(): Promise<void> {
   // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
   // and hook to the Telemetry system
-  const azureConfig = {
-      connection: connectionProps,
-      logger: new ConsoleLogger(),
-  };
-  const client = new AzureClient(azureConfig);
+  const client = new TinyliciousClient({logger: new ConsoleLogger()});
   let container: FluidContainer;
-  let services: AzureContainerServices;
+  let services: TinyliciousContainerServices;
 
   // Get or create the document depending if we are running through the create new flow
   const createNew = !location.hash;
   if (createNew) {
       // The client will create a new detached container using the schema
       // A detached container will enable the app to modify the container before attaching it to the client
-      {container, services} = await client.createContainer(containerSchema);
+      ({container, services} = await client.createContainer(containerSchema));
+
+      // Assign the returned ID to the URL hash for subsequent load flow
+      const id = await container.attach();
+      location.hash = id;
   }
 ```
 
