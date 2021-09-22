@@ -144,22 +144,33 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
 }
 
 /**
- * Base interface for information for each connection made to the Fluid session, which will be
- * different even if it is by the same user, i.e. the connection's id will be uniquely generated for each time the user
- * connects This interface can be extended to provide additional information specific to each service.
+ * Base interface for information for each connection made to the Fluid session.  This interface can be extended
+ * to provide additional information specific to each service.
  */
 export interface IConnection {
+    /**
+     * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
+     */
     id: string;
+
+    /**
+     * Whether the connection is in read or read/write mode.
+     */
     mode: "write" | "read";
 }
 
 /**
- * Base interface to be implemented to fetch each service's member. The user ID is unique for each individual
- * user that is connecting to the session. However, one user may have multiple connections from different tabs,
- * devices, etc. and the information for each is provided within the connections array. This interface can be
- * extended by each service to provide additional service-specific user metadata.
+ * Base interface to be implemented to fetch each service's member.  This interface can be extended by each service
+ * to provide additional service-specific user metadata.
  */
 export interface IMember {
+    /**
+     * An ID for the user, unique among each individual user connecting to the session.
+     */
     userId: string;
+
+    /**
+     * The set of connections the user has made, e.g. from multiple tabs or devices.
+     */
     connections: IConnection[];
 }

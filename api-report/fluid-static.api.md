@@ -50,9 +50,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
 // @public
 export interface IConnection {
-    // (undocumented)
     id: string;
-    // (undocumented)
     mode: "write" | "read";
 }
 
@@ -75,9 +73,7 @@ export interface IFluidContainerEvents extends IEvent {
 
 // @public
 export interface IMember {
-    // (undocumented)
     connections: IConnection[];
-    // (undocumented)
     userId: string;
 }
 
