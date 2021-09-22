@@ -21,25 +21,29 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
 
 /**
  * A LoadableObjectClass is an class object of DataObject or SharedObject
+ * @typeParam T - The class of the DataObject or SharedObject
  */
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
 /**
  * A DataObjectClass is a class that has a factory that can create a DataObject and a
  * constructor that will return the type of the DataObject.
+ * @typeParam T - The class of the DataObject
  */
 export type DataObjectClass<T extends IFluidLoadable>
-    = { readonly factory: IFluidDataStoreFactory }  & LoadableObjectCtor<T>;
+    = { readonly factory: IFluidDataStoreFactory } & LoadableObjectCtor<T>;
 
 /**
  * A SharedObjectClass is a class that has a factory that can create a DDS (SharedObject) and a
  * constructor that will return the type of the DataObject.
+ * @typeParam T - The class of the SharedObject
  */
 export type SharedObjectClass<T extends IFluidLoadable>
     = { readonly getFactory: () => IChannelFactory } & LoadableObjectCtor<T>;
 
 /**
  * An object with a constructor that will return an `IFluidLoadable`.
+ * @typeParam T - The class of the loadable object
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
@@ -128,6 +132,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * Base interface to be implemented to fetch each service's audience. The generic M allows consumers to further
  * extend the client object with service-specific details about the connecting client, such as device information,
  * environment, or a username.
+ * @typeParam M - A service-specific member type.
  */
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
