@@ -83,7 +83,7 @@ menu:
     url: "/docs/glossary/"
     weight: -90
   - identifier: "changelogs"
-    name: "What's new 📰"
+    name: "What's new"
     weight: -80
 
 markup:
