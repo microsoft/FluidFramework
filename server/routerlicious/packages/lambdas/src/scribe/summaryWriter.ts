@@ -104,22 +104,6 @@ export class SummaryWriter implements ISummaryWriter {
             };
         }
 
-        // We also validate that the parent summary is valid
-        try {
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            await Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary)));
-        } catch (e) {
-            return {
-                message: {
-                    errorMessage: "One or more parent summaries are invalid.",
-                    summaryProposal: {
-                        summarySequenceNumber: op.sequenceNumber,
-                    },
-                },
-                status: false,
-            };
-        }
-
         // We should not accept this summary if it is less than current protocol sequence number
         if (op.referenceSequenceNumber < checkpoint.protocolState.sequenceNumber) {
             return {
