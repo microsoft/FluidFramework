@@ -205,10 +205,7 @@ export class OpProcessingController {
     }
 
 // @public
-export function retry<T>(callback: () => Promise<T>, defaultValue: T, maxTries?: number, currentTry?: number, backoffMs?: number): Promise<T>;
-
-// @public
-export const retryWithEventualValue: <T>(callback: () => Promise<T>, expectedValue: T, defaultValue: T, maxTries?: number, backoffMs?: number) => Promise<T>;
+export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @public (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;

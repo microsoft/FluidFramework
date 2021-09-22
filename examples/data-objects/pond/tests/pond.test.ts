@@ -35,7 +35,7 @@ describe("pond", () => {
 
                     return "";
                 }, index, classId),
-                expectedValue,
+                (actualValue) => actualValue === expectedValue,
                 "" /* defaultValue */);
 
         // Validate both users have 5 as their value

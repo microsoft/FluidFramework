@@ -4,12 +4,12 @@
  */
 
 import { globals } from "../jest.config";
-import { retry } from "@fluidframework/test-utils";
+import { retryWithEventualValue } from "@fluidframework/test-utils";
 
 describe("ToDo", () => {
     const getItemUrl = async (index: number) =>
-        retry(async () => {
-            const val = await page.evaluate((i: number) => {
+        retryWithEventualValue(
+            () => page.evaluate((i: number) => {
                 const subComponentButton = document.getElementsByName("OpenSubComponent");
                 const button = subComponentButton[i] as HTMLDivElement;
                 if (button) {
@@ -17,14 +17,9 @@ describe("ToDo", () => {
                 }
 
                 return "";
-            }, index);
-
-            if (val.length === 0) {
-                throw Error("Not ready");
-            }
-
-            return val;
-        }, "" /* defaultValue */);
+            }, index),
+            (actualValue) => actualValue,
+            "" /* defaultValue */);
 
     beforeAll(async () => {
         // Wait for the page to load first before running any tests

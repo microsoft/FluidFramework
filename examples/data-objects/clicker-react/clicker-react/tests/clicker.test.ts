@@ -18,7 +18,7 @@ describe("clicker", () => {
 
                 return "";
             }, index),
-            expectedValue,
+            (actualValue) => actualValue === expectedValue,
             "" /* defaultValue */);
 
     beforeAll(async () => {

@@ -5,55 +5,44 @@
 
 import { delay } from "@fluidframework/common-utils";
 
-/**
- * Simple retry function with linear backoff.
- * It does not track/report errors and when attempts are exhausted
- * it will return a preconfigured value.
- *
- * @param callback - the function to execute
- * @param maxTries - maximum number of attempts
- * @param currentTry - current attempt number
- * @param backoffMs - backoff in milliseconds
- * @returns the result of the callback's promise or the default value
- */
-export async function retry<T>(
+async function retry<T>(
     callback: () => Promise<T>,
     defaultValue: T,
     maxTries = 20,
     currentTry = 0,
-    backoffMs = 50,
+    backOffMs = 50,
 ): Promise<T> {
     if (currentTry >= maxTries) {
         return Promise.resolve(defaultValue);
     }
 
-    await delay(currentTry * backoffMs);
+    await delay(currentTry * backOffMs);
     return callback()
-        .catch(async (e) => retry(callback, defaultValue, maxTries, currentTry + 1, backoffMs));
+        .catch(async (e) => retry(callback, defaultValue, maxTries, currentTry + 1, backOffMs));
 }
 
 /**
- * Simple retry mechanism with liniar backoff to call
- * a function which may eventually return an expected value.
+ * Simple retry mechanism with linear back off to call
+ * a function which may eventually return an accepted value.
  *
  * @param callback - the function to execute
- * @param expectedValue - the expected value
+ * @param check - the function to check if the value is acceptable
  * @param defaultValue - the default value
  * @param maxTries - maximum number of attempts
- * @param backoffMs - backoff in milliseconds
- * @returns the expected value when sucessfull or the default value otherwise
+ * @param backOffMs - back off between attempts in milliseconds
+ * @returns the actual value from the callback when successful or the default value otherwise
  */
 export const retryWithEventualValue = async <T>(
     callback: () => Promise<T>,
-    expectedValue: T,
+    check: (value: T) => boolean,
     defaultValue: T,
     maxTries = 20,
-    backoffMs = 50,
+    backOffMs = 50,
 ): Promise<T> => retry(async () => {
     const value = await callback();
-    if (value !== expectedValue) {
-        throw Error("Not ready");
+    if (check(value)) {
+        return value;
     }
 
-    return expectedValue;
-}, defaultValue, maxTries, 0, backoffMs);
+    throw Error("Not ready");
+}, defaultValue, maxTries, 0, backOffMs);

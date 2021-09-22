@@ -19,7 +19,7 @@ describe("collaborativetext", () => {
 
                 return "-----undefined-----";
             }, index),
-            expectedValue,
+            (actualValue) => actualValue === expectedValue,
             "" /* defaultValue */);
 
     const setText = async (index: number, text: string) => {
