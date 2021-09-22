@@ -174,14 +174,9 @@ export function configureWebSocketServices(
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
-        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+        function isWriter(scopes: string[], mode: ConnectionMode): boolean {
             if (hasWriteAccess(scopes)) {
-                // New document needs a writer to boot.
-                if (!existing) {
-                    return true;
-                } else {
-                    return mode === "write";
-                }
+                return mode === "write";
             } else {
                 return false;
             }
@@ -280,19 +275,11 @@ export function configureWebSocketServices(
                 });
             }
 
-            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId)
-                .catch(async (err) => {
-                    const errMsg = `Failed to get or create document. Error: ${safeStringify(err, undefined, 2)}`;
-                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-                });
-
-            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId)
+            const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
                 .catch(async (err) => {
                     const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
                     return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                 });
-
-            const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
@@ -320,14 +307,14 @@ export function configureWebSocketServices(
             }
 
             let connectedMessage: IConnected;
-            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
+            if (isWriter(messageClient.scopes, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
                     .catch(async (err) => {
                         const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details)
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient)
                     .catch(async (err) => {
                         const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
@@ -360,7 +347,7 @@ export function configureWebSocketServices(
                 connectedMessage = {
                     claims,
                     clientId,
-                    existing: details.existing,
+                    existing: true,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
                     serviceConfiguration: {
@@ -378,7 +365,7 @@ export function configureWebSocketServices(
                 connectedMessage = {
                     claims,
                     clientId,
-                    existing: details.existing,
+                    existing: true,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
                     serviceConfiguration: {
