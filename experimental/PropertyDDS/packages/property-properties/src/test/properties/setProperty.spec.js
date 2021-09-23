@@ -7,20 +7,19 @@
  * @fileoverview In this file, we will test the set property
  *    object described in /src/properties/setProperty.js
  */
+const _ = require('lodash');
+const { PropertyFactory } = require('../..');
+const { BaseProperty } = require('../..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset')
+const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
 
 describe('SetProperty', function () {
-    var PropertyFactory, BaseProperty, ChangeSet, generateGuid, PATH_TOKENS;
+    var PATH_TOKENS;
     var changeSetWithTwoChildren, _, changeSetWithTwoChildren_full, removalChangeSet;
     var myNode, childNode1, childNode2, children;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('../..').PropertyFactory;
-        BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        _ = require('lodash');
-        generateGuid = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
-        PATH_TOKENS = require('../..').BaseProperty.PATH_TOKENS;
+        PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
         // Register a template with a set property for the tests
         var TestPropertyTemplate = {
@@ -54,12 +53,12 @@ describe('SetProperty', function () {
 
     // Inserts a new node in the root
     var insertNodeInRoot = function (root) {
-        insertNodeInRootWithGuid(generateGuid(), root);
+        insertNodeInRootWithGuid(generateGUID(), root);
     };
 
     // Returns a function that will insert a node with a constant GUID
     var insertUniqueNodeInRoot = function () {
-        return insertNodeInRootWithGuid.bind(undefined, generateGuid());
+        return insertNodeInRootWithGuid.bind(undefined, generateGUID());
     };
 
     // Inserts a new node as leaf

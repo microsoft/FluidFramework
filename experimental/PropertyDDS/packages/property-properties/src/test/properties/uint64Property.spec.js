@@ -8,17 +8,11 @@
  *    described in /src/shared/property_sets/properties/int_property.js
  */
 
-var PropertyFactory, Uint64, MSG;
+const { PropertyFactory } = require('../..');
+const { Uint64 } = require('@fluid-experimental/property-common').Datastructures;
+const { MSG } = require('@fluid-experimental/property-common').constants;
 
 describe('Test Uint64Property', function () {
-    /**
-     * Get all the objects we need in this test here.
-     */
-    before(function () {
-        PropertyFactory = require('../..').PropertyFactory;
-        Uint64 = require('@fluid-experimental/property-common').Uint64;
-        MSG = require('@fluid-experimental/property-common').constants.MSG
-    });
 
     it('should correctly setValue when passed a number', function () {
         const prop = PropertyFactory.create('Uint64');

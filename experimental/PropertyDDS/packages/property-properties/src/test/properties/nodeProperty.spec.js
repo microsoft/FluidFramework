@@ -8,24 +8,20 @@
  * @fileoverview In this file, we will test the NodeProperty
  *    object described in properties/nodeProperty.js
  */
+const { PropertyFactory } = require('../..');
+const { BaseProperty } = require('../..');
+const { NodeProperty } = require('../../properties/nodeProperty');
+const { MapProperty } = require('../../properties/mapProperty');
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const _ = require('lodash');
+const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
+const { MSG } = require('@fluid-experimental/property-common').constants;
 
 describe('NodeProperty', function () {
-    var PropertyFactory, BaseProperty, MapProperty, NodeProperty, ChangeSet, generateGuid;
     var changeSetWithTwoMapEntries, _, changeSetWithTwoMapEntries_full, removalChangeSet;
     var myNode, mapNode1, mapNode2, myNode;
-    var MSG;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('../..').PropertyFactory;
-        BaseProperty = require('../..').BaseProperty;
-        NodeProperty = require('../../properties/nodeProperty');
-        MapProperty = require('../../properties/mapProperty');
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        _ = require('lodash');
-        generateGuid = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
-        MSG = require('@fluid-experimental/property-common').constants.MSG
-
         // Register a template with a set property for the tests
         var MixedNodePropertyTemplate = {
             typeid: 'autodesk.tests:MixedNodeTestProperty-1.0.0',
@@ -151,7 +147,7 @@ describe('NodeProperty', function () {
     // Returns a functor that will insert a node with a constant GUID
     var insertUniqueNodeInRoot = function () {
         var key = 'node' + keyCounter++;
-        return insertNodeInRootWithKeyAndGuid.bind(undefined, key, generateGuid());
+        return insertNodeInRootWithKeyAndGuid.bind(undefined, key, generateGUID());
     };
 
     // Inserts a new node as leaf
