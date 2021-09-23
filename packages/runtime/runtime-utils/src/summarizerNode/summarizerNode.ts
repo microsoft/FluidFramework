@@ -240,7 +240,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     /**
      * Refreshes the latest summary tracked by this node. If we have a pending summary for the given proposal handle,
-     * it becomes the latest summary. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
+     * it becomes the latest summary. If the current summary is already ahead (e.g., loaded from a service summary),
+     * we skip the update. Otherwise, we get the snapshot by calling `getSnapshot` and update latest
      * summary based off of that.
      * @returns A RefreshSummaryResult type which returns information based on the following three scenarios:
      *          1. The latest summary was not udpated.
@@ -250,7 +251,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
-        summaryRefSeq: number | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
@@ -265,17 +266,12 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         // If we have seen a summary same or later as the current one, ignore it.
-        if (summaryRefSeq !== undefined && this.referenceSequenceNumber >= summaryRefSeq) {
+        if (this.referenceSequenceNumber >= summaryRefSeq) {
             return { latestSummaryUpdated: false };
         }
 
         const snapshotTree = await getSnapshot();
         const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-
-        // If we have seen a summary same or later as the downloaded one, ignore it.
-        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
-            return { latestSummaryUpdated: false };
-        }
 
         await this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,

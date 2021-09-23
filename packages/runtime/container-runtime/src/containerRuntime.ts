@@ -2194,8 +2194,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
-        summaryRefSeq: number | undefined,
         ackHandle: string,
+        summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);

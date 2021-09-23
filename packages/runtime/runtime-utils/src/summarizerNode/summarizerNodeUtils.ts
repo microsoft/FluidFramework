@@ -44,7 +44,7 @@ export interface ISummarizerNodeRootContract {
     clearSummary(): void;
     refreshLatestSummary(
         proposalHandle: string | undefined,
-        summaryRefSeq: number | undefined,
+        summaryRefSeq: number,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
