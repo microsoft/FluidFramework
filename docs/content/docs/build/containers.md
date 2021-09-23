@@ -30,7 +30,6 @@ This example schema defines two initial objects, `layout` and `text`, and declar
 
 ```typescript
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -44,7 +43,7 @@ const schema = {
 Containers are created from the service-specific client's `createContainer` function. Your code must provide a configuration that is specific to the service and a schema object that defines the container schema. About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
@@ -150,7 +149,6 @@ These shared objects are exposed via the `initialObjects` property on the contai
 
 ```typescript {linenos=inline}
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -190,12 +188,6 @@ First, if your application loads two different experiences that have different u
 A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
-{{% callout tip %}}
-
-Use the `name` property on the container to help manage multiple containers.
-
-{{% /callout %}}
-
 ## Container services
 
 When you load a container, the Fluid service will also return a service-specific *services* object. This object contains
@@ -214,6 +206,8 @@ references to useful services you can use to build richer apps. An example of a 
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}

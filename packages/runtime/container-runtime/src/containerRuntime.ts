@@ -216,6 +216,12 @@ export interface IGCRuntimeOptions {
     runFullGC?: boolean;
 
     /**
+     * Flag that if true, will run sweep which may delete unused objects that meet certain criteria. Only takes
+     * effect if GC is enabled.
+     */
+    runSweep?: boolean;
+
+    /**
      * Allows additional GC options to be passed.
      */
     [key: string]: any;
@@ -277,6 +283,8 @@ interface IRuntimeMessageMetadata {
 const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
+// Local storage key to turn GC sweep on / off.
+const runSweepKey = "FluidRunSweep";
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
 
@@ -780,6 +788,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private latestSummaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
+    // This is the source of truth for whether GC sweep phase should run or not.
+    private readonly shouldRunSweep: boolean;
     /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
@@ -836,13 +846,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
 
-        // Can override with localStorage flag.
+        // Whether GC should run or not. Can override with localStorage flag.
         this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // Must not be disabled by runtime option.
             && !this.runtimeOptions.gcOptions.disableGC
         );
+
+        // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
+        // localStorage flag.
+        this.shouldRunSweep = this.shouldRunGC &&
+            (getLocalStorageFeatureGate(runSweepKey) ?? this.runtimeOptions.gcOptions.runSweep === true);
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -873,6 +888,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
                 // If GC is disabled, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.shouldRunGC,
+                // The max duration for which objects can be unreferenced before they are eligible for deletion.
+                maxUnreferencedDurationMs: this.runtimeOptions.gcOptions.maxUnreferencedDurationMs,
             },
         );
 
@@ -1734,6 +1751,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean,
         /** True to generate full GC data; defaults to false */
         fullGC?: boolean,
+        /** True to run GC sweep phase after the mark phase; defaults to false */
+        runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
@@ -1838,6 +1857,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     trackState: true,
                     runGC: this.shouldRunGC,
                     fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
+                    runSweep: this.shouldRunSweep,
                 });
             } catch (error) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };

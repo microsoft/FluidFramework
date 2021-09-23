@@ -15,7 +15,6 @@ import {
 } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 import { DiceRollerController } from "./controller";
-import { ConsoleLogger } from "./ConsoleLogger";
 import { makeAppView } from "./view";
 
 export interface ICustomUserDetails {
@@ -42,7 +41,7 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionProps: AzureConnectionConfig = useAzure ? {
+const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "",
     tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",
@@ -78,11 +77,10 @@ async function initializeNewContainer(container: IFluidContainer): Promise<void>
 async function start(): Promise<void> {
     // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
     // and hook to the Telemetry system
-    const azureConfig = {
-        connection: connectionProps,
-        logger: new ConsoleLogger(),
+    const clientProps = {
+        connection: connectionConfig,
     };
-    const client = new AzureClient(azureConfig);
+    const client = new AzureClient(clientProps);
     let container: IFluidContainer;
     let services: AzureContainerServices;
     let id: string;
