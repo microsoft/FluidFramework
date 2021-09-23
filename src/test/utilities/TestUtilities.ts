@@ -234,6 +234,8 @@ export interface LocalServerSharedTreeTestingComponents<TSharedTree = SharedTree
 	testObjectProvider: TestObjectProvider;
 	/** The SharedTree created and set up. */
 	tree: TSharedTree;
+	/** The container created and set up. */
+	container: Container;
 }
 
 /** Options used to customize setUpLocalServerTestSharedTree */
@@ -348,7 +350,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 		setTestTree(tree, initialTree, setupEditId);
 	}
 
-	return { tree, testObjectProvider: provider };
+	return { container, tree, testObjectProvider: provider };
 }
 
 /** Sets testTrait to contain `node`. */

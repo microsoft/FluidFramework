@@ -719,15 +719,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			return;
 		}
 
-		this.editLog.addSequencedEdit(edit, message);
-		if (!wasLocalEdit) {
-			const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
-				editId,
-				local: false,
-				tree: this,
-			};
-			this.emit(SharedTreeEvent.EditCommitted, eventArguments);
-		} else {
+		if (wasLocalEdit) {
+			this.editLog.addSequencedEdit(edit, message);
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
 			const lastPair = this.editLog.getLastEditChunk();
 			if (lastPair !== undefined) {
@@ -743,6 +736,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 						.catch((error) => {});
 				}
 			}
+		} else {
+			this.applyEditLocally(edit, { local: false, message });
 		}
 	}
 
@@ -753,6 +748,30 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * @internal
 	 */
 	public processLocalEdit(edit: Edit<TChange>): void {
+		this.submitEditOp(edit);
+		this.applyEditLocally(edit, { local: true });
+	}
+
+	private applyEditLocally(
+		edit: Edit<TChange>,
+		editInformation: { local: true; message?: never } | { local: false; message: ISequencedDocumentMessage }
+	): void {
+		const { local } = editInformation;
+		if (local) {
+			this.editLog.addLocalEdit(edit);
+		} else {
+			this.editLog.addSequencedEdit(edit, editInformation.message);
+		}
+
+		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
+			editId: edit.id,
+			local,
+			tree: this,
+		};
+		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
+	}
+
+	private submitEditOp(edit: Edit<TChange>): void {
 		const editOp: SharedTreeEditOp<TChange> = {
 			type: SharedTreeOpType.Edit,
 			edit,
@@ -765,21 +784,39 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 		// TODO:44711: what should be passed in when unattached?
 		this.submitLocalMessage(semiSerialized);
-		this.editLog.addLocalEdit(edit);
-
-		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
-			editId: edit.id,
-			local: true,
-			tree: this,
-		};
-		this.emit(SharedTreeEvent.EditCommitted, eventArguments);
 	}
 
 	public getRuntime(): IFluidDataStoreRuntime {
 		return this.runtime;
 	}
 
-	protected applyStashedOp() {
-		throw new Error('not implemented');
+	/**
+	 * "Pending local state" refers to ops submitted to the runtime that have not yet been acked.
+	 * When closing a container, hosts have the option to stash this pending local state somewhere to be reapplied
+	 * later (to avoid data loss).
+	 * If a host then loads a container using that stashed state, this function is called for each stashed op, and is expected to:
+	 * 1. Update this DDS to reflect that state locally.
+	 * 2. Return any `localOpMetadata` that would have been associated with this op.
+	 *
+	 * @param content - op to apply locally.
+	 */
+	protected applyStashedOp(content: any): void {
+		// Note: parameter is typed as "any" as in the base class to avoid exposing SharedTreeOp.
+		const op = content as SharedTreeOp;
+		switch (op.type) {
+			case SharedTreeOpType.Edit: {
+				const { edit } = op as SharedTreeEditOp<TChange>;
+				this.applyEditLocally(edit, { local: true });
+				break;
+			}
+			// Handle ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
+			case SharedTreeOpType.Handle:
+			case SharedTreeOpType.NoOp:
+				break;
+			default: {
+				const _: never = op.type;
+				break;
+			}
+		}
 	}
 }

@@ -269,8 +269,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (view: RevisionView) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
-    // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: any): void;
     // (undocumented)
     get currentView(): RevisionView;
     // (undocumented)

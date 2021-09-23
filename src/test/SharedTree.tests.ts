@@ -8,9 +8,11 @@ import { setUpTestSharedTree, setUpLocalServerTestSharedTree } from './utilities
 import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
 import { runSummaryFormatCompatibilityTests } from './utilities/SummaryFormatCompatibilityTests';
 import { runSummarySizeTests } from './utilities/SummarySizeTests';
+import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests';
 
 describe('SharedTree', () => {
 	runSharedTreeOperationsTests<SharedTree>('Operations', setUpTestSharedTree);
 	runSummaryFormatCompatibilityTests<SharedTree>('Summary', setUpTestSharedTree, setUpLocalServerTestSharedTree);
 	runSummarySizeTests<SharedTree>('Summary size', setUpLocalServerTestSharedTree);
+	runPendingLocalStateTests<SharedTree>('Pending local state', setUpTestSharedTree, setUpLocalServerTestSharedTree);
 });
