@@ -7,6 +7,7 @@ import {
     AzureClient,
     AzureConnectionConfig,
     AzureContainerServices,
+    LOCAL_MODE_TENANT_ID,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
@@ -47,7 +48,7 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
     orderer: "",
     storage: "",
 } : {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
