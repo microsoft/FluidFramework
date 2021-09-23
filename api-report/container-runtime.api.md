@@ -708,6 +708,8 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
+    // (undocumented)
+    addOpListener(listener: () => void): void;
     createWatcher(clientId: string): IClientSummaryWatcher;
     // (undocumented)
     emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean;
@@ -715,6 +717,8 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     get latestAck(): IAckedSummary | undefined;
     // (undocumented)
     get opsSinceLastAck(): number;
+    // (undocumented)
+    removeOpListener(listener: () => void): void;
     // (undocumented)
     removeWatcher(clientId: string): void;
     // (undocumented)

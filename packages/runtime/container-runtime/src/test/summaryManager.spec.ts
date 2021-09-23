@@ -33,7 +33,15 @@ describe("Summary Manager", () => {
     let summaryManager: SummaryManager;
 
     // Fake objects
-    const summaryCollection = { opsSinceLastAck: 0 };
+    let fakeOpListener;
+    const summaryCollection = {
+        opsSinceLastAck: 0,
+        addOpListener: (listener) => { fakeOpListener = listener; },
+        removeOpListener: (listener) => {
+            assert.strictEqual(fakeOpListener, listener, "Re-init of fakeOpListener?");
+            fakeOpListener = undefined;
+        },
+    };
     const throttler = {
         delayMs: 0,
         numAttempts: 0,
@@ -288,10 +296,10 @@ describe("Summary Manager", () => {
         // client was selected to be a summarizer in the past, then got disconnected and later
         // again was elected a summarizer and at that moment we had enough ops to cut short wait.
         // If we want to cut short such wait, we should do it properly by listening for incoming ops
-        // and cut wait short based on op count when an a single op triggers overflow, i.e.
-        // make it work in main scenario, not a some corner case that does not matter.
+        // and cut wait short based on op count when a single op triggers overflow, i.e.
+        // make it work in main scenario, not some corner case that does not matter.
         // Issue #7273 tracks making appropriate product and test change and re-enable the test.
-        it.skip("Should bypass initial delay if enough ops pass later", async () => {
+        it("Should bypass initial delay if enough ops pass later", async () => {
             summaryCollection.opsSinceLastAck = 500; // 500 < 1000, so do not bypass yet
             createSummaryManager({
                 initialDelayMs: 2000,
@@ -305,10 +313,12 @@ describe("Summary Manager", () => {
             await flushPromises();
             assertRequests(0, "should not have requested summarizer yet");
             summaryCollection.opsSinceLastAck = 999; // 999 < 1000, still do not bypass
+            fakeOpListener(); // Fire a fake "op" event
             clientElection.electClient(thisClientId); // force trigger refresh
             await flushPromises();
             assertRequests(0, "still should not have requested summarizer yet");
             summaryCollection.opsSinceLastAck = 1000; // 1000 >= 1000, so should bypass now
+            fakeOpListener();  // Fire a fake "op" event
             clientElection.electClient(thisClientId); // force trigger refresh
             await flushPromises();
             assertRequests(1, "should request summarizer, bypassing initial delay");
