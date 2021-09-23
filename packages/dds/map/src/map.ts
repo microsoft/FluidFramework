@@ -112,7 +112,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * ```typescript
      * const myMap = SharedMap.create(this.runtime, id);
      * ```
-     *
      */
     public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
         return runtime.createChannel(id, MapFactory.Type) as SharedMap;
