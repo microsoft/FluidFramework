@@ -1,10 +1,10 @@
 ---
 title: "What's new"
 draft: false
-area: changelogs
-tocTitle: "in this update"
+area: updates
+tocTitle: "In this update"
 cascade:
-    area: changelogs
+    area: updates
     draft: false
     tocTitle: "In this update"
 ---
