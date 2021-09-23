@@ -5,9 +5,9 @@
 /**
  * @namespace property-properties
  */
-const Property = require('./properties/lazyLoadedProperties');
-const AbstractStaticCollectionProperty = require('./properties/abstractStaticCollectionProperty')
-const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
+const Property = require('./propertyFactory');
+const { AbstractStaticCollectionProperty } = require('./properties/abstractStaticCollectionProperty')
+const { PathHelper } = require('@fluid-experimental/property-changeset');
 
 
 var MSG = {
@@ -16,42 +16,45 @@ var MSG = {
 
 /**
  * Dummy property used to return the scope to the underlying properties
- * @param {object} in_params BaseProperty parameters
- * @param {string} in_params.scope The scope to keep track of
- * @constructor
  */
-var ScopeProperty = function (in_params) {
-    // HACK: Normally, we would inherit from NodeProperty however, NodeProperty seems to not be available
-    // at this point. There may be a bug with MR.
-    AbstractStaticCollectionProperty.call(this, in_params);
-    this._scope = in_params.scope;
-};
+class ScopeProperty extends AbstractStaticCollectionProperty {
+    /**
+     * @param {object} in_params BaseProperty parameters
+     * @param {string} in_params.scope The scope to keep track of
+     * @constructor
+     */
+    constructor(in_params) {
+        // HACK: Normally, we would inherit from NodeProperty however, NodeProperty seems to not be available
+        // at this point. There may be a bug with MR.
+        super(in_params);
+        this._scope = in_params.scope;
+    };
 
-ScopeProperty.prototype = Object.create(AbstractStaticCollectionProperty.prototype);
 
-/**
- * @override
- */
-ScopeProperty.prototype._getScope = function () {
-    return this._scope;
-};
+    /**
+     * @override
+     */
+    _getScope() {
+        return this._scope;
+    };
 
-/**
- * Remove a child property
- * This is an internal function, called internally by NodeProperty. Removing children dynamically by the user is
- * only allowed in the NodeProperty.
- *
- * @param {String} in_id - the id of the property to remove
- * @protected
- */
-ScopeProperty.prototype._remove = function (in_id) {
-    if (this._staticChildren[in_id] !== undefined) {
-        this._staticChildren[in_id]._setParent(undefined);
-        delete this._staticChildren[in_id];
-    } else {
-        throw new Error(MSG.REMOVING_NON_EXISTING_ID + in_id);
-    }
-};
+    /**
+     * Remove a child property
+     * This is an internal function, called internally by NodeProperty. Removing children dynamically by the user is
+     * only allowed in the NodeProperty.
+     *
+     * @param {String} in_id - the id of the property to remove
+     * @protected
+     */
+    _remove(in_id) {
+        if (this._staticChildren[in_id] !== undefined) {
+            this._staticChildren[in_id]._setParent(undefined);
+            delete this._staticChildren[in_id];
+        } else {
+            throw new Error(MSG.REMOVING_NON_EXISTING_ID + in_id);
+        }
+    };
+}
 
 /**
  * Serialize the input document.
@@ -60,7 +63,7 @@ ScopeProperty.prototype._remove = function (in_id) {
  * @return {{}} JSON data of the document
  * @alias property-properties.serialize
  */
-var serialize = function (in_psets, in_dirtyOnly) {
+export function serialize(in_psets, in_dirtyOnly) {
 
     in_dirtyOnly = in_dirtyOnly || false;
 
@@ -89,7 +92,7 @@ var serialize = function (in_psets, in_dirtyOnly) {
  * @return {{}} an object of guid : pset
  * @alias property-properties.deserialize
  */
-var deserialize = function (in_data, in_scope, in_filteringOptions) {
+export function deserialize(in_data, in_scope, in_filteringOptions) {
 
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);
@@ -165,7 +168,7 @@ var deserialize = function (in_data, in_scope, in_filteringOptions) {
  * @return {array<BaseProperty>} an array of psets
  * @alias property-properties.deserializeNonPrimitiveArrayElements
  */
-var deserializeNonPrimitiveArrayElements = function (in_data, in_scope) {
+export function deserializeNonPrimitiveArrayElements(in_data, in_scope) {
 
     if (!in_data) {
         console.warn(MSG.NOTHING_TO_DESERIALIZE);
@@ -197,8 +200,3 @@ var deserializeNonPrimitiveArrayElements = function (in_data, in_scope) {
     return insertedPropertyInstances;
 };
 
-module.exports = {
-    serialize,
-    deserialize,
-    deserializeNonPrimitiveArrayElements
-};
