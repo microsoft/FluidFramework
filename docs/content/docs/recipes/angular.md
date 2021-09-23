@@ -150,14 +150,6 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     return container.initialObjects.sharedTimestamp as SharedMap;
     ```
 
-### Get the Fluid data on application startup
-
-Now that we've defined how to get our Fluid data, we need to tell Angular to call `getFluidData` when the application starts up and then store the result in component properties. So add the following code to the `ngOnInit` function we defined previously.
-
-```js
-this.sharedTimestamp = await this.getFluidData();
-```
-
 ### Keep the Fluid Data synchronized
 
 To ensure that both local and remote changes to the timestamp are reflected in the UI, we will use the `localTimestamp` component property to store the local timestamp value and ensure that it is updated whenever any client changes the `fluidSharedObjects` value.
@@ -197,12 +189,14 @@ To ensure that both local and remote changes to the timestamp are reflected in t
     // Delete handler registration when the Angular App component is dismounted.
     this.sharedTimestamp!.off('valueChanged', this.updateLocalTimestamp!);
    ```
+### Get the Fluid data on application startup
 
-1. To ensure that this function is called after getting the initial Fluid Data, add the following line to the `ngOnInit` function:
-    ```js
-        this.syncData();
-    ```
+Now that we've defined how to get and synchronize our Fluid data, we need to tell Angular to call `getFluidData` and `syncData` when the application starts up and then store the result in component properties. So add the following code to the `ngOnInit` function we defined previously.
 
+```js
+this.sharedTimestamp = await this.getFluidData();
+this.syncData();
+```
 ### Update the Fluid Data
 
 1.  In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
