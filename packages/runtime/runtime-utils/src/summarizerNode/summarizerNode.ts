@@ -250,6 +250,7 @@ export class SummarizerNode implements IRootSummarizerNode {
      */
     public async refreshLatestSummary(
         proposalHandle: string | undefined,
+        summaryRefSeq: number | undefined,
         getSnapshot: () => Promise<ISnapshotTree>,
         readAndParseBlob: ReadAndParseBlob,
         correlatedSummaryLogger: ITelemetryLogger,
@@ -263,14 +264,13 @@ export class SummarizerNode implements IRootSummarizerNode {
             }
         }
 
-        const snapshotTree = await getSnapshot();
-        const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-
         // If we have seen a summary same or later as the downloaded one, ignore it.
-        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+        if (summaryRefSeq !== undefined && this.referenceSequenceNumber >= summaryRefSeq) {
             return { latestSummaryUpdated: false };
         }
 
+        const snapshotTree = await getSnapshot();
+        const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
         await this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,

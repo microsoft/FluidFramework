@@ -56,6 +56,7 @@ export interface ISummarizerInternalsProvider {
     /** Callback whenever a new SummaryAck is received, to update internal tracking state */
     refreshLatestSummaryAck(
         proposalHandle: string,
+        summaryRefSeq: number,
         ackHandle: string,
         summaryLogger: ITelemetryLogger,
     ): Promise<void>;

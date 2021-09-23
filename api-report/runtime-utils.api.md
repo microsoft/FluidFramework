@@ -128,7 +128,7 @@ export interface ISummarizerNodeRootContract {
     // (undocumented)
     completeSummary(proposalHandle: string): void;
     // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
+    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number | undefined, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
     // (undocumented)
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 }

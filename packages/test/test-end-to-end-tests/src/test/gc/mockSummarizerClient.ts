@@ -92,6 +92,7 @@ export async function submitAndAckSummary(
     // client in these tests that takes care of this.
     await summarizerClient.containerRuntime.refreshLatestSummaryAck(
         ackedSummary.summaryOp.contents.handle,
+        ackedSummary.summaryOp.referenceSequenceNumber,
         ackedSummary.summaryAck.contents.handle,
         logger,
     );

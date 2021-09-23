@@ -331,6 +331,7 @@ describe("Runtime", () => {
                     createRoot();
                     const result = await rootNode.refreshLatestSummary(
                         undefined,
+                        undefined,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -344,6 +345,7 @@ describe("Runtime", () => {
                     createRoot();
                     const result = await rootNode.refreshLatestSummary(
                         "test-handle",
+                        undefined,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -356,6 +358,7 @@ describe("Runtime", () => {
                 it("Should not refresh latest if already passed ref seq number", async () => {
                     createRoot({ refSeq: 123 });
                     const result = await rootNode.refreshLatestSummary(
+                        undefined,
                         undefined,
                         getSnapshot,
                         readAndParseBlob,
@@ -374,6 +377,7 @@ describe("Runtime", () => {
 
                     const result = await rootNode.refreshLatestSummary(
                         proposalHandle,
+                        undefined,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
