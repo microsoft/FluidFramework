@@ -11,7 +11,7 @@
 
 var lazyLoadedProperties = {
     PropertyFactory: undefined,
-    ContainerProperty: undefined,
+    AbstractStaticCollectionProperty: undefined,
     ArrayProperty: undefined,
     EnumArrayProperty: undefined,
     ReferenceProperty: undefined,
