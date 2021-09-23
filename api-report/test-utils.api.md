@@ -33,6 +33,7 @@ import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definiti
 import { IProvideRuntimeFactory } from '@fluidframework/container-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -169,6 +170,7 @@ export interface ITestObjectProvider {
     opProcessingController: IOpProcessingController;
     // (undocumented)
     reset(): void;
+    updateDocumentId(url: IResolvedUrl | undefined): void;
     // (undocumented)
     urlResolver: IUrlResolver;
 }
@@ -285,6 +287,8 @@ export class TestObjectProvider {
     get opProcessingController(): IOpProcessingController;
     // (undocumented)
     reset(): void;
+    // (undocumented)
+    updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     // (undocumented)
     get urlResolver(): IUrlResolver;
     }

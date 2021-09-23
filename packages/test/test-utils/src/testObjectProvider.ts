@@ -8,10 +8,11 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { Container, IDetachedBlobStorage, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
@@ -49,6 +50,11 @@ export interface ITestObjectProvider {
     makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader,
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
     loadTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>,
+    /**
+     * Extract the document ID from the resolved container's URL and reset the ID property
+     * @param url - Resolved container URL
+     */
+    updateDocumentId(url: IResolvedUrl | undefined): void,
 
     logger: ITelemetryBaseLogger,
     documentServiceFactory: IDocumentServiceFactory,
@@ -199,6 +205,9 @@ export class TestObjectProvider {
             loader,
             this.driver.createCreateNewRequest(this.documentId),
         );
+        // r11s driver will generate a new ID for the new container.
+        // update the document ID with the actual ID of the attached container.
+        this.updateDocumentId(container.resolvedUrl);
         return container;
     }
 
@@ -234,6 +243,9 @@ export class TestObjectProvider {
                 defaultCodeDetails,
                 loader,
                 this.driver.createCreateNewRequest(this.documentId));
+        // r11s driver will generate a new ID for the new container.
+        // update the document ID with the actual ID of the attached container.
+        this.updateDocumentId(container.resolvedUrl);
         return container;
     }
 
@@ -259,5 +271,10 @@ export class TestObjectProvider {
 
     public async ensureSynchronized() {
         return this._loaderContainerTracker.ensureSynchronized();
+    }
+
+    updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
+        ensureFluidResolvedUrl(resolvedUrl);
+        this._documentId = resolvedUrl.id ?? this._documentId;
     }
 }
