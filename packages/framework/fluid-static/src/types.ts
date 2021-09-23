@@ -8,34 +8,50 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
+/**
+ * A mapping of string identifiers to instantiated DataObjects or SharedObjects.
+ */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
+/**
+ * A mapping of string identifiers to classes that will later be used to instantiate a corresponding DataObject
+ * or SharedObject in a LoadableObjectRecord.
+ */
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 /**
  * A LoadableObjectClass is an class object of DataObject or SharedObject
+ * @typeParam T - The class of the DataObject or SharedObject
  */
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
 /**
  * A DataObjectClass is a class that has a factory that can create a DataObject and a
  * constructor that will return the type of the DataObject.
+ * @typeParam T - The class of the DataObject
  */
 export type DataObjectClass<T extends IFluidLoadable>
-    = { readonly factory: IFluidDataStoreFactory }  & LoadableObjectCtor<T>;
+    = { readonly factory: IFluidDataStoreFactory } & LoadableObjectCtor<T>;
 
 /**
  * A SharedObjectClass is a class that has a factory that can create a DDS (SharedObject) and a
  * constructor that will return the type of the DataObject.
+ * @typeParam T - The class of the SharedObject
  */
 export type SharedObjectClass<T extends IFluidLoadable>
     = { readonly getFactory: () => IChannelFactory } & LoadableObjectCtor<T>;
 
 /**
  * An object with a constructor that will return an `IFluidLoadable`.
+ * @typeParam T - The class of the loadable object
  */
 export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) => T;
 
+/**
+ * The ContainerSchema declares the Fluid objects that will be available in the container.  It includes both the
+ * instances of objects that are initially available upon container creation, as well as the types of objects that may
+ * be dynamically created throughout the lifetime of the container.
+ */
 export interface ContainerSchema {
     /**
      * initialObjects defines loadable objects that will be created when the Container
@@ -116,6 +132,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
  * Base interface to be implemented to fetch each service's audience. The generic M allows consumers to further
  * extend the client object with service-specific details about the connecting client, such as device information,
  * environment, or a username.
+ * @typeParam M - A service-specific member type.
  */
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     /**
@@ -132,22 +149,33 @@ export interface IServiceAudience<M extends IMember> extends IEventProvider<ISer
 }
 
 /**
- * Base interface for information for each connection made to the Fluid session, which will be
- * different even if it is by the same user, i.e. the connection's id will be uniquely generated for each time the user
- * connects This interface can be extended to provide additional information specific to each service.
+ * Base interface for information for each connection made to the Fluid session.  This interface can be extended
+ * to provide additional information specific to each service.
  */
 export interface IConnection {
+    /**
+     * A unique ID for the connection.  A single user may have multiple connections, each with a different ID.
+     */
     id: string;
+
+    /**
+     * Whether the connection is in read or read/write mode.
+     */
     mode: "write" | "read";
 }
 
 /**
- * Base interface to be implemented to fetch each service's member. The user ID is unique for each individual
- * user that is connecting to the session. However, one user may have multiple connections from different tabs,
- * devices, etc. and the information for each is provided within the connections array. This interface can be
- * extended by each service to provide additional service-specific user metadata.
+ * Base interface to be implemented to fetch each service's member.  This interface can be extended by each service
+ * to provide additional service-specific user metadata.
  */
 export interface IMember {
+    /**
+     * An ID for the user, unique among each individual user connecting to the session.
+     */
     userId: string;
+
+    /**
+     * The set of connections the user has made, e.g. from multiple tabs or devices.
+     */
     connections: IConnection[];
 }
