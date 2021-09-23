@@ -1573,15 +1573,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     };
 
     /**
-     * @deprecated - // back-compat: marked deprecated in 0.35
-     * Returns true of document is dirty, i.e. there are some pending local changes that
-     * either were not sent out to delta stream or were not yet acknowledged.
-     */
-    public isDocumentDirty(): boolean {
-        return this.dirtyContainer;
-    }
-
-    /**
      * Returns true of container is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
@@ -1999,9 +1990,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.dirtyContainer = dirty;
         if (this.emitDirtyDocumentEvent) {
-            // back-compat: dirtyDocument & savedDocument deprecated in 0.35.
-            this.emit(dirty ? "dirtyDocument" : "savedDocument");
-
             this.emit(dirty ? "dirty" : "saved");
             // back-compat: Loader API added in 0.35 only
             if (this.context.updateDirtyContainerState !== undefined) {
