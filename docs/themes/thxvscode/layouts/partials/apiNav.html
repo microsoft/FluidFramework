@@ -29,7 +29,7 @@
                 aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
         </li>
 
-        {{- range .Site.Menus.section }}
+        {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
             {{ $isCurrentArea := (eq $menuArea $area) }}
 
