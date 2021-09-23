@@ -454,12 +454,10 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
 
             await provider.ensureSynchronized();
 
-            if (intervals1[Symbol.iterator]) {
-                for (interval of intervals1) {
-                    assert(false, "intervals1 should be empty after emptying invervals2");
-                }
+            for (interval of intervals1) {
+                assert(false, "intervals1 should be empty after emptying invervals2");
             }
-        });
+    });
 
         it("Conflicting ops", async () => {
             const stringId = "stringKey";
@@ -541,8 +539,6 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
             }
 
-            if (typeof(intervals1.change) === "function" &&
-                typeof(intervals2.change) === "function") {
                 // Conflicting changes
                 intervals1.change(id1, 1, 2);
                 intervals2.change(id1, 2, 1);
@@ -596,10 +592,7 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 interval2 = intervals2.getIntervalById(id1);
                 assert.strictEqual(interval2.start.getOffset(), 2, "Conflicting transparent change");
                 assert.strictEqual(interval2.end.getOffset(), 2, "Conflicting transparent change");
-            }
 
-            if (typeof(intervals1.changeProperties) === "function" &&
-                typeof(intervals2.changeProperties) === "function") {
                 const assertPropertyChangedArg = (p: any, v: any, m: string) => {
                     // Check expected values of args passed to the propertyChanged event only if IntervalCollection
                     // is a TypedEventEmitter. (This is not true of earlier versions,
@@ -667,7 +660,6 @@ describeFullCompat("SharedInterval", (getTestObjectProvider) => {
                 assert.strictEqual(Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"), false,
                     "Property not deleted 2");
                 assert.strictEqual(interval2.properties.prop2, "prop2", "Mismatch in changed properties 10");
-            }
 
             // Conflicting removes
             intervals1.removeIntervalById(id1);
