@@ -23,7 +23,7 @@ In the example below we will walk through both connecting to a a live Azure Flui
 To run the local Azure Fluid Relay service with the default values of `localhost:7070`, enter the following command into a terminal window:
 
 ```sh
-npx @fluidframework/azure-local-service
+npx @fluidframework/azure-local-service@latest
 ```
 
 Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our local Azure Fluid Relay service instance is running at.
