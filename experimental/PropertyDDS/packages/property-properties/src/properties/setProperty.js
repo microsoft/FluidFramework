@@ -2,13 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the set property class
  */
 const BaseProperty = require('./baseProperty');
-const ContainerProperty = require('./containerProperty');
-const NamedProperty = require('./namedProperty');
-const NamedNodeProperty = require('./namedNodeProperty');
+const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const IndexedCollectionBaseProperty = require('./indexedCollectionBaseProperty');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const _ = require('lodash');
@@ -36,7 +35,7 @@ var SetProperty = function (in_params, in_scope) {
     this._scope = in_scope;
 
     /** Contains the actual entries of the set, indexed by their GUID */
-    this._entries = {};
+    this._dynamicChildren = {};
 };
 
 SetProperty.prototype = Object.create(IndexedCollectionBaseProperty.prototype);
@@ -117,9 +116,9 @@ SetProperty.prototype._getPathSegmentForChildNode = function (in_childNode) {
 SetProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType) {
     // Base Properties only support paths separated via dots
     if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-        return this._entries[in_segment];
+        return this._dynamicChildren[in_segment];
     } else {
-        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 };
 
@@ -132,8 +131,7 @@ SetProperty.prototype._resolvePathSegment = function (in_segment, in_segmentType
  * @throws if a property already exists with the same guid as in_property
  */
 SetProperty.prototype.insert = function (in_property) {
-    if (in_property instanceof NamedProperty ||
-        in_property instanceof NamedNodeProperty) {
+    if (in_property instanceof AbstractStaticCollectionProperty && in_property.has('guid')) {
         var guid = in_property.getGuid();
         this._insert(guid, in_property, true);
     } else {
@@ -151,7 +149,7 @@ SetProperty.prototype.insert = function (in_property) {
 SetProperty.prototype.set = function (in_property) {
     this._checkIsNotReadOnly(true);
 
-    if (in_property instanceof NamedProperty || in_property instanceof NamedNodeProperty) {
+    if (in_property instanceof AbstractStaticCollectionProperty && in_property.has('guid')) {
         var guid = in_property.getGuid();
         if (this.has(guid)) {
             this.remove(guid);
@@ -191,7 +189,7 @@ SetProperty.prototype.remove = function (in_entry) {
  * @return {Object<String, property-properties.NamedProperty>} The map with all entries in the set.
  */
 SetProperty.prototype.getEntriesReadOnly = function () {
-    return this._entries;
+    return this._dynamicChildren;
 };
 
 /**
@@ -200,7 +198,7 @@ SetProperty.prototype.getEntriesReadOnly = function () {
  * @return {Array.<string>} An array of all the property ids
  */
 SetProperty.prototype.getIds = function () {
-    return Object.keys(this._entries);
+    return Object.keys(this._dynamicChildren);
 };
 
 /**
@@ -220,7 +218,7 @@ SetProperty.prototype.getIds = function () {
 SetProperty.prototype.get = function (in_ids, in_options) {
     if (_.isArray(in_ids)) {
         // Forward handling of arrays to the BaseProperty function
-        return ContainerProperty.prototype.get.call(this, in_ids, in_options);
+        return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
     } else {
         var prop = this;
         in_options = in_options || {};
@@ -234,7 +232,7 @@ SetProperty.prototype.get = function (in_ids, in_options) {
         } else if (in_ids === PATH_TOKENS.REF) {
             throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
         } else {
-            prop = prop._entries[in_ids];
+            prop = prop._dynamicChildren[in_ids];
         }
 
         return prop;
@@ -248,7 +246,7 @@ SetProperty.prototype.get = function (in_ids, in_options) {
  * @return {boolean} True if the property exists, otherwise false.
  */
 SetProperty.prototype.has = function (in_id) {
-    return this._entries[in_id] !== undefined;
+    return this._dynamicChildren[in_id] !== undefined;
 };
 
 /**
@@ -324,7 +322,7 @@ SetProperty.prototype.setValues = function (in_properties) {
  * which can be modified by the caller without effects on the set.
  */
 SetProperty.prototype.getAsArray = function () {
-    return _.values(this._entries);
+    return _.values(this._dynamicChildren);
 };
 
 /**
