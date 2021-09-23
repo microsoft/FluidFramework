@@ -119,7 +119,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ) => void
  * ```
  * - `changed` - Information on the key that changed, its value prior to the change, and the path to the key that
- * changed.
+ *   changed.
  *
  * - `local` - Whether the change originated from the this client.
  *
