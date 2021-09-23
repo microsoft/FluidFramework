@@ -19,7 +19,7 @@ describe("ToDo", () => {
                 return "";
             }, index),
             (actualValue) => actualValue,
-            "" /* defaultValue */);
+            "not propagated" /* defaultValue */);
 
     beforeAll(async () => {
         // Wait for the page to load first before running any tests

@@ -8,9 +8,9 @@ import { delay } from "@fluidframework/common-utils";
 async function retry<T>(
     callback: () => Promise<T>,
     defaultValue: T,
-    maxTries = 20,
-    currentTry = 0,
-    backOffMs = 50,
+    maxTries: number,
+    currentTry: number,
+    backOffMs: number,
 ): Promise<T> {
     if (currentTry >= maxTries) {
         return Promise.resolve(defaultValue);

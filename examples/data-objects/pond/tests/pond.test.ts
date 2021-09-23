@@ -36,7 +36,7 @@ describe("pond", () => {
                     return "";
                 }, index, classId),
                 (actualValue) => actualValue === expectedValue,
-                "" /* defaultValue */);
+                "not propagated" /* defaultValue */);
 
         // Validate both users have 5 as their value
         const preValue_51 = await getValue(0, "clicker-value-class-5", "5");

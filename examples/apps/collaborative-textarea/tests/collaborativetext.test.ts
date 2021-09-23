@@ -20,7 +20,7 @@ describe("collaborativetext", () => {
                 return "-----undefined-----";
             }, index),
             (actualValue) => actualValue === expectedValue,
-            "" /* defaultValue */);
+            "not propagated" /* defaultValue */);
 
     const setText = async (index: number, text: string) => {
         return page.evaluate((i: number, t: string) => {
