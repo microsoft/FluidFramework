@@ -74,7 +74,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import { Component, OnInit, OnDestroy } from '@angular/core';
-    import { SharedMap } from "fluid-framework";
+    import { SharedMap } from 'fluid-framework';
     import { TinyliciousClient } from '@fluidframework/tinylicious-client';
     ```
 
@@ -188,14 +188,14 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 1. To ensure that the `localTimestamp` state is updated whenever the `sharedTimestamp` is changed *even by other clients*, replace `TODO 5` with the following code. Note that because `updateLocalTimestamp` calls the state-setting function `setTimestamp`, a rerender is triggered whenever any client changes the Fluid `sharedTimestamp`.
 
     ```js
-    this.sharedTimestamp!.on("valueChanged", this.updateLocalTimestamp!);
+    this.sharedTimestamp!.on('valueChanged', this.updateLocalTimestamp!);
    ```
 
 1. It is a good practice to deregister event handlers when the Angular component dismounts, so add the following code to the `ngOnDestroy` function we previously defined.
 
     ```js
     // Delete handler registration when the Angular App component is dismounted.
-    this.sharedTimestamp!.off("valueChanged", this.updateLocalTimestamp!);
+    this.sharedTimestamp!.off('valueChanged', this.updateLocalTimestamp!);
    ```
 
 1. To ensure that this function is called after getting the initial Fluid Data, add the following line to the `ngOnInit` function:
@@ -211,7 +211,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
     ```js
     onButtonClick() {
-      this.sharedTimestamp?.set("time", Date.now().toString());
+      this.sharedTimestamp?.set('time', Date.now().toString());
     }
     ```
 ### Create the UI
