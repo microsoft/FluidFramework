@@ -88,6 +88,9 @@ export { ITokenResponse }
 
 export { IUser }
 
+// @public
+export const LOCAL_MODE_TENANT_ID = "local";
+
 export { ScopeType }
 
 
