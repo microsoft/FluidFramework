@@ -109,7 +109,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 ### Get the Fluid Data
 
-1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the component layer. Add the following code inside the `AppComponent` class. This function will be called when the application loads the first time, and the value that is returned form it is assigned to the `sharedTimestamp` component level property.
+1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the component layer. Add the following code inside the `AppComponent` class. This function will be called when the application loads the first time, and the value it returns is assigned to the `sharedTimestamp` component level property.
 
     ```js
     async getFluidData() {
