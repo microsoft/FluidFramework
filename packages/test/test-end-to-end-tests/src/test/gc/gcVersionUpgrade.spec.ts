@@ -249,6 +249,7 @@ describeFullCompat("GC version upgrade", (getTestObjectProvider) => {
         await summarizerClient1.containerRuntime.refreshLatestSummaryAck(
             latestAckedSummary.summaryOp.contents.handle,
             latestAckedSummary.summaryAck.contents.handle,
+            latestAckedSummary.summaryOp.referenceSequenceNumber,
             logger,
         );
 

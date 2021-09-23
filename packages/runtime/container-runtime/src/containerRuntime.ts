@@ -2195,11 +2195,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
+        summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
+            summaryRefSeq,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 fetchLatest: false,
@@ -2239,6 +2241,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
+            snapshotRefSeq,
             async () => snapshot,
             readAndParseBlob,
             summaryLogger,
