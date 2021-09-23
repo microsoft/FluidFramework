@@ -33,9 +33,9 @@ menu:
   - name: "Community"
     url: "/community/"
     weight: -60
-#  - name: "Updates"
-#    url: "/posts/"
-#    weight: -50
+  - name: "Updates"
+    url: "/updates/"
+    weight: -50
 
   old_section:
   - identifier: "quick-start"
@@ -82,9 +82,21 @@ menu:
     name: "Glossary"
     url: "/docs/glossary/"
     weight: -90
-  - identifier: "updates"
-    name: "What's new"
+
+  updates:
+  - identifier: updates
+    name: Updates
+    url: "/updates"
+    weight: -100
+  - identifier: "client"
+    name: "Client releases"
+    weight: -90
+  - identifier: "server"
+    name: "Server releases"
     weight: -80
+  - identifier: "other"
+    name: "Other packages"
+    weight: -70
 
 markup:
   goldmark:
