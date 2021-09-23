@@ -42,7 +42,7 @@ export class AttachmentTreeEntry {
 
 // @public
 export class BlobTreeEntry {
-    constructor(path: string, contents: string, encoding?: string);
+    constructor(path: string, contents: string, encoding?: BufferEncoding);
     // (undocumented)
     readonly mode = FileMode.File;
     // (undocumented)

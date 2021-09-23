@@ -93,6 +93,7 @@ export async function submitAndAckSummary(
     await summarizerClient.containerRuntime.refreshLatestSummaryAck(
         ackedSummary.summaryOp.contents.handle,
         ackedSummary.summaryAck.contents.handle,
+        ackedSummary.summaryOp.referenceSequenceNumber,
         logger,
     );
     return { ackedSummary, summarySequenceNumber };

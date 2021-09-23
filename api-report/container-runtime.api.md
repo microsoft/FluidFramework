@@ -152,7 +152,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     processSignal(message: ISignalMessage, local: boolean): void;
     // (undocumented)
     readonly raiseContainerWarning: (warning: ContainerWarning) => void;
-    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -487,7 +487,7 @@ export interface ISummarizerEvents extends IEvent {
 
 // @public (undocumented)
 export interface ISummarizerInternalsProvider {
-    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
