@@ -12,6 +12,36 @@ import { RootDataObject } from "./rootDataObject";
 
 /**
  * Events emitted from IFluidContainer.
+ *
+ * ### "connected"
+ *
+ * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "dispose"
+ *
+ * The dispose event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "disconnected"
+ *
+ * The disconnected event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
  */
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;

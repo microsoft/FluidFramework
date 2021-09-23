@@ -188,12 +188,6 @@ First, if your application loads two different experiences that have different u
 A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
-{{% callout tip %}}
-
-Use the `name` property on the container to help manage multiple containers.
-
-{{% /callout %}}
-
 ## Container services
 
 When you load a container, the Fluid service will also return a service-specific *services* object. This object contains
@@ -212,6 +206,8 @@ references to useful services you can use to build richer apps. An example of a 
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
