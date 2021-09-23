@@ -11,6 +11,7 @@ export let dumpMessageStats = false;
 export let dumpSnapshotStats = false;
 export let dumpSnapshotTrees = false;
 export let dumpSnapshotVersions = false;
+export let overWrite = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
 export let paramUnpackAggregatedBlobs = true;
@@ -66,12 +67,35 @@ export function printUsage() {
     }
 }
 
+// Can be used in unit test to pass in customized argument values
+// More argument options can be added when needed
+export function setArguments(values: {
+    saveDir: string,
+    paramURL: string
+    dumpMessages?: boolean,
+    dumpMessageStats?: boolean,
+    dumpSnapshotStats?: boolean,
+    dumpSnapshotTrees?: boolean,
+    overWrite?: boolean }) {
+    paramSaveDir = values.saveDir;
+    paramURL = values.paramURL;
+    dumpMessages = values.dumpMessages ?? dumpMessages;
+    dumpMessageStats = values.dumpMessageStats ?? dumpMessageStats;
+    dumpSnapshotStats = values.dumpSnapshotStats ?? dumpSnapshotStats;
+    dumpSnapshotTrees = values.dumpSnapshotTrees ?? dumpSnapshotTrees;
+    overWrite = values.overWrite ?? overWrite;
+}
+
 export function parseArguments() {
     for (let i = 2; i < process.argv.length; i++) {
         const arg = process.argv[i];
         switch (arg) {
             case "--dump:rawmessage":
                 dumpMessages = true;
+                break;
+            case "--dump:rawmessage:overwrite":
+                dumpMessages = true;
+                overWrite = true;
                 break;
             case "--stat:message":
                 dumpMessageStats = true;

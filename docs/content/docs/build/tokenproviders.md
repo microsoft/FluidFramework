@@ -8,12 +8,12 @@ The token provider is responsible for creating and signing tokens that the `@flu
 requests to the Azure Fluid Relay service. There are two ways by which you can generate the token:
 
 - `InsecureTokenProvider`
-
 - Implement your own `TokenProvider` class for fetching the token and a backend for token generation
 
 Fluid provides an `InsecureTokenProvider` that accepts your tenant secret, then locally generates and returns a signed token. This type of token provider is only useful for development purpose. For production scenarios, you must use a secure token provider.
 
 ## Implementing your own TokenProvider class
+
 The `TokenProvider` class can be created by extending the `ITokenProvider` interface, thereby not exposing the tenant key secret in the client-side bundle code. While the tenant ID, orderer and storage URLs are fine to be on client-side code, the tenant key itself should not be exposed as it would allow malicious users to gain access to your tenant. The `TokenProvider` class would fetch the token from your very own backend service, thus providing a secure way for token resolution.
 
 The `ITokenProvider` interface has two token calls: `fetchOrdererToken` and `fetchStorageToken`. They are responsible for fetching the orderer and storage URLs from the host respectively. Both functions return `TokenResponse` objects representing the token value.
@@ -21,6 +21,7 @@ The `ITokenProvider` interface has two token calls: `fetchOrdererToken` and `fet
 There are few possible ways through which you can setup your own backend service for token generation such as a backend API endpoint that will handle the token generation, etc. One of the possible backend service which you can setup is an `Azure Function`. This lets you run your code in a serverless environment without having to create a virtual machine or publish a web application. It allows you to write less code, maintain less infrastructure, and save on costs.
 
 ## TokenProvider class example
+
 In the example below, the token provider class is called `AzureFunctionTokenProvider`. This class would be fetching the token from your very own backend Azure Function. It accepts the URL to your Azure Function and an optional user object.
 
 ```typescript

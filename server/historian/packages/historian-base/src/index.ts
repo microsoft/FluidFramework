@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./logger";
 export * from "./routes";
 export * from "./services";
 export * from "./runnerFactory";

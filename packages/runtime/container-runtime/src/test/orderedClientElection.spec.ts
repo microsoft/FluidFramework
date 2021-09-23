@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedClient } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
     IOrderedClientCollection,
     IOrderedClientElection,

@@ -4,6 +4,7 @@
 </div>
 {{ else }}
 <div class="col-md-2 docs-navbar-container">
-    {{ partial "docNav.html" (dict "context" . "menu" .Site.Menus.section "mainURL" "{{ .Section }}") }}
+    {{ $menu := index .Site.Menus .Section }}
+    {{ partial "docNav.html" (dict "context" . "menu" $menu "mainURL" "{{ .Section }}") }}
 </div>
 {{ end }}

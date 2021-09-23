@@ -5,7 +5,11 @@ aliases:
   - "/start/react-tutorial/"
 ---
 
-In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/). The following image shows the time stamp application open in four browsers. Each has a button labelled **click** and beside it a UNIX Epoch time. The same time in all four. The cursor is on the button in one browser.
+In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/).
+
+To jump ahead into the finished demo, check out the [Create React App demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/cra-demo).
+
+The following image shows the time stamp application open in four browsers. Each has a button labeled **click** and beside it a Unix epoch time. The same time is in all four. The cursor is on the button in one browser.
 
 ![Four browsers with the Timestamp app open in them.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-1.PNG)
 
@@ -33,14 +37,14 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;experimental/fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluidframework/azure&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][]. In this tutorial, we will use a local test service called Tinylicious.|
+    |fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    |fluidframework/tinylicious&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
     &nbsp;
 
     Run the following command to install the libraries.
 
     ```dotnetcli
-    npm install @fluidframework/azure-client fluid-framework
+    npm install @fluidframework/tinylicious-client fluid-framework
     ```
 
 ## Code the project
@@ -63,49 +67,13 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     ```js
     import React from "react";
-    import { AzureClient, InsecureTokenProvider } from "@fluidframework/azure-client";;
+    import { TinyliciousClient } from "@fluidframework/tinylicious-client";
     import { SharedMap } from "fluid-framework";
     ```
 
-### Create a container ID helper function
-
-Add the following helper function to the file below the `import` statements. Note the following about this code:
-
-- Every [Fluid container][] must have a unique ID. For the ID, this application will use a truncated version of the UNIX epoch time when the container is first created.
-- The ID is stored in the `window.location.hash` property.
-- The function is called in a useEffect hook that you create in a later step, so it is called every time the application (re)renders.
-
-```js
-const getContainerId = () => {
-    let isNew = false;
-    if (window.location.hash.length === 0) {
-        isNew = true;
-        window.location.hash = Date.now().toString();
-    }
-    const containerId = window.location.hash.substring(1);
-    return { containerId, isNew };
-};
-```
-
-### Configure the `AzureClient`
-
-Add the following constant below the helper function. This object configures the Azure Fluid Relay service client to
-connect with a Fluid service that runs on localhost. Note that in a production application, you would use a real security token
-service to protect access to the Azure Fluid Relay service (see [Authentication & authorization]({{< relref "auth.md" >}})), but during development you can use the dummy service
-`InsecureTokenProvider`.
-
-```js
-const azureClientConfig = {
-    tenantId: "local",
-    tokenProvider: new InsecureTokenProvider("anyValue", { id: "userId" }),
-    orderer: "http://localhost:7070",
-    storage: "http://localhost:7070",
-};
-```
-
 ### Move Fluid data to the view
 
-1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the `AzureClient` configuration constant. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
+1. The Fluid runtime will bring changes made to the timestamp from any client to the current client. But Fluid is agnostic about the UI framework. You can use a helper method to get the Fluid data, from the SharedMap object, into the view layer (the React state). Add the following code below the import statements. This method is called when the application loads the first time, and the value that is returned form it is assigned to a React state property.
 
     ```js
     const getFluidData = async () => {
@@ -119,26 +87,30 @@ const azureClientConfig = {
 1. Replace `TODO 1` with the following code. Note that there is only one object in the container: a SharedMap holding the timestamp. Note also that `sharedTimestamp` is the ID of the `SharedMap` object and it must be unique within the container.
 
     ```js
-    const { containerId, isNew } = getContainerId();
-    const azureClient = new AzureClient(azureClientConfig);
-    const containerSchema = {
-        name: 'fluid-react-tutorial-container',
-        initialObjects: { sharedTimestamp: SharedMap }
-    };
+      const client = new TinyliciousClient();
+      const containerSchema = {
+          initialObjects: { sharedTimestamp: SharedMap }
+      };
     ```
 
-1. Replace `TODO 2` with the following code. Note that `isNew` was returned by the `getContainerId` helper method and it is true if the application has no Fluid container yet.
+1. Replace `TODO 2` with the following code. Note that `containerId` is being stored on the URL hash, and if there is no `containerId` we create a new container instead.
 
     ```js
-    const { fluidContainer } = isNew
-        ? await azureClient.createContainer({id: containerId}, containerSchema)
-        : await azureClient.getContainer({id: containerId}, containerSchema);
+    let container;
+    const containerId = location.hash.substring(1);
+    if (!containerId) {
+        ({ container } = await client.createContainer(containerSchema));
+        const id = await container.attach();
+        location.hash = id;
+    } else {
+        ({ container } = await client.getContainer(containerId, containerSchema));
+    }
     ```
 
 1. Replace `TODO 3` with the following code.
 
     ```js
-    return fluidContainer.initialObjects;
+    return container.initialObjects;
     ```
 
 ### Get the Fluid data on application startup
@@ -146,33 +118,33 @@ const azureClientConfig = {
 Now that we've defined how to get our Fluid data, we need to tell React to call `getFluidData` when the application starts up and then store the result in state. So add the following code at the top of the `App()` function (above the `return` statement). Note about this this code:
 
 - By setting an empty dependency array at the end of the useEffect, we ensure that this function only gets called once.
-- Since `setFluidSharedMap` is a state-changing method, it will cause the React `App` component to immediately rerender.
+- Since `setFluidSharedObjects` is a state-changing method, it will cause the React `App` component to immediately rerender.
 
 ```js
-const [fluidSharedMap, setFluidSharedMap] = React.useState();
+const [fluidSharedObjects, setFluidSharedObjects] = React.useState();
 
 React.useEffect(() => {
     getFluidData()
-    .then(data => setFluidSharedMap(data));
+    .then(data => setFluidSharedObjects(data));
 }, []);
 ```
 
 ### Keep the view synchronized with the Fluid data
 
-The timestamp that is rendered in the application's UI does not come directly from the `fluidSharedMap` state object because that object can be changed by other clients and these changes do not call the `setFluidSharedMap` method, so they do not trigger a rerender of the `App` component. Thus, remote changes would not appear in the current client's UI.
+The timestamp that is rendered in the application's UI does not come directly from the `fluidSharedObjects` state object because that object can be changed by other clients and these changes do not call the `setFluidSharedObjects` method, so they do not trigger a rerender of the `App` component. Thus, remote changes would not appear in the current client's UI.
 
-To ensure that both local and remote changes to the timestamp are reflected in the UI, create a second application state value for the local timestamp and ensure that it is updated (with a state-updating function) whenever any client changes the `fluidSharedMap` value.
+To ensure that both local and remote changes to the timestamp are reflected in the UI, create a second application state value for the local timestamp and ensure that it is updated (with a state-updating function) whenever any client changes the `fluidSharedObjects` value.
 
 1. Below the preceding `useEffect` add the following code. Note about this code:
 
-    - The `fluidSharedMap` state is undefined only when the `App` component is rendering for the first time.
-    - Passing `fluidSharedMap` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `fluidSharedMap` has not changed since the last time the `App` component rendered.
+    - The `fluidSharedObjects` state is undefined only when the `App` component is rendering for the first time.
+    - Passing `fluidSharedObjects` in the second parameter of the `useEffect` hook ensures that the hook will not pointlessly run if `fluidSharedObjects` has not changed since the last time the `App` component rendered.
 
     ```js
     const [localTimestamp, setLocalTimestamp] = React.useState();
 
     React.useEffect(() => {
-        if (fluidSharedMap) {
+        if (fluidSharedObjects) {
 
             // TODO 4: Set the value of the localTimestamp state object that will appear in the UI.
             // TODO 5: Register handlers.
@@ -181,7 +153,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
         } else {
             return; // Do nothing because there is no Fluid SharedMap object yet.
         }
-    }, [fluidSharedMap])
+    }, [fluidSharedObjects])
     ```
 
 1. Replace `TODO 4` with the following code. Note about this code:
@@ -190,13 +162,13 @@ To ensure that both local and remote changes to the timestamp are reflected in t
     - `updateLocalTimestamp` is called immediately to ensure that `localTimestamp` is initialized with the current shared timestamp value.
 
     ```js
-    const { sharedTimestamp } = fluidSharedMap;
+    const { sharedTimestamp } = fluidSharedObjects;
     const updateLocalTimestamp = () => setLocalTimestamp({ time: sharedTimestamp.get("time") });
 
     updateLocalTimestamp();
     ```
 
-1. To ensure that the `localTimestamp` state is updated whenever the `fluidSharedMap` is changed *even by other clients*, replace `TODO 5` with the following code. Note that because `updateLocalTimestamp` calls the state-setting function `setTimestamp`, a rerender is triggered whenever any client changes the Fluid `fluidSharedMap`.
+1. To ensure that the `localTimestamp` state is updated whenever the `sharedTimestamp` is changed *even by other clients*, replace `TODO 5` with the following code. Note that because `updateLocalTimestamp` calls the state-setting function `setTimestamp`, a rerender is triggered whenever any client changes the Fluid `sharedTimestamp`.
 
     ```js
     sharedTimestamp.on("valueChanged", updateLocalTimestamp);
@@ -213,14 +185,14 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 Below the `useEffect` hook, replace the `return ();` line with the following code. Note about this code:
 
 - If the `localTimestamp` state has not been initialized, a blank screen is rendered.
-- The `sharedTimestamp.set` method sets the *key* of the `fluidSharedMap` object to "time" and the *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
-- All other clients update too because the Fluid server propagates the change to the `fluidSharedMap` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
+- The `sharedTimestamp.set` method sets the *key* of the `sharedTimestamp` object to "time" and the *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`. The `App` component rerenders and the `<span>` is updated with the latest timestamp.
+- All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
 
 ```js
 if (localTimestamp) {
     return (
         <div className="App">
-            <button onClick={() => fluidSharedMap.sharedTimestamp.set("time", Date.now().toString())}>
+            <button onClick={() => fluidSharedObjects.sharedTimestamp.set("time", Date.now().toString())}>
                 Get Time
             </button>
             <span>{localTimestamp.time}</span>
@@ -250,9 +222,10 @@ Paste the URL of the application into the address bar of another tab or even ano
 
 ## Next steps
 
-- Try extending the demo with more key/value pairs and a more complex UI
-- Consider using the [Fluent UI React controls](https://developer.microsoft.com/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
+- Try extending the demo with more key/value pairs and a more complex UI.
+- Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
 - Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
+- For an example that will scale to larger applications and larger teams, check out the [Fluid React Starter in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/fluid-react-starter).
 
 {{< callout tip >}}
 
@@ -272,6 +245,8 @@ When you make changes to the code the project will automatically rebuild and the
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}

@@ -89,6 +89,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 export interface IRouterliciousDriverPolicies {
     aggregateBlobsSmallerThanBytes: number | undefined;
     enablePrefetch: boolean;
+    enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
@@ -96,7 +97,7 @@ export interface IRouterliciousDriverPolicies {
 
 // @public
 export interface ITokenProvider {
-    fetchOrdererToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
 

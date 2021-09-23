@@ -47,7 +47,7 @@ export interface IBlob {
     // (undocumented)
     contents: string;
     // (undocumented)
-    encoding: string;
+    encoding: BufferEncoding;
 }
 
 // @public

@@ -8,6 +8,8 @@ import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
 import { pkgName } from "./packageVersion";
 
+const testVariant = process.env.FLUID_TEST_VARIANT;
+
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent) {
@@ -19,6 +21,7 @@ class TestLogger implements ITelemetryBufferedLogger {
         if (this.testName !== undefined) {
             event.testName = this.testName;
         }
+        event.testVariant = testVariant;
         event.hostName = pkgName;
         this.parentLogger.send(event);
     }
@@ -67,6 +70,7 @@ export const mochaHooks = {
             category: "generic",
             eventName: "fluid:telemetry:Test_start",
             testName: currentTestName,
+            testVariant,
         });
     },
     afterEach() {
@@ -78,6 +82,7 @@ export const mochaHooks = {
             testName: currentTestName,
             state: context.currentTest?.state,
             duration: context.currentTest?.duration,
+            testVariant,
         });
 
         console.log = log;

@@ -5,7 +5,6 @@
 
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { assert, TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -15,19 +14,12 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
+import { TestDataObject } from "./mockSummarizerClient";
 
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
-describeFullCompat("Garbage Collection", (getTestObjectProvider) => {
+/**
+ * Validates that when running in GC test mode, unreferenced content is deleted from the summary.
+ */
+describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => {
     // If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
     // deleted after each GC run.
     const tests = (deleteUnreferencedContent: boolean = false) => {
@@ -47,7 +39,7 @@ describeFullCompat("Garbage Collection", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            flattenRuntimeOptions(runtimeOptions),
+            runtimeOptions,
         );
 
         let provider: ITestObjectProvider;
@@ -155,7 +147,7 @@ describeFullCompat("Garbage Collection", (getTestObjectProvider) => {
             provider = getTestObjectProvider();
             const container = await createContainer() as Container;
             defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-            containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+            containerRuntime = defaultDataStore.containerRuntime;
         });
 
         it("marks default data store as referenced", async () => {

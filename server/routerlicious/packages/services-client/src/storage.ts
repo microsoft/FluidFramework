@@ -5,7 +5,12 @@
 
 import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
-import * as storage from "./storageContracts";
+import {
+    IWholeSummaryPayload,
+    IWholeFlatSummary,
+    IWriteSummaryResponse,
+    IWholeSummaryPayloadType,
+} from "./storageContracts";
 
 /**
  * Required params to create ref with config
@@ -68,8 +73,8 @@ export interface IGitService {
     getTag(tag: string): Promise<git.ITag>;
     createTree(tree: git.ICreateTreeParams): Promise<git.ITree>;
     getTree(sha: string, recursive: boolean): Promise<git.ITree>;
-    createSummary(summary: storage.IWholeSummaryPayload): Promise<storage.IWriteSummaryResponse>;
-    getSummary(sha: string): Promise<storage.IWholeFlatSummary>;
+    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+    getSummary(sha: string): Promise<IWholeFlatSummary>;
 }
 
 /**
@@ -103,8 +108,8 @@ export interface IGitManager {
     createRef(branch: string, sha: string): Promise<git.IRef>;
     upsertRef(branch: string, commitSha: string): Promise<git.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<git.ICommit>;
-    createSummary(summary: storage.IWholeSummaryPayload): Promise<storage.IWriteSummaryResponse>;
-    getSummary(sha: string): Promise<storage.IWholeFlatSummary>;
+    createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
+    getSummary(sha: string): Promise<IWholeFlatSummary>;
 }
 
 /**
@@ -113,15 +118,15 @@ export interface IGitManager {
 export interface ISummaryUploadManager {
     /**
      * Writes summary tree to storage.
-     * @param summaryTree Summary tree to write to storage
-     * @param parentHandle Parent summary acked handle (if available from summary ack)
-     * @param summaryType type of summary being uploaded
-     * @param sequenceNumber optional reference sequence number of the summary
+     * @param summaryTree - Summary tree to write to storage
+     * @param parentHandle - Parent summary acked handle (if available from summary ack)
+     * @param summaryType - type of summary being uploaded
+     * @param sequenceNumber - optional reference sequence number of the summary
      * @returns Id of created tree as a string.
      */
     writeSummaryTree(
         summaryTree: api.ISummaryTree,
         parentHandle: string,
-        summaryType: storage.IWholeSummaryPayloadType,
+        summaryType: IWholeSummaryPayloadType,
         sequenceNumber?: number): Promise<string>;
 }

@@ -119,7 +119,7 @@ export class GitManager implements IGitManager {
         return this.historian.getContent(path, commit);
     }
 
-    public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
+    public createBlob(content: string, encoding: BufferEncoding): Promise<resources.ICreateBlobResponse> {
         const blob: resources.ICreateBlobParams = {
             content,
             encoding,
@@ -257,7 +257,7 @@ export class GitManager implements IGitManager {
                         entryAsBlob.contents = this.translateSymlink(entryAsBlob.contents, depth);
                     }
 
-                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
+                    const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding as BufferEncoding);
                     entriesP.push(blobP);
                     break;
 
@@ -265,10 +265,6 @@ export class GitManager implements IGitManager {
                     const entryAsTree = entry.value as api.ITree;
                     const treeBlobP = this.createTreeCore(entryAsTree, depth + 1);
                     entriesP.push(treeBlobP);
-                    break;
-
-                case api.TreeEntry.Commit:
-                    entriesP.push(Promise.resolve({ sha: entry.value as string, url: "" }));
                     break;
 
                 default:

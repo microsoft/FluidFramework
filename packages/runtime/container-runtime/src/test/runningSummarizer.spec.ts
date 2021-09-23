@@ -15,7 +15,8 @@ import {
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { neverCancelledSummaryToken } from  "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { ISummarizerOptions } from "../summarizerTypes";

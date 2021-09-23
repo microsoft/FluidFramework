@@ -57,12 +57,15 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider,
             this.logger,
             rateLimiter,
+            this.driverPolicies.enableRestLess,
             this.gitUrl,
         );
         const historian = new Historian(
             this.gitUrl,
             true,
-            false,
+            // Disable caching of storage requests until we implement non-URL-based caching
+            // when using WholeSummaries, because we cannot gurantee that a summary sha is unique to the document.
+            this.driverPolicies.enableWholeSummaryUpload,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
@@ -91,7 +94,13 @@ export class DocumentService implements api.IDocumentService {
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-            this.tenantId, this.documentId, this.tokenProvider, this.logger, rateLimiter);
+            this.tenantId,
+            this.documentId,
+            this.tokenProvider,
+            this.logger,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+        );
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);

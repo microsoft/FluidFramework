@@ -34,7 +34,7 @@
     "nconf": "^0.11.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0-0",
+    "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

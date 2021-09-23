@@ -11,8 +11,8 @@ import { NetworkError } from "./error";
 
 /**
  * Validates a JWT token to authorize routerlicious.
- * @returns decoded claims.
- * @throws {NetworkError} if claims are invalid.
+ * Throws NetworkError if claims are invalid.
+ * @returns - decoded claims.
  */
 export function validateTokenClaims(
     token: string,
@@ -33,8 +33,8 @@ export function validateTokenClaims(
 
 /**
  * Validates token claims' iat and exp properties to ensure valid token expiration.
+ * Throws NetworkError if expiry is invalid.
  * @returns token lifetime in milliseconds.
- * @throws {NetworkError} if expiry is invalid.
  */
 export function validateTokenClaimsExpiration(claims: ITokenClaims, maxTokenLifetimeSec: number): number {
     if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {

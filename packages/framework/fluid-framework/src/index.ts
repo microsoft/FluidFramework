@@ -5,6 +5,7 @@
 
 /* eslint-disable import/export */
 
-export * from  "./fluidStatic";
-export * from  "./map";
-export * from  "./sequence";
+export * from "./containerDefinitions";
+export * from "./fluidStatic";
+export * from "./map";
+export * from "./sequence";

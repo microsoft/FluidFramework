@@ -31,6 +31,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     maxConcurrentOrdererRequests: 100,
     aggregateBlobsSmallerThanBytes: undefined,
     enableWholeSummaryUpload: false,
+    enableRestLess: false,
 };
 
 /**
@@ -63,7 +64,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
-        const [, tenantId, id] = parsedUrl.pathname.split("/");
+        // extract tenant and document IDs from the parsed URL.
+        const [, tenantId, newDocumentId] = parsedUrl.pathname.split("/");
+        // TODO: This logic to determine ID helps with back-compat of the legacy container create flow.
+        // Will ignore the new document ID provided by the application as r11s will not honor it.
+        // The literal "new" document ID interpreted as a request to generate the ID
+        // by the server and therefore is replaced with `undefined` value.
+        // Any other value will be transmitted as-is to support the legacy container create flow.
+        const id = newDocumentId !== "new" ? newDocumentId : undefined;
+
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
         if (!(protocolSummary && appSummary)) {
@@ -80,8 +89,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             logger2,
             rateLimiter,
+            this.driverPolicies.enableRestLess,
             resolvedUrl.endpoints.ordererUrl,
         );
+        // the backend responds with the actual document ID associated with the new container.
         const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
