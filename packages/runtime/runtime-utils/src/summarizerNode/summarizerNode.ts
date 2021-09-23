@@ -21,7 +21,7 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
-import { ReadAndParseBlob, seqFromTree } from "../utils";
+import { ReadAndParseBlob } from "../utils";
 import {
     decodeSummary,
     encodeSummary,
@@ -271,10 +271,8 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         const snapshotTree = await getSnapshot();
-        const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
-
         await this.refreshLatestSummaryFromSnapshot(
-            referenceSequenceNumber,
+            summaryRefSeq,
             snapshotTree,
             undefined,
             EscapedPath.create(""),
