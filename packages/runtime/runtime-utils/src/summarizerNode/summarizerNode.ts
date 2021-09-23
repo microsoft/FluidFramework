@@ -264,13 +264,19 @@ export class SummarizerNode implements IRootSummarizerNode {
             }
         }
 
-        // If we have seen a summary same or later as the downloaded one, ignore it.
+        // If we have seen a summary same or later as the current one, ignore it.
         if (summaryRefSeq !== undefined && this.referenceSequenceNumber >= summaryRefSeq) {
             return { latestSummaryUpdated: false };
         }
 
         const snapshotTree = await getSnapshot();
         const referenceSequenceNumber = await seqFromTree(snapshotTree, readAndParseBlob);
+
+        // If we have seen a summary same or later as the downloaded one, ignore it.
+        if (this.referenceSequenceNumber >= referenceSequenceNumber) {
+            return { latestSummaryUpdated: false };
+        }
+
         await this.refreshLatestSummaryFromSnapshot(
             referenceSequenceNumber,
             snapshotTree,
