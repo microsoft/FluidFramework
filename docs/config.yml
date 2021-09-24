@@ -5,6 +5,20 @@ theme: "thxvscode"
 title: "Fluid Framework"
 titleCaseStyle: "Chicago"
 
+module:
+  noVendor: "github.com/**"
+  hugoVersion:
+    extended: true
+    min: "0.76.5"
+  mounts:
+  - source: content
+    target: content
+  imports:
+  - path: github.com/microsoft/FluidFramework
+    mounts:
+    - source: packages/dds/sequence/README.md
+      target: content/docs/sequence-readme.md
+
 permalinks:
   page: "/:slug"
   post: "/:year/:month/:title"
