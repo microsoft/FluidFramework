@@ -160,7 +160,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
-    // (undocumented)
+    // @internal (undocumented)
     protected applyStashedOp(): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
@@ -176,23 +176,23 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     has(key: string): boolean;
     hasSubDirectory(subdirName: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal (undocumented)
     readonly localValueMaker: LocalValueMaker;
-    // (undocumented)
+    // @internal (undocumented)
     protected onDisconnect(): void;
     // @internal
     protected populate(data: IDirectoryDataObject): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
-    // (undocumented)
+    // @internal (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     // Warning: (ae-forgotten-export) The symbol "IDirectoryOperation" needs to be exported by the entry point index.d.ts

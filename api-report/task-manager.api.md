@@ -85,21 +85,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     _getTaskQueues(): Map<string, string[]>;
     // (undocumented)
     haveTaskLock(taskId: string): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     protected initializeLocalCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     lockTask(taskId: string): Promise<void>;
-    // (undocumented)
+    // @internal (undocumented)
     protected onDisconnect(): void;
+    // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     queued(taskId: string): boolean;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected reSubmitCore(): void;
+    // @internal (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     }
 
