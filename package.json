@@ -17,6 +17,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:compile && npm run build:docs",
+		"build:code": "npm run build:compile",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
 		"build:docs": "api-extractor run --local && copyfiles -u 2 ./_api-extractor-temp/doc-models/* ../../api-metadata/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
