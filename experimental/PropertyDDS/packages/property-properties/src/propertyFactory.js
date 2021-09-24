@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview
  * Declaration of the PropertyFactory class
@@ -608,6 +609,7 @@ class PropertyFactory {
      * @throws if in_fromType is not a valid object type.
      */
     registerFrom(in_fromType, in_toConvert) {
+        var psetsTemplates = this.convertToTemplates(in_fromType, in_toConvert);
         for (var i = 0; i < psetsTemplates.length; i++) {
             this.register(psetsTemplates[i]);
         }

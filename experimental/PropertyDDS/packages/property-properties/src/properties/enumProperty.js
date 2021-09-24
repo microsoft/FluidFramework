@@ -19,7 +19,8 @@ const { ConsoleUtils } = require('@fluid-experimental/property-common');
  */
 export class EnumProperty extends Int32Property {
 
-    /** @param {Object=} in_params - the parameters
+    /**
+    * @param {Object=} in_params - the parameters
     * @constructor
     * @protected
     * @extends property-properties.Int32Property

@@ -8,6 +8,7 @@ const { ConsoleUtils, constants } = require('@fluid-experimental/property-common
 const { PathHelper, ChangeSet } = require('@fluid-experimental/property-changeset');
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
+const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
 /**
  * This class serves as a view to read, write and listen to changes in an

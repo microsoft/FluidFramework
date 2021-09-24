@@ -162,7 +162,7 @@ export class ReferenceProperty extends ValueProperty {
      * @throws if in_value is defined but is not a property or a string.
      */
     set(...args) {
-        this.setValue(...args);
+        return this.setValue(...args);
     }
 
     /**

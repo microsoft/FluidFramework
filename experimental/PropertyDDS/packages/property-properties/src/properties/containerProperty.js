@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /**
 * @fileoverview This file contains the implementation of the ContainerProperty class
 */
@@ -15,7 +20,7 @@ const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProper
 
 export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
-     *  @param {Object} in_params - Input parameters for property creation
+     * @param {Object} in_params - Input parameters for property creation
      * @constructor
      * @protected
      * @extends property-properties.IndexedCollectionBaseProperty

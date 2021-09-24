@@ -10,8 +10,12 @@ const { BaseProperty } = require('./baseProperty');
 const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
 const { DataArrays } = require('@fluid-experimental/property-common').Datastructures;
 const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
-const { ChangeSet } = require('@fluid-experimental/property-changeset');
-const { TypeIdHelper } = require('@fluid-experimental/property-changeset');
+const {
+    ArrayChangeSetIterator,
+    ChangeSet,
+    PathHelper,
+    TypeIdHelper
+} = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
@@ -51,40 +55,6 @@ var DIRTY_STATE_FLAGS_ARRAY = [
 
 
 var PATH_TOKENS = BaseProperty.PATH_TOKENS;
-
-var getValueDeprecatedWarning = false;
-/**
- * deprecated - replaced with .get
- * @param {number | array<string|number>} in_position the target index
- * @param {Object} in_options - parameter object
- * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
- *   the token indicating the mode of resolution for reference properties
- * @deprecated use .get instead.
- * @return {*} the value found at in_position
- */
-ArrayProperty.prototype.getValue = function (in_position, in_options) {
-    if (!getValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_GET_VALUE_DEPRECATED);
-        getValueDeprecatedWarning = true;
-    }
-    return this.get(in_position, in_options);
-};
-
-var setValueDeprecatedWarning = false;
-/**
- * deprecated - replaced with .set
- * @param {number} in_position the target index
- * @param {*} in_value the new property or value
- * @deprecated use .set instead.
- */
-ArrayProperty.prototype.setValue = function (in_position, in_value) {
-    if (!setValueDeprecatedWarning) {
-        console.warn(MSG.ARRAY_SET_VALUE_DEPRECATED);
-        setValueDeprecatedWarning = true;
-    }
-    this.set(in_position, in_value);
-};
-
 
 /**
  * Given a list of non-overlapping, unordered segments, each identified by its start point and length,

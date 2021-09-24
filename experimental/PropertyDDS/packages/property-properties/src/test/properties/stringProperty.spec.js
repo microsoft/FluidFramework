@@ -17,7 +17,7 @@ const deepCopy = _.cloneDeep;
 
 describe('StringProperty', function () {
     var changeSetWithEntries, removalChangeSet;
-    var myStringProp, MSG;
+    var myStringProp;
 
     before(function () {
         // Register a template with a set property for the tests
