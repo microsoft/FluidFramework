@@ -133,7 +133,8 @@
       "tools": [
         "tools/benchmark",
         "tools/generator-fluid",
-        "server/tinylicious"
+        "server/tinylicious",
+        "server/azure-local-service"
       ],
       "services": {
         "directory": "server",

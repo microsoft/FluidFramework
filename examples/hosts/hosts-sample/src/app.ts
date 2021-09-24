@@ -7,10 +7,8 @@ import {
     IUser,
 } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import {
-    InsecureTokenProvider,
-    InsecureUrlResolver,
-} from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
 import { setupUI } from "./codeDetailsView";
 import { InMemoryCodeDetailsLoader } from "./codeDetailsLoader";
