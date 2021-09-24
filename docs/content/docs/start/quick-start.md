@@ -13,7 +13,7 @@ In this Quick Start you will be getting a dice roller Fluid application up and r
 localhost.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-bundleName="dice-roller.2021-09-24.js" >}}
+    bundleName="dice-roller.2021-09-24.js" >}}
 
 ## Set up your development environment
 
