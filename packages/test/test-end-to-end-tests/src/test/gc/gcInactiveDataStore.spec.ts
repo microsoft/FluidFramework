@@ -4,29 +4,23 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { TestDataObject } from "./mockSummarizerClient";
 
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
+/**
+ * Validates this scenario: When a data store becomes inactive (has been unreferenced for a given amount of time),
+ * using that data store results in an error telemetry.
+ */
 describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -89,7 +83,7 @@ describeNoCompat("GC inactive data store tests", (getTestObjectProvider) => {
         mockLogger = new MockLogger();
         const container = await createContainer(mockLogger) as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        containerRuntime = defaultDataStore.containerRuntime;
     });
 
     it("can generate events when unreferenced data store is accessed after it's inactive", async () => {

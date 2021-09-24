@@ -94,7 +94,7 @@ ValueMapProperty.prototype._prettyPrintChildren = function (indent, printFct) {
         prefix = '"';
         suffix = '"';
     }
-    _.mapValues(this._entries, function (val, key) {
+    _.mapValues(this._dynamicChildren, function (val, key) {
         printFct(indent + key + ': ' + prefix + val + suffix);
     });
 };
@@ -108,9 +108,9 @@ ValueMapProperty.prototype._prettyPrintChildren = function (indent, printFct) {
 ValueMapProperty.prototype.set = function (in_key, in_value) {
     this._checkIsNotReadOnly(true);
     var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
-    if (this._entries[in_key] !== castedValue) {
+    if (this._dynamicChildren[in_key] !== castedValue) {
         this._checkIsNotReadOnly(true);
-        if (this._entries[in_key] !== undefined) {
+        if (this._dynamicChildren[in_key] !== undefined) {
             this._removeByKey(in_key, false);
         }
         this._insert(in_key, castedValue, false);
@@ -120,7 +120,7 @@ ValueMapProperty.prototype.set = function (in_key, in_value) {
 };
 
 ValueMapProperty.prototype._getValue = function (in_key) {
-    return this._entries[in_key];
+    return this._dynamicChildren[in_key];
 };
 
 /**
@@ -152,7 +152,7 @@ ValueMapProperty.prototype._reapplyDirtyFlags = function (in_pendingChangeSet, i
     if (in_pendingChangeSet.insert) {
         keys = Object.keys(in_pendingChangeSet.insert);
         for (i = 0; i < keys.length; i++) {
-            if (this._entries[keys[i]] !== undefined) {
+            if (this._dynamicChildren[keys[i]] !== undefined) {
                 this._pendingChanges.insert[keys[i]] = true;
             } else {
                 throw new Error(`${MSG.CANT_DIRTY_MISSING_PROPERTY}${keys[i]}`);
@@ -167,7 +167,7 @@ ValueMapProperty.prototype._reapplyDirtyFlags = function (in_pendingChangeSet, i
         keys = Object.keys(modifiedPendingEntries).concat(Object.keys(modifiedDirtyEntries));
         for (i = 0; i < keys.length; i++) {
             key = keys[i];
-            if (this._entries[key] !== undefined) {
+            if (this._dynamicChildren[key] !== undefined) {
                 if (modifiedPendingEntries[key]) {
                     if (!this._pendingChanges.insert[key]) {
                         this._pendingChanges.modify[key] = true;
@@ -324,7 +324,7 @@ Integer64MapProperty.prototype = Object.create(ValueMapProperty.prototype);
  */
 Integer64MapProperty.prototype.set = function (in_key, in_value) {
     var castedValue = this._castFunctor ? this._castFunctor(in_value) : in_value;
-    var myValue = this._entries[in_key];
+    var myValue = this._dynamicChildren[in_key];
     if (myValue === undefined) {
         this._insert(in_key, castedValue, true);
     } else if (myValue.getValueHigh() !== castedValue.getValueHigh() ||
@@ -354,9 +354,9 @@ Integer64MapProperty.prototype._serializeValue = function (in_obj) {
 Integer64MapProperty.prototype._prettyPrintChildren = function (indent, printFct) {
     indent += '  ';
     var int64Prop;
-    _.mapValues(this._entries, function (val, key) {
+    _.mapValues(this._dynamicChildren, function (val, key) {
         // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
-        //       such object to use it. It would be better to have it in Integer64.prototype.toString
+        //       such object to use it. It would be better to have it in Utils Integer64.prototype.toString
         if (val instanceof Int64) {
             int64Prop = new Int64Property({});
         } else {

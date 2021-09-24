@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger } from "./logger";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
@@ -31,7 +30,6 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
         const matchedExpectedEventCount = this.getMatchedEventsCount(expectedEvents);
         // How many expected events were left over? Hopefully none.
         const unmatchedExpectedEventCount = expectedEvents.length - matchedExpectedEventCount;
-        assert(unmatchedExpectedEventCount >= 0);
         return unmatchedExpectedEventCount === 0;
     }
 

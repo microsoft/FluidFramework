@@ -57,6 +57,7 @@ export interface ISummarizerInternalsProvider {
     refreshLatestSummaryAck(
         proposalHandle: string,
         ackHandle: string,
+        summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
     ): Promise<void>;
 }

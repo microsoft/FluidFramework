@@ -10,7 +10,7 @@ const ValueProperty = require('./valueProperty');
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 const BaseProperty = require('./baseProperty');
-const ContainerProperty = require('./containerProperty');
+const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
 const _castFunctors = require('./primitiveTypeCasts');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const _ = require('lodash');
@@ -121,7 +121,7 @@ ReferenceProperty.prototype.resolvePath = function (in_path, in_options) {
         in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.NEVER) {
         return undefined;
     }
-    return ContainerProperty.prototype.resolvePath.call(this, in_path, in_options);
+    return AbstractStaticCollectionProperty.prototype.resolvePath.call(this, in_path, in_options);
 };
 
 /**
@@ -171,7 +171,7 @@ ReferenceProperty.prototype._resolvePathSegment = function (in_segment, in_segme
         in_segmentType === PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
         return undefined;
     } else {
-        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 };
 

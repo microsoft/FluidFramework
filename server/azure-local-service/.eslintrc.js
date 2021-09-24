@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-module.exports = {
+ module.exports = {
     "extends": [
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+        "project": ["./tsconfig.json"]
     },
     "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off",
+        "import/no-unassigned-import": "off",
+        "@typescript-eslint/strict-boolean-expressions": "off"
     }
 }

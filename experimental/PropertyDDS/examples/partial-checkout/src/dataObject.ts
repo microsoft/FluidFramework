@@ -5,15 +5,15 @@
 
 import { EventEmitter } from "events";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidHandle , IRequest, IResponse} from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { SharedPropertyTree, PropertyTreeFactory } from "@fluid-experimental/property-dds";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
-import { BaseProperty } from "@fluid-experimental/property-properties";
+import { BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
 
 export interface IPropertyTree extends EventEmitter {
-    pset: any;
+    pset: NodeProperty;
     tree: SharedPropertyTree;
 
     on(event: "changeSetModified" | "commit", listener: (CS: any) => void): this;
@@ -76,7 +76,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         this.emit("commit");
     }
 
-    resolvePath(path: string, options: any): BaseProperty|undefined {
+    resolvePath(path: string, options: any): BaseProperty | undefined {
         return this.tree.root.resolvePath(path, options);
     }
     public static getFactory(): IFluidDataStoreFactory { return PropertyTreeInstantiationFactory; }

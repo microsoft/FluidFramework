@@ -41,7 +41,7 @@ export interface IBlob {
     contents: string;
 
     // The encoding of the contents string (utf-8 or base64)
-    encoding: string;
+    encoding: BufferEncoding;
 }
 
 export interface IAttachment {

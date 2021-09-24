@@ -39,13 +39,10 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public
 export enum AttachState {
-    // (undocumented)
     Attached = "Attached",
-    // (undocumented)
     Attaching = "Attaching",
-    // (undocumented)
     Detached = "Detached"
 }
 

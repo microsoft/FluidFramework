@@ -7,10 +7,9 @@
 
 const packageDir = `${__dirname}/../..`;
 
-const common = require("@fluidframework/mocha-test-setup/mocharc-common.js");
-const config = common.getFluidTestMochaConfig(packageDir,
+const getFluidTestMochaConfig = require("@fluidframework/test-version-utils/mocharc-common.js");
+const config = getFluidTestMochaConfig(packageDir,
     [
-        "@fluidframework/test-version-utils",
         "ignore-styles",
     ]);
 module.exports = config;

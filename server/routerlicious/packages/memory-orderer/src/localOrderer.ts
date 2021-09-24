@@ -53,6 +53,7 @@ const DefaultScribe: IScribe = {
     minimumSequenceNumber: -1,
     protocolState: undefined,
     sequenceNumber: -1,
+    lastSummarySequenceNumber: 0,
 };
 
 const DefaultDeli: IDeliState = {

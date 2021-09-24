@@ -6,7 +6,7 @@
  * @namespace property-properties
  */
 const Property = require('./properties/lazyLoadedProperties');
-const ContainerProperty = require('./properties/containerProperty');
+const AbstractStaticCollectionProperty = require('./properties/abstractStaticCollectionProperty')
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 
 
@@ -23,17 +23,34 @@ var MSG = {
 var ScopeProperty = function (in_params) {
     // HACK: Normally, we would inherit from NodeProperty however, NodeProperty seems to not be available
     // at this point. There may be a bug with MR.
-    ContainerProperty.call(this, in_params);
+    AbstractStaticCollectionProperty.call(this, in_params);
     this._scope = in_params.scope;
 };
 
-ScopeProperty.prototype = Object.create(ContainerProperty.prototype);
+ScopeProperty.prototype = Object.create(AbstractStaticCollectionProperty.prototype);
 
 /**
  * @override
  */
 ScopeProperty.prototype._getScope = function () {
     return this._scope;
+};
+
+/**
+ * Remove a child property
+ * This is an internal function, called internally by NodeProperty. Removing children dynamically by the user is
+ * only allowed in the NodeProperty.
+ *
+ * @param {String} in_id - the id of the property to remove
+ * @protected
+ */
+ScopeProperty.prototype._remove = function (in_id) {
+    if (this._staticChildren[in_id] !== undefined) {
+        this._staticChildren[in_id]._setParent(undefined);
+        delete this._staticChildren[in_id];
+    } else {
+        throw new Error(MSG.REMOVING_NON_EXISTING_ID + in_id);
+    }
 };
 
 /**
@@ -141,7 +158,6 @@ var deserialize = function (in_data, in_scope, in_filteringOptions) {
 
     return deserializedProperties;
 };
-
 /**
  * Deserialize the input document assuming it contains elements of a non-primitive array.
  * @param {array<object>} in_data the input JSON document data
@@ -182,7 +198,7 @@ var deserializeNonPrimitiveArrayElements = function (in_data, in_scope) {
 };
 
 module.exports = {
-    'serialize': serialize,
-    'deserialize': deserialize,
-    'deserializeNonPrimitiveArrayElements': deserializeNonPrimitiveArrayElements
+    serialize,
+    deserialize,
+    deserializeNonPrimitiveArrayElements
 };

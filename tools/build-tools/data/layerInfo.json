@@ -101,7 +101,6 @@
             },
             "Telemetry-Utils": {
                 "packages": [
-                    "@fluid-internal/mock-logger",
                     "@fluidframework/telemetry-utils"
                 ],
                 "deps": [
@@ -289,6 +288,7 @@
             },
             "Server-Tools": {
                 "packages": [
+                    "@fluidframework/azure-local-service",
                     "tinylicious"
                 ],
                 "deps": [

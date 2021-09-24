@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { DriverHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { ensureFluidResolvedUrl } from "../fluidResolvedUrl";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
@@ -33,6 +33,7 @@ describe("Insecure Url Resolver Test", () => {
     });
 
     it("Create New Request", async () => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!!request.headers?.[DriverHeader.createNew],
             "Request should contain create new header");
         const url = `${hostUrl}?fileName=${fileName}`;
