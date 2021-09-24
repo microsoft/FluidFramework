@@ -83,7 +83,7 @@
     "@fluidframework/runtime-definitions": "^0.48.2",
     "@fluidframework/runtime-utils": "^0.48.2",
     "@fluidframework/sequence": "^0.48.2",
-    "@fluidframework/server-local-server": "^0.1031.0-37526",
+    "@fluidframework/server-local-server": "^0.1031.0",
     "@fluidframework/shared-object-base": "^0.48.2",
     "@fluidframework/telemetry-utils": "^0.48.2",
     "@fluidframework/test-loader-utils": "^0.48.2",
