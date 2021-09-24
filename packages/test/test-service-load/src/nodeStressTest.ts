@@ -42,6 +42,7 @@ async function main() {
             { ...profile, name: profileArg },
             { testId, debug, verbose, seed, browserAuth });
 }
+
 /**
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
@@ -50,6 +51,7 @@ async function orchestratorProcess(
     profile: ILoadTestConfig & { name: string },
     args: { testId?: string, debug?: true, verbose?: true, seed?: number, browserAuth?: true },
 ) {
+    const start = Date.now();
     const seed = args.seed ?? Date.now();
     const seedArg = `0x${seed.toString(16)}`;
 
@@ -64,14 +66,15 @@ async function orchestratorProcess(
         ? await testDriver.createContainerUrl(args.testId)
         : await initialize(testDriver, seed);
 
-    const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
+    const estRunningTimeMin = 2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients);
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
-    console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
+    console.log(`Estimated run time: ${printTime(estRunningTimeMin * 60)}.\n`);
 
     const runnerArgs: string[][] = [];
     for (let i = 0; i < profile.numClients; i++) {
         const childArgs: string[] = [
+            "--trace-warnings",
             "./dist/runner.js",
             "--driver", driver,
             "--profile", profile.name,
@@ -90,18 +93,106 @@ async function orchestratorProcess(
         runnerArgs.push(childArgs);
     }
     console.log(runnerArgs[0].join(" "));
+    const finished: boolean[] = new Array(profile.numClients).fill(false);
+    const times: number[] = new Array(profile.numClients).fill(Date.now());
+    const tasks: string[][] = Array.from(Array(profile.numClients), () => []);
+    const taskLength = 5;
+
+    let prevClientsDone = 0;
+    let finishedP: Promise<void>[];
+    const timeLimitMs = 55 * 60 * 1000;
     try{
-        await Promise.all(runnerArgs.map(async (childArgs)=>{
+        const processes = await Promise.all(runnerArgs.map(async (childArgs, i)=>{
             const process = child_process.spawn(
                 "node",
                 childArgs,
-                { stdio: "inherit" },
+                // { stdio: "inherit" },
+                { stdio: ["ipc", "inherit", "inherit"] },
             );
-            return new Promise((resolve) => process.once("close", resolve));
+            process.on("message", (message) => {
+                if (message?.runId !== undefined) {
+                    if (message?.task === "count") {
+                        times[i] = Date.now();
+                    }
+                    tasks[message.runId].push(message.task ?? "");
+                    while (tasks[message.runId].length > taskLength) {
+                        tasks[message.runId].shift();
+                    }
+                } else {
+                    console.log(`unrecognized message: ${JSON.stringify(message)}`);
+                }
+            });
+            return process;
         }));
+        finishedP = processes.map(async (process, i)=>{
+            return new Promise((resolve) => process.once("close", () => {
+                finished[i] = true;
+                resolve();
+            }));
+        });
+
+        const killAll = (reason: string) => {
+            console.log(`Cancelling run: ${reason}`);
+            const time = (Date.now() - start) / 1000;
+            const diff = time - estRunningTimeMin * 60;
+            console.log(
+                `ran for ${printTime(time)}`,
+                diff > 0 ? `(${printTime(diff)} more than estimated)` : "");
+            processes.map((p) => p.kill());
+            process.exit(-1);
+        };
+        process.on("SIGINT", () => killAll("interrupted by user"));
+        setTimeout(() => killAll(`service load test timeout`), timeLimitMs);
+
+        while (finished.some((b) => !b)) {
+            await Promise.race([
+                ...(finishedP.filter((_, i) => !finished[i])),
+                new Promise((res) => setTimeout(res, profile.readWriteCycleMs)),
+            ]);
+            const someCyclesAgo = Date.now() - profile.readWriteCycleMs * 4;
+            const stalled = [...Array(profile.numClients).keys()]
+                .filter((i) => !finished[i] && times[i] < someCyclesAgo).sort((a, b) => times[a] - times[b]);
+
+            const printStalled = (a: number[]) => {
+                const partner = (i: number) => (i + (profile.numClients / 2)) % profile.numClients;
+                return `[ ${a.map((i) => {
+                    const partnerString = a.indexOf(partner(i)) < 0 ? `(${tasks[partner(i)].join("->")})` : "";
+                    return `${i} (${tasks[i].join("->")}) ${partnerString}`;
+                }).join(", ")} ]`;
+            };
+            if (stalled.length > 0) {
+                console.log("-".repeat(120));
+                console.log(`${stalled.length} stalled: ${printStalled(stalled)}`.padEnd(120, "-"));
+                console.log("-".repeat(120));
+            }
+            const clientsDone = finished.filter((b) => b).length;
+            if (clientsDone > prevClientsDone) {
+                console.log(`${clientsDone}/${profile.numClients} clients finished `.padEnd(120, "="));
+                prevClientsDone = clientsDone;
+                if (stalled.length === 0 && profile.numClients - clientsDone < profile.numClients / 2) {
+                    console.log("+".repeat(120));
+                    console.log(printStalled([...Array(profile.numClients).keys()]
+                        .filter((i) => !finished[i]).sort((a, b) => times[a] - times[b]).slice(0, 5)).padEnd(120, "+"));
+                    console.log("+".repeat(120));
+                }
+            }
+        }
     } finally{
+        const time = (Date.now() - start) / 1000;
+        const diff = time - estRunningTimeMin * 60;
+        console.log(
+            `took ${printTime(time)}`,
+            `(${printTime(Math.abs(diff))} ${diff > 0 ? "more" : "less"} than estimated)`);
         await safeExit(0, url);
     }
+}
+
+function printTime(seconds: number): string {
+        if (seconds > 60) {
+            return `${Math.floor(seconds / 60)} minutes ${(seconds % 60).toFixed(1)} seconds`;
+        } else {
+            return `${(seconds % 60).toFixed(1)} seconds`;
+        }
 }
 
 main().catch(

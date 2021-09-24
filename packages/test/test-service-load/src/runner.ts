@@ -4,19 +4,19 @@
  */
 
 import commander from "commander";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
 import random from "random-js";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore";
-import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
+import { LoaderHeader } from "@fluidframework/container-definitions";
+import { Container, Loader } from "@fluidframework/container-loader";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore";
 import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
+import { createCodeLoader, createTestDriver, getProfile, loggerP, safeExit } from "./utils";
 
 function printStatus(runConfig: IRunConfig, message: string) {
     if (runConfig.verbose) {
@@ -38,7 +38,7 @@ async function main() {
         .requiredOption("-u --url <url>", "Load an existing data store from the url")
         .requiredOption("-r, --runId <runId>",
             "run a child process with the given id. Requires --url option.", parseIntArg)
-        .requiredOption("-s, --seed <number>", "Seed for this runners random number generator", parseIntArg)
+        .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
         .parse(process.argv);
@@ -50,7 +50,7 @@ async function main() {
     const log: string | undefined = commander.log;
     const verbose: boolean = commander.verbose ?? false;
     const seed: number = commander.seed;
-    console.log(typeof runId, typeof seed);
+    // console.log(typeof runId, typeof seed);
 
     const profile = getProfile(profileArg);
 
@@ -133,6 +133,9 @@ async function runnerProcess(
     url: string,
     seed: number,
 ): Promise<number> {
+    if (process.send) {
+        process.send({ runId: runConfig.runId, task: "pre setup" });
+    }
     try {
         const loaderOptions = generateLoaderOptions(seed);
         const containerOptions = generateRuntimeOptions(seed);
@@ -158,6 +161,9 @@ async function runnerProcess(
         // Reset the workload once, on the first iteration
         let reset = true;
         while (!done) {
+            if (process.send) {
+                process.send({ runId: runConfig.runId, task: "setup" });
+            }
             const nextFactoryPermutation = iterator.next();
             if (nextFactoryPermutation.done === true) {
                 throw new Error("Factory permutation iterator is expected to cycle forever");
@@ -173,8 +179,14 @@ async function runnerProcess(
                 options: loaderOptions[runConfig.runId % containerOptions.length],
             });
 
+            if (process.send) {
+                process.send({ runId: runConfig.runId, task: "load" });
+            }
             const container = await loader.resolve({ url, headers });
             container.resume();
+            if (process.send) {
+                process.send({ runId: runConfig.runId, task: "request" });
+            }
             const test = await requestFluidObject<ILoadTest>(container, "/");
 
             // Control fault injection period through config.
@@ -196,11 +208,22 @@ async function runnerProcess(
             }
 
             try {
+                if (process.send) {
+                    process.send({ runId: runConfig.runId, task: "running" });
+                }
                 printStatus(runConfig, `running`);
                 done = await test.run(runConfig, reset);
                 reset = false;
-                printStatus(runConfig, done ? `finished` : "closed");
+                printStatus(runConfig, done ? "finished!" : "closed");
+                if (process.send) {
+                    process.send({ runId: runConfig.runId, task: done ? `finishing` : "closed" });
+                }
             } catch (error) {
+                if (process.send) {
+                    process.send({ runId: runConfig.runId, task: "restarting" });
+                }
+                printStatus(runConfig, "restarting on error");
+                console.log(error);
                 logger.sendErrorEvent({ eventName: "RunnerFailed" }, error);
             } finally {
                 if (!container.closed) {
@@ -209,9 +232,16 @@ async function runnerProcess(
                 await baseLogger.flush({ url, runId: runConfig.runId });
             }
         }
+        if (process.send) {
+            process.send({ runId: runConfig.runId, task: "finished" });
+        }
         return 0;
     } catch (e) {
+        if (process.send) {
+            process.send({ runId: runConfig.runId, task: "dead" });
+        }
         printStatus(runConfig, `error: loading test`);
+        console.log(`error: loading test`);
         console.error(e);
         return -1;
     }
@@ -225,7 +255,7 @@ function scheduleFaultInjection(
     faultInjectionMaxMs: number) {
     const schedule = () => {
         const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
-        printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
+        // printStatus(runConfig, `fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`);
         setTimeout(() => {
             if (container.connected && container.resolvedUrl !== undefined) {
                 const deltaConn =
@@ -237,12 +267,18 @@ function scheduleFaultInjection(
                     switch (random.integer(0, 5)(runConfig.randEng)) {
                         // dispreferr errors
                         case 0: {
+                            if (process.send) {
+                                process.send({ runId: runConfig.runId, task: `error ${canRetry ? "(retry)" : ""}` });
+                            }
                             deltaConn.injectError(canRetry);
                             printStatus(runConfig, `error injected canRetry:${canRetry}`);
                             break;
                         }
                         case 1:
                         case 2: {
+                            if (process.send) {
+                                process.send({ runId: runConfig.runId, task: "disconnect" });
+                            }
                             deltaConn.injectDisconnect();
                             printStatus(runConfig, "disconnect injected");
                             break;
@@ -250,6 +286,9 @@ function scheduleFaultInjection(
                         case 3:
                         case 4:
                         default: {
+                            if (process.send) {
+                                process.send({ runId: runConfig.runId, task: `nack ${canRetry ? "(retry)" : ""}` });
+                            }
                             deltaConn.injectNack(container.id, canRetry);
                             printStatus(runConfig, `nack injected canRetry:${canRetry}`);
                             break;
@@ -275,12 +314,13 @@ function scheduleContainerClose(
         container.once("closed", res);
         if (!container.connected && !container.closed) {
             container.once("connected", () => {
-                res();
                 container.off("closed", res);
+                res();
             });
         }
     }).then(() => {
         if (container.closed) {
+            printStatus(runConfig, "skipping container close; container already closed!");
             return;
         }
         const quorum = container.getQuorum();
@@ -298,10 +338,14 @@ function scheduleContainerClose(
                 if (quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
                     quorum.off("removeMember", scheduleLeave);
                     const leaveTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs)(runConfig.randEng);
-                    printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0, 4)} min`);
+                    // printStatus(runConfig, `closing in ${(leaveTime / 60000).toString().substring(0, 4)} min`);
                     setTimeout(
                         () => {
                             if (!container.closed) {
+                                if (process.send) {
+                                    process.send({ runId: runConfig.runId, task: "closing" });
+                                }
+                                printStatus(runConfig, "closing");
                                 container.close();
                             }
                         },
@@ -312,6 +356,7 @@ function scheduleContainerClose(
         quorum.on("removeMember", scheduleLeave);
         scheduleLeave();
     }).catch(async (e) => {
+        console.log("ScheduleLeaveFailed", e);
         await loggerP.then(async (l) => l.sendErrorEvent({
             eventName: "ScheduleLeaveFailed", runId: runConfig.runId,
         }, e));

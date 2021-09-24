@@ -21,8 +21,8 @@
         "mini": {
             "opRatePerMin": 60,
             "progressIntervalMs": 5000,
-            "numClients": 2,
-            "totalSendCount": 30,
+            "numClients": 10,
+            "totalSendCount": 300,
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 50000

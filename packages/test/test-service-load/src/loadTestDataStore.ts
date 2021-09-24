@@ -3,21 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
-    DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {ISharedCounter, SharedCounter} from "@fluidframework/counter";
-import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
-import { IDirectory, ISharedDirectory } from "@fluidframework/map";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import random from "random-js";
+import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
+import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { assert, delay } from "@fluidframework/common-utils";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { delay, assert } from "@fluidframework/common-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -48,7 +44,10 @@ class LoadTestDataStoreModel {
         root.set(taskManagerKey, TaskManager.create(runtime).handle);
     }
 
-    private static async waitForCatchup(runtime: IFluidDataStoreRuntime): Promise<void> {
+    private static async waitForCatchup(runtime: IFluidDataStoreRuntime, runId: number): Promise<void> {
+        if (process.send) {
+            process.send({ runId, task: "waitForCatchup" });
+        }
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
         assert(runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
             "lastKnownSeqNumber should never be below last processed sequence number");
@@ -56,16 +55,22 @@ class LoadTestDataStoreModel {
             return;
         }
 
-        return new Promise<void>((resolve, reject) => {
+        console.log(runId, "waiting at", runtime.deltaManager.lastSequenceNumber, "for", lastKnownSeq);
+
+        return timeoutP(new Promise<void>((resolve, reject) => {
+            let timeout = setTimeout(() => console.log(runId, "stuck at", lastKnownSeq), 10000);
             if (runtime.disposed) {
                 reject(new Error("disposed"));
             }
 
             const opListener = (op: ISequencedDocumentMessage) => {
+                clearTimeout(timeout);
                 if (lastKnownSeq <= op.sequenceNumber) {
                     runtime.deltaManager.off("op", opListener);
                     runtime.off("dispose", disposeListener);
                     resolve();
+                } else {
+                    timeout = setTimeout(() => console.log(runId, "stuck at", op.sequenceNumber), 10000);
                 }
             };
 
@@ -77,7 +82,7 @@ class LoadTestDataStoreModel {
 
             runtime.deltaManager.on("op", opListener);
             runtime.on("dispose", disposeListener);
-        });
+        }), "waitForCatchup timeout");
     }
 
     /**
@@ -118,7 +123,10 @@ class LoadTestDataStoreModel {
         runtime: IFluidDataStoreRuntime,
         containerRuntime: IContainerRuntimeBase,
     ) {
-        await LoadTestDataStoreModel.waitForCatchup(runtime);
+        await LoadTestDataStoreModel.waitForCatchup(runtime, config.runId);
+        if (process.send) {
+            process.send({ runId: config.runId, task: "caught up" });
+        }
 
         if(!root.hasSubDirectory(config.runId.toString())) {
             root.createSubDirectory(config.runId.toString());
@@ -156,7 +164,7 @@ class LoadTestDataStoreModel {
         );
 
         if(reset) {
-            await LoadTestDataStoreModel.waitForCatchup(runtime);
+            await LoadTestDataStoreModel.waitForCatchup(runtime, config.runId);
             runDir.set(startTimeKey,Date.now());
             runDir.delete(taskTimeKey);
             counter.increment(-1 * counter.value);
@@ -275,7 +283,11 @@ class LoadTestDataStoreModel {
         }
     }
 
-    public printStatus() {
+    public printStatus(message?: string) {
+        if (message !== undefined) {
+            console.log(`${this.config.runId.toString().padStart(3)}> ${message}`);
+            return;
+        }
         if(this.config.verbose) {
             const now = Date.now();
             const totalMin = (now - this.startTime) / 60000;
@@ -298,6 +310,11 @@ class LoadTestDataStoreModel {
     }
 }
 
+const timeoutP = async <T>(p: Promise<T>, m: string, t: number = 120000): Promise<T> => {
+    const e = new Error(m);
+    return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(e), t))]);
+};
+
 class LoadTestDataStore extends DataObject implements ILoadTest {
     public static DataStoreName = "StressTestDataStore";
 
@@ -308,8 +325,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean) {
-        const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
-            config, reset, this.root, this.runtime, this.context.containerRuntime);
+        if (process.send) {
+            process.send({ runId: config.runId, task: "init" });
+        }
+        const dataModel = await timeoutP(LoadTestDataStoreModel.createRunnerInstance(
+            config, reset, this.root, this.runtime, this.context.containerRuntime), "createRunnerInstance timeout");
 
          // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
@@ -317,16 +337,20 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         // and listen cycles
 
         const cycleMs = config.testConfig.readWriteCycleMs;
+        const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         let t: NodeJS.Timeout | undefined;
+        let lastPrint = 0;
         if(config.verbose) {
             const printProgress = () => {
-                dataModel.printStatus();
+                if (dataModel.counter.value - (clientSendCount / 4) * lastPrint > (clientSendCount / 4)) {
+                    ++lastPrint;
+                    dataModel.printStatus();
+                }
                 t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
             };
             t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
-        const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
         try{
@@ -335,11 +359,15 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                 // leading to a slow ramp down. so if there are less than half the clients
                 // and it's partner is done, return true to complete the runner.
                 if(this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
-                    && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
+                    && ((await timeoutP(dataModel.getPartnerCounter(),
+                    "getPartnerCounter timeout"))?.value ?? 0) >= clientSendCount) {
                     return true;
                 }
 
                 if(dataModel.haveTaskLock()) {
+                    if (process.send) {
+                        process.send({ runId: config.runId, task: "count" });
+                    }
                     dataModel.counter.increment(1);
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         dataModel.abandonTask();
@@ -350,10 +378,24 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         await delay(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
                     }
                 }else{
-                    await dataModel.lockTask();
+                    if (process.send) {
+                        process.send({ runId: config.runId, task: "wait" });
+                    }
+                    let printed = false;
+                    const timeout = setTimeout(() => {
+                        printed = true;
+                        dataModel.printStatus("Waiting for lock...");
+                    }, cycleMs * 2);
+                    await timeoutP(dataModel.lockTask(), `${config.runId} timeout waiting for lock`);
+                    if (printed) {
+                        dataModel.printStatus("got lock");
+                    } else {
+                        clearTimeout(timeout);
+                    }
                 }
             }
-            return !this.runtime.disposed;
+            // return !this.runtime.disposed;
+            return !this.disposed;
         }finally{
             if(t !== undefined) {
                 clearTimeout(t);

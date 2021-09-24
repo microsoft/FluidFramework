@@ -20,7 +20,7 @@ export const defaultTimeoutDurationMs = 250;
     executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void,
     timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ): Promise<T | void> {
-    // create the timeout error outside the async task, so it's callstack includes
+    // create the timeout error outside the async task, so its callstack includes
     // the original call site, this makes it easier to debug
     const err = timeoutOptions.reject === false
         ? undefined

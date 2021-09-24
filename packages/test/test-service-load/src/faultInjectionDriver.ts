@@ -161,6 +161,7 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
             "error",
             new FaultInjectionError("FaultInjectionError", canRetry));
     }
+
     public injectDisconnect() {
         assert(!this.disposed, "cannot inject disconnect into closed delta connection");
         this.emit("disconnect","FaultInjectionDisconnect");
