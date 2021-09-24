@@ -189,6 +189,17 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @public (undocumented)
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
+// @public
+export class InsecureUrlResolver implements IUrlResolver {
+    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
+    // (undocumented)
+    createCreateNewRequest(fileName: string): IRequest;
+    // (undocumented)
+    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
+    // (undocumented)
+    resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
+    }
+
 // @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
