@@ -8,6 +8,7 @@
     "@fluid-experimental/task-manager",
     "@fluidframework/aqueduct",
     "@fluidframework/azure-client",
+    "@fluidframework/azure-local-service",
     "@fluidframework/cell",
     "@fluidframework/common-definitions",
     "@fluidframework/common-utils",
