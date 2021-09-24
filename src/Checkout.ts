@@ -77,7 +77,10 @@ export enum EditValidationResult {
  * `SharedTree` used at construction time.
  * @public
  */
-export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
+export abstract class Checkout<TChange, TFailure = unknown>
+	extends EventEmitterWithErrorHandling<ICheckoutEvents>
+	implements IDisposable
+{
 	/**
 	 * The view of the latest committed revision.
 	 * Does not include changes from any open edits.
@@ -95,18 +98,18 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	/**
 	 * A handler for 'committedEdit' SharedTreeEvent
 	 */
-	private readonly editCommittedHandler: EditCommittedHandler<GenericSharedTree<TChange>>;
+	private readonly editCommittedHandler: EditCommittedHandler<GenericSharedTree<TChange, TFailure>>;
 
 	/**
 	 * The shared tree this checkout views/edits.
 	 */
-	public readonly tree: GenericSharedTree<TChange>;
+	public readonly tree: GenericSharedTree<TChange, TFailure>;
 
 	/**
 	 * `tree`'s log viewer as a CachingLogViewer if it is one, otherwise undefined.
 	 * Used for optimizations if provided.
 	 */
-	private readonly cachingLogViewer?: CachingLogViewer<TChange>;
+	private readonly cachingLogViewer?: CachingLogViewer<TChange, TFailure>;
 
 	/**
 	 * Holds the state required to manage the currently open edit.
@@ -120,9 +123,9 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	public disposed: boolean = false;
 
 	protected constructor(
-		tree: GenericSharedTree<TChange>,
+		tree: GenericSharedTree<TChange, TFailure>,
 		currentView: RevisionView,
-		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>
+		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange, TFailure>>
 	) {
 		super();
 		this.tree = tree;

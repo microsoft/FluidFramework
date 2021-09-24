@@ -142,7 +142,7 @@ export class SharedTreeWithAnchorsEditor {
  * @public
  * @sealed
  */
-export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange> {
+export class SharedTreeWithAnchors extends GenericSharedTree<AnchoredChange, TransactionWithAnchors.Failure> {
 	/**
 	 * Create a new SharedTreeWithAnchors. It will contain the default value (see initialTree).
 	 */

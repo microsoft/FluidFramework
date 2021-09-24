@@ -19,6 +19,7 @@ import {
 	Checkout,
 	CheckoutEvent,
 	Change,
+	Transaction,
 } from '../index';
 import {
 	left,
@@ -36,11 +37,11 @@ import {
  */
 export function checkoutTests(
 	suiteName: string,
-	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change>>
+	checkoutFactory: (tree: SharedTree) => Promise<Checkout<Change, Transaction.Failure>>
 ): Mocha.Suite {
 	async function setUpTestCheckout(
 		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
-	): Promise<{ checkout: Checkout<Change>; tree: SharedTree }> {
+	): Promise<{ checkout: Checkout<Change, Transaction.Failure>; tree: SharedTree }> {
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
@@ -52,7 +53,10 @@ export function checkoutTests(
 	 * @param options Options object used to construct the initial SharedTree
 	 */
 	async function countViewChange(
-		action: (checkout: Checkout<Change>, data: { changeCount: number }) => void | Promise<void>,
+		action: (
+			checkout: Checkout<Change, Transaction.Failure>,
+			data: { changeCount: number }
+		) => void | Promise<void>,
 		options: SharedTreeTestingOptions = { localMode: true }
 	): Promise<number> {
 		const { checkout } = await setUpTestCheckout(options);

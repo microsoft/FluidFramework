@@ -6,7 +6,14 @@
 import { expect } from 'chai';
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { ChangeNode } from '../generic';
-import { StablePlace, StableRange, ConstraintEffect } from '../default-edits';
+import {
+	StablePlace,
+	StableRange,
+	ConstraintEffect,
+	RangeValidationResultKind,
+	PlaceValidationResult,
+	ChangeType,
+} from '../default-edits';
 import {
 	AnchoredChange,
 	PlaceAnchor,
@@ -21,10 +28,15 @@ import {
 	updateRelativePlaceAnchorForChange,
 	updateRelativePlaceAnchorForPath,
 	EvaluatedChange,
+	PlaceResolutionFailure,
+	RangeUpdateFailureKind,
+	ResolutionFailureKind,
+	PlaceUpdateFailureKind,
+	PlaceUpdateDeletedParentFailure,
+	PlaceUpdateFailure,
 } from '../anchored-edits';
-import { assert, fail } from '../Common';
+import { assert, fail, Result } from '../Common';
 import { RevisionView, Side, TreeView, TransactionView } from '../TreeView';
-import { EditValidationResult } from '../Checkout';
 import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from '../ReconciliationPath';
 import { makeEmptyNode, leftTraitLabel, rightTraitLabel } from './utilities/TestUtilities';
 
@@ -72,6 +84,17 @@ const mockView = 'mock-view' as unknown as TransactionView;
 const mockPath = 'mock-path' as unknown as ReconciliationPath<AnchoredChange>;
 const mockEvaluatedChange = 'mock-evaluated-change' as unknown as EvaluatedChange<AnchoredChange>;
 
+const placeUpdateFailure = Result.error<PlaceUpdateFailure>({
+	kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
+	place: mockPlace,
+});
+
+const unresolvedPlaceResult = Result.error<PlaceResolutionFailure>({
+	kind: ResolutionFailureKind.UnresolvedPlace,
+	originalPlace: mockPlace,
+	placeFailure: placeUpdateFailure.error,
+});
+
 describe('Anchor Glass Box Tests', () => {
 	describe(resolveChangeAnchors.name, () => {
 		const testCases = [
@@ -105,17 +128,31 @@ describe('Anchor Glass Box Tests', () => {
 			it(`attempts to resolve anchors in ${testCase.name} changes`, () => {
 				const change = testCase.input;
 				const actualHappy = resolveChangeAnchors(change, mockView, [], {
-					nodeResolver: () => mockNodeId,
-					placeResolver: () => mockPlace,
-					rangeResolver: () => mockRange,
+					nodeResolver: () => Result.ok(mockNodeId),
+					placeResolver: () => Result.ok(mockPlace),
+					rangeResolver: () => Result.ok(mockRange),
 				});
-				expect(actualHappy).deep.equal(testCase.expected);
+				expect(actualHappy).deep.equal(Result.ok(testCase.expected));
 				const actualSad = resolveChangeAnchors(change, mockView, [], {
-					nodeResolver: () => undefined,
-					placeResolver: () => undefined,
-					rangeResolver: () => undefined,
+					nodeResolver: () =>
+						Result.error({
+							kind: ResolutionFailureKind.UnresolvedID,
+							id: mockNodeId,
+						}),
+					placeResolver: () => unresolvedPlaceResult,
+					rangeResolver: () =>
+						Result.error({
+							kind: ResolutionFailureKind.UnresolvedRange,
+							originalRange: mockRange,
+							rangeFailure: {
+								kind: RangeUpdateFailureKind.ResolvedPlacesMakeBadRange,
+								resolvedStart: mockPlace,
+								resolvedEnd: mockPlace,
+								rangeFailure: RangeValidationResultKind.Inverted,
+							},
+						}),
 				});
-				expect(actualSad).equal(undefined);
+				expect(actualSad.type).equal(Result.ResultType.Error);
 			});
 		}
 
@@ -128,12 +165,17 @@ describe('Anchor Glass Box Tests', () => {
 	describe(resolveNodeAnchor.name, () => {
 		it('returns the given NodeAnchor as a NodeId if the node exists in the view', () => {
 			const view = RevisionView.fromTree(left);
-			expect(resolveNodeAnchor(left.identifier, view, [])).equals(left.identifier);
+			expect(resolveNodeAnchor(left.identifier, view, [])).deep.equals(Result.ok(left.identifier));
 		});
 
-		it('returns undefined if the node does not exists in the view', () => {
+		it('returns an error if the node does not exist in the view', () => {
 			const view = RevisionView.fromTree(left);
-			expect(resolveNodeAnchor(mockNodeId, view, [])).equals(undefined);
+			expect(resolveNodeAnchor(mockNodeId, view, [])).deep.equals(
+				Result.error({
+					kind: ResolutionFailureKind.UnresolvedID,
+					id: mockNodeId,
+				})
+			);
 		});
 	});
 
@@ -141,40 +183,69 @@ describe('Anchor Glass Box Tests', () => {
 		it('returns a range with resolved places when possible', () => {
 			expect(
 				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
-					placeResolver: () => mockPlace,
-					rangeValidator: () => EditValidationResult.Valid,
+					placeResolver: () => Result.ok(mockPlace),
+					rangeValidator: () => RangeValidationResultKind.Valid,
 				})
-			).deep.equals(RangeAnchor.from(mockPlace).to(mockPlace));
+			).deep.equals(Result.ok(RangeAnchor.from(mockPlace).to(mockPlace)));
 		});
 
-		it('returns undefined if either place cannot be resolved', () => {
+		it('returns an error if either place cannot be resolved', () => {
+			const originalRange = RangeAnchor.only(left);
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
-					placeResolver: (place: PlaceAnchor) => (place.side === Side.After ? mockPlace : undefined),
-					rangeValidator: () => EditValidationResult.Valid,
+				resolveRangeAnchor(originalRange, mockView, [], {
+					placeResolver: (place: PlaceAnchor) =>
+						place.side === Side.After ? Result.ok(mockPlace) : unresolvedPlaceResult,
+					rangeValidator: () => RangeValidationResultKind.Valid,
 				})
-			).equals(undefined);
+			).deep.equals(
+				Result.error({
+					kind: ResolutionFailureKind.UnresolvedRange,
+					originalRange,
+					rangeFailure: {
+						kind: RangeUpdateFailureKind.PlaceUpdateFailure,
+						place: originalRange.start,
+						placeFailure: placeUpdateFailure.error,
+					},
+				})
+			);
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
-					placeResolver: (place: PlaceAnchor) => (place.side === Side.Before ? undefined : mockPlace),
-					rangeValidator: () => EditValidationResult.Valid,
+				resolveRangeAnchor(originalRange, mockView, [], {
+					placeResolver: (place: PlaceAnchor) =>
+						place.side === Side.Before ? Result.ok(mockPlace) : unresolvedPlaceResult,
+					rangeValidator: () => RangeValidationResultKind.Valid,
 				})
-			).equals(undefined);
+			).deep.equals(
+				Result.error({
+					kind: ResolutionFailureKind.UnresolvedRange,
+					originalRange,
+					rangeFailure: {
+						kind: RangeUpdateFailureKind.PlaceUpdateFailure,
+						place: originalRange.end,
+						placeFailure: placeUpdateFailure.error,
+					},
+				})
+			);
 		});
 
-		it('returns undefined the resolved places do not make a valid range', () => {
+		it('returns an error if the resolved places do not make a valid range', () => {
+			const originalRange = RangeAnchor.only(left);
 			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
-					placeResolver: () => mockPlace,
-					rangeValidator: () => EditValidationResult.Malformed,
+				resolveRangeAnchor(originalRange, mockView, [], {
+					placeResolver: () => Result.ok(mockPlace),
+					rangeValidator: () => RangeValidationResultKind.Inverted,
 				})
-			).equals(undefined);
-			expect(
-				resolveRangeAnchor(RangeAnchor.only(left), mockView, [], {
-					placeResolver: () => mockPlace,
-					rangeValidator: () => EditValidationResult.Invalid,
+			).deep.equals(
+				Result.error({
+					kind: ResolutionFailureKind.UnresolvedRange,
+					originalRange,
+					rangeFailure: {
+						kind: RangeUpdateFailureKind.ResolvedPlacesMakeBadRange,
+						resolvedStart: mockPlace,
+						resolvedEnd: mockPlace,
+						rangeFailure: RangeValidationResultKind.Inverted,
+					},
 				})
-			).equals(undefined);
+			);
 		});
 	});
 
@@ -182,35 +253,48 @@ describe('Anchor Glass Box Tests', () => {
 		it('returns the given anchor when that anchor is valid in the current view', () => {
 			const view = RevisionView.fromTree(initialTree);
 			const testWithPlace = (place) => resolvePlaceAnchor(place, view, []);
-			expect(testWithPlace(startPlace)).contains(startPlace);
-			expect(testWithPlace(endPlace)).contains(endPlace);
-			expect(testWithPlace(beforePlace)).contains(beforePlace);
-			expect(testWithPlace(afterPlace)).contains(afterPlace);
-			expect(testWithPlace(PlaceAnchor.atStartOf(leftTraitLocation))).contains(startPlace);
-			expect(testWithPlace(PlaceAnchor.atEndOf(leftTraitLocation))).contains(endPlace);
-			expect(testWithPlace(PlaceAnchor.before(left))).contains(beforePlace);
-			expect(testWithPlace(PlaceAnchor.after(left))).contains(afterPlace);
+			expect(testWithPlace(startPlace)).deep.equals(Result.ok(startPlace));
+			expect(testWithPlace(endPlace)).deep.equals(Result.ok(endPlace));
+			expect(testWithPlace(beforePlace)).deep.equals(Result.ok(beforePlace));
+			expect(testWithPlace(afterPlace)).deep.equals(Result.ok(afterPlace));
+			expect(testWithPlace(startAnchor)).deep.equals(Result.ok(startAnchor));
+			expect(testWithPlace(endAnchor)).deep.equals(Result.ok(endAnchor));
+			expect(testWithPlace(beforeAnchor)).deep.equals(Result.ok(beforeAnchor));
+			expect(testWithPlace(afterAnchor)).deep.equals(Result.ok(afterAnchor));
 		});
 
-		it('returns undefined when the anchor is invalid and not updatable', () => {
+		it('returns an error when that anchor is invalid and its update fails', () => {
 			expect(
-				resolvePlaceAnchor(mockPlace, mockView, [], {
-					placeUpdatorForPath: () => undefined,
-					placeValidator: () => EditValidationResult.Invalid,
+				resolvePlaceAnchor(afterAnchor, mockView, [], {
+					placeUpdatorForPath: () => placeUpdateFailure,
+					placeValidator: () => PlaceValidationResult.MissingParent,
 				})
-			).equals(undefined);
+			).deep.equals(
+				Result.error({
+					kind: ResolutionFailureKind.UnresolvedPlace,
+					originalPlace: afterAnchor,
+					placeFailure: {
+						kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
+						place: mockPlace,
+					},
+				})
+			);
 		});
 
-		it('returns undefined when the anchor is invalid and bound to the node', () => {
+		it('returns the given anchor when that anchor is invalid and not updatable', () => {
 			const resolvePlaceAnchorForInvalidPlace = (place) =>
 				resolvePlaceAnchor(place, mockView, [], {
-					placeUpdatorForPath: () => fail(),
-					placeValidator: () => EditValidationResult.Invalid,
+					placeUpdatorForPath: () =>
+						fail('The place updator should not be called for places that are not updatable'),
+					placeValidator: () => PlaceValidationResult.MissingParent,
 				});
-			expect(resolvePlaceAnchorForInvalidPlace(startPlace)).equals(undefined);
-			expect(resolvePlaceAnchorForInvalidPlace(endPlace)).equals(undefined);
-			expect(resolvePlaceAnchorForInvalidPlace(beforePlace)).equals(undefined);
-			expect(resolvePlaceAnchorForInvalidPlace(afterPlace)).equals(undefined);
+			function testPlace(place: StablePlace): void {
+				expect(resolvePlaceAnchorForInvalidPlace(place)).deep.equals(Result.ok(place));
+			}
+			testPlace(startPlace);
+			testPlace(endPlace);
+			testPlace(beforePlace);
+			testPlace(afterPlace);
 		});
 
 		it('returns an updated anchor when the anchor is invalid but updatable to be valid', () => {
@@ -220,48 +304,57 @@ describe('Anchor Glass Box Tests', () => {
 			const placeUpdatorForPath = (
 				place: RelativePlaceAnchor,
 				path: ReconciliationPath<AnchoredChange>
-			): PlaceAnchor | undefined => {
+			): Result<PlaceAnchor, PlaceUpdateFailure> => {
 				expect(place).equals(inputPlace);
 				expect(path).equals(mockPath);
-				return --updateCountdown ? inputPlace : afterAnchor;
+				return --updateCountdown ? Result.ok(inputPlace) : Result.ok(afterAnchor);
 			};
 			const placeValidator = (view, place) => {
 				expect(view).equals(inputView);
-				return place === inputPlace ? EditValidationResult.Invalid : EditValidationResult.Valid;
+				return place === inputPlace ? PlaceValidationResult.MissingParent : PlaceValidationResult.Valid;
 			};
 			expect(
 				resolvePlaceAnchor(inputPlace, inputView, mockPath, {
 					placeUpdatorForPath,
 					placeValidator,
 				})
-			).contains(PlaceAnchor.after(left));
+			).deep.equals(Result.ok(PlaceAnchor.after(left)));
 			// Check that it took the expected number of updates
 			expect(updateCountdown).equals(0);
 		});
 
-		it('returns undefined when the anchor is invalid and updatable to be invalid', () => {
+		it('returns an error when the anchor is invalid and updatable to be invalid', () => {
 			let updateCountdown = 5;
 			const inputView = RevisionView.fromTree(initialTree);
 			const inputPlace = PlaceAnchor.after(mockNodeId);
 			const placeUpdatorForPath = (
 				place: RelativePlaceAnchor,
 				path: ReconciliationPath<AnchoredChange>
-			): PlaceAnchor | undefined => {
+			): Result<PlaceAnchor, PlaceUpdateFailure> => {
 				expect(place).equals(inputPlace);
 				expect(path).equals(mockPath);
-				return --updateCountdown ? inputPlace : undefined;
+				return --updateCountdown ? Result.ok(inputPlace) : placeUpdateFailure;
 			};
 			const placeValidator = (view, place) => {
 				expect(view).equals(inputView);
 				expect(place).equals(inputPlace);
-				return EditValidationResult.Invalid;
+				return PlaceValidationResult.MissingParent;
 			};
 			expect(
 				resolvePlaceAnchor(inputPlace, inputView, mockPath, {
 					placeUpdatorForPath,
 					placeValidator,
 				})
-			).equals(undefined);
+			).deep.equals(
+				Result.error({
+					kind: ResolutionFailureKind.UnresolvedPlace,
+					originalPlace: inputPlace,
+					placeFailure: {
+						kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
+						place: mockPlace,
+					},
+				})
+			);
 			// Check that it took the expected number of updates
 			expect(updateCountdown).equals(0);
 		});
@@ -274,8 +367,18 @@ describe('Anchor Glass Box Tests', () => {
 
 	describe(updateRelativePlaceAnchorForPath.name, () => {
 		it('does not update anchors for start and end of traits', () => {
-			expect(updateRelativePlaceAnchorForPath(startAnchor, [])).equals(undefined);
-			expect(updateRelativePlaceAnchorForPath(endAnchor, [])).equals(undefined);
+			expect(updateRelativePlaceAnchorForPath(startAnchor, [])).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
+					place: startAnchor,
+				})
+			);
+			expect(updateRelativePlaceAnchorForPath(endAnchor, [])).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
+					place: endAnchor,
+				})
+			);
 		});
 
 		it('does not update anchors when the last offending change is not found', () => {
@@ -284,7 +387,12 @@ describe('Anchor Glass Box Tests', () => {
 					lastOffendingChangeFinder: () => undefined,
 					placeUpdatorForChange: () => fail(),
 				})
-			).equals(undefined);
+			).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.PlaceWasNeverValid,
+					place: startAnchor,
+				})
+			);
 		});
 
 		it('tries to update anchors when the last offending change is found', () => {
@@ -294,20 +402,31 @@ describe('Anchor Glass Box Tests', () => {
 					placeUpdatorForChange: (place, change) => {
 						expect(place).equals(beforeAnchor);
 						expect(change).equals(mockEvaluatedChange);
-						return mockPlace;
+						return Result.ok(mockPlace);
 					},
 				})
-			).equals(mockPlace);
+			).deep.equals(Result.ok(mockPlace));
+
+			const error = Result.error<PlaceUpdateFailure>({
+				kind: PlaceUpdateFailureKind.DeletedParent,
+				place: beforeAnchor,
+				parent: mockNodeId,
+				detach: {
+					destination: mockDetachedSequenceId,
+					source: mockRange,
+					type: ChangeType.Detach,
+				},
+			});
 			expect(
 				updateRelativePlaceAnchorForPath(beforeAnchor, [], {
 					lastOffendingChangeFinder: () => mockEvaluatedChange,
 					placeUpdatorForChange: (place, change) => {
 						expect(place).equals(beforeAnchor);
 						expect(change).equals(mockEvaluatedChange);
-						return undefined;
+						return error;
 					},
 				})
-			).equals(undefined);
+			).deep.equals(error);
 		});
 	});
 
@@ -353,9 +472,9 @@ describe('Anchor Glass Box Tests', () => {
 			findLastOffendingChange(mockPlaceAnchor, path, {
 				placeValidator: (view) =>
 					view === invalidView
-						? EditValidationResult.Invalid
+						? PlaceValidationResult.MissingParent
 						: view === validView
-						? EditValidationResult.Valid
+						? PlaceValidationResult.Valid
 						: fail(),
 			});
 
@@ -452,7 +571,7 @@ describe('Anchor Glass Box Tests', () => {
 			},
 		];
 
-		function evaluateCase(caseIndex: number, anchor: RelativePlaceAnchor): PlaceAnchor | undefined {
+		function evaluatedChangeForCase(caseIndex: number) {
 			const before = RevisionView.fromTree({
 				...parent,
 				traits: { [leftTraitLabel]: rangesInSitu[caseIndex].trait },
@@ -467,6 +586,20 @@ describe('Anchor Glass Box Tests', () => {
 				before,
 				after,
 			};
+			return evaluatedChange;
+		}
+
+		function evaluateCase(
+			caseIndex: number,
+			anchor: RelativePlaceAnchor
+		): Result<PlaceAnchor, PlaceUpdateDeletedParentFailure> {
+			return evaluate(anchor, evaluatedChangeForCase(caseIndex));
+		}
+
+		function evaluate(
+			anchor: RelativePlaceAnchor,
+			evaluatedChange: EvaluatedChange<AnchoredChange>
+		): Result<PlaceAnchor, PlaceUpdateDeletedParentFailure> {
 			return updateRelativePlaceAnchorForChange(anchor, evaluatedChange);
 		}
 
@@ -478,8 +611,8 @@ describe('Anchor Glass Box Tests', () => {
 						rangesInSitu[i].trait[rangesInSitu[i].trait.length - 1] === nextSibling
 							? beforeNext
 							: endAnchor;
-					expect(evaluateCase(i, afterAnchor)).deep.equals(expectedAfter);
-					expect(evaluateCase(i, beforeAnchor)).deep.equals(expectedBefore);
+					expect(evaluateCase(i, afterAnchor)).deep.equals(Result.ok(expectedAfter));
+					expect(evaluateCase(i, beforeAnchor)).deep.equals(Result.ok(expectedBefore));
 				});
 			}
 		});
@@ -487,8 +620,23 @@ describe('Anchor Glass Box Tests', () => {
 		describe('does not update anchors for start and end of traits', () => {
 			for (let i = 0; i < rangesInSitu.length; ++i) {
 				it(`Test Case ${i}`, () => {
-					expect(evaluateCase(i, startAnchor)).equals(undefined);
-					expect(evaluateCase(i, endAnchor)).equals(undefined);
+					const evaluatedChange: EvaluatedChange<AnchoredChange> = evaluatedChangeForCase(i);
+					expect(evaluate(startAnchor, evaluatedChange)).deep.equals(
+						Result.error({
+							kind: PlaceUpdateFailureKind.DeletedParent,
+							place: startAnchor,
+							parent: leftTraitLocation.parent,
+							detach: evaluatedChange.change,
+						})
+					);
+					expect(evaluate(endAnchor, evaluatedChange)).deep.equals(
+						Result.error({
+							kind: PlaceUpdateFailureKind.DeletedParent,
+							place: endAnchor,
+							parent: leftTraitLocation.parent,
+							detach: evaluatedChange.change,
+						})
+					);
 				});
 			}
 		});
@@ -499,15 +647,44 @@ describe('Anchor Glass Box Tests', () => {
 				...initialTree,
 				traits: {},
 			}).openForTransaction();
+			const change = AnchoredChange.detach(RangeAnchor.only(parent));
 			const evaluatedChange: EvaluatedChange<AnchoredChange> = {
-				change: AnchoredChange.detach(RangeAnchor.only(parent)),
+				change,
 				before,
 				after,
 			};
-			expect(updateRelativePlaceAnchorForChange(startAnchor, evaluatedChange)).equals(undefined);
-			expect(updateRelativePlaceAnchorForChange(endAnchor, evaluatedChange)).equals(undefined);
-			expect(updateRelativePlaceAnchorForChange(afterAnchor, evaluatedChange)).equals(undefined);
-			expect(updateRelativePlaceAnchorForChange(beforeAnchor, evaluatedChange)).equals(undefined);
+			expect(updateRelativePlaceAnchorForChange(startAnchor, evaluatedChange)).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.DeletedParent,
+					place: startAnchor,
+					parent: leftTraitLocation.parent,
+					detach: change,
+				})
+			);
+			expect(updateRelativePlaceAnchorForChange(endAnchor, evaluatedChange)).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.DeletedParent,
+					place: endAnchor,
+					parent: leftTraitLocation.parent,
+					detach: change,
+				})
+			);
+			expect(updateRelativePlaceAnchorForChange(afterAnchor, evaluatedChange)).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.DeletedParent,
+					place: afterAnchor,
+					parent: leftTraitLocation.parent,
+					detach: change,
+				})
+			);
+			expect(updateRelativePlaceAnchorForChange(beforeAnchor, evaluatedChange)).deep.equals(
+				Result.error({
+					kind: PlaceUpdateFailureKind.DeletedParent,
+					place: beforeAnchor,
+					parent: leftTraitLocation.parent,
+					detach: change,
+				})
+			);
 		});
 	});
 });

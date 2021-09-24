@@ -16,7 +16,7 @@ import {
 	TransactionFailure,
 } from '../generic';
 import { AnchoredChange } from './PersistedTypes';
-import { resolveChangeAnchors } from './AnchorResolution';
+import { ResolutionFailure, resolveChangeAnchors } from './AnchorResolution';
 
 /**
  * A mutable transaction for applying sequences of changes to a TreeView.
@@ -35,7 +35,7 @@ export namespace TransactionWithAnchors {
 	/**
 	 * Makes a new {@link GenericTransaction} that follows the {@link TransactionWithAnchors.Policy} policy.
 	 */
-	export function factory(view: RevisionView): GenericTransaction<AnchoredChange> {
+	export function factory(view: RevisionView): GenericTransaction<AnchoredChange, Failure> {
 		return new GenericTransaction(view, new Policy());
 	}
 
@@ -44,24 +44,64 @@ export namespace TransactionWithAnchors {
 	/**
 	 * The policy followed by a {@link TransactionWithAnchors}.
 	 */
-	export class Policy implements GenericTransactionPolicy<AnchoredChange> {
+	export class Policy implements GenericTransactionPolicy<AnchoredChange, Failure> {
 		private readonly basePolicy = new Transaction.Policy();
 
 		public tryResolveChange(
 			state: ValidState,
 			change: AnchoredChange,
 			path: ReconciliationPath<AnchoredChange>
-		): Result<AnchoredChange, TransactionFailure> {
-			const resolved = resolveChangeAnchors(change, state.view, path);
-			return resolved === undefined ? Result.error({ status: EditStatus.Invalid }) : Result.ok(resolved);
+		): Result<AnchoredChange, TransactionFailure<Failure>> {
+			const result = resolveChangeAnchors(change, state.view, path);
+			return Result.isOk(result)
+				? result
+				: Result.error({
+						status: EditStatus.Invalid,
+						failure: { kind: FailureKind.ResolutionFailure, change, resolutionFailure: result.error },
+				  });
 		}
 
-		public validateOnClose(state: ValidState): ChangeResult {
-			return this.basePolicy.validateOnClose(state);
+		public validateOnClose(state: ValidState): ChangeResult<Failure> {
+			return Result.mapError(this.basePolicy.validateOnClose(state), wrapBasicError);
 		}
 
-		public dispatchChange(state: ValidState, change: AnchoredChange): ChangeResult {
-			return this.basePolicy.dispatchChange(state, change);
+		public dispatchChange(state: ValidState, change: AnchoredChange): ChangeResult<Failure> {
+			return Result.mapError(this.basePolicy.dispatchChange(state, change), wrapBasicError);
 		}
 	}
+
+	/**
+	 * The kinds of failures that a transaction with anchors might encounter.
+	 */
+	export enum FailureKind {
+		BadBasicTransaction = 'BadBasicTransaction',
+		ResolutionFailure = 'ResolutionFailure',
+	}
+
+	/**
+	 * A failure encountered by a transaction with anchors.
+	 */
+	export type Failure =
+		| {
+				kind: FailureKind.BadBasicTransaction;
+				basicFailure: Transaction.Failure;
+		  }
+		| {
+				kind: FailureKind.ResolutionFailure;
+				change: AnchoredChange;
+				resolutionFailure: ResolutionFailure;
+		  };
+}
+
+function wrapBasicError({
+	status,
+	failure,
+}: TransactionFailure<Transaction.Failure>): TransactionFailure<TransactionWithAnchors.Failure> {
+	return {
+		status,
+		failure: {
+			kind: TransactionWithAnchors.FailureKind.BadBasicTransaction,
+			basicFailure: failure,
+		},
+	};
 }

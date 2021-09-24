@@ -105,9 +105,12 @@ export const leftTraitLabel = 'left' as TraitLabel;
 /** Label for the 'right' trait in 'simpleTestTree' */
 export const rightTraitLabel = 'right' as TraitLabel;
 
+/** NodeId for the root node of `simpleTestTree` */
+export const rootNodeId = '25de3875-9537-47ec-8699-8a85e772a509' as NodeId;
+
 /** A simple, three node tree useful for testing. Contains one node under a 'left' trait and one under a 'right' trait. */
 export const simpleTestTree: ChangeNode = {
-	...makeEmptyNode('25de3875-9537-47ec-8699-8a85e772a509' as NodeId),
+	...makeEmptyNode(rootNodeId),
 	traits: { [leftTraitLabel]: [left], [rightTraitLabel]: [right] },
 };
 
@@ -355,7 +358,7 @@ async function setUpLocalServerTestSharedTreeGeneric<
 
 /** Sets testTrait to contain `node`. */
 export function setTestTree<TExtraChangeTypes = never>(
-	tree: GenericSharedTree<TExtraChangeTypes | Change>,
+	tree: GenericSharedTree<TExtraChangeTypes | Change, any>,
 	node: ChangeNode,
 	overrideId?: EditId
 ): EditId {
@@ -419,7 +422,7 @@ export function createStableEdits(numberOfEdits: number): Edit<Change>[] {
 }
 
 /** Asserts that changes to SharedTree in editor() function do not cause any observable state change */
-export function assertNoDelta<TChange>(tree: GenericSharedTree<TChange>, editor: () => void) {
+export function assertNoDelta(tree: GenericSharedTree<any, any>, editor: () => void) {
 	const viewA = tree.currentView;
 	editor();
 	const viewB = tree.currentView;

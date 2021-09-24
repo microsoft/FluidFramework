@@ -49,7 +49,7 @@ export namespace MockTransaction {
 		public validateOnClose(state): ChangeResult {
 			return this.options.statusOnClose === EditStatus.Applied
 				? Result.ok(state.view)
-				: Result.error({ status: this.options.statusOnClose });
+				: Result.error({ status: this.options.statusOnClose, failure: undefined });
 		}
 
 		public dispatchChange(state): ChangeResult {

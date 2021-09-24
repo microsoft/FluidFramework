@@ -16,7 +16,7 @@ import { getSummaryByVersion } from './Summary';
  * @public
  * @sealed
  */
-export class SharedTree extends GenericSharedTree<Change> {
+export class SharedTree extends GenericSharedTree<Change, Transaction.Failure> {
 	/**
 	 * Create a new SharedTree. It will contain the default value (see initialTree).
 	 */

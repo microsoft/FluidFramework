@@ -14,12 +14,12 @@ import { EditCommittedEventArguments, GenericSharedTree } from './generic';
  * @public
  * @sealed
  */
-export class BasicCheckout<TChange> extends Checkout<TChange> {
+export class BasicCheckout<TChange, TFailure = unknown> extends Checkout<TChange, TFailure> {
 	/**
 	 * @param tree - the tree
 	 */
-	public constructor(tree: GenericSharedTree<TChange>) {
-		super(tree, tree.currentView, (args: EditCommittedEventArguments<GenericSharedTree<TChange>>) => {
+	public constructor(tree: GenericSharedTree<TChange, TFailure>) {
+		super(tree, tree.currentView, (args: EditCommittedEventArguments<GenericSharedTree<TChange, TFailure>>) => {
 			this.emitChange();
 		});
 	}

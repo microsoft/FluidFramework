@@ -7,8 +7,20 @@ import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
 import { EditStatus } from '../generic';
-import { Transaction, Change, ChangeType, ConstraintEffect, Insert, StableRange, StablePlace } from '../default-edits';
+import {
+	Transaction,
+	Change,
+	ChangeType,
+	ConstraintEffect,
+	Insert,
+	StableRange,
+	StablePlace,
+	RangeValidationResultKind,
+	PlaceValidationResult,
+} from '../default-edits';
 import { Side } from '../TreeView';
+import { assert } from '../Common';
+import { initialTree } from '../InitialTree';
 import {
 	makeEmptyNode,
 	testTrait,
@@ -41,12 +53,27 @@ describe('Transaction', () => {
 		};
 		it('can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
-			transaction.applyChange({
+			const constraint = {
 				toConstrain: invalidStableRange,
 				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-			});
+				type: ChangeType.Constraint as ChangeType.Constraint,
+			};
+			transaction.applyChange(constraint);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.ConstraintViolation,
+				constraint,
+				violation: {
+					kind: Transaction.ConstraintViolationKind.BadRange,
+					rangeFailure: {
+						kind: RangeValidationResultKind.BadPlace,
+						place: invalidStableRange.start,
+						placeFailure: PlaceValidationResult.MissingSibling,
+					},
+				},
+			});
 		});
 		it('effect can apply anyway', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
@@ -69,13 +96,24 @@ describe('Transaction', () => {
 		});
 		it('length can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
-			transaction.applyChange({
+			const constraint = {
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
+				type: ChangeType.Constraint as ChangeType.Constraint,
 				length: 1,
-			});
+			};
+			transaction.applyChange(constraint);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.ConstraintViolation,
+				constraint,
+				violation: {
+					kind: Transaction.ConstraintViolationKind.BadLength,
+					actual: 0,
+				},
+			});
 		});
 		it('parent can be met', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
@@ -89,13 +127,24 @@ describe('Transaction', () => {
 		});
 		it('parent can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
-			transaction.applyChange({
+			const constraint = {
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
+				type: ChangeType.Constraint as ChangeType.Constraint,
 				parentNode: nonExistentNode,
-			});
+			};
+			transaction.applyChange(constraint);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.ConstraintViolation,
+				constraint,
+				violation: {
+					kind: Transaction.ConstraintViolationKind.BadParent,
+					actual: initialTree.identifier,
+				},
+			});
 		});
 		it('label can be met', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
@@ -109,25 +158,45 @@ describe('Transaction', () => {
 		});
 		it('label can be unmet', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
-			transaction.applyChange({
+			const constraint = {
 				toConstrain: StableRange.all(testTrait),
 				effect: ConstraintEffect.InvalidAndDiscard,
-				type: ChangeType.Constraint,
-				label: '7969ee2e-5418-43db-929a-4e9a23c5499d' as TraitLabel, // Arbitrary label not equal to testTrait.label
-			});
+				type: ChangeType.Constraint as ChangeType.Constraint,
+				label: '7969ee2e-5418-43db-929a-4e9a23c5499d' as TraitLabel,
+			};
+			transaction.applyChange(constraint);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.ConstraintViolation,
+				constraint,
+				violation: {
+					kind: Transaction.ConstraintViolationKind.BadLabel,
+					actual: testTrait.label,
+				},
+			});
 		});
 	});
 
 	describe('SetValue', () => {
-		it('can be invalid', () => {
+		it('can be invalid if the node does not exist', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
-			transaction.applyChange({
-				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, // Arbitrary id not equal to initialRevision.root
-				payload: {}, // Arbitrary payload.
-				type: ChangeType.SetValue,
-			});
+			const change = {
+				nodeToModify: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId,
+				payload: {},
+				type: ChangeType.SetValue as ChangeType.SetValue,
+			};
+			transaction.applyChange(change);
+
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.UnknownId,
+				change,
+				id: change.nodeToModify,
+			});
 		});
 
 		it('can change payload', () => {
@@ -185,29 +254,62 @@ describe('Transaction', () => {
 		const buildId = 0 as DetachedSequenceId;
 		const builtNodeId = uuidv4() as NodeId;
 		const newNode = makeEmptyNode(builtNodeId);
-		it('can be malformed', () => {
-			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
-			transaction.applyChange(Change.build([newNode], buildId));
-			transaction.applyChange(
-				Change.insert(
+		describe('can be malformed', () => {
+			it('when the detached sequence ID is bogus', () => {
+				const transaction = Transaction.factory(simpleRevisionViewWithValidation);
+				transaction.applyChange(Change.build([newNode], buildId));
+				const change = Change.insert(
 					// Non-existent detached id
 					1 as DetachedSequenceId,
 					{ referenceSibling: initialRevisionView.root, side: Side.After }
-				)
-			);
-			expect(transaction.status).equals(EditStatus.Malformed);
+				);
+				transaction.applyChange(change);
+				expect(transaction.status).equals(EditStatus.Malformed);
+				const result = transaction.close();
+				assert(result.status === EditStatus.Malformed);
+				expect(result.failure).deep.equals({
+					kind: Transaction.FailureKind.DetachedSequenceNotFound,
+					change,
+					sequenceId: change.source,
+				});
+			});
+			it('when the target place is malformed', () => {
+				const transaction = Transaction.factory(simpleRevisionViewWithValidation);
+				transaction.applyChange(Change.build([newNode], buildId));
+				const place = {
+					referenceTrait: leftTraitLocation,
+					referenceSibling: initialRevisionView.root,
+					side: Side.After,
+				};
+				const change = Change.insert(buildId, place);
+				transaction.applyChange(change);
+				expect(transaction.status).equals(EditStatus.Malformed);
+				const result = transaction.close();
+				assert(result.status === EditStatus.Malformed);
+				expect(result.failure).deep.equals({
+					kind: Transaction.FailureKind.BadPlace,
+					change,
+					place,
+					placeFailure: PlaceValidationResult.Malformed,
+				});
+			});
 		});
-		it('can be invalid', () => {
+		it('can be invalid when the target place is invalid', () => {
 			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
 			transaction.applyChange(Change.build([newNode], buildId));
-			transaction.applyChange(
-				Change.insert(
-					buildId,
-					// Arbitrary id not present in the tree
-					{ referenceSibling: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, side: Side.After }
-				)
-			);
+			// Arbitrary id not present in the tree
+			const place = { referenceSibling: '7969ee2e-5418-43db-929a-4e9a23c5499d' as NodeId, side: Side.After };
+			const change = Change.insert(buildId, place);
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.BadPlace,
+				change,
+				place,
+				placeFailure: PlaceValidationResult.MissingSibling,
+			});
 		});
 		[Side.Before, Side.After].forEach((side) => {
 			it(`can insert a node at the ${side === Side.After ? 'beginning' : 'end'} of a trait`, () => {
@@ -240,35 +342,57 @@ describe('Transaction', () => {
 			// Apply two Build_s with the same detached id
 			transaction.applyChange(Change.build([makeEmptyNode()], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
-			transaction.applyChange(Change.build([makeEmptyNode()], 0 as DetachedSequenceId));
+			const change = Change.build([makeEmptyNode()], 0 as DetachedSequenceId);
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Malformed);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.DetachedSequenceIdAlreadyInUse,
+				change,
+				sequenceId: change.destination,
+			});
 		});
 		it('can be malformed due to duplicate node identifiers', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			// Build two nodes with the same identifier, one of them nested
 			const newNode = makeEmptyNode();
-			transaction.applyChange(
-				Change.build(
-					[
-						newNode,
-						{
-							...makeEmptyNode(),
-							traits: { [leftTraitLabel]: [{ ...makeEmptyNode(), identifier: newNode.identifier }] },
-						},
-					],
-					0 as DetachedSequenceId
-				)
+			const change = Change.build(
+				[
+					newNode,
+					{
+						...makeEmptyNode(),
+						traits: { [leftTraitLabel]: [{ ...makeEmptyNode(), identifier: newNode.identifier }] },
+					},
+				],
+				0 as DetachedSequenceId
 			);
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Malformed);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.DuplicateIdInBuild,
+				change,
+				id: newNode.identifier,
+			});
 		});
-		it('can be invalid', () => {
+		it('can be invalid when a node already exists with the given identifier', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			// Build two nodes with the same identifier
 			const identifier = uuidv4() as NodeId;
 			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 0 as DetachedSequenceId));
 			expect(transaction.status).equals(EditStatus.Applied);
-			transaction.applyChange(Change.build([makeEmptyNode(identifier)], 1 as DetachedSequenceId));
+			const change = Change.build([makeEmptyNode(identifier)], 1 as DetachedSequenceId);
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.IdAlreadyInUse,
+				change,
+				id: identifier,
+			});
 		});
 		it('can build a detached node', () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
@@ -280,15 +404,23 @@ describe('Transaction', () => {
 			expect(transaction.view.getParentViewNode(identifier)).is.undefined;
 			expect(transaction.view.getChangeNode(identifier)).deep.equals(newNode);
 		});
-		it("is malformed if detached node id doesn't exist", () => {
+		it("can be malformed if detached sequence id doesn't exist", () => {
 			const transaction = Transaction.factory(initialRevisionViewWithValidation);
 			const detachedSequenceId = 0 as DetachedSequenceId;
-			transaction.applyChange({
+			const change = {
 				destination: 1 as DetachedSequenceId,
 				source: [detachedSequenceId],
-				type: ChangeType.Build,
-			});
+				type: ChangeType.Build as ChangeType.Build,
+			};
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Malformed);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.DetachedSequenceNotFound,
+				change,
+				sequenceId: detachedSequenceId,
+			});
 		});
 		it('can build a node with an explicit empty trait', () => {
 			// Forest should strip off the empty trait
@@ -307,27 +439,63 @@ describe('Transaction', () => {
 	});
 
 	describe('Detach', () => {
-		it('can be malformed', () => {
+		it('can be malformed if the target range is malformed', () => {
 			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
+			const place = { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before };
+			const range = {
+				start: place,
+				end: StablePlace.after(right),
+			};
+			const change = Change.detach(range);
 			// Supplied StableRange is malformed
-			transaction.applyChange(
-				Change.detach({
-					start: { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before },
-					end: StablePlace.after(right),
-				})
-			);
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Malformed);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Malformed);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.BadRange,
+				change,
+				range,
+				rangeFailure: {
+					kind: RangeValidationResultKind.BadPlace,
+					place,
+					placeFailure: PlaceValidationResult.Malformed,
+				},
+			});
 		});
-		it('can be invalid', () => {
+		it('can be malformed if the destination sequence id is already in use', () => {
 			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
+			transaction.applyChange(Change.detach(StableRange.only(left), 0 as DetachedSequenceId));
+			const change = Change.detach(StableRange.only(right), 0 as DetachedSequenceId);
+			// Supplied StableRange is malformed
+			transaction.applyChange(change);
+			expect(transaction.status).equals(EditStatus.Malformed);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Malformed);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.DetachedSequenceIdAlreadyInUse,
+				change,
+				sequenceId: change.destination,
+			});
+		});
+		it('can be invalid if the target range is invalid', () => {
+			const transaction = Transaction.factory(simpleRevisionViewWithValidation);
+			const range = {
+				start: StablePlace.atEndOf(leftTraitLocation),
+				end: StablePlace.atStartOf(leftTraitLocation),
+			};
+			const change = Change.detach(range);
 			// Start place is before end place
-			transaction.applyChange(
-				Change.detach({
-					start: StablePlace.atEndOf(leftTraitLocation),
-					end: StablePlace.atStartOf(leftTraitLocation),
-				})
-			);
+			transaction.applyChange(change);
 			expect(transaction.status).equals(EditStatus.Invalid);
+			const result = transaction.close();
+			assert(result.status === EditStatus.Invalid);
+			expect(result.failure).deep.equals({
+				kind: Transaction.FailureKind.BadRange,
+				change,
+				range,
+				rangeFailure: RangeValidationResultKind.Inverted,
+			});
 		});
 		it('can delete a node', () => {
 			const transaction = Transaction.factory(simpleRevisionViewWithValidation);

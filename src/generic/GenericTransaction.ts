@@ -12,7 +12,9 @@ import { EditStatus } from './PersistedTypes';
  * Result of applying a transaction.
  * @public
  */
-export type EditingResult<TChange> = FailedEditingResult<TChange> | ValidEditingResult<TChange>;
+export type EditingResult<TChange, TFailure = unknown> =
+	| FailedEditingResult<TChange, TFailure>
+	| ValidEditingResult<TChange>;
 
 /**
  * Basic result of applying a transaction.
@@ -41,19 +43,23 @@ export interface EditingResultBase<TChange> {
  * Result of applying an invalid or malformed transaction.
  * @public
  */
-export interface FailedEditingResult<TChange> extends EditingResultBase<TChange> {
+export interface FailedEditingResult<TChange, TFailure> extends EditingResultBase<TChange> {
 	/**
 	 * {@inheritDoc EditingResultBase.status}
 	 */
 	readonly status: EditStatus.Invalid | EditStatus.Malformed;
 	/**
+	 * Information about what caused the transaction to fail.
+	 */
+	readonly failure: TFailure;
+	/**
 	 * The valid changes applied as part of the transaction.
-	 * Those were ultimately rolled back due to the transaction failure.
+	 * Those were ultimately abandoned due to the transaction failure.
 	 */
 	readonly changes: readonly TChange[];
 	/**
 	 * The editing steps applied as part of the transaction.
-	 * Those were ultimately rolled back due to the transaction failure.
+	 * Those were ultimately abandoned due to the transaction failure.
 	 */
 	readonly steps: readonly ReconciliationChange<TChange>[];
 }
@@ -77,13 +83,15 @@ export interface ValidEditingResult<TChange> extends EditingResultBase<TChange> 
  * The result of applying a change within a transaction.
  * @public
  */
-export type ChangeResult = Result<TransactionView, TransactionFailure>;
+export type ChangeResult<TFailure = unknown> = Result<TransactionView, TransactionFailure<TFailure>>;
 
 /**
  * The ongoing state of a transaction.
  * @public
  */
-export type TransactionState<TChange> = SucceedingTransactionState<TChange> | FailingTransactionState<TChange>;
+export type TransactionState<TChange, TFailure = unknown> =
+	| SucceedingTransactionState<TChange>
+	| FailingTransactionState<TChange, TFailure>;
 
 /**
  * The state of a transaction that has not encountered an error.
@@ -110,7 +118,7 @@ export interface SucceedingTransactionState<TChange> {
 /**
  * The state of a transaction that has encountered an error.
  */
-export interface FailingTransactionState<TChange> extends TransactionFailure {
+export interface FailingTransactionState<TChange, TFailure = unknown> extends TransactionFailure<TFailure> {
 	/**
 	 * The view reflecting the latest applied change.
 	 */
@@ -128,11 +136,15 @@ export interface FailingTransactionState<TChange> extends TransactionFailure {
 /**
  * The failure state of a transaction.
  */
-export interface TransactionFailure {
+export interface TransactionFailure<TFailure = unknown> {
 	/**
-	 * The status of the transaction.
+	 * The status indicating the kind of failure encountered.
 	 */
-	status: EditStatus.Invalid | EditStatus.Malformed;
+	readonly status: EditStatus.Invalid | EditStatus.Malformed;
+	/**
+	 * Information about what caused the transaction to fail.
+	 */
+	readonly failure: TFailure;
 }
 
 /**
@@ -148,17 +160,17 @@ export interface TransactionFailure {
  * No data outside the Transaction is modified by Transaction:
  * the results from `close` must be used to actually submit an `Edit`.
  */
-export class GenericTransaction<TChange> {
-	private readonly policy: GenericTransactionPolicy<TChange>;
+export class GenericTransaction<TChange, TFailure = unknown> {
+	private readonly policy: GenericTransactionPolicy<TChange, TFailure>;
 	protected readonly before: RevisionView;
-	private state: TransactionState<TChange>;
+	private state: TransactionState<TChange, TFailure>;
 	private isOpen = true;
 
 	/**
 	 * Create and open an edit of the provided `TreeView`. After applying 0 or more changes, this editor should be closed via `close()`.
 	 * @param view - the `TreeView` at which this edit begins. The first change will be applied against this view.
 	 */
-	public constructor(view: RevisionView, policy: GenericTransactionPolicy<TChange>) {
+	public constructor(view: RevisionView, policy: GenericTransactionPolicy<TChange, TFailure>) {
 		this.before = view;
 		this.policy = policy;
 		this.state = {
@@ -193,12 +205,12 @@ export class GenericTransaction<TChange> {
 	/**
 	 * The status code of the most recent attempted change.
 	 */
-	public get steps(): readonly { readonly resolvedChange: TChange; readonly after: TransactionView }[] {
+	public get steps(): readonly ReconciliationChange<TChange>[] {
 		return this.state.steps;
 	}
 
 	/** @returns the final `EditStatus` and `TreeView` after all changes are applied. */
-	public close(): EditingResult<TChange> {
+	public close(): EditingResult<TChange, TFailure> {
 		assert(this.isOpen, 'transaction has already been closed');
 		this.isOpen = false;
 		if (this.state.status === EditStatus.Applied) {
@@ -225,6 +237,7 @@ export class GenericTransaction<TChange> {
 		}
 		return {
 			status: this.state.status,
+			failure: this.state.failure,
 			steps: this.steps,
 			changes: this.changes,
 			before: this.before,
@@ -339,7 +352,7 @@ export class GenericTransaction<TChange> {
  *
  * Instances of this type are passed to the {@link GenericTransaction} constructor.
  */
-export interface GenericTransactionPolicy<TChange> {
+export interface GenericTransactionPolicy<TChange, TFailure = unknown> {
 	/**
 	 * Given a change, attempts to derive an equivalent change which can be applied to the current state even if the given change was issued
 	 * over a different state. This can be used to apply a sequence of changes that were issued concurrently, i.e., without knowledge of
@@ -353,7 +366,7 @@ export interface GenericTransactionPolicy<TChange> {
 		state: SucceedingTransactionState<TChange>,
 		change: TChange,
 		path: ReconciliationPath<TChange>
-	): Result<TChange, TransactionFailure>;
+	): Result<TChange, TransactionFailure<TFailure>>;
 
 	/**
 	 * Provides a new state given the current state and a change to apply.
@@ -361,12 +374,12 @@ export interface GenericTransactionPolicy<TChange> {
 	 * @param change - The change to apply to the current state.
 	 * @returns The new state reflecting the applied change, or a failure.
 	 */
-	dispatchChange(state: SucceedingTransactionState<TChange>, change: TChange): ChangeResult;
+	dispatchChange(state: SucceedingTransactionState<TChange>, change: TChange): ChangeResult<TFailure>;
 
 	/**
 	 * Additional transaction validation when the transaction is closed.
 	 * @param state - The current state of the transaction.
 	 * @returns The new state reflecting the closed transaction, or a failure if the transaction cannot be closed.
 	 */
-	validateOnClose(state: SucceedingTransactionState<TChange>): ChangeResult;
+	validateOnClose(state: SucceedingTransactionState<TChange>): ChangeResult<TFailure>;
 }

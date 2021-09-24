@@ -22,9 +22,15 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
+// @public
+export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
+
+// @public
+export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
+
 // @public @sealed
-export class BasicCheckout<TChange> extends Checkout<TChange> {
-    constructor(tree: GenericSharedTree<TChange>);
+export class BasicCheckout<TChange, TFailure = unknown> extends Checkout<TChange, TFailure> {
+    constructor(tree: GenericSharedTree<TChange, TFailure>);
     // (undocumented)
     protected get latestCommittedView(): RevisionView;
     // (undocumented)
@@ -61,7 +67,7 @@ export const Change: {
 export type ChangeNode = TreeNode<ChangeNode>;
 
 // @public
-export type ChangeResult = Result<TransactionView, TransactionFailure>;
+export type ChangeResult<TFailure = unknown> = Result<TransactionView, TransactionFailure<TFailure>>;
 
 // @public
 export enum ChangeType {
@@ -78,8 +84,8 @@ export enum ChangeType {
 }
 
 // @public
-export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
-    protected constructor(tree: GenericSharedTree<TChange>, currentView: RevisionView, onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>);
+export abstract class Checkout<TChange, TFailure = unknown> extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
+    protected constructor(tree: GenericSharedTree<TChange, TFailure>, currentView: RevisionView, onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange, TFailure>>);
     abortEdit(): void;
     applyChanges(...changes: TChange[]): void;
     applyEdit(...changes: TChange[]): EditId;
@@ -104,7 +110,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
     protected abstract readonly latestCommittedView: RevisionView;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
-    readonly tree: GenericSharedTree<TChange>;
+    readonly tree: GenericSharedTree<TChange, TFailure>;
     tryApplyEdit(...changes: TChange[]): EditId | undefined;
     // (undocumented)
     abstract waitForPendingUpdates(): Promise<void>;
@@ -175,6 +181,15 @@ export interface Edit<TChange> extends EditBase<TChange> {
 }
 
 // @public
+export type EditApplicationOutcome<TSharedTree> = {
+    readonly view: RevisionView;
+    readonly status: EditStatus.Applied;
+} | {
+    readonly failure: SharedTreeFailureType<TSharedTree>;
+    readonly status: EditStatus.Invalid | EditStatus.Malformed;
+};
+
+// @public
 export interface EditBase<TChange> {
     readonly changes: readonly TChange[];
 }
@@ -210,7 +225,7 @@ export type EditId = UuidString & {
 };
 
 // @public
-export type EditingResult<TChange> = FailedEditingResult<TChange> | ValidEditingResult<TChange>;
+export type EditingResult<TChange, TFailure = unknown> = FailedEditingResult<TChange, TFailure> | ValidEditingResult<TChange>;
 
 // @public
 export interface EditingResultBase<TChange> {
@@ -251,22 +266,23 @@ export interface EditWithoutId<TChange> extends EditBase<TChange> {
 }
 
 // @public
-export interface FailedEditingResult<TChange> extends EditingResultBase<TChange> {
+export interface FailedEditingResult<TChange, TFailure> extends EditingResultBase<TChange> {
     readonly changes: readonly TChange[];
+    readonly failure: TFailure;
     readonly status: EditStatus.Invalid | EditStatus.Malformed;
     readonly steps: readonly ReconciliationChange<TChange>[];
 }
 
 // @public
-export interface FailingTransactionState<TChange> extends TransactionFailure {
+export interface FailingTransactionState<TChange, TFailure = unknown> extends TransactionFailure<TFailure> {
     readonly changes: readonly TChange[];
     readonly steps: readonly ReconciliationChange<TChange>[];
     readonly view: TransactionView;
 }
 
 // @public
-export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange>>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (view: RevisionView) => GenericTransaction<TChange>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
+export abstract class GenericSharedTree<TChange, TFailure = unknown> extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange, TFailure>>> {
+    constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     // @internal
     applyEdit(...changes: TChange[]): EditId;
     protected applyStashedOp(content: any): void;
@@ -274,7 +290,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     get currentView(): RevisionView;
     // (undocumented)
     get edits(): OrderedEditSet<TChange>;
-    equals<TOtherChangeTypes>(sharedTree: GenericSharedTree<TOtherChangeTypes>): boolean;
+    equals(sharedTree: GenericSharedTree<any, any>): boolean;
     protected abstract generateSummary(editLog: OrderedEditSet<TChange>): SharedTreeSummaryBase;
     // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
@@ -302,34 +318,31 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
     // (undocumented)
     protected readonly summarizeHistory: boolean;
     // (undocumented)
-    readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange>;
+    readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>;
     // (undocumented)
     protected readonly writeSummaryFormat: SharedTreeSummaryWriteFormat;
 }
 
 // @public
-export class GenericTransaction<TChange> {
-    constructor(view: RevisionView, policy: GenericTransactionPolicy<TChange>);
+export class GenericTransaction<TChange, TFailure = unknown> {
+    constructor(view: RevisionView, policy: GenericTransactionPolicy<TChange, TFailure>);
     applyChange(change: TChange, path?: ReconciliationPath<TChange>): this;
     applyChanges(changes: Iterable<TChange>, path?: ReconciliationPath<TChange>): this;
     // (undocumented)
     protected readonly before: RevisionView;
     get changes(): readonly TChange[];
     // (undocumented)
-    close(): EditingResult<TChange>;
+    close(): EditingResult<TChange, TFailure>;
     get status(): EditStatus;
-    get steps(): readonly {
-        readonly resolvedChange: TChange;
-        readonly after: TransactionView;
-    }[];
+    get steps(): readonly ReconciliationChange<TChange>[];
     get view(): TransactionView;
 }
 
 // @public
-export interface GenericTransactionPolicy<TChange> {
-    dispatchChange(state: SucceedingTransactionState<TChange>, change: TChange): ChangeResult;
-    tryResolveChange(state: SucceedingTransactionState<TChange>, change: TChange, path: ReconciliationPath<TChange>): Result<TChange, TransactionFailure>;
-    validateOnClose(state: SucceedingTransactionState<TChange>): ChangeResult;
+export interface GenericTransactionPolicy<TChange, TFailure = unknown> {
+    dispatchChange(state: SucceedingTransactionState<TChange>, change: TChange): ChangeResult<TFailure>;
+    tryResolveChange(state: SucceedingTransactionState<TChange>, change: TChange, path: ReconciliationPath<TChange>): Result<TChange, TransactionFailure<TFailure>>;
+    validateOnClose(state: SucceedingTransactionState<TChange>): ChangeResult<TFailure>;
 }
 
 // @public
@@ -439,7 +452,40 @@ export type PlaceIndex = number & {
 };
 
 // @public
+export enum PlaceValidationResult {
+    // (undocumented)
+    Malformed = "Malformed",
+    // (undocumented)
+    MissingParent = "MissingParent",
+    // (undocumented)
+    MissingSibling = "MissingSibling",
+    // (undocumented)
+    SiblingIsRootOrDetached = "SiblingIsRootOrDetached",
+    // (undocumented)
+    Valid = "Valid"
+}
+
+// @public
 export function rangeFromStableRange(view: TreeView, range: StableRange): TreeViewRange;
+
+// @public
+export type RangeValidationResult = RangeValidationResultKind.Valid | RangeValidationResultKind.PlacesInDifferentTraits | RangeValidationResultKind.Inverted | {
+    kind: RangeValidationResultKind.BadPlace;
+    place: StablePlace;
+    placeFailure: BadPlaceValidationResult;
+};
+
+// @public
+export enum RangeValidationResultKind {
+    // (undocumented)
+    BadPlace = "BadPlace",
+    // (undocumented)
+    Inverted = "Inverted",
+    // (undocumented)
+    PlacesInDifferentTraits = "PlacesInDifferentTraits",
+    // (undocumented)
+    Valid = "Valid"
+}
 
 // @public
 export interface ReconciliationChange<TChange> {
@@ -510,6 +556,7 @@ export function saveUploadedEditChunkContents<TChange>(editLog: OrderedEditSet<T
 // @public
 export interface SequencedEditAppliedEventArguments<TSharedTree> {
     readonly edit: Edit<SharedTreeChangeType<TSharedTree>>;
+    readonly outcome: EditApplicationOutcome<TSharedTree>;
     readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
     readonly tree: TSharedTree;
     readonly wasLocal: boolean;
@@ -531,7 +578,7 @@ export interface SetValue {
 }
 
 // @public @sealed
-export class SharedTree extends GenericSharedTree<Change> {
+export class SharedTree extends GenericSharedTree<Change, Transaction.Failure> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedTree;
     protected generateSummary(editLog: OrderedEditSet<Change>): SharedTreeSummaryBase;
@@ -542,7 +589,7 @@ export class SharedTree extends GenericSharedTree<Change> {
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 // @public
-export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<infer TChange> ? TChange : never;
+export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<infer TChange, any> ? TChange : never;
 
 // @public
 export enum SharedTreeDiagnosticEvent {
@@ -583,6 +630,9 @@ export interface SharedTreeFactoryOptions {
     readonly uploadEditChunks?: boolean;
     readonly writeSummaryFormat?: SharedTreeSummaryWriteFormat;
 }
+
+// @public
+export type SharedTreeFailureType<TSharedTree> = TSharedTree extends GenericSharedTree<any, infer TFailure> ? TFailure : never;
 
 // Warning: (ae-internal-missing-underscore) The name "SharedTreeSummarizer" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -682,17 +732,148 @@ export type TraitNodeIndex = number & {
 
 // @public
 export namespace Transaction {
-    export function factory(view: RevisionView): GenericTransaction<Change>;
-    export class Policy implements GenericTransactionPolicy<Change> {
-        protected createViewNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: TreeViewNode) => boolean, onInvalidDetachedId: () => void): NodeId[] | undefined;
+    // (undocumented)
+    export interface BadPlaceFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly kind: FailureKind.BadPlace;
+        // (undocumented)
+        readonly place: StablePlace;
+        // (undocumented)
+        readonly placeFailure: BadPlaceValidationResult;
+    }
+    // (undocumented)
+    export interface BadRangeFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly kind: FailureKind.BadRange;
+        // (undocumented)
+        readonly range: StableRange;
+        // (undocumented)
+        readonly rangeFailure: BadRangeValidationResult;
+    }
+    // (undocumented)
+    export interface ConstraintViolationFailure {
+        // (undocumented)
+        readonly constraint: Constraint;
+        // (undocumented)
+        readonly kind: FailureKind.ConstraintViolation;
+        // (undocumented)
+        readonly violation: ConstraintViolationResult;
+    }
+    // (undocumented)
+    export enum ConstraintViolationKind {
+        // (undocumented)
+        BadLabel = "BadLabel",
+        // (undocumented)
+        BadLength = "BadLength",
+        // (undocumented)
+        BadParent = "BadParent",
+        // (undocumented)
+        BadRange = "BadRange"
+    }
+    // (undocumented)
+    export type ConstraintViolationResult = {
+        readonly kind: ConstraintViolationKind.BadRange;
+        readonly rangeFailure: BadRangeValidationResult;
+    } | {
+        readonly kind: ConstraintViolationKind.BadLength;
+        readonly actual: number;
+    } | {
+        readonly kind: ConstraintViolationKind.BadParent;
+        readonly actual: NodeId;
+    } | {
+        readonly kind: ConstraintViolationKind.BadLabel;
+        readonly actual: TraitLabel;
+    };
+    // (undocumented)
+    export interface DetachedSequenceIdAlreadyInUseFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly kind: FailureKind.DetachedSequenceIdAlreadyInUse;
+        // (undocumented)
+        readonly sequenceId: DetachedSequenceId;
+    }
+    // (undocumented)
+    export interface DetachedSequenceNotFoundFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly kind: FailureKind.DetachedSequenceNotFound;
+        // (undocumented)
+        readonly sequenceId: DetachedSequenceId;
+    }
+    // (undocumented)
+    export interface DuplicateIdInBuildFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly id: NodeId;
+        // (undocumented)
+        readonly kind: FailureKind.DuplicateIdInBuild;
+    }
+    export function factory(view: RevisionView): GenericTransaction<Change, Failure>;
+    export type Failure = UnusedDetachedSequenceFailure | DetachedSequenceIdAlreadyInUseFailure | DetachedSequenceNotFoundFailure | DuplicateIdInBuildFailure | IdAlreadyInUseFailure | UnknownIdFailure | BadPlaceFailure | BadRangeFailure | ConstraintViolationFailure;
+    export enum FailureKind {
+        // (undocumented)
+        BadPlace = "BadPlace",
+        // (undocumented)
+        BadRange = "BadRange",
+        // (undocumented)
+        ConstraintViolation = "ConstraintViolation",
+        // (undocumented)
+        DetachedSequenceIdAlreadyInUse = "DetachedSequenceIdAlreadyInUse",
+        // (undocumented)
+        DetachedSequenceNotFound = "DetachedSequenceNotFound",
+        // (undocumented)
+        DuplicateIdInBuild = "DuplicateIdInBuild",
+        // (undocumented)
+        IdAlreadyInUse = "IdAlreadyInUse",
+        // (undocumented)
+        MalformedChange = "MalformedChange",
+        // (undocumented)
+        UnknownId = "UnknownId",
+        // (undocumented)
+        UnusedDetachedSequence = "UnusedDetachedSequence"
+    }
+    // (undocumented)
+    export interface IdAlreadyInUseFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly id: NodeId;
+        // (undocumented)
+        readonly kind: FailureKind.IdAlreadyInUse;
+    }
+    export class Policy implements GenericTransactionPolicy<Change, Failure> {
+        protected createViewNodesForTree(sequence: Iterable<BuildNode>, onCreateNode: (id: NodeId, node: TreeViewNode) => boolean, onInvalidDetachedId: (sequenceId: DetachedSequenceId) => void): NodeId[] | undefined;
         // (undocumented)
         protected readonly detached: Map<DetachedSequenceId, readonly NodeId[]>;
         // (undocumented)
-        dispatchChange(state: ValidState, change: Change): ChangeResult;
+        dispatchChange(state: ValidState, change: Change): ChangeResult<Failure>;
         // (undocumented)
         tryResolveChange(state: ValidState, change: Change): Result.Ok<Change>;
         // (undocumented)
-        validateOnClose(state: ValidState): ChangeResult;
+        validateOnClose(state: ValidState): ChangeResult<Failure>;
+    }
+    // (undocumented)
+    export interface UnknownIdFailure {
+        // (undocumented)
+        readonly change: Change;
+        // (undocumented)
+        readonly id: NodeId;
+        // (undocumented)
+        readonly kind: FailureKind.UnknownId;
+    }
+    // (undocumented)
+    export interface UnusedDetachedSequenceFailure {
+        // (undocumented)
+        readonly kind: FailureKind.UnusedDetachedSequence;
+        // (undocumented)
+        readonly sequenceId: DetachedSequenceId;
     }
     // (undocumented)
     export type ValidState = SucceedingTransactionState<Change>;
@@ -700,12 +881,13 @@ export namespace Transaction {
 }
 
 // @public
-export interface TransactionFailure {
-    status: EditStatus.Invalid | EditStatus.Malformed;
+export interface TransactionFailure<TFailure = unknown> {
+    readonly failure: TFailure;
+    readonly status: EditStatus.Invalid | EditStatus.Malformed;
 }
 
 // @public
-export type TransactionState<TChange> = SucceedingTransactionState<TChange> | FailingTransactionState<TChange>;
+export type TransactionState<TChange, TFailure = unknown> = SucceedingTransactionState<TChange> | FailingTransactionState<TChange, TFailure>;
 
 // @public
 export class TransactionView extends TreeView {
@@ -828,10 +1010,10 @@ export type UuidString = string & {
 };
 
 // @public
-export function validateStablePlace(view: TreeView, place: StablePlace): EditValidationResult;
+export function validateStablePlace(view: TreeView, place: StablePlace): PlaceValidationResult;
 
 // @public
-export function validateStableRange(view: TreeView, range: StableRange): EditValidationResult;
+export function validateStableRange(view: TreeView, range: StableRange): RangeValidationResult;
 
 // @public
 export interface ValidEditingResult<TChange> extends EditingResultBase<TChange> {

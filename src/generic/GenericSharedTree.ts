@@ -175,13 +175,51 @@ export interface SequencedEditAppliedEventArguments<TSharedTree> {
 	readonly tree: TSharedTree;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
 	readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
+	/** The outcome of the sequenced edit being applied. */
+	readonly outcome: EditApplicationOutcome<TSharedTree>;
 }
 
 /**
  * Helper for extracting the change type from a {@link GenericSharedTree} type.
  * @public
  */
-export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<infer TChange> ? TChange : never;
+export type SharedTreeChangeType<TSharedTree> = TSharedTree extends GenericSharedTree<infer TChange, any>
+	? TChange
+	: never;
+
+/**
+ * Helper for extracting the failure type from a {@link GenericSharedTree} type.
+ * @public
+ */
+export type SharedTreeFailureType<TSharedTree> = TSharedTree extends GenericSharedTree<any, infer TFailure>
+	? TFailure
+	: never;
+
+/**
+ * The outcome of an edit.
+ * @public
+ */
+export type EditApplicationOutcome<TSharedTree> =
+	| {
+			/**
+			 * The revision view resulting from the edit.
+			 */
+			readonly view: RevisionView;
+			/**
+			 * The status code for the edit that produced the revision.
+			 */
+			readonly status: EditStatus.Applied;
+	  }
+	| {
+			/**
+			 * The revision view resulting from the edit.
+			 */
+			readonly failure: SharedTreeFailureType<TSharedTree>;
+			/**
+			 * The status code for the edit that produced the revision.
+			 */
+			readonly status: EditStatus.Invalid | EditStatus.Malformed;
+	  };
 
 /**
  * Events which may be emitted by `SharedTree`. See {@link SharedTreeEvent} for documentation of event semantics.
@@ -225,7 +263,9 @@ export interface SharedTreeFactoryOptions {
  * A distributed tree.
  * @public
  */
-export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange>>> {
+export abstract class GenericSharedTree<TChange, TFailure = unknown> extends SharedObject<
+	ISharedTreeEvents<GenericSharedTree<TChange, TFailure>>
+> {
 	/**
 	 * The log of completed edits for this SharedTree.
 	 */
@@ -236,7 +276,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 * It is not exposed to avoid accidental correctness issues, but `logViewer` is exposed in order to give clients a way
 	 * to access the revision history.
 	 */
-	private cachingLogViewer: CachingLogViewer<TChange>;
+	private cachingLogViewer: CachingLogViewer<TChange, TFailure>;
 
 	/**
 	 * Viewer for trees defined by editLog. This allows access to views of the tree at different revisions (various points in time).
@@ -247,7 +287,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 
 	protected readonly logger: ITelemetryLogger;
 
-	public readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange>;
+	public readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>;
 
 	/** Indicates if the client is the oldest member of the quorum. */
 	private currentIsOldest: boolean;
@@ -262,18 +302,19 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 		wasLocal,
 		result,
 		reconciliationPath,
-	}: SequencedEditResult<TChange>): void => {
+	}: SequencedEditResult<TChange, TFailure>): void => {
 		if (wasLocal && result.status !== EditStatus.Applied) {
 			this.logger.send({
 				category: 'generic',
 				eventName: result.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
 			});
 		}
-		const eventArguments: SequencedEditAppliedEventArguments<GenericSharedTree<TChange>> = {
+		const eventArguments: SequencedEditAppliedEventArguments<GenericSharedTree<TChange, TFailure>> = {
 			edit,
 			wasLocal,
 			tree: this,
 			reconciliationPath,
+			outcome: result,
 		};
 		this.emit(SharedTreeEvent.SequencedEditApplied, eventArguments);
 	};
@@ -290,7 +331,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	public constructor(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
-		transactionFactory: (view: RevisionView) => GenericTransaction<TChange>,
+		transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>,
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
 		protected readonly summarizeHistory = true,
@@ -572,8 +613,8 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	private createEditLogFromSummary(
 		summary: SharedTreeSummaryBase,
 		editStatusCallback: EditStatusCallback,
-		sequencedEditResultCallback: SequencedEditResultCallback<TChange>
-	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange> } {
+		sequencedEditResultCallback: SequencedEditResultCallback<TChange, TFailure>
+	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange, TFailure> } {
 		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
 
 		if (summary.version !== convertedSummary.version) {
@@ -591,7 +632,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
 		});
 
-		let knownRevisions: [number, EditCacheEntry<TChange>][] | undefined;
+		let knownRevisions: [number, EditCacheEntry<TChange, TFailure>][] | undefined;
 		if (currentTree !== undefined) {
 			const currentView = RevisionView.fromTree(currentTree);
 
@@ -641,7 +682,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 	 *   - registered event listeners
 	 *   - state of caches
 	 * */
-	public equals<TOtherChangeTypes>(sharedTree: GenericSharedTree<TOtherChangeTypes>): boolean {
+	public equals(sharedTree: GenericSharedTree<any, any>): boolean {
 		if (!this.currentView.equals(sharedTree.currentView)) {
 			return false;
 		}
@@ -763,7 +804,7 @@ export abstract class GenericSharedTree<TChange> extends SharedObject<ISharedTre
 			this.editLog.addSequencedEdit(edit, editInformation.message);
 		}
 
-		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange>> = {
+		const eventArguments: EditCommittedEventArguments<GenericSharedTree<TChange, TFailure>> = {
 			editId: edit.id,
 			local,
 			tree: this,

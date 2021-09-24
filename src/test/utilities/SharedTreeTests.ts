@@ -1048,10 +1048,9 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 					eventArgs.push(args)
 				);
 
+				const change = Change.setPayload(makeEmptyNode().identifier, 42);
 				// Invalid change
-				const invalidEditId = tree.applyEdit(
-					...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode()))
-				);
+				const invalidEditId = tree.applyEdit(change);
 				containerRuntimeFactory.processAllMessages();
 				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
 
@@ -1059,6 +1058,7 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				expect(eventArgs[0].edit.id).equals(invalidEditId);
 				expect(eventArgs[0].wasLocal).equals(true);
 				expect(eventArgs[0].reconciliationPath.length).equals(0);
+				expect(eventArgs[0].outcome.status).equals(EditStatus.Invalid);
 
 				// Valid change
 				const validEdit1Id = secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
@@ -1072,10 +1072,12 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 				expect(eventArgs[1].edit.id).equals(validEdit1Id);
 				expect(eventArgs[1].wasLocal).equals(false);
 				expect(eventArgs[1].reconciliationPath.length).equals(0);
+				expect(eventArgs[1].outcome.status).equals(EditStatus.Applied);
 
 				expect(eventArgs[2].edit.id).equals(validEdit2Id);
 				expect(eventArgs[2].wasLocal).equals(true);
 				expect(eventArgs[2].reconciliationPath.length).equals(1);
+				expect(eventArgs[2].outcome.status).equals(EditStatus.Applied);
 			});
 		});
 	});

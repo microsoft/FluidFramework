@@ -6,7 +6,6 @@
 import { DetachedSequenceId, NodeId } from '../Identifiers';
 import { TreeView, TransactionView, TreeViewPlace, TreeViewRange } from '../TreeView';
 import { assert, assertNotUndefined, fail } from '../Common';
-import { EditValidationResult } from '../Checkout';
 import { BuildNode, TraitLocation, TreeNodeSequence } from '../generic';
 import { Change, StablePlace, StableRange } from './PersistedTypes';
 
@@ -30,7 +29,7 @@ export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode
  * @param view - the `TreeView` within which to validate the given place
  * @param place - the `StablePlace` to check
  */
-export function validateStablePlace(view: TreeView, place: StablePlace): EditValidationResult {
+export function validateStablePlace(view: TreeView, place: StablePlace): PlaceValidationResult {
 	/* A StablePlace is valid if the following conditions are met:
 	 *     1. A sibling or trait is defined.
 	 *     2. If a sibling is defined, both it and its parent exist in the `TreeView`.
@@ -44,35 +43,51 @@ export function validateStablePlace(view: TreeView, place: StablePlace): EditVal
 		(referenceSibling === undefined && referenceTrait === undefined) ||
 		(referenceSibling !== undefined && referenceTrait !== undefined)
 	) {
-		return EditValidationResult.Malformed;
+		return PlaceValidationResult.Malformed;
 	}
 
 	if (referenceSibling !== undefined) {
 		if (!view.hasNode(referenceSibling)) {
-			return EditValidationResult.Invalid;
+			return PlaceValidationResult.MissingSibling;
 		}
 
 		// Detached nodes and the root are invalid anchors.
 		if (view.getTraitLabel(referenceSibling) === undefined) {
-			return EditValidationResult.Invalid;
+			return PlaceValidationResult.SiblingIsRootOrDetached;
 		}
 
-		return EditValidationResult.Valid;
+		return PlaceValidationResult.Valid;
 	}
 
 	if (!view.hasNode(assertNotUndefined(referenceTrait).parent)) {
-		return EditValidationResult.Invalid;
+		return PlaceValidationResult.MissingParent;
 	}
 
-	return EditValidationResult.Valid;
+	return PlaceValidationResult.Valid;
 }
+
+/**
+ * The result of validating a place.
+ */
+export enum PlaceValidationResult {
+	Valid = 'Valid',
+	Malformed = 'Malformed',
+	SiblingIsRootOrDetached = 'SiblingIsRootOrDetached',
+	MissingSibling = 'MissingSibling',
+	MissingParent = 'MissingParent',
+}
+
+/**
+ * The result of validating a bad place.
+ */
+export type BadPlaceValidationResult = Exclude<PlaceValidationResult, PlaceValidationResult.Valid>;
 
 /**
  * Check the validity of the given `StableRange`
  * @param view - the `TreeView` within which to validate the given range
  * @param range - the `StableRange` to check
  */
-export function validateStableRange(view: TreeView, range: StableRange): EditValidationResult {
+export function validateStableRange(view: TreeView, range: StableRange): RangeValidationResult {
 	/* A StableRange is valid if the following conditions are met:
 	 *     1. Its start and end places are valid.
 	 *     2. Its start and end places are within the same trait.
@@ -81,20 +96,20 @@ export function validateStableRange(view: TreeView, range: StableRange): EditVal
 	const { start, end } = range;
 
 	const startValidationResult = validateStablePlace(view, start);
-	if (startValidationResult !== EditValidationResult.Valid) {
-		return startValidationResult;
+	if (startValidationResult !== PlaceValidationResult.Valid) {
+		return { kind: RangeValidationResultKind.BadPlace, place: start, placeFailure: startValidationResult };
 	}
 
 	const endValidationResult = validateStablePlace(view, end);
-	if (endValidationResult !== EditValidationResult.Valid) {
-		return endValidationResult;
+	if (endValidationResult !== PlaceValidationResult.Valid) {
+		return { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: endValidationResult };
 	}
 
 	const startTraitLocation =
 		start.referenceTrait || view.getTraitLocation(assertNotUndefined(start.referenceSibling));
 	const endTraitLocation = end.referenceTrait || view.getTraitLocation(assertNotUndefined(end.referenceSibling));
 	if (!compareTraits(startTraitLocation, endTraitLocation)) {
-		return EditValidationResult.Invalid;
+		return RangeValidationResultKind.PlacesInDifferentTraits;
 	}
 
 	const { start: startPlace, end: endPlace } = rangeFromStableRange(view, range);
@@ -102,11 +117,35 @@ export function validateStableRange(view: TreeView, range: StableRange): EditVal
 	const endIndex = view.findIndexWithinTrait(endPlace);
 
 	if (startIndex > endIndex) {
-		return EditValidationResult.Invalid;
+		return RangeValidationResultKind.Inverted;
 	}
 
-	return EditValidationResult.Valid;
+	return RangeValidationResultKind.Valid;
 }
+
+/**
+ * The kinds of result of validating a range.
+ */
+export enum RangeValidationResultKind {
+	Valid = 'Valid',
+	BadPlace = 'BadPlace',
+	PlacesInDifferentTraits = 'PlacesInDifferentTraits',
+	Inverted = 'Inverted',
+}
+
+/**
+ * The result of validating a range.
+ */
+export type RangeValidationResult =
+	| RangeValidationResultKind.Valid
+	| RangeValidationResultKind.PlacesInDifferentTraits
+	| RangeValidationResultKind.Inverted
+	| { kind: RangeValidationResultKind.BadPlace; place: StablePlace; placeFailure: BadPlaceValidationResult };
+
+/**
+ * The result of validating a bad range.
+ */
+export type BadRangeValidationResult = Exclude<RangeValidationResult, RangeValidationResultKind.Valid>;
 
 /**
  * @param view - the `TreeView` within which to retrieve the trait location

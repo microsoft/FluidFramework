@@ -5,18 +5,10 @@
 
 import { expect } from 'chai';
 import { Definition, NodeId, TraitLabel } from '../Identifiers';
-import { RevisionView, Side } from '../TreeView';
-import { EditValidationResult } from '../Checkout';
-import { detachRange, insertIntoTrait, StablePlace, StableRange, validateStableRange } from '../default-edits';
+import { RevisionView } from '../TreeView';
+import { detachRange, insertIntoTrait, StablePlace, StableRange } from '../default-edits';
 import { ChangeNode } from '../generic';
-import {
-	simpleRevisionViewWithValidation,
-	left,
-	right,
-	leftTraitLocation,
-	makeEmptyNode,
-	makeTestNode,
-} from './utilities/TestUtilities';
+import { makeEmptyNode, makeTestNode } from './utilities/TestUtilities';
 
 describe('TreeView', () => {
 	describe('creation from a ChangeNode', () => {
@@ -35,42 +27,6 @@ describe('TreeView', () => {
 			const view = RevisionView.fromTree(node);
 			expect(view.getChangeNode(nodeId).traits.trait[0].identifier).to.equal(testNode.identifier);
 			expect(view.getChangeNode(nodeId).traits.emptyTrait).to.equal(undefined);
-		});
-	});
-
-	describe('StableRange validation', () => {
-		it('is malformed when anchors are malformed', () => {
-			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					// trait and sibling should be mutually exclusive
-					start: { referenceTrait: leftTraitLocation, referenceSibling: left.identifier, side: Side.Before },
-					end: { referenceSibling: left.identifier, side: Side.After },
-				})
-			).equals(EditValidationResult.Malformed);
-		});
-		it('is invalid when anchors are incorrectly ordered', () => {
-			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					start: { referenceSibling: left.identifier, side: Side.After },
-					end: { referenceSibling: left.identifier, side: Side.Before },
-				})
-			).equals(EditValidationResult.Invalid);
-		});
-		it('is invalid when anchors are in different traits', () => {
-			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					start: { referenceSibling: left.identifier, side: Side.Before },
-					end: { referenceSibling: right.identifier, side: Side.After },
-				})
-			).equals(EditValidationResult.Invalid);
-		});
-		it('is invalid when an anchor is invalid', () => {
-			expect(
-				validateStableRange(simpleRevisionViewWithValidation, {
-					start: { referenceSibling: '49a7e636-71ed-45f1-a1a8-2b8f2e7e84a3' as NodeId, side: Side.Before },
-					end: { referenceSibling: right.identifier, side: Side.After },
-				})
-			).equals(EditValidationResult.Invalid);
 		});
 	});
 

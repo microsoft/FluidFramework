@@ -171,9 +171,9 @@ describe('CachingLogViewer', () => {
 		log: EditLog<Change>,
 		baseView?: RevisionView,
 		editStatusCallback?: EditStatusCallback,
-		sequencedEditResultCallback?: SequencedEditResultCallback<Change>,
+		sequencedEditResultCallback?: SequencedEditResultCallback<Change, Transaction.Failure>,
 		knownRevisions?: [number, RevisionView][]
-	): CachingLogViewer<Change> {
+	): CachingLogViewer<Change, Transaction.Failure> {
 		return new CachingLogViewer(
 			log,
 			baseView,
@@ -219,7 +219,7 @@ describe('CachingLogViewer', () => {
 		}
 	});
 
-	async function requestAllRevisionViews(viewer: CachingLogViewer<Change>, log: EditLog<Change>): Promise<void> {
+	async function requestAllRevisionViews(viewer: CachingLogViewer<Change, any>, log: EditLog<Change>): Promise<void> {
 		for (let i = 0; i <= log.length; i++) {
 			await viewer.getRevisionView(i);
 		}
@@ -486,18 +486,18 @@ describe('CachingLogViewer', () => {
 	describe('Callbacks', () => {
 		function getViewer(): {
 			log: EditLog<Change>;
-			viewer: CachingLogViewer<Change>;
-			events: SequencedEditResult<Change>[];
+			viewer: CachingLogViewer<Change, Transaction.Failure>;
+			events: SequencedEditResult<Change, Transaction.Failure>[];
 		} {
 			const log = getSimpleLog();
-			const events: SequencedEditResult<Change>[] = [];
+			const events: SequencedEditResult<Change, Transaction.Failure>[] = [];
 			const viewer = new CachingLogViewer(
 				log,
 				simpleRevisionViewNoTraits,
 				[],
 				/* expensiveValidation */ true,
 				undefined,
-				(args: SequencedEditResult<Change>) => events.push(args),
+				(args: SequencedEditResult<Change, Transaction.Failure>) => events.push(args),
 				Transaction.factory
 			);
 			return { log, viewer, events };
