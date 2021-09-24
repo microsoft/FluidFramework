@@ -18,7 +18,7 @@ const memberCombineInstructions = [
     {
         package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
-            ["@fluidframework/server-services-client", ["GenerateToken"]],
+            ["@fluidframework/server-services-client", ["generateToken"]],
             ["@fluidframework/protocol-definitions", ["ScopeType"]],
         ])
     },
