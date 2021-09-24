@@ -78,12 +78,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     import { TinyliciousClient } from '@fluidframework/tinylicious-client';
     ```
 
-1. Define the following `interface` under the import statements:
-    ```js
-    interface TimestampDataModel { time: string | undefined; }
-    ```
-
-1. Define the following component properties inside of the `AppComponent` class. These will be used later.
+1. Define the following component properties inside of the `AppComponent` class. These will be used later. Note about this code:
+    - `localTimestamp` has the `{ time: string | undefined }` type. This is represented as the `TimestampDataModel` interface in the completed demo in our repo.
     ```js
     sharedTimestamp: SharedMap | undefined;
     localTimestamp: TimestampDataModel | undefined;
@@ -154,7 +150,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 To ensure that both local and remote changes to the timestamp are reflected in the UI, we will use the `localTimestamp` component property to store the local timestamp value and ensure that it is updated whenever any client changes the `fluidSharedObjects` value.
 
-1. Below the preceding `getFluidData` function add the following code. Note about this code:
+1. Below the preceding `getFluidData` function add the following code.
 
     ```js
     syncData() {
