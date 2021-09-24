@@ -22,7 +22,7 @@ If you want to load a Fluid container on your app or website, you'll load the co
 want to create a new collaborative experience using the Fluid Framework, you'll create a Fluid container.
 
 A Fluid container includes state and app logic. It's a serverless app model with data persistence. It has at least one
-*Fluid object*, which encapsulates app logic. Fluid objects can have state, which is managed by *distributed data
+*shared object*, which encapsulates app logic. Shared objects can have state, which is managed by *distributed data
 structures* (DDSes).
 
 DDSes are used to distribute state to clients. Instead of centralizing merge logic in the
@@ -64,8 +64,8 @@ serverless application model with persistent data, the container is the serverle
 
 The Fluid container is the result of the principle "Move Logic to the Client." The container includes the merge logic
 used to replicate state across connected clients, but the container also includes app logic. The merge logic is
-incapsulated in our lowest level objects, **distributed data structures (DDS)**. App logic operating over this data is
-stored in **Fluid objects**.
+encapsulated in our lowest level objects, **distributed data structures (DDS)**. App logic operating over this data is
+stored in **shared objects**.
 
 ### Fluid service
 
@@ -81,6 +81,6 @@ the service with the assigned order of the operation.">
 From the client perspective, this op flow is accessed through a **DeltaConnection** object.
 
 The service also stores old operations, accessible to clients through a **DeltaStorageService** object, and stores
-summaries of the Fluid objects. It's worth discussing summaries at length, but for now, consider that merging
+summaries of the shared objects. It's worth discussing summaries at length, but for now, consider that merging
 1,000,000 changes could take some time, so we summarize the state of the objects and store it on the service for faster
 loading.

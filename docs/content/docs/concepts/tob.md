@@ -71,9 +71,9 @@ storage and broadcast an event to the connected clients acknowledging that the s
 the clients will ignore both the summary op itself and the acknowledgement, since connected clients already receive all
 ops and are thus already consistent.
 
-Summary ops summarize the state of distributed data structures, so Fluid objects (which are a collection of distributed
+Summary ops summarize the state of distributed data structures, so Data Objects (which are a collection of distributed
 data structures) don't need to do anything to participate in summarization; it happens automatically, and all
-Fluid objects' data structures will be summarized.
+Data Objects' data structures will be summarized.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 <!-- Links -->
