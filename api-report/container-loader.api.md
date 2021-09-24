@@ -180,6 +180,10 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get lastMessage(): ISequencedDocumentMessage | undefined;
     // (undocumented)
+    get lastObservedSequenceNumber(): number;
+    // (undocumented)
+    get lastQueuedSeqNumber(): number;
+    // (undocumented)
     get lastSequenceNumber(): number;
     // (undocumented)
     get maxMessageSize(): number;
