@@ -33,7 +33,7 @@ You'll write container code to define which shared objects your scenario uses an
 ## Data Object
 
 Data Objects are higher-level shared objects, compared to distributed data structures, which are low-level shared objects.
-DataObjects are used to organize distributed data structures into semantically meaningful groupings for your scenario,
+Data Objects are used to organize distributed data structures into semantically meaningful groupings for your scenario,
 as well as providing an API surface to your data.
 
 ## Detached
