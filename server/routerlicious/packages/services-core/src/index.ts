@@ -25,6 +25,7 @@ export * from "./publisher";
 export * from "./queue";
 export * from "./runner";
 export * from "./runWithRetry";
+export * from "./scheduleJob";
 export * from "./secretManager";
 export * from "./taskMessages";
 export * from "./tenant";
