@@ -115,4 +115,7 @@ export interface IDocument {
 
     // Deli state
     deli: string;
+
+    // Timestamp of when this document will be permanently deleted
+    deletionTime?: string;
 }

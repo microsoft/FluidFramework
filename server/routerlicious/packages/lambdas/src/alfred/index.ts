@@ -230,6 +230,16 @@ export function configureWebSocketServices(
                 });
             }
 
+            const document = await storage.getDocument(claims.tenantId, claims.documentId);
+            if (document && document.deletionTime) {
+                // Prevent connection to existing documents that have been marked for deletion.
+                // eslint-disable-next-line prefer-promise-reject-errors
+                return Promise.reject({
+                    code: 404,
+                    message: "Trying to connect to deleted document",
+                });
+            }
+
             const clientId = generateClientId();
             const room: IRoom = {
                 tenantId: claims.tenantId,

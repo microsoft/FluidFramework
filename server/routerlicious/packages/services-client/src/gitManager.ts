@@ -145,6 +145,10 @@ export class GitManager implements IGitManager {
         return this.historian.createSummary(summary);
     }
 
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        return this.historian.deleteSummary(softDelete);
+    }
+
     public async getSummary(sha: string): Promise<IWholeFlatSummary> {
         return this.historian.getSummary(sha);
     }

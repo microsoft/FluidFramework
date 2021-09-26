@@ -41,7 +41,13 @@ export class DocumentStorage implements IDocumentStorage {
      */
     public async getDocument(tenantId: string, documentId: string): Promise<any> {
         const collection = await this.databaseManager.getDocumentCollection();
-        return collection.findOne({ documentId, tenantId });
+        const document = await collection.findOne({ documentId, tenantId });
+
+        if (document && document.deletionTime) {
+            return Promise.reject(new Error("Cannot retrieve deleted document."));
+        }
+
+        return document;
     }
 
     public async getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails> {
