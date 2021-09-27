@@ -149,7 +149,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     return container.initialObjects.sharedTimestamp as SharedMap;
     ```
 
-### Keep the Fluid Data synchronized
+### Keep the Fluid data synchronized
 
 To ensure that both local and remote changes to the timestamp are reflected in the UI, we will use the `localTimestamp` component property to store the local timestamp value and ensure that it is updated whenever any client changes the `fluidSharedObjects` value.
 
