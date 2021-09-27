@@ -22,7 +22,7 @@ There are few possible ways through which you can setup your own backend service
 
 ## TokenProvider class example
 
-In the example below, the token provider class is called `AzureFunctionTokenProvider`. This class would be fetching the token from your very own backend Azure Function. It accepts the URL to your Azure Function and an optional user object. This specific implementation is also provided for you as an export from the `@fluidframework/azure-client` package.
+In the example below, the token provider class is called `AzureFunctionTokenProvider`. This class would be fetching the token from your very own backend Azure Function. It accepts the URL to your Azure Function, `userId` and`userName`. This specific implementation is also provided for you as an export from the `@fluidframework/azure-client` package.
 
 ```typescript
 import { ITokenProvider, ITokenResponse } from "@fluidframework/azure-client";
@@ -30,7 +30,8 @@ import { ITokenProvider, ITokenResponse } from "@fluidframework/azure-client";
 export class AzureFunctionTokenProvider implements ITokenProvider {
   constructor(
     private readonly azFunctionUrl: string,
-    private readonly user?: AzureMember,
+    private readonly userId: string,
+    private readonly userName: string,
   );
 
   public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
@@ -54,8 +55,8 @@ private async getToken(tenantId: string, documentId: string): Promise<string> {
     const params = {
         tenantId,
         documentId,
-        userId: this.user.userId,
-        userName: this.user.userName,
+        userId,
+        userName
     };
     const token = this.getTokenFromServer(params);
     return token;
