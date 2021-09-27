@@ -181,6 +181,10 @@ export class DeltaManager extends TypedEventEmitter<IDeltaManagerInternalEvents>
     // (undocumented)
     get lastMessage(): ISequencedDocumentMessage | undefined;
     // (undocumented)
+    get lastObservedSequenceNumber(): number;
+    // (undocumented)
+    get lastQueuedSeqNumber(): number;
+    // (undocumented)
     get lastSequenceNumber(): number;
     logConnectionIssue(event: ITelemetryErrorEvent): void;
     // (undocumented)
