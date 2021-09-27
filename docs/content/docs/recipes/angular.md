@@ -187,8 +187,6 @@ To ensure that both local and remote changes to the timestamp are reflected in t
     ```js
     // Delete handler registration when the Angular App component is dismounted.
     this.sharedTimestamp!.off('valueChanged', this.updateLocalTimestamp!);
-   ```
-### Get the Fluid data on application startup
 
 Now that we've defined how to get and synchronize our Fluid data, we need to tell Angular to call `getFluidData` and `syncData` when the application starts up and then store the result in component properties. So add the following code to the `ngOnInit` function we defined previously.
 
