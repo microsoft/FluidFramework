@@ -203,6 +203,7 @@ this.syncData();
       this.sharedTimestamp?.set('time', Date.now().toString());
     }
     ```
+
 ### Create the UI
 
 1. Open the file `\src\app\app.component.html` in your code editor. Delete all the default code in the file and replace it with the following. Note about this code:
