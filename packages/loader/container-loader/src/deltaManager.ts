@@ -267,6 +267,14 @@ export class DeltaManager
         return this.initSequenceNumber;
     }
 
+    public get lastQueuedSeqNumber(): number {
+        return this.lastQueuedSequenceNumber;
+    }
+
+    public get lastObservedSequenceNumber(): number {
+        return this.lastObservedSeqNumber;
+    }
+
     public get lastSequenceNumber(): number {
         return this.lastProcessedSequenceNumber;
     }
@@ -1580,6 +1588,12 @@ export class DeltaManager
             return;
         }
 
+        this.logger.sendTelemetryEvent({
+            eventName: "fetchingDeltas",
+            fetchReason: reason,
+            lastKnowOp,
+            to,
+        });
         try {
             assert(lastKnowOp === this.lastQueuedSequenceNumber, 0x0f1 /* "from arg" */);
             let from = lastKnowOp + 1;
