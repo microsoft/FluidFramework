@@ -26,4 +26,5 @@ export interface ILoadTestConfig {
      * ODSP). Also, keep in mind that large blob uploads will likely dwarf other observable effects.
      */
     blobSize?: number,
+    detachedBlobs?: number,
 }

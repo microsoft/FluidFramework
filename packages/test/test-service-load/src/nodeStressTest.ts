@@ -63,7 +63,7 @@ async function orchestratorProcess(
     // Create a new file if a testId wasn't provided
     const url = args.testId !== undefined
         ? await testDriver.createContainerUrl(args.testId)
-        : await initialize(testDriver, seed);
+        : await initialize(testDriver, seed, profile);
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);

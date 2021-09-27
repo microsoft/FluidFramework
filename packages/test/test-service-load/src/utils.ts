@@ -2,22 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import crypto from "crypto";
 import fs from "fs";
-import { Loader } from "@fluidframework/container-loader";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { ITestDriver, TestDriverTypes, ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { createFluidTestDriver, generateOdspHostStoragePolicy } from "@fluidframework/test-drivers";
-import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import random from "random-js";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { assert, LazyPromise } from "@fluidframework/common-utils";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { pkgName, pkgVersion } from "./packageVersion";
-import { createFluidExport } from "./loadTestDataStore";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
+import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBufferedLogger, ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { createFluidTestDriver, generateOdspHostStoragePolicy, OdspTestDriver } from "@fluidframework/test-drivers";
+import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import { generateLoaderOptions, generateRuntimeOptions } from "./optionsMatrix";
+import { pkgName, pkgVersion } from "./packageVersion";
+import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 
@@ -87,7 +90,29 @@ export const createCodeLoader =
     (options: IContainerRuntimeOptions) =>
         new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
 
-export async function initialize(testDriver: ITestDriver, seed: number) {
+class MockDetachedBlobStorage implements IDetachedBlobStorage {
+    public readonly blobs = new Map<string, ArrayBufferLike>();
+
+    public get size() { return this.blobs.size; }
+
+    public getBlobIds(): string[] {
+        return Array.from(this.blobs.keys());
+    }
+
+    public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
+        const id = this.size.toString();
+        this.blobs.set(id, content);
+        return { id, url: "" };
+    }
+
+    public async readBlob(blobId: string): Promise<ArrayBufferLike> {
+        const blob = this.blobs.get(blobId);
+        assert(!!blob, "blob not found");
+        return blob;
+    }
+}
+
+export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
     const options = random.pick(randEng, generateLoaderOptions(seed));
@@ -104,6 +129,7 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
                 },
             }),
         options,
+        detachedBlobStorage: new MockDetachedBlobStorage(),
     });
 
     const container = await loader.createDetachedContainer(codeDetails);
@@ -111,11 +137,29 @@ export async function initialize(testDriver: ITestDriver, seed: number) {
         console.log(error);
         process.exit(-1);
     });
+
+    if ((testConfig.detachedBlobs ?? 0) > 0) {
+        const ds = await requestFluidObject<ILoadTest>(container, "/");
+        const dsm = await ds.detached({
+            runId: -1,
+            testConfig,
+            verbose: true,
+            randEng,
+        });
+
+        // await Promise.all(Array(testConfig.detachedBlobs).fill(0).map(async () => { await dsm.writeBlob(); }));
+        await Promise.all(Array(testConfig.detachedBlobs).fill(0).map(async () => dsm.writeBlob()));
+    }
+
     const testId = Date.now().toString();
     const request = testDriver.createCreateNewRequest(testId);
     await container.attach(request);
     container.close();
 
+    if (testDriver.type === "odsp") {
+        const url = (testDriver as OdspTestDriver).getUrlFromItemId((container.resolvedUrl as any).itemId);
+        return url;
+    }
     return testDriver.createContainerUrl(testId);
 }
 

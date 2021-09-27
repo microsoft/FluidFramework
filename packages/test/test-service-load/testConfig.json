@@ -50,7 +50,8 @@
             "totalSendCount": 150,
             "readWriteCycleMs": 10000,
             "numBlobClients": 2,
-            "blobSize": 3000000
+            "blobSize": 3000000,
+            "detachedBlobs": 10
         }
     }
 }

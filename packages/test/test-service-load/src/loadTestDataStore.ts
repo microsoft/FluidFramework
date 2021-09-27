@@ -27,9 +27,10 @@ export interface IRunConfig {
     randEng: random.Engine,
 }
 
-export interface ILoadTest {
+export type ILoadTest = DataObject & {
     run(config: IRunConfig, reset: boolean): Promise<boolean>;
-}
+    detached(config: IRunConfig): Promise<LoadTestDataStoreModel>;
+};
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
@@ -44,7 +45,7 @@ const defaultBlobSize = 1024;
  * and provide common abstractions for workload scheduling
  * via task picking.
  */
-class LoadTestDataStoreModel {
+export class LoadTestDataStoreModel {
     public static initializingFirstTime(root: ISharedDirectory, runtime: IFluidDataStoreRuntime) {
         root.set(taskManagerKey, TaskManager.create(runtime).handle);
     }
@@ -343,6 +344,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         LoadTestDataStoreModel.initializingFirstTime(
             this.root,
             this.runtime);
+    }
+
+    public async detached(config) {
+        return LoadTestDataStoreModel.createRunnerInstance(
+            config, false, this.root, this.runtime, this.context.containerRuntime);
     }
 
     public async run(config: IRunConfig, reset: boolean) {
