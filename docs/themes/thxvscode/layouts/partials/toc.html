@@ -10,13 +10,15 @@
 {{- end -}}
 {{- end -}}
 
+{{- $tocTitle := default "In this article" .Params.tocTitle }}
+
 {{- $firstHeaderLevel := len (seq (index (findRE "[1-2]" (index $headers 0) 1) 0)) -}}
 
 {{- if not (eq .Params.status "unwritten") -}}
 
 {{- $.Scratch.Set "bareul" slice -}}
 <nav id="docs-subnavbar" aria-label="On Page" data-spy="affix" data-offset-top="20">
-    <h4>In this article</h4>
+    <h4>{{- $tocTitle -}}</h4>
     <ul class="nav">
         {{- range seq (sub $firstHeaderLevel $largest) -}}
         <ul>
@@ -65,7 +67,7 @@
         {{- end -}}
         {{- end -}}
         <li>
-            <a href="#{{- $cleanedID  -}}">{{- $header | plainify | safeHTML -}}</a>
+            <a href="#{{- $cleanedID -}}">{{- $header | plainify | safeHTML -}}</a>
             {{- else -}}
         <li>
             <a href="#{{- $cleanedID -}}">{{- $header | plainify | safeHTML -}}</a>

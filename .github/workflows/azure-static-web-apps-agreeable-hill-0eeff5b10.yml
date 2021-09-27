@@ -51,30 +51,6 @@ jobs:
           mkdir -pv $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/
           tar -C $GITHUB_WORKSPACE/_api-extractor-temp/doc-models/ -zxvf api-extractor.tar.gz
 
-      - name: Download Storybook by SHA
-        id: download-sha-storybook
-        continue-on-error: true
-        uses: carlosperate/download-file-action@v1.0.3
-        with:
-          file-url: https://fluidframework.blob.core.windows.net/storybook/${{ github.sha }}.tar.gz
-          file-name: storybook.tar.gz
-      - name: "Download latest Storybook (only if previous step fails)"
-        id: download-latest-storybook
-        if: steps.download-sha-storybook.outcome != 'success'
-        uses: carlosperate/download-file-action@v1.0.3
-        with:
-          file-url: https://fluidframework.blob.core.windows.net/storybook/latest.tar.gz
-          file-name: storybook.tar.gz
-      - name: "Extract Storybook ==> /docs/static/playground/"
-        id: extract-storybook
-        run: |
-          mkdir -pv $GITHUB_WORKSPACE/docs/static/playground/
-          tar -C $GITHUB_WORKSPACE/docs/static/playground/ -zxvf storybook.tar.gz
-      - name: "Copy playground.html"
-        id: copy-playground
-        run: |
-          cp $GITHUB_WORKSPACE/docs/static/playground/playground.html $GITHUB_WORKSPACE/docs/layouts/page/playground.html
-
       # Build here so we can upload an artifact; ASWA will rebuild when it deploys in the step below
       - name: Build site artifact
         run: |

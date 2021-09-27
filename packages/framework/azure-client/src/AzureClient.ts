@@ -26,6 +26,11 @@ import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 
 /**
+ * Strongly typed id for connecting to a local Azure Fluid Relay service
+ */
+export const LOCAL_MODE_TENANT_ID = "local";
+
+/**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Relay Service or,
  * when running with local tenantId, have it be backed by a Tinylicious local service instance
  */
@@ -43,9 +48,12 @@ export class AzureClient {
             this.props.connection.orderer,
             this.props.connection.storage,
         );
+        // The local service implementation differs from the Azure Fluid Relay service in blob
+        // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
+        const enableWholeSummaryUpload = this.props.connection.tenantId !== LOCAL_MODE_TENANT_ID;
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
-            { enableWholeSummaryUpload: true },
+            { enableWholeSummaryUpload },
         );
     }
 

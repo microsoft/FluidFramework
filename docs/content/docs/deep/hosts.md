@@ -50,7 +50,7 @@ Fluid container from the loader. Finally, the host *does something* with the Flu
 multiple containers from the loader.
 
 <img src="/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
-service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
+service driver, and a container code loader. It then returns a Fluid container or shared object.">
 
 We'll talk about each of these parts, starting with the request and loader dependencies, over the next sections.
 
@@ -129,6 +129,8 @@ As the Fluid Framework expands, we intend to make further use of these responses
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}

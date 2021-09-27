@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ParsedUrlQueryInput } from "querystring";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
@@ -31,7 +32,7 @@ export const getAuthorizationTokenFromCredentials = (credentials: ICredentials):
  * Implementation of the IHistorian interface that calls out to a REST interface
  */
 export class Historian implements IHistorian {
-    private readonly defaultQueryString: Record<string, unknown> = {};
+    private readonly defaultQueryString: ParsedUrlQueryInput = {};
     private readonly cacheBust: boolean;
 
     constructor(
@@ -163,7 +164,7 @@ export class Historian implements IHistorian {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
-    private getQueryString(queryString?: {}): Record<string, unknown> {
+    private getQueryString(queryString?: {}): ParsedUrlQueryInput {
         if (this.cacheBust) {
             return {
                 cacheBust: Date.now(),

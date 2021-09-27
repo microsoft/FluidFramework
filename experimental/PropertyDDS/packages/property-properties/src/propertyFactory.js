@@ -22,6 +22,7 @@ const TemplateValidator = require('@fluid-experimental/property-changeset').Temp
 const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
 
 const PropertyTemplate = require('./propertyTemplate');
+const PropertyTemplateWrapper = require('./propertyTemplateWrapper');
 
 // Include the property classes
 const BaseProperty = require('./properties/baseProperty');
@@ -53,6 +54,7 @@ const SetProperty = require('./properties/setProperty');
 const MapProperty = require('./properties/mapProperty');
 const ValueMapProperty = require('./properties/valueMapProperty').ValueMapProperty;
 const IndexedCollectionBaseProperty = require('./properties/indexedCollectionBaseProperty');
+const AbstractStaticCollectionProperty = require('./properties/abstractStaticCollectionProperty');
 
 const Float32ArrayProperty = require('./properties/valueArrayProperty').Float32ArrayProperty;
 const Float64ArrayProperty = require('./properties/valueArrayProperty').Float64ArrayProperty;
@@ -144,7 +146,6 @@ var PropertyFactory = function () {
     this._remoteScopedAndVersionedTemplates = new Collection();
 
     // To hold the template store the PropertyFactory interacts with.
-    // Currently we don't have a template store
     this._templateStore = undefined;
 
     // Async queue of schema retrieval tasks
@@ -343,7 +344,7 @@ var registerLocal = function (in_template) {
 
             var localValidationResults = { isValid: true };
             if (this._localPrimitivePropertiesAndTemplates.has(typeid)) {
-                var localRegisteredTemplate = this._localPrimitivePropertiesAndTemplates.item(typeid);
+                var localRegisteredTemplate = this._localPrimitivePropertiesAndTemplates.item(typeid).getPropertyTemplate();
 
                 localValidationResults = templateValidator.validate(
                     localRegisteredTemplate.serializeCanonical(),
@@ -416,7 +417,8 @@ var registerLocal = function (in_template) {
 };
 
 /**
- * Register template which are used to instantiate properties.
+ * Register a template which are used to instantiate properties. To find out more about templates,
+ * see https://docs.google.com/document/d/1-7kXkKTu3AZLjKyKl7XK2VuAJRSbUxo3ZuPA8bzWocs/edit
  *
  * In addition to json structures
  * it also accepts typeids, as well as arrays of jsons ans arrays of typeids
@@ -575,14 +577,14 @@ PropertyFactory.prototype._validateSemver = function (in_template, in_compareRem
                 if (previousRemoteVersion) {
                     validationResults = that._templateValidator.validate(
                         in_template.serializeCanonical(),
-                        previousRemoteVersion.serializeCanonical()
+                        previousRemoteVersion.getPropertyTemplate().serializeCanonical()
                     );
                     warnings.push.apply(warnings, validationResults.warnings);
                 } else {
                     var nextRemoteVersion = remoteVersionedTemplates.item(typeidWithoutVersion).getNearestNextItem(version);
                     if (nextRemoteVersion) {
                         validationResults = that._templateValidator.validate(
-                            nextRemoteVersion.serializeCanonical(),
+                            nextRemoteVersion.getPropertyTemplate().serializeCanonical(),
                             in_template.serializeCanonical()
                         );
                         warnings.push.apply(warnings, validationResults.warnings);
@@ -621,7 +623,7 @@ PropertyFactory.prototype._registerRemoteTemplate = function (in_remoteTemplate,
         // Template already exists. The incoming template MUST match what is registered.
         // If they do not match, throw an error letting the user know that the templates are incompatible.
         // This is likely due to the fact that the developer did not bump its version.
-        var registeredTemplate = this._localPrimitivePropertiesAndTemplates.item(typeid);
+        var registeredTemplate = this._localPrimitivePropertiesAndTemplates.item(typeid).getPropertyTemplate();
 
         var templateValidator = _createTemplateValidator.call(this);
         var validationResults = templateValidator.validate(
@@ -636,24 +638,25 @@ PropertyFactory.prototype._registerRemoteTemplate = function (in_remoteTemplate,
         }
     } else if (in_remoteTemplate._isVersioned()) {
         this._validateSemver(in_remoteTemplate);
+        var wrappedTemplate = new PropertyTemplateWrapper(in_remoteTemplate, in_scope);
 
         if (this._remoteScopedAndVersionedTemplates.has(in_scope)) {
             if (this._remoteScopedAndVersionedTemplates.item(in_scope).has(typeidWithoutVersion)) {
                 if (!this._remoteScopedAndVersionedTemplates.item(in_scope).item(typeidWithoutVersion).has(version)) {
                     this._remoteScopedAndVersionedTemplates.item(in_scope)
                         .item(typeidWithoutVersion)
-                        .add(version, in_remoteTemplate);
+                        .add(version, wrappedTemplate);
                 }
             } else {
                 var versionCollection = _createVersionedSortedCollection();
-                versionCollection.add(version, in_remoteTemplate);
+                versionCollection.add(version, wrappedTemplate);
                 this._remoteScopedAndVersionedTemplates.item(in_scope).add(typeidWithoutVersion, versionCollection);
             }
         } else {
             var namespaceCollection = new Collection();
             var versionCollection = _createVersionedSortedCollection();
             namespaceCollection.add(typeidWithoutVersion, versionCollection);
-            versionCollection.add(version, in_remoteTemplate);
+            versionCollection.add(version, wrappedTemplate);
             this._remoteScopedAndVersionedTemplates.add(in_scope, namespaceCollection);
         }
     } else {
@@ -673,7 +676,7 @@ PropertyFactory.prototype._removeScope = function (in_scope) {
         // remove the schemas in this scope from the inheritance cache.
         this._remoteScopedAndVersionedTemplates.item(in_scope).iterate(function (nt, schemas) {
             schemas.iterate(function (k, schema) {
-                delete that._inheritanceCache[schema.typeid];
+                delete that._inheritanceCache[schema.getPropertyTemplate().typeid];
             });
         });
 
@@ -723,7 +726,8 @@ PropertyFactory.prototype._registerTypeId = function (in_typeid, in_templateOrPr
         }
         this._localPrimitivePropertiesAndTemplates.item(in_typeid).add(in_context, in_templateOrProperty);
     } else if (!this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
-        this._localPrimitivePropertiesAndTemplates.add(in_typeid, in_templateOrProperty);
+        var wrapper = new PropertyTemplateWrapper(in_templateOrProperty);
+        this._localPrimitivePropertiesAndTemplates.add(in_typeid, wrapper);
     }
 
     this._eventEmitter.trigger('registered', this, in_templateOrProperty);
@@ -757,15 +761,32 @@ PropertyFactory.prototype.validate = function (in_template) {
  *
  * @param {string} in_typeid    - The type unique identifier
  * @param {string} [in_context]  - The context of the property to create
- * @param {string|undefined} in_scope - The scope in which the property typeid is defined
+ * @param {string} [in_scope] - The scope in which the property typeid is defined
  *
  * @return {property-properties.PropertyTemplate|object|property-properties.BaseProperty|undefined}
  *     Template/Property identified by the typeid.
  */
 PropertyFactory.prototype._get = function (in_typeid, in_context, in_scope = undefined) {
+    var templateOrProperty = this._getWrapper(in_typeid, in_context, in_scope);
+    if (templateOrProperty instanceof PropertyTemplateWrapper) {
+        return templateOrProperty.getPropertyTemplate();
+    }
+    return templateOrProperty;
+};
+
+/**
+ * Get a template or property object based on a typeid and a context
+ *
+ * @param {string} in_typeid    - The type unique identifier
+ * @param {string} [in_context]  - The context of the property to create
+ * @param {string} [in_scope] - The scope in which the property typeid is defined
+ *
+ * @return {property-properties.PropertyTemplateWrapper|property-properties.BaseProperty|undefined}
+ *     Template/Property identified by the typeid.
+ */
+PropertyFactory.prototype._getWrapper = function (in_typeid, in_context, in_scope) {
     if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
         var typeidItem = this._localPrimitivePropertiesAndTemplates.item(in_typeid);
-
         if (!(typeidItem instanceof Collection)) {
             return typeidItem;
         } else {
@@ -796,10 +817,8 @@ PropertyFactory.prototype._get = function (in_typeid, in_context, in_scope = und
  */
 PropertyFactory.prototype.getTemplate = function (in_typeid) {
     if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
-        return this._localPrimitivePropertiesAndTemplates.item(in_typeid);
-    } else {
-        return undefined;
-    }
+        return this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate();
+    } else return undefined;
 };
 
 /**
@@ -819,7 +838,7 @@ PropertyFactory.prototype._getRemoteTemplates = function (in_typeid) {
         if (remoteVersionedTemplates.has(typeidWithoutVersion) &&
             remoteVersionedTemplates.item(typeidWithoutVersion).item(version)) {
 
-            templatesFound.push(remoteVersionedTemplates.item(typeidWithoutVersion).item(version));
+            templatesFound.push(remoteVersionedTemplates.item(typeidWithoutVersion).item(version).getPropertyTemplate());
         }
     });
 
@@ -835,19 +854,18 @@ PropertyFactory.prototype._getRemoteTemplates = function (in_typeid) {
  *                               Accepted values are "single" (default), "array", "map" and "set".
  * @param {object|undefined} in_initialProperties A set of initial values for the PropertySet being created
  * @param {string|undefined} in_scope - The scope in which the property typeid is defined
- * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
- *    The options to selectively create only a subset of a property. Creates all properties if undefined.
+ * @param {boolean|undefined} in_optimizeConstants - set true if constant optimization should occur
  * @throws if the property does not have a unique id.
  * @throws if the property has a typeid that is not registered.
  * @return {property-properties.BaseProperty|undefined} the property instance
  * @private
  */
 PropertyFactory.prototype._createProperty = function (
-    in_typeid, in_context, in_initialProperties, in_scope, in_filteringOptions) {
+    in_typeid, in_context, in_initialProperties, in_scope, in_optimizeConstants) {
 
-    var ifNotSingleOrUndefined = (in_context || 'single') !== 'single';
+    const ifNotSingleOrUndefined = (in_context || 'single') !== 'single';
     ConsoleUtils.assert(ifNotSingleOrUndefined || _.isString(in_typeid), MSG.UNKNOWN_TYPEID_SPECIFIED + in_typeid);
-    var context = in_context;
+    let context = in_context;
     if (!context) {
         // If no context is supplied, we check whether the typeid contains a context
         if (!TypeIdHelper.isReferenceTypeId(in_typeid)) {
@@ -857,10 +875,26 @@ PropertyFactory.prototype._createProperty = function (
         }
     }
 
-    var property = this._createFromPropertyDeclaration({
-        typeid: in_typeid,
-        context: context || 'single'
-    }, undefined, in_scope, in_filteringOptions);
+    var property;
+    if (in_optimizeConstants) {
+        var templateOrProperty = this._getWrapper(in_typeid, undefined, in_scope);
+        var isProperty = templateOrProperty instanceof PropertyTemplateWrapper;
+        var evaluateConstants = isProperty ? !templateOrProperty.hasConstantTree() : false;
+
+        var property = this._createFromPropertyDeclaration({
+            typeid: in_typeid,
+            context: context || 'single'
+        }, undefined, in_scope, evaluateConstants);
+
+        if (isProperty) {
+            templateOrProperty.loadConstants(property);
+        }
+    } else {
+        property = this._createFromPropertyDeclaration({
+            typeid: in_typeid,
+            context: context || 'single'
+        }, undefined, in_scope, true);
+    }
 
     if (in_initialProperties !== undefined) {
         this._setInitialValue(property, {
@@ -904,12 +938,15 @@ PropertyFactory.prototype._setInitialValue = function (property, valueParsed) {
  * @param {string} in_context  - The type of collection of values that the property contains.
  *                               Accepted values are "single" (default), "array", "map" and "set".
  * @param {object=} in_initialProperties A set of initial values for the PropertySet being created
+ * @param {object=} in_options Additional options
+ * @param {property-properties.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
+ *  the function will check against the schemas that have been registered within the workspace
  * @throws if the property does not have a unique id.
  * @throws if the property has a typeid that is not registered.
  * @return {property-properties.BaseProperty|undefined} the property instance
  */
 PropertyFactory.prototype.create = function (in_typeid, in_context, in_initialProperties) {
-    return this._createProperty(in_typeid, in_context, in_initialProperties, null);
+    return this._createProperty(in_typeid, in_context, in_initialProperties, null, true);
 };
 
 /**
@@ -984,7 +1021,7 @@ PropertyFactory.prototype._getConstructorFunctionForTypeidAndID = function (in_c
  *
  * @param {string}                               in_typeid - The type unique identifier
  * @param {string}                               in_id     - The id of the property to create
- * @param {property-properties.BaseProperty|undefined} in_parent - The parent property object. If
+ * @param {property-properties.BaseProperty} in_parent - The parent property object. If
  *                                                           it exists it will be returned
  * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
  *        the Template/Property for this in_typeid
@@ -999,36 +1036,32 @@ PropertyFactory.prototype._ensurePropertyParentExists = function (in_typeid, in_
     if (in_parent) {
         return in_parent;
     }
-
-    // Otherwise, we check the inheritance hierarchy to determine which internal property object we have to use
-    var parents = {};
-    this._getAllParentsForTemplateInternal(in_typeid, parents, undefined, in_scope);
-    parents[in_typeid] = true;
-
-    var params = {
+    let ConstructorFunction;
+    const params = {
         typeid: in_typeid,
-        id: in_id || null // An id of NULL means that the GUID of the property is used if it is a named property
+        id: in_id
     };
-    var ConstructorFunction;
 
-    if (parents['NodeProperty'] && parents['NamedProperty']) {
-        // We have a named node property
-        ConstructorFunction = NamedNodeProperty;
-    } else if (parents['NodeProperty']) {
-        // We have a node property
-        ConstructorFunction = NodeProperty;
-    } else if (parents['NamedProperty']) {
-        // We have a named property
-        ConstructorFunction = NamedProperty;
-    } else if (parents['Enum']) {
-        params._enumDictionary = in_templateOrConstructor._enumDictionary;
-        ConstructorFunction = EnumProperty;
-    } else {
-        // Otherwise we just use a simple base property
-        ConstructorFunction = ContainerProperty;
-        // For the normal container we use the verbatim ID and don't
-        // initialize it with a null as we do for the named properties above
-        params.id = in_id;
+    if (this.inheritsFrom(in_typeid, 'NamedProperty', { scope: in_scope })) {
+        params.id = in_id || null; // An id of NULL means that the GUID of the property is used if it is a named property
+    }
+
+    const wrapper = this._getWrapper(in_typeid, undefined, in_scope);
+    const creationType = wrapper.getCreationType();
+
+    switch (creationType) {
+        case 'Enum':
+            params._enumDictionary = in_templateOrConstructor._enumDictionary;
+            ConstructorFunction = EnumProperty;
+            break;
+        case 'NodeProperty':
+            ConstructorFunction = NodeProperty;
+            break;
+        case 'NamedProperty':
+            ConstructorFunction = NamedProperty;
+            break;
+        default:
+            ConstructorFunction = ContainerProperty;
     }
 
     ConstructorFunction = this._getConstructorFunctionForTypeidAndID(
@@ -1046,6 +1079,30 @@ PropertyFactory.prototype._ensurePropertyParentExists = function (in_typeid, in_
  */
 PropertyFactory.prototype._isRegisteredTypeid = function (in_typeid, in_scope) {
     return !!this._get(in_typeid, undefined, in_scope);
+};
+
+/**
+ * Checks if there exists a registered template with a corresponding typeid
+ * example:example would match to example:example-1.0.0
+ * example:example-1.0.0 would not match to example:example only to example:example-1.0.0
+ * @param {string} in_typeid The type unique identifier with or without a version
+ * @param {string|undefined} in_scope - The scope in which the property typeid is defined
+ * @return {boolean} Returns true if a match is found. False otherwise.
+ * @private
+ */
+PropertyFactory.prototype._hasCorrespondingRegisteredTypeid = function (in_typeid, in_scope) {
+    if (in_typeid.includes('-')) {
+        return this._isRegisteredTypeid(in_typeid, in_scope);
+    }
+
+    var registered = this._localVersionedTemplates.has(in_typeid) ||
+        this._localPrimitivePropertiesAndTemplates.has(in_typeid);
+
+    if (!registered && in_scope && this._remoteScopedAndVersionedTemplates.has(in_scope)) {
+        registered = this._remoteScopedAndVersionedTemplates.item(in_scope).has(in_typeid);
+    }
+
+    return registered;
 };
 
 /**
@@ -1068,9 +1125,9 @@ PropertyFactory.prototype._isSpecializedConstructor = function (in_typeid) {
  * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
  * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
  * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
- * @param {property-properties.BaseProperty=}  in_parent                      - The parent property which will be used as
+ * @param {property-properties.BaseProperty}  in_parent                      - The parent property which will be used as
  *                                                                        the root to construct the property template
- * @param {string|undefined} in_scope - The scope in which the property typeid is defined
+ * @param {string} in_scope - The scope in which the property typeid is defined
  * @param {string} context - The context of the property
  *
  * @return {string} The typeid.
@@ -1103,22 +1160,25 @@ PropertyFactory.prototype._computeTypeid = function (in_propertiesEntry, in_pare
  * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
  * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
  * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
- * @param {property-properties.BaseProperty=}  in_parent                      - The parent property which will be used as
+ * @param {property-properties.BaseProperty}  in_parent                      - The parent property which will be used as
  *                                                                        the root to construct the property template
- * @param {string|undefined} in_scope - The scope in which the property typeid is defined
- * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
- *    The options to selectively create only a subset of a property. Creates all properties if undefined.
+ * @param {string} [in_scope] - The scope in which the property typeid is defined
+ * @param {boolean} [in_evaluateConstants] - If constants need to be traversed and created
  *
  * @return {property-properties.BaseProperty|undefined} the property instance
  */
 PropertyFactory.prototype._createFromPropertyDeclaration = function (
-    in_propertiesEntry, in_parent, in_scope, in_filteringOptions) {
+    in_propertiesEntry, in_parent, in_scope, in_evaluateConstants) {
+
     var context = in_propertiesEntry.context !== undefined ? in_propertiesEntry.context : 'single';
     var typeid = this._computeTypeid(in_propertiesEntry, in_parent, in_scope, context);
+    var referenceTarget = typeid === 'Reference' ?
+        TypeIdHelper.extractReferenceTargetTypeIdFromReference(in_propertiesEntry.typeid) : undefined;
     var parent = undefined;
 
     if (typeid) {
-        if (this._isRegisteredTypeid(typeid, in_scope)) {
+        if (this._isRegisteredTypeid(typeid, in_scope) &&
+            (!referenceTarget || this._hasCorrespondingRegisteredTypeid(referenceTarget, in_scope))) {
             var templateOrConstructor = this._get(typeid, context, in_scope);
             var isSpecializedConstructor = this._isSpecializedConstructor(typeid);
 
@@ -1134,9 +1194,10 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
 
                 // If this is a primitive type, we create it via the registered constructor
                 var result = new templateOrConstructor(in_propertiesEntry); // eslint-disable-line new-cap
-                result._signalAllStaticMembersHaveBeenAdded(in_scope);
                 return result;
             } else {
+                const templateWrapper = this._getWrapper(typeid, context, in_scope);
+                templateOrConstructor = templateWrapper.getCompiledTemplate(this);
                 if (context === 'single') {
                     // If we have a template in a single context, we create it directly here
 
@@ -1149,34 +1210,8 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
                         in_scope
                     );
 
-                    // start from the inherited property
-                    if (templateOrConstructor.inherits) {
-                        // deal with [ 'inherits' ] or 'inherits'
-                        if (templateOrConstructor.inherits instanceof Array &&
-                            templateOrConstructor.inherits.length > 0) {
-                            for (var i = 0; i < templateOrConstructor.inherits.length; i++) {
-                                if (templateOrConstructor.inherits[i] !== 'Enum') {
-                                    this._createFromPropertyDeclaration({
-                                        typeid: templateOrConstructor.inherits[i],
-                                        context: 'single'
-                                    }, parent, in_scope, in_filteringOptions);
-                                }
-                            }
-                        } else if (_.isString(templateOrConstructor.inherits)) {
-                            if (templateOrConstructor.inherits !== 'Enum') {
-                                this._createFromPropertyDeclaration({
-                                    typeid: templateOrConstructor.inherits,
-                                    context: 'single'
-                                }, parent, in_scope, in_filteringOptions);
-                            }
-                        } else {
-                            console.error(MSG.INHERITS_ARRAY_OR_STRING + templateOrConstructor.inherits);
-                        }
-                    }
-
                     this._parseTemplate(templateOrConstructor, parent, in_scope,
-                        !!(templateOrConstructor.inherits), in_filteringOptions);
-
+                        !!(templateOrConstructor.inherits), in_evaluateConstants);
                 } else {
                     // If we have other contexts, we have to create the corresponding property object for that context
 
@@ -1206,18 +1241,9 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
                         case 'map':
                             result = new MapProperty(in_propertiesEntry, in_scope);
                             break;
-                        /* TODO: Remove this completely.
-                                 This seemed to be a mistake to consider 'enum' as a context. It is a typeid.
-                                 Not removing it completely yet in case someone has a strong point to get it back.
-                        case 'enum':
-                          var enumPropertyEntry = deepCopy(in_propertiesEntry);
-                          enumPropertyEntry._enumDictionary = templateOrConstructor._enumDictionary;
-                          result = new EnumProperty(enumPropertyEntry);
-                          break;*/
                         default:
                             throw new Error(MSG.UNKNOWN_CONTEXT_SPECIFIED + context);
                     }
-                    result._signalAllStaticMembersHaveBeenAdded(in_scope);
                     return result;
                 }
             }
@@ -1225,6 +1251,7 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
             // We tried to create a property with an unknown typeid
             // that means we have no template and don't know what to instantiate
             // TODO: look for and use the missing template somehow at this point
+            typeid = referenceTarget || typeid;
             throw new Error(MSG.UNKNOWN_TYPEID_SPECIFIED + typeid);
         }
     } else {
@@ -1238,24 +1265,12 @@ PropertyFactory.prototype._createFromPropertyDeclaration = function (
         }
 
         // And then parse the entry like a template
-        this._parseTemplate(in_propertiesEntry, parent, in_scope, false, in_filteringOptions);
+        this._parseTemplate(in_propertiesEntry, parent, in_scope, false, in_evaluateConstants);
     }
 
     // If this property inherits from NamedProperty we assign a random GUID
-    if (parent instanceof NamedProperty ||
-        parent instanceof NamedNodeProperty) {
-        const guid = parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        if (guid) {
-            guid.setValue(generateGUID());
-        }
-    }
-
-    // We only signal that we have finished the processing, once
-    // we have processed all templates that this template inherits from
-    // Which means, that the function has been called without a parent
-    // as parameter
-    if (in_parent === undefined) {
-        parent._signalAllStaticMembersHaveBeenAdded(in_scope);
+    if (typeid && this.inheritsFrom(typeid, 'NamedProperty', { scope: in_scope })) {
+        parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).value = generateGUID();
     }
 
     return parent;
@@ -1278,7 +1293,7 @@ PropertyFactory.prototype._isNativePropertyConstructor = function (in_obj) {
  * Checks whether the property has a typedValue and replaces the value and the typeid
  * with the ones in the typedValue.
  * @param {Object} in_property - The property top parse.
- * @param {string|undefined} in_scope - The scope in which in_template is defined in
+ * @param {string} in_scope - The scope in which in_template is defined in
  * @param {string} in_context - The context of the in_property
  * @return {Boolean} - True if the property has a typedValue.
  * @throws {TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE} - Thrown when setting a typed value for a primitive.
@@ -1325,143 +1340,60 @@ PropertyFactory.prototype._parseTypedValue = function (in_property, in_scope, in
  *
  * @param {property-properties.PropertyTemplate} in_template - template for the property
  * @param {property-properties.BaseProperty}     in_parent   - the parent
- * @param {string|undefined} in_scope - The scope in which in_template is defined in
+ * @param {string} in_scope - The scope in which in_template is defined in
  * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
  *                                        This is used for extending inherited properties.
- * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
- *    The options to selectively create only a subset of a property. Creates all properties if undefined.
+ * @param {boolean} [in_evaluateConstants] - If constants need to be traversed and created
  * @private
  */
-// eslint-disable-next-line complexity
 PropertyFactory.prototype._parseTemplate = function (
-    in_template, in_parent, in_scope, in_allowChildMerges, in_filteringOptions) {
+    in_template, in_parent, in_scope, in_allowChildMerges, in_evaluateConstants) {
 
     // Check if there are nested property arrays
-    if (in_template.properties || in_template.constants) {
-        var properties = in_template.properties;
-        var constants = in_template.constants;
+    if (!(in_template.inherits && in_template.inherits.indexOf('Enum') !== -1)) {
+        if (in_template.properties) {
+            const properties = in_template.properties;
 
-        if (in_template.inherits && in_template.inherits[0] && in_template.inherits[0] === 'Enum') {
-            // We don't have to parse enum "properties"
-        } else {
-            if (properties) {
-                for (var i = 0; i < properties.length; i++) {
-                    var oldChild = in_parent._children[properties[i].id];
-                    var context = properties[i].context || 'single';
-                    var typeid = properties[i].typeid || 'ContainerProperty';
-                    let newChild;
+            for (let i = 0; i < properties.length; i++) {
+                const id = properties[i].id;
+                const typeid = properties[i].typeid || 'ContainerProperty';
+                const context = properties[i].context || 'single';
+                const optional = properties[i].optional || false;
 
-                    // Validate that set inherit from a NamedProperty
-                    if (context === 'set' && !this.inheritsFrom(typeid, 'NamedProperty', { scope: in_scope })) {
-                        throw new Error(MSG.SET_ONLY_NAMED_PROPS + typeid);
-                    }
+                const valueParsed = this._parseTypedValue(properties[i], in_scope, context);
 
-                    var valueParsed = this._parseTypedValue(properties[i], in_scope, context);
-                    // Check if the property id already exists (inherited property) with the same scope and type.
-                    //   If yes; then update the existing property's value.
-                    //   If no; set the default value and append the property.
+                if (optional) {
+                    in_parent._addOptionalChild(id, typeid);
+                }
 
-                    // 1/3. Create or clear
-                    if (oldChild !== undefined && oldChild.getTypeid() === typeid &&
-                        oldChild.getContext() === context && valueParsed.value) {
-                        // If an inherited set or map, then we need to delete all the entries already created.
-                        if (context === 'set' || context === 'map') {
-                            oldChild.clear();
-                        }
-                        newChild = oldChild;
+                if (valueParsed.value) {
+                    const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
+                    this._setInitialValue(property, valueParsed);
+                    if (optional) {
+                        in_parent._insert(property.getId(), property, true);
                     } else {
-                        // No need to calculate the child path if there is no filtering
-                        if (in_filteringOptions) {
-                            let childBasePath = PathHelper.getChildAbsolutePathCanonical(
-                                in_filteringOptions.basePath, properties[i].id);
-                            if (PathHelper.getPathCoverage(childBasePath, in_filteringOptions.paths).coverageExtent) {
-                                newChild = this._createFromPropertyDeclaration(properties[i], undefined, in_scope,
-                                    { basePath: childBasePath, paths: in_filteringOptions.paths });
-                            }
-                        } else {
-                            newChild = this._createFromPropertyDeclaration(properties[i], undefined, in_scope);
-                        }
+                        in_parent._append(property, in_allowChildMerges);
                     }
-
-                    if (newChild) {
-                        // 2/3. Set initial value
-                        if (valueParsed.value) {
-                            this._setInitialValue(newChild, valueParsed);
-                        }
-
-                        // 3/3. Insert in parent
-                        if (newChild !== oldChild) {
-                            in_parent._append(newChild, in_allowChildMerges);
-                        }
-                    }
+                } else if (!optional) {
+                    const property = this._createFromPropertyDeclaration(properties[i], undefined, in_scope, false);
+                    in_parent._append(property, in_allowChildMerges);
                 }
             }
+        }
 
-            if (constants) {
-                for (var i = 0; i < constants.length; i++) {
-                    var child = in_parent._children[constants[i].id];
-                    var context = constants[i].context || 'single';
+        if (in_evaluateConstants && in_template.constants) {
+            const constants = in_template.constants;
+            for (let i = 0; i < constants.length; i++) {
+                const context = constants[i].context || 'single';
+                const valueParsed = this._parseTypedValue(constants[i], in_scope, context);
+                const constant = this._createFromPropertyDeclaration(constants[i], undefined, in_scope, true);
 
-                    // If constant is missing its context, set it from its child
-                    if (child && child._isConstant && !constants[i].context) {
-                        context = child.getContext();
-                    }
-
-                    // Validate that set inherit from a NamedProperty
-                    if (context === 'set' && !this.inheritsFrom(constants[i].typeid, 'NamedProperty', { scope: in_scope })) {
-                        throw new Error(MSG.SET_ONLY_NAMED_PROPS + constants[i].typeid);
-                    }
-
-                    var valueParsed = this._parseTypedValue(constants[i], in_scope, context);
-
-                    // If constant is missing its typeid
-                    if (child && child._isConstant && !constants[i].typeid) {
-                        // if constant is a typedValue and is a single (has a typeid), use the typedValue's typeid
-                        //   else use the child's
-                        constants[i].typeid = valueParsed && valueParsed.typed && valueParsed.typeid ?
-                            valueParsed.typeid : child.getTypeid();
-                    }
-
-                    // Check if the constant id already exists (inherited constant) with the same scope and type
-                    //   If yes; then only update its default value.
-                    //   If no; set the default value and append the constant.
-                    if (child !== undefined && child._isConstant && child.getTypeid() === constants[i].typeid &&
-                        child.getContext() === context) {
-                        if (valueParsed.value) {
-                            child._unsetAsConstant();
-                            if (context === 'set' || context === 'map') {
-                                child.clear();
-                            }
-
-                            this._setInitialValue(child, valueParsed);
-                        }
-                        child._setAsConstant();
-                    } else {
-                        // if we are overriding a constant with a typedValue, delete the child constant and recreate the new one.
-                        if (child !== undefined && child._isConstant) {
-                            if (valueParsed.typed && valueParsed.typeid) {
-                                if (!this.inheritsFrom(valueParsed.typeid, child.getTypeid(), { scope: in_scope })) {
-                                    throw new Error(MSG.TYPED_VALUES_MUST_DERIVE_FROM_BASE_TYPE +
-                                        valueParsed.typeid + ' must be a subclass of ' + child.getTypeid());
-                                }
-
-                                in_parent._remove(child.getId());
-                            } else if (child.getContext() !== context) {
-                                throw new Error(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_CONTEXT_AS_BASE_TYPE +
-                                    child.getId() + ':' + context);
-                            }
-                        }
-
-                        constants[i].context = context;
-                        var constant = this._createFromPropertyDeclaration(constants[i], undefined, in_scope);
-                        if (valueParsed.value) {
-                            this._setInitialValue(constant, valueParsed);
-                        }
-
-                        constant._setAsConstant();
-                        in_parent._append(constant, false);
-                    }
+                if (valueParsed.value) {
+                    this._setInitialValue(constant, valueParsed);
                 }
+
+                constant._setAsConstant();
+                in_parent._append(constant, false);
             }
         }
     }
@@ -1480,6 +1412,8 @@ PropertyFactory.prototype._parseTemplate = function (
  * @param {string}  in_baseTypeid         - The base template to check for
  * @param {object} [in_options]          - Additional options
  * @param {boolean} [in_options.includeSelf=true] - Also return true if in_templateTypeid === in_baseTypeid
+ * @param {property-properties.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
+ *  the function will check against the schemas that have been registered within the workspace
  * @throws if no template is found for in_templateTypeid
  * @return {boolean} True if in_baseTypeid is a parent of in_templateTypeid or
  *                   if (in_includeSelf == true and in_templateTypeid == in_baseTypeid)
@@ -1489,90 +1423,34 @@ PropertyFactory.prototype.inheritsFrom = function (in_templateTypeid, in_baseTyp
 
     in_options = in_options || {};
 
-    const templateEnumTypeId = this._getEnumTypeid(in_templateTypeid, in_options);
-    if (templateEnumTypeId) {
-        in_templateTypeid = 'Enum';
-    }
-
-    const baseEnumTypeId = this._getEnumTypeid(in_baseTypeid, in_options);
-    if (baseEnumTypeId) {
-        in_baseTypeid = 'Enum';
-    }
-
-    if (in_templateTypeid === 'Enum' && in_baseTypeid === 'Enum') {
-        in_options._isTemplateEnum = true;
-
-        return PropertyFactory.inheritsFrom(templateEnumTypeId || in_templateTypeid,
-            baseEnumTypeId || in_baseTypeid, in_options);
-    }
-
-    if ((in_templateTypeid === in_baseTypeid || templateEnumTypeId === in_baseTypeid) &&
+    if (in_templateTypeid === in_baseTypeid &&
         (!!in_options.includeSelf || in_options.includeSelf === undefined)) {
         return true;
     }
 
     // check the inheritance of primitive typeid
-    const isPrimitiveOrReservedType =
-        (templateId) => TypeIdHelper.isPrimitiveType(templateId) || TypeIdHelper.isReservedType(templateId);
-
-    if (isPrimitiveOrReservedType(in_templateTypeid) && isPrimitiveOrReservedType(in_baseTypeid)) {
-        return TypeIdHelper.nativeInheritsFrom(in_templateTypeid, in_baseTypeid) ||
-            (templateEnumTypeId && PropertyFactory.inheritsFrom(templateEnumTypeId, in_baseTypeid, in_options));
+    if ((TypeIdHelper.isPrimitiveType(in_templateTypeid) ||
+        TypeIdHelper.isReservedType(in_templateTypeid)) &&
+        (TypeIdHelper.isPrimitiveType(in_baseTypeid) ||
+            TypeIdHelper.isReservedType(in_baseTypeid))) {
+        return TypeIdHelper.nativeInheritsFrom(in_templateTypeid, in_baseTypeid);
     }
 
     // look in the cache first
     if (cachedInheritance && cachedInheritance[in_baseTypeid]) {
         return true;
     } else {
-        let parents = {};
-        this._getAllParentsForTemplateInternal(in_templateTypeid, parents, true, in_options.scope);
+        var parents = {};
+        var scope = in_options.workspace ?
+            in_options.workspace.getRoot()._getCheckedOutRepositoryInfo().getScope() :
+            in_options.scope;
 
-        if (in_options._isTemplateEnum && parents['Enum'] === undefined) {
-            throw new Error(MSG.TYPEID_IS_NOT_ENUM + in_templateTypeid);
-        }
+        this._getAllParentsForTemplateInternal(in_templateTypeid, parents, true, scope);
 
         // update the cache
         this._inheritanceCache[in_templateTypeid] = parents;
 
         return parents[in_baseTypeid] !== undefined;
-    }
-};
-
-/**
- * Get the typeid contained in the enum, eg: enum<'a:a-1.0.0'> will return 'a:a-1.0.0'
- *
- * @param {string} in_templateTypeid         - the template typeid
- * @param {object} in_options                - Additional optionsin_options
- * @return {string} the typeid contained in the enum
- * @private
- */
-PropertyFactory.prototype._getEnumTypeid = function (in_templateTypeid, in_options) {
-    const enumRegex = /enum<(.*)>/;
-    let enumTypeId;
-    if (in_templateTypeid.substr(0, 5) === 'enum<') {
-        enumTypeId = enumRegex.exec(in_templateTypeid)[1];
-
-        this._validateEnumTemplate(enumTypeId, in_options);
-    }
-
-    return enumTypeId;
-};
-
-/**
- * Validate the typeid inside of an enum<>
- *
- * @param {string} in_templateTypeid     - the template typeid
- * @param {object} [in_options]          - Additional optionsin_options
- * @private
- */
-PropertyFactory.prototype._validateEnumTemplate = function (in_templateTypeid, in_options) {
-    const template = this._get(in_templateTypeid, undefined, in_options.scope);
-    if (!template) {
-        throw new Error(MSG.NON_EXISTING_TYPEID + in_templateTypeid);
-    }
-
-    if (TypeIdHelper.isReservedType(in_templateTypeid)) {
-        throw new Error(MSG.TYPEID_IS_NOT_ENUM);
     }
 };
 
@@ -1588,6 +1466,9 @@ PropertyFactory.prototype._validateEnumTemplate = function (in_templateTypeid, i
  *                                                   Everything implicitly inherits
  *                                                   from BaseProperty, but it is not explicitly listed in the
  *                                                   template, so it is only included if explicitly requested
+ * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against.
+ *                                                   If supplied, the function will check against the
+ *                                                   schemas that have been registered within the workspace
  * @throws if no template found for in_typeid. Make sure it is registered first.
  * @return {Array.<string>} typeids of all inherited types (in unspecified order)
  */
@@ -1595,7 +1476,10 @@ PropertyFactory.prototype.getAllParentsForTemplate = function (in_typeid, in_opt
     in_options = in_options || {};
     // We just forward the request to the internal function
     var parents = {};
-    this._getAllParentsForTemplateInternal(in_typeid, parents, !!in_options.includeBaseProperty, in_options.scope);
+    var scope = in_options.workspace ?
+        in_options.workspace.getRoot()._getCheckedOutRepositoryInfo().getScope() :
+        in_options.scope;
+    this._getAllParentsForTemplateInternal(in_typeid, parents, !!in_options.includeBaseProperty, scope);
 
     return _.keys(parents);
 };
@@ -1608,7 +1492,7 @@ PropertyFactory.prototype.getAllParentsForTemplate = function (in_typeid, in_opt
  * @param {Boolean} in_includeBaseProperty - Include BaseProperty as parent. Everything implicitly inherits
  *                                           from BaseProperty, but it is not explicitly listed in the
  *                                           template, so it is only be included if explicitly requested
- * @param {string|undefined} in_scope - The scope in which the property typeid is defined
+ * @param {string} [in_scope] - The scope in which the property typeid is defined
  */
 PropertyFactory.prototype._getAllParentsForTemplateInternal = function (in_typeid,
     out_parents,
@@ -1617,7 +1501,7 @@ PropertyFactory.prototype._getAllParentsForTemplateInternal = function (in_typei
     if (TypeIdHelper.isPrimitiveType(in_typeid)) {
         // Everything inherits from BaseProperty.
         if (in_includeBaseProperty) {
-            out_parents['ContainerProperty'] = true;
+            out_parents['AbstractStaticCollectionProperty'] = true;
             out_parents['BaseProperty'] = true;
         }
         return;
@@ -1630,7 +1514,7 @@ PropertyFactory.prototype._getAllParentsForTemplateInternal = function (in_typei
 
     // Everything inherits from BaseProperty.
     if (in_includeBaseProperty) {
-        out_parents['ContainerProperty'] = true;
+        out_parents['AbstractStaticCollectionProperty'] = true;
         out_parents['BaseProperty'] = true;
     }
 
@@ -1691,9 +1575,6 @@ PropertyFactory.prototype._reregister = function (in_template) {
         }
     }
 
-    // Invalidate the cache of static children per typeid
-    NodeProperty._cleanStaticChildrenCache();
-
     // Clear this schema from the inheritance cache
     delete this._inheritanceCache[typeid];
 
@@ -1735,18 +1616,19 @@ PropertyFactory.prototype.initializeSchemaStore = function (in_options) {
         in_options.url = in_options.url + '/';
     }
 
+    this._templateStore = new ForgeSchemaStore(in_options);
+
     return Promise.resolve();
 };
 
 /**
-* Extracts typeids directly referred to in a template and that are not locally known
-*
-* @public
-* @param {property-properties.PropertyTemplate|object} in_template from which to extract dependencies
-*
-* @return {Array} list of unknown typeids
-* @ignore
-*/
+ * Extracts typeids directly referred to in a template and that are not locally known
+ *
+ * @public
+ * @param {property-properties.PropertyTemplate|object} in_template from which to extract dependencies
+ *
+ * @return {Array} list of unknown typeids
+ */
 var _extractUnknownDependencies = function (in_template) {
     var self = this;
     var dependencies = PropertyTemplate.extractDependencies(in_template);
@@ -1759,12 +1641,12 @@ var _extractUnknownDependencies = function (in_template) {
 };
 
 /**
-* Pushes a template request task onto the template requests queue
-*
-* @public
-* @param {String} in_typeid typeid of the template to retrieve
-* @ignore
-*/
+ * Pushes a template request task onto the template requests queue
+ *
+ * @public
+ * @param {String} in_typeid typeid of the template to retrieve
+ *
+ */
 var _pushTemplateRequestTask = function (in_typeid) {
     var that = this;
 
@@ -1811,13 +1693,13 @@ var _pushTemplateRequestTask = function (in_typeid) {
 };
 
 /**
-* Pushes a template request task onto the template requests queue
-*
-* @private
-* @param {String} in_task schema retrieval task
-* @param {String} in_callback callback of the task
-*
-*/
+ * Pushes a template request task onto the template requests queue
+ *
+ * @private
+ * @param {String} in_task schema retrieval task
+ * @param {String} in_callback callback of the task
+ *
+ */
 PropertyFactory.prototype._retrieveTemplateRequestWorker = function (in_task, in_callback) {
     var store = in_task.context;
     if (store) {
@@ -1832,25 +1714,25 @@ PropertyFactory.prototype._retrieveTemplateRequestWorker = function (in_task, in
 };
 
 /**
-* Tries to resolve dependencies after some calls to register() have been made
-*
-* @public
-*
-* @return {Promise} A promise that resolves to an object with the following structure:
-* {
-*  errors: {
-*    typeid1: errors,
-*    ...
-*    typeidn: errors
-*  },
-*  templates: {
-*    typeid1: [], array of templates
-*    ...
-*    typeidn: []  array of templates
-*   }
-* }
-*
-*/
+ * Tries to resolve dependencies after some calls to register() have been made
+ *
+ * @public
+ *
+ * @return {Promise} A promise that resolves to an object with the following structure:
+ * {
+ *  errors: {
+ *    typeid1: errors,
+ *    ...
+ *    typeidn: errors
+ *  },
+ *  templates: {
+ *    typeid1: [], array of templates
+ *    ...
+ *    typeidn: []  array of templates
+ *   }
+ * }
+ *
+ */
 PropertyFactory.prototype.resolveSchemas = function () {
     // Only one queue at a time can be processed.
     if (this.templateRequestsQueue !== undefined) {
@@ -1863,8 +1745,8 @@ PropertyFactory.prototype.resolveSchemas = function () {
 
     // 0. Inspect locally registered templates for unknown dependencies
     this._localPrimitivePropertiesAndTemplates.iterate(function (key, type) {
-        if (PropertyTemplate.isTemplate(type)) {
-            var unknownDeps = _extractUnknownDependencies.call(that, type);
+        if (!that._isSpecializedConstructor(key) && PropertyTemplate.isTemplate(type.getPropertyTemplate())) {
+            var unknownDeps = _extractUnknownDependencies.call(that, type.getPropertyTemplate());
             for (var d = 0; d < unknownDeps.length; d++) {
                 var dep = unknownDeps[d];
                 if (that.missingDependencies[dep] === undefined) {
@@ -1874,7 +1756,7 @@ PropertyFactory.prototype.resolveSchemas = function () {
         }
     });
 
-    var typeids = _.keys(this.missingDependencies);
+    var typeids = Object.keys(this.missingDependencies);
 
     // 1. Iterate over missing dependencies. Create pending request entries. Set status to pending.
     // Push template retrieve task to the queue for unresolved typeids (missing dependencies)
@@ -1895,20 +1777,63 @@ PropertyFactory.prototype.resolveSchemas = function () {
             resolve({ errors: {}, schemas: {} });
             that.templateRequestsQueue = undefined;
         } else {
-            that.templateRequestsQueue.drain(
-                function () {
-                    var errors = _.compact(_.pluck(that.templateRequestsResults.errors, 'typeid'));
-                    var results = that.templateRequestsResults;
+            that.templateRequestsQueue.drain = function () {
+                var errors = _.compact(_.pluck(that.templateRequestsResults.errors, 'typeid'));
+                var results = that.templateRequestsResults;
+                var resultsKeys = Object.keys(that.templateRequestsResults.schemas);
+                var tempMissingDependencies = [];
+                let tempConstant;
+                // create missing dependencies for contextKeyType
+                for (var j = 0; j < resultsKeys.length; j++) {
+                    var templateWrapper = that._getWrapper(results.schemas[resultsKeys[j]].typeid, undefined, undefined);
+                    if (templateWrapper) {
+                        var compiledTemplate = templateWrapper.getCompiledTemplate(that);
+                        if (compiledTemplate.constants) {
+                            for (var s = 0; s < compiledTemplate.constants.length; s++) {
+                                tempConstant = compiledTemplate.constants[s];
+                                if (tempConstant.contextKeyType === 'typeid' &&
+                                    tempConstant.context === 'map' &&
+                                    tempConstant.value) {
+                                    var valueKeys = Object.keys(tempConstant.value);
+                                    for (var z = 0; z < valueKeys.length; z++) {
+                                        if (TypeIdHelper.isTemplateTypeid(valueKeys[z]) &&
+                                            !(valueKeys[z] in that.templateRequestsResults.schemas) &&
+                                            !(tempMissingDependencies.includes(valueKeys[z]))) {
+                                            tempMissingDependencies.push(valueKeys[z]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (tempMissingDependencies.length !== 0) {
+                    for (var j = 0; j < tempMissingDependencies.length; j++) {
+                        var missingTypeid = tempMissingDependencies[j];
+                        if (that.missingDependencies[missingTypeid] === undefined) {
+                            that.missingDependencies[missingTypeid] = { requested: false };
+                            if (that.templateRequestsResults.errors[missingTypeid] === undefined) {
+                                that.templateRequestsResults.errors[missingTypeid] = {};
+                            }
+                            if (that.templateRequestsResults.schemas[missingTypeid] === undefined) {
+                                that.templateRequestsResults.schemas[missingTypeid] = {};
+                            }
+                        }
+                        _pushTemplateRequestTask.call(that, missingTypeid);
+                    }
+                }
+
+                if (that.templateRequestsQueue.length() === 0) {
                     that.templateRequestsResults = { errors: {}, schemas: {} };
                     if (errors.length && errors.length > 0) {
-                        reject(new Error('Some errors occurs'));
+                        reject(new Error('Some errors occured'));
                     } else {
                         that.missingDependencies = {};
                         resolve(results);
                     }
                     that.templateRequestsQueue = undefined;
                 }
-            );
+            };
         }
     });
 };
@@ -1938,6 +1863,8 @@ var PropertyFactory = new PropertyFactory();
 // into the LazyLoadedProperties namespace, so that the Factory can be accessed at
 // runtime by the Property objects itself without introducing a cycle during parsing
 LazyLoadedProperties.PropertyFactory = PropertyFactory;
+LazyLoadedProperties.AbstractStaticCollectionProperty = AbstractStaticCollectionProperty;
+LazyLoadedProperties.IndexedCollectionBaseProperty = IndexedCollectionBaseProperty;
 LazyLoadedProperties.ContainerProperty = ContainerProperty;
 LazyLoadedProperties.ArrayProperty = ArrayProperty;
 LazyLoadedProperties.EnumArrayProperty = EnumArrayProperty;
@@ -1947,7 +1874,5 @@ LazyLoadedProperties.ValueProperty = ValueProperty;
 LazyLoadedProperties.ValueMapProperty = ValueMapProperty;
 LazyLoadedProperties.ReferenceMapProperty = ReferenceMapProperty;
 LazyLoadedProperties.NodeProperty = NodeProperty;
-LazyLoadedProperties.IndexedCollectionBaseProperty = IndexedCollectionBaseProperty;
-
 
 module.exports = PropertyFactory;

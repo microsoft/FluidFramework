@@ -68,10 +68,10 @@ ReferenceMapProperty.prototype.get = function (in_ids, in_options) {
 
     if (_.isArray(in_ids)) {
         // Forward handling of arrays to the BaseProperty function
-        return ContainerProperty.prototype.get.call(this, in_ids, in_options);
+        return AbstractStaticCollectionProperty.prototype.get.call(this, in_ids, in_options);
     } else {
 
-        var value = this._entries[in_ids];
+        var value = this._dynamicChildren[in_ids];
         if (value === undefined ||
             value === '') {
             return undefined;
@@ -129,8 +129,6 @@ ReferenceMapProperty.prototype.set = function (in_key, in_value) {
     StringMapProperty.prototype.set.call(this, in_key, value);
 };
 
-let setValueDeprecatedWarning = false;
-
 /**
  * Sets or inserts the reference to point to the given property object or to be equal to the given path string.
  *
@@ -142,13 +140,7 @@ let setValueDeprecatedWarning = false;
  * @throws if in_value is defined, but is not a property or a string.
  * @deprecated
  */
-ReferenceMapProperty.prototype.setValue = function (in_key, in_value) {
-    if (!setValueDeprecatedWarning) {
-        console.warn(MSG.DEPRECATED_FUNCTION, 'setValue');
-        setValueDeprecatedWarning = true;
-    }
-    this.set(in_key, in_value);
-};
+ReferenceMapProperty.prototype.setValue = ReferenceMapProperty.prototype.set;
 
 /**
  * Inserts the reference to point to the given property object or to be equal to the given path string.
@@ -197,7 +189,7 @@ ReferenceMapProperty.prototype._resolvePathSegment = function (in_segment, in_se
         return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
     } else {
         // Everything else is handled by the implementation in the base property
-        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 };
 

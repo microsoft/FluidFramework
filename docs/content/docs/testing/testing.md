@@ -101,12 +101,13 @@ describe("ClientTest", () => {
     });
 
     it("can create Azure container successfully", async () => {
-        const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
-            name: documentId,
+            initialObjects: {
+              customMap: SharedMap
+            },
         };
 
-        const containerAndServices  = await client.createContainer(containerConfig, schema);
+        const containerAndServices  = await client.createContainer(schema);
     });
 });
 

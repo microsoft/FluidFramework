@@ -61,7 +61,7 @@ export interface IDirectoryDataObject {
     };
 }
 
-// @public (undocumented)
+// @public
 export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -100,7 +100,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
@@ -115,7 +115,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
     wait<T = any>(key: string): Promise<T>;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedMapEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;

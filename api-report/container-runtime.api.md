@@ -152,7 +152,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     processSignal(message: ISignalMessage, local: boolean): void;
     // (undocumented)
     readonly raiseContainerWarning: (warning: ContainerWarning) => void;
-    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(proposalHandle: string | undefined, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     request(request: IRequest): Promise<IResponse>;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -487,7 +487,7 @@ export interface ISummarizerEvents extends IEvent {
 
 // @public (undocumented)
 export interface ISummarizerInternalsProvider {
-    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryLogger: ITelemetryLogger): Promise<void>;
+    refreshLatestSummaryAck(proposalHandle: string, ackHandle: string, summaryRefSeq: number, summaryLogger: ITelemetryLogger): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
@@ -708,6 +708,8 @@ export class SummarizingWarning extends LoggingError implements ISummarizingWarn
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
     constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLogger);
+    // (undocumented)
+    addOpListener(listener: () => void): void;
     createWatcher(clientId: string): IClientSummaryWatcher;
     // (undocumented)
     emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean;
@@ -715,6 +717,8 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     get latestAck(): IAckedSummary | undefined;
     // (undocumented)
     get opsSinceLastAck(): number;
+    // (undocumented)
+    removeOpListener(listener: () => void): void;
     // (undocumented)
     removeWatcher(clientId: string): void;
     // (undocumented)

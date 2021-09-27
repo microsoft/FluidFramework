@@ -5,20 +5,21 @@
 /**
  * @fileoverview Definition of the array property class
  */
-const BaseProperty = require('./baseProperty');
-const ContainerProperty = require('./containerProperty');
-const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
-const ArrayChangeSetIterator = require('@fluid-experimental/property-changeset').ArrayChangeSetIterator;
-const deserializeNonPrimitiveArrayElements =
-    require('../containerSerializer').deserializeNonPrimitiveArrayElements;
-const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
-const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const _ = require('lodash');
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
+const BaseProperty = require('./baseProperty');
+const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
+const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
+const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
+const {
+    ArrayChangeSetIterator,
+    ChangeSet,
+    PathHelper,
+    TypeIdHelper
+} = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
 const Property = require('./lazyLoadedProperties');
-const PathHelper = require('@fluid-experimental/property-changeset').PathHelper;
+const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const deepCopy = _.cloneDeep;
-const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
 
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
@@ -61,12 +62,11 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @param {string} [in_scope] - The scope in which the property typeid is defined
  * @protected
  * @constructor
- * @extends property-properties.ContainerProperty
  * @alias property-properties.ArrayProperty
  * @category Arrays
  */
 var ArrayProperty = function (in_params, in_scope) {
-    ContainerProperty.call(this, in_params);
+    AbstractStaticCollectionProperty.call(this, in_params);
     var length = in_params.size || in_params.length || 0;
 
     // changesets
@@ -80,10 +80,10 @@ var ArrayProperty = function (in_params, in_scope) {
     this._dataArrayCreate(length);
 };
 
-ArrayProperty.prototype = Object.create(ContainerProperty.prototype);
+ArrayProperty.prototype = Object.create(AbstractStaticCollectionProperty.prototype);
 
 ArrayProperty.prototype._context = 'array';
-ArrayProperty.prototype._children = {};
+ArrayProperty.prototype._staticChildren = {};
 
 /**
  * Returns the path segment for a child
@@ -129,7 +129,7 @@ ArrayProperty.prototype._resolvePathSegment = function (in_segment, in_segmentTy
         }
         return this._dataArrayGetValue(index);
     } else {
-        return ContainerProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+        return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 };
 
@@ -186,6 +186,7 @@ ArrayProperty.prototype.enqueue = ArrayProperty.prototype.push;
  * @param {Array<*>|*|Array<property-properties.BaseProperty>|property-properties.BaseProperty} in_values the values
  * or properties to be pushed
  * @throws if trying to insert a property that already has a parent.
+ * @throws if trying to insert a root property
  * @throws if trying to modify a referenced property.
  * @return {number} new length of the array
  */
@@ -287,14 +288,14 @@ ArrayProperty.prototype._setValues = function (in_values, in_typed, in_initial) 
                     prop = in_values[i];
                 } else {
                     prop = Property.PropertyFactory._createProperty(
-                        in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
+                        in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope(), !in_initial);
                 }
                 arr.push(prop);
             }
 
             this._setValuesInternal(arr);
         } else {
-            ContainerProperty.prototype._setValues.call(this, in_values, in_typed, in_initial);
+            AbstractStaticCollectionProperty.prototype._setValues.call(this, in_values, in_typed, in_initial);
         }
     } else {
         this._setValuesInternal(in_values);
@@ -312,31 +313,23 @@ ArrayProperty.prototype._setValuesInternal = function (in_values) {
         if (_.isArray(in_values)) {
             this.clear();
             this.insertRange(0, in_values);
-        } else {
-            ContainerProperty.prototype.setValues.call(this, in_values);
-        }
+        } else AbstractStaticCollectionProperty.prototype.setValues.call(this, in_values);
     } else {
-        if (_.isArray(in_values)) {
-            if (in_values.length < this._dataArrayGetLength()) {
-                this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
-            }
-            this.setRange(0, in_values.slice(0, this._dataArrayGetLength()));
-            if (in_values.length > this._dataArrayGetLength()) {
-                this.insertRange(this._dataArrayGetLength(), in_values.slice(this._dataArrayGetLength()));
-            }
-        } else {
-            var that = this;
-            var maxIndex = this._dataArrayGetLength() - 1;
-            _.each(in_values, function (value, index) {
-                if (index > maxIndex) {
-                    that.insert(index, value);
-                } else {
-                    if (that._dataArrayGetValue(index) !== value) {
-                        that.set(index, value);
-                    }
-                }
-            });
+        if (_.isArray(in_values) && in_values.length < this._dataArrayGetLength()) {
+            this.removeRange(in_values.length, this._dataArrayGetLength() - in_values.length);
         }
+
+        var that = this;
+        var maxIndex = this._dataArrayGetLength() - 1;
+        _.each(in_values, function (value, index) {
+            if (index > maxIndex) {
+                that.insert(index, value);
+            } else {
+                if (that._dataArrayGetValue(index) !== value) {
+                    that.set(index, value);
+                }
+            }
+        });
     }
 };
 
@@ -523,7 +516,7 @@ ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
 
     for (var i = 0; i < in_array.length; i++) {
         if (in_array[i] instanceof BaseProperty) {
-            in_array[i]._validateInsertIn(this, in_offset + i);
+            in_array[i]._validateInsertIn(this)
         }
     }
     this._checkIsNotReadOnly(true);
@@ -536,13 +529,16 @@ ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
  * this is useful for batch changes
  * @param {number} in_offset target index
  * @param {Array<*>} in_array the array to be inserted
+ * @param {Boolean=} [in_setParents=true] If true, set parent of inserted properties.
+ *                   If false, caller has already set parents.
  * @private
  */
-ArrayProperty.prototype._insertRangeWithoutDirtying = function (in_offset, in_array) {
+ArrayProperty.prototype._insertRangeWithoutDirtying = function (in_offset, in_array, in_setParents) {
+    if (in_setParents === undefined) in_setParents = true;
     if (in_offset < 0 || in_offset > this.length || !_.isNumber(in_offset)) {
         throw Error(MSG.START_OFFSET_INVALID + in_offset);
     }
-    if (!this._isPrimitive) {
+    if (in_setParents && !this._isPrimitive) {
         var arr = [];
         for (var i = 0; i < in_array.length; ++i) {
             var prop = in_array[i];
@@ -848,7 +844,7 @@ ArrayProperty.prototype.getLength = function () {
 /**
  * @inheritdoc
  */
-ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions) {
+ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView) {
     this._checkIsNotReadOnly(false);
 
     // Iterator to process the changes in the ChangeSet in the correct order
@@ -861,12 +857,19 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                 case ArrayChangeSetIterator.types.INSERT:
                     // Handle inserts
                     var propertyDescriptions = arrayIterator.opDescription.operation[1];
+                    var insertedPropertyInstances = [];
                     var scope = this._getScope();
-                    var insertedPropertyInstances = deserializeNonPrimitiveArrayElements(propertyDescriptions, scope);
+                    for (var i = 0; i < propertyDescriptions.length; ++i) {
+                        var createdProperty = Property.PropertyFactory._createProperty(
+                            propertyDescriptions[i]['typeid'], null, undefined, scope, true);
+                        // Set parent so scope is defined for deserialization
+                        createdProperty._setParent(this);
+                        createdProperty._deserialize(propertyDescriptions[i], false);
+                        insertedPropertyInstances.push(createdProperty);
+                    }
                     this._insertRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset,
-                        this._deserializeArray(insertedPropertyInstances));
+                        this._deserializeArray(insertedPropertyInstances), false);
                     break;
-
                 case ArrayChangeSetIterator.types.REMOVE:
                     // Handle removes
                     var numRemoved = arrayIterator.opDescription.operation[1];
@@ -875,7 +878,6 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                     }
                     this._removeRangeWithoutDirtying(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset, numRemoved);
                     break;
-
                 case ArrayChangeSetIterator.types.MODIFY:
                     // Handle modifies
                     var propertyDescriptions = arrayIterator.opDescription.operation[1];
@@ -889,7 +891,6 @@ ArrayProperty.prototype._applyChangeset = function (in_changeSet, in_reportToVie
                         modifiedProperty._applyChangeset(propertyDescriptions[i], false);
                     }
                     break;
-
                 default:
                     console.error('applyChangeset: ' + MSG.UNKNOWN_OPERATION + arrayIterator.opDescription.type);
             }
@@ -1526,7 +1527,7 @@ ArrayProperty.prototype._getChangesetForCustomTypeArray = function (in_basePrope
  */
 ArrayProperty.prototype._serialize = function (in_dirtyOnly, in_includeRootTypeid,
     in_dirtinessType, in_includeReferencedRepositories) {
-    var result = ContainerProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid,
+    var result = AbstractStaticCollectionProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories);
 
     if (!this._isPrimitive) {
@@ -1745,7 +1746,7 @@ ArrayProperty.prototype._dataArraySetRange = function (in_position, in_range) {
  * @private
  */
 ArrayProperty.prototype._getScope = function () {
-    var scope = ContainerProperty.prototype._getScope.call(this);
+    var scope = AbstractStaticCollectionProperty.prototype._getScope.call(this);
 
     if (scope !== undefined) {
         return scope;

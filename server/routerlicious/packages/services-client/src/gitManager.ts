@@ -119,7 +119,7 @@ export class GitManager implements IGitManager {
         return this.historian.getContent(path, commit);
     }
 
-    public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
+    public createBlob(content: string, encoding: BufferEncoding): Promise<resources.ICreateBlobResponse> {
         const blob: resources.ICreateBlobParams = {
             content,
             encoding,

@@ -314,7 +314,7 @@ BaseProperty.prototype._getDirtyFlags = function () {
  */
 // TODO: Cleaner way to make the property tree aware of the DDS hosting it.
 // Currently, this._tree is set in SharedPropertyTree constructor.
-BaseProperty.prototype._reportDirtinessToView = function _reportDirtinessToView() {
+BaseProperty.prototype._reportDirtinessToView = function () {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let currentNode = this;
 
@@ -342,11 +342,11 @@ BaseProperty.prototype._reportDirtinessToView = function _reportDirtinessToView(
  *    The filtering options to consider while applying the ChangeSet.
  * @throws if in_changeSet is invalid.
  */
-BaseProperty.prototype.applyChangeSet = function (in_changeSet, in_filteringOptions) {
+BaseProperty.prototype.applyChangeSet = function (in_changeSet) {
     this._checkIsNotReadOnly(false);
 
     // We just forward the call to the internal function
-    this._applyChangeset(in_changeSet, true, in_filteringOptions);
+    this._applyChangeset(in_changeSet, true);
 };
 
 /**
@@ -514,8 +514,8 @@ BaseProperty.prototype.getId = function () {
  * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} value - The checkedOut repository info.
  * @protected
  */
-BaseProperty.prototype._setCheckedOutRepositoryInfo = function (value) {
-    this._checkedOutRepositoryInfo = value;
+BaseProperty.prototype._setCheckoutView = function (value) {
+    this._checkoutView = value;
 };
 
 /**
@@ -610,7 +610,8 @@ BaseProperty.prototype._setId = function (in_id) {
  */
 BaseProperty.prototype.clone = function () {
     const PropertyFactory = Property.PropertyFactory;
-    var clone = PropertyFactory._createProperty(this.getFullTypeid(), null, undefined, this._getScope());
+    var clone = PropertyFactory._createProperty(
+        this.getFullTypeid(), null, undefined, this._getScope(), true);
 
     // TODO: this is not very efficient. Clone should be overriden
     // by the child classes
@@ -1110,9 +1111,7 @@ BaseProperty.prototype.serialize = function (in_options) {
         'includeReferencedRepositories': false
     };
     if (in_options !== undefined) {
-        if (typeof in_options !== 'object') {
-            throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
-        }
+        if (typeof in_options !== 'object') throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
         Object.assign(opts, in_options);
     }
 
@@ -1154,7 +1153,7 @@ BaseProperty.prototype._checkIsNotReadOnly = function (in_checkConstant) {
 BaseProperty.prototype._setAsConstant = function () {
     this._isConstant = true;
 
-    if (this instanceof Property.ContainerProperty) {
+    if (this instanceof Property.AbstractStaticCollectionProperty) {
         // Set all children properties as constants
         this.traverseDown(function (prop) {
             prop._isConstant = true;
@@ -1170,7 +1169,7 @@ BaseProperty.prototype._unsetAsConstant = function () {
     // fall back to the entry in the prototype (false)
     delete this._isConstant;
 
-    if (this instanceof Property.ContainerProperty) {
+    if (this instanceof Property.AbstractStaticCollectionProperty) {
         // Unset all children properties as constants
         this.traverseDown(function (prop) {
             // Deleting this property will make the object
@@ -1204,19 +1203,15 @@ BaseProperty.prototype._setDirtyTree = function (in_reportToView) {
  * This does NOT validate if the parent can accept the child property, it only validates if
  * the child property can be inserted in the parent.
  * @param {property-properties.BaseProperty} in_targetParent - The parent property
- * @param {string} in_childId - The id of the child property
  * @throws if the property can not be inserted
- * @private
  */
-BaseProperty.prototype._validateInsertIn = function (in_targetParent, in_childId) {
-    // Already a child?
-    if (this._parent !== undefined) {
-        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
-    }
+BaseProperty.prototype._validateInsertIn = function (in_targetParent) {
+
     // A root?
     if (this._getCheckedOutRepositoryInfo() !== undefined) {
         throw new Error(MSG.INSERTED_ROOT_ENTRY);
     }
+
     // Would create a cycle?
     let parent = in_targetParent;
     while (parent !== undefined) {
@@ -1225,15 +1220,16 @@ BaseProperty.prototype._validateInsertIn = function (in_targetParent, in_childId
         }
         parent = parent._parent;
     }
-    // Outside the checked out paths?
-    const repositoryInfo = in_targetParent._getCheckedOutRepositoryInfo();
-    if (repositoryInfo && !repositoryInfo._allCoveredByCheckout(in_targetParent.getAbsolutePath(), in_childId, this)) {
-        throw new Error(MSG.INSERTED_OUTSIDE_PATHS);
+
+    // Already a child?
+    if (this._parent !== undefined || this._getCheckoutView() !== undefined) {
+        throw new Error(MSG.INSERTED_ENTRY_WITH_PARENT);
     }
 };
 
-
 /**
+ * TODO: Remove it later. Kept not to modify tests
+ *
  * Validates if the property and all its children are covered by the given list of paths.
  *
  * This function is expected to be used before inserting the property into its parent. That is the
@@ -1288,14 +1284,6 @@ BaseProperty.prototype._coveredByPaths = function (in_basePath, in_paths) {
     return false;
 };
 
-/**
- * Check if a property has a fixed id during insert
- * @private
- * @return {boolean} has fixed id
- */
-BaseProperty.prototype._hasFixedId = function () {
-    return false;
-};
 
 Object.defineProperty(
     BaseProperty.prototype,

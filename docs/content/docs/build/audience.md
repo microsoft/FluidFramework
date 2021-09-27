@@ -13,9 +13,9 @@ This document will explain how to use the audience APIs and then provide example
 When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library.
 
 ```js
-const { fluidContainer, containerServices } =
-    await client.createContainer(serviceConfig, containerSchema);
-const audience = containerServices.audience;
+const { container, services } =
+    await client.createContainer(containerSchema);
+const audience = services.audience;
 ```
 
 ### The IMember
@@ -122,6 +122,8 @@ In some cases, the user data could be generated locally or fetched from an exter
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}

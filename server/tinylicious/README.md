@@ -22,7 +22,8 @@ npm run start
 Tinylicious uses port 7070 by default.  You can change the port number by setting an environment
 variable named PORT to the desired number.  For example:
 ```sh
-PORT=6502 npm run start
+$env:PORT=6502
+npm run start
 ```
 
 ### Storage

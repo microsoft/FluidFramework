@@ -80,6 +80,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
             dbObject = await this.collection.findOne({ documentId, tenantId });
+            // Check if the document was deleted prior.
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
@@ -121,7 +122,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log?.info(`Deli checkpoint from summary: 
+                    context.log?.info(`Deli checkpoint from summary:
                         ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
