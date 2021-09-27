@@ -8,18 +8,19 @@
  * fluid-framework. API Extractor does not extract re-exported APIs, so this script manipulates the API Extractor JSON
  * output to merge and re-write the API JSON as a workaround.
  *
+ * To update the packages combined and how they are combined, edit the rollup-api-data.js file.
+ *
  * This script changes source files in place; you may want to create a copy of the source files prior to running this
  * script on them. If you're using the tasks defined in package.json, then you don't need to do this; those scripts
  * create copies.
  */
 
-// const fs = require("fs");
-const path = require("path");
-const copyfiles = require("copyfiles");
 const cpy = require("cpy");
 const findValue = require("deepdash/findValueDeep");
 const fs = require("fs-extra");
-const data = require("./data");
+const path = require("path");
+
+const data = require("./rollup-api-data");
 
 const originalPath = path.resolve(process.argv[2]);
 const targetPath = path.resolve(process.argv.length > 3 ? process.argv[3] : originalPath);
@@ -58,7 +59,6 @@ const extractMembers = (sourceFile, members) => {
     // First load the source API file...
     console.log(`Reading ${sourceFile}`);
     const sourceApiObj = JSON.parse(fs.readFileSync(sourceFile, { encoding: "utf8" }));
-    // console.log(jsonStr.includes("@fluidframework/container-definitions"));
 
     // ... then check if all members should be extracted, and if so, return them all...
     if (members.length === 1 && members[0] === "*") {
@@ -112,7 +112,6 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         console.log(`Reading ${inputPackagePath}`);
         jsonStr = fs.readFileSync(inputPackagePath, { encoding: "utf8" });
         const rewrittenApiObj = JSON.parse(jsonStr);
-        // console.log(jsonStr.includes("@fluidframework/container-definitions"));
 
         // Append the members extracted earlier.
         const combinedMembers = rewrittenApiObj.members[0].members.concat(extractedMembers);

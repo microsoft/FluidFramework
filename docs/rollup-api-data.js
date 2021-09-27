@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Our public API is exposed by re-exporting things from 'internal' packages in 'external' packages, like
+ * fluid-framework. API Extractor does not extract re-exported APIs, so we need to merge and rewrite the API JSON. This
+ * ficleontains the input data to the re-writing process. The processing scrip[t itself is in the rollup-api-json.js
+ * file.
+ */
+
 /** An array of all packages whose TSDocs should be published to website. */
 const websitePackages = [
     "fluid-framework",
