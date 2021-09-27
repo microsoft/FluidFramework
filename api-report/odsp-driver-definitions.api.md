@@ -91,7 +91,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     odspResolvedUrl: true;
     shareLinkInfo: {
         createLink?: {
-            type?: string;
+            type?: ShareLinkTypes;
             link?: string;
             error?: any;
         };
@@ -175,6 +175,12 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
     siteUrl: string;
+}
+
+// @public
+export enum ShareLinkTypes {
+    // (undocumented)
+    csl = "csl"
 }
 
 // @public
