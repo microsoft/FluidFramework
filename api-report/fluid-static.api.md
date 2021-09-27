@@ -18,7 +18,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public (undocumented)
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -50,9 +50,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
 
 // @public
 export interface IConnection {
-    // (undocumented)
     id: string;
-    // (undocumented)
     mode: "write" | "read";
 }
 
@@ -75,9 +73,7 @@ export interface IFluidContainerEvents extends IEvent {
 
 // @public
 export interface IMember {
-    // (undocumented)
     connections: IConnection[];
-    // (undocumented)
     userId: string;
 }
 
@@ -98,13 +94,13 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
-// @public (undocumented)
+// @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
-// @public (undocumented)
+// @public
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
 // @public (undocumented)
@@ -125,7 +121,7 @@ export interface RootDataObjectProps {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @public (undocumented)
+// @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
     constructor(container: Container);
     // (undocumented)

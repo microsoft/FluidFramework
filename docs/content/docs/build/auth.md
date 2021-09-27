@@ -96,18 +96,13 @@ sign the token][1]. Fluid delegates the responsibility of creating and signing t
 
 A token provider is responsible for creating and signing tokens that the `@fluidframework/azure-client` uses to make
 requests to the Azure Fluid Relay service. You are required to provide your own secure token provider implementation.
-However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret, then locally generates and returns a signed token. This token
-provider is useful for testing, but in production scenarios you must use a secure token provider.
+However, Fluid provides an `InsecureTokenProvider` that accepts your tenant secret, then locally generates and returns a signed token. This token provider is useful for testing, but in production scenarios you must use a secure token provider.
 
 ### A secure serverless token provider
 
 One option for building a secure token provider is to create a serverless Azure Function and expose it as a token
 provider. This enables you to store the *tenant secret key* on a secure server. Your application calls the Azure Function to
-generate tokens rather than signing them locally like the `InsecureTokenProvider` does.
-
-## Adding custom data to tokens
-
-{{< placeholder >}}
+generate tokens rather than signing them locally like the `InsecureTokenProvider` does. You can find more information regarding secure token generation on [Tutorial: Writing a TokenProvider with an Azure Function]({{< relref "tokenproviders.md" >}}).
 
 ## Connecting user auth to Fluid service auth
 
@@ -137,6 +132,8 @@ Relay service.
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}

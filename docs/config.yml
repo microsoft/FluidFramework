@@ -52,7 +52,7 @@ menu:
     weight: -600
 
   # this menu supplements one generated in the apiNav partial
-  section:
+  docs:
   - identifier: "start"
     name: "Getting started"
     weight: -800
@@ -69,7 +69,7 @@ menu:
     name: "Deployment"
     weight: -400
   - identifier: "DDS"
-    name: "Data Structures"
+    name: "Data structures"
     weight: -300
   - identifier: "concepts"
     name: "Concepts"
@@ -82,9 +82,8 @@ menu:
     name: "Glossary"
     url: "/docs/glossary/"
     weight: -90
-  - identifier: "changelogs"
-    name: "Changelogs"
-    url: "/docs/changelogs/contents"
+  - identifier: "updates"
+    name: "What's new"
     weight: -80
 
 markup:

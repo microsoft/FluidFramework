@@ -4,7 +4,7 @@
  */
 
 import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { delay, TypedEventEmitter, assert } from "@fluidframework/common-utils";
+import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
@@ -90,7 +90,8 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     constructor(
         private readonly clientElection: ISummarizerClientElection,
         private readonly connectedState: IConnectedState,
-        private readonly summaryCollection: Pick<SummaryCollection, "opsSinceLastAck">,
+        private readonly summaryCollection:
+            Pick<SummaryCollection, "opsSinceLastAck" | "addOpListener" | "removeOpListener">,
         parentLogger: ITelemetryLogger,
         /** Creates summarizer by asking interactive container to spawn summarizing container and
          * get back its Summarizer instance. */
@@ -317,7 +318,24 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
         }
 
         if (delayMs > 0) {
-            await delay(delayMs);
+            let timer;
+            let resolveOpPromiseFn;
+            // Create a listener that will break the delay if we've exceeded the initial delay ops count.
+            const opsListenerFn = () => {
+                if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
+                    clearTimeout(timer);
+                    resolveOpPromiseFn();
+                }
+            };
+            // Create a Promise that will resolve when the delay expires.
+            const delayPromise = new Promise<void>((resolve) => {
+                timer = setTimeout(() => resolve(), delayMs);
+            });
+            // Create a Promise that will resolve if the ops count passes the threshold.
+            const opPromise = new Promise<void>((resolve) => { resolveOpPromiseFn = resolve; });
+            this.summaryCollection.addOpListener(opsListenerFn);
+            await Promise.race([ delayPromise, opPromise ]);
+            this.summaryCollection.removeOpListener(opsListenerFn);
         }
         return startWithInitialDelay;
     }

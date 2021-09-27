@@ -9,7 +9,7 @@ aliases:
 In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at <https://github.com/microsoft/FluidHelloWorld>. To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-    bundleName="dice-roller.12142020.js" >}}
+    bundleName="dice-roller.2021-09-24.js" >}}
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, the Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
@@ -181,6 +181,8 @@ The [full code for this application is available](https://github.com/microsoft/F
 [ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
 [DataObject]: {{< relref "dataobject.md" >}}
 [DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [PureDataObject]: {{< relref "puredataobject.md" >}}
 [PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}

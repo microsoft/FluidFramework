@@ -3,34 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import nconf from "nconf";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
-import { resolveVersion } from "./versionUtils";
-
-/**
- * Different kind of compat version config
- */
-enum CompatKind {
-    None = "None",
-    Loader = "Loader",
-    NewLoader = "NewLoader",
-    Driver = "Driver",
-    NewDriver = "NewDriver",
-    ContainerRuntime = "ContainerRuntime",
-    NewContainerRuntime = "NewContainerRuntime",
-    DataRuntime = "DataRuntime",
-    NewDataRuntime = "NewDataRuntime",
-    LoaderDriver = "LoaderDriver",
-}
+import {
+    CompatKind,
+    compatKind,
+    compatVersions,
+    driver,
+    r11sEndpointName,
+    baseVersion,
+    reinstall,
+} from "./compatOptions";
 
 /*
  * Generate configuration combinations for a particular compat version
  */
-
 interface CompatConfig {
     name: string,
     kind: CompatKind,
@@ -138,112 +127,6 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
     ];
 };
 
-/*
- * Parse the command line argument and environment variables.  Arguments take precedent.
- *   --compat <index> - choose a config to run (default: -1 for all)
- *   --reinstall      - force reinstallation of legacy versions
- *
- * Env:
- *   fluid__test__compat - same as --compat
- */
-const options = {
-    compatKind: {
-        description: "Compat kind to run",
-        choices: [
-            CompatKind.None,
-            CompatKind.Loader,
-            CompatKind.NewLoader,
-            CompatKind.Driver,
-            CompatKind.NewDriver,
-            CompatKind.ContainerRuntime,
-            CompatKind.NewContainerRuntime,
-            CompatKind.DataRuntime,
-            CompatKind.NewDataRuntime,
-            CompatKind.LoaderDriver,
-        ],
-        requiresArg: true,
-        array: true,
-    },
-    compatVersion: {
-        description: "Compat version to run",
-        requiresArg: true,
-        array: true,
-        type: "string",
-    },
-    reinstall: {
-        default: false,
-        description: "Force compat package to be installed",
-        boolean: true,
-    },
-    driver: {
-        choices: [
-            "tinylicious",
-            "t9s",
-            "routerlicious",
-            "r11s",
-            "odsp",
-            "local",
-        ],
-        requiresArg: true,
-    },
-    r11sEndpointName: {
-        type: "string",
-    },
-    baseVersion: {
-        type: "string",
-    },
-};
-
-nconf.argv({
-    ...options,
-    transform: (obj: { key: string, value: string }) => {
-        if (options[obj.key] !== undefined) {
-            obj.key = `fluid:test:${obj.key}`;
-        }
-        return obj;
-    },
-}).env({
-    separator: "__",
-    whitelist: [
-        "fluid__test__compatKind",
-        "fluid__test__compatVersion",
-        "fluid__test__driver",
-        "fluid__test__r11sEndpointName",
-        "fluid__test__baseVersion",
-    ],
-    transform: (obj: { key: string, value: string }) => {
-        if (!obj.key.startsWith("fluid__test__")) {
-            return obj;
-        }
-        const key = obj.key.substring("fluid__test__".length);
-        if (options[key] !== undefined && options[key].array) {
-            try {
-                obj.value = JSON.parse(obj.value);
-            } catch {
-                // ignore
-            }
-        }
-        return obj;
-    },
-}).defaults(
-    {
-        fluid: {
-            test: {
-                compat: undefined,
-                driver: "local",
-                baseVersion: pkgVersion,
-                r11sEndpointName: "r11s",
-            },
-        },
-    },
-);
-
-const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[] | undefined;
-const compatVersions = nconf.get("fluid:test:compatVersion") as string[] | undefined;
-const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
-const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string;
-const baseVersion = resolveVersion(nconf.get("fluid:test:baseVersion") as string, false);
-
 // set it in the env for parallel workers
 if (compatKind) {
     process.env.fluid__test__compatKind = JSON.stringify(compatKind);
@@ -281,7 +164,8 @@ if (!compatVersions || compatVersions.length === 0) {
 }
 
 if (compatKind !== undefined) {
-    configList = configList.filter((value) => compatKind.includes(value.kind));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    configList = configList.filter((value) => compatKind!.includes(value.kind));
 }
 
 /*
@@ -364,7 +248,7 @@ export async function mochaGlobalSetup() {
 
     // Make sure we wait for all before returning, even if one of them has error.
     const installP = Array.from(versions.values()).map(
-        async (value) => ensurePackageInstalled(baseVersion, value, nconf.get("fluid:test:reinstall")));
+        async (value) => ensurePackageInstalled(baseVersion, value, reinstall));
 
     let error: Error | undefined;
     for (const p of installP) {

@@ -27,16 +27,15 @@ const MSG = require('@fluid-experimental/property-common').constants.MSG;
  *   are used to define children properties
  * @param {Array.<object>} in_params.constants List of property templates that
  *   are used to define constant properties and their values
- * @param {Array.<string>|string} in_params.inherits List of property template typeids that this
+ * @param {Array.<string>} in_params.inherits List of property template typeids that this
  *   PropertyTemplate inherits from
  *
  * @constructor
  * @protected
- * @alias property-properties.PropertyTemplate
  * @category Properties
  */
-var PropertyTemplate = function (in_params) {
-    let params = in_params ? deepCopy(in_params) : {};
+var PropertyTemplate = function (in_params = {}) {
+    let params = deepCopy(in_params);
     /** The identifier of the property */
     this.id = params.id;
     /** The type identifier of the property */
@@ -74,7 +73,6 @@ var PropertyTemplate = function (in_params) {
     }
     // check for inlined enums and parse them:
     this._digestNestedInlineEnumProperties(this);
-
     this._serializedParams = in_params;
 };
 
@@ -82,8 +80,12 @@ PropertyTemplate.prototype.hasNestedProperties = function () {
     return (this.properties && this.properties.length > 0);
 };
 
+PropertyTemplate.prototype.hasNestedConstants = function () {
+    return (this.constants && this.constants.length > 0);
+};
+
 /**
- * intenlal function to recursivly traverse a property template and create dictionaries for found inline enums
+ * internal function to recursivly traverse a property template and create dictionaries for found inline enums
  * @param {{}} in_currentPropertyLevel the current level in the template hierarchie
  */
 PropertyTemplate.prototype._digestNestedInlineEnumProperties = function (in_currentPropertyLevel) {
@@ -137,7 +139,7 @@ PropertyTemplate.prototype._parseEnums = function (in_enumProperties) {
  * @return {property-properties.PropertyTemplate} The cloned template
  */
 PropertyTemplate.prototype.clone = function () {
-    return new PropertyTemplate(this);
+    return new PropertyTemplate(deepCopy(this._serializedParams));
 };
 
 /**

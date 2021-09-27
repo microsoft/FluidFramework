@@ -159,18 +159,18 @@ describe('SetProperty', function () {
             var guidChild3 = childNode3.getGuid();
             var guidChild4 = childNode4.getGuid();
             expect(function () { myNode1.getValues(); }).to.not.throw();
-            var expectedStr = '{"guid":"' + guid + '",' +
-                '"stringProperty":"",' +
+            var expectedStr = '{"stringProperty":"",' +
                 '"stringProperty2":"",' +
                 '"children":{"' +
-                guidChild3 + '":{"guid":"' + guidChild3 + '",' +
-                '"stringProperty":"",' +
+                guidChild3 + '":{"stringProperty":"",' +
                 '"stringProperty2":"",' +
-                '"children":{}},' +
-                '"' + guidChild4 + '":{"guid":"' + guidChild4 + '",' +
-                '"stringProperty":"",' +
+                '"children":{},' +
+                '"guid":"' + guidChild3 + '"},' +
+                '"' + guidChild4 + '":{"stringProperty":"",' +
                 '"stringProperty2":"",' +
-                '"children":{}}}}';
+                '"children":{},' +
+                '"guid":"' + guidChild4 + '"}},' +
+                '"guid":"' + guid + '"}';
             expect(JSON.stringify(myNode1.getValues())).to.equal(expectedStr);
         });
 
@@ -181,20 +181,20 @@ describe('SetProperty', function () {
 
             var expectedPrettyStr =
                 guid + ' (autodesk.tests:TestPropertyID-1.0.0):\n' +
-                '  guid (String): "' + guid + '"\n' +
                 '  stringProperty (String): ""\n' +
                 '  stringProperty2 (String): ""\n' +
                 '  children (Set of NamedProperty):\n' +
                 '    ' + guidChild1 + ' (autodesk.tests:TestPropertyID-1.0.0):\n' +
-                '      guid (String): "' + guidChild1 + '"\n' +
                 '      stringProperty (String): ""\n' +
                 '      stringProperty2 (String): ""\n' +
                 '      children (Set of NamedProperty):\n' +
+                '      guid (String): "' + guidChild1 + '"\n' +
                 '    ' + guidChild2 + ' (autodesk.tests:TestPropertyID-1.0.0):\n' +
-                '      guid (String): "' + guidChild2 + '"\n' +
                 '      stringProperty (String): ""\n' +
                 '      stringProperty2 (String): ""\n' +
-                '      children (Set of NamedProperty):\n';
+                '      children (Set of NamedProperty):\n' +
+                '      guid (String): "' + guidChild2 + '"\n' +
+                '  guid (String): "' + guid + '"\n';
             var prettyStr = '';
             myNode.prettyPrint(function (str) {
                 prettyStr += str + '\n';

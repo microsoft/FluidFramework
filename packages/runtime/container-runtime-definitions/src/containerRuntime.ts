@@ -47,7 +47,7 @@ export interface IProvideContainerRuntime {
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void);
     (
-        event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved" | "attached",
+        event: "dirty" | "disconnected" | "dispose" | "saved" | "attached",
         listener: () => void);
     (event: "connected", listener: (clientId: string) => void);
     (event: "localHelp", listener: (message: IHelpMessage) => void);
@@ -108,11 +108,6 @@ export interface IContainerRuntime extends
      * Used to raise an unrecoverable error on the runtime.
      */
     raiseContainerWarning(warning: ContainerWarning): void;
-
-    /**
-     * @deprecated - Please use isDirty()
-     */
-    isDocumentDirty(): boolean;
 
     /**
      * Returns true of document is dirty, i.e. there are some pending local changes that

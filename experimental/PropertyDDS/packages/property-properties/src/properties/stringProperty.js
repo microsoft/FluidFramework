@@ -6,12 +6,12 @@
  * @fileoverview Definition of the StringProperty class
  */
 
+const _ = require('lodash');
 const ValueArrayProperty = require('./valueArrayProperty').ValueArrayProperty;
 const ArrayProperty = require('./arrayProperty');
-const _ = require('lodash');
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
-const ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
-const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const BaseProperty = require('./baseProperty');
 
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
@@ -34,16 +34,9 @@ var NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE = {
 };
 
 var DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE = {
-    pending: undefined,
-    dirty: 'setAsLiteral',
-    _flags: MODIFIED_STATE_FLAGS.DIRTY,
-    set flags(flags) {
-        this._flags = flags;
-        console.log('flags was changed!');
-    },
-    get flags() {
-        return this._flags;
-    }
+    pending: 'setAsLiteral',
+    dirty: undefined,
+    flags: MODIFIED_STATE_FLAGS.DIRTY
 };
 
 var STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS = [
@@ -128,8 +121,7 @@ StringProperty.prototype._getPendingChanges = function () {
 };
 
 StringProperty.prototype._getDirtyChanges = function () {
-    if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-        this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
+    if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE) {
         return this.getValue();
     } else if (this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) {
         return {};
@@ -176,11 +168,11 @@ StringProperty.prototype._insertRange = function (in_position, in_value) {
 };
 
 /**
-   * Returns the full property type identifier for the ChangeSet including the enum type id
-   * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
-   *                since that is not aplicable here, this param is ignored
-   * @return {string} The typeid
-   */
+  * Returns the full property type identifier for the ChangeSet including the enum type id
+  * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
+  *                since that is not aplicable here, this param is ignored
+  * @return {string} The typeid
+  */
 StringProperty.prototype.getFullTypeid = function (in_hideCollection) {
     return this._typeid;
 };
@@ -224,7 +216,7 @@ StringProperty.prototype.removeRange = function (in_offset, in_deleteCount) {
 /**
  * @inheritdoc
  */
-StringProperty.prototype._deserialize = function (in_serializedObj, in_reportToView, in_filteringOptions) {
+StringProperty.prototype._deserialize = function (in_serializedObj, in_reportToView) {
     if ((in_serializedObj.remove && in_serializedObj.remove.length > 0) ||
         (in_serializedObj.modify && in_serializedObj.modify.length > 0) ||
         (in_serializedObj.insert &&
@@ -397,17 +389,10 @@ StringProperty.prototype._setValue = function (in_value, in_reportToView) {
  *     applied. undefined indicates that the changes should be reset
  */
 StringProperty.prototype._setChanges = function (in_pending, in_dirty) {
-    if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-        this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE ||
-        this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
-        let newFlags = this._dirty.flags;
-        if (in_pending === undefined) {
-            newFlags &= 0xFFFFFFFF ^ BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
-        }
-        if (in_dirty === undefined) {
-            newFlags &= 0xFFFFFFFF ^ BaseProperty.MODIFIED_STATE_FLAGS.DIRTY;
-        }
-        this._dirty = STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS[newFlags];
+    if ((this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
+        this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) &&
+        in_pending === null && in_dirty === undefined) {
+        this._dirty = NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE;
     } else {
         ArrayProperty.prototype._setChanges.call(this, in_pending, in_dirty);
     }
@@ -419,8 +404,7 @@ StringProperty.prototype._setChanges = function (in_pending, in_dirty) {
  */
 StringProperty.prototype._setDirtyFlags = function (in_flags) {
     if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-        this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE ||
-        this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
+        this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) {
         this._dirty = STRING_PROPERTY_SET_PROPERTY_VALUE_STATE_FLAGS[in_flags];
         return;
     }
@@ -434,8 +418,7 @@ StringProperty.prototype._setDirtyFlags = function (in_flags) {
  */
 StringProperty.prototype._getDirtyFlags = function () {
     if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
-        this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE ||
-        this._dirty === DIRTY_AND_NO_PENDING_SET_TO_PROPERTY_VALUE) {
+        this._dirty === NO_DIRTY_AND_PENDING_SET_TO_PROPERTY_VALUE) {
         return this._dirty.flags;
     }
 
@@ -445,7 +428,7 @@ StringProperty.prototype._getDirtyFlags = function () {
 /**
  * @inheritdoc
  */
-StringProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView, in_filteringOptions) {
+StringProperty.prototype._applyChangeset = function (in_changeSet, in_reportToView) {
     // It is unfortunate, but because StringProperty derives from ArrayProperty, it can happen
     // that we receive here a ChangeSet that is formatted for an Array. We must be able to
     // distinguish it from a reversible changeset and from a simple changeset...

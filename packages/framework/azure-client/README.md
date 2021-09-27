@@ -1,6 +1,6 @@
 # @fluidframework/azure-client
 
-The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service (FRS).
+The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
 
 ## Using azure-client
 
@@ -12,21 +12,21 @@ import { AzureClient } from "@fluidframework/azure-client";
 
 ## Instantiating AzureClient
 
-Fluid requires a backing service to enable collaborative communication. The `AzureClient` supports both instantiating against a deployed Azure Fluid Relay service instance for production scenarios, as well as against a local, in-memory service instance, known as Tinylicious, for development purposes.
+Fluid requires a backing service to enable collaborative communication. The `AzureClient` supports both instantiating against a deployed Azure Fluid Relay service instance for production scenarios, as well as against a local, in-memory service instance from the `@fluidframework/azure-local-service` library, for development purposes.
 
 NOTE: You can use one instance of the `AzureClient` to create/fetch multiple containers from the same Azure Fluid Relay service instance.
 
-In the example below we will walk through both connecting to a a live Azure Fluid Relay service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against Tinylicious. We make use of `AzureFunctionTokenProvider` for token generation while running against a live Azure Fluid Relay instance and `InsecureTokenProvider`, from the `@fluidframework/test-client-utils` package, to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implementation that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
+In the example below we will walk through both connecting to a a live Azure Fluid Relay service instance by providing the tenant ID and key that is uniquely generated for us when onboarding to the service, as well as using a tenant ID of "local" for development purposes to run our application against the local service. We make use of `AzureFunctionTokenProvider` for token generation while running against a live Azure Fluid Relay instance and `InsecureTokenProvider`, from the `@fluidframework/test-client-utils` package, to authenticate a given user for access to the service locally. The `AzureFunctionTokenProvider` is an implementation that fulfills the `ITokenProvider` interface without exposing the tenant key secret in client-side code.
 
 ### Backed Locally
 
-To run Tinylicious on the default values of `localhost:7070`, please enter the following into a terminal window:
+To run the local Azure Fluid Relay service with the default values of `localhost:7070`, enter the following command into a terminal window:
 
 ```sh
-npx tinylicious
+npx @fluidframework/azure-local-service@latest
 ```
 
-Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our Tinylicous instance is running at.
+Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our local Azure Fluid Relay service instance is running at.
 
 ```typescript
 import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
@@ -102,7 +102,7 @@ const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);
 ```
 
-NOTE: When using the `AzureClient` with tenant ID as "local", all containers that have been created will be deleted when the instance of the Tinylicious service (not client) that was run from the terminal window is closed. However, any containers created when running against the Azure Fluid Relay service itself will be persisted. Container IDs can NOT be reused between Tinylicious and Azure Fluid Relay to fetch back the same container.
+**Note:** When using the `AzureClient` with `tenantId` set to `"local"`, all containers that have been created will be deleted when the instance of the local Azure Fluid Relay service (not client) that was run from the terminal window is closed. However, any containers created when running against a remote Azure Fluid Relay service will be persisted. Container IDs **cannot** be reused between local and remote Azure Fluid Relay services to fetch back the same container.
 
 ## Using initial objects
 
