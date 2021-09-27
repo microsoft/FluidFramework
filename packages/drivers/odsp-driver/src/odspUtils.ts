@@ -25,6 +25,7 @@ import {
     tokenFromResponse,
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
+    ShareLinkTypes,
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
@@ -213,9 +214,9 @@ export interface INewFileInfo {
     /**
      * application can request creation of a share link along with the creation of a new file
      * by passing in an optional param to specify the kind of sharing link
-     * (at the time of adding this comment 9/21/2021), odsp only supports csl
+     * (at the time of adding this comment Sept/2021), odsp only supports csl
      */
-    createLinkType?: string;
+    createLinkType?: ShareLinkTypes;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {

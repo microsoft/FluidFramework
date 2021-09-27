@@ -66,8 +66,8 @@ export async function createNewFluidFile(
 
     let itemId: string;
     let summaryHandle: string = "";
-    let sharingLink: string = "";
-    let sharingLinkErrorReason: string = "";
+    let sharingLink: string | undefined;
+    let sharingLinkErrorReason: string | undefined;
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
     } else {
@@ -75,13 +75,16 @@ export async function createNewFluidFile(
             getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
         itemId = content.itemId;
         summaryHandle = content.id;
-        sharingLink = content.sharingLink || "";
-        sharingLinkErrorReason = content.sharingLinkErrorReason || "";
+        sharingLink = content.sharingLink;
+        sharingLinkErrorReason = content.sharingLinkErrorReason;
     }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
     const resolver = new OdspDriverUrlResolver();
     const odspResolvedUrl = await resolver.resolve({ url: odspUrl });
+    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
+    fileEntry.resolvedUrl = odspResolvedUrl;
+
     if(sharingLink || sharingLinkErrorReason) {
         odspResolvedUrl.shareLinkInfo = {
             createLink: {

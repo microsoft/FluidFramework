@@ -11,6 +11,15 @@ export interface IOdspUrlParts {
     itemId: string;
 }
 
+/**
+ * Type of shareLink requested/created when creating the file for the first time.
+ * At the time of adding this comment (Sept/2021) ODSP only supports creation of CSL links
+ * when provided as a request parameter with the /snapshot api call.
+ * In future, we can add more types here.
+*/
+export enum ShareLinkTypes {
+    csl = "csl",
+}
 export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     type: "fluid";
     odspResolvedUrl: true;
@@ -65,10 +74,10 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
         createLink?: {
             /**
              * Type of shareLink requested/created when creating the file for the first time.
-             * At the time of adding this comment (09/21/2021) ODSP only supports creation of CSL links
+             * At the time of adding this comment (Sept/2021) ODSP only supports creation of CSL links
              * when provided as a request parameter with the /snapshot api call.
             */
-            type?: string,
+            type?: ShareLinkTypes,
 
             /**
              * Share link created when the file is created for the first time with /snapshot api call.
