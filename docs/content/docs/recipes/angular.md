@@ -1,6 +1,7 @@
 ---
 title: Using Fluid with Angular
 menuPosition: 2
+author: scottn12
 aliases:
   - "/start/angular-tutorial/"
 ---
@@ -169,7 +170,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. Replace `TODO 4` with the following code. Note about this code:
 
-    - The Fluid `SharedObject.get` method returns the data of the `SharedObject` (in this case the `SharedMap` object), which is roughly the `SharedObject` without any of its methods. So the `updateLocalTimestamp` function is setting the `localTimestamp` property to a copy of the data of the `SharedMap` object. (The key "time" that is passed to `SharedObject.get` is created in a later step. It will have been set by the time this code runs the first time.)
+    - `this.sharedTimestamp` is an instance of a `SharedMap` which exposes the ability to set/get from the API. The `updateLocalTimestamp` function is setting the `localTimestamp` property to the value of the key `"time"` on the `sharedTimestamp`. (The "time"key is created in a later step. It will have been set by the time this code runs the first time.)
     - `updateLocalTimestamp` is called immediately to ensure that `localTimestamp` is initialized with the current shared timestamp value.
 
     ```js
@@ -188,12 +189,14 @@ To ensure that both local and remote changes to the timestamp are reflected in t
     ```js
     // Delete handler registration when the Angular App component is dismounted.
     this.sharedTimestamp!.off('valueChanged', this.updateLocalTimestamp!);
+    ```
 
 Now that we've defined how to get and synchronize our Fluid data, we need to tell Angular to call `getFluidData` and `syncData` when the application starts up and then store the result in component properties. So add the following code to the `ngOnInit` function we defined previously.
 
-```js
-this.sharedTimestamp = await this.getFluidData();
-this.syncData();
+    ```js
+    this.sharedTimestamp = await this.getFluidData();
+    this.syncData();
+    ```
 
 1.  In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
     - The `sharedTimestamp.set` method sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
@@ -233,7 +236,6 @@ Open a new Command Prompt and navigate to the root of the project; for example, 
 ```dotnetcli
 npm run start
 ```
-
 
 Paste the URL of the application into the address bar of another tab or even another browser to have more than one client open at a time. Press the **Get Time** button on any client and see the value change and synchronize on all the clients.
 
