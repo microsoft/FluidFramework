@@ -38,7 +38,7 @@
     "install:hugo:force": "binstall install -n hugo -d bin",
     "install:hugo:win32": "if not exist bin/hugo.exe npm run install:hugo:force",
     "linkcheck": "npm run linkcheck:site",
-    "linkcheck:api": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/index.xml --exclude https://twitter.com/intent/tweet* --exclude http://localhost:8080 --exclude http://localhost:1313/docs/apis/protocol-definitions/summarytype/* --exclude http://localhost:1313/docs/apis/protocol-definitions/messagetype/* --exclude http://localhost:1313/docs/apis/container-definitions/containererrortype/* --exclude http://localhost:1313/docs/apis/container-definitions/attachstate/* --exclude http://localhost:1313/docs/apis/driver-definitions/drivererrortype/*",
+    "linkcheck:api": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/index.xml --exclude https://twitter.com/intent/tweet* --exclude http://localhost:8080",
     "linkcheck:site": "blc -ore --input http://localhost:1313 --exclude http://localhost:1313/index.xml --exclude https://twitter.com/intent/tweet* --exclude http://localhost:8080 --exclude http://localhost:1313/docs/apis/*",
     "lint": "markdownlint-cli2",
     "lint:fix": "markdownlint-cli2-fix",
