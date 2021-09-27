@@ -9,6 +9,9 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
+export type BufferEncoding = "ascii" | "utf8" | "utf-8" | "utf16le" | "ucs2" | "ucs-2" | "base64" | "latin1" | "binary" | "hex";
+
+// @public (undocumented)
 export type ConnectionMode = "write" | "read";
 
 // @public (undocumented)
