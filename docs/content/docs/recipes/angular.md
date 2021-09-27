@@ -89,6 +89,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     ```
 
 1. Ensure the `AppComponent` class implements the `OnInit` and `OnDestroy` classes. Then define the `ngOnInit` and `ngOnDestroy` functions. Your `AppComponent` class should now look like this:
+
     ```js
     export class AppComponent implements OnInit, OnDestroy {
 
