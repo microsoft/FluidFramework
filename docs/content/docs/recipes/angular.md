@@ -37,6 +37,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Open a Command Prompt and navigate to the parent folder where you want to create the project; e.g., `c:\My Fluid Projects`.
 1. Run the following command at the prompt.
+
     ```dotnetcli
     ng new fluid-angular-tutorial
     ```
