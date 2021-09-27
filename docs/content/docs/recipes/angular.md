@@ -180,7 +180,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
     ```js
     this.sharedTimestamp!.on('valueChanged', this.updateLocalTimestamp!);
-   ```
+    ```
 
 1. It is a good practice to deregister event handlers when the Angular component dismounts, so add the following code to the `ngOnDestroy` function we previously defined.
 
