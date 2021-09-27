@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/fetch-tool",
-  "version": "0.48.2",
+  "version": "0.48.3",
   "private": true,
   "description": "",
   "homepage": "https://fluidframework.com",
@@ -26,22 +26,22 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluid-internal/fluidapp-odsp-urlresolver": "^0.48.2",
+    "@fluid-internal/fluidapp-odsp-urlresolver": "^0.48.3",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime": "^0.48.2",
-    "@fluidframework/datastore": "^0.48.2",
+    "@fluidframework/container-runtime": "^0.48.3",
+    "@fluidframework/datastore": "^0.48.3",
     "@fluidframework/driver-definitions": "^0.39.6",
-    "@fluidframework/driver-utils": "^0.48.2",
-    "@fluidframework/odsp-doclib-utils": "^0.48.2",
-    "@fluidframework/odsp-driver": "^0.48.2",
-    "@fluidframework/odsp-driver-definitions": "^0.48.2",
-    "@fluidframework/odsp-urlresolver": "^0.48.2",
+    "@fluidframework/driver-utils": "^0.48.3",
+    "@fluidframework/odsp-doclib-utils": "^0.48.3",
+    "@fluidframework/odsp-driver": "^0.48.3",
+    "@fluidframework/odsp-driver-definitions": "^0.48.3",
+    "@fluidframework/odsp-urlresolver": "^0.48.3",
     "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/routerlicious-driver": "^0.48.2",
-    "@fluidframework/routerlicious-urlresolver": "^0.48.2",
-    "@fluidframework/runtime-definitions": "^0.48.2",
-    "@fluidframework/telemetry-utils": "^0.48.2",
-    "@fluidframework/tool-utils": "^0.48.2"
+    "@fluidframework/routerlicious-driver": "^0.48.3",
+    "@fluidframework/routerlicious-urlresolver": "^0.48.3",
+    "@fluidframework/runtime-definitions": "^0.48.3",
+    "@fluidframework/telemetry-utils": "^0.48.3",
+    "@fluidframework/tool-utils": "^0.48.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",

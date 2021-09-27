@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-query",
-  "version": "0.48.2",
+  "version": "0.48.3",
   "private": true,
   "description": "Moira service",
   "homepage": "https://fluidframework.com",
@@ -38,9 +38,9 @@
     "tempDirectory": "coverage/tmp"
   },
   "dependencies": {
-    "@fluid-experimental/property-changeset": "^0.48.2",
-    "@fluid-experimental/property-common": "^0.48.2",
-    "@fluid-experimental/property-properties": "^0.48.2",
+    "@fluid-experimental/property-changeset": "^0.48.3",
+    "@fluid-experimental/property-common": "^0.48.3",
+    "@fluid-experimental/property-properties": "^0.48.3",
     "async": "^3.2.0",
     "basicauth-middleware": "2.0.0",
     "body-parser": "^1.18.3",
@@ -64,13 +64,13 @@
     "sleep-promise": "8.0.1"
   },
   "devDependencies": {
-    "@fluid-experimental/property-dds": "^0.48.2",
+    "@fluid-experimental/property-dds": "^0.48.3",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/local-driver": "^0.48.2",
-    "@fluidframework/mocha-test-setup": "^0.48.2",
-    "@fluidframework/runtime-utils": "^0.48.2",
+    "@fluidframework/local-driver": "^0.48.3",
+    "@fluidframework/mocha-test-setup": "^0.48.3",
+    "@fluidframework/runtime-utils": "^0.48.3",
     "@fluidframework/server-local-server": "^0.1031.0",
-    "@fluidframework/test-utils": "^0.48.2",
+    "@fluidframework/test-utils": "^0.48.3",
     "aws-sdk": "2.547.0",
     "chai": "^4.2.0",
     "chai-as-promised": "7.1.1",

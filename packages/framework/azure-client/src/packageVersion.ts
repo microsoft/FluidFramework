@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/azure-client";
-export const pkgVersion = "0.48.2";
+export const pkgVersion = "0.48.3";
