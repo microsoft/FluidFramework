@@ -88,7 +88,7 @@ import { generateToken } from "@fluidframework/azure-service-utils";
 const key = "myTenantKey";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
-    // tenantId and documentId are required parameters
+    // tenantId, documentId, userId and userName are required parameters
     const tenantId = (req.query.tenantId || (req.body && req.body.tenantId)) as string;
     const documentId = (req.query.documentId || (req.body && req.body.documentId)) as string;
     const userId = (req.query.userId || (req.body && req.body.userId)) as string;
