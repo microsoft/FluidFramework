@@ -11,7 +11,7 @@ import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
-import { InsecureUrlResolver } from '@fluidframework/test-runtime-utils';
+import { InsecureUrlResolver } from '@fluidframework/driver-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRouterliciousDriverPolicies } from '@fluidframework/routerlicious-driver';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';

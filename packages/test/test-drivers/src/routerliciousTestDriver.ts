@@ -5,7 +5,8 @@
 
 import assert from "assert";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { InsecureTokenProvider, InsecureUrlResolver } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { v4 as uuid } from "uuid";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
