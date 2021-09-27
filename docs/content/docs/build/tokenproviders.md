@@ -55,8 +55,8 @@ private async getToken(tenantId: string, documentId: string): Promise<string> {
     const params = {
         tenantId,
         documentId,
-        userId,
-        userName
+        userId: this.userId,
+        userName: this.userName,
     };
     const token = this.getTokenFromServer(params);
     return token;
