@@ -23,8 +23,10 @@ export async function runWithRetry<T>(
         try {
             result = await api();
             success = true;
-            logger?.info(`Succeeded in executing ${callName} with ${retryCount} retries`);
-            Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`);
+            if (retryCount >= 1) {
+                logger?.info(`Succeeded in executing ${callName} with ${retryCount} retries`);
+                Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`);
+            }
         } catch (error) {
             logger?.error(`Error running ${callName}: retryCount ${retryCount}, error ${error}`);
             Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, undefined, error);
