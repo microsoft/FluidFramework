@@ -48,9 +48,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluidframework/tinylicious&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
-    &nbsp;
+    |fluid&#x2011;framework |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    |fluidframework/tinylicious&#x2011;client |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
 
     Run the following command to install the libraries.
 
@@ -82,7 +81,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Define the following component properties inside of the `AppComponent` class. These will be used later. Note about this code:
     - `localTimestamp` has the `{ time: string | undefined }` type. This is represented as the `TimestampDataModel` interface in the completed demo in our repo.
-    
+
     ```js
     sharedTimestamp: SharedMap | undefined;
     localTimestamp: TimestampDataModel | undefined;
