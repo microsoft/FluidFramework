@@ -9,13 +9,13 @@ In this tutorial, you'll learn about using the Fluid Framework by building a sim
 
 To jump ahead into the finished demo, check out the [Angular demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/angular-demo).
 
-The following image shows the time stamp application open in four browsers. Each has a button labeled **click** and beside it a Unix epoch time. The same time is in all four. The cursor is on the button in one browser.
+The following image shows the time stamp application open in four browsers. Each has a button labeled **Get Time** and beside it a Unix epoch time. The same time is in all four. The cursor is on the button in one browser.
 
-![Four browsers with the Timestamp app open in them.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-1.PNG)
+![Four browsers with the Timestamp app open in them.](https://fluidframework.blob.core.windows.net/static/images/angular-demo-1.png)
 
-The following image shows the same four clients one second after the **click** button was pressed. Note that the timestamp has updated to the very same time in all four browsers.
+The following image shows the same four clients one second after the **Get Time** button was pressed. Note that the timestamp has updated to the very same time in all four browsers.
 
-![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/Four-clients-2.PNG)
+![Four browsers with the Timestamp app open in them one second after the button has been pushed.](https://fluidframework.blob.core.windows.net/static/images/angular-demo-2.png)
 
 {{< callout note >}}
 
