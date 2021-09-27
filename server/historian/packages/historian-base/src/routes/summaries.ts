@@ -77,18 +77,18 @@ export function create(
     });
 
     router.delete("/repos/:ignored?/:tenantId/git/summaries",
-    throttle(throttler, winston, commonThrottleOptions),
-    (request, response, next) => {
-        const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
-        const summaryP = deleteSummary(
-            request.params.tenantId,
-            request.get("Authorization"),
-            softDelete);
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
+            const summaryP = deleteSummary(
+                request.params.tenantId,
+                request.get("Authorization"),
+                softDelete);
 
-        utils.handleResponse(
-            summaryP,
-            response,
-            false);
+            utils.handleResponse(
+                summaryP,
+                response,
+                false);
     });
 
     return router;

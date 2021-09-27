@@ -15,7 +15,7 @@ export interface IDocumentDetails {
 }
 
 export interface IDocumentStorage {
-    getDocument(tenantId: string, documentId: string): Promise<any>;
+    getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
     getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
