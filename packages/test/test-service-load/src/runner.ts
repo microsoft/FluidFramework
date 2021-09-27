@@ -247,7 +247,7 @@ async function runnerProcess(
     }
 }
 
-function scheduleFaultInjection(
+export function scheduleFaultInjection(
     ds: FaultInjectionDocumentServiceFactory,
     container: Container,
     runConfig: IRunConfig,
@@ -304,7 +304,7 @@ function scheduleFaultInjection(
     schedule();
 }
 
-function scheduleContainerClose(
+export function scheduleContainerClose(
     container: Container,
     runConfig: IRunConfig,
     faultInjectionMinMs: number,

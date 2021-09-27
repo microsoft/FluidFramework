@@ -100,6 +100,9 @@ class LoadTestDataStoreModel {
         const gcDataStoreIdKey = `gc_dataStore_${config.runId % halfClients}`;
         let gcDataStore: LoadTestDataStore | undefined;
         if (!root.has(gcDataStoreIdKey)) {
+            if (process.send) {
+                process.send({ runId: config.runId, task: "creating GC DS" });
+            }
             // The data store for this pair doesn't exist, create it and store its url.
             gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
             root.set(gcDataStoreIdKey, gcDataStore.id);
@@ -107,7 +110,12 @@ class LoadTestDataStoreModel {
         // If we did not create the data store above, load it by getting its url.
         if (gcDataStore === undefined) {
             const gcDataStoreId = root.get(gcDataStoreIdKey);
-            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+            console.log(config.runId, "key:", gcDataStoreIdKey, "id:", gcDataStoreId);
+            if (process.send) {
+                process.send({ runId: config.runId, task: "requesting GC DS" });
+            }
+
+            const response = await timeoutP(containerRuntime.request({ url: `/${gcDataStoreId}` }), "request timeout");
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 throw new Error("GC data store not available");
             }
@@ -140,7 +148,13 @@ class LoadTestDataStoreModel {
             runDir.set(counterKey, SharedCounter.create(runtime).handle);
             runDir.set(startTimeKey,Date.now());
         }
+        if (process.send) {
+            process.send({ runId: config.runId, task: "getting counter" });
+        }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
+        if (process.send) {
+            process.send({ runId: config.runId, task: "getting taskmanager" });
+        }
         const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
 
         if(counter === undefined) {
@@ -150,8 +164,14 @@ class LoadTestDataStoreModel {
             throw new Error("taskmanger not available");
         }
 
+        if (process.send) {
+            process.send({ runId: config.runId, task: "getting GC DS" });
+        }
         const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
 
+        if (process.send) {
+            process.send({ runId: config.runId, task: "ctor" });
+        }
         const dataModel =  new LoadTestDataStoreModel(
             root,
             config,
@@ -163,8 +183,14 @@ class LoadTestDataStoreModel {
             gcDataStore.handle,
         );
 
+        if (process.send) {
+            process.send({ runId: config.runId, task: "reset" });
+        }
         if(reset) {
             await LoadTestDataStoreModel.waitForCatchup(runtime, config.runId);
+            if (process.send) {
+                process.send({ runId: config.runId, task: "caught up again" });
+            }
             runDir.set(startTimeKey,Date.now());
             runDir.delete(taskTimeKey);
             counter.increment(-1 * counter.value);
@@ -329,7 +355,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             process.send({ runId: config.runId, task: "init" });
         }
         const dataModel = await timeoutP(LoadTestDataStoreModel.createRunnerInstance(
-            config, reset, this.root, this.runtime, this.context.containerRuntime), "createRunnerInstance timeout");
+                config, reset, this.root, this.runtime, this.context.containerRuntime),
+                "createRunnerInstance timeout",
+                600000,
+        );
 
          // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
