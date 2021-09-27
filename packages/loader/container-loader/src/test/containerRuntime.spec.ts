@@ -11,9 +11,9 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { DeltaManager } from "@fluidframework/container-loader";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
+import { DeltaManager } from "../deltaManager";
 
 describe("Container Runtime", () => {
     /**

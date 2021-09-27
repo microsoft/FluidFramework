@@ -1,1 +1,0 @@
-# @fluid-internal/functional-tests
