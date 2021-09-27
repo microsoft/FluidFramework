@@ -103,6 +103,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
       }
     }
     ```
+
     Note: `ngOnInit` has been declared as an asynchronous function.
 
 ### Get the Fluid Data
