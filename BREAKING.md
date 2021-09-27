@@ -10,6 +10,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.49 Breaking changes
+- [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
+
+### Deprecated dirty document events and property removed from ContainerRuntime
+The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
+
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
 - [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
