@@ -81,6 +81,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
 1. Define the following component properties inside of the `AppComponent` class. These will be used later. Note about this code:
     - `localTimestamp` has the `{ time: string | undefined }` type. This is represented as the `TimestampDataModel` interface in the completed demo in our repo.
+    
     ```js
     sharedTimestamp: SharedMap | undefined;
     localTimestamp: TimestampDataModel | undefined;
