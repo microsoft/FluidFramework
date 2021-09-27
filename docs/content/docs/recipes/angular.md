@@ -193,8 +193,6 @@ Now that we've defined how to get and synchronize our Fluid data, we need to tel
 ```js
 this.sharedTimestamp = await this.getFluidData();
 this.syncData();
-```
-### Update the Fluid Data
 
 1.  In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
     - The `sharedTimestamp.set` method sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
