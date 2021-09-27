@@ -47,15 +47,15 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 }
 ```
 
-To ensure that the tenant secret key is kept secure, it is stored in a secure backend location and is only accessible from within the Azure Function. One way to fetch a signed token is to make a `GET` request to your Azure Function, providing the `tenantID` and `documentId`, and optionally `userID`/`userName`. The Azure Function is responsible for the mapping between the tenant ID and a tenant key secret to appropriately generate and sign the token such that the Azure Fluid Relay service will accept it.
+To ensure that the tenant secret key is kept secure, it is stored in a secure backend location and is only accessible from within the Azure Function. One way to fetch a signed token is to make a `GET` request to your Azure Function, providing the `tenantID` and `documentId`, and `userID`/`userName`. The Azure Function is responsible for the mapping between the tenant ID and a tenant key secret to appropriately generate and sign the token such that the Azure Fluid Relay service will accept it.
 
 ```typescript
 private async getToken(tenantId: string, documentId: string): Promise<string> {
     const params = {
         tenantId,
         documentId,
-        userId: this.user?.userId,
-        userName: this.user?.userName,
+        userId: this.user.userId,
+        userName: this.user.userName,
     };
     const token = this.getTokenFromServer(params);
     return token;
@@ -82,7 +82,6 @@ The below code snippet can help you with creating your own `HTTPTrigger Azure Fu
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { ScopeType } from "@fluidframework/azure-client";
 import { generateToken } from "@fluidframework/azure-service-utils";
-import { generateUser } from "@fluidframework/server-service-utils";
 
 //Replace "myTenantKey" with your key here.
 const key = "myTenantKey";
@@ -91,7 +90,6 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     // tenantId and documentId are required parameters
     const tenantId = (req.query.tenantId || (req.body && req.body.tenantId)) as string;
     const documentId = (req.query.documentId || (req.body && req.body.documentId)) as string;
-    // userId, userName, and scopes are optional and will be filled with default values if not provided
     const userId = (req.query.userId || (req.body && req.body.userId)) as string;
     const userName = (req.query.userName || (req.body && req.body.userName)) as string;
     const scopes = (req.query.scopes || (req.body && req.body.scopes)) as ScopeType[];
@@ -118,12 +116,6 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     }
 
     let user = { name: userName, id: userId };
-    if (!userId || !userName) {
-        // generateUser will generate a random userName and userId. If either of these values are not provided as
-        // query parameters, the randomly generated values will be used instead.
-        const generatedUser = generateUser() as any;
-        user = { name: userName ?? generatedUser.name, id: userId ?? generatedUser.id };
-    }
 
     // Will generate the token and returned by an ITokenProvider implementation to use with the AzureClient.
     const token = generateToken(
