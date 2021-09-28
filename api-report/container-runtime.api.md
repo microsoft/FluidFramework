@@ -246,11 +246,11 @@ export interface IAckedSummary {
 }
 
 // @public (undocumented)
-export interface IAckNackSummaryResult {
+export interface IAckSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
-    readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
+    readonly summaryAckNackOp: ISummaryAckMessage;
 }
 
 // @public
@@ -357,6 +357,14 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly stage: "generate";
     readonly summaryStats: IGeneratedSummaryStats;
     readonly summaryTree: ISummaryTree;
+}
+
+// @public (undocumented)
+export interface INackSummaryResult {
+    // (undocumented)
+    readonly ackNackDuration: number;
+    // (undocumented)
+    readonly summaryAckNackOp: ISummaryNackMessage;
 }
 
 // @public (undocumented)
@@ -473,7 +481,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRo
 
 // @public (undocumented)
 export interface ISummarizeResults {
-    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
+    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
 }
@@ -661,12 +669,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
 // @public (undocumented)
-export type SummarizeResultPart<T> = {
+export type SummarizeResultPart<T, Y = undefined> = {
     success: true;
     data: T;
 } | {
     success: false;
-    data: T | undefined;
+    data: Y | undefined;
     message: string;
     error: any;
     retryAfterSeconds?: number;

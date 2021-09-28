@@ -4,12 +4,19 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { assert, Deferred, IPromiseTimer, IPromiseTimerResult, Timer } from "@fluidframework/common-utils";
+import {
+    assert,
+    Deferred,
+    IPromiseTimer,
+    IPromiseTimerResult,
+    Timer,
+} from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import {
-    IAckNackSummaryResult,
+    IAckSummaryResult,
+    INackSummaryResult,
     ISummarizeOptions,
     IBroadcastSummaryResult,
     ISummarizeResults,
@@ -118,9 +125,10 @@ const summarizeErrors = {
 export class SummarizeResultBuilder {
     public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
     public readonly summaryOpBroadcasted = new Deferred<SummarizeResultPart<IBroadcastSummaryResult>>();
-    public readonly receivedSummaryAckOrNack = new Deferred<SummarizeResultPart<IAckNackSummaryResult>>();
+    public readonly receivedSummaryAckOrNack =
+        new Deferred<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>();
 
-    public fail(message: string, error: any, nackSummaryResult?: IAckNackSummaryResult, retryAfterSeconds?: number) {
+    public fail(message: string, error: any, nackSummaryResult?: INackSummaryResult, retryAfterSeconds?: number) {
         assert(!this.receivedSummaryAckOrNack.isCompleted,
             0x25e /* "no reason to call fail if all promises have been completed" */);
 
@@ -203,7 +211,7 @@ export class SummaryGenerator {
             errorCode: keyof typeof summarizeErrors,
             error?: any,
             properties?: ITelemetryProperties,
-            nackSummaryResult?: IAckNackSummaryResult,
+            nackSummaryResult?: INackSummaryResult,
         ) => {
             this.raiseSummarizingError(summarizeErrors[errorCode]);
             // UploadSummary may fail with 429 and retryAfter - respect that
@@ -333,10 +341,9 @@ export class SummaryGenerator {
             } else {
                 // Check for retryDelay in summaryNack response.
                 // back-compat: cast needed until dep on protocol-definitions version bump
-                const summaryNack = ackNackOp.type === MessageType.SummaryNack
-                    ? ackNackOp.contents as { message?: string; retryAfter?: number; }
-                    : undefined;
-                const message = (ackNackOp.contents as { message?: string }).message ?? ackNackOp.contents.errorMessage;
+                assert(ackNackOp.type === MessageType.SummaryNack, "type check");
+                const summaryNack = ackNackOp.contents as { message?: string; retryAfter?: number; };
+                const message = summaryNack.message ?? ackNackOp.contents.errorMessage;
                 const retryAfterSeconds = summaryNack?.retryAfter;
 
                 const error = new LoggingError(`summaryNack: ${message}`, { retryAfterSeconds });
