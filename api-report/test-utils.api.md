@@ -112,11 +112,9 @@ export interface IProvideTestFluidObject {
 
 // @public (undocumented)
 export interface ITestContainerConfig {
-    // (undocumented)
     fluidDataObjectType?: DataObjectFactoryType;
-    // (undocumented)
+    loaderOptions?: ITestLoaderOptions;
     registry?: ChannelFactoryRegistry;
-    // (undocumented)
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
