@@ -93,15 +93,15 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     lockTask(taskId: string): Promise<void>;
     // @internal (undocumented)
     protected onDisconnect(): void;
-    // @internal (undocumented)
+    // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     queued(taskId: string): boolean;
     // @internal (undocumented)
     protected registerCore(): void;
-    // @internal (undocumented)
+    // @internal
     protected reSubmitCore(): void;
-    // @internal (undocumented)
+    // @internal
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     }
 

@@ -76,6 +76,12 @@ export interface IDirectoryNewStorageFormat {
     content: IDirectoryDataObject;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IDirectoryStorageOperation" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "IDirectorySubDirectoryOperation" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+
 // @public
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
@@ -195,8 +201,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     // @internal (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     subdirectories(): IterableIterator<[string, IDirectory]>;
-    // Warning: (ae-forgotten-export) The symbol "IDirectoryOperation" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     values(): IterableIterator<any>;

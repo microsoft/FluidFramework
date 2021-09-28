@@ -8,6 +8,10 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { ITinyliciousAudience, TinyliciousMember } from "./interfaces";
 
 export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
+
+  /**
+   * @internal
+   */
   protected createServiceMember(audienceMember: IClient): TinyliciousMember {
     return {
       userId: audienceMember.user.id,
