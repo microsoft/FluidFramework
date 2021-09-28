@@ -8,7 +8,6 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { IAzureAudience, AzureMember } from "./interfaces";
 
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-
   /**
    * @internal
    */
