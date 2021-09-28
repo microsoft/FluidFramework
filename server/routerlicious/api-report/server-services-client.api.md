@@ -76,7 +76,7 @@ export class GitManager implements IGitManager {
     // (undocumented)
     addTree(tree: resources.ITree): void;
     // (undocumented)
-    createBlob(content: string, encoding: BufferEncoding): Promise<resources.ICreateBlobResponse>;
+    createBlob(content: string, encoding: "utf-8" | "base64"): Promise<resources.ICreateBlobResponse>;
     // (undocumented)
     createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit>;
     // (undocumented)
