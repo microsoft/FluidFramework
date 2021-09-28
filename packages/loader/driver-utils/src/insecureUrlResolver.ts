@@ -117,8 +117,7 @@ export class InsecureUrlResolver implements IUrlResolver {
         const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
 
         const parsedUrl = parse(fluidResolvedUrl.url);
-        const [, , documentId] = parsedUrl.pathname?.split("/");
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
         assert(!!documentId, "Invalid document id from parsed URL");
 
         let url = relativeUrl;
