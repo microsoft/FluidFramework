@@ -116,6 +116,7 @@ export interface IDocument {
     // Deli state
     deli: string;
 
-    // Timestamp of when this document will be permanently deleted
+    // Timestamp of when this document and related data will be hard deleted.
+    // The document is soft deleted if a deletion timestamp is present.
     deletionTime?: string;
 }
