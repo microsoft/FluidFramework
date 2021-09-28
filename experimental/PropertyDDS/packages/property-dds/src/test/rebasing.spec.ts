@@ -110,13 +110,13 @@ describe("PropertyDDS", () => {
 			maxOperations = 30,
 		) {
 			for (let i = startTest; i < count; i++) {
-				it(`Test ${i}`, async () => {
+                const seed = createDerivedGuid("", String(i));
+                it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
 					let testString = "";
 
 					errorHandler = (err) => {
 						console.error(`Failed Test code: ${testString}`);
 					};
-					const seed = createDerivedGuid("", String(i));
 					const random = new DeterministicRandomGenerator(seed);
 					const operationCumSums = [] as number[];
 					for (const operation of operations) {
@@ -367,8 +367,8 @@ describe("PropertyDDS", () => {
 				const logTest = true;
 
 				for (let i = startTest; i < count; i++) {
-					it(`Test ${i}`, async () => {
-						const seed = createDerivedGuid("", String(i));
+                    const seed = createDerivedGuid("", String(i));
+					it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
 						const random = new DeterministicRandomGenerator(seed);
 						let testString = "";
 
