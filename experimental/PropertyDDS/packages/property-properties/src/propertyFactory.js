@@ -1441,11 +1441,8 @@ PropertyFactory.prototype.inheritsFrom = function (in_templateTypeid, in_baseTyp
         return true;
     } else {
         var parents = {};
-        var scope = in_options.workspace ?
-            in_options.workspace.getRoot()._getCheckedOutRepositoryInfo().getScope() :
-            in_options.scope;
 
-        this._getAllParentsForTemplateInternal(in_templateTypeid, parents, true, scope);
+        this._getAllParentsForTemplateInternal(in_templateTypeid, parents, true, in_options.scope);
 
         // update the cache
         this._inheritanceCache[in_templateTypeid] = parents;
