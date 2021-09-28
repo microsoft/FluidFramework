@@ -194,7 +194,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.noActiveClients = msn === -1;
         this.minimumSequenceNumber = this.noActiveClients ? this.sequenceNumber : msn;
 
-        this.checkNackMessagesState();
+        if (this.serviceConfiguration.deli.summaryNackMessages.checkOnStartup) {
+            this.checkNackMessagesState();
+        }
 
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
 

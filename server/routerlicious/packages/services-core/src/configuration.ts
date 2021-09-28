@@ -60,6 +60,10 @@ export interface IDeliSummaryNackMessagesServerConfiguration {
     // the op count since the last summary exceeds this limit
     enable: boolean;
 
+    // Check the summary nack messages state when starting up
+    // It will potentionally reset the nackMessages flag
+    checkOnStartup: boolean;
+
     // Amount of ops since the last summary before starting to nack
     maxOps: number;
 
@@ -141,6 +145,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         },
         summaryNackMessages: {
             enable: false,
+            checkOnStartup: false,
             maxOps: 5000,
             nackContent: {
                 code: 429,
