@@ -42,9 +42,8 @@ async function main() {
             { ...profile, name: profileArg },
             { testId, debug, verbose, seed, browserAuth });
 }
-
 /**
- * Implementation of the orchestrator process.
+ * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
     driver: TestDriverTypes,
@@ -84,15 +83,15 @@ async function orchestratorProcess(
             const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
             childArgs.unshift(`--inspect-brk=${debugPort}`);
         }
-        if (args.verbose === true) {
+        if(args.verbose === true) {
             childArgs.push("--verbose");
         }
 
         runnerArgs.push(childArgs);
     }
     console.log(runnerArgs[0].join(" "));
-    try {
-        await Promise.all(runnerArgs.map(async (childArgs) => {
+    try{
+        await Promise.all(runnerArgs.map(async (childArgs)=>{
             const process = child_process.spawn(
                 "node",
                 childArgs,
@@ -100,7 +99,7 @@ async function orchestratorProcess(
             );
             return new Promise((resolve) => process.once("close", resolve));
         }));
-    } finally {
+    } finally{
         await safeExit(0, url);
     }
 }
