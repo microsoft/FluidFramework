@@ -8,6 +8,7 @@ import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
     IDeliState,
+    IDocument,
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
@@ -40,7 +41,7 @@ export class TestDocumentStorage implements IDocumentStorage {
     /**
      * Retrieves database details for the given document
      */
-    public async getDocument(tenantId: string, documentId: string): Promise<any> {
+    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
         const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
