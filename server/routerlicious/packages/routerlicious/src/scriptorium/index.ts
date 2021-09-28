@@ -5,7 +5,8 @@
 
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
-import { IPartitionLambdaFactory, MongoManager, scheduleJob } from "@fluidframework/server-services-core";
+import { IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import { scheduleJob } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
 

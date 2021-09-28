@@ -5,7 +5,7 @@
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as cron from "node-cron";
-import { ILogger } from "./lambdas";
+import { ILogger } from "@fluidframework/server-services-core";
 
 export async function scheduleJob<T>(
     api: () => Promise<T>,
