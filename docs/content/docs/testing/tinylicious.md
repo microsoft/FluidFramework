@@ -29,7 +29,7 @@ Now, you can navigate to `http://localhost:6502` on your browser to see the Tiny
 
 The `AzureClient` supports both instantiating against a deployed Azure Fluid Relay service instance for production scenarios, as well as against a local, in-memory service instance, known as Tinylicious, for development purposes.
 
-`AzureClient` can be connected to a local Tinylicious instance by passing in the tenant ID as `local`, the orderer and storage URLs  pointing to the Tinylicious instance on the default values of `http://localhost:7070`. You can use `InsecureTokenProvider` for token resolution while running the service locally for development purposes.
+`AzureClient` can be connected to a `Azure local service (Tinylicious)` instance by passing in the tenant ID as `local`, the orderer and storage URLs  pointing to the Tinylicious instance on the default values of `http://localhost:7070`. You can use `InsecureTokenProvider` for token resolution while running the service locally for development purposes.
 
 In the below code snippet, `AzureClient` is pointing to Tinylicious service. This is providing you with an added feature to work with both the local Tinylicious service and the deployed Azure Fluid Relay service. `TinyliciousClient` only works with local Tinylicous service.
 
@@ -57,7 +57,7 @@ const clientProps = {
 const client = new AzureClient(clientProps);
 ```
 
-To launch the local Tinylicious service instance, run `npx tinylicious@latest` from your terminal window.
+To launch the local Tinylicious service instance, run `npx @fluidframework/azure-local-service@latest` from your terminal window.
 
 ## Using custom domains with Tinylicious
 
