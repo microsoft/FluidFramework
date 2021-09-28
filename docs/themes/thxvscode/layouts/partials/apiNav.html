@@ -132,7 +132,7 @@
     <h4>Topics</h4>
     <select id="small-nav-dropdown">
         <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
-        {{- range .Site.Menus.section }}
+        {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
 
             {{- if ne .URL "" -}}

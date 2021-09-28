@@ -89,6 +89,7 @@ menu:
 markup:
   goldmark:
     renderer:
+      attribute: true
       autoHeadingIDType: "github"
       # mark unsafe html as true since api-documenter uses html snippets in markdown
       unsafe: true

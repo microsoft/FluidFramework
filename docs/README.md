@@ -216,16 +216,10 @@ The site theme/template lives in `themes/thxvscode`.
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `hugo:default` | --- |
-| `hugo:win32` | --- |
 | `install:ditaa` | Install ditaa to generate diagrams unless it already exists. |
 | `install:ditaa:default` | --- |
 | `install:ditaa:force` | Install ditaa to generate diagrams. |
 | `install:ditaa:win32` | --- |
-| `install:hugo` | Install Hugo unless it already exists. |
-| `install:hugo:default` | --- |
-| `install:hugo:force` | Install the version of Hugo used by the documentation. |
-| `install:hugo:win32` | --- |
 | `linkcheck` | `npm run linkcheck:site` |
 | `linkcheck:api` | Runs a broken link check against <http://localhost:1313>, including the /apis path. |
 | `linkcheck:site` | Runs a broken link check against <http://localhost:1313>. Does not scan the /apis path. |
