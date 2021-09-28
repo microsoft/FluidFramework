@@ -346,6 +346,8 @@ export class RunningSummarizer implements IDisposable {
             let totalAttempts = 0;
             let attemptPerPhase = 0;
 
+            let lastResult: { message: string; error: any; } | undefined;
+
             for (let attemptPhase = 0; attemptPhase < attempts.length;) {
                 if (this.cancellationToken.cancelled) {
                     return;
@@ -388,9 +390,16 @@ export class RunningSummarizer implements IDisposable {
                     attemptPhase++;
                     attemptPerPhase = 0;
                 }
+                lastResult = result;
             }
-            // If all attempts failed, close the summarizer container
-            this.logger.sendErrorEvent({ eventName: "FailToSummarize", summarizeReason });
+
+            // If all attempts failed, log error (with last attempt info) and close the summarizer container
+            this.logger.sendErrorEvent({
+                eventName: "FailToSummarize",
+                summarizeReason,
+                message: lastResult?.message,
+            }, lastResult?.error);
+
             this.stopSummarizerCallback("failToSummarize");
         }).catch((error) => {
             this.logger.sendErrorEvent({ eventName: "UnexpectedSummarizeError" }, error);
