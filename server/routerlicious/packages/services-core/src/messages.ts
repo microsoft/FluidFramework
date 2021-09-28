@@ -13,16 +13,17 @@ import {
 import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
-export const RawOperationType: string = "RawOperation";
+export const RawOperationType = "RawOperation";
 
 // String identifying the sequenced operation message
-export const SequencedOperationType: string = "SequencedOperation";
+export const SequencedOperationType = "SequencedOperation";
 
-export const NackOperationType: string = "Nack";
+// String identifying nack messages
+export const NackOperationType = "Nack";
 
 export const SystemType: string = "System";
 
-export const BoxcarType: string = "boxcar";
+export const BoxcarType = "boxcar";
 
 /**
  * Base class for messages placed on the distributed log
@@ -81,6 +82,9 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
  * Raw message inserted into the event hub queue
  */
 export interface IRawOperationMessage extends IObjectMessage {
+    // The type of the message
+    type: typeof RawOperationType;
+
     // The message that was submitted
     operation: IDocumentMessage;
 }
@@ -114,6 +118,9 @@ export interface ITicketedMessage extends IMessage {
  * Message sent when a raw operation is nacked
  */
 export interface INackMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof NackOperationType;
+
     // The client that is being NACKed
     clientId: string;
 
@@ -129,11 +136,17 @@ export interface INackMessage extends ITicketedMessage {
  * A sequenced operation
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof SequencedOperationType;
+
     // The sequenced operation
     operation: ISequencedDocumentMessage;
 }
 
 export interface IBoxcarMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof BoxcarType;
+
     contents: IMessage[];
 }
 

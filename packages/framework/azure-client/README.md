@@ -1,6 +1,6 @@
 # @fluidframework/azure-client
 
-The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service (FRS).
+The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
 
 ## Using azure-client
 
