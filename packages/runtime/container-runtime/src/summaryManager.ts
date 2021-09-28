@@ -266,15 +266,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             0x265 /* "Expected: Starting or Running" */);
         this.state = SummaryManagerState.Stopping;
 
-        if (this.summarizer !== undefined) {
-            // Stopping the running summarizer client should trigger a change
-            // in states when the running summarizer closes
-            this.summarizer.stop(reason);
-        } else {
-            // Should not be possible to hit this case
-            this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer", reason });
-            this.state = SummaryManagerState.Off;
-        }
+        // Stopping the running summarizer client should trigger a change
+        // in states when the running summarizer closes
+        this.summarizer?.stop(reason);
     }
 
     /**
