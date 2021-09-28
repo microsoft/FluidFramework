@@ -33,9 +33,6 @@ export enum FileMode {
     Symlink = "120000",
 }
 
-export type BufferEncoding = "ascii" | "utf8" | "utf-8" | "utf16le" | "ucs2" |
-                             "ucs-2" | "base64" | "latin1" | "binary" | "hex";
-
 /**
  * Raw blob stored within the tree
  */
@@ -43,8 +40,8 @@ export interface IBlob {
     // Contents of the blob
     contents: string;
 
-    // The encoding of the contents string (utf-8 or base64)
-    encoding: BufferEncoding;
+    // The encoding of the contents string
+    encoding: "utf-8" | "base64";
 }
 
 export interface IAttachment {
