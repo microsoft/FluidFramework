@@ -44,6 +44,9 @@ export function create(
                 getParam(request.params, "id"));
             documentP.then(
                 (document) => {
+                    if (!document || document.deletionTime) {
+                        response.status(404);
+                    }
                     response.status(200).json(document);
                 },
                 (error) => {

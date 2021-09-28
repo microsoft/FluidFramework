@@ -39,7 +39,7 @@ export class DocumentStorage implements IDocumentStorage {
     /**
      * Retrieves database details for the given document
      */
-    public async getDocument(tenantId: string, documentId: string): Promise<any> {
+    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
         const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
