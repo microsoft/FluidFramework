@@ -359,7 +359,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         container.removeListener("closed", onClosed);
                     })
                     .then((props) => {
-                        event.end(props);
+                        event.end({ ...props, ...mode });
                         res(container);
                     },
                     (error) => {
