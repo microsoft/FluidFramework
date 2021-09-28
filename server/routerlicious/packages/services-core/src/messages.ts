@@ -83,7 +83,7 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
  */
 export interface IRawOperationMessage extends IObjectMessage {
     // The type of the message
-    type: "RawOperation";
+    type: typeof RawOperationType;
 
     // The message that was submitted
     operation: IDocumentMessage;
@@ -119,7 +119,7 @@ export interface ITicketedMessage extends IMessage {
  */
 export interface INackMessage extends ITicketedMessage {
     // The type of the message
-    type: "Nack";
+    type: typeof NackOperationType;
 
     // The client that is being NACKed
     clientId: string;
@@ -137,7 +137,7 @@ export interface INackMessage extends ITicketedMessage {
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
     // The type of the message
-    type: "SequencedOperation";
+    type: typeof SequencedOperationType;
 
     // The sequenced operation
     operation: ISequencedDocumentMessage;
@@ -145,7 +145,7 @@ export interface ISequencedOperationMessage extends ITicketedMessage {
 
 export interface IBoxcarMessage extends ITicketedMessage {
     // The type of the message
-    type: "boxcar";
+    type: typeof BoxcarType;
 
     contents: IMessage[];
 }
