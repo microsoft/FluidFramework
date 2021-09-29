@@ -686,7 +686,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
                             // ops were reliably stored
                             // ensure op event timers & last sequenced op counters are reset
-                            // that will make the MaxTime & MaxOps op events will be accurate
+                            // that will make the MaxTime & MaxOps op events accurate
                             this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
                         }
                     }
