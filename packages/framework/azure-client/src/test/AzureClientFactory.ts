@@ -6,33 +6,29 @@
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
-    AzureClient,
+    AzureClient, AzureFunctionTokenProvider,
 } from "..";
 
-// This function will detemine if local or remote mode is required (based on FLUID_CLIENT),
+// This function will determine if local or remote mode is required (based on azureTokenProvider),
 // and return a new AzureClient instance based on the mode by setting the Connection config
 // accordingly.
-export function createAzureClient(): AzureClient {
-    const useAzure = process.env.FLUID_CLIENT === "azure";
-    const tenantId = useAzure ? process.env.fluid__webpack__tenantId as string : "frs-client-tenant";
-    const tenantKey = useAzure ? process.env.fluid__webpack__tenantKey as string : "";
+export function createAzureClient(azureTokenProvider?: AzureFunctionTokenProvider): AzureClient {
+    const tenantId = azureTokenProvider ? process.env.fluid__webpack__tenantId as string : "frs-client-tenant";
     const user = generateUser();
 
-    // use AzureClient remote mode will run against live Azure Relay Service.
+    // use azureTokenProvider remote mode will run against live Azure Relay Service.
     // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
-    const connectionProps = useAzure ? {
+    const connectionProps = azureTokenProvider ? {
         tenantId,
-        tokenProvider: new InsecureTokenProvider(
-            tenantKey, user,
-        ),
-        orderer: "https://alfred.eus-1.canary.frs.azure.com",
-        storage: "https://historian.eus-1.canary.frs.azure.com",
+        tokenProvider: azureTokenProvider,
+        orderer: "https://alfred.westus2.fluidrelay.azure.com",
+        storage: "https://historian.westus2.fluidrelay.azure.com",
     } : {
         tenantId: "local",
         tokenProvider: new InsecureTokenProvider("fooBar", user),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new AzureClient({ connection:connectionProps });
+    return new AzureClient({ connection: connectionProps });
 }
