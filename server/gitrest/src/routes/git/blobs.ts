@@ -8,6 +8,13 @@ import { Router } from "express";
 import nconf from "nconf";
 import * as utils from "../../utils";
 
+/**
+ * Validates that the input encoding is valid
+ */
+function validateEncoding(encoding: BufferEncoding): boolean {
+    return encoding === "utf-8" || encoding === "base64";
+}
+
 function validateBlob(blob: string): boolean {
     // eslint-disable-next-line no-null/no-null
     return blob !== undefined && blob !== null;
@@ -29,7 +36,7 @@ export async function createBlob(
     owner: string,
     repo: string,
     blob: ICreateBlobParams): Promise<ICreateBlobResponse> {
-        if (!blob || !validateBlob(blob.content)) {
+        if (!blob || !validateBlob(blob.content) || !validateEncoding(blob.encoding)) {
             // eslint-disable-next-line prefer-promise-reject-errors
             return Promise.reject("Invalid blob");
     }
