@@ -16,7 +16,12 @@ import {
     OdspResourceTokenFetchOptions,
     TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import { getLocatorFromOdspUrl, storeLocatorInOdspUrl, encodeOdspFluidDataStoreLocator } from "./odspFluidFileLink";
+import {
+    getLocatorFromOdspUrl,
+    storeLocatorInOdspUrl,
+    encodeOdspFluidDataStoreLocator,
+    locatorQueryParamName,
+} from "./odspFluidFileLink";
 import { OdspDocumentInfo, OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
@@ -137,7 +142,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         const odspResolvedUrl = await new OdspDriverUrlResolver().resolve(requestToBeResolved);
 
         if (isSharingLinkToRedeem) {
-            odspResolvedUrl.sharingLinkToRedeem = request.url;
+            odspResolvedUrl.sharingLinkToRedeem = this.removeNavParam(request.url);
         }
         if (odspResolvedUrl.itemId) {
             // Kick start the sharing link request if we don't have it already as a performance optimization.
@@ -145,6 +150,14 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             this.getShareLinkPromise(odspResolvedUrl).catch(() => {});
         }
         return odspResolvedUrl;
+    }
+
+    private removeNavParam(link: string): string {
+        const url = new URL(link);
+        const params = new URLSearchParams(url.search);
+        params.delete(locatorQueryParamName);
+        url.search = params.toString();
+        return url.href;
     }
 
     private toInstrumentedTokenFetcher(

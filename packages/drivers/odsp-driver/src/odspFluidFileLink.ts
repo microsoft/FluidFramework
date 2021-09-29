@@ -100,7 +100,7 @@ function decodeOdspFluidDataStoreLocator(
     };
 }
 
-const locatorQueryParamName = "nav";
+export const locatorQueryParamName = "nav";
 
 /**
  * Embeds Fluid data store locator data into given ODSP url
