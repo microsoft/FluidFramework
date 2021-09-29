@@ -85,7 +85,6 @@ const containerId = await container.attach();
 ### Loading a container
 
 To load the container created in the above section your code calls the client's `getContainer` method. The call must pass the `id` of the container to load as well as the exact same schema definition used when creating the container. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
-schema is required on all subsequent loads or the container will not be loaded correctly.
 
 Note that when loading an existing container, the container is already attached.
 
