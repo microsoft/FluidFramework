@@ -19,6 +19,7 @@ const cpy = require("cpy");
 const findValue = require("deepdash/findValueDeep");
 const fs = require("fs-extra");
 const path = require("path");
+const replace = require("replace-in-file");
 
 const data = require("./rollup-api-data");
 
@@ -79,7 +80,7 @@ const extractMembers = (sourceFile, members) => {
  * @param {string} replaceValue The replacement string.
  * @returns {string} The updated string.
  */
-const replaceAll = (input, searchValue, replaceValue) => input.replace(new RegExp(searchValue, 'g'), replaceValue);
+const replaceAll = (input, searchValue, replaceValue) => input.replace(new RegExp(searchValue, "g"), replaceValue);
 
 /**
  * Rewrites an API JSON file by combining members from other API JSON files and rewriting the references in the JSON to
@@ -134,6 +135,10 @@ const main = async () => {
     fs.emptyDirSync(stagingPath);
     fs.emptyDirSync(outputPath);
 
+    const websitePackageFiles = data.websitePackages.map(
+        (p) => `${packageName(p)}.api.json`
+    );
+
     // Copy all the files to staging that need to be present for member processing.
     const stagedPackageFiles = data.allStagingPackages.map(
         (p) => `${packageName(p)}.api.json`
@@ -144,16 +149,41 @@ const main = async () => {
     combineMembers(originalPath, stagingPath, data.memberCombineInstructions);
 
     // Copy all processed files that should be published on the site to the output dir.
-    const websitePackageFiles = data.websitePackages.map(
-        (p) => `${packageName(p)}.api.json`
-    );
     console.log(`Copying final files from ${stagingPath} to ${outputPath}`)
     await cpy(websitePackageFiles, outputPath, { cwd: stagingPath })
         .on("progress", (progress) => {
-            if(progress.completedFiles > 0) {
+            if (progress.completedFiles > 0) {
                 console.log(`\tCopied ${websitePackageFiles[progress.completedFiles]}`);
             }
         });
+
+    // Rewrite imports
+    const from = [];
+    const to = [];
+
+    for (const [searchString, replacement] of data.stringReplacements) {
+        from.push(new RegExp(searchString, "g"));
+        to.push(replacement);
+    }
+
+    // const files = fs.readdirSync(stagingPath).map(p => path.resolve(p));
+    const files = `${path.resolve(outputPath)}/**`;
+    console.log(files);
+
+    try {
+        const options = {
+            files: files,
+            from: from,
+            to: to,
+            // disableGlobs: true,
+        };
+
+        const results = await replace(options);
+        console.log("Replacement results:", results);
+    }
+    catch (error) {
+        console.error("Error occurred:", error);
+    }
 };
 
 main();

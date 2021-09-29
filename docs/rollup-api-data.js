@@ -51,13 +51,27 @@ const memberCombineInstructions = [
         ])
     },
 ];
+
+const stringReplacements = memberCombineInstructions.flatMap((instruction) => {
+    const returnValue = [];
+    const { package, sourceImports } = instruction;
+    for (const [sourcePackage, imports] of sourceImports) {
+        for (const importName of imports) {
+            const searchString = `${sourcePackage}!${importName}`;
+            const replacementString = `${package}!${importName}`;
+            returnValue.push([searchString, replacementString]);
+        }
+    }
+    return returnValue;
+});
+
 /**
  * Adds an array of strings to a set individually.
  *
  * @param {Set<string>} set
  * @param {string[]} add
  */
- const addToSet = (set, add) => {
+const addToSet = (set, add) => {
     for (item of add) {
         set.add(item);
     }
@@ -72,4 +86,5 @@ for (const { package, sourceImports } of memberCombineInstructions) {
 
 exports.allStagingPackages = Array.from(allStagingPackages);
 exports.memberCombineInstructions = memberCombineInstructions;
+exports.stringReplacements = stringReplacements;
 exports.websitePackages = websitePackages;
