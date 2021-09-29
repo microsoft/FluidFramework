@@ -138,8 +138,6 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     /** Flag to indicate whether the client can write or not. */
     readonly active: boolean;
 
-    readonly connectionMode?: ConnectionMode;
-
     /**
      * Tells if container is in read-only mode.
      * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
