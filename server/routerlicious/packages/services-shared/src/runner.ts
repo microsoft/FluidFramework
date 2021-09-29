@@ -70,9 +70,8 @@ export function runService<T extends IResources>(
         },
         (error) => {
             logger?.error(`${group} service exiting due to error`);
-            Lumberjack.error(`${group} service exiting due to error`);
+            Lumberjack.error(`${group} service exiting due to error`, undefined, error);
             logger?.error(inspect(error));
-            Lumberjack.error(inspect(error));
             if (error.forceKill) {
                 process.kill(process.pid, "SIGKILL");
             } else {
