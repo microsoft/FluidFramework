@@ -43,7 +43,7 @@
     "traverse": "0.6.6"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.22.0",
+    "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/mocha-test-setup": "^0.49.0",
     "@microsoft/api-extractor": "^7.16.1",

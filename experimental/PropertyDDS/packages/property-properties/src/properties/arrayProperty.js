@@ -8,7 +8,6 @@
 const _ = require('lodash');
 const BaseProperty = require('./baseProperty');
 const AbstractStaticCollectionProperty = require('./abstractStaticCollectionProperty');
-const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
 const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
 const {
     ArrayChangeSetIterator,
@@ -18,7 +17,7 @@ const {
 } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const Property = require('./lazyLoadedProperties');
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
+const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
 const deepCopy = _.cloneDeep;
 
 

@@ -138,6 +138,7 @@ const TypeidHelperError = {
 };
 
 const PropertyError = {
+    TYPEID_NOT_NATIVE: "TYPEID_NOT_NATIVE",
     /**
      * methods: ArrayProperty.length.set, StringProperty.length.set
      * Cannot directly set the array.length or string.length. This is a read-only property.
@@ -1359,6 +1360,12 @@ const ChangeSetError = {
      * The ChangeSet did not include an oldValue member which is computed when making the ChangeSet reversible.
      */
     OLD_VALUE_NOT_FOUND: "CS-004: Internal error: Old value not found while inverting a change set. The change set is probably not reversible.",
+
+    CONTEXT_VALIDATION_IN_PROGRESS: "CONTEXT_VALIDATION_IN_PROGRESS",
+
+    NOT_A_VALID_CONTEXT: "NOT_A_VALID_CONTEXT",
+
+    MISSING_PRE_POST_CALLBACK: "Missing callback. Either pre- or postcallback must be provided.",
 };
 
 const UtilsError = {

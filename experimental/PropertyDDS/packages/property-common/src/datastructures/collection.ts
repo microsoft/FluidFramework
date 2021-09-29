@@ -49,6 +49,7 @@ export class Collection<T> {
      * @returns Return the value passed in
      */
     add(in_key: number | string, in_value: T): T {
+        this._checkType(in_value);
         this._checkIsNewKey(in_key);
 
         this._items[in_key] = in_value;
@@ -57,6 +58,22 @@ export class Collection<T> {
         this.onAdd(in_key, in_value);
 
         return in_value;
+    }
+
+    /**
+     * Checks if in_value's type is equal to this Collection type. If this collection
+     * has no type set, the check will pass.
+     *
+     * @param in_value - A value that is equal to the type managed by this collection.
+     * @returns Return true if the type is a valid type for this
+     * collection, throw otherwise.
+     */
+    private _checkType(in_value: T) {
+        if (this._type && !(in_value instanceof this._type)) {
+            throw new Error(MSGS.TYPE_MISMATCH);
+        } else {
+            return true;
+        }
     }
 
     /**
