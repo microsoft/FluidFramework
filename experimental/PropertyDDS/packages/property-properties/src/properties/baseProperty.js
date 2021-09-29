@@ -74,6 +74,7 @@ var PATH_TOKENS = {
  * @property {array<string>} paths The canonical paths of the properties we are allowed to create.
  */
 export class BaseProperty {
+
     /**
      * Default constructor for BaseProperty
      * @param {object} in_params List of parameters
@@ -97,7 +98,12 @@ export class BaseProperty {
         // Pre-conditions
         ConsoleUtils.assert(in_params, MSG.PROP_CONSTRUCTOR_EXPECTS_OBJECTS);
 
-        in_params = in_params || {};
+        const defaultParams = {
+            typeid: 'BaseProperty',
+            isConstant: false
+        };
+
+        in_params = _.merge(defaultParams, in_params);
 
         if (this._id !== in_params.id) {
             this._id = in_params.id;
@@ -113,6 +119,7 @@ export class BaseProperty {
         }
 
         this._parent = undefined;
+        this._isConstant = in_params.isConstant;
 
         // internal management
         if (!this._noDirtyInBase) {
@@ -121,18 +128,15 @@ export class BaseProperty {
     };
 
     static MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
-    MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
+    get MODIFIED_STATE_FLAGS() { return MODIFIED_STATE_FLAGS; }
 
     static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
-    REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
+    get REFERENCE_RESOLUTION() { return REFERENCE_RESOLUTION; }
 
     static PATH_TOKENS = PATH_TOKENS;
-    PATH_TOKENS = PATH_TOKENS;
+    get PATH_TOKENS() { return PATH_TOKENS; }
 
-    // Default values. Hide them per instance if required.
-    _typeid = 'BaseProperty';
     get _context() { return 'single'; }
-    _isConstant = false;
 
     /**
      * @return {string} - The typeid of this property

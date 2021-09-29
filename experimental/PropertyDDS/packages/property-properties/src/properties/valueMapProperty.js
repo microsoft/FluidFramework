@@ -204,10 +204,9 @@ export class Float32MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Float32', ...in_params });
     }
 
-    _typeid = 'Float32';
     _castFunctor = _castFunctors.Float32;
 }
 
@@ -225,9 +224,8 @@ export class Float64MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Float64', ...in_params });
     };
-    _typeid = 'Float64';
     _castFunctor = _castFunctors.Float64;
 }
 
@@ -245,10 +243,9 @@ export class Uint32MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint32', ...in_params });
     };
 
-    _typeid = 'Uint32';
     _castFunctor = _castFunctors.Uint32;
 
 }
@@ -267,10 +264,9 @@ export class Uint16MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint16', ...in_params });
     };
 
-    _typeid = 'Uint16';
     _castFunctor = _castFunctors.Uint16;
 }
 
@@ -288,10 +284,9 @@ export class Uint8MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint8', ...in_params });
     };
 
-    _typeid = 'Uint8';
     _castFunctor = _castFunctors.Uint8;
 }
 
@@ -309,10 +304,9 @@ export class Int32MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int32', ...in_params });
     };
 
-    _typeid = 'Int32';
     _castFunctor = _castFunctors.Int32;
 }
 
@@ -402,10 +396,9 @@ export class Int64MapProperty extends Integer64MapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int64', ...in_params });
     };
 
-    _typeid = 'Int64';
     _castFunctor = _castFunctors.Int64;
 
 
@@ -437,10 +430,9 @@ export class Uint64MapProperty extends Integer64MapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint64', ...in_params });
     };
 
-    _typeid = 'Uint64';
     _castFunctor = _castFunctors.Uint64;
 
     /**
@@ -469,10 +461,9 @@ export class Int16MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int16', ...in_params });
     };
 
-    _typeid = 'Int16';
     _castFunctor = _castFunctors.Int16;
 }
 
@@ -490,10 +481,9 @@ export class Int8MapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int8', ...in_params });
     };
 
-    _typeid = 'Int8';
     _castFunctor = _castFunctors.Int8;
 }
 
@@ -511,10 +501,9 @@ export class StringMapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'String', ...in_params });
     };
 
-    _typeid = 'String';
     _castFunctor = _castFunctors.String;
 }
 
@@ -532,10 +521,8 @@ export class BoolMapProperty extends ValueMapProperty {
      * @category Maps
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Bool', ...in_params });
     };
 
-    _typeid = 'Bool';
     _castFunctor = _castFunctors.Boolean;
-
 }

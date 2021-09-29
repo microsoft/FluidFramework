@@ -30,12 +30,10 @@ export class Int8Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Int8', ...in_params });
         // default for this property type is '0'
         this._data = 0;
-
     };
-    _typeid = 'Int8';
     _castFunctor = _castFunctors.Int8;
 }
 
@@ -53,13 +51,11 @@ export class Int16Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Int16', ...in_params });
         // default for this property type is '0'
         this._data = 0;
 
     };
-
-    _typeid = 'Int16';
     _castFunctor = _castFunctors.Int16;
 
 }
@@ -77,12 +73,11 @@ export class Int32Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Int32', ...in_params });
         // default for this property type is '0'
         this._data = 0;
 
     };
-    _typeid = 'Int32';
     _castFunctor = _castFunctors.Int32;
 }
 /**
@@ -287,12 +282,10 @@ export class Int64Property extends Integer64Property {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params, Int64);
+        super({ typeid: 'Int64', ...in_params }, Int64);
     };
 
-    _typeid = 'Int64';
     _castFunctor = _castFunctors.Int64;
-
 }
 
 /**
@@ -308,9 +301,8 @@ export class Uint64Property extends Integer64Property {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params, Uint64);
+        super({ typeid: 'Uint64', ...in_params }, Uint64);
     };
 
-    _typeid = 'Uint64';
     _castFunctor = _castFunctors.Uint64;
 };

@@ -28,7 +28,7 @@ export class EnumProperty extends Int32Property {
     * @category Value Properties
     */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Enum', ...in_params });
         // whenever an EnumProperty is created by the PropertyFactory, we get a
         // dictionary [value->enum] and [enum->value] to efficiently lookup
         // values/enums for the property.
@@ -37,7 +37,6 @@ export class EnumProperty extends Int32Property {
         this._data = this._enumDictionary ? this._enumDictionary.defaultValue : 0;
     };
 
-    _typeid = 'Enum';
     _castFunctor = _castFunctors.Int32;
 
     /**

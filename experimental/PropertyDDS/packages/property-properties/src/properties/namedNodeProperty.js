@@ -28,10 +28,8 @@ export class NamedNodeProperty extends NodeProperty {
      * @category Other Collections
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'NamedNodeProperty', ...in_params });
     }
-
-    _typeid = 'NamedNodeProperty';
 
     /**
      * Returns a string identifying the property

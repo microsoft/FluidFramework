@@ -15,7 +15,7 @@ const { generateGUID } = require('@fluid-experimental/property-common').GuidUtil
 
 describe('SetProperty', function () {
     var PATH_TOKENS;
-    var changeSetWithTwoChildren, _, changeSetWithTwoChildren_full, removalChangeSet;
+    var changeSetWithTwoChildren, changeSetWithTwoChildren_full, removalChangeSet;
     var myNode, childNode1, childNode2, children;
 
     before(function () {

@@ -27,7 +27,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * @category Other Collections
      */
     constructor(in_params, in_scope) {
-        super(in_params);
+        super({ typeid: 'NamedProperty', ...in_params });
 
         this._scope = in_scope;
 
@@ -38,7 +38,6 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
     get _context() { return 'set'; }
     // A set property falls back to NamedProperty, if none is specified
-    _typeid = 'NamedProperty';
 
     /**
      * Is this property a leaf node with regard to flattening?

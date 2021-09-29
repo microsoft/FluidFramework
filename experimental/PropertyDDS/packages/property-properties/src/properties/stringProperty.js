@@ -59,11 +59,10 @@ export class StringProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'String', ...in_params });
     };
 
 
-    _typeid = 'String';
     get _context() { return 'single'; }
     get _noDirtyInBase() { return true; }
 

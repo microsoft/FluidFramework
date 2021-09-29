@@ -23,12 +23,11 @@ export class BoolProperty extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Bool', ...in_params });
         // default for this property type is 'false'
         this._data = false;
     };
 
-    _typeid = 'Bool';
     _castFunctor = _castFunctors.Boolean;
 
 }

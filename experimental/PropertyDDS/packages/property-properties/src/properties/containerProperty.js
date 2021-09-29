@@ -28,15 +28,10 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * @category Other Collections
      */
     constructor(in_params) {
-
-        super(in_params);
-
+        super({ typeid: 'ContainerProperty', ...in_params });
         this._dynamicChildren = {};
         this._optionalChildren = {};
     };
-
-
-    _typeid = 'ContainerProperty';
 
     /**
      * Returns the name of all the sub-properties of this property.

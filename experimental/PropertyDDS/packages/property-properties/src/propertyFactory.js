@@ -1080,9 +1080,8 @@ class PropertyFactory {
         // sure whether we want to use a dynamic eval for this. It might be flagged by some security scans
         // It should be safe, since we control the name of constructorClasses for properties
         // eslint-disable-next-line no-new-func
-        var propertyConstructorFunction = class extends in_baseConstructor {
-            _typeid = in_typeid;
-        }
+        var propertyConstructorFunction = class extends in_baseConstructor { }
+        propertyConstructorFunction.prototype._typeid = in_typeid;
 
         Object.defineProperty(propertyConstructorFunction, 'name', { value: in_baseConstructor.name });
 

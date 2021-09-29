@@ -22,12 +22,11 @@ export class Uint8Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint8', ...in_params });
         // default for this property type is '0'
         this._data = 0;
     };
 
-    _typeid = 'Uint8';
     _castFunctor = _castFunctors.Uint8;
 }
 
@@ -44,12 +43,11 @@ export class Uint16Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint16', ...in_params });
         // default for this property type is '0'
         this._data = 0;
     };
 
-    _typeid = 'Uint16';
     _castFunctor = _castFunctors.Uint16;
 }
 
@@ -66,11 +64,10 @@ export class Uint32Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint32', ...in_params });
         // default for this property type is '0'
         this._data = 0;
     };
 
-    _typeid = 'Uint32';
     _castFunctor = _castFunctors.Uint32;
 }

@@ -122,10 +122,8 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Float32', ...in_params });
     };
-
-    _typeid = 'Float32';
 
     /**
      * Creates and initializes the data array
@@ -150,9 +148,8 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Float64', ...in_params });
     };
-    _typeid = 'Float64';
 
     /**
      * Creates and initializes the data array
@@ -177,10 +174,8 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint8', ...in_params });
     };
-
-    _typeid = 'Uint8';
 
     /**
      * Creates and initializes the data array
@@ -206,10 +201,8 @@ export class Int8ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int8', ...in_params });
     };
-
-    _typeid = 'Int8';
 
     /**
      * Creates and initializes the data array
@@ -235,9 +228,8 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint16', ...in_params });
     };
-    _typeid = 'Uint16';
 
     /**
      * Creates and initializes the data array
@@ -263,10 +255,8 @@ export class Int16ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int16', ...in_params });
     };
-
-    _typeid = 'Int16';
 
     /**
      * Creates and initializes the data array
@@ -291,10 +281,9 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint32', ...in_params });
     };
 
-    _typeid = 'Uint32';
 
     /**
      * Creates and initializes the data array
@@ -320,10 +309,8 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int32', ...in_params });
     };
-
-    _typeid = 'Int32';
 
     /**
      * Creates and initializes the data array
@@ -435,9 +422,8 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Int64', ...in_params });
     };
-    _typeid = 'Int64';
 
     /**
      * Sets the array properties elements to the content of the given array
@@ -513,10 +499,8 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'Uint64', ...in_params });
     };
-
-    _typeid = 'Uint64';
 
     /**
      * Specialized function to deserialize Uint64 primitive types.
@@ -592,10 +576,8 @@ export class StringArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params);
+        super({  typeid: 'String', ...in_params });
     };
-
-    _typeid = 'String';
 
     /**
      * Creates and initializes the data array
@@ -624,10 +606,8 @@ export class BoolArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super(in_params, Array, true);
+        super({  typeid: 'Uint32', ...in_params }, Array, true);
     };
-
-    _typeid = 'Bool';
 
     /**
      * Creates and initializes the data array

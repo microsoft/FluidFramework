@@ -18,8 +18,8 @@ const { generateGUID } = require('@fluid-experimental/property-common').GuidUtil
 const { MSG } = require('@fluid-experimental/property-common').constants;
 
 describe('NodeProperty', function () {
-    var changeSetWithTwoMapEntries, _, changeSetWithTwoMapEntries_full, removalChangeSet;
-    var myNode, mapNode1, mapNode2, myNode;
+    var changeSetWithTwoMapEntries, changeSetWithTwoMapEntries_full, removalChangeSet;
+    var myNode, mapNode1, mapNode2;
 
     before(function () {
         // Register a template with a set property for the tests

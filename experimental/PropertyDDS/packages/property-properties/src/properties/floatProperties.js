@@ -22,11 +22,10 @@ export class Float32Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Float32', ...in_params });
         // default for this property type is '0'
         this._data = 0;
     };
-    _typeid = 'Float32';
     _castFunctor = _castFunctors.Float32;
 }
 
@@ -44,12 +43,10 @@ export class Float64Property extends ValueProperty {
      * @category Value Properties
      */
     constructor(in_params) {
-        super(in_params);
+        super({ typeid: 'Float64', ...in_params });
         // default for this property type is '0'
         this._data = 0;
     };
 
-    _typeid = 'Float64';
     _castFunctor = _castFunctors.Float64;
-
 }
