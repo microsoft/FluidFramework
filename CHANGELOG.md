@@ -1,5 +1,23 @@
 # Change Log
 
+## 11.3.0
+
+* build: add build-code script for faster incremental builds while testing
+  * Associated pull request: [34583](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34583)
+  * Commit: [fe2ec9904463bf2c00a3e44cdd8b4401dbd367ce](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fe2ec9904463bf2c00a3e44cdd8b4401dbd367ce)
+* feat: BREAKING CHANGE: expose transaction failure information
+  * Associated pull request: [34589](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34589)
+  * Commit: [221d0a1ad59e83a1d44ee589bb65c524d3e8676f](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/221d0a1ad59e83a1d44ee589bb65c524d3e8676f)
+* feat: Implement applyStashedOp on SharedTree
+  * Associated pull request: [34584](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34584)
+  * Commit: [a4da66198ad3ad9ac9a1b4955c6ba8123bbb5b66](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/a4da66198ad3ad9ac9a1b4955c6ba8123bbb5b66)
+* merge: `releases/2021.09.4` into `master`
+  * Associated pull request: [34518](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34518)
+  * Commit: [f187c2cd31c8b5583e454924ad3aa99c91463bfb](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f187c2cd31c8b5583e454924ad3aa99c91463bfb)
+* docs: Fix casing of `@inheritDoc` comment tags
+  * Associated pull request: [34520](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34520)
+  * Commit: [d95332be99248824fc279db55b39a324976d0423](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d95332be99248824fc279db55b39a324976d0423)
+
 ## 10.2.0
 
 * feat: Add StringInterner
