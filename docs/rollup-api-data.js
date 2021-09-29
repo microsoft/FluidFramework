@@ -23,6 +23,12 @@ const websitePackages = [
 /** An array of objects describing how members should be combined. */
 const memberCombineInstructions = [
     {
+        package: "@fluidframework/test-client-utils",
+        sourceImports: new Map([
+            ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
+        ])
+    },
+    {
         package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
             ["@fluidframework/server-services-client", ["generateToken"]],
