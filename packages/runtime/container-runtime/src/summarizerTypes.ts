@@ -198,21 +198,21 @@ export interface IBroadcastSummaryResult {
 }
 
 export interface IAckSummaryResult {
-    readonly summaryAckNackOp: ISummaryAckMessage;
+    readonly summaryAckOp: ISummaryAckMessage;
     readonly ackNackDuration: number;
 }
 
 export interface INackSummaryResult {
-    readonly summaryAckNackOp: ISummaryNackMessage;
+    readonly summaryNackOp: ISummaryNackMessage;
     readonly ackNackDuration: number;
 }
 
-export type SummarizeResultPart<T, Y = undefined> = {
+export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
-    data: T;
+    data: TSuccess;
 } | {
     success: false;
-    data: Y | undefined;
+    data: TFailure | undefined;
     message: string;
     error: any;
     retryAfterSeconds?: number;

@@ -335,7 +335,7 @@ export class SummaryGenerator {
                 this.heuristicData.markLastAttemptAsSuccessful();
                 summarizeEvent.end({ ...telemetryProps, handle: ackNackOp.contents.handle, message: "summaryAck" });
                 resultsBuilder.receivedSummaryAckOrNack.resolve({ success: true, data: {
-                    summaryAckNackOp: ackNackOp,
+                    summaryAckOp: ackNackOp,
                     ackNackDuration,
                 }});
             } else {
@@ -355,7 +355,7 @@ export class SummaryGenerator {
                     "summaryNack",
                     error,
                     { ...telemetryProps, nackRetryAfter: retryAfterSeconds },
-                    { summaryAckNackOp: ackNackOp, ackNackDuration },
+                    { summaryNackOp: ackNackOp, ackNackDuration },
                 );
             }
         } finally {

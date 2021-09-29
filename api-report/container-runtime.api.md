@@ -250,7 +250,7 @@ export interface IAckSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
-    readonly summaryAckNackOp: ISummaryAckMessage;
+    readonly summaryAckOp: ISummaryAckMessage;
 }
 
 // @public
@@ -364,7 +364,7 @@ export interface INackSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
-    readonly summaryAckNackOp: ISummaryNackMessage;
+    readonly summaryNackOp: ISummaryNackMessage;
 }
 
 // @public (undocumented)
@@ -669,12 +669,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
 // @public (undocumented)
-export type SummarizeResultPart<T, Y = undefined> = {
+export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
-    data: T;
+    data: TSuccess;
 } | {
     success: false;
-    data: Y | undefined;
+    data: TFailure | undefined;
     message: string;
     error: any;
     retryAfterSeconds?: number;
