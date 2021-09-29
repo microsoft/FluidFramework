@@ -170,6 +170,7 @@ export interface ITestObjectProvider {
     opProcessingController: IOpProcessingController;
     // (undocumented)
     reset(): void;
+    // (undocumented)
     updateDocumentId(url: IResolvedUrl | undefined): void;
     // (undocumented)
     urlResolver: IUrlResolver;
