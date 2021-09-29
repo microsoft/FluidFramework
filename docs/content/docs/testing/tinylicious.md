@@ -6,35 +6,35 @@ editor: sdeshpande3
 
 ## What is Tinylicious?
 
-Tinylicious is a local, in-memory service used for prototyping and development purpose. You can find the code for the [Tinylicious service](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious) and [Tinylicious client](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/tinylicious-client). It can be instantiated against both `AzureClient` and `TinyliciousClient` for testing purpose.
+Tinylicious is a local, in-memory Fluid service intended for prototyping and development purpose. You can use both [AzureClient]]({{< relref "azureclient.md" >}}) and [TinyliciousClient]({{< relref "tinyliciousclient.md" >}}) with Tinylicious for testing purposes.
 
 ## Using Tinylicious locally
 
-You can run tinylicious locally by executing the following command:
+You can run Tinylicious locally by executing the following command:
 
 ```sh
 npx tinylicious@latest
 ```
 
-By default, Tinylicious runs on port `7070`, however you can change port by setting an environment variable as `PORT` by running the below command in `Windows Powershell`,
+By default, Tinylicious runs on port `7070`. You can change port by setting the `PORT` environment variable when running Tinylicious. Setting environment variables will vary based on the shell you are using. For example, the `Windows PowerShell` commands below will run Tinylicious on port `6502`.
 
 ```sh
 $env:PORT=6502
 npx tinylicious@latest
 ```
 
-Now, you can navigate to `http://localhost:6502` on your browser to see the Tinylicious service up and running.
+Now Tinylicious is listening on port `6502`.
 
 ## How to deploy using Tinylicious
 
-The `AzureClient` supports both instantiating against a deployed Azure Fluid Relay service instance for production scenarios, as well as against a local, in-memory service instance, known as Tinylicious, for development purposes.
+The `AzureClient` supports Tinylicious for development purposes in addition to deployed Azure Fluid Relay service instances for production scenarios.
 
-`AzureClient` can be connected to a `Azure local service (Tinylicious)` instance by passing in the tenant ID as `local`, the orderer and storage URLs  pointing to the Tinylicious instance on the default values of `http://localhost:7070`. You can use `InsecureTokenProvider` for token resolution while running the service locally for development purposes.
+`AzureClient` can be connected to a Tinylicious instance by passing in the configuration values shown below. You can use `InsecureTokenProvider` for token resolution while running the service locally for development purposes.
 
 In the below code snippet, `AzureClient` is pointing to Tinylicious service. This is providing you with an added feature to work with both the local Tinylicious service and the deployed Azure Fluid Relay service. `TinyliciousClient` only works with local Tinylicous service.
 
 ```typescript
-import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
+import { AzureClient, AzureConnectionConfig, LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const user = {
@@ -43,8 +43,8 @@ const user = {
 };
 
 const config: AzureConnectionConfig = {
-    tenantId: "local",
-    tokenProvider: new InsecureTokenProvider("fooBar", user),
+    tenantId: LOCAL_MODE_TENANT_ID,
+    tokenProvider: new InsecureTokenProvider("anyValue", user),
     // if you're running Tinylicious on a non-default port, you'll need change these URLs
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
@@ -57,20 +57,22 @@ const clientProps = {
 const client = new AzureClient(clientProps);
 ```
 
-To launch the local Tinylicious service instance, run `npx @fluidframework/azure-local-service@latest` from your terminal window.
+To launch the local Tinylicious service instance, run `npx tinylicious@latest` from your terminal window.
 
-## Using custom domains with Tinylicious
+##  Testing with Tinylicious and multiple clients
 
-You can use `ngrok` which lets you expose port on your local machine to the internet. Ngrok gives you a random hostname for each tunnel. This tool enables you to attach domains/subdomains against those tunnels.
+When testing, it can be useful to make Tinylicious available outside localhost. You can use a service like [ngrok](https://ngrok.com/) to expose the Tinylicious port on your local machine to the internet. ngrok gives you a random hostname for each tunnel you create and routes requests to your locally-running Tinylicious service.
 
-1. Navigate to [ngrok](https://ngrok.com/) and Sign-up. There would be an `AUTH_TOKEN` generated on signing up.
+To use Tinylicious with ngrok, use the following steps. If you do not have an ngrok account, you can sign up at <https://ngrok.com/>.
 
-2. Download [ngrok](https://ngrok.com/download) and unzip the folder
+1. Sign in to the ngrok dashboard and click "Your Authtoken". You will need this token to authenticate with ngrok.
 
-3. Connect to your account by running the following command,
+2. [Download ngrok](https://ngrok.com/download) and unzip the file.
+
+3. Connect to your account by running the following command.
 
 ```sh
-ngrok authtoken AUTH_TOKEN
+ngrok authtoken <YOUR NGROK AUTHTOKEN>
 ```
 
 Running this command will add your authtoken to the default ngrok.yml configuration file.
@@ -89,7 +91,7 @@ ngrok http PORT_NUMBER
 
 After running this command, you will see the `Forwarding` URL in your terminal, which can be used to access Tinylicious by replacing the `orderer` and `storage` URLs in the `AzureConnectionConfig`.
 
-If you are using the `Free` subscription of `ngrok`, there would random hexadecimal names generated to the HTTP tunnel opened for you. If you want to specify your subdomain, you would have to upgrade to their [paid plans](https://dashboard.ngrok.com/billing/plan). Once upgraded, you can run the below command by specifying your custom domain name and port number on which your local Tinylicious service is running.
+If your ngrok account includes the capability to set custom domains or subdomains, you can use the following command to use a custom domain instead of a randomly-generated one.
 
 ```sh
 ngrok http -hostname CUSTOM_DOMAIN_NAME PORT_NUMBER
