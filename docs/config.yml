@@ -56,6 +56,10 @@ params:
   dateformShort: "Jan 2"
   githubRepo: "microsoft/FluidFramework"
   twitterHandle: "fluidframework"
+  update:
+    version: "0.48"
+    showBanner: true
+    urlRef: "docs/updates/v0.48.md"
 
 menu:
   main:

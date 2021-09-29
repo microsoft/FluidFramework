@@ -1,0 +1,14 @@
+{{ $update := .Site.Params.update }}
+{{- if and $update $update.showBanner -}}
+<div class="updates-banner hidden">
+    <div class="container">
+        <p class="message">
+        <a href="{{ relref . $update.urlRef }}" id="banner-link-updates">Version {{ $update.version }}</a> is now
+        available! Read about the new features and fixes from the release.</p>
+    </div>
+    {{- if ne .IsHome true -}}
+    <div tabindex="0" role="button" title="Dismiss this update" class="dismiss-btn" id="banner-dismiss-btn"><span
+    class="sr-only">Dismiss this update</span><span aria-hidden="true" class="glyph-icon"></span></div>
+    {{- end -}}
+</div>
+{{- end -}}
