@@ -50,6 +50,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     |---|---|
     |fluid&#x2011;framework |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
     |fluidframework/tinylicious&#x2011;client |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
+    {.table}
 
     Run the following command to install the libraries.
 
