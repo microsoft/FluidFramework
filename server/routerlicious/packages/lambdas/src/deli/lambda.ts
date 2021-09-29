@@ -99,6 +99,7 @@ export enum OpEventType {
     Idle,
     MaxOps,
     MaxTime,
+    UpdatedDurableSequenceNumber,
 }
 
 export interface IDeliLambdaEvents extends IEvent {
@@ -683,9 +684,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         this.emit("updatedDurableSequenceNumber", dsn);
 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
-                            // since the dsn updated, ops were reliably stored
-                            // we can safely restart the MaxTime timer
-                            this.updateOpMaxTimeTimer();
+                            // ops were reliably stored
+                            // ensure op event timers & last sequenced op counters are reset
+                            // that will make the MaxTime & MaxOps op events accurate
+                            this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
                         }
                     }
 
@@ -1084,7 +1086,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     /**
      * Resets the op event MaxTime timer
-     * Called after an opEvent is emitted or when the dsn is updated
+     * Called after an opEvent is emitted
      */
     private updateOpMaxTimeTimer() {
         const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
@@ -1107,11 +1109,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     /**
-     * Emits an opEvent based for the provided type
+     * Emits an opEvent for the provided type
      * Also resets the MaxTime timer
      */
-    private emitOpEvent(type: OpEventType) {
-        if (this.sequencedMessagesSinceLastOpEvent === 0) {
+    private emitOpEvent(type: OpEventType, force?: boolean) {
+        if (!force && this.sequencedMessagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
             return;
         }
