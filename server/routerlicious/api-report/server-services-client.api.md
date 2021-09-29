@@ -76,7 +76,7 @@ export class GitManager implements IGitManager {
     // (undocumented)
     addTree(tree: resources.ITree): void;
     // (undocumented)
-    createBlob(content: string, encoding: BufferEncoding): Promise<resources.ICreateBlobResponse>;
+    createBlob(content: string, encoding: "utf-8" | "base64"): Promise<resources.ICreateBlobResponse>;
     // (undocumented)
     createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit>;
     // (undocumented)
@@ -87,6 +87,8 @@ export class GitManager implements IGitManager {
     createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse>;
     // (undocumented)
     createTree(files: api.ITree): Promise<resources.ITree>;
+    // (undocumented)
+    deleteSummary(softDelete: boolean): Promise<void>;
     // (undocumented)
     getBlob(sha: string): Promise<resources.IBlob>;
     // (undocumented)
@@ -126,6 +128,8 @@ export class Historian implements IHistorian {
     createTree(tree: resources.ICreateTreeParams): Promise<resources.ITree>;
     // (undocumented)
     deleteRef(ref: string): Promise<void>;
+    // (undocumented)
+    deleteSummary(softDelete: boolean): Promise<void>;
     // (undocumented)
     endpoint: string;
     // (undocumented)
@@ -219,6 +223,8 @@ export interface IGitManager {
     // (undocumented)
     createTree(files: api.ITree): Promise<resources.ITree>;
     // (undocumented)
+    deleteSummary(softDelete: boolean): Promise<void>;
+    // (undocumented)
     getBlob(sha: string): Promise<resources.IBlob>;
     // (undocumented)
     getCommit(sha: string): Promise<resources.ICommit>;
@@ -260,6 +266,8 @@ export interface IGitService {
     createTree(tree: resources.ICreateTreeParams): Promise<resources.ITree>;
     // (undocumented)
     deleteRef(ref: string): Promise<void>;
+    // (undocumented)
+    deleteSummary(softDelete: boolean): Promise<void>;
     // (undocumented)
     getBlob(sha: string): Promise<resources.IBlob>;
     // (undocumented)

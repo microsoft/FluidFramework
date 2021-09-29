@@ -46,7 +46,7 @@ async function start(): Promise<void> {
         await getFRSContainer(documentId, ContainerFactory, createNew)
         : await getTinyliciousContainer(documentId, ContainerFactory, createNew);
 
-    const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container);
+        const propertyTree: IPropertyTree = await getDefaultObjectFromContainer<IPropertyTree>(container);
 
     renderApp(propertyTree.tree, document.getElementById("root")!);
 

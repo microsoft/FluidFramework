@@ -199,6 +199,11 @@ export class RestGitService {
         return summaryResponse;
     }
 
+    public async deleteSummary(softDelete: boolean): Promise<boolean> {
+        const headers = { "Soft-Delete": softDelete };
+        return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
+    }
+
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
         return this.resolve(
             `${sha}:summary`,
@@ -362,8 +367,8 @@ export class RestGitService {
         }).catch(getRequestErrorTranslator(url, "POST"));
     }
 
-    private async delete<T>(url: string): Promise<T> {
-        return this.restWrapper.delete<T>(url)
+    private async delete<T>(url: string, headers?: any): Promise<T> {
+        return this.restWrapper.delete<T>(url, undefined, headers)
             .catch(getRequestErrorTranslator(url, "DELETE"));
     }
 
