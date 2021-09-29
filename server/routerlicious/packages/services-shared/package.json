@@ -33,6 +33,7 @@
     "@fluidframework/protocol-definitions": "^0.1025.0-38244",
     "@fluidframework/server-services-client": "^0.1032.0",
     "@fluidframework/server-services-core": "^0.1032.0",
+    "@fluidframework/server-services-telemetry": "^0.1032.0",
     "@socket.io/redis-adapter": "^7.0.0",
     "debug": "^4.1.1",
     "formidable": "2.0.0-canary.20200504.1",
