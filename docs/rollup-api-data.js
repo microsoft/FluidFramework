@@ -57,9 +57,15 @@ const stringReplacements = memberCombineInstructions.flatMap((instruction) => {
     const { package, sourceImports } = instruction;
     for (const [sourcePackage, imports] of sourceImports) {
         for (const importName of imports) {
-            const searchString = `${sourcePackage}!${importName}`;
-            const replacementString = `${package}!${importName}`;
-            returnValue.push([searchString, replacementString]);
+            if (importName !== "*") {
+                const searchString = `${sourcePackage}!${importName}`;
+                const replacementString = `${package}!${importName}`;
+                returnValue.push([searchString, replacementString]);
+            } else {
+                const searchString = `${sourcePackage}!`;
+                const replacementString = `${package}!`;
+                returnValue.push([searchString, replacementString]);
+            }
         }
     }
     return returnValue;

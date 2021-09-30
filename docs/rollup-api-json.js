@@ -119,11 +119,11 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         rewrittenApiObj.members[0].members = combinedMembers;
 
         // Convert API object back to a string to more replace the package names using string replace.
-        jsonStr = JSON.stringify(rewrittenApiObj);
+        jsonStr = JSON.stringify(rewrittenApiObj, null, 2);
 
-        for (const [sourcePackage, _] of sourceImports) {
-            jsonStr = replaceAll(jsonStr, sourcePackage, package);
-        }
+        // for (const [sourcePackage, _] of sourceImports) {
+        //     jsonStr = replaceAll(jsonStr, sourcePackage, package);
+        // }
 
         console.log(`Writing ${outputPackagePath}`);
         fs.writeFileSync(outputPackagePath, jsonStr);
@@ -165,25 +165,28 @@ const main = async () => {
         from.push(new RegExp(searchString, "g"));
         to.push(replacement);
     }
+    // console.log(data.stringReplacements);
+    // console.log(from);
+    // console.log(to);
 
-    // const files = fs.readdirSync(stagingPath).map(p => path.resolve(p));
-    const files = `${path.resolve(outputPath)}/**`;
-    console.log(files);
+    // // const files = fs.readdirSync(stagingPath).map(p => path.resolve(p));
+    // const files = `${path.resolve(outputPath)}/**`;
+    // console.log(files);
 
-    try {
-        const options = {
-            files: files,
-            from: from,
-            to: to,
-            // disableGlobs: true,
-        };
+    // try {
+    //     const options = {
+    //         files: files,
+    //         from: from,
+    //         to: to,
+    //         // disableGlobs: true,
+    //     };
 
-        const results = await replace(options);
-        console.log("Replacement results:", results);
-    }
-    catch (error) {
-        console.error("Error occurred:", error);
-    }
+    //     const results = await replace(options);
+    //     console.log("Replacement results:", results);
+    // }
+    // catch (error) {
+    //     console.error("Error occurred:", error);
+    // }
 };
 
 main();
