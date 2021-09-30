@@ -590,6 +590,38 @@ describe("Ops on Reconnect", () => {
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were sent in disconnected state");
         });
+
+        it("can resend batch ops after reconnect if disconnect happened during the batch", async () => {
+            // Create a second container and set up a listener to store the received map / directory values.
+            await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
+
+            // Set values in the DDSes so that they are batched together.
+            container1Object1Map1.set("key1", "value1");
+            container1Object1Map2.set("key2", "value2");
+            container1Object1Directory.set("key3", "value3");
+            container1.forceReadonly(true);
+            assert(!!container1.readOnlyInfo.readonly);
+            // At this point, the delta manager should have the messages
+            // in its buffer but not in its outbound queue,
+            // as ops have not been flushed yet
+            assert.strictEqual(container1.deltaManager.outbound.length, 0);
+
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(container1);
+            assert(container1.readOnlyInfo.readonly);
+
+            // Wait for the ops to get processed by both the containers.
+            await loaderContainerTracker.ensureSynchronized();
+
+            const expectedValues: [string, string, boolean | undefined][] = [
+                ["key1", "value1", true /* batch */],
+                ["key2", "value2", undefined /* batch */],
+                ["key3", "value3", false /* batch */],
+            ];
+            assert.deepStrictEqual(
+                receivedValues, expectedValues, "Did not receive the ops that were re-sent");
+        });
     });
 
     afterEach(async () => {
