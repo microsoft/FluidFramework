@@ -51,6 +51,9 @@ export type RangeStackMap = Properties.MapLike<Collections.Stack<ReferencePositi
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
+    /**
+     * The length of the contents of the node.
+     */
     cachedLength: number;
     index: number;
     ordinal: string;
@@ -84,6 +87,9 @@ export interface IRemovalInfo {
     removedClientOverlap?: number[];
 }
 
+/**
+ * A segment representing a portion of the merge tree.
+ */
 export interface ISegment extends IMergeNodeCommon, IRemovalInfo {
     readonly type: string;
     readonly segmentGroups: SegmentGroupCollection;

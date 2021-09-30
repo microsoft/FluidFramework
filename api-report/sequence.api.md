@@ -169,15 +169,13 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     };
     }
 
-// @public (undocumented)
+// @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     // (undocumented)
     operation: TOperation;
-    // (undocumented)
     position: number;
     // (undocumented)
     propertyDeltas: PropertySet;
-    // (undocumented)
     segment: ISegment;
 }
 
@@ -325,7 +323,6 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
 // @public
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
-    // (undocumented)
     readonly isLocal: boolean;
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs;
@@ -339,11 +336,9 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    // (undocumented)
     get first(): Readonly<ISequenceDeltaRange<TOperation>>;
     // (undocumented)
     readonly isEmpty: boolean;
-    // (undocumented)
     get last(): Readonly<ISequenceDeltaRange<TOperation>>;
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
     }
@@ -622,7 +617,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     insertTextRelative(relativePos1: MergeTree.IRelativePosition, text: string, props?: MergeTree.PropertySet): void;
     // (undocumented)
     get ISharedString(): ISharedString;
-    // (undocumented)
     removeText(start: number, end: number): MergeTree.IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: MergeTree.PropertySet): void;
 }
