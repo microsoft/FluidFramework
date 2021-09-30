@@ -99,38 +99,29 @@ interface IDocumentIdStrategy {
 }
 
 function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
-    let documentId: string | undefined;
+    let documentId = createDocumentId();
     switch (type) {
         case "tinylicious":
         case "t9s":
         case "routerlicious":
         case "r11s":
             return {
-                get: () => {
-                    return documentId ?? "";
-                },
+                get: () => documentId,
                 update: (resolvedUrl?: IResolvedUrl) => {
                     // Extract the document ID from the resolved container's URL and reset the ID property
                     ensureFluidResolvedUrl(resolvedUrl);
                     documentId = resolvedUrl.id ?? documentId;
                 },
                 reset: () => {
-                    documentId = undefined;
+                    documentId = createDocumentId();
                 },
             };
         default:
             return {
-                get: () => {
-                    if (documentId === undefined) {
-                        documentId = createDocumentId();
-                    }
-                    return documentId;
-                },
-                update: () => {
-
-                },
+                get: () => documentId,
+                update: () => { },
                 reset: () => {
-                    documentId = undefined;
+                    documentId = createDocumentId();
                 },
             };
     }
