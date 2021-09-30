@@ -8,61 +8,14 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
-import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 describe("AzureClient", () => {
-    const useAzure = process.env.FLUID_CLIENT === "azure";
-    let client;
+    const client = createAzureClient();
     const schema: ContainerSchema = {
         initialObjects: {
             map1: SharedMap,
         },
     };
-    if (useAzure) {
-        let azureTokenProvider;
-
-        it("can create an Azure Token Provider", async () => {
-            /**
-             * Scenario: test if Azure Client token provider can be created
-             *
-             * Expected behavior: an error should not be thrown nor should a rejected promise
-             * be returned.
-             */
-            assert.doesNotThrow(() => {
-                azureTokenProvider = createAzureTokenProvider();
-            },
-            "azure token provider cannot be created",
-            );
-        });
-        /**
-         * Scenario: test if Azure Client can be created with token provider
-         *
-         * Expected behavior: an error should not be thrown nor should a rejected promise
-         * be returned.
-         */
-        it("can create an azure client with live service", async () => {
-            assert.doesNotThrow(() => {
-                client = createAzureClient(azureTokenProvider);
-            },
-            "azure client cannot be created with live service",
-            );
-        });
-    }
-    else {
-        /**
-         * Scenario: test if Azure Client can be created with tinylicious
-         *
-         * Expected behavior: an error should not be thrown nor should a rejected promise
-         * be returned.
-         */
-        it("can create an azure client with tinylicious", async () => {
-            assert.doesNotThrow(() => {
-                client = createAzureClient();
-            },
-            "azure client cannot be created with tinylicious",
-            );
-        });
-    }
 
     /**
      * Scenario: test when Azure Client is instantiated correctly, it can create
