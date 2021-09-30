@@ -57,7 +57,7 @@ const config = {
 const client = new AzureClient(config);
 ```
 
-These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious and `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
+These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious. `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
 
 ## Automation example
 
