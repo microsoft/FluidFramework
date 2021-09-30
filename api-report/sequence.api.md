@@ -215,7 +215,7 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
     waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;

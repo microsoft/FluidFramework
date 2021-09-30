@@ -42,9 +42,36 @@ import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 const snapshotFileName = "header";
 const contentPath = "content";
 
-export interface ISharedSegmentSequenceEvents
-    extends ISharedObjectEvents {
-
+/**
+ * Events emitted in response to changes to the sequence data.
+ *
+ * ### "sequenceDelta"
+ *
+ * The sequenceDelta event is emitted when segments are inserted, annotated, or removed.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `event` - Various information on the segments that were modified.
+ *
+ * - `target` - The sequence itself.
+ *
+ * ### "maintenance"
+ *
+ * The maintenance event is emitted when segments are modified during merge-tree maintenance.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void
+ * ```
+ * - `event` - Various information on the segments that were modified.
+ *
+ * - `target` - The sequence itself.
+ */
+export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void);
     (event: "maintenance",
         listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void);
