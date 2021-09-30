@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/bubblebench-sharedtree",
-  "version": "0.48.3",
+  "version": "0.48.4",
   "description": "Bubblemark inspired DDS benchmark",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -37,20 +37,20 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-experimental/bubblebench-common": "^0.48.3",
-    "@fluid-experimental/tree": "^0.48.3",
-    "@fluidframework/aqueduct": "^0.48.3",
+    "@fluid-experimental/bubblebench-common": "^0.48.4",
+    "@fluid-experimental/tree": "^0.48.4",
+    "@fluidframework/aqueduct": "^0.48.4",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/container-definitions": "^0.39.8",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/datastore-definitions": "^0.48.3",
-    "@fluidframework/map": "^0.48.3",
-    "@fluidframework/view-interfaces": "^0.48.3",
+    "@fluidframework/datastore-definitions": "^0.48.4",
+    "@fluidframework/map": "^0.48.4",
+    "@fluidframework/view-interfaces": "^0.48.4",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.48.3",
+    "@fluid-tools/webpack-fluid-loader": "^0.48.4",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
