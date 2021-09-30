@@ -26,15 +26,15 @@ To run the local Azure Fluid Relay service with the default values of `localhost
 npx @fluidframework/azure-local-service@latest
 ```
 
-Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our local Azure Fluid Relay service instance is running at.
+Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Both our orderer and storage URLs will point to the domain and port that our local Azure Fluid Relay service instance is running at. Lastly, to differentiate local mode from remote mode, we are passing in `LOCAL_MODE_TENANT_ID` as tenant ID.
 
 ```typescript
-import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
+import { AzureClient, AzureConnectionConfig, LOCAL_MODE_TENANT_ID } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const clientProps = {
     connection: {
-        tenantId: "local",
+        tenantId: LOCAL_MODE_TENANT_ID,
         tokenProvider: new InsecureTokenProvider("fooBar", { id: "123", name: "Test User" }),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",

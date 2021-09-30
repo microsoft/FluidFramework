@@ -84,10 +84,16 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
         return this.mergeTreeClient.longClientId;
     }
 
+    /**
+     * The first of the modified ranges.
+     */
     public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pFirst.value;
     }
 
+    /**
+     * The last of the modified ranges.
+     */
     public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
         return this.pLast.value;
     }
@@ -105,6 +111,9 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
  * Ops may get multiple events. For instance, an insert-replace will get a remove then an insert event.
  */
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
+    /**
+     * Whether the event was caused by a locally-made change.
+     */
     public readonly isLocal: boolean;
 
     constructor(
@@ -134,9 +143,18 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     }
 }
 
+/**
+ * A range that has changed corresponding to a segment modification.
+ */
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
+    /**
+     * The index of the start of the range.
+     */
     position: number;
+    /**
+     * The segment that corresponds to the range.
+     */
     segment: ISegment;
     propertyDeltas: PropertySet;
 }
