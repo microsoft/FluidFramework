@@ -18,7 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
 
 ### DeltaManager removed from fluid-framework export
-The `DeltaManager` class has been removed from the `@fluid-framework/container-loader` package exports. The `IDeltaManager` should be used where appropriate. 
+The `DeltaManager` class has been removed from the `@fluidframework/container-loader` package exports. The `IDeltaManager` should be used where appropriate. 
 
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
