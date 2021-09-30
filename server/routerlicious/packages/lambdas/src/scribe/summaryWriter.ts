@@ -246,6 +246,12 @@ export class SummaryWriter implements ISummaryWriter {
             return false;
         }
 
+        if (!op.additionalContent) {
+            // this is a mixed mode edge case that can occur if the "generateServiceSummary" config
+            // was disabled in a previous deployment and is now enabled in the next one
+            return false;
+        }
+
         // Generate a tree of logTail starting from the last protocol state.
         const logTailEntries = await this.generateLogtailEntries(
             currentProtocolHead,
@@ -371,7 +377,7 @@ export class SummaryWriter implements ISummaryWriter {
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[],
         sequenceNumber: number): Promise<string> {
-        const fullTree: ISummaryTree =  {
+        const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
                 ".protocol": this.createSummaryTreeFromEntry(protocolEntries),
@@ -395,7 +401,7 @@ export class SummaryWriter implements ISummaryWriter {
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[],
         sequenceNumber: number): Promise<string> {
-        const fullTree: ISummaryTree =  {
+        const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
                 ".logTail": this.createSummaryTreeFromEntry(logTailEntries),
@@ -422,7 +428,7 @@ export class SummaryWriter implements ISummaryWriter {
         const tree: { [path: string]: SummaryObject } = {};
         for (const treeEntry of treeEntries) {
             let summaryObject: SummaryObject;
-            switch(treeEntry.type) {
+            switch (treeEntry.type) {
                 case TreeEntry.Attachment: {
                     summaryObject = {
                         type: SummaryType.Attachment,
@@ -434,8 +440,8 @@ export class SummaryWriter implements ISummaryWriter {
                     summaryObject = {
                         type: SummaryType.Blob,
                         content: treeEntry.value.encoding === "base64" ?
-                                 fromBase64ToUtf8(treeEntry.value.contents) :
-                                 treeEntry.value.contents,
+                            fromBase64ToUtf8(treeEntry.value.contents) :
+                            treeEntry.value.contents,
                     };
                     break;
                 }

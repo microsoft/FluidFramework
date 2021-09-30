@@ -187,7 +187,10 @@ async function checkDocumentExistence(request: Request, storage: core.IDocumentS
     if (!tenantId || !documentId) {
         return Promise.reject(new Error("Invalid tenant or document id"));
     }
-    return storage.getDocument(tenantId, documentId);
+    const document = await storage.getDocument(tenantId, documentId);
+    if (!document || document.deletionTime) {
+        return Promise.reject(new Error("Cannot access document marked for deletion"));
+    }
 }
 
 const uploadBlob = async (uri: string, blobData: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> =>

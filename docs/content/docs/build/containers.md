@@ -85,7 +85,6 @@ const containerId = await container.attach();
 ### Loading a container
 
 To load the container created in the above section your code calls the client's `getContainer` method. The call must pass the `id` of the container to load as well as the exact same schema definition used when creating the container. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
-schema is required on all subsequent loads or the container will not be loaded correctly.
 
 Note that when loading an existing container, the container is already attached.
 
@@ -203,19 +202,13 @@ references to useful services you can use to build richer apps. An example of a 
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
 [FluidContainer]: {{< relref "fluidcontainer.md" >}}
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

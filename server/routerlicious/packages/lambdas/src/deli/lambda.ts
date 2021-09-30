@@ -99,6 +99,7 @@ export enum OpEventType {
     Idle,
     MaxOps,
     MaxTime,
+    UpdatedDurableSequenceNumber,
 }
 
 export interface IDeliLambdaEvents extends IEvent {
@@ -193,6 +194,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
         this.noActiveClients = msn === -1;
         this.minimumSequenceNumber = this.noActiveClients ? this.sequenceNumber : msn;
+
+        if (this.serviceConfiguration.deli.summaryNackMessages.checkOnStartup) {
+            this.checkNackMessagesState();
+        }
 
         this.checkpointContext = new CheckpointContext(this.tenantId, this.documentId, checkpointManager, context);
 
@@ -453,7 +458,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         if (nackMessages && this.serviceConfiguration.deli.enableNackMessages) {
             let shouldNack = true;
 
-            if (nackMessages.allowSystemMessages && (isServiceMessageType(message.type) || !message.clientId)) {
+            if (nackMessages.allowSystemMessages &&
+                (isServiceMessageType(message.operation.type) || !message.clientId)) {
                 // this is a system message. don't nack it
                 shouldNack = false;
             } else if (nackMessages.allowedScopes) {
@@ -673,25 +679,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
                         this.durableSequenceNumber = dsn;
 
-                        // note: "!this.nackMessages.identifier" is for backwards compat
-                        if (this.serviceConfiguration.deli.summaryNackMessages.enable && this.nackMessages &&
-                            (!this.nackMessages.identifier ||
-                                this.nackMessages.identifier === NackMessagesType.SummaryMaxOps)) {
-                            // Deli is nacking messages due to summary max ops
-                            // Check if this new dsn gets it out of that state
-                            const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
-                            if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
-                                // stop nacking future messages
-                                this.nackMessages = undefined;
-                            }
-                        }
+                        this.checkNackMessagesState();
 
                         this.emit("updatedDurableSequenceNumber", dsn);
 
                         if (this.serviceConfiguration.deli.opEvent.enable) {
-                            // since the dsn updated, ops were reliably stored
-                            // we can safely restart the MaxTime timer
-                            this.updateOpMaxTimeTimer();
+                            // ops were reliably stored
+                            // ensure op event timers & last sequenced op counters are reset
+                            // that will make the MaxTime & MaxOps op events accurate
+                            this.emitOpEvent(OpEventType.UpdatedDurableSequenceNumber, true);
                         }
                     }
 
@@ -789,8 +785,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         };
         if (message.operation.type === MessageType.Summarize || message.operation.type === MessageType.NoClient) {
             const augmentedOutputMessage = outputMessage as ISequencedDocumentAugmentedMessage;
-            const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
-            augmentedOutputMessage.additionalContent = checkpointData;
+            if (message.operation.type === MessageType.Summarize ||
+                this.serviceConfiguration.scribe.generateServiceSummary) {
+                // only add additional content if scribe will use this op for generating a summary
+                // NoClient ops are ignored by scribe when generateServiceSummary is disabled
+                const checkpointData = JSON.stringify(this.generateDeliCheckpoint());
+                augmentedOutputMessage.additionalContent = checkpointData;
+            }
             return augmentedOutputMessage;
         } else if (systemContent !== undefined) { // TODO to consolidate the logic here
             const systemOutputMessage = outputMessage as ISequencedDocumentSystemMessage;
@@ -1085,7 +1086,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     /**
      * Resets the op event MaxTime timer
-     * Called after an opEvent is emitted or when the dsn is updated
+     * Called after an opEvent is emitted
      */
     private updateOpMaxTimeTimer() {
         const maxTime = this.serviceConfiguration.deli.opEvent.maxTime;
@@ -1108,11 +1109,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     /**
-     * Emits an opEvent based for the provided type
+     * Emits an opEvent for the provided type
      * Also resets the MaxTime timer
      */
-    private emitOpEvent(type: OpEventType) {
-        if (this.sequencedMessagesSinceLastOpEvent === 0) {
+    private emitOpEvent(type: OpEventType, force?: boolean) {
+        if (!force && this.sequencedMessagesSinceLastOpEvent === 0) {
             // no need to emit since no messages were handled since last time
             return;
         }
@@ -1122,5 +1123,23 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.sequencedMessagesSinceLastOpEvent = 0;
 
         this.updateOpMaxTimeTimer();
+    }
+
+    /**
+     * Checks if the nackMessages flag should be reset
+     */
+    private checkNackMessagesState() {
+        // note: "!this.nackMessages.identifier" is for backwards compat
+        if (this.serviceConfiguration.deli.summaryNackMessages.enable && this.nackMessages &&
+            (!this.nackMessages.identifier ||
+                this.nackMessages.identifier === NackMessagesType.SummaryMaxOps)) {
+            // Deli is nacking messages due to summary max ops
+            // Check if this new dsn gets it out of that state
+            const opsSinceLastSummary = this.sequenceNumber - this.durableSequenceNumber;
+            if (opsSinceLastSummary <= this.serviceConfiguration.deli.summaryNackMessages.maxOps) {
+                // stop nacking future messages
+                this.nackMessages = undefined;
+            }
+        }
     }
 }

@@ -4,7 +4,9 @@
  */
 
 import registerDebug from "debug";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { pkgName, pkgVersion } from "./packageVersion";
 
 export const debug = registerDebug("fluid:services");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);
+Lumberjack.debug(`Package: ${pkgName} - Version: ${pkgVersion}`);
