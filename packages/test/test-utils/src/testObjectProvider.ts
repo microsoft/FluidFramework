@@ -9,6 +9,7 @@ import { Container, IDetachedBlobStorage, Loader, waitContainerToCatchUp } from 
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger } from "@fluidframework/telemetry-utils";
@@ -16,7 +17,6 @@ import { LoaderContainerTracker } from "./loaderContainerTracker";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
 import { createAndAttachContainer } from "./localLoader";
 import { ChannelFactoryRegistry } from "./testFluidObject";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 
 const defaultCodeDetails: IFluidCodeDetails = {
     package: "defaultTestPackage",
