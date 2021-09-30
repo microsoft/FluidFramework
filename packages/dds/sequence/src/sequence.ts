@@ -235,7 +235,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     /**
      * Inserts the content of the register.
      *
-     * @param pos - The postition to insert the content at.
+     * @param pos - The position to insert the content at.
      * @param register - The name of the register to get the content from
      */
     public paste(pos: number, register: string) {
@@ -288,7 +288,7 @@ export abstract class SharedSegmentSequence<T extends MergeTree.ISegment>
     /**
      * Annotates the range with the provided properties
      *
-     * @param start - The inclusive start postition of the range to annotate
+     * @param start - The inclusive start position of the range to annotate
      * @param end - The exclusive end position of the range to annotate
      * @param props - The properties to annotate the range with
      * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.

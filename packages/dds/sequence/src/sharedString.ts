@@ -15,16 +15,16 @@ import { SharedStringFactory } from "./sequenceFactory";
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
     /**
-     * Inserts the text at the postition.
-     * @param pos - The postition to insert the text at
+     * Inserts the text at the position.
+     * @param pos - The position to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
     /**
-     * Inserts a marker at the postition.
-     * @param pos - The postition to insert the marker at
+     * Inserts a marker at the position.
+     * @param pos - The position to insert the marker at
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
@@ -79,8 +79,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Inserts a marker at a relative postition.
-     * @param relativePos1 - The relative postition to insert the marker at
+     * Inserts a marker at a relative position.
+     * @param relativePos1 - The relative position to insert the marker at
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
@@ -120,8 +120,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Inserts the text at the postition.
-     * @param relativePos1 - The relative postition to insert the text at
+     * Inserts the text at the position.
+     * @param relativePos1 - The relative position to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
