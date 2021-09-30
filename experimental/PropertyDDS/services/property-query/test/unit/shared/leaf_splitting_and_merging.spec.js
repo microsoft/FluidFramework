@@ -940,7 +940,7 @@ describe('Node', function() {
           };
 
           return runMhsTest(_.range(10).map( () => randomPermutationFunction), deepTreeSettings);
-        });
+        }).timeout(10000); // GH Issue #7340
       })();
     }
   });
