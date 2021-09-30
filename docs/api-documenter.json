@@ -2,6 +2,7 @@
   "outputTarget": "markdown",
   "newlineKind": "lf",
   "uriRoot": "/docs/apis",
+  "logLevel": "verbose",
   "onlyPackagesStartingWith": [
     "fluid-framework",
     "tinylicious",
@@ -10,6 +11,7 @@
     "@fluidframework/azure-service-utils",
     "@fluidframework/map",
     "@fluidframework/sequence",
+    "@fluidframework/test-client-utils",
     "@fluidframework/tinylicious-client"
   ]
 }
