@@ -423,14 +423,26 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
-                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        // Ensure that failures on both paths are ignored initially.
+                        // I.e. if cache fails for some reason, we will proceed with network result.
+                        // And vice versa - if (for example) client is offline and network request fails first, we
+                        // do want to attempt to succeed with cached data!
+                        const promiseRaceWinner = await promiseRaceWithWinner([
+                            cachedSnapshotP.catch(() => undefined),
+                            snapshotP.catch(() => undefined),
+                        ]);
                         cachedSnapshot = promiseRaceWinner.value;
 
-                        if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await snapshotP;
-                        }
-                        else {
-                            snapshotP.catch(() => {});
+                        if (cachedSnapshot === undefined)
+                        {
+                            // if network failed -> wait for cache ( then return network failure)
+                            // If cache returned empty or failed -> wait for network (success of failure)
+                            if (promiseRaceWinner.index === 1) {
+                                cachedSnapshot = await cachedSnapshotP;
+                            }
+                            if (cachedSnapshot === undefined) {
+                                cachedSnapshot = await snapshotP;
+                            }
                         }
 
                         method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
