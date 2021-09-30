@@ -2,7 +2,6 @@
   "outputTarget": "markdown",
   "newlineKind": "lf",
   "uriRoot": "/docs/apis",
-  "logLevel": "verbose",
   "onlyPackagesStartingWith": [
     "fluid-framework",
     "tinylicious",
