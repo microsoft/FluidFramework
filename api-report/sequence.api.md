@@ -227,11 +227,8 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @public
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    // (undocumented)
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet): any;
-    // (undocumented)
     insertText(pos: number, text: string, props?: MergeTree.PropertySet): any;
-    // (undocumented)
     posFromRelativePos(relativePos: MergeTree.IRelativePosition): any;
 }
 
@@ -606,7 +603,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     static getFactory(): SharedStringFactory;
     // (undocumented)
     getMarkerFromId(id: string): MergeTree.ISegment;
-    // (undocumented)
     getText(start?: number, end?: number): string;
     // (undocumented)
     getTextAndMarkers(label: string): {
