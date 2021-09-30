@@ -356,10 +356,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         const clientQueue = this.taskQueues.get(taskId);
         // If we have no queue for the taskId, then no one has signed up for it.
         return (
-                clientQueue !== undefined
-                && clientQueue.includes(this.runtime.clientId)
-                && !this.latestPendingOps.has(taskId)
-            )
+            clientQueue !== undefined
+            && clientQueue.includes(this.runtime.clientId)
+            && !this.latestPendingOps.has(taskId)
+        )
             || this.latestPendingOps.get(taskId)?.type === "volunteer";
     }
 
@@ -367,6 +367,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * Create a snapshot for the task manager
      *
      * @returns the snapshot of the current state of the task manager
+     * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         // TODO filter out tasks with no clients, some are still getting in.
@@ -392,6 +393,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
@@ -401,16 +403,29 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.scrubClientsNotInQuorum();
     }
 
+    /**
+     * @internal
+     */
     protected initializeLocalCore() { }
 
+    /**
+     * @internal
+     */
     protected registerCore() { }
 
+    /**
+     * @internal
+     */
     protected onDisconnect() {
         this.disconnectWatcher.emit("disconnect");
     }
 
-    // Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
-    // queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+    //
+    /**
+     * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
+     * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+     * @internal
+     */
     protected reSubmitCore() { }
 
     /**
@@ -420,6 +435,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      * @param local - whether the message was sent by the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
@@ -442,7 +458,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     private addClientToQueue(taskId: string, clientId: string) {
-        if(this.runtime.getQuorum().getMembers().has(clientId)) {
+        if (this.runtime.getQuorum().getMembers().has(clientId)) {
             // Create the queue if it doesn't exist, and push the client on the back.
             let clientQueue = this.taskQueues.get(taskId);
             if (clientQueue === undefined) {

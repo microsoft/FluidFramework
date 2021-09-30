@@ -203,11 +203,15 @@ The site theme/template lives in `themes/thxvscode`.
 | Script | Description |
 |--------|-------------|
 | `build` | Build the site; outputs to `public/` by default. |
+| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
+| `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
 | `build:diagrams` | Generate the diagram images using ditaa. |
+| `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
+| `build:prep` | Copy files from _api-extractor-temp/doc-models in the root of the repo to a staging location for the docs build. |
 | `clean` | Remove all generated files. |
 | `copyfiles` | `copyfiles _replacements/ content/` |
 | `ditaa` | Run the local copy of ditaa. |
@@ -216,16 +220,10 @@ The site theme/template lives in `themes/thxvscode`.
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `hugo:default` | --- |
-| `hugo:win32` | --- |
 | `install:ditaa` | Install ditaa to generate diagrams unless it already exists. |
 | `install:ditaa:default` | --- |
 | `install:ditaa:force` | Install ditaa to generate diagrams. |
 | `install:ditaa:win32` | --- |
-| `install:hugo` | Install Hugo unless it already exists. |
-| `install:hugo:default` | --- |
-| `install:hugo:force` | Install the version of Hugo used by the documentation. |
-| `install:hugo:win32` | --- |
 | `linkcheck` | `npm run linkcheck:site` |
 | `linkcheck:api` | Runs a broken link check against <http://localhost:1313>, including the /apis path. |
 | `linkcheck:site` | Runs a broken link check against <http://localhost:1313>. Does not scan the /apis path. |

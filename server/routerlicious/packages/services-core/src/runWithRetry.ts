@@ -4,6 +4,7 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILogger } from "./lambdas";
 
 export async function runWithRetry<T>(
@@ -22,18 +23,26 @@ export async function runWithRetry<T>(
         try {
             result = await api();
             success = true;
+            if (retryCount >= 1) {
+                logger?.info(`Succeeded in executing ${callName} with ${retryCount} retries`);
+                Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`);
+            }
         } catch (error) {
-            logger?.info(`Error running ${callName}: retryCount ${retryCount}, error ${error}`);
+            logger?.error(`Error running ${callName}: retryCount ${retryCount}, error ${error}`);
+            Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, undefined, error);
             if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
                 logger?.info(`Should ignore error for ${callName}`);
+                Lumberjack.info(`Should ignore error for ${callName}`);
                 break;
             } else if (shouldRetry !== undefined && shouldRetry(error) === false)
             {
-                logger?.info(`Should not retry ${callName}`);
+                logger?.error(`Should not retry ${callName} for the current error, rejecting ${error}`);
+                Lumberjack.error(`Should not retry ${callName} for the current error, rejecting`, undefined, error);
                 return Promise.reject(error);
             }
             if (retryCount >= maxRetries) {
-                logger?.info(`Error after retrying ${retryCount} times, rejecting`);
+                logger?.error(`Error after retrying ${retryCount} times, rejecting`);
+                Lumberjack.error(`Error after retrying ${retryCount} times, rejecting`, undefined, error);
                 // Needs to be a full rejection here
                 return Promise.reject(error);
             }

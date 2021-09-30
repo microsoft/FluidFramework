@@ -14,7 +14,8 @@ import {
 import {
     IGitCache,
     SummaryTreeUploadManager,
-    WholeSummaryUploadManager } from "@fluidframework/server-services-client";
+    WholeSummaryUploadManager,
+} from "@fluidframework/server-services-client";
 import {
     ICollection,
     IDeliState,
@@ -25,6 +26,7 @@ import {
     ITenantManager,
     SequencedOperationType,
     IDocument,
+    ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
@@ -39,7 +41,7 @@ export class DocumentStorage implements IDocumentStorage {
     /**
      * Retrieves database details for the given document
      */
-    public async getDocument(tenantId: string, documentId: string): Promise<any> {
+    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
         const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
@@ -55,7 +57,7 @@ export class DocumentStorage implements IDocumentStorage {
         sequenceNumber: number,
         term: number,
         values: [string, ICommittedProposal][],
-        ): ISummaryTree {
+    ): ISummaryTree {
         const documentAttributes: IDocumentAttributes = {
             branch: documentId,
             minimumSequenceNumber: sequenceNumber,
@@ -332,7 +334,7 @@ export class DocumentStorage implements IDocumentStorage {
                     Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
                 ).toString(),
             ) as ISequencedDocumentMessage[];
-            const dbOps = ops.map((op: ISequencedDocumentMessage) => {
+            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
                 return {
                     documentId,
                     operation: op,
