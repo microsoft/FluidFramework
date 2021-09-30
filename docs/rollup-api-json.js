@@ -157,7 +157,7 @@ const main = async () => {
             }
         });
 
-    // Rewrite imports
+    // Rewrite any remaining references in the output files
     const from = [];
     const to = [];
 
@@ -165,28 +165,21 @@ const main = async () => {
         from.push(new RegExp(searchString, "g"));
         to.push(replacement);
     }
-    // console.log(data.stringReplacements);
-    // console.log(from);
-    // console.log(to);
 
-    // // const files = fs.readdirSync(stagingPath).map(p => path.resolve(p));
-    // const files = `${path.resolve(outputPath)}/**`;
-    // console.log(files);
+    const files = `${path.resolve(outputPath)}/**`;
 
-    // try {
-    //     const options = {
-    //         files: files,
-    //         from: from,
-    //         to: to,
-    //         // disableGlobs: true,
-    //     };
+    try {
+        const options = {
+            files: files,
+            from: from,
+            to: to,
+        };
 
-    //     const results = await replace(options);
-    //     console.log("Replacement results:", results);
-    // }
-    // catch (error) {
-    //     console.error("Error occurred:", error);
-    // }
+        const results = await replace(options);
+    }
+    catch (error) {
+        console.error("Error occurred:", error);
+    }
 };
 
 main();
