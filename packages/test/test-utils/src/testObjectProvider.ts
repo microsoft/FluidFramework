@@ -101,10 +101,13 @@ interface IDocumentIdStrategy {
 function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
     let documentId = createDocumentId();
     switch (type) {
-        case "tinylicious":
-        case "t9s":
-        case "routerlicious":
-        case "r11s":
+        case "odsp":
+            return {
+                get: () => documentId,
+                update: () => { }, // do not update document ID in odsp test cases
+                reset: () => documentId = createDocumentId(),
+            };
+        default:
             return {
                 get: () => documentId,
                 update: (resolvedUrl?: IResolvedUrl) => {
@@ -112,17 +115,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
                     ensureFluidResolvedUrl(resolvedUrl);
                     documentId = resolvedUrl.id ?? documentId;
                 },
-                reset: () => {
-                    documentId = createDocumentId();
-                },
-            };
-        default:
-            return {
-                get: () => documentId,
-                update: () => { },
-                reset: () => {
-                    documentId = createDocumentId();
-                },
+                reset: () => documentId = createDocumentId(),
             };
     }
 }
@@ -135,7 +128,7 @@ export class TestObjectProvider {
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _logger: ITelemetryBaseLogger | undefined;
-    private readonly documentIdStrategy: IDocumentIdStrategy;
+    private readonly _documentIdStrategy: IDocumentIdStrategy;
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -147,7 +140,7 @@ export class TestObjectProvider {
         public readonly driver: ITestDriver,
         private readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
-        this.documentIdStrategy = getDocumentIdStrategy(driver.type);
+        this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
 
     get logger() {
@@ -178,7 +171,7 @@ export class TestObjectProvider {
     }
 
     get documentId() {
-        return this.documentIdStrategy.get();
+        return this._documentIdStrategy.get();
     }
 
     get defaultCodeDetails() {
@@ -240,7 +233,7 @@ export class TestObjectProvider {
         );
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
-        this.documentIdStrategy.update(container.resolvedUrl);
+        this._documentIdStrategy.update(container.resolvedUrl);
         return container;
     }
 
@@ -278,7 +271,7 @@ export class TestObjectProvider {
                 this.driver.createCreateNewRequest(this.documentId));
         // r11s driver will generate a new ID for the new container.
         // update the document ID with the actual ID of the attached container.
-        this.documentIdStrategy.update(container.resolvedUrl);
+        this._documentIdStrategy.update(container.resolvedUrl);
         return container;
     }
 
@@ -298,7 +291,7 @@ export class TestObjectProvider {
         this._loaderContainerTracker.reset();
         this._documentServiceFactory = undefined;
         this._urlResolver = undefined;
-        this.documentIdStrategy.reset();
+        this._documentIdStrategy.reset();
         this._logger = undefined;
     }
 
@@ -307,6 +300,6 @@ export class TestObjectProvider {
     }
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
-        this.documentIdStrategy.update(resolvedUrl);
+        this._documentIdStrategy.update(resolvedUrl);
     }
 }
