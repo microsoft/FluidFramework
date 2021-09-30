@@ -98,13 +98,17 @@ interface IDocumentIdStrategy {
     reset(): void;
 }
 
+/**
+ * Document ID is treated differently by test drivers. The key difference is in generating
+ * a new container ID and accessing the container in multi-instance test cases.
+ */
 function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
     let documentId = createDocumentId();
     switch (type) {
         case "odsp":
             return {
                 get: () => documentId,
-                update: () => { }, // do not update document ID in odsp test cases
+                update: () => { }, // do not update the document ID in odsp test cases
                 reset: () => documentId = createDocumentId(),
             };
         default:
