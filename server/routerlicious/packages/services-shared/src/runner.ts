@@ -6,7 +6,7 @@
 import { inspect } from "util";
 import nconf from "nconf";
 import { ILogger, IResources, IResourcesFactory, IRunnerFactory } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack, LumberEventName } from "@fluidframework/server-services-telemetry";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -60,18 +60,20 @@ export function runService<T extends IResources>(
         ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
         : configOrPath;
 
+    const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
+
     const runningP = run(config, resourceFactory, runnerFactory, logger);
 
     runningP.then(
         () => {
             logger?.info("Exiting");
-            Lumberjack.info("Exiting");
+            runnerMetric.success(`${group} exiting.`);
             process.exit(0);
         },
         (error) => {
             logger?.error(`${group} service exiting due to error`);
-            Lumberjack.error(`${group} service exiting due to error`, undefined, error);
             logger?.error(inspect(error));
+            runnerMetric.error(`${group} service exiting due to error`, error);
             if (error.forceKill) {
                 process.kill(process.pid, "SIGKILL");
             } else {

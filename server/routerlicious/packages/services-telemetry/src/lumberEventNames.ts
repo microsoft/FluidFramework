@@ -6,9 +6,12 @@
 // List of event names that should identify Lumber events throughout the code.
 // Values in the enum must be strings.
 export enum LumberEventName {
-    // Infrastructure and helpers
+    // Lumberjack infrastructure and helpers
     LumberjackError = "LumberjackError",
     LumberjackSchemaValidationFailure = "LumberjackSchemaValidationFailure",
+
+    // Fluid server infrastructure
+    RunService = "RunService",
 
     // Unit Testing
     UnitTestEvent = "UnitTestEvent",
