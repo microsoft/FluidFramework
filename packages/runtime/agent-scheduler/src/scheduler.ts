@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IEvent } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IFluidHandle,
@@ -25,17 +27,22 @@ import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 const UnattachedClientId = `${uuid()}_unattached`;
 
 class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements IAgentScheduler {
-    public static async load(runtime: IFluidDataStoreRuntime, context: IFluidDataStoreContext, existing: boolean) {
+    public static async load(
+        runtime: IFluidDataStoreRuntime,
+        context: IFluidDataStoreContext,
+        existing: boolean,
+        id?: string,
+    ) {
         let root: ISharedMap;
         let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
         if (!existing) {
-            root = SharedMap.create(runtime, "root");
+            root = SharedMap.create(runtime, id ?? "root");
             root.bindToContext();
             consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
             consensusRegisterCollection.bindToContext();
             root.set("scheduler", consensusRegisterCollection.handle);
         } else {
-            root = await runtime.getChannel("root") as ISharedMap;
+            root = await runtime.getChannel(id ?? "root") as ISharedMap;
             const handle = await root.wait<IFluidHandle<ConsensusRegisterCollection<string | null>>>("scheduler");
             assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
             consensusRegisterCollection = await handle.get();
@@ -390,4 +397,35 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 
         return new AgentSchedulerRuntime(context, dataTypes, existing);
     }
+}
+
+export class AgentSchedulerWrapper extends DataObject {
+    public static readonly ComponentName = `AgentSchedulerWrapper`;
+    private _scheduler: AgentScheduler | undefined;
+
+    protected async initializingFirstTime() {
+        this._scheduler = await AgentScheduler.load(this.runtime, this.context, false, "schedulerRoot");
+    }
+
+    protected async initializingFromExisting() {
+        this._scheduler = await AgentScheduler.load(this.runtime, this.context, true, "schedulerRoot");
+    }
+
+    protected async hasInitialized() {
+        console.log(this._scheduler);
+    }
+
+    public get scheduler() {
+        return this._scheduler;
+    }
+
+    public static readonly factory = new DataObjectFactory<AgentSchedulerWrapper, undefined, undefined, IEvent>(
+        AgentSchedulerWrapper.ComponentName,
+        AgentSchedulerWrapper,
+        [
+            SharedMap.getFactory(),
+            ConsensusRegisterCollection.getFactory(),
+        ],
+        {},
+    );
 }

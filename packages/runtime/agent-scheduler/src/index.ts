@@ -4,5 +4,5 @@
  */
 
 export * from "./agent";
-export { AgentSchedulerFactory } from "./scheduler";
+export { AgentSchedulerFactory, AgentSchedulerWrapper } from "./scheduler";
 export * from "./taskSubscription";

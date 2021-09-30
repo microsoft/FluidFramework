@@ -34,6 +34,7 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
+    "@fluidframework/agent-scheduler": "^0.49.0",
     "@fluidframework/azure-client": "^0.49.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/test-client-utils": "^0.49.0",

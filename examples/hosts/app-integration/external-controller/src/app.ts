@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { AgentSchedulerWrapper } from "@fluidframework/agent-scheduler";
 import {
     AzureFunctionTokenProvider,
     AzureClient,
@@ -62,6 +64,7 @@ const containerSchema = {
         /* [id]: DataObject */
         map1: SharedMap,
         map2: SharedMap,
+        schedulerWrapper: AgentSchedulerWrapper,
     },
 };
 
@@ -114,6 +117,8 @@ async function start(): Promise<void> {
     const sharedMap2 = container.initialObjects.map2 as SharedMap;
     const diceRollerController1 = new DiceRollerController(sharedMap1);
     const diceRollerController2 = new DiceRollerController(sharedMap2);
+
+    console.log((container.initialObjects.schedulerWrapper as AgentSchedulerWrapper).scheduler);
 
     const contentDiv = document.getElementById("content") as HTMLDivElement;
     contentDiv.append(makeAppView([diceRollerController1, diceRollerController2], services.audience));
