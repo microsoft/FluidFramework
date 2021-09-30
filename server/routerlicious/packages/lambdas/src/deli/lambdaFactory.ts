@@ -88,7 +88,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             throw error;
         }
 
-        if (!dbObject) {
+        if (!dbObject || dbObject.deletionTime) {
             // Temporary guard against failure until we figure out what causing this to trigger.
             return new NoOpLambda(context);
         }

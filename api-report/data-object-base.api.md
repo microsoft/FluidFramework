@@ -44,7 +44,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
     // (undocumented)
     get IProvideFluidHandle(): this;
     // (undocumented)
-    abstract load(): Promise<void>;
+    abstract load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean): Promise<void>;
     // (undocumented)
     request(r: IRequest): Promise<IResponse>;
     // (undocumented)
