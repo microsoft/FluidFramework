@@ -89,14 +89,7 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     hashedDocumentId: string;
     // (undocumented)
     odspResolvedUrl: true;
-    shareLinkInfo: {
-        createLink?: {
-            type?: ShareLinkTypes;
-            link?: string;
-            error?: any;
-        };
-        sharingLinkToRedeem?: string;
-    };
+    shareLinkInfo?: ShareLinkInfoType;
     // @deprecated (undocumented)
     sharingLinkToRedeem?: string;
     // (undocumented)
@@ -175,6 +168,16 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
     siteUrl: string;
+}
+
+// @public (undocumented)
+export interface ShareLinkInfoType {
+    createLink?: {
+        type?: ShareLinkTypes;
+        link?: string;
+        error?: any;
+    };
+    sharingLinkToRedeem?: string;
 }
 
 // @public

@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { IFluidCodeDetails, IRequest, isFluidPackage } from "@fluidframework/core-interfaces";
 import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl, ShareLinkTypes } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, ShareLinkTypes, ShareLinkInfoType } from "@fluidframework/odsp-driver-definitions";
 import { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -71,6 +71,14 @@ export class OdspDriverUrlResolver implements IUrlResolver {
             if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
                 throw new Error("Proper new file params should be there!!");
             }
+            let shareLinkInfo: ShareLinkInfoType | undefined;
+            if(createLinkType && createLinkType in ShareLinkTypes) {
+                shareLinkInfo = {
+                    createLink: {
+                        type: ShareLinkTypes[createLinkType],
+                    },
+                };
+            }
             return {
                 endpoints: {
                     snapshotStorageUrl: "",
@@ -93,11 +101,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                     containerPackageName: packageName ? packageName : undefined,
                 },
                 fileVersion: undefined,
-                shareLinkInfo: {
-                    createLink: {
-                        type: createLinkType ? ShareLinkTypes[createLinkType] : undefined,
-                    },
-                },
+                shareLinkInfo,
             };
         }
         const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } = decodeOdspUrl(request.url);
@@ -139,7 +143,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 containerPackageName,
             },
             fileVersion,
-            shareLinkInfo: {},
         };
     }
 
