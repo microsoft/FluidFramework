@@ -16,7 +16,7 @@ import { SharedStringFactory } from "./sequenceFactory";
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
     /**
      * Inserts the text at the postition.
-     * @param pos - The  postition to insert the text at
+     * @param pos - The postition to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
@@ -164,6 +164,12 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         this.replaceRange(start, end, MergeTree.TextSegment.make(text, props));
     }
 
+    /**
+     * Removes the text in the given range.
+     * @param start - The inclusive start of the range to remove
+     * @param end - The exclusive end of the range to replace
+     * @returns the message sent.
+     */
     public removeText(start: number, end: number) {
         return this.removeRange(start, end);
     }
