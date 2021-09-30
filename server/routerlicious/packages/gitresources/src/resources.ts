@@ -96,8 +96,8 @@ export interface ICreateBlobParams {
     // The encoded content
     content: string;
 
-    // The encoding of the content. Either utf8 or base64.
-    encoding: BufferEncoding;
+    // The encoding of the content.
+    encoding: "utf-8" |"base64";
 }
 
 /**
