@@ -64,7 +64,7 @@
     "mocha": "^8.4.0",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.38350",
+    "@fluidframework/azure-local-service": "^0.1.38773",
     "typescript": "~4.1.3"
   },
   "peerDependencies": {
