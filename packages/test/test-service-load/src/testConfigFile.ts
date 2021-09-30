@@ -18,13 +18,16 @@ export interface ILoadTestConfig {
     faultInjectionMaxMs?: number,
     faultInjectionMinMs?: number,
     /**
-     * Number of clients sending blobs. Each of these will send one blob per cycle.
+     * Number of "attachment" type blobs to upload over the course of the test run.
      */
-    numBlobClients?: number,
+    totalBlobCount?: number,
     /**
      * Size of blob to upload in bytes. Note that some services may limit the maximum uploadable blob size (e.g. 4MB in
-     * ODSP). Also, keep in mind that large blob uploads will likely dwarf other observable effects.
+     * ODSP).
      */
     blobSize?: number,
-    detachedBlobs?: number,
+    /**
+     * Number of "attachment" type blobs to add while detached. Note this is only supported on ODSP currently.
+     */
+    detachedBlobCount?: number,
 }

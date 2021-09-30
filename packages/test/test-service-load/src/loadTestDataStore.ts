@@ -27,10 +27,10 @@ export interface IRunConfig {
     randEng: random.Engine,
 }
 
-export type ILoadTest = DataObject & {
+export interface ILoadTest {
     run(config: IRunConfig, reset: boolean): Promise<boolean>;
-    detached(config: IRunConfig): Promise<LoadTestDataStoreModel>;
-};
+    detached(config: Omit<IRunConfig, "runId">): Promise<LoadTestDataStoreModel>;
+}
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
@@ -173,9 +173,10 @@ export class LoadTestDataStoreModel {
     private readonly taskId: string;
     private readonly partnerId: number;
     private taskStartTime: number = 0;
-    private blobCount = 0;
 
-    public readonly isBlobWriter: boolean = false;
+    private readonly isBlobWriter: boolean;
+    private readonly blobUploads: Promise<void>[] = [];
+    private blobCount = 0;
 
     private constructor(
         private readonly root: ISharedDirectory,
@@ -200,18 +201,43 @@ export class LoadTestDataStoreModel {
         this.taskManager.on("lost", changed);
         this.taskManager.on("assigned", changed);
 
-        if (this.config.testConfig.numBlobClients !== undefined) {
-            this.isBlobWriter = this.config.runId < this.config.testConfig.numBlobClients;
+        const clientBlobCount = Math.trunc((config.testConfig.totalBlobCount ?? 0) / config.testConfig.numClients) +
+            (this.config.runId < ((config.testConfig.totalBlobCount ?? 0) % config.testConfig.numClients) ? 1 : 0);
+        this.isBlobWriter = clientBlobCount > 0;
 
-            // if our partner uploads a blob, download it
-            if (this.partnerId < this.config.testConfig.numBlobClients) {
-                this.root.on("valueChanged", (v) => {
-                    if (v.key === this.blobKey(this.partnerId)) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        this.root.get<IFluidHandle>(v.key)?.get();
-                    }
-                });
-            }
+        const clientOpCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+        const blobsPerOp = clientBlobCount / clientOpCount;
+
+        this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
+
+        if (clientBlobCount > 0) {
+            this.counter.on("op", (_, local) => {
+                const value = this.counter.value;
+                if (!local) {
+                    this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
+                    return;
+                }
+                const newBlobs = value >= clientOpCount
+                    ? clientBlobCount - this.blobCount
+                    : Math.trunc(value * blobsPerOp - this.blobCount);
+
+                if (newBlobs > 0) {
+                    this.blobUploads.push(...[...Array(newBlobs)].map(async () => this.writeBlob(this.blobCount++)));
+                }
+            });
+        }
+
+        const partnerBlobCount = Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
+            (this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
+
+        // if our partner uploads a blob, download it
+        if (partnerBlobCount > 0) {
+            this.root.on("valueChanged", (v) => {
+                if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    this.root.get<IFluidHandle>(v.key)?.get();
+                }
+            });
         }
     }
 
@@ -225,15 +251,27 @@ export class LoadTestDataStoreModel {
         return Date.now() - (this.haveTaskLock() ?  this.taskStartTime : this.startTime);
     }
 
-    private blobKey(id): string { return `blob_${id}`; }
+    private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
+    private get partnerBlobKeyPrefix(): string { return `blob_${this.partnerId}_`; }
 
-    public async writeBlob() {
+    public blobFinish() {
+        if (this.blobUploads.length > 0) {
+            const p = Promise.all(this.blobUploads);
+            this.blobUploads.length = 0;
+            return p;
+        }
+    }
+
+    /**
+     * Upload a unique attachment blob and store the handle in a unique key on the root map
+     */
+    public async writeBlob(blobNumber: number) {
         const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
         // upload a unique blob, since they may be deduped otherwise
-        const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${this.blobCount++}:`);
+        const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
         assert(buffer.byteLength === blobSize, "incorrect buffer size");
         const handle = await this.runtime.uploadBlob(buffer);
-        this.root.set(this.blobKey(this.config.runId), handle);
+        this.root.set(this.blobKey(blobNumber), handle);
     }
 
     public async getPartnerCounter() {
@@ -319,7 +357,7 @@ export class LoadTestDataStoreModel {
             const opRate = Math.floor(this.runtime.deltaManager.lastKnownSeqNumber / totalMin);
             const sendRate = Math.floor(this.counter.value / taskMin);
             const disposed = this.runtime.disposed;
-            const blobsEnabled = (this.config.testConfig.numBlobClients ?? 0) > 0;
+            const blobsEnabled = (this.config.testConfig.totalBlobCount ?? 0) > 0;
             const blobSize = this.config.testConfig.blobSize ?? defaultBlobSize;
             console.log(
                 `${this.config.runId.toString().padStart(3)}>` +
@@ -346,9 +384,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             this.runtime);
     }
 
-    public async detached(config) {
+    public async detached(config: Omit<IRunConfig, "runId">) {
         return LoadTestDataStoreModel.createRunnerInstance(
-            config, false, this.root, this.runtime, this.context.containerRuntime);
+            { ...config, runId: -1 }, false, this.root, this.runtime, this.context.containerRuntime);
     }
 
     public async run(config: IRunConfig, reset: boolean) {
@@ -374,7 +412,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
         try {
-            let blobP: Promise<void> | undefined;
             while (dataModel.counter.value < clientSendCount && !this.disposed) {
                 // this enables a quick ramp down. due to restart, some clients can lag
                 // leading to a slow ramp down. so if there are less than half the clients
@@ -387,15 +424,12 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                 if(dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
 
-                    // write a blob once per cycle
-                    if (dataModel.isBlobWriter && !blobP) {
-                        blobP = dataModel.writeBlob();
-                    }
                     if (dataModel.counter.value % opsPerCycle === 0) {
-                        if (blobP) {
-                            await blobP;
-                            blobP = undefined;
+                        const maybeP = dataModel.blobFinish();
+                        if (maybeP) {
+                            await maybeP;
                         }
+
                         dataModel.abandonTask();
                         // give our partner a half cycle to get the task
                         await delay(cycleMs / 2);

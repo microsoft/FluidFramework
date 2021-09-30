@@ -112,7 +112,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     }
 }
 
-export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig) {
+export async function initialize(testDriver: ITestDriver, seed: number, testConfig: ILoadTestConfig, verbose: boolean) {
     const randEng = random.engines.mt19937();
     randEng.seed(seed);
     const options = random.pick(randEng, generateLoaderOptions(seed));
@@ -138,17 +138,16 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         process.exit(-1);
     });
 
-    if ((testConfig.detachedBlobs ?? 0) > 0) {
+    if ((testConfig.detachedBlobCount ?? 0) > 0) {
+        assert(testDriver.type === "odsp", "attachment blobs in detached container not supported on this service");
         const ds = await requestFluidObject<ILoadTest>(container, "/");
         const dsm = await ds.detached({
-            runId: -1,
             testConfig,
             verbose: true,
             randEng,
         });
 
-        // await Promise.all(Array(testConfig.detachedBlobs).fill(0).map(async () => { await dsm.writeBlob(); }));
-        await Promise.all(Array(testConfig.detachedBlobs).fill(0).map(async () => dsm.writeBlob()));
+        await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
     }
 
     const testId = Date.now().toString();
@@ -156,7 +155,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     await container.attach(request);
     container.close();
 
-    if (testDriver.type === "odsp") {
+    if ((testConfig.detachedBlobCount ?? 0) > 0) {
         const url = (testDriver as OdspTestDriver).getUrlFromItemId((container.resolvedUrl as any).itemId);
         return url;
     }

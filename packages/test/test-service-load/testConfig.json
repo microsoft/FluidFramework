@@ -49,9 +49,11 @@
             "numClients": 4,
             "totalSendCount": 150,
             "readWriteCycleMs": 10000,
-            "numBlobClients": 2,
-            "blobSize": 3000000,
-            "detachedBlobs": 10
+            "faultInjectionMinMs": 0,
+            "faultInjectionMaxMs": 50000,
+            "totalBlobCount": 300,
+            "blobSize": 10240,
+            "detachedBlobCount": 10
         }
     }
 }
