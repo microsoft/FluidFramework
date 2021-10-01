@@ -12,9 +12,17 @@ There are a few steps you can take to write a good change note and avoid needing
 
 ## 0.49 Breaking changes
 - [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
+- [Removed deltaManager.ts from @fluidframework/container-loader export](#deltamanager-removed-from-fluid-framework-export)
+- [Container class protected function resumeInternal made private](#resumeinternal-made-private)
 
 ### Deprecated dirty document events and property removed from ContainerRuntime
 The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
+
+### DeltaManager removed from fluid-framework export
+The `DeltaManager` class, the `IConnectionArgs` interface, the `IDeltaManagerInternalEvents` interface, and the `ReconnectedMode` enum have been removed from `@fluidframework/container-loader` package exports. Instead of `DeltaManager`, `IDeltaManager` should be used where appropriate.
+
+### resumeInternal made private
+The `protected` function `resumeInternal` under the class `Container` has been made `private`.
 
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
