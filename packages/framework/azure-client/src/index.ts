@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid
+ * Relay service.
+ *
+ * @packageDocumentation
+ */
+
 export * from "./AzureAudience";
 export * from "./AzureClient";
 export * from "./AzureFunctionTokenProvider";
