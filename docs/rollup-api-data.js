@@ -23,6 +23,12 @@ const websitePackages = [
 /** An array of objects describing how members should be combined. */
 const memberCombineInstructions = [
     {
+        package: "@fluidframework/test-client-utils",
+        sourceImports: new Map([
+            ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
+        ])
+    },
+    {
         package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
             ["@fluidframework/server-services-client", ["generateToken"]],
@@ -45,13 +51,36 @@ const memberCombineInstructions = [
         ])
     },
 ];
+
+/**
+ * An array of tuples containing a member reference to search for and a replacement member reference string.
+ */
+const stringReplacements = memberCombineInstructions.flatMap((instruction) => {
+    const returnValue = [];
+    const { package, sourceImports } = instruction;
+    for (const [sourcePackage, imports] of sourceImports) {
+        for (const importName of imports) {
+            if (importName !== "*") {
+                const searchString = `${sourcePackage}!${importName}`;
+                const replacementString = `${package}!${importName}`;
+                returnValue.push([searchString, replacementString]);
+            } else {
+                const searchString = `${sourcePackage}!`;
+                const replacementString = `${package}!`;
+                returnValue.push([searchString, replacementString]);
+            }
+        }
+    }
+    return returnValue;
+});
+
 /**
  * Adds an array of strings to a set individually.
  *
  * @param {Set<string>} set
  * @param {string[]} add
  */
- const addToSet = (set, add) => {
+const addToSet = (set, add) => {
     for (item of add) {
         set.add(item);
     }
@@ -66,4 +95,5 @@ for (const { package, sourceImports } of memberCombineInstructions) {
 
 exports.allStagingPackages = Array.from(allStagingPackages);
 exports.memberCombineInstructions = memberCombineInstructions;
+exports.stringReplacements = stringReplacements;
 exports.websitePackages = websitePackages;
