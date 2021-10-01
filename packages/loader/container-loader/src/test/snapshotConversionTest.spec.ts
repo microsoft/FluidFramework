@@ -54,8 +54,8 @@ describe("Dehydrate Container", () => {
         const snapshotTree = convertProtocolAndAppSummaryToSnapshotTree(protocolSummary, appSummary);
 
         assert.strictEqual(Object.keys(snapshotTree.trees).length, 2, "2 trees should be there");
-        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 2,
-            "2 protocol blobs should be there.");
+        assert.strictEqual(Object.keys(snapshotTree.trees[".protocol"].blobs).length, 4,
+            "2 protocol blobs should be there(4 mappings)");
 
         // Validate the ".component" blob.
         const defaultDataStoreBlobId = snapshotTree.trees.default.blobs[".component"];
