@@ -890,7 +890,10 @@ describe('Node', function() {
     for (let i = 0; i < numRandomTests; i++) {
       (() => {
         let j = i;
-        it('Test ' + j, () => {
+        it('Test ' + j, function() {
+          // Increase timeout to 10s for large randomly generated tests (Issue #7340)
+          this.timeout(10000);
+
           let random = new DeterministicRandomGenerator(randomGuids[j]);
 
           let randomPermutationFunction = (root) => {
@@ -940,7 +943,7 @@ describe('Node', function() {
           };
 
           return runMhsTest(_.range(10).map( () => randomPermutationFunction), deepTreeSettings);
-        }).timeout(10000); // GH Issue #7340
+        })
       })();
     }
   });
