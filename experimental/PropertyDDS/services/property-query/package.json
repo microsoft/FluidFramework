@@ -69,7 +69,7 @@
     "@fluidframework/local-driver": "^0.49.0",
     "@fluidframework/mocha-test-setup": "^0.49.0",
     "@fluidframework/runtime-utils": "^0.49.0",
-    "@fluidframework/server-local-server": "^0.1031.0-37526",
+    "@fluidframework/server-local-server": "^0.1032.0-39051",
     "@fluidframework/test-utils": "^0.49.0",
     "aws-sdk": "2.547.0",
     "chai": "^4.2.0",
