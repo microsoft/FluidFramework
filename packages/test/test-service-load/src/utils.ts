@@ -153,11 +153,15 @@ export function getProfile(profileArg: string) {
 
 export async function safeExit(code: number, url: string, runId?: number) {
     // There seems to be at least one dangling promise in ODSP Driver, give it a second to resolve
-    await Promise.race([
-        new Promise((res) => { setTimeout(res, 5000); }),
-        // Flush the logs
-        loggerP.then(async (l) => l.flush({ url, runId })),
-    ]);
+    await new Promise((res) => { setTimeout(res, 1000); });
+    // Flush the logs
+    await loggerP.then(async (l) => l.flush({ url, runId }));
 
     process.exit(code);
+}
+
+export function processSend(runId: number, task: string) {
+    if (process.send) {
+        return process.send({ runId, task });
+    }
 }

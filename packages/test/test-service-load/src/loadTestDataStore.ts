@@ -15,6 +15,7 @@ import { IDirectory, ISharedDirectory } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
+import { processSend } from "./utils";
 
 export interface IRunConfig {
     runId: number,
@@ -45,9 +46,7 @@ class LoadTestDataStoreModel {
     }
 
     private static async waitForCatchup(runtime: IFluidDataStoreRuntime, runId: number): Promise<void> {
-        if (process.send) {
-            process.send({ runId, task: "waitForCatchup" });
-        }
+        processSend(runId, "waitForCatchup");
         const lastKnownSeq = runtime.deltaManager.lastKnownSeqNumber;
         assert(runtime.deltaManager.lastSequenceNumber <= lastKnownSeq,
             "lastKnownSeqNumber should never be below last processed sequence number");
@@ -55,22 +54,16 @@ class LoadTestDataStoreModel {
             return;
         }
 
-        console.log(runId, "waiting at", runtime.deltaManager.lastSequenceNumber, "for", lastKnownSeq);
-
-        return timeoutP(new Promise<void>((resolve, reject) => {
-            let timeout = setTimeout(() => console.log(runId, "stuck at", lastKnownSeq), 10000);
+        return new Promise<void>((resolve, reject) => {
             if (runtime.disposed) {
                 reject(new Error("disposed"));
             }
 
             const opListener = (op: ISequencedDocumentMessage) => {
-                clearTimeout(timeout);
                 if (lastKnownSeq <= op.sequenceNumber) {
                     runtime.deltaManager.off("op", opListener);
                     runtime.off("dispose", disposeListener);
                     resolve();
-                } else {
-                    timeout = setTimeout(() => console.log(runId, "stuck at", op.sequenceNumber), 10000);
                 }
             };
 
@@ -82,7 +75,7 @@ class LoadTestDataStoreModel {
 
             runtime.deltaManager.on("op", opListener);
             runtime.on("dispose", disposeListener);
-        }), "waitForCatchup timeout");
+        });
     }
 
     /**
@@ -100,9 +93,7 @@ class LoadTestDataStoreModel {
         const gcDataStoreIdKey = `gc_dataStore_${config.runId % halfClients}`;
         let gcDataStore: LoadTestDataStore | undefined;
         if (!root.has(gcDataStoreIdKey)) {
-            if (process.send) {
-                process.send({ runId: config.runId, task: "creating GC DS" });
-            }
+            processSend(config.runId, "requesting GC DS");
             // The data store for this pair doesn't exist, create it and store its url.
             gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
             root.set(gcDataStoreIdKey, gcDataStore.id);
@@ -110,12 +101,10 @@ class LoadTestDataStoreModel {
         // If we did not create the data store above, load it by getting its url.
         if (gcDataStore === undefined) {
             const gcDataStoreId = root.get(gcDataStoreIdKey);
-            console.log(config.runId, "key:", gcDataStoreIdKey, "id:", gcDataStoreId);
-            if (process.send) {
-                process.send({ runId: config.runId, task: "requesting GC DS" });
-            }
+            // console.log(config.runId, "key:", gcDataStoreIdKey, "id:", gcDataStoreId);
+            processSend(config.runId, "requesting GC DS");
 
-            const response = await timeoutP(containerRuntime.request({ url: `/${gcDataStoreId}` }), "request timeout");
+            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 throw new Error("GC data store not available");
             }
@@ -132,9 +121,7 @@ class LoadTestDataStoreModel {
         containerRuntime: IContainerRuntimeBase,
     ) {
         await LoadTestDataStoreModel.waitForCatchup(runtime, config.runId);
-        if (process.send) {
-            process.send({ runId: config.runId, task: "caught up" });
-        }
+        processSend(config.runId, "caught up");
 
         if(!root.hasSubDirectory(config.runId.toString())) {
             root.createSubDirectory(config.runId.toString());
@@ -148,13 +135,7 @@ class LoadTestDataStoreModel {
             runDir.set(counterKey, SharedCounter.create(runtime).handle);
             runDir.set(startTimeKey,Date.now());
         }
-        if (process.send) {
-            process.send({ runId: config.runId, task: "getting counter" });
-        }
         const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
-        if (process.send) {
-            process.send({ runId: config.runId, task: "getting taskmanager" });
-        }
         const taskmanager = await root.wait<IFluidHandle<ITaskManager>>(taskManagerKey).then(async (h)=>h.get());
 
         if(counter === undefined) {
@@ -164,14 +145,10 @@ class LoadTestDataStoreModel {
             throw new Error("taskmanger not available");
         }
 
-        if (process.send) {
-            process.send({ runId: config.runId, task: "getting GC DS" });
-        }
+        processSend(config.runId, "getting GC DS");
         const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
 
-        if (process.send) {
-            process.send({ runId: config.runId, task: "ctor" });
-        }
+        processSend(config.runId, "ctor");
         const dataModel =  new LoadTestDataStoreModel(
             root,
             config,
@@ -183,14 +160,10 @@ class LoadTestDataStoreModel {
             gcDataStore.handle,
         );
 
-        if (process.send) {
-            process.send({ runId: config.runId, task: "reset" });
-        }
+        processSend(config.runId, "reset");
         if(reset) {
             await LoadTestDataStoreModel.waitForCatchup(runtime, config.runId);
-            if (process.send) {
-                process.send({ runId: config.runId, task: "caught up again" });
-            }
+            processSend(config.runId, "caught up again");
             runDir.set(startTimeKey,Date.now());
             runDir.delete(taskTimeKey);
             counter.increment(-1 * counter.value);
@@ -309,11 +282,7 @@ class LoadTestDataStoreModel {
         }
     }
 
-    public printStatus(message?: string) {
-        if (message !== undefined) {
-            console.log(`${this.config.runId.toString().padStart(3)}> ${message}`);
-            return;
-        }
+    public printStatus() {
         if(this.config.verbose) {
             const now = Date.now();
             const totalMin = (now - this.startTime) / 60000;
@@ -336,10 +305,10 @@ class LoadTestDataStoreModel {
     }
 }
 
-const timeoutP = async <T>(p: Promise<T>, m: string, t: number = 120000): Promise<T> => {
-    const e = new Error(m);
-    return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(e), t))]);
-};
+// const timeoutP = async <T>(p: Promise<T>, m: string, t: number = 120000): Promise<T> => {
+//     const e = new Error(m);
+//     return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(e), t))]);
+// };
 
 class LoadTestDataStore extends DataObject implements ILoadTest {
     public static DataStoreName = "StressTestDataStore";
@@ -351,14 +320,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     }
 
     public async run(config: IRunConfig, reset: boolean) {
-        if (process.send) {
-            process.send({ runId: config.runId, task: "init" });
-        }
-        const dataModel = await timeoutP(LoadTestDataStoreModel.createRunnerInstance(
-                config, reset, this.root, this.runtime, this.context.containerRuntime),
-                "createRunnerInstance timeout",
-                600000,
-        );
+        processSend(config.runId, "init");
+        const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
+                config, reset, this.root, this.runtime, this.context.containerRuntime);
 
          // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
@@ -368,13 +332,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         let t: NodeJS.Timeout | undefined;
-        let lastPrint = 0;
+        // let lastPrint = 0;
         if(config.verbose) {
             const printProgress = () => {
-                if (dataModel.counter.value - (clientSendCount / 4) * lastPrint > (clientSendCount / 4)) {
-                    ++lastPrint;
-                    dataModel.printStatus();
-                }
+                dataModel.printStatus();
+                // if (dataModel.counter.value - (clientSendCount / 4) * lastPrint > (clientSendCount / 4)) {
+                //     ++lastPrint;
+                //     dataModel.printStatus();
+                // }
                 t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
             };
             t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
@@ -388,15 +353,12 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                 // leading to a slow ramp down. so if there are less than half the clients
                 // and it's partner is done, return true to complete the runner.
                 if(this.runtime.getAudience().getMembers().size < config.testConfig.numClients / 2
-                    && ((await timeoutP(dataModel.getPartnerCounter(),
-                    "getPartnerCounter timeout"))?.value ?? 0) >= clientSendCount) {
+                    && ((await dataModel.getPartnerCounter())?.value ?? 0) >= clientSendCount) {
                     return true;
                 }
 
                 if(dataModel.haveTaskLock()) {
-                    if (process.send) {
-                        process.send({ runId: config.runId, task: "count" });
-                    }
+                    processSend(config.runId, "count");
                     dataModel.counter.increment(1);
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         dataModel.abandonTask();
@@ -407,24 +369,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         await delay(opsGapMs + opsGapMs * random.real(0,.5,true)(config.randEng));
                     }
                 }else{
-                    if (process.send) {
-                        process.send({ runId: config.runId, task: "wait" });
-                    }
-                    let printed = false;
-                    const timeout = setTimeout(() => {
-                        printed = true;
-                        dataModel.printStatus("Waiting for lock...");
-                    }, cycleMs * 2);
-                    await timeoutP(dataModel.lockTask(), `${config.runId} timeout waiting for lock`);
-                    if (printed) {
-                        dataModel.printStatus("got lock");
-                    } else {
-                        clearTimeout(timeout);
-                    }
+                    processSend(config.runId, "wait");
+                    await dataModel.lockTask();
                 }
             }
-            // return !this.runtime.disposed;
-            return !this.disposed;
+            return !this.runtime.disposed;
         }finally{
             if(t !== undefined) {
                 clearTimeout(t);

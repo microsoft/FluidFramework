@@ -8,6 +8,9 @@
             "type": "node",
             "request": "attach",
             "name": "Attach by Process ID",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ],
             "processId": "${command:PickProcess}"
         },
         {

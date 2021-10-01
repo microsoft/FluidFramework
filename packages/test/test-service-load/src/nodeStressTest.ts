@@ -66,10 +66,11 @@ async function orchestratorProcess(
         ? await testDriver.createContainerUrl(args.testId)
         : await initialize(testDriver, seed);
 
+        // 600 / (60 * 10)
     const estRunningTimeMin = 2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients);
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
-    console.log(`Estimated run time: ${printTime(estRunningTimeMin * 60)}.\n`);
+    console.log(`Estimated run time: ${printTime(estRunningTimeMin * 60)}\n`);
 
     const runnerArgs: string[][] = [];
     for (let i = 0; i < profile.numClients; i++) {
@@ -102,19 +103,18 @@ async function orchestratorProcess(
     let finishedP: Promise<void>[];
     const timeLimitMs = 55 * 60 * 1000;
     try{
-        const processes = await Promise.all(runnerArgs.map(async (childArgs, i)=>{
+        const processes = await Promise.all(runnerArgs.map(async (childArgs) => {
             const process = child_process.spawn(
                 "node",
                 childArgs,
-                // { stdio: "inherit" },
-                { stdio: ["ipc", "inherit", "inherit"] },
+                { stdio: args.verbose === true ? ["ipc", "inherit", "inherit"] : "inherit" },
             );
             process.on("message", (message) => {
-                if (message?.runId !== undefined) {
-                    if (message?.task === "count") {
-                        times[i] = Date.now();
+                if (message?.runId !== undefined && message?.task !== undefined) {
+                    if (message.task === "count") {
+                        times[message.runId] = Date.now();
                     }
-                    tasks[message.runId].push(message.task ?? "");
+                    tasks[message.runId].push(message.task);
                     while (tasks[message.runId].length > taskLength) {
                         tasks[message.runId].shift();
                     }
@@ -124,7 +124,7 @@ async function orchestratorProcess(
             });
             return process;
         }));
-        finishedP = processes.map(async (process, i)=>{
+        finishedP = processes.map(async (process, i) => {
             return new Promise((resolve) => process.once("close", () => {
                 finished[i] = true;
                 resolve();
@@ -135,45 +135,41 @@ async function orchestratorProcess(
             console.log(`Cancelling run: ${reason}`);
             const time = (Date.now() - start) / 1000;
             const diff = time - estRunningTimeMin * 60;
-            console.log(
-                `ran for ${printTime(time)}`,
-                diff > 0 ? `(${printTime(diff)} more than estimated)` : "");
+            console.log(`ran for ${printTime(time)}`, diff > 0 ? `(${printTime(diff)} more than estimated)` : "");
             processes.map((p) => p.kill());
             process.exit(-1);
         };
         process.on("SIGINT", () => killAll("interrupted by user"));
-        setTimeout(() => killAll(`service load test timeout`), timeLimitMs);
+        setTimeout(() => killAll("test timeout"), timeLimitMs);
 
-        while (finished.some((b) => !b)) {
-            await Promise.race([
-                ...(finishedP.filter((_, i) => !finished[i])),
-                new Promise((res) => setTimeout(res, profile.readWriteCycleMs)),
-            ]);
-            const someCyclesAgo = Date.now() - profile.readWriteCycleMs * 4;
-            const stalled = [...Array(profile.numClients).keys()]
-                .filter((i) => !finished[i] && times[i] < someCyclesAgo).sort((a, b) => times[a] - times[b]);
+        if (args.verbose !== true) {
+            await Promise.all(finishedP);
+        } else {
+            while (finished.some((b) => !b)) {
+                await Promise.race([
+                    ...(finishedP.filter((_, i) => !finished[i])),
+                    new Promise((res) => setTimeout(res, profile.readWriteCycleMs)),
+                ]);
+                const someCyclesAgo = Date.now() - profile.readWriteCycleMs * 10;
+                const stalled = [...Array(profile.numClients).keys()]
+                    .filter((i) => !finished[i] && times[i] < someCyclesAgo).sort((a, b) => times[a] - times[b]);
 
-            const printStalled = (a: number[]) => {
-                const partner = (i: number) => (i + (profile.numClients / 2)) % profile.numClients;
-                return `[ ${a.map((i) => {
-                    const partnerString = a.indexOf(partner(i)) < 0 ? `(${tasks[partner(i)].join("->")})` : "";
-                    return `${i} (${tasks[i].join("->")}) ${partnerString}`;
-                }).join(", ")} ]`;
-            };
-            if (stalled.length > 0) {
-                console.log("-".repeat(120));
-                console.log(`${stalled.length} stalled: ${printStalled(stalled)}`.padEnd(120, "-"));
-                console.log("-".repeat(120));
-            }
-            const clientsDone = finished.filter((b) => b).length;
-            if (clientsDone > prevClientsDone) {
-                console.log(`${clientsDone}/${profile.numClients} clients finished `.padEnd(120, "="));
-                prevClientsDone = clientsDone;
-                if (stalled.length === 0 && profile.numClients - clientsDone < profile.numClients / 2) {
-                    console.log("+".repeat(120));
-                    console.log(printStalled([...Array(profile.numClients).keys()]
-                        .filter((i) => !finished[i]).sort((a, b) => times[a] - times[b]).slice(0, 5)).padEnd(120, "+"));
-                    console.log("+".repeat(120));
+                const printStalled = (a: number[]) => {
+                    const partner = (i: number) => (i + (profile.numClients / 2)) % profile.numClients;
+                    return `[ ${a.map((i) => {
+                        const partnerString = a.indexOf(partner(i)) < 0 ? ` (${tasks[partner(i)].join("->")})` : "";
+                        return `${i} (${tasks[i].join("->")})${partnerString}`;
+                    }).join(", ")} ]`;
+                };
+                if (stalled.length > 0) {
+                    console.log("-".repeat(120));
+                    console.log(`${stalled.length} stalled: ${printStalled(stalled)}`.padEnd(120, "-"));
+                    console.log("-".repeat(120));
+                }
+                const clientsDone = finished.filter((b) => b).length;
+                if (clientsDone > prevClientsDone) {
+                    console.log(`${clientsDone}/${profile.numClients} clients finished `.padEnd(120, "="));
+                    prevClientsDone = clientsDone;
                 }
             }
         }
@@ -181,14 +177,13 @@ async function orchestratorProcess(
         const time = (Date.now() - start) / 1000;
         const diff = time - estRunningTimeMin * 60;
         console.log(
-            `took ${printTime(time)}`,
-            `(${printTime(Math.abs(diff))} ${diff > 0 ? "more" : "less"} than estimated)`);
+            `took ${printTime(time)} (${printTime(Math.abs(diff))} ${diff > 0 ? "more" : "less"} than estimated)`);
         await safeExit(0, url);
     }
 }
 
 function printTime(seconds: number): string {
-        if (seconds > 60) {
+        if (seconds >= 60) {
             return `${Math.floor(seconds / 60)} minutes ${(seconds % 60).toFixed(1)} seconds`;
         } else {
             return `${(seconds % 60).toFixed(1)} seconds`;
