@@ -278,9 +278,45 @@ class Int8DataArray extends BaseDataArray {
     }
 }
 
+class Int16DataArray extends BaseDataArray {
+    constructor(size: number) {
+        super(Int16Array, size);
+    }
+}
+
 class Int32DataArray extends BaseDataArray {
     constructor(size: number) {
         super(Int32Array, size);
+    }
+}
+
+class Uint8DataArray extends BaseDataArray {
+    constructor(size: number) {
+        super(Uint8Array, size);
+    }
+}
+
+class Uint16DataArray extends BaseDataArray {
+    constructor(size: number) {
+        super(Uint16Array, size);
+    }
+}
+
+class Uint32DataArray extends BaseDataArray {
+    constructor(size: number) {
+        super(Uint32Array, size);
+    }
+}
+
+class Float32DataArray extends BaseDataArray {
+    constructor(size: number) {
+        super(Float32Array, size);
+    }
+}
+
+class Float64DataArray extends BaseDataArray {
+    constructor(size: number) {
+        super(Float64Array, size);
     }
 }
 
@@ -396,9 +432,68 @@ class UniversalDataArray extends BaseDataArray {
 }
 
 /**
+ * A data container that contains a string
+ */
+class StringDataArray extends BaseDataArray {
+    constructor() {
+        super(String, 0);
+        this.size = 0;
+        this._buffer = "";
+    }
+    /**
+     * insert the content of a string into the StringDataArray
+     * @param in_offset - the target index
+     * @param in_string - the string to be inserted
+     */
+    insertRange(in_offset: number, in_string: string) {
+        this._buffer = `${this._buffer.substr(0, in_offset)}${in_string}${this._buffer.substr(in_offset)}`;
+        this.size = this.size + in_string.length;
+    }
+
+    /**
+     * remove a range of elements from the string
+     * @param in_offset - start of the range
+     * @param in_deleteCount - number of elements to be removed
+     */
+    removeRange(in_offset: number, in_deleteCount: number) {
+        if (in_offset + in_deleteCount < (this._buffer.length as number) + 1) {
+            this._buffer = `${this._buffer.substr(0, in_offset)}${this._buffer.substr(in_offset + in_deleteCount)}`;
+            this.size -= in_deleteCount;
+        } else {
+            throw Error("DataArray removeRange in_offset + in_deleteCount is out of bounds.");
+        }
+    }
+
+    /**
+     * Set this array values to be equal to in_string values
+     * @param in_offset - The offset in this array to begin start
+     *                  setting this arrays values to in_string values.
+     * @param in_string - the input string
+     */
+    set(in_offset: number, in_string: string) {
+        this._buffer =
+            `${this._buffer.substr(0, in_offset)}${in_string}${this._buffer.substr(in_offset + in_string.length)}`;
+    }
+
+    /**
+     * Return a range of characters in the string.
+     * @param in_idxStart - the starting index
+     * @param in_idxEnd - the end index - this offset is exclusive
+     * @returns the characters in the range
+     */
+    getValueRange(in_idxStart: number, in_idxEnd: number): string {
+        if (in_idxStart >= this.size || in_idxEnd > this.size || in_idxStart < 0 || in_idxEnd < 0) {
+            throw new Error("Trying to access out of bounds!");
+        }
+        return this._buffer.slice(in_idxStart, in_idxEnd);
+    }
+
+    get length() { return this._buffer.length; }
+}
+
+/**
  * A data container that can contain boolean type
  */
-
 class BoolDataArray extends UniversalDataArray {
     /**
      * @param size - The initial size with which to allocate the array.
@@ -451,8 +546,15 @@ class BoolDataArray extends UniversalDataArray {
 
 export {
     BaseDataArray,
+    Float32DataArray,
+    Float64DataArray,
     Int8DataArray,
+    Int16DataArray,
     Int32DataArray,
+    Uint8DataArray,
+    Uint16DataArray,
+    Uint32DataArray,
     UniversalDataArray,
+    StringDataArray,
     BoolDataArray,
 };
