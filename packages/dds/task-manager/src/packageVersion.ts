@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/task-manager";
-export const pkgVersion = "0.48.4";
+export const pkgVersion = "0.48.5";
