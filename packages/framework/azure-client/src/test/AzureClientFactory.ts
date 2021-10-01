@@ -5,7 +5,10 @@
 
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
-import { AzureClient } from "..";
+import {
+    AzureClient,
+    LOCAL_MODE_TENANT_ID,
+} from "..";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 // This function will determine if local or remote mode is required (based on FLUID_CLIENT),
@@ -24,7 +27,7 @@ export function createAzureClient(): AzureClient {
         orderer: "https://alfred.westus2.fluidrelay.azure.com",
         storage: "https://historian.westus2.fluidrelay.azure.com",
     } : {
-        tenantId: "local",
+        tenantId: LOCAL_MODE_TENANT_ID,
         tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",

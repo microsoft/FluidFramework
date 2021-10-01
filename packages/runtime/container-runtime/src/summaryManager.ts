@@ -279,7 +279,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
-        if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
+        if (delayMs > 0 && delayMs > this.startThrottler.maxDelayMs) {
             this.emit(
                 "summarizerWarning",
                 createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),

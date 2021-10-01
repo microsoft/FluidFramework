@@ -204,8 +204,6 @@ describe("AzureClient", () => {
      * the container.
      */
     // it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
-    //     const dynamicSchema: ContainerSchema = {
-    //         initialObjects: {
     //             map1: SharedMap,
     //         },
     //         dynamicObjectTypes: [SharedDirectory],
@@ -215,15 +213,7 @@ describe("AzureClient", () => {
 
     //     const map1 = container.initialObjects.map1 as SharedMap;
     //     const newPair = await container.create(SharedDirectory);
-    //     map1.set("newpair-id", newPair.handle);
-    //     const obj = await map1.get("newpair-id").get();
-    //     assert.strictEqual(obj[Symbol.toStringTag], "SharedDirectory", "container added dynamic objects incorrectly");
-    // });
 
-    // /**
-    //  * Scenario: test if the optional schema parameter, dynamicObjectTypes (custom data objects),
-    //  * can be added during runtime and be returned by the container.
-    //  *
     //  * Expected behavior: added loadable object can be retrieved from the container. Loadable
     //  * object's id and containeronfig ID should be identical since it's now attached to
     //  * the container.

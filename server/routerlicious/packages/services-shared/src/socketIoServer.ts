@@ -53,7 +53,6 @@ class SocketIoServer implements core.IWebSocketServer {
         private readonly pub: Redis.Redis,
         private readonly sub: Redis.Redis) {
         this.io.on("connection", (socket: Socket) => {
-            winston.info(`Socket.io connection received: protocol ${socket.conn.protocol}`);
             const webSocket = new SocketIoSocket(socket);
             this.events.emit("connection", webSocket);
         });
