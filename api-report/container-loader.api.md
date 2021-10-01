@@ -5,7 +5,6 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -116,8 +115,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get resolvedUrl(): IResolvedUrl | undefined;
     // (undocumented)
     resume(): void;
-    // (undocumented)
-    protected resumeInternal(args: IConnectionArgs): void;
     get scopes(): string[] | undefined;
     // (undocumented)
     serialize(): string;
@@ -137,16 +134,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @public (undocumented)
-export interface IConnectionArgs {
-    // (undocumented)
-    fetchOpsFromStorage?: boolean;
-    // (undocumented)
-    mode?: ConnectionMode;
-    // (undocumented)
-    reason: string;
 }
 
 // @public (undocumented)

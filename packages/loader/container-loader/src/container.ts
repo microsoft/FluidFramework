@@ -96,7 +96,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
-import { DeltaManager, ReconnectMode } from "./deltaManager";
+import { IConnectionArgs, DeltaManager, ReconnectMode } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
@@ -106,7 +106,6 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
-import { IConnectionArgs } from "./connectionArgs";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1024,7 +1023,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    protected resumeInternal(args: IConnectionArgs) {
+    private resumeInternal(args: IConnectionArgs) {
         assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
 
         // Resume processing ops
