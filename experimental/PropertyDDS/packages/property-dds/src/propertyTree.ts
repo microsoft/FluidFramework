@@ -403,8 +403,8 @@ export class SharedPropertyTree extends SharedObject {
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
-			let serializedSummary =
-				serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
+			let serializedSummary = JSON.stringify(summary);
+				// serializer !== undefined ? serializer.stringify(summary, this.handle) : JSON.stringify(summary);
 
 			// JSON.stringify does not escape unicode characters. As a consequence,
 			// the chunking code below could create chunks which are bigger than the
@@ -471,8 +471,8 @@ export class SharedPropertyTree extends SharedObject {
 				);
 
 				const serializedSummary = chunks.reduce((a, b) => a + b, "");
-				const snapshotSummary: ISnapshotSummary =
-					serializer !== undefined ? serializer.parse(serializedSummary) : JSON.parse(serializedSummary);
+				const snapshotSummary: ISnapshotSummary = JSON.parse(serializedSummary);
+					// serializer !== undefined ? serializer.parse(serializedSummary) : JSON.parse(serializedSummary);
 				if (
 					snapshotSummary.remoteChanges === undefined ||
 					snapshotSummary.remoteTipView === undefined ||
