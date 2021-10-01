@@ -66,7 +66,6 @@ async function orchestratorProcess(
         ? await testDriver.createContainerUrl(args.testId)
         : await initialize(testDriver, seed);
 
-        // 600 / (60 * 10)
     const estRunningTimeMin = 2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients);
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);
     console.log(`Selected test profile: ${profile.name}`);
@@ -103,14 +102,16 @@ async function orchestratorProcess(
     let finishedP: Promise<void>[];
     const timeLimitMs = 55 * 60 * 1000;
     try{
-        const processes = await Promise.all(runnerArgs.map(async (childArgs) => {
+        const processes = runnerArgs.map((childArgs) => {
             const process = child_process.spawn(
                 "node",
                 childArgs,
                 { stdio: args.verbose === true ? ["ipc", "inherit", "inherit"] : "inherit" },
             );
             process.on("message", (message) => {
-                if (message?.runId !== undefined && message?.task !== undefined) {
+                if (message?.runId === undefined || message?.task === undefined) {
+                    console.log(`unrecognized message: ${JSON.stringify(message)}`);
+                } else {
                     if (message.task === "count") {
                         times[message.runId] = Date.now();
                     }
@@ -118,12 +119,10 @@ async function orchestratorProcess(
                     while (tasks[message.runId].length > taskLength) {
                         tasks[message.runId].shift();
                     }
-                } else {
-                    console.log(`unrecognized message: ${JSON.stringify(message)}`);
                 }
             });
             return process;
-        }));
+        });
         finishedP = processes.map(async (process, i) => {
             return new Promise((resolve) => process.once("close", () => {
                 finished[i] = true;

@@ -93,7 +93,7 @@ class LoadTestDataStoreModel {
         const gcDataStoreIdKey = `gc_dataStore_${config.runId % halfClients}`;
         let gcDataStore: LoadTestDataStore | undefined;
         if (!root.has(gcDataStoreIdKey)) {
-            processSend(config.runId, "requesting GC DS");
+            processSend(config.runId, "creating GC DS");
             // The data store for this pair doesn't exist, create it and store its url.
             gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
             root.set(gcDataStoreIdKey, gcDataStore.id);
@@ -160,7 +160,6 @@ class LoadTestDataStoreModel {
             gcDataStore.handle,
         );
 
-        processSend(config.runId, "reset");
         if(reset) {
             await LoadTestDataStoreModel.waitForCatchup(runtime, config.runId);
             processSend(config.runId, "caught up again");
@@ -322,7 +321,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
     public async run(config: IRunConfig, reset: boolean) {
         processSend(config.runId, "init");
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
-                config, reset, this.root, this.runtime, this.context.containerRuntime);
+            config, reset, this.root, this.runtime, this.context.containerRuntime);
 
          // At every moment, we want half the client to be concurrent writers, and start and stop
         // in a rotation fashion for every cycle.
