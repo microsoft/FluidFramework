@@ -97,7 +97,7 @@ describe("AzureClient", () => {
         await assert.rejects(
             container.attach(),
             () => true,
-            "Container should not attached twice",
+            "Container should not attach twice",
         );
     });
 
@@ -181,7 +181,7 @@ describe("AzureClient", () => {
         const container = (await client.createContainer(schema)).container;
         const containerId = await container.attach();
         await new Promise<void>((resolve) => {
-            container.on("connected", () => {
+            container.once("connected", () => {
                 resolve();
             });
         });
@@ -193,7 +193,7 @@ describe("AzureClient", () => {
 
         const containerGet = (await client.getContainer(containerId, schema)).container;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
-        const valueGet = await map1Get.get("new-key");
+        const valueGet = await map1Get.wait("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
     });
 
