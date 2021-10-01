@@ -18,7 +18,7 @@ Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
      --info <path>    Path to the layer graph json file
-     --md <path>      Generate PACKAGES.md file for human consumption
+     --md [<path>]      Generate PACKAGES.md file for human consumption. (default: current working directory)
 ${commonOptionString}
 `);
 }
