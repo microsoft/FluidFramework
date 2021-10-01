@@ -25,10 +25,10 @@ describe("AzureClient", () => {
      * be returned.
      */
     it("can create new Azure Fluid Relay container successfully", async () => {
-        const azureContainer = client.createContainer(schema);
+        const resourcesP = client.createContainer(schema);
 
         await assert.doesNotReject(
-            azureContainer,
+            resourcesP,
             () => true,
             "container cannot be created in Azure Fluid Relay",
         );
