@@ -9,6 +9,4 @@ import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
 export { InsecureTokenProvider }
 
 
-// (No @packageDocumentation comment for this package)
-
 ```
