@@ -52,6 +52,9 @@ const memberCombineInstructions = [
     },
 ];
 
+/**
+ * An array of tuples containing a member reference to search for and a replacement member reference string.
+ */
 const stringReplacements = memberCombineInstructions.flatMap((instruction) => {
     const returnValue = [];
     const { package, sourceImports } = instruction;

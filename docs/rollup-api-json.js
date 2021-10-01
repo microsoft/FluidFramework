@@ -58,29 +58,22 @@ const extractMembersFromApiObject = (sourceApiObj, members) =>
  */
 const extractMembers = (sourceFile, members) => {
     // First load the source API file...
-    console.log(`Reading ${sourceFile}`);
+    console.log(`Extracting members from ${path.basename(sourceFile)}`);
     const sourceApiObj = JSON.parse(fs.readFileSync(sourceFile, { encoding: "utf8" }));
 
     // ... then check if all members should be extracted, and if so, return them all...
     if (members.length === 1 && members[0] === "*") {
-        return sourceApiObj.members[0].members;
+        // console.log("\tExtracting *");
+        const extractedMembers = sourceApiObj.members[0].members;
+        console.log(`\tExtracted ${extractedMembers.length} members (*)`);
+        return extractedMembers;
     }
 
     // ...otherwise extract the requested members and return them.
-    return extractMembersFromApiObject(sourceApiObj, members);
+    const extractedMembers = extractMembersFromApiObject(sourceApiObj, members);
+    console.log(`\tExtracted ${extractedMembers.length} members`);
+    return extractedMembers;
 };
-
-/**
- * Replaces all instances of a string with a replacement string.
- *
- * Implemented because Node <= 15 doesn't support string.replaceAll.
- *
- * @param {string} input The string to search.
- * @param {string} searchValue The string to replace.
- * @param {string} replaceValue The replacement string.
- * @returns {string} The updated string.
- */
-const replaceAll = (input, searchValue, replaceValue) => input.replace(new RegExp(searchValue, "g"), replaceValue);
 
 /**
  * Rewrites an API JSON file by combining members from other API JSON files and rewriting the references in the JSON to
@@ -91,9 +84,6 @@ const replaceAll = (input, searchValue, replaceValue) => input.replace(new RegEx
  * @param {object} instructions Array of 'member combine data' objects.
  */
 const combineMembers = (sourcePath, targetPath, instructions) => {
-    let jsonStr;
-    let extractedMembers = [];
-
     // Iterate through the "instructions."
     for (const { package, sourceImports } of instructions) {
         /** The path to the API JSON file. */
@@ -103,6 +93,7 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         const outputPackagePath = path.join(targetPath, `${packageName(package)}.api.json`)
 
         // Iterate through each package that serves as an import source.
+        let extractedMembers = [];
         for (const [sourcePackage, members] of sourceImports) {
             // Extract the members from the source API JSON file and save them for later.
             const sourceFile = path.join(sourcePath, `${packageName(sourcePackage)}.api.json`);
@@ -110,22 +101,18 @@ const combineMembers = (sourcePath, targetPath, instructions) => {
         }
 
         // Load the input API JSON file (the one that will be rewritten).
-        console.log(`Reading ${inputPackagePath}`);
-        jsonStr = fs.readFileSync(inputPackagePath, { encoding: "utf8" });
+        console.log(`Parsing ${inputPackagePath}`);
+        let jsonStr = fs.readFileSync(inputPackagePath, { encoding: "utf8" });
         const rewrittenApiObj = JSON.parse(jsonStr);
+        console.log(`\t${rewrittenApiObj.members[0].members.length} members, adding ${extractedMembers.length}`);
 
         // Append the members extracted earlier.
         const combinedMembers = rewrittenApiObj.members[0].members.concat(extractedMembers);
+        console.log(`\t= ${combinedMembers.length} total members`);
         rewrittenApiObj.members[0].members = combinedMembers;
 
-        // Convert API object back to a string to more replace the package names using string replace.
         jsonStr = JSON.stringify(rewrittenApiObj, null, 2);
-
-        // for (const [sourcePackage, _] of sourceImports) {
-        //     jsonStr = replaceAll(jsonStr, sourcePackage, package);
-        // }
-
-        console.log(`Writing ${outputPackagePath}`);
+        console.log(`Writing output file ${outputPackagePath}\n`);
         fs.writeFileSync(outputPackagePath, jsonStr);
     }
 };
@@ -146,18 +133,9 @@ const main = async () => {
     await cpy(stagedPackageFiles, stagingPath, { cwd: originalPath });
 
     // Combine members.
-    combineMembers(originalPath, stagingPath, data.memberCombineInstructions);
+    combineMembers(stagingPath, stagingPath, data.memberCombineInstructions);
 
-    // Copy all processed files that should be published on the site to the output dir.
-    console.log(`Copying final files from ${stagingPath} to ${outputPath}`)
-    await cpy(websitePackageFiles, outputPath, { cwd: stagingPath })
-        .on("progress", (progress) => {
-            if (progress.completedFiles > 0) {
-                console.log(`\tCopied ${websitePackageFiles[progress.completedFiles]}`);
-            }
-        });
-
-    // Rewrite any remaining references in the output files
+    // Rewrite any remaining references in the output files using replace-in-files
     const from = [];
     const to = [];
 
@@ -166,11 +144,9 @@ const main = async () => {
         to.push(replacement);
     }
 
-    const files = `${path.resolve(outputPath)}/**`;
-
     try {
         const options = {
-            files: files,
+            files: `${path.resolve(stagingPath)}/**`,
             from: from,
             to: to,
         };
@@ -180,6 +156,15 @@ const main = async () => {
     catch (error) {
         console.error("Error occurred:", error);
     }
+
+    // Copy all processed files that should be published on the site to the output dir.
+    console.log(`Copying final files from ${stagingPath} to ${outputPath}`)
+    await cpy(websitePackageFiles, outputPath, { cwd: stagingPath })
+        .on("progress", (progress) => {
+            if (progress.percent === 1) {
+                console.log(`\tCopied ${progress.totalFiles} files.`);
+            }
+        });
 };
 
 main();
