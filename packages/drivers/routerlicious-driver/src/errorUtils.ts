@@ -92,7 +92,7 @@ export function throwR11sNetworkError(
  * Returns network error based on error object from R11s socket (IR11sSocketError)
  */
 export function errorObjectFromSocketError(socketError: IR11sSocketError, handler: string): R11sError {
-    const message = `socket.io: ${handler}: ${socketError.message}`;
+    const message = `IR11sSocketError: ${handler}: ${socketError.message}`;
     return createR11sNetworkError(
         message,
         socketError.code,
