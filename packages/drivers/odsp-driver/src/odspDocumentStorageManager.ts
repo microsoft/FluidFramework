@@ -433,8 +433,7 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                         ]);
                         cachedSnapshot = promiseRaceWinner.value;
 
-                        if (cachedSnapshot === undefined)
-                        {
+                        if (cachedSnapshot === undefined) {
                             // if network failed -> wait for cache ( then return network failure)
                             // If cache returned empty or failed -> wait for network (success of failure)
                             if (promiseRaceWinner.index === 1) {
