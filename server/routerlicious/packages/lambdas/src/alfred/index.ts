@@ -13,6 +13,7 @@ import {
     ISignalMessage,
     MessageType,
     NackErrorType,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
     canSummarize,
@@ -36,6 +37,8 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
+
+const summarizerClientType = "summarizer";
 
 interface IRoom {
 
@@ -251,8 +254,14 @@ export function configureWebSocketServices(
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
+            const isSummarizer = messageClient.details?.type === summarizerClientType;
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
+
+            // Do not give SummaryWrite scope to clients that are not summarizers
+            if (!isSummarizer) {
+                messageClient.scopes = claims.scopes.filter((scope) => scope !== ScopeType.SummaryWrite);
+            }
 
             // back-compat: remove cast to any once new definition of IClient comes through.
             (messageClient as any).timestamp = connectedTimestamp;

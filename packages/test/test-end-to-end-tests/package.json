@@ -107,7 +107,7 @@
     "mocha": "^8.4.0",
     "semver": "^7.3.4",
     "start-server-and-test": "^1.11.7",
-    "tinylicious": "^0.4.34614",
+    "tinylicious": "^0.4.38350",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
