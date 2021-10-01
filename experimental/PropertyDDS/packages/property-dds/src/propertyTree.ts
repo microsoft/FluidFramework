@@ -9,6 +9,7 @@ import findIndex from "lodash/findIndex";
 import range from "lodash/range";
 import {copy as cloneDeep} from "fastest-json-copy";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
 	ITree,
@@ -576,7 +577,12 @@ export class SharedPropertyTree extends SharedObject {
 		const changeSetWrapper = new ChangeSet(this.tipView);
 		changeSetWrapper.applyChangeSet(change.changeSet);
 
-		this.localChanges.push(change);
+        if (this.runtime.attachState === AttachState.Detached) {
+            const remoteChangeSetWrapper = new ChangeSet(this.remoteTipView);
+            remoteChangeSetWrapper.applyChangeSet(change.changeSet);
+        } else {
+            this.localChanges.push(change);
+        }
 	}
 
 	private _applyRemoteChangeSet(change: IRemotePropertyTreeMessage) {
