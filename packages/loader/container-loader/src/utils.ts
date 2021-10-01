@@ -7,6 +7,7 @@ import { parse } from "url";
 import { v4 as uuid } from "uuid";
 import {
     assert,
+    bufferToString,
     stringToBuffer,
     Uint8ArrayToArrayBuffer,
     unreachableCase,
@@ -84,6 +85,9 @@ function convertSummaryToSnapshotWithEmbeddedBlobContents(
                 const contentBuffer = typeof summaryObject.content === "string" ?
                     stringToBuffer(summaryObject.content, "utf8") : Uint8ArrayToArrayBuffer(summaryObject.content);
                 treeNode.blobsContents[blobId] = contentBuffer;
+                // 0.47 back-compat old runtime will still expect content in the blobs only.
+                // So need to put in blobs for now.
+                treeNode.blobs[blobId] = bufferToString(contentBuffer, "base64");
                 break;
             }
             case SummaryType.Handle:
