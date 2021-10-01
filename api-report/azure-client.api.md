@@ -94,6 +94,4 @@ export const LOCAL_MODE_TENANT_ID = "local";
 export { ScopeType }
 
 
-// (No @packageDocumentation comment for this package)
-
 ```
