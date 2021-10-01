@@ -26,9 +26,10 @@ import {
     WebCodeLoader,
 } from "@fluidframework/web-code-loader";
 import { IFluidObject, IFluidPackage, IFluidCodeDetails } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -304,6 +305,7 @@ export async function start(
             rightDiv,
             manualAttach,
             testOrderer,
+            !options.mode.startsWith("spo"),
         );
     }
 
@@ -378,11 +380,18 @@ async function attachContainer(
     rightDiv: HTMLDivElement | undefined,
     manualAttach: boolean,
     testOrderer: boolean,
+    shouldUseContainerId: boolean,
 ) {
     // This is called once loading is complete to replace the url in the address bar with the new `url`.
-    const replaceUrl = () => {
-        window.history.replaceState({}, "", url);
-        document.title = documentId;
+    const replaceUrl = (resolvedUrl: IResolvedUrl) => {
+        let [docUrl, title] = [url, documentId];
+        if (shouldUseContainerId) {
+            ensureFluidResolvedUrl(resolvedUrl);
+            docUrl = url.replace(documentId, resolvedUrl.id);
+            title = resolvedUrl.id;
+        }
+        window.history.replaceState({}, "", docUrl);
+        document.title = title;
     };
 
     let currentContainer = container;
@@ -445,7 +454,7 @@ async function attachContainer(
             currentContainer.attach(attachUrl)
                 .then(() => {
                     attachDiv.remove();
-                    replaceUrl();
+                    replaceUrl(currentContainer.resolvedUrl);
 
                     if (rightDiv) {
                         rightDiv.innerText = "";
@@ -463,7 +472,7 @@ async function attachContainer(
         }
     } else {
         await currentContainer.attach(attachUrl);
-        replaceUrl();
+        replaceUrl(currentContainer.resolvedUrl);
         attached.resolve();
     }
     await attached.promise;
