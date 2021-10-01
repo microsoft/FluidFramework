@@ -68,6 +68,7 @@ import {
     GenericError,
 } from "@fluidframework/container-utils";
 import { DeltaQueue } from "./deltaQueue";
+import { IConnectionArgs } from "./connectionArgs";
 
 const MaxReconnectDelayInMs = 8000;
 const InitialReconnectDelayInMs = 1000;
@@ -85,12 +86,6 @@ const createReconnectError = (prefix: string, err: any) =>
         err,
         (errorMessage: string) => new GenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
     );
-
-export interface IConnectionArgs {
-    mode?: ConnectionMode;
-    fetchOpsFromStorage?: boolean;
-    reason: string;
-}
 
 export enum ReconnectMode {
     Never = "Never",

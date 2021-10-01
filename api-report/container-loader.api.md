@@ -86,9 +86,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/container-loader" does not have an export "DeltaManager"
-    //
-    // (undocumented)
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -106,17 +103,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     raiseContainerWarning(warning: ContainerWarning): void;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/container-loader" does not have an export "DeltaManager"
-    //
-    // @deprecated (undocumented)
+    // @deprecated
     get readonly(): boolean | undefined;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/container-loader" does not have an export "DeltaManager"
-    //
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    // Warning: (ae-unresolved-inheritdoc-reference) The @inheritDoc reference could not be resolved: The package "@fluidframework/container-loader" does not have an export "DeltaManager"
-    //
-    // @deprecated (undocumented)
+    // @deprecated
     get readonlyPermissions(): boolean | undefined;
     static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
     // (undocumented)
@@ -125,8 +116,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get resolvedUrl(): IResolvedUrl | undefined;
     // (undocumented)
     resume(): void;
-    // Warning: (ae-forgotten-export) The symbol "IConnectionArgs" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     protected resumeInternal(args: IConnectionArgs): void;
     get scopes(): string[] | undefined;
@@ -148,6 +137,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+}
+
+// @public (undocumented)
+export interface IConnectionArgs {
+    // (undocumented)
+    fetchOpsFromStorage?: boolean;
+    // (undocumented)
+    mode?: ConnectionMode;
+    // (undocumented)
+    reason: string;
 }
 
 // @public (undocumented)

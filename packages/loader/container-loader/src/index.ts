@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./connectionArgs";
 export * from "./container";
 export * from "./loader";
