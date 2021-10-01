@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * A simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
+ *
+ * @packageDocumentation
+ */
+
 export * from "./AzureAudience";
 export * from "./AzureClient";
 export * from "./AzureFunctionTokenProvider";

@@ -20,7 +20,7 @@ import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // (undocumented)
+    // @internal (undocumented)
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
@@ -93,7 +93,5 @@ export const LOCAL_MODE_TENANT_ID = "local";
 
 export { ScopeType }
 
-
-// (No @packageDocumentation comment for this package)
 
 ```

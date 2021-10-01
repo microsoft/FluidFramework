@@ -88,18 +88,22 @@ menu:
 
 markup:
   goldmark:
+    parser:
+      attribute:
+        # enables adding CSS classes to black elements in markdown
+        block: true
     renderer:
       autoHeadingIDType: "github"
       # mark unsafe html as true since api-documenter uses html snippets in markdown
       unsafe: true
-      extensions:
-        definitionList: true
-        footnote: true
-        linkify: true
-        strikethrough: true
-        table: true
-        taskList: true
-        typographer: true
+    extensions:
+      definitionList: true
+      footnote: true
+      linkify: true
+      strikethrough: true
+      table: true
+      taskList: true
+      typographer: true
 
   highlight:
     codeFences: true

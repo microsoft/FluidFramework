@@ -83,7 +83,6 @@ jobs:
           ###### End of Repository/Build Configurations ######
         env: # Add environment variables here
           HUGO_PARAMS_APPINSIGHTKEY: ${{ secrets.APP_INSIGHTS_KEY }}
-          HUGO_VERSION: 0.76.5
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

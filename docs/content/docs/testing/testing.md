@@ -47,7 +47,7 @@ const user = {
     name: "Test User",
 };
 const config = {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
@@ -57,7 +57,7 @@ const config = {
 const client = new AzureClient(config);
 ```
 
-These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
+These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious. `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
 
 ## Automation example
 
@@ -77,7 +77,7 @@ function createAzureClient(): AzureClient {
         orderer: "https://myOrdererUrl",
         storage: "https://myStorageUrl",
     } : {
-        tenantId: "local",
+        tenantId: LOCAL_MODE_TENANT_ID,
         tokenProvider: new InsecureTokenProvider("fooBar", user),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",

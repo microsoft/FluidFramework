@@ -7,7 +7,7 @@ aliases:
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/).
 
-To jump ahead into the finished demo, check out the [Create React App demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/cra-demo).
+To jump ahead into the finished demo, check out the [React demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-demo).
 
 The following image shows the time stamp application open in four browsers. Each has a button labeled **click** and beside it a Unix epoch time. The same time is in all four. The cursor is on the button in one browser.
 
@@ -37,9 +37,9 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluidframework/tinylicious&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
-    &nbsp;
+    |fluid&#x2011;framework    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    |fluidframework/tinylicious&#x2011;client   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
+    {.table}
 
     Run the following command to install the libraries.
 
@@ -225,7 +225,7 @@ Paste the URL of the application into the address bar of another tab or even ano
 - Try extending the demo with more key/value pairs and a more complex UI.
 - Consider using the [Fluent UI React controls](https://aka.ms/fluentui/) to give the application the look and feel of Microsoft 365. To install them in your project run the following in the command prompt: `npm install @fluentui/react`.
 - Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
-- For an example that will scale to larger applications and larger teams, check out the [Fluid React Starter in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/fluid-react-starter).
+- For an example that will scale to larger applications and larger teams, check out the [React Starter Template in the FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-starter-template).
 
 {{< callout tip >}}
 
@@ -242,19 +242,13 @@ When you make changes to the code the project will automatically rebuild and the
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
 [FluidContainer]: {{< relref "fluidcontainer.md" >}}
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

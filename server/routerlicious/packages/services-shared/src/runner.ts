@@ -6,6 +6,7 @@
 import { inspect } from "util";
 import nconf from "nconf";
 import { ILogger, IResources, IResourcesFactory, IRunnerFactory } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Uses the provided factories to create and execute a runner.
@@ -26,6 +27,7 @@ export async function run<T extends IResources>(
                     .stop()
                     .catch((innerError) => {
                         logger?.error(`Could not stop runner due to error: ${innerError}`);
+                        Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
                         error.forceKill = true;
                     });
             return Promise.reject(error);
@@ -63,10 +65,12 @@ export function runService<T extends IResources>(
     runningP.then(
         () => {
             logger?.info("Exiting");
+            Lumberjack.info("Exiting");
             process.exit(0);
         },
         (error) => {
             logger?.error(`${group} service exiting due to error`);
+            Lumberjack.error(`${group} service exiting due to error`, undefined, error);
             logger?.error(inspect(error));
             if (error.forceKill) {
                 process.kill(process.pid, "SIGKILL");
