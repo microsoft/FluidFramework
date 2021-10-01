@@ -8,6 +8,7 @@ import winston from "winston";
 import { IContextErrorData, IProducer } from "@fluidframework/server-services-core";
 import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";
 import { RdkafkaProducer } from "@fluidframework/server-services-ordering-rdkafka";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export function createProducer(
     type: string,
@@ -34,6 +35,8 @@ export function createProducer(
             } else {
                 winston.error("Kafka Producer emitted an error that is not configured to restart the process.");
                 winston.error(inspect(error));
+                Lumberjack.error("Kafka Producer emitted an error that is not configured to restart the process.");
+                Lumberjack.error(inspect(error));
             }
         });
     } else {
@@ -45,6 +48,7 @@ export function createProducer(
             replicationFactor);
         producer.on("error", (error) => {
             winston.error(error);
+            Lumberjack.error(error);
         });
     }
 

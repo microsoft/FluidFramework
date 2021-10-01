@@ -7,6 +7,8 @@ import { ICache } from "@fluidframework/server-services-core";
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 /**
  * Redis based cache client
  */
@@ -26,6 +28,7 @@ export class RedisCache implements ICache {
 
         client.on("error", (err) => {
             winston.error("Error with Redis:", err);
+            Lumberjack.error("Error with Redis:", err);
         });
     }
 

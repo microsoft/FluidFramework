@@ -6,6 +6,7 @@
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
 import { IThrottler, ILogger, ThrottlingError } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IThrottleMiddlewareOptions {
     /**
@@ -67,6 +68,7 @@ export function throttle(
 
         if (throttleOptions.weight === 0) {
             logger?.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.");
+            Lumberjack.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.");
             return noopMiddleware;
         }
 
@@ -80,6 +82,14 @@ export function throttle(
                     return res.status(e.code).json(e);
                 } else {
                     logger?.error(
+                        `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                        {
+                            messageMetaData: {
+                                key: throttleId,
+                                eventName: "throttling",
+                            },
+                        });
+                    Lumberjack.error(
                         `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
                         {
                             messageMetaData: {
