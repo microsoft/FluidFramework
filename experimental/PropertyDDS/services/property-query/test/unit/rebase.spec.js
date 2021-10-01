@@ -415,6 +415,9 @@ describe("Rebasing", () => {
 
       for (let i = startTest; i < count; i++) {
         it(`Test ${i}`, async () => {
+          // Increase timeout to 10s for large randomly generated tests (Issue #7340)
+          this.timeout(10000);
+
           const seed = createDerivedGuid("", String(i));
           const random = new DeterministicRandomGenerator(seed);
           let testString = "";
