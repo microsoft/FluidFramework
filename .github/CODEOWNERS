@@ -1,5 +1,12 @@
-# API reports
-api-report/                                                               @microsoft/fluid-cr-api
+# Internal API reports
+api-report/                                                               @microsoft/fluid-cr-internal-api
+
+# Public API reports
+api-report/azure-client*                                                  @microsoft/fluid-cr-api
+api-report/azure-service-utils*                                           @microsoft/fluid-cr-api
+api-report/fluid-framework*                                               @microsoft/fluid-cr-api
+api-report/test-client-utils*                                             @microsoft/fluid-cr-api
+api-report/tinylicious-client*                                            @microsoft/fluid-cr-api
 
 # Documentation folders
 /.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs @tylerbutler
@@ -9,8 +16,6 @@ api-report/                                                               @micro
 /.github/workflows/azure-static-web-apps-agreeable-hill-0eeff5b10.yml     @microsoft/fluid-cr-docs @tylerbutler
 /README.md                                                                @microsoft/fluid-cr-docs @tylerbutler
 /.markdownlint.json                                                       @microsoft/fluid-cr-docs @tylerbutler
-api-extractor.json                                                        @microsoft/fluid-cr-docs @tylerbutler
-md-magic.config.*                                                         @microsoft/fluid-cr-docs @tylerbutler
 
 # Shared ESLint config
 common/build/eslint-config-fluid/                                         @tylerbutler
