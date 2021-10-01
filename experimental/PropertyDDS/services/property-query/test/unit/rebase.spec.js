@@ -414,7 +414,7 @@ describe("Rebasing", () => {
       const logTest = true;
 
       for (let i = startTest; i < count; i++) {
-        it(`Test ${i}`, async () => {
+        it(`Test ${i}`, async function() {
           // Increase timeout to 10s for large randomly generated tests (Issue #7340)
           this.timeout(10000);
 
