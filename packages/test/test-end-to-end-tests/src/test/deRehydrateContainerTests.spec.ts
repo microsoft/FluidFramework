@@ -173,8 +173,8 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check for protocol attributes
             const protocolTree = assertProtocolTree(snapshotTree);
-            assert.strictEqual(Object.keys(protocolTree.blobs).length, 4,
-                "4 protocol blobs should be there.");
+            assert.strictEqual(Object.keys(protocolTree.blobs).length, 8,
+                "4 protocol blobs should be there.(8 mappings)");
 
             const protocolAttributes = assertProtocolAttributes(snapshotTree);
             assert.strictEqual(protocolAttributes.sequenceNumber, detachedContainerRefSeqNumber, "initial aeq #");
