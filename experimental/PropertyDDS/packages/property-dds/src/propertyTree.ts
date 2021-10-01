@@ -560,8 +560,12 @@ export class SharedPropertyTree extends SharedObject {
 			this.remoteTipView = {};
 			this.remoteChanges = [];
 		} finally {
-			this._root.deserialize(this.tipView);
-			this.root.cleanDirty();
+			this._root.deserialize(this.tipView, undefined, false, false);
+            const _changeSet = new ChangeSet(this.tipView);
+            if (!isEmpty(_changeSet.getSerializedChangeSet())) {
+                this.emit("localModification", _changeSet);
+            }
+            this.root.cleanDirty();
 		}
 	}
 
