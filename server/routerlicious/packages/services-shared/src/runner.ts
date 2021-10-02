@@ -61,7 +61,6 @@ export function runService<T extends IResources>(
         : configOrPath;
 
     const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
-
     const runningP = run(config, resourceFactory, runnerFactory, logger);
 
     runningP.then(
@@ -99,5 +98,5 @@ async function executeAndWait(func: () => void, waitInMs: number) {
     func();
     return new Promise((resolve) => {
         setTimeout(resolve, waitInMs);
-      });
+    });
 }
