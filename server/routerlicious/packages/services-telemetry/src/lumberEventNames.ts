@@ -17,8 +17,11 @@ export enum LumberEventName {
     DeliHandler = "DeliHandler",
     ScribeHandler = "ScribeHandler",
 
-    // Miscellaneous
+    // Reliability
     SessionResult = "SessionResult",
     StartSessionResult = "StartSessionResult",
     ScribeSessionResult = "ScribeSessionResult",
+
+    // Miscellaneous
+    ConnectDocument = "ConnectDocument",
 }
