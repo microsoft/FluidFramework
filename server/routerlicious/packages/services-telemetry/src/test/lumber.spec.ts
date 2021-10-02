@@ -145,7 +145,7 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.properties.get(key3), value3);
     });
 
-    it("Makes sure errorHandler is called when we try to complete an already completed Lumber.", () => {
+    it("Makes sure handleError is called when we try to complete an already completed Lumber.", () => {
         const handleErrorStub = Sinon.stub(resources, "handleError");
         const successMessage = "SuccessMessage";
         const alternativeSuccessMessage = "AlternativeSuccessMessage";
@@ -192,7 +192,7 @@ describe("Lumber", () => {
         assert.strictEqual(engineEmitStub.calledOnce, true);
     });
 
-    it("Makes sure errorHandler is called if schema validation fails.", () => {
+    it("Makes sure handleError is called if schema validation fails.", () => {
         const handleErrorStub = Sinon.stub(resources, "handleError");
         const successMessage = "SuccessMessage";
         const engine = new TestEngine1();
