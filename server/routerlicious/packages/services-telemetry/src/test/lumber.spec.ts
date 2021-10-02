@@ -170,7 +170,6 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.message, successMessage);
         assert.strictEqual(handleErrorStub.calledOnce, true);
         assert.strictEqual(engineEmitStub.calledOnce, true);
-
     });
 
     it("Makes sure we can complete Lumber if schema validation succeeds.", () => {
@@ -212,6 +211,5 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.successful, true);
         assert.strictEqual(handleErrorStub.calledOnce, true);
         assert.strictEqual(engineEmitStub.calledOnce, true);
-
     });
 });
