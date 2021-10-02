@@ -426,7 +426,7 @@ export function configureWebSocketServices(
                     connectMetric.setProperties({
                         [CommonProperties.clientId]: message.connection.clientId,
                         [CommonProperties.clientCount]: message.connection.initialClients.length + 1,
-                        [CommonProperties.clientType]: message.details.details.type,
+                        [CommonProperties.clientType]: message.details.details?.type,
                     });
                     connectMetric.success(`Connect document successful`);
                 },
