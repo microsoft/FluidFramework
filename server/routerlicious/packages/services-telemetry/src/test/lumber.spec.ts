@@ -7,7 +7,7 @@ import assert from "assert";
 import Sinon from "sinon";
 import { Lumber } from "../lumber";
 import { LumberEventName } from "../lumberEventNames";
-import { LumberType } from "../resources";
+import * as resources from "../resources";
 import { TestEngine1, TestSchemaValidator } from "../lumberjackCommonTestUtils"
 
 
@@ -28,7 +28,7 @@ describe("Lumber", () => {
         const engineStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            LumberType.Metric,
+            resources.LumberType.Metric,
             [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
@@ -50,7 +50,7 @@ describe("Lumber", () => {
         const error = new Error("SampleError");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            LumberType.Metric,
+            resources.LumberType.Metric,
             [engine]);
 
         assert.strictEqual(lumber.successful, undefined);
@@ -72,7 +72,7 @@ describe("Lumber", () => {
         const value2 = "value2";
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            LumberType.Metric,
+            resources.LumberType.Metric,
             []);
 
         lumber.setProperty(key1, value1)
@@ -96,7 +96,7 @@ describe("Lumber", () => {
         };
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            LumberType.Metric,
+            resources.LumberType.Metric,
             []);
 
         lumber.setProperties(mapProperties);
@@ -126,7 +126,7 @@ describe("Lumber", () => {
 
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            LumberType.Metric,
+            resources.LumberType.Metric,
             [],
             undefined,
             originalMapProperties);
@@ -145,71 +145,73 @@ describe("Lumber", () => {
         assert.strictEqual(lumber.properties.get(key3), value3);
     });
 
-    it("Makes sure we cannot complete an already completed Lumber.", () => {
+    it("Makes sure errorHandler is called when we try to complete an already completed Lumber.", () => {
+        const handleErrorStub = Sinon.stub(resources, "handleError");
         const successMessage = "SuccessMessage";
+        const alternativeSuccessMessage = "AlternativeSuccessMessage";
         const engine = new TestEngine1();
-        const engineStub = Sinon.stub(engine, "emit");
+        const engineEmitStub = Sinon.stub(engine, "emit");
         const lumber = new Lumber(
             LumberEventName.UnitTestEvent,
-            LumberType.Metric,
+            resources.LumberType.Metric,
             [engine]);
+
+        assert.strictEqual(lumber.successful, undefined);
+
+        // First time completing lumber
+        lumber.success(successMessage);
+
+        assert.strictEqual(handleErrorStub.notCalled, true);
+        assert.strictEqual(lumber.successful, true);
+
+        // Second time completing lumber
+        lumber.success(alternativeSuccessMessage);
+
+        assert.strictEqual(lumber.message, successMessage);
+        assert.strictEqual(handleErrorStub.calledOnce, true);
+        assert.strictEqual(engineEmitStub.calledOnce, true);
+
+    });
+
+    it("Makes sure we can complete Lumber if schema validation succeeds.", () => {
+        const handleErrorStub = Sinon.stub(resources, "handleError");
+        const successMessage = "SuccessMessage";
+        const engine = new TestEngine1();
+        const engineEmitStub = Sinon.stub(engine, "emit");
+        const schemaValidator = new TestSchemaValidator(true);
+        const lumber = new Lumber(
+            LumberEventName.UnitTestEvent,
+            resources.LumberType.Metric,
+            [engine],
+            [schemaValidator]); // Setting this as true to force validation to succeed
+
+        assert.strictEqual(lumber.successful, undefined);
+
+        lumber.success(successMessage);
+        assert.strictEqual(lumber.successful, true);
+        assert.strictEqual(handleErrorStub.notCalled, true);
+        assert.strictEqual(engineEmitStub.calledOnce, true);
+    });
+
+    it("Makes sure errorHandler is called if schema validation fails.", () => {
+        const handleErrorStub = Sinon.stub(resources, "handleError");
+        const successMessage = "SuccessMessage";
+        const engine = new TestEngine1();
+        const engineEmitStub = Sinon.stub(engine, "emit");
+        const schemaValidator = new TestSchemaValidator(false);
+        const lumber = new Lumber(
+            LumberEventName.UnitTestEvent,
+            resources.LumberType.Metric,
+            [engine],
+            [schemaValidator]); // Setting this as false to force validation to fail
 
         assert.strictEqual(lumber.successful, undefined);
 
         lumber.success(successMessage);
 
         assert.strictEqual(lumber.successful, true);
+        assert.strictEqual(handleErrorStub.calledOnce, true);
+        assert.strictEqual(engineEmitStub.calledOnce, true);
 
-        try {
-            lumber.success(successMessage);
-        }
-        catch (err) {
-            assert.deepStrictEqual(engineStub.calledOnce, true);
-            return;
-        }
-
-        assert.fail("Lumber should not be allowed to complete more than once.");
-    });
-
-    it("Makes sure we can complete Lumber if schema validation succeeds.", () => {
-        const successMessage = "SuccessMessage";
-        const engine = new TestEngine1();
-        const schemaValidator = new TestSchemaValidator(true);
-        const lumber = new Lumber(
-            LumberEventName.UnitTestEvent,
-            LumberType.Metric,
-            [engine],
-            [schemaValidator]); // Setting this as true to force validation to succeed
-
-        assert.strictEqual(lumber.successful, undefined);
-
-        try {
-            lumber.success(successMessage);
-        }
-        catch (err) {
-            assert.fail("Lumber should have been allowed to complete if schema validation succeeded.");
-        }
-    });
-
-    it("Makes sure we cannot complete Lumber if schema validation fails.", () => {
-        const successMessage = "SuccessMessage";
-        const engine = new TestEngine1();
-        const schemaValidator = new TestSchemaValidator(false);
-        const lumber = new Lumber(
-            LumberEventName.UnitTestEvent,
-            LumberType.Metric,
-            [engine],
-            [schemaValidator]); // Setting this as false to force validation to fail
-
-        assert.strictEqual(lumber.successful, undefined);
-
-        try {
-            lumber.success(successMessage);
-        }
-        catch (err) {
-            return;
-        }
-
-        assert.fail("Lumber should not be allowed to complete if schema validation fails.");
     });
 });
