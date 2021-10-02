@@ -65,19 +65,39 @@ export function runService<T extends IResources>(
     const runningP = run(config, resourceFactory, runnerFactory, logger);
 
     runningP.then(
-        () => {
-            logger?.info("Exiting");
-            runnerMetric.success(`${group} exiting.`);
+        async () => {
+            await executeAndWait(
+                () => {
+                    logger?.info("Exiting");
+                    runnerMetric.success(`${group} exiting.`);
+                },
+                1000);
             process.exit(0);
         },
-        (error) => {
-            logger?.error(`${group} service exiting due to error`);
-            logger?.error(inspect(error));
-            runnerMetric.error(`${group} service exiting due to error`, error);
+        async (error) => {
+            await executeAndWait(
+                () => {
+                    logger?.error(`${group} service exiting due to error`);
+                    logger?.error(inspect(error));
+                    runnerMetric.error(`${group} service exiting due to error`, error);
+                },
+                1000);
             if (error.forceKill) {
                 process.kill(process.pid, "SIGKILL");
             } else {
                 process.exit(1);
             }
         });
+}
+
+/*
+ * Waits after the execution of a given function. This helps ensure
+ * log/telemetry data has time to be emitted before we exit the process
+ * in runService().
+ */
+async function executeAndWait(func: () => void, waitInMs: number) {
+    func();
+    return new Promise((resolve) => {
+        setTimeout(resolve, waitInMs);
+      });
 }
