@@ -55,11 +55,13 @@ export function runService<T extends IResources>(
     logger: ILogger | undefined,
     group: string,
     configOrPath: nconf.Provider | string,
+    waitBeforeExitInMs?: number,
 ) {
     const config = typeof configOrPath === "string"
         ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
         : configOrPath;
 
+    const waitInMs = waitBeforeExitInMs ?? 1000;
     const runnerMetric = Lumberjack.newLumberMetric(LumberEventName.RunService);
     const runningP = run(config, resourceFactory, runnerFactory, logger);
 
@@ -70,7 +72,7 @@ export function runService<T extends IResources>(
                     logger?.info("Exiting");
                     runnerMetric.success(`${group} exiting.`);
                 },
-                1000);
+                waitInMs);
             process.exit(0);
         },
         async (error) => {
@@ -80,7 +82,7 @@ export function runService<T extends IResources>(
                     logger?.error(inspect(error));
                     runnerMetric.error(`${group} service exiting due to error`, error);
                 },
-                1000);
+                waitInMs);
             if (error.forceKill) {
                 process.kill(process.pid, "SIGKILL");
             } else {
