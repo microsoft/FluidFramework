@@ -50,6 +50,9 @@ describe('Node', function() {
   const numRandomTests = 30;
   let summedTime = 0;
 
+  // Increase timeout to 10s for testing of pathological merge/split cases (Issue #7340)
+  this.timeout(10000);
+
   before(() => {
     let outerRandom = new DeterministicRandomGenerator('fcfaa9c7-8483-85ca-04ee-c20458f86532');
     for (let i = 0; i < numRandomTests; i++) {
@@ -890,10 +893,7 @@ describe('Node', function() {
     for (let i = 0; i < numRandomTests; i++) {
       (() => {
         let j = i;
-        it('Test ' + j, function() {
-          // Increase timeout to 10s for large randomly generated tests (Issue #7340)
-          this.timeout(10000);
-
+        it('Test ' + j, () => {
           let random = new DeterministicRandomGenerator(randomGuids[j]);
 
           let randomPermutationFunction = (root) => {
