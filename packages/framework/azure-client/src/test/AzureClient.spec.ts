@@ -108,7 +108,7 @@ describe("AzureClient", () => {
      * be returned.
      */
     it("can retrieve existing Azure Fluid Relay container successfully", async () => {
-        const { container: newContainer } = await client.createContainer(schema);
+        const newContainer = (await client.createContainer(schema)).container;
         const containerId = await newContainer.attach();
         await new Promise<void>((resolve) => {
             newContainer.on("connected", () => {
@@ -152,7 +152,7 @@ describe("AzureClient", () => {
      * be returned.
      */
     it("can set initial objects for a container", async () => {
-        const { container: newContainer } = await client.createContainer(schema);
+        const newContainer = (await client.createContainer(schema)).container;
         const containerId = await newContainer.attach();
         await new Promise<void>((resolve) => {
             newContainer.on("connected", () => {
@@ -167,7 +167,7 @@ describe("AzureClient", () => {
             "container cannot be retrieved from Azure Fluid Relay",
         );
 
-        const { container } = await resources;
+        const container = (await resources).container;
         assert.deepStrictEqual(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
     });
 
