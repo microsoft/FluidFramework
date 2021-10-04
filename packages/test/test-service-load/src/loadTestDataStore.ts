@@ -201,19 +201,22 @@ export class LoadTestDataStoreModel {
         this.taskManager.on("lost", changed);
         this.taskManager.on("assigned", changed);
 
+        // calculate the number of blobs we will upload
         const clientBlobCount = Math.trunc((config.testConfig.totalBlobCount ?? 0) / config.testConfig.numClients) +
             (this.config.runId < ((config.testConfig.totalBlobCount ?? 0) % config.testConfig.numClients) ? 1 : 0);
         this.isBlobWriter = clientBlobCount > 0;
+        if (this.isBlobWriter) {
+            const clientOpCount = config.testConfig.totalSendCount / config.testConfig.numClients;
+            const blobsPerOp = clientBlobCount / clientOpCount;
 
-        const clientOpCount = config.testConfig.totalSendCount / config.testConfig.numClients;
-        const blobsPerOp = clientBlobCount / clientOpCount;
+            // start uploading blobs where we left off
+            this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
 
-        this.blobCount = Math.trunc(this.counter.value * blobsPerOp);
-
-        if (clientBlobCount > 0) {
+            // upload blobs progressively as the counter is incremented
             this.counter.on("op", (_, local) => {
                 const value = this.counter.value;
                 if (!local) {
+                    // this is an old op, we should have already uploaded this blob
                     this.blobCount = Math.max(this.blobCount, Math.trunc(value * blobsPerOp));
                     return;
                 }
@@ -227,10 +230,9 @@ export class LoadTestDataStoreModel {
             });
         }
 
+        // download any blobs our partner may upload
         const partnerBlobCount = Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
             (this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
-
-        // if our partner uploads a blob, download it
         if (partnerBlobCount > 0) {
             this.root.on("valueChanged", (v) => {
                 if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
@@ -254,12 +256,10 @@ export class LoadTestDataStoreModel {
     private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
     private get partnerBlobKeyPrefix(): string { return `blob_${this.partnerId}_`; }
 
-    public blobFinish() {
-        if (this.blobUploads.length > 0) {
-            const p = Promise.all(this.blobUploads);
-            this.blobUploads.length = 0;
-            return p;
-        }
+    public async blobFinish() {
+        const p = Promise.all(this.blobUploads);
+        this.blobUploads.length = 0;
+        return p;
     }
 
     /**
@@ -425,11 +425,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                     dataModel.counter.increment(1);
 
                     if (dataModel.counter.value % opsPerCycle === 0) {
-                        const maybeP = dataModel.blobFinish();
-                        if (maybeP) {
-                            await maybeP;
-                        }
-
+                        await dataModel.blobFinish();
                         dataModel.abandonTask();
                         // give our partner a half cycle to get the task
                         await delay(cycleMs / 2);

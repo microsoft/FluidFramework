@@ -141,12 +141,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     if ((testConfig.detachedBlobCount ?? 0) > 0) {
         assert(testDriver.type === "odsp", "attachment blobs in detached container not supported on this service");
         const ds = await requestFluidObject<ILoadTest>(container, "/");
-        const dsm = await ds.detached({
-            testConfig,
-            verbose: true,
-            randEng,
-        });
-
+        const dsm = await ds.detached({ testConfig, verbose, randEng });
         await Promise.all([...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)));
     }
 
@@ -156,6 +151,7 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
     container.close();
 
     if ((testConfig.detachedBlobCount ?? 0) > 0) {
+        // TODO: #7684 this should be driver-agnostic
         const url = (testDriver as OdspTestDriver).getUrlFromItemId((container.resolvedUrl as any).itemId);
         return url;
     }
