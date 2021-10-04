@@ -92,6 +92,8 @@ To build Fluid within VSCode, use Ctrl-Shift-B to break up the build task list a
 Usage: fluid-layer-check <options>
 Options:
      --dot <path>     Generate *.dot for GraphViz
+     --info <path>    Path to the layer graph json file
+     --md [<path>]    Generate PACKAGES.md file for human consumption. (default: current working directory)
      --defroot <path> Default root directory of the Fluid repo if infer failed (default: env _FLUID_DEFAULT_ROOT_)
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
      --timer          Measure elapsed time of each step

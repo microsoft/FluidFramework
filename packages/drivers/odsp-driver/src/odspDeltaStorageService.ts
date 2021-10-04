@@ -30,7 +30,14 @@ export class OdspDeltaStorageService {
     ) {
     }
 
-    public async get(
+    /**
+     * Retrieves ops from cache
+     * @param from - inclusive
+     * @param to - exclusive
+     * @param telemetryProps - properties to add when issuing telemetry events
+     * @returns ops retrieved & info if result was partial (i.e. more is available)
+     */
+     public async get(
         from: number,
         to: number,
         telemetryProps: ITelemetryProperties,
