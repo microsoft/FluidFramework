@@ -342,7 +342,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
      public requestOps(from: number, to: number) {
         // Given that to is exclusive, we should be asking for at least something!
-        assert(to > from, "empty request");
+        assert(to > from, 0x272 /* "empty request" */);
 
         // PUSH may disable this functionality
         // back-compat: remove cast to any once latest version of IConnected is consumed
