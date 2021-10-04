@@ -13,6 +13,7 @@ import {
     ISignalMessage,
     MessageType,
     NackErrorType,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
     canSummarize,
@@ -27,6 +28,7 @@ import * as core from "@fluidframework/server-services-core";
 import {
     BaseTelemetryProperties,
     CommonProperties,
+    LumberEventName,
     Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import {
@@ -36,6 +38,8 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
+
+const summarizerClientType = "summarizer";
 
 interface IRoom {
 
@@ -251,8 +255,14 @@ export function configureWebSocketServices(
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
+            const isSummarizer = messageClient.details?.type === summarizerClientType;
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
+
+            // Do not give SummaryWrite scope to clients that are not summarizers
+            if (!isSummarizer) {
+                messageClient.scopes = claims.scopes.filter((scope) => scope !== ScopeType.SummaryWrite);
+            }
 
             // back-compat: remove cast to any once new definition of IClient comes through.
             (messageClient as any).timestamp = connectedTimestamp;
@@ -394,6 +404,14 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const lumberjackProperties = {
+                [BaseTelemetryProperties.tenantId]: connectionMessage.tenantId,
+                [BaseTelemetryProperties.documentId]: connectionMessage.id,
+            };
+
+            const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
+            connectMetric.setProperties(lumberjackProperties);
+
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
@@ -404,16 +422,17 @@ export function configureWebSocketServices(
                             "signal",
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
+
+                    connectMetric.setProperties({
+                        [CommonProperties.clientId]: message.connection.clientId,
+                        [CommonProperties.clientCount]: message.connection.initialClients.length + 1,
+                        [CommonProperties.clientType]: message.details.details?.type,
+                    });
+                    connectMetric.success(`Connect document successful`);
                 },
                 (error) => {
-                    const messageMetaData = getMessageMetadata(connectionMessage.id, connectionMessage.tenantId);
-                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
-                    Lumberjack.error(
-                        `Connect Document error`,
-                        getLumberProperties(connectionMessage.id, connectionMessage.tenantId),
-                        error,
-                    );
                     socket.emit("connect_document_error", error);
+                    connectMetric.error(`Connect document failed`, error);
                 });
         });
 

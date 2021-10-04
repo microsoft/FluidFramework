@@ -117,7 +117,13 @@ export class OpsCache {
         }
     }
 
-    private async getCore(from: number, to?: number): Promise<IMessage[]> {
+    /**
+     * Retrieves ops from cache
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
+     private async getCore(from: number, to?: number): Promise<IMessage[]> {
         const messages: IMessage[] = [];
         let batchNumber = this.getBatchNumber(from);
         // eslint-disable-next-line no-constant-condition
@@ -150,6 +156,12 @@ export class OpsCache {
         }
     }
 
+    /**
+     * Retrieves ops from cache
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
     public async get(from: number, to?: number): Promise<IMessage[]> {
         const start = performance.now();
 

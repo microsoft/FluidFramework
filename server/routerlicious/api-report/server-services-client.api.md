@@ -13,14 +13,13 @@ import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import * as querystring from 'querystring';
 import * as resources from '@fluidframework/gitresources';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: querystring.ParsedUrlQueryInput, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: querystring.ParsedUrlQueryInput, axios?: AxiosInstance, refreshDefaultQueryString?: () => querystring.ParsedUrlQueryInput, refreshDefaultHeaders?: () => querystring.ParsedUrlQueryInput, getCorrelationId?: () => string | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: Record<string, unknown>, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, unknown>, refreshDefaultHeaders?: () => Record<string, unknown>, getCorrelationId?: () => string | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -471,25 +470,25 @@ export enum RestLessFieldNames {
 
 // @public (undocumented)
 export abstract class RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: querystring.ParsedUrlQueryInput, maxBodyLength?: number, maxContentLength?: number);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, unknown>, maxBodyLength?: number, maxContentLength?: number);
     // (undocumented)
     protected readonly baseurl?: string;
     // (undocumented)
-    protected defaultQueryString: querystring.ParsedUrlQueryInput;
+    protected defaultQueryString: Record<string, unknown>;
     // (undocumented)
-    delete<T>(url: string, queryString?: querystring.ParsedUrlQueryInput, headers?: querystring.ParsedUrlQueryInput): Promise<T>;
+    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
     // (undocumented)
-    protected generateQueryString(queryStringValues: querystring.ParsedUrlQueryInput): string;
+    protected generateQueryString(queryStringValues: Record<string, unknown>): string;
     // (undocumented)
-    get<T>(url: string, queryString?: querystring.ParsedUrlQueryInput, headers?: querystring.ParsedUrlQueryInput): Promise<T>;
+    get<T>(url: string, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
     // (undocumented)
     protected readonly maxBodyLength: number;
     // (undocumented)
     protected readonly maxContentLength: number;
     // (undocumented)
-    patch<T>(url: string, requestBody: any, queryString?: querystring.ParsedUrlQueryInput, headers?: querystring.ParsedUrlQueryInput): Promise<T>;
+    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
     // (undocumented)
-    post<T>(url: string, requestBody: any, queryString?: querystring.ParsedUrlQueryInput, headers?: querystring.ParsedUrlQueryInput): Promise<T>;
+    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: Record<string, unknown>): Promise<T>;
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
