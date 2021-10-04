@@ -331,7 +331,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     ) {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
-        this.requestOpsNoncePrefix = `${this.documentId}-`;
+        this.requestOpsNoncePrefix = `${uuid()}-`;
     }
 
     /**
