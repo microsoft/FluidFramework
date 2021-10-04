@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { serializeError } from "serialize-error";
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
 
@@ -32,12 +33,16 @@ export enum QueuedMessageProperties {
 }
 
 export enum CommonProperties {
+    // Client properties
+    clientId = "clientId",
+    clientType = "clientType",
+    clientCount = "clientCount",
+
     // Session properties
     sessionState = "sessionState",
     sessionEndReason = "sessionEndReason",
 
     // Post checkpoint properties
-    clientCount = "clientCount",
     minSequenceNumber = "minSequenceNumber",
     sequenceNumber = "sequenceNumber",
     checkpointOffset = "checkpointOffset",
@@ -93,25 +98,18 @@ export interface ILumberjackSchemaValidationResult {
 
 // Helper method to assist with handling Lumberjack/Lumber errors depending on the context.
 export function handleError(eventName: LumberEventName, errMsg: string, engineList: ILumberjackEngine[]) {
-    // If we are running in production, we want to avoid throwing errors that could cause
-    // the process to crash - especially since those would be telemetry errors. Instead,
-    // we log the error so it can be tracked
-    if (process.env.NODE_ENV === "production")
-    {
-        // If there is no LumberjackEngine specified, making the list empty,
-        // we log the error to the console as a last resort, so the information can
-        // be found in raw logs.
-        if (engineList.length === 0) {
-            console.error(errMsg);
-        } else {
-            // Otherwise, we log the error through the current LumberjackEngines.
-            const errLumber = new Lumber<LumberEventName>(
-                eventName,
-                LumberType.Metric,
-                engineList);
-            errLumber.error(errMsg);
-        }
+    const err = new Error(errMsg);
+    // If there is no LumberjackEngine specified, making the list empty,
+    // we log the error to the console as a last resort, so the information can
+    // be found in raw logs.
+    if (engineList.length === 0) {
+        console.error(serializeError(err));
     } else {
-        throw new Error(errMsg);
+        // Otherwise, we log the error through the current LumberjackEngines.
+        const errLumber = new Lumber<LumberEventName>(
+            eventName,
+            LumberType.Metric,
+            engineList);
+        errLumber.error(errMsg, err);
     }
 }
