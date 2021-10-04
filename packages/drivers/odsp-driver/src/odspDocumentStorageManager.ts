@@ -432,19 +432,20 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                             snapshotP.catch(() => undefined),
                         ]);
                         cachedSnapshot = promiseRaceWinner.value;
+                        method = promiseRaceWinner.index === 0 ? "cache" : "network";
 
                         if (cachedSnapshot === undefined) {
                             // if network failed -> wait for cache ( then return network failure)
                             // If cache returned empty or failed -> wait for network (success of failure)
                             if (promiseRaceWinner.index === 1) {
                                 cachedSnapshot = await cachedSnapshotP;
+                                method = "cache";
                             }
                             if (cachedSnapshot === undefined) {
                                 cachedSnapshot = await snapshotP;
+                                method = "network";
                             }
                         }
-
-                        method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
