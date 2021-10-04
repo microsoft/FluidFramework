@@ -13,7 +13,7 @@ const { MSG } = require('@fluid-experimental/property-common').constants;
 const { ConsoleUtils } = require('@fluid-experimental/property-common');
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
 
-var BREAK_TRAVERSAL = 'BREAK';
+const BREAK_TRAVERSAL = 'BREAK';
 const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').constants.PROPERTY_PATH_DELIMITER;
 
 /**
@@ -21,7 +21,7 @@ const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').c
  * @enum {number}
  * @alias property-properties.BaseProperty.REFERENCE_RESOLUTION
  */
-var REFERENCE_RESOLUTION = {
+const REFERENCE_RESOLUTION = {
     /** The resolution will always automatically follow references */
     ALWAYS: 0,
     /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
@@ -35,7 +35,7 @@ var REFERENCE_RESOLUTION = {
  * @enum {number}
  * @alias property-properties.BaseProperty.MODIFIED_STATE_FLAGS
  */
-var MODIFIED_STATE_FLAGS = {
+const MODIFIED_STATE_FLAGS = {
     /** No changes to this property at the moment */
     CLEAN: 0,
     /** The property is marked as changed in the currently pending ChangeSet */
@@ -49,7 +49,7 @@ var MODIFIED_STATE_FLAGS = {
  * @enum Object
  * Type of the token in the path string
  */
-var PATH_TOKENS = {
+const PATH_TOKENS = {
     /** A / at the beginning of the path */
     ROOT: { 'token': 'ROOT' },
     /** A * that indicates a dereferencing operation */ // note: reversed!
@@ -89,10 +89,7 @@ export class BaseProperty {
      * @param {Array.<string>} in_params.inherits List of property template typeids that this
      *   PropertyTemplate inherits from -- UNUSED PARAMETER ??
      * @abstract
-     * @constructor
      * @protected
-     * @alias property-properties.BaseProperty
-     * @category Properties
      */
     constructor(in_params) {
         // Pre-conditions
@@ -128,13 +125,8 @@ export class BaseProperty {
     };
 
     static MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
-    get MODIFIED_STATE_FLAGS() { return MODIFIED_STATE_FLAGS; }
-
     static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
-    get REFERENCE_RESOLUTION() { return REFERENCE_RESOLUTION; }
-
     static PATH_TOKENS = PATH_TOKENS;
-    get PATH_TOKENS() { return PATH_TOKENS; }
 
     get _context() { return 'single'; }
 
@@ -682,7 +674,7 @@ export class BaseProperty {
         var ids = this.getIds();
         for (var i = 0; i < ids.length; i++) {
             json.value.push(
-                this.get(ids[i], { referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER })._toJson()
+                this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson()
             );
         }
 
@@ -718,7 +710,7 @@ export class BaseProperty {
         indent += '  ';
         var ids = this.getIds();
         for (var i = 0; i < ids.length; i++) {
-            this.get(ids[i], { referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER })._prettyPrint(indent, '', printFct);
+            this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._prettyPrint(indent, '', printFct);
         }
     };
 

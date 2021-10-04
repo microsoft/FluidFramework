@@ -147,9 +147,6 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      * @param {Number} [in_params.length = 0] the length of the array, if applicable
      * @param {string} [in_scope] - The scope in which the property typeid is defined
      * @protected
-     * @constructor
-     * @alias property-properties.ArrayProperty
-     * @category Arrays
      */
     constructor(in_params, in_scope) {
         super(in_params);
@@ -335,8 +332,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Removes elements from the front of the queue (array)
      */
-    dequeue(...args) {
-        return this.shift(...args);
+    dequeue() {
+        return this.shift();
     }
 
     /**
@@ -1637,7 +1634,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             var ids = this.getIds();
             for (var i = 0; i < ids.length; i++) {
                 json.value.push(
-                    this.get(ids[i], { referenceResolutionMode: this.REFERENCE_RESOLUTION.NEVER })._toJson()
+                    this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson()
                 );
             }
         } else {

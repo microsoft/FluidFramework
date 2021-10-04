@@ -17,15 +17,10 @@ const { IndexedCollectionBaseProperty } = require('./indexedCollectionBaseProper
  * A property object that allows to add child properties dynamically.
  *
  */
-
 export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * @param {Object} in_params - Input parameters for property creation
-     * @constructor
      * @protected
-     * @extends property-properties.IndexedCollectionBaseProperty
-     * @alias property-properties.ContainerProperty
-     * @category Other Collections
      */
     constructor(in_params) {
         super({ typeid: 'ContainerProperty', ...in_params });
@@ -313,8 +308,4 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
         }
     };
 
-
-    get _properties() {
-        return this._flatten();
-    }
 }

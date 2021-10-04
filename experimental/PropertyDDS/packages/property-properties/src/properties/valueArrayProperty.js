@@ -122,7 +122,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Float32', ...in_params });
+        super({ typeid: 'Float32', ...in_params });
     };
 
     /**
@@ -148,7 +148,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Float64', ...in_params });
+        super({ typeid: 'Float64', ...in_params });
     };
 
     /**
@@ -174,7 +174,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Uint8', ...in_params });
+        super({ ...in_params, typeid: 'Uint8' });
     };
 
     /**
@@ -201,7 +201,7 @@ export class Int8ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Int8', ...in_params });
+        super({ ...in_params, typeid: 'Int8' });
     };
 
     /**
@@ -228,7 +228,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Uint16', ...in_params });
+        super({ ...in_params, typeid: 'Uint16' });
     };
 
     /**
@@ -255,7 +255,7 @@ export class Int16ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Int16', ...in_params });
+        super({ ...in_params, typeid: 'Int16' });
     };
 
     /**
@@ -281,7 +281,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Uint32', ...in_params });
+        super({  ...in_params, typeid: 'Uint32' });
     };
 
 
@@ -309,7 +309,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Int32', ...in_params });
+        super({ typeid: 'Int32', ...in_params });
     };
 
     /**
@@ -422,7 +422,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Int64', ...in_params });
+        super({ typeid: 'Int64', ...in_params });
     };
 
     /**
@@ -499,7 +499,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Uint64', ...in_params });
+        super({ typeid: 'Uint64', ...in_params });
     };
 
     /**
@@ -576,7 +576,7 @@ export class StringArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'String', ...in_params });
+        super({ typeid: 'String', ...in_params });
     };
 
     /**
@@ -606,7 +606,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'Uint32', ...in_params }, Array, true);
+        super({ typeid: 'Uint32', ...in_params }, Array, true);
     };
 
     /**

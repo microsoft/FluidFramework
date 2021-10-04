@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the BooleanProperty class
  */
@@ -15,15 +16,10 @@ const { _castFunctors } = require('./primitiveTypeCasts');
 export class BoolProperty extends ValueProperty {
 
     /**
-     * @param {Object=} in_params - the parameters
-     * @constructor
-     * @protected
-     * @extends property-properties.ValueProperty
-     * @alias property-properties.BoolProperty
-     * @category Value Properties
+     * @param in_params - the parameters
      */
     constructor(in_params) {
-        super({ typeid: 'Bool', ...in_params });
+        super({ ...in_params, typeid: 'Bool' });
         // default for this property type is 'false'
         this._data = false;
     };

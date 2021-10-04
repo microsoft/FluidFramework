@@ -130,9 +130,9 @@ export class ValueProperty extends BaseProperty {
      */
     _reapplyDirtyFlags(in_pendingChangeSet, in_dirtyChangeSet) {
         const flags = (ChangeSet.isEmptyChangeSet(in_pendingChangeSet) ?
-            this.MODIFIED_STATE_FLAGS.CLEAN : this.MODIFIED_STATE_FLAGS.PENDING_CHANGE) |
+            BaseProperty.MODIFIED_STATE_FLAGS.CLEAN : BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE) |
             (ChangeSet.isEmptyChangeSet(in_dirtyChangeSet) ?
-                this.MODIFIED_STATE_FLAGS.CLEAN : this.MODIFIED_STATE_FLAGS.DIRTY);
+                BaseProperty.MODIFIED_STATE_FLAGS.CLEAN : BaseProperty.MODIFIED_STATE_FLAGS.DIRTY);
         if (flags) {
             this._setDirty(false, this, flags);
         }

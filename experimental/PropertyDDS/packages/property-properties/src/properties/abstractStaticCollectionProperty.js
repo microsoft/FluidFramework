@@ -19,11 +19,8 @@ const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
 
 export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
-     * @virtual
      * @param {Object=} in_params - the parameters
-     * @constructor
      * @protected
-     * @extends property-properties.BaseProperty
      */
     constructor(in_params) {
         super(in_params);
@@ -706,9 +703,5 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             ' setConstants parameter: in_constants must be an object.');
         this._constantChildren = in_constants;
     };
-
-    get _properties() {
-        return this._flatten();
-    }
 
 }

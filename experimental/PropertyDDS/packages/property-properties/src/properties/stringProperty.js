@@ -59,7 +59,7 @@ export class StringProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  typeid: 'String', ...in_params });
+        super({ ...in_params, typeid: 'String' });
     };
 
 
