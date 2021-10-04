@@ -97,13 +97,9 @@ describe("Odsp Driver Resolver", () => {
         const createLinkType = "csl";
         newRequest.url += `&createLinkType=${createLinkType}`;
         const resolvedUrl = await resolver.resolve(request);
-
-        assert.strictEqual(
-            resolvedUrl.shareLinkInfo, {
-                createLink: {
-                    type: createLinkType,
-                },
-            });
+        assert(resolvedUrl.shareLinkInfo !== undefined);
+        assert(resolvedUrl.shareLinkInfo.createLink !== undefined);
+        assert.strictEqual(resolvedUrl.shareLinkInfo.createLink.type, createLinkType);
     });
 
     it("Should resolve url with a string in the codeDetails package", async () => {
