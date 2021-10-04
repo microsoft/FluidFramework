@@ -114,19 +114,3 @@ stages:
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-
-  # end-to-end tests azure
-  - stage:
-    displayName: e2e - azure
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Lite
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: ${{ variables.testWorkspace }}
-        target: azure
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-          azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
