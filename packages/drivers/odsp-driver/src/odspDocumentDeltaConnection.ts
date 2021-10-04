@@ -331,10 +331,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     ) {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
-        this.requestOpsNoncePrefix = `${this.documentId}-`;
+        this.requestOpsNoncePrefix = `${uuid()}-`;
     }
 
-    public requestOps(from: number, to: number) {
+    /**
+     * Retrieves ops from PUSH
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
+     public requestOps(from: number, to: number) {
+        // Given that to is exclusive, we should be asking for at least something!
+        assert(to > from, "empty request");
+
         // PUSH may disable this functionality
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_get_ops] !== true) {
@@ -353,9 +362,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // So track some number of requests, but log if we get too many in flight - that likely
         // indicates an error somewhere.
         if (this.getOpsMap.size >= 5) {
-            this.logger.sendTelemetryEvent({
-                eventName: "GetOpsTooMany",
-            });
             let time = start;
             let key: string | undefined;
             for (const [keyCandidate, value] of this.getOpsMap.entries()) {
@@ -364,6 +370,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     key = keyCandidate;
                 }
             }
+            const payloadToDelete = this.getOpsMap.get(key!)!;
+            this.logger.sendErrorEvent({
+                eventName: "GetOpsTooMany",
+                from: payloadToDelete.from,
+                to: payloadToDelete.to,
+                length: payloadToDelete.to - payloadToDelete.from,
+                duration: performance.now() - payloadToDelete.start,
+            });
             this.getOpsMap.delete(key!);
         }
         this.getOpsMap.set(
@@ -377,7 +391,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         this.socket.emit("get_ops", this.clientId, {
             nonce,
             from,
-            to,
+            to: to - 1,
         });
     }
 

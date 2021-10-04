@@ -12,6 +12,4 @@ export { generateToken }
 export { ScopeType }
 
 
-// (No @packageDocumentation comment for this package)
-
 ```

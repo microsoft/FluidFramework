@@ -67,6 +67,4 @@ export interface TinyliciousMember extends IMember {
 }
 
 
-// (No @packageDocumentation comment for this package)
-
 ```
