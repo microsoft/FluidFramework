@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import { resolve, join } from 'path';
 import { v4 as uuidv4, v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
-import { Container, Loader } from '@fluidframework/container-loader';
+import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -20,11 +20,14 @@ import {
 	TestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	createAndAttachContainer,
 	// KLUDGE:#62681: Remove eslint ignore due to unresolved import false positive
 } from '@fluidframework/test-utils'; // eslint-disable-line import/no-unresolved
 import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { assert } from '@fluidframework/common-utils';
+import type { IHostLoader } from '@fluidframework/container-definitions';
+import type { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../../Identifiers';
 import { assertNotUndefined, compareArrays, comparePayloads, fail } from '../../Common';
 import { initialTree } from '../../InitialTree';
@@ -161,6 +164,7 @@ export function setUpTestSharedTreeWithAnchors(
 	return setUpTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
 }
 
+/** Sets up and returns an object of components useful for testing a GenericSharedTree. */
 function setUpTestSharedTreeGeneric<
 	TSharedTree extends SharedTree | SharedTreeWithAnchors,
 	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
@@ -303,6 +307,12 @@ export async function setUpLocalServerTestSharedTreeWithAnchors(
 	return setUpLocalServerTestSharedTreeGeneric(SharedTreeWithAnchors.getFactory, options);
 }
 
+/**
+ * Sets up and returns an object of components useful for testing a GenericSharedTree with a local server.
+ * Required for tests that involve the uploadBlob API.
+ *
+ * Any TestObjectProvider created by this function will be reset after the test completes (via afterEach) hook.
+ */
 async function setUpLocalServerTestSharedTreeGeneric<
 	TSharedTree extends SharedTree | SharedTreeWithAnchors,
 	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
@@ -333,17 +343,37 @@ async function setUpLocalServerTestSharedTreeGeneric<
 			summaryOptions: { initialSummarizerDelayMs: 0 },
 		});
 
+	const defaultCodeDetails: IFluidCodeDetails = {
+		package: 'defaultTestPackage',
+		config: {},
+	};
+
+	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
+		const fluidEntryPoint = runtimeFactory();
+		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], { maxClientLeaveWaitTime: 1000 });
+	}
+
 	let provider: TestObjectProvider;
 	let container: Container;
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
-		container = await provider.loadTestContainer();
+		const driver = new LocalServerTestDriver();
+		const loader = makeTestLoader(provider);
+		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
+		container = (await loader.resolve({ url: await driver.createContainerUrl(treeId) })) as Container;
+		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
 		provider = new TestObjectProvider(Loader, driver, runtimeFactory);
 		testObjectProviders.push(provider);
-		container = (await provider.makeTestContainer()) as Container;
+		// Once ILoaderOptions is specificable, this should use `provider.makeTestContainer` instead.
+		const loader = makeTestLoader(provider);
+		container = (await createAndAttachContainer(
+			defaultCodeDetails,
+			loader,
+			driver.createCreateNewRequest(treeId)
+		)) as Container;
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, 'default');

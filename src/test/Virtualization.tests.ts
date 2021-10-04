@@ -188,9 +188,13 @@ describe('SharedTree history virtualization', () => {
 	it('sends handle ops to connected clients when chunks are uploaded', async () => {
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
 		});
 		const { tree: sharedTree3 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			summarizeHistory: true,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
 		});
 
 		// All shared trees should have no edits or chunks
