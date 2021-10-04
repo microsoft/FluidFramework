@@ -68,7 +68,8 @@ export class Throttler implements IThrottler {
                     retryAfterInSeconds,
                     eventName: "throttling",
                 },
-            });            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            });
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new ThrottlingError(
                 cachedThrottlerResponse.throttleReason,
                 retryAfterInSeconds,
