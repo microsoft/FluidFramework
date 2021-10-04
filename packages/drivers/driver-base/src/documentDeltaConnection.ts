@@ -512,7 +512,7 @@ export class DocumentDeltaConnection
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
-        let message = `socket.io: ${handler}`;
+        let message = `socket.io (${handler})`;
         if (typeof error !== "object") {
             message = `${message}: ${error}`;
         } else if (error?.type === "TransportError") {
