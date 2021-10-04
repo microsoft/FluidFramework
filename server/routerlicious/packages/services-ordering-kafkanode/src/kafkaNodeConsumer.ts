@@ -49,6 +49,13 @@ export class KafkaNodeConsumer implements IConsumer {
         return this.client ? true : false;
     }
 
+    /**
+     * Returns the offset of the latest consumsed message
+     */
+    public getLatestMessageOffset(partitionId: number): number | undefined {
+        return undefined;
+    }
+
     public async commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void> {
         // Although tagged as optional, kafka-node requies a value in the metadata field.
         // Also logs are replayed from the last checkponited offset. To avoid reprocessing the last message
