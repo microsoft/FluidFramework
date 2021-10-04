@@ -211,7 +211,6 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:diagrams` | Generate the diagram images using ditaa. |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
-| `build:prep` | Copy files from _api-extractor-temp/doc-models in the root of the repo to a staging location for the docs build. |
 | `clean` | Remove all generated files. |
 | `copyfiles` | `copyfiles _replacements/ content/` |
 | `ditaa` | Run the local copy of ditaa. |
