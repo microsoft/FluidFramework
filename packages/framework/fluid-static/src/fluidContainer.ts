@@ -58,7 +58,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
 
     /**
-     * Returns true if fluid container has data loss, container is closed at that same moment and
+     * Returns true if Fluid Container has data loss, container is closed at that same moment and
      * there is no network connection to ordering service
      */
      readonly isDirty: boolean;
