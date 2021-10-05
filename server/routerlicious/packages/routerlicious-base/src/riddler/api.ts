@@ -47,7 +47,7 @@ export function create(
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const includeDisabled = request.get("Include-Deleted")?.toLowerCase() === "true";
+        const includeDisabled = request.get("Include-Disabled")?.toLowerCase() === "true";
         const tenantP = manager.getTenant(tenantId, includeDisabled);
         handleResponse(tenantP, response);
     });
@@ -56,7 +56,7 @@ export function create(
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const includeDisabled = request.get("Include-Deleted")?.toLowerCase() === "true";
+        const includeDisabled = request.get("Include-Disabled")?.toLowerCase() === "true";
         const tenantP = manager.getAllTenants(includeDisabled);
         handleResponse(tenantP, response);
     });
