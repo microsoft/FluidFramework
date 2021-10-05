@@ -32,7 +32,7 @@ export class RedisThrottleStorageManager implements IThrottleStorageManager {
 
         client.on("error", (error) => {
             winston.error("Throttle Manager Redis Error:", error);
-            Lumberjack.error("Throttle Manager Redis Error:", error);
+            Lumberjack.error("Throttle Manager Redis Error:", undefined, error);
         });
     }
 

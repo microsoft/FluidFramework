@@ -28,7 +28,7 @@ export class RedisCache implements ICache {
 
         client.on("error", (err) => {
             winston.error("Error with Redis:", err);
-            Lumberjack.error("Error with Redis:", err);
+            Lumberjack.error("Error with Redis:", undefined, err);
         });
     }
 

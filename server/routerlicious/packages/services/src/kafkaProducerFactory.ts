@@ -35,8 +35,7 @@ export function createProducer(
             } else {
                 winston.error("Kafka Producer emitted an error that is not configured to restart the process.");
                 winston.error(inspect(error));
-                Lumberjack.error("Kafka Producer emitted an error that is not configured to restart the process.");
-                Lumberjack.error(inspect(error));
+                Lumberjack.error("Kafka Producer emitted an error that is not configured to restart the process.", undefined, error);
             }
         });
     } else {

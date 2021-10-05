@@ -6,7 +6,7 @@
 import { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
 import { IThrottler, ILogger, ThrottlingError } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { CommonProperties, Lumberjack, ThrottlingTelemetryProperties } from "@fluidframework/server-services-telemetry";
 
 export interface IThrottleMiddlewareOptions {
     /**
@@ -90,13 +90,13 @@ export function throttle(
                             },
                         });
                     Lumberjack.error(
-                        `Throttle increment failed: ${safeStringify(e, undefined, 2)}`,
+                        `Throttle increment failed`, 
                         {
-                            messageMetaData: {
-                                key: throttleId,
-                                eventName: "throttling",
-                            },
-                        });
+                            [CommonProperties.telemetryGroupName]: "throttling",
+                            [ThrottlingTelemetryProperties.key]: throttleId,
+                        },
+                        e
+                    );
                 }
             }
 

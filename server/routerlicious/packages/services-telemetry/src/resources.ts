@@ -60,6 +60,11 @@ export enum CommonProperties {
     telemetryGroupName = "telemetryGroupName",
 }
 
+export enum ThrottlingTelemetryProperties {
+    // Use throttleId as key
+    key = "key"
+}
+
 export enum SessionState {
     // State set when the document lambdas are up and first op for the document is ticketed
     started = "started",

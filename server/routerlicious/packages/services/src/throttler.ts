@@ -11,7 +11,7 @@ import {
     ILogger,
 } from "@fluidframework/server-services-core";
 import LRUCache from "lru-cache";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { CommonProperties, Lumberjack, ThrottlingTelemetryProperties } from "@fluidframework/server-services-telemetry";
 
 /**
  * A lenient implementation of IThrottlerHelper that prioritizes low latency over strict throttling.
@@ -61,14 +61,13 @@ export class Throttler implements IThrottler {
                     eventName: "throttling",
                 },
             });
-            Lumberjack.info(`Throttled: ${id}`, {
-                messageMetaData: {
-                    key: id,
-                    reason: cachedThrottlerResponse.throttleReason,
-                    retryAfterInSeconds,
-                    eventName: "throttling",
-                },
-            });
+            Lumberjack.info(
+                `Throttled: ${id}`,                         {
+                {
+                    [CommonProperties.telemetryGroupName]: "throttling",
+                    [ThrottlingTelemetryProperties.key]: id,
+                }
+            );
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new ThrottlingError(
                 cachedThrottlerResponse.throttleReason,
@@ -104,15 +103,19 @@ export class Throttler implements IThrottler {
                 weight: countDelta,
                 eventName: "throttling",
             };
+            const lumberjackProperties = {
+                [CommonProperties.telemetryGroupName]: "throttling",
+                [ThrottlingTelemetryProperties.key]: id,
+            };
             await this.throttlerHelper.updateCount(id, countDelta)
                 .then((throttlerResponse) => {
                     this.logger?.info(`Incremented throttle count for ${id} by ${countDelta}`, { messageMetaData });
-                    Lumberjack.info(`Incremented throttle count for ${id} by ${countDelta}`, { messageMetaData });
+                    Lumberjack.info(`Incremented throttle count for ${id} by ${countDelta}`, lumberjackProperties);
                     this.throttlerResponseCache.set(id, throttlerResponse);
                 })
                 .catch((err) => {
                     this.logger?.error(`Failed to update throttling count for ${id}: ${err}`, { messageMetaData });
-                    Lumberjack.error(`Failed to update throttling count for ${id}: ${err}`, { messageMetaData });
+                    Lumberjack.error(`Failed to update throttling count for ${id}`, lumberjackProperties, err);
                 });
         }
     }
