@@ -14,6 +14,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
 - [Removed deltaManager.ts from @fluidframework/container-loader export](#deltamanager-removed-from-fluid-framework-export)
 - [Container class protected function resumeInternal made private](#resumeinternal-made-private)
+- [url removed from ICreateBlobResponsee](#url-removed-from-ICreateBlobResponse)
+- [encoding type change](#encoding-type-change)
 
 ### Deprecated dirty document events and property removed from ContainerRuntime
 The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
@@ -23,6 +25,12 @@ The `DeltaManager` class, the `IConnectionArgs` interface, the `IDeltaManagerInt
 
 ### resumeInternal made private
 The `protected` function `resumeInternal` under the class `Container` has been made `private`.
+
+### `url` removed from ICreateBlobResponse
+The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-definitions` has been removed
+
+### `encoding` type change
+The `encoding` property of `IBlob` in `@fluidframework/protocol-definitions` has changed type from `string` to `"utf-8" | "base64"` to match the only supported values.
 
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)

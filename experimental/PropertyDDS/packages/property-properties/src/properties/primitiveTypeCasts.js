@@ -5,8 +5,8 @@
 /**
  * @fileoverview Helper functions to cast a JavaScript type to a value that is compatible with a given primitive type
  */
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
-const { Int64, Uint64 } = require('@fluid-experimental/property-common').Datastructures;
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 const _ = require('lodash');
 
 var castArrays = {
