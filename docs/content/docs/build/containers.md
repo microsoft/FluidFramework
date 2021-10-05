@@ -142,6 +142,19 @@ container.on("disposed", () => {
 });
 ```
 
+### dirty
+
+`isDirty` flag returns a boolean value depending on the data loss in the container. The possible scenarios where the flag is set to true are:
+
+1. Container is closed while making changes
+2. When there is no network connection while making changes
+
+`isDirty` is set to false in scenarios such as,
+
+1. Making changes when the container is in the detached state
+2. Attaching the container to the service
+3. If the network disconnects without any outstanding changes
+
 ### Initial objects
 
 Initial objects are shared objects that your code defines in a container's schema and which exist for the lifetime of the container.

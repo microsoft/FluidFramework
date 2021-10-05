@@ -58,6 +58,11 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
 
     /**
+     * Whether the container is connected to the collaboration session.
+     */
+     readonly isDirty: boolean;
+
+    /**
      * Whether the container is disposed, which permanently disables it.
      */
     readonly disposed: boolean;
@@ -111,6 +116,13 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.isDirty}
+     */
+     public get isDirty(): boolean {
+        return this.container.isDirty;
     }
 
     /**
