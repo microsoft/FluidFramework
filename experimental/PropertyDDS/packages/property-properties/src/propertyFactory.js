@@ -10,12 +10,14 @@
 const _ = require('lodash');
 const deepCopy = _.cloneDeep;
 
-const Collection = require('@fluid-experimental/property-common').Datastructures.Collection;
-const SortedCollection = require('@fluid-experimental/property-common').Datastructures.SortedCollection;
-const EventEmitter = require('@fluid-experimental/property-common').Events.EventEmitter;
-const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
+const {
+    Collection,
+    ConsoleUtils,
+    EventEmitter,
+    SortedCollection
+} = require('@fluid-experimental/property-common');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
-const ConsoleUtils = require('@fluid-experimental/property-common').ConsoleUtils;
+const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
 
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
 const TemplateValidator = require('@fluid-experimental/property-changeset').TemplateValidator;
@@ -291,7 +293,7 @@ var _extractErrorMessage = function (in_errors) {
 
 /**
  * Helper function used to create a sorted collection
- * @return {property-common.Datastructures.SortedCollection} Empty sorted collection
+ * @return {property-common.SortedCollection} Empty sorted collection
  * @private
  */
 var _createVersionedSortedCollection = function () {
@@ -730,7 +732,7 @@ PropertyFactory.prototype._registerTypeId = function (in_typeid, in_templateOrPr
         this._localPrimitivePropertiesAndTemplates.add(in_typeid, wrapper);
     }
 
-    this._eventEmitter.trigger('registered', this, in_templateOrProperty);
+    this._eventEmitter.emit('registered', in_templateOrProperty);
 };
 
 /**

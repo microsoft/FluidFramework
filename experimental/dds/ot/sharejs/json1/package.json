@@ -60,7 +60,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/datastore-definitions": "^0.49.0",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
     "@fluidframework/shared-object-base": "^0.49.0",
     "ot-json1": "^1.0.1"
   },
