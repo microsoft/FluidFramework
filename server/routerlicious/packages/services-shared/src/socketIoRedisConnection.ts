@@ -5,6 +5,7 @@
 
 import { Redis } from "ioredis";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ISocketIoRedisConnection, ISocketIoRedisSubscriptionConnection } from "./redisSocketIoAdapter";
 
 /**
@@ -15,6 +16,7 @@ export class SocketIORedisConnection implements ISocketIoRedisConnection {
     constructor(protected readonly client: Redis) {
         client.on("error", (err) => {
             winston.error("Error with Redis:", err);
+            Lumberjack.error("Error with Redis:", undefined, err);
         });
     }
 

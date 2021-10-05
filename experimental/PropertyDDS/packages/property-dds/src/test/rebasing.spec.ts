@@ -110,13 +110,13 @@ describe("PropertyDDS", () => {
 			maxOperations = 30,
 		) {
 			for (let i = startTest; i < count; i++) {
-				it(`Test ${i}`, async () => {
+                const seed = createDerivedGuid("", String(i));
+                it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
 					let testString = "";
 
 					errorHandler = (err) => {
 						console.error(`Failed Test code: ${testString}`);
 					};
-					const seed = createDerivedGuid("", String(i));
 					const random = new DeterministicRandomGenerator(seed);
 					const operationCumSums = [] as number[];
 					for (const operation of operations) {
@@ -129,7 +129,7 @@ describe("PropertyDDS", () => {
 						const numOperations = random.irandom(maxOperations);
 						const maxCount = operationCumSums[operationCumSums.length - 1];
 						for (const j of _.range(numOperations)) {
-							const operationId = 1 + (random.irandom(maxCount) as number);
+							const operationId = 1 + random.irandom(maxCount);
 							const selectedOperation = _.sortedIndex(operationCumSums, operationId);
 
 							const parameters = operations[selectedOperation].getParameters(random);
@@ -367,8 +367,8 @@ describe("PropertyDDS", () => {
 				const logTest = true;
 
 				for (let i = startTest; i < count; i++) {
-					it(`Test ${i}`, async () => {
-						const seed = createDerivedGuid("", String(i));
+                    const seed = createDerivedGuid("", String(i));
+					it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
 						const random = new DeterministicRandomGenerator(seed);
 						let testString = "";
 
@@ -548,7 +548,7 @@ describe("PropertyDDS", () => {
 								const array = tree().root.get<ArrayProperty>("array");
 								return {
 									position: random.irandom(array?.getLength()) || 0,
-									count: (random.irandom(3) as number) + 1,
+									count: (random.irandom(3)) + 1,
 									tree,
 								};
 							},
@@ -564,7 +564,7 @@ describe("PropertyDDS", () => {
 								const array = tree().root.get<ArrayProperty>("array");
 								return {
 									position: random.irandom(array?.getLength()) || 0,
-									count: (random.irandom(3) as number) + 1,
+									count: (random.irandom(3)) + 1,
 									tree,
 								};
 							},

@@ -26,7 +26,7 @@ describe("AzureClient", () => {
         );
 
         const { container } = await resources;
-        assert.equal(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
+        assert.notStrictEqual(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
     });
 
     it("Created container is detached", async () => {
@@ -39,7 +39,7 @@ describe("AzureClient", () => {
         const containerId = await container.attach();
 
         assert.strictEqual(
-            typeof(containerId) === "string",
+            typeof(containerId), "string",
             "Attach did not return a string ID",
         );
         assert.strictEqual(
@@ -48,7 +48,7 @@ describe("AzureClient", () => {
         );
         await assert.rejects(
             container.attach(),
-            ()=> true,
+            () => true,
             "Container should not attached twice",
         );
     });
@@ -56,6 +56,11 @@ describe("AzureClient", () => {
     it("can retrieve existing Azure Fluid Relay container successfully", async () => {
         const { container: newContainer } = await client.createContainer(schema);
         const containerId = await newContainer.attach();
+        await new Promise<void>((resolve, reject) => {
+            newContainer.on("connected", () => {
+                resolve();
+            });
+        });
 
         const resources = client.getContainer(containerId, schema);
         await assert.doesNotReject(
@@ -65,6 +70,6 @@ describe("AzureClient", () => {
         );
 
         const { container } = await resources;
-        assert.equal(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
+        assert.notStrictEqual(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
     });
 });
