@@ -170,6 +170,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
             const earlyOpHandler = (docId: string, msgs: ISequencedDocumentMessage[]) => {
                 this.logger.info(`Queued early ops: ${msgs.length}`);
+                Lumberjack.info(`Queued early ops: ${msgs.length}`);
                 queuedMessages.push(...msgs);
             };
             socket.on("op", earlyOpHandler);
