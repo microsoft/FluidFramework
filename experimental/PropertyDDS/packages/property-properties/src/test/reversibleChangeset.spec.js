@@ -74,8 +74,8 @@ describe('Reversible ChangeSets', function () {
         ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
         _ = require('lodash');
         deepCopy = _.cloneDeep;
-        Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-        Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
+        Int64 = require('@fluid-experimental/property-common').Int64;
+        Uint64 = require('@fluid-experimental/property-common').Uint64;
 
         var TaskSubjectParentTemplate = {
             typeid: 'autodesk.tests:ChangeSetApplyAfterTask.parentTemplate-1.0.0',

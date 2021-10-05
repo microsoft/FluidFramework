@@ -169,7 +169,7 @@ describe("ErrorUtils", () => {
         const handler = "test_handler";
         const message = "test error";
         const assertExpectedMessage = (actualMessage: string) => {
-            const expectedMessage = `socket.io: ${handler}: ${message}`;
+            const expectedMessage = `R11sSocketError (${handler}): ${message}`;
             assert.strictEqual(actualMessage, expectedMessage);
         };
         it("creates non-retriable authorization error on 401", () => {
