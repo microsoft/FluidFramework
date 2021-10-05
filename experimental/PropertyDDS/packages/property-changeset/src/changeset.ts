@@ -14,7 +14,7 @@ import extend from "lodash/extend";
 import each from "lodash/each";
 
 //@ts-ignore
-import { ConsoleUtils, Strings, constants } from "@fluid-experimental/property-common";
+import { ConsoleUtils, joinPaths, constants } from "@fluid-experimental/property-common";
 
 import { TypeIdHelper } from "./helpers/typeidHelper";
 import { ChangeSetArrayFunctions } from './changeset_operations/array';
@@ -30,8 +30,6 @@ import { TemplateValidator } from "./templateValidator";
 import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes"
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
-const { joinPaths } = Strings;
-
 
 const { extractContext, isPrimitiveType } = TypeIdHelper;
 
