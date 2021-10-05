@@ -196,17 +196,26 @@ export class RestGitService {
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
 
+        // We only want to force-refresh the cache if uploading a "container".
+        // "channels" are an intermediate type of summary, being uploaded by a client
+        // and then used internally by the server. "channels" are not requested by clients,
+        // so they are not cached.
+        if (summaryParams.type === "container") {
+            this.deleteFromCacheIfExists(this.getSummaryCacheKey());
+        }
+
         return summaryResponse;
     }
 
     public async deleteSummary(softDelete: boolean): Promise<boolean> {
         const headers = { "Soft-Delete": softDelete };
+        this.deleteFromCacheIfExists(this.getSummaryCacheKey());
         return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
         return this.resolve(
-            `${sha}:summary`,
+            this.getSummaryCacheKey(),
             async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
             useCache);
@@ -391,6 +400,19 @@ export class RestGitService {
         }
     }
 
+    /**
+     * Deletes the given key from the cache, if it exists. Will log any errors with the cache.
+     */
+     private deleteFromCacheIfExists<T>(key: string) {
+        if (this.cache) {
+            // Attempt to delete the key from Redis - log any errors but don't fail
+            this.cache.deleteIfExists(key).catch((error) => {
+                winston.error(`Error deleting key ${key} from Redis cache`, error);
+                Lumberjack.error(`Error deleting key ${key} from Redis cache`, this.lumberProperties, error);
+            });
+        }
+    }
+
     private async resolve<T>(key: string, fetch: () => Promise<T>, useCache: boolean): Promise<T> {
         if (this.cache && useCache) {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
@@ -416,5 +438,9 @@ export class RestGitService {
         } else {
             return fetch();
         }
+    }
+
+    private getSummaryCacheKey() {
+        return `${this.tenantId}:${this.documentId}:summary`;
     }
 }
