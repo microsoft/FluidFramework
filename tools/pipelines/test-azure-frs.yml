@@ -28,7 +28,7 @@ stages:
     displayName: e2e - azure
     dependsOn: []
     jobs:
-    - template: templates/include-test-real-service.yml
+    - template: templates/include-test-azure-frs.yml
       parameters:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
