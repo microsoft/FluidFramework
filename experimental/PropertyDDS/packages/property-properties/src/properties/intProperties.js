@@ -12,9 +12,10 @@ const _castFunctors = require('./primitiveTypeCasts');
 const _ = require('lodash');
 const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const {
-  ConsoleUtils,
-  constants: { MSG },
-  Datastructures: { Uint64, Int64 }
+    ConsoleUtils,
+    constants: { MSG },
+    Uint64,
+    Int64
 } = require('@fluid-experimental/property-common');
 
 /**

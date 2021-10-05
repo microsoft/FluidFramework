@@ -6,7 +6,7 @@ const _ = require('lodash');
 const ValueArrayProperty = require('./valueArrayProperty').ValueArrayProperty;
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const TypeIdHelper = require('@fluid-experimental/property-changeset').TypeIdHelper;
-const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
+const { BaseDataArray } = require('@fluid-experimental/property-common');
 
 /**
  * This class is a specialized version of the ArrayProperty for enums.
@@ -203,7 +203,7 @@ EnumArrayProperty.prototype.getValues = function () {
  * @param {Number} in_length      the initial length of the array
  */
 EnumArrayProperty.prototype._dataArrayCreate = function (in_length) {
-    this._dataArrayRef = new DataArrays.BaseDataArray(Int32Array, in_length);
+    this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
 };
 
 /**
