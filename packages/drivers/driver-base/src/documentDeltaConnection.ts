@@ -518,7 +518,7 @@ export class DocumentDeltaConnection
         } else if (error?.type === "TransportError") {
             // Websocket errors reported by engine.io-client.
             // They are Error objects with description containing WS error and description = "TransportError"
-            // Please see https://github.com/socketio/engine.io-client/blob/master/lib/transport.js#L30,
+            // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
             message = `${message}: ${JSON.stringify(error)}`;
         } else {
             message = `${message}: [object omitted]`;
