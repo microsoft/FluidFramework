@@ -272,11 +272,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
     protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
         // Note: we suspect the incoming error object is either:
-        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-        //   over it.
-        if (canRetry && typeof error === "object" && error !== null) {
-            return errorObjectFromSocketError(error, handler) as DriverError;
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
+        // - anything else: let base class handle it
+        if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
+            return errorObjectFromSocketError(error as IOdspSocketError, handler) as DriverError;
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }

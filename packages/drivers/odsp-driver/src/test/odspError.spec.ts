@@ -85,7 +85,7 @@ describe("Odsp Error", () => {
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.equal(networkError.message, "socket.io: disconnect: testMessage");
+            assert.equal(networkError.message, "OdspSocketError (disconnect): testMessage");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -100,7 +100,7 @@ describe("Odsp Error", () => {
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.equal(networkError.message, "socket.io: error: testMessage");
+            assert.equal(networkError.message, "OdspSocketError (error): testMessage");
             assert.equal(networkError.canRetry, false);
             assert.equal(networkError.statusCode, 400);
         }
@@ -112,11 +112,11 @@ describe("Odsp Error", () => {
             code: 429,
             retryAfter: 10,
         };
-        const networkError = errorObjectFromSocketError(socketError, "429");
+        const networkError = errorObjectFromSocketError(socketError, "handler");
         if (networkError.errorType !== DriverErrorType.throttlingError) {
             assert.fail("networkError should be a throttlingError");
         } else {
-            assert.equal(networkError.message, "socket.io: 429: testMessage");
+            assert.equal(networkError.message, "OdspSocketError (handler): testMessage");
             assert.equal(networkError.retryAfterSeconds, 10);
         }
     });
