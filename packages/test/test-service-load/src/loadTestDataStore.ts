@@ -423,7 +423,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
                 if(dataModel.haveTaskLock()) {
                     dataModel.counter.increment(1);
-
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         await dataModel.blobFinish();
                         dataModel.abandonTask();
