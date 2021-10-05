@@ -54,6 +54,12 @@ export interface IConsumer {
     commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;
 
     /**
+     * Returns the offset of the latest consumsed message
+     * May return undefined if a consumer is not tracking this
+     */
+    getLatestMessageOffset(partitionId: number): number | undefined;
+
+    /**
      * Event handlers
      */
     on(event: "connected" | "disconnected" | "closed" | "paused" | "resumed", listener: () => void): this;
@@ -83,8 +89,9 @@ export interface IProducer<T = ITicketedMessage> {
 
     /**
      * Sends the message to a queue
+     * @param partitionId Specify this to send the messages to a specific partition. Only RdkafkaProducer supports this.
      */
-    send(messages: T[], tenantId: string, documentId: string): Promise<void>;
+    send(messages: T[], tenantId: string, documentId: string, partitionId?: number): Promise<void>;
 
     /**
      * Closes the underlying connection

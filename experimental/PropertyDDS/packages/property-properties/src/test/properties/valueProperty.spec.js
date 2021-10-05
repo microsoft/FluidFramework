@@ -17,8 +17,8 @@ describe('ValueProperty', function () {
   before(function () {
     ValueProperty = require('../../properties/valueProperty');
     PropertyFactory = require('../..').PropertyFactory;
-    Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-    Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
+    Int64 = require('@fluid-experimental/property-common').Int64;
+    Uint64 = require('@fluid-experimental/property-common').Uint64;
 
     OurTestTemplate = {
       typeid: 'autodesk.tests:TestID-1.0.0',

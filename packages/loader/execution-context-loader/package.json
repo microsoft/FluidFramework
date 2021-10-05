@@ -29,10 +29,10 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^0.39.8",
+    "@fluidframework/container-definitions": "^0.40.0-39046",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.39.6",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/driver-definitions": "^0.40.0-39010",
+    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
     "comlink": "^4.3.0"
   },
   "devDependencies": {

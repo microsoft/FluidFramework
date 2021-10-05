@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
@@ -90,9 +91,11 @@ export function create(
 
     pub.on("error", (err) => {
         winston.error("Error with Redis pub connection: ", err);
+        Lumberjack.error("Error with Redis pub connection", undefined, err);
     });
     sub.on("error", (err) => {
         winston.error("Error with Redis sub connection: ", err);
+        Lumberjack.error("Error with Redis sub connection", undefined, err);
     });
 
     let adapter: (nsp: Namespace) => Adapter | undefined;
