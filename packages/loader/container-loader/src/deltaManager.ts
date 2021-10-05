@@ -403,7 +403,7 @@ export class DeltaManager
      */
     public setAutoReconnect(mode: ReconnectMode): void {
         assert(mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
-            "API is not supported for non-connecting clients");
+            "API is not supported for non-connecting or closed container");
 
         this._reconnectMode = mode;
 
@@ -431,8 +431,6 @@ export class DeltaManager
      * @param readonly - set or clear force readonly.
      */
     public forceReadonly(readonly: boolean) {
-        assert(this._reconnectMode !== ReconnectMode.Never, "API is not supported for non-connecting clients");
-
         if (readonly !== this._forceReadonly) {
             this.logger.sendTelemetryEvent({
                 eventName: "ForceReadOnly",
@@ -441,7 +439,11 @@ export class DeltaManager
         }
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
+
         if (oldValue !== this.readonly) {
+            assert(this._reconnectMode !== ReconnectMode.Never,
+                "API is not supported for non-connecting or closed container");
+
             let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
