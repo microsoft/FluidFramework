@@ -69,7 +69,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
-            createLinkType: odspResolvedUrl.shareLinkInfo?.createLink?.type,
+            // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
+            // so that share link creation with create file can be enabled
+            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
+            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
         };
 
         const odspLogger = createOdspLogger(logger);

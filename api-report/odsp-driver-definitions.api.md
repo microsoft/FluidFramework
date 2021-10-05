@@ -18,6 +18,7 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // (undocumented)
     enableRedeemFallback?: boolean;
+    enableShareLinkWithCreate?: boolean;
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
     // (undocumented)
