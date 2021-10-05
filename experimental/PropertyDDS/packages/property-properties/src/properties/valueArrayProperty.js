@@ -10,9 +10,13 @@
 const _ = require('lodash');
 const MSG = require('@fluid-experimental/property-common').constants.MSG;
 const _castFunctors = require('./primitiveTypeCasts');
-const Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-const Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
-const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
+const {
+    BaseDataArray,
+    BoolDataArray,
+    Int64,
+    Uint64,
+    UniversalDataArray
+} = require('@fluid-experimental/property-common');
 const ArrayProperty = require('./arrayProperty');
 const Int64Property = require('../properties/intProperties').Int64Property;
 const Uint64Property = require('../properties/intProperties').Uint64Property;
@@ -126,7 +130,7 @@ Float32ArrayProperty.prototype._typeid = 'Float32';
  * @param {Number} in_length      the initial length of the array
  */
 Float32ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Float32Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Float32Array, in_length);
 };
 
 
@@ -152,7 +156,7 @@ Float64ArrayProperty.prototype._typeid = 'Float64';
  * @param {Number} in_length      the initial length of the array
  */
 Float64ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Float64Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Float64Array, in_length);
 };
 
 /**
@@ -177,7 +181,7 @@ Uint8ArrayProperty.prototype._typeid = 'Uint8';
  * @param {Number} in_length      the initial length of the array
  */
 Uint8ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Uint8Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Uint8Array, in_length);
 };
 
 /**
@@ -202,7 +206,7 @@ Int8ArrayProperty.prototype._typeid = 'Int8';
  * @param {Number} in_length      the initial length of the array
  */
 Int8ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Int8Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Int8Array, in_length);
 };
 
 /**
@@ -227,7 +231,7 @@ Uint16ArrayProperty.prototype._typeid = 'Uint16';
  * @param {Number} in_length      the initial length of the array
  */
 Uint16ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Uint16Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Uint16Array, in_length);
 };
 
 /**
@@ -252,7 +256,7 @@ Int16ArrayProperty.prototype._typeid = 'Int16';
  * @param {Number} in_length      the initial length of the array
  */
 Int16ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Int16Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Int16Array, in_length);
 };
 
 /**
@@ -277,7 +281,7 @@ Uint32ArrayProperty.prototype._typeid = 'Uint32';
  * @param {Number} in_length      the initial length of the array
  */
 Uint32ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Uint32Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Uint32Array, in_length);
 };
 
 /**
@@ -302,7 +306,7 @@ Int32ArrayProperty.prototype._typeid = 'Int32';
  * @param {Number} in_length      the initial length of the array
  */
 Int32ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BaseDataArray(Int32Array, in_length);
+  this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
 };
 
 /**
@@ -461,7 +465,7 @@ Int64ArrayProperty.prototype._deserializeValue = function (in_serializedObj) {
  * @param {Number} in_length      the initial length of the array
  */
 Int64ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+  this._dataArrayRef = new UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, new Int64());
   }
@@ -536,7 +540,7 @@ Uint64ArrayProperty.prototype.insertRange = function (in_offset, in_array) {
  * @param {Number} in_length      the initial length of the array
  */
 Uint64ArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+  this._dataArrayRef = new UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, new Uint64());
   }
@@ -564,7 +568,7 @@ StringArrayProperty.prototype._typeid = 'String';
  * @param {Number} in_length      the initial length of the array
  */
 StringArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+  this._dataArrayRef = new UniversalDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, '');
   }
@@ -592,7 +596,7 @@ BoolArrayProperty.prototype._typeid = 'Bool';
  * @param {Number} in_length      the initial length of the array
  */
 BoolArrayProperty.prototype._dataArrayCreate = function (in_length) {
-  this._dataArrayRef = new DataArrays.BoolDataArray(in_length);
+  this._dataArrayRef = new BoolDataArray(in_length);
   for (var i = 0; i < in_length; i++) {
     this._dataArraySetValue(i, false);
   }

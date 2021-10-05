@@ -511,11 +511,17 @@ export class DocumentDeltaConnection
     protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-        //   over it.
-        let message = `socket.io: ${handler}`;
-        if (typeof error === "string") {
+        // - an Error object thrown by socket.io engine. Be careful with not recording PII!
+        let message = `socket.io (${handler})`;
+        if (typeof error !== "object") {
             message = `${message}: ${error}`;
+        } else if (error?.type === "TransportError") {
+            // Websocket errors reported by engine.io-client.
+            // They are Error objects with description containing WS error and description = "TransportError"
+            // Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
+            message = `${message}: ${JSON.stringify(error)}`;
+        } else {
+            message = `${message}: [object omitted]`;
         }
         const errorObj = createGenericNetworkError(
             message,

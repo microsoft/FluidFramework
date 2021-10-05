@@ -1064,8 +1064,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
-            message: error?.message,
-        });
+        }, error);
 
         if (this.summaryManager !== undefined) {
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
