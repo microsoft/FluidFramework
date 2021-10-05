@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-coordinate-model",
-  "version": "0.48.4",
+  "version": "0.48.5",
   "description": "Coordinate model for multiview sample",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -36,13 +36,13 @@
     "webpack:dev": "webpack --env.development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^0.48.4",
-    "@fluidframework/aqueduct": "^0.48.4",
+    "@fluid-example/multiview-coordinate-interface": "^0.48.5",
+    "@fluidframework/aqueduct": "^0.48.5",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/map": "^0.48.4"
+    "@fluidframework/map": "^0.48.5"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^0.48.4",
+    "@fluid-tools/webpack-fluid-loader": "^0.48.5",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/test-tools": "^0.2.3074",
