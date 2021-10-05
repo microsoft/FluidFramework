@@ -16,6 +16,7 @@ import {
     BasicRestWrapper,
     RestWrapper,
     IWholeFlatSummary,
+    IWholeSummaryPayloadType,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
@@ -195,27 +196,29 @@ export class RestGitService {
         const summaryResponse = await this.post<IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
-
-        // We only want to force-refresh the cache if uploading a "container".
-        // "channels" are an intermediate type of summary, being uploaded by a client
-        // and then used internally by the server. "channels" are not requested by clients,
-        // so they are not cached.
-        if (summaryParams.type === "container") {
-            this.deleteFromCacheIfExists(this.getSummaryCacheKey());
-        }
-
+        this.deleteFromCacheIfExists(this.getSummaryCacheKey(summaryParams.type));
         return summaryResponse;
     }
 
     public async deleteSummary(softDelete: boolean): Promise<boolean> {
         const headers = { "Soft-Delete": softDelete };
-        this.deleteFromCacheIfExists(this.getSummaryCacheKey());
+
+        // First, delete any cached summary (including both types, "channel" and "container")
+        // from the Redis cache
+        this.deleteFromCacheIfExists(this.getSummaryCacheKey("channel"));
+        this.deleteFromCacheIfExists(this.getSummaryCacheKey("container"));
+
+        // Finally, delete from storage.
         return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
         return this.resolve(
-            this.getSummaryCacheKey(),
+            // Currently, only "container" type summaries are retrieved from storage.
+            // In the future, we might want to also retrieve "channels". When that happens,
+            // our APIs will change so we specify what type we want to retrieve during
+            // the request.
+            this.getSummaryCacheKey("container"),
             async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
             useCache);
@@ -440,7 +443,7 @@ export class RestGitService {
         }
     }
 
-    private getSummaryCacheKey() {
-        return `${this.tenantId}:${this.documentId}:summary`;
+    private getSummaryCacheKey(type: IWholeSummaryPayloadType) {
+        return `${this.tenantId}:${this.documentId}:summary:${type}`;
     }
 }
