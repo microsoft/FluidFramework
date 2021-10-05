@@ -34,8 +34,8 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.39.6",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
+    "@fluidframework/driver-definitions": "^0.40.0-39010",
+    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
     "nconf": "^0.11.0"
   },
   "devDependencies": {

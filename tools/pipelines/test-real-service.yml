@@ -14,7 +14,7 @@ resources:
     source: Build - client packages
     trigger:
       branches:
-      - releases/*
+      - release/*
       - main
 
 variables:
