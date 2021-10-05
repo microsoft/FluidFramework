@@ -8,13 +8,10 @@ import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import * as ClientUI from "@fluid-example/client-ui-lib";
 import {
-    IMergeTreeGroupMsg,
-    IMergeTreeInsertMsg,
-    IMergeTreeOp,
-    IMergeTreeRemoveMsg,
     MergeTreeDeltaType,
+    TextSegment,
 } from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 // eslint-disable-next-line import/no-unresolved
 import * as monaco from "monaco-editor";
@@ -197,14 +194,14 @@ export class MonacoRunner extends DataObject implements
             }
         });
 
-        text.on("op", (op, local) => {
-            if (local) {
+        text.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+            if (ev.isLocal) {
                 return;
             }
 
             try {
                 ignoreModelContentChanges = true;
-                this.mergeDelta(op.contents);
+                this.mergeSequenceDelta(ev);
             } finally {
                 ignoreModelContentChanges = false;
             }
@@ -212,65 +209,26 @@ export class MonacoRunner extends DataObject implements
     }
 
     /**
-     * Merge changes to the text from incoming ops.
-     * @param delta The incoming op contents
+     * SequenceDeltaEvent merge
      */
-    private mergeDelta(delta: IMergeTreeOp): void {
-        switch (delta.type) {
-            case MergeTreeDeltaType.GROUP:
-                this.mergeDeltaGroup(delta);
-                break;
-            case MergeTreeDeltaType.INSERT:
-                this.mergeInsertDelta(delta);
-                break;
-            case MergeTreeDeltaType.REMOVE:
-                this.mergeRemoveDelta(delta);
-                break;
-            default:
-                break;
+    private mergeSequenceDelta(ev: SequenceDeltaEvent): void {
+        for(const range of ev.ranges) {
+            const segment = range.segment;
+
+            if (range.operation === MergeTreeDeltaType.INSERT) {
+                if (TextSegment.is(segment)) {
+                    const posRange = this.offsetsToRange(range.position);
+                    const text = segment.text || "";
+                    this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                }
+            } else if (range.operation === MergeTreeDeltaType.REMOVE) {
+                if (TextSegment.is(segment)) {
+                    const posRange = this.offsetsToRange(range.position, range.position + segment.text.length);
+                    const text = "";
+                    this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                }
+            }
         }
-    }
-
-    /**
-     * Unpack group ops to merge them individually.
-     * @param delta The incoming op contents
-     */
-    private mergeDeltaGroup(delta: IMergeTreeGroupMsg): void {
-        for (const op of delta.ops) {
-            this.mergeDelta(op);
-        }
-    }
-
-    /**
-     * Merge an insert operation.
-     * @param delta The insert message
-     */
-    private mergeInsertDelta(delta: IMergeTreeInsertMsg): void {
-        if (typeof delta.pos1 !== "number" ||
-            typeof delta.seg !== "string"
-        ) {
-            return;
-        }
-
-        const range = this.offsetsToRange(delta.pos1, delta.pos2);
-        const text = delta.seg || "";
-        this.codeEditor.executeEdits("remote", [{ range, text }]);
-    }
-
-    /**
-     * Merge a remove operation.
-     * @param delta The remove message
-     */
-    private mergeRemoveDelta(delta: IMergeTreeRemoveMsg): void {
-        if (typeof delta.pos1 !== "number" ||
-            typeof delta.pos2 !== "number"
-        ) {
-            return;
-        }
-
-        const range = this.offsetsToRange(delta.pos1, delta.pos2);
-        const text = "";
-        this.codeEditor.executeEdits("remote", [{ range, text }]);
     }
 
     /**
