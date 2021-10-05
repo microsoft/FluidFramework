@@ -1742,18 +1742,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.messageCountAfterDisconnection = 0;
         }
 
-        const state = this.connectionState === ConnectionState.Connected;
-        if (!this.context.disposed) {
-            this.context.setConnectionState(state, this.clientId);
-        }
-        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
-        this.protocolHandler.quorum.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.logger, this, state, this.clientId);
+        PerformanceEvent.timedExec(
+            this.logger,
+            { eventName: "OpsSentOnReconnect" },
+            (event)=>{
+                const state = this.connectionState === ConnectionState.Connected;
+                if (!this.context.disposed) {
+                    this.context.setConnectionState(state, this.clientId);
+                }
+                assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
+                this.protocolHandler.quorum.setConnectionState(state, this.clientId);
+                raiseConnectedEvent(this.logger, this, state, this.clientId);
 
-        if (logOpsOnReconnect) {
-            this.logger.sendTelemetryEvent(
-                { eventName: "OpsSentOnReconnect", count: this.messageCountAfterDisconnection });
-        }
+                event.end({
+                    count: this.messageCountAfterDisconnection,
+                });
+            },
+            logOpsOnReconnect ? {end: true} : {});
     }
 
     private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
