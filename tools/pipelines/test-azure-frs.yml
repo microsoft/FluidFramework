@@ -23,6 +23,21 @@ variables:
   value: $(Pipeline.Workspace)/test
 
 stages:
+
+  # Run tinylicious tests (temp)
+  - stage:
+    displayName: e2e - tinylicious
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Lite
+        testPackage: "@fluidframework/test-end-to-end-tests"
+        testWorkspace: ${{ variables.testWorkspace }}
+        target: tinylicious
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
     # Run Azure FRS Tests
   - stage:
     displayName: e2e - azure
