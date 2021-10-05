@@ -39,6 +39,10 @@ export interface ITenantDocument {
 
     // Whether the tenant is disabled
     disabled: boolean;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // Only applicable if the tenant is disabled.
+    deletionTime?: string;
 }
 
 export class TenantManager {
@@ -75,8 +79,8 @@ export class TenantManager {
     /**
      * Retrieves the details for the given tenant
      */
-    public async getTenant(tenantId: string): Promise<ITenantConfig> {
-        const tenant = await this.getTenantDocument(tenantId);
+    public async getTenant(tenantId: string, includedDeleted = false): Promise<ITenantConfig> {
+        const tenant = await this.getTenantDocument(tenantId, includedDeleted);
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
@@ -98,14 +102,15 @@ export class TenantManager {
     /**
      * Retrieves the details for all tenants
      */
-    public async getAllTenants(): Promise<ITenantConfig[]> {
-        const tenants = await this.getAllTenantDocuments();
+    public async getAllTenants(includedDeleted = false): Promise<ITenantConfig[]> {
+        const tenants = await this.getAllTenantDocuments(includedDeleted);
 
         return tenants.map((tenant) => ({
             id: tenant._id,
             orderer: tenant.orderer,
             storage: tenant.storage,
             customData: tenant.customData,
+            deletionTime: tenant.deletionTime,
         }));
     }
 
@@ -157,7 +162,7 @@ export class TenantManager {
 
         await collection.update({ _id: tenantId }, { storage }, null);
 
-        return (await this.getTenantDocument(tenantId)).storage;
+        return (await this.getTenantDocument(tenantId, false)).storage;
     }
 
     /**
@@ -169,7 +174,7 @@ export class TenantManager {
 
         await collection.update({ _id: tenantId }, { orderer }, null);
 
-        return (await this.getTenantDocument(tenantId)).orderer;
+        return (await this.getTenantDocument(tenantId, false)).orderer;
     }
 
     /**
@@ -184,14 +189,14 @@ export class TenantManager {
         }
         await collection.update({ _id: tenantId }, { customData }, null);
 
-        return (await this.getTenantDocument(tenantId)).customData;
+        return (await this.getTenantDocument(tenantId, false)).customData;
     }
 
     /**
      * Retrieves the secret for the given tenant
      */
     public async getTenantKey(tenantId: string): Promise<string> {
-        const encryptedTenantKey = (await this.getTenantDocument(tenantId)).key;
+        const encryptedTenantKey = (await this.getTenantDocument(tenantId, false)).key;
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
@@ -251,12 +256,12 @@ export class TenantManager {
     /**
      * Retrieves the raw database tenant document
      */
-    private async getTenantDocument(tenantId: string): Promise<ITenantDocument> {
+    private async getTenantDocument(tenantId: string, includedDeleted: boolean): Promise<ITenantDocument> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const found = await collection.findOne({ _id: tenantId });
-        if (found.disabled) {
+        if (found.disabled && !includedDeleted) {
             return null;
         }
 
@@ -268,7 +273,7 @@ export class TenantManager {
     /**
      * Retrieves all the raw database tenant documents
      */
-    private async getAllTenantDocuments(): Promise<ITenantDocument[]> {
+    private async getAllTenantDocuments(includeDeleted = false): Promise<ITenantDocument[]> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
@@ -278,17 +283,31 @@ export class TenantManager {
             this.attachDefaultsToTenantDocument(found);
         });
 
-        return allFound.filter((found) => !found.disabled);
+        return includeDeleted ? allFound : allFound.filter((found) => !found.disabled);
     }
 
     /**
-     * Flags the given tenant as disabled
+     * Deletes a tenant
+     * @param tenantId: Id of the tenant to delete.
+     * @param deletionTime: If present, indicates when to hard-delete the tenant.
+     * If no deletionTime is provided the tenant is only soft-deleted.
      */
-    public async disableTenant(tenantId: string): Promise<void> {
+    public async deleteTenant(tenantId: string, deletionTime?: Date): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-
-        await collection.update({ _id: tenantId }, { disabled: true }, null);
+        const softDelete = !deletionTime || deletionTime.getTime() > Date.now();
+        if (softDelete) {
+            const query = {
+                _id: tenantId,
+                disabled: false,
+            };
+            await collection.update(query, {
+                disabled: true,
+                deletionTime: deletionTime.toJSON(),
+            }, null);
+        } else {
+            await collection.deleteOne({ _id: tenantId });
+        }
     }
 
     private encryptAccessInfo(accessInfo: any): string {

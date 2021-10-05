@@ -13,6 +13,10 @@ export interface ITenantConfig {
     orderer: ITenantOrderer;
 
     customData: ITenantCustomData;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // The tenant is soft deleted if a deletion timestamp is present.
+    deletionTime?: string;
 }
 
 export interface ITenantStorage {

@@ -47,7 +47,8 @@ export function create(
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.getTenant(tenantId);
+        const includeDisabled = request.get("Include-Deleted")?.toLowerCase() === "true";
+        const tenantP = manager.getTenant(tenantId, includeDisabled);
         handleResponse(tenantP, response);
     });
 
@@ -55,7 +56,8 @@ export function create(
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const tenantP = manager.getAllTenants();
+        const includeDisabled = request.get("Include-Deleted")?.toLowerCase() === "true";
+        const tenantP = manager.getAllTenants(includeDisabled);
         handleResponse(tenantP, response);
     });
 
@@ -119,11 +121,13 @@ export function create(
     });
 
     /**
-     * Deletes a tenant by adding a disabled flag
+     * Deletes a tenant
      */
     router.delete("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.disableTenant(tenantId);
+        const deletionTimeStr = request.body.deletionTime;
+        const deletionTime = deletionTimeStr ? new Date(deletionTimeStr) : null;
+        const tenantP = manager.deleteTenant(tenantId, deletionTime);
         handleResponse(tenantP, response);
     });
 
