@@ -11,7 +11,7 @@ const { MSG } = require('@fluid-experimental/property-common').constants;
 const { _castFunctors } = require('./primitiveTypeCasts');
 const { BaseProperty } = require('./baseProperty');
 const { MapProperty } = require('./mapProperty');
-const { Int64, Uint64 } = require('@fluid-experimental/property-common').Datastructures;
+const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 const { Int64Property, Uint64Property } = require('../properties/intProperties');
 
 /**

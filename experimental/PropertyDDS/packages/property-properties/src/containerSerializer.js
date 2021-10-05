@@ -5,7 +5,7 @@
 /**
  * @namespace property-properties
  */
-const Property = require('./propertyFactory');
+const { LazyLoadedProperties: Property } = require('./properties/lazyLoadedProperties');
 const { AbstractStaticCollectionProperty } = require('./properties/abstractStaticCollectionProperty')
 const { PathHelper } = require('@fluid-experimental/property-changeset');
 

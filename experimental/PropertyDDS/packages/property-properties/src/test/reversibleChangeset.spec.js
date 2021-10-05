@@ -9,9 +9,8 @@
 const _ = require('lodash');
 const { PropertyFactory } = require('..');
 const { ChangeSet } = require('@fluid-experimental/property-changeset')
+const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 const deepCopy = _.cloneDeep;
-const { Int64 } = require('@fluid-experimental/property-common').Datastructures;
-const { Uint64 } = require('@fluid-experimental/property-common').Datastructures;
 
 describe('Reversible ChangeSets', function () {
 

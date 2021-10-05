@@ -9,7 +9,7 @@
  */
 
 const { PropertyFactory } = require('../..');
-const { Uint64 } = require('@fluid-experimental/property-common').Datastructures;
+const { Uint64 } = require('@fluid-experimental/property-common');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 
 describe('Test Uint64Property', function () {

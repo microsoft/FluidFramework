@@ -6,8 +6,8 @@
  * @fileoverview Helper functions to cast a JavaScript type to a value that is compatible with a given primitive type
  */
 const _ = require('lodash');
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
-const { Int64, Uint64 } = require('@fluid-experimental/property-common').Datastructures;
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { Int64, Uint64 } = require('@fluid-experimental/property-common');
 
 var castArrays = {
     Uint32: new Uint32Array(1),

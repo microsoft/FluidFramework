@@ -15,10 +15,11 @@ const {
     Collection,
     ConsoleUtils,
     EventEmitter,
-    SortedCollection
+    SortedCollection,
+    constants,
+    GuidUtils
 } = require('@fluid-experimental/property-common');
-const MSG = require('@fluid-experimental/property-common').constants.MSG;
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
+const { MSG } = constants;
 
 const {
     TypeIdHelper,
@@ -819,7 +820,7 @@ class PropertyFactory {
             this._localPrimitivePropertiesAndTemplates.add(in_typeid, wrapper);
         }
 
-        this._eventEmitter.trigger('registered', this, in_templateOrProperty);
+        this._eventEmitter.emit('registered', in_templateOrProperty);
     };
 
     /**
@@ -964,13 +965,13 @@ class PropertyFactory {
             }
         }
 
-        var property;
+        let property;
         if (in_optimizeConstants) {
             var templateOrProperty = this._getWrapper(in_typeid, undefined, in_scope);
             var isProperty = templateOrProperty instanceof PropertyTemplateWrapper;
             var evaluateConstants = isProperty ? !templateOrProperty.hasConstantTree() : false;
 
-            var property = this._createFromPropertyDeclaration({
+            property = this._createFromPropertyDeclaration({
                 typeid: in_typeid,
                 context: context || 'single'
             }, undefined, in_scope, evaluateConstants);
@@ -1349,7 +1350,7 @@ class PropertyFactory {
 
         // If this property inherits from NamedProperty we assign a random GUID
         if (typeid && this.inheritsFrom(typeid, 'NamedProperty', { scope: in_scope })) {
-            parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).value = generateGUID();
+            parent.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }).value = GuidUtils.generateGUID();
         }
 
         return parent;

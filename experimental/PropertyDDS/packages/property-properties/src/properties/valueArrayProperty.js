@@ -10,12 +10,15 @@
 const _ = require('lodash');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { _castFunctors } = require('./primitiveTypeCasts');
-const Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-const Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
-const DataArrays = require('@fluid-experimental/property-common').Datastructures.DataArrays;
+const {
+    BaseDataArray,
+    UniversalDataArray,
+    BoolDataArray,
+    Uint64,
+    Int64
+} = require('@fluid-experimental/property-common');
 const { ArrayProperty } = require('./arrayProperty');
-const { Int64Property } = require('../properties/intProperties');
-const { Uint64Property } = require('../properties/intProperties');
+const { Int64Property, Uint64Property } = require('../properties/intProperties');
 
 /**
  * An array property which stores primitive values
@@ -122,7 +125,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Float32', ...in_params });
+        super({ ...in_params, typeid: 'Float32' });
     };
 
     /**
@@ -130,7 +133,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Float32Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Float32Array, in_length);
     };
 }
 
@@ -148,7 +151,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Float64', ...in_params });
+        super({ ...in_params, typeid: 'Float64' });
     };
 
     /**
@@ -156,7 +159,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Float64Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Float64Array, in_length);
     };
 }
 
@@ -182,7 +185,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Uint8Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Uint8Array, in_length);
     };
 }
 
@@ -209,7 +212,7 @@ export class Int8ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Int8Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Int8Array, in_length);
     };
 
 }
@@ -236,7 +239,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Uint16Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Uint16Array, in_length);
     };
 }
 
@@ -263,7 +266,7 @@ export class Int16ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Int16Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Int16Array, in_length);
     };
 
 }
@@ -281,7 +284,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({  ...in_params, typeid: 'Uint32' });
+        super({ ...in_params, typeid: 'Uint32' });
     };
 
 
@@ -290,7 +293,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Uint32Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Uint32Array, in_length);
     };
 }
 
@@ -309,7 +312,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Int32', ...in_params });
+        super({ ...in_params, typeid: 'Int32' });
     };
 
     /**
@@ -317,7 +320,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BaseDataArray(Int32Array, in_length);
+        this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
     };
 }
 
@@ -422,7 +425,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Int64', ...in_params });
+        super({ ...in_params, typeid: 'Int64' });
     };
 
     /**
@@ -477,7 +480,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+        this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, new Int64());
         }
@@ -499,7 +502,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Uint64', ...in_params });
+        super({ ...in_params, typeid: 'Uint64' });
     };
 
     /**
@@ -554,7 +557,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+        this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, new Uint64());
         }
@@ -576,7 +579,7 @@ export class StringArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'String', ...in_params });
+        super({ ...in_params, typeid: 'String' });
     };
 
     /**
@@ -584,7 +587,7 @@ export class StringArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+        this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, '');
         }
@@ -606,7 +609,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ typeid: 'Uint32', ...in_params }, Array, true);
+        super({ ...in_params, typeid: 'Uint32' }, Array, true);
     };
 
     /**
@@ -614,7 +617,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.BoolDataArray(in_length);
+        this._dataArrayRef = new BoolDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, false);
         }

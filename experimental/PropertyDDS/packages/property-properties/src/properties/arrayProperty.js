@@ -8,7 +8,6 @@
 const _ = require('lodash');
 const { BaseProperty } = require('./baseProperty');
 const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
-const { DataArrays } = require('@fluid-experimental/property-common').Datastructures;
 const { deserializeNonPrimitiveArrayElements } = require('../containerSerializer');
 const {
     ArrayChangeSetIterator,
@@ -18,7 +17,7 @@ const {
 } = require('@fluid-experimental/property-changeset');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
+const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
 const deepCopy = _.cloneDeep;
 
 
@@ -1665,7 +1664,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _dataArrayCreate(in_length) {
         // This really creates a generic array for custom type arrays. For primitive arrays, like
         // 'StringArrayProperty' or 'Float32ArrayProperty', you need to overload this function.
-        this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+        this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             var element = Property.PropertyFactory._createProperty(this.getTypeid(), null, undefined, this._scope);
             element._setParent(this);

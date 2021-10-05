@@ -14,7 +14,8 @@ const { ChangeSet } = require('@fluid-experimental/property-changeset');
 const {
     ConsoleUtils,
     constants: { MSG },
-    Datastructures: { Uint64, Int64 }
+    Uint64,
+    Int64
 } = require('@fluid-experimental/property-common');
 
 const BIT32 = 4294967296;

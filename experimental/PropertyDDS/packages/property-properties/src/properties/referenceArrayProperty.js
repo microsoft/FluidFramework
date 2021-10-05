@@ -10,8 +10,7 @@ const { ValueArrayProperty } = require('./valueArrayProperty');
 const { PathHelper, TypeIdHelper } = require('@fluid-experimental/property-changeset');
 const { BaseProperty } = require('./baseProperty');
 const { MSG } = require('@fluid-experimental/property-common').constants;
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
-const { DataArrays } = require('@fluid-experimental/property-common').Datastructures;
+const { UniversalDataArray, ConsoleUtils } = require('@fluid-experimental/property-common');
 const { AbstractStaticCollectionProperty } = require('./abstractStaticCollectionProperty');
 const { ReferenceProperty } = require('./referenceProperty');
 
@@ -222,7 +221,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * @param {Number} in_length      the initial length of the array
      */
     _dataArrayCreate(in_length) {
-        this._dataArrayRef = new DataArrays.UniversalDataArray(in_length);
+        this._dataArrayRef = new UniversalDataArray(in_length);
         for (var i = 0; i < in_length; i++) {
             this._dataArraySetValue(i, '');
         }
