@@ -67,8 +67,12 @@ export function throttle(
         };
 
         if (throttleOptions.weight === 0) {
-            logger?.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.");
-            Lumberjack.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.");
+            const messageMetaData = {
+                weight: 0,
+                eventName: "throttling",
+            };
+            logger?.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.", { messageMetaData });
+            Lumberjack.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.", { [CommonProperties.telemetryGroupName]: "throttling" });
             return noopMiddleware;
         }
 
