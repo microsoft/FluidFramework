@@ -69,7 +69,7 @@ describe("AzureClient", () => {
             container.attachState, AttachState.Attached,
             "Container is not attached after attach is called",
         );
-    });
+    }).timeout(10000);
 
     /**
      * Scenario: Test if attaching a container twice fails.
@@ -99,7 +99,7 @@ describe("AzureClient", () => {
             () => true,
             "Container should not attach twice",
         );
-    });
+    }).timeout(10000);
 
     /**
      * Scenario: test if Azure Client can get an existing container.
@@ -122,7 +122,7 @@ describe("AzureClient", () => {
             () => true,
             "container cannot be retrieved from Azure Fluid Relay",
         );
-    });
+    }).timeout(10000);
 
     /**
      * Scenario: test if Azure Client can get a non-exiting container.
@@ -145,7 +145,7 @@ describe("AzureClient", () => {
             "Azure Client can load a non-existent container",
         );
         console.error = consoleErrorFn;
-    });
+    }).timeout(10000);
 
     /**
      * Scenario: test when an Azure Client container is created,
@@ -172,7 +172,7 @@ describe("AzureClient", () => {
 
         const container = (await resources).container;
         assert.deepStrictEqual(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
-    });
+    }).timeout(10000);
 
     /**
      * Scenario: test if initialObjects passed into the container functions correctly.
@@ -198,7 +198,7 @@ describe("AzureClient", () => {
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
         const valueGet = await map1Get.wait("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
-    });
+    }).timeout(10000);
 
     /**
      * Scenario: test if the optional schema parameter, dynamicObjectTypes (custom data objects),
@@ -225,5 +225,5 @@ describe("AzureClient", () => {
         map1.set("new-pair-id", newPair.handle);
         const obj = await map1.get("new-pair-id").get();
         assert.ok(obj, "container added dynamic objects incorrectly");
-    });
+    }).timeout(10000);
 });
