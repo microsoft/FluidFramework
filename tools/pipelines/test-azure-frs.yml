@@ -21,9 +21,9 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: $(Pipeline.Workspace)/packages/framework/azure-client
-  value: $(Pipeline.Workspace)/test
-
+- name: testPath
+  value: $(Pipeline.Workspace)/packages/framework/azure-client
+  
 stages:
   # Run Azure FRS Tests
   - stage:
