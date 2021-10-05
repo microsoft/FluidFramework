@@ -21,6 +21,8 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
+- name: $(Pipeline.Workspace)/packages/framework/azure-client
+  value: $(Pipeline.Workspace)/test
 
 stages:
   # Run Azure FRS Tests
@@ -31,8 +33,9 @@ stages:
     - template: templates/include-test-azure-frs.yml
       parameters:
         poolBuild: Lite
-        testPackage: "@fluidframework/test-end-to-end-tests"
-        testWorkspace: $(Pipeline.Workspace)
+        testPackage: "@fluidframework/azure-client"
+        testWorkspace: ${{ variables.testWorkspace }}
+        testPath: ${{ variables.testPath }}
         target: azure
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
