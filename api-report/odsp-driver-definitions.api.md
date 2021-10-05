@@ -170,7 +170,7 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     siteUrl: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ShareLinkInfoType {
     createLink?: {
         type?: ShareLinkTypes;
