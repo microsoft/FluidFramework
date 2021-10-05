@@ -8,9 +8,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-import { InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { InsecureUrlResolver, ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { extractPackageIdentifierDetails } from "@fluidframework/web-code-loader";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { setupUI } from "./codeDetailsView";
 import { InMemoryCodeDetailsLoader } from "./codeDetailsLoader";
 import { getFluidObjectAndRender } from "./utils";
