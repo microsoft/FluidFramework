@@ -1,5 +1,20 @@
 # Change Log
 
+## 11.5.2
+
+* build: update dependencies
+  * Associated pull request: [34930](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34930)
+  * Commit: [fe37d99b6b9e8d57415626f85c0333a7714e8771](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/fe37d99b6b9e8d57415626f85c0333a7714e8771)
+* fix: Resolve test hang issue by lowering client leave wait time
+  * Associated pull request: [34758](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34758)
+  * Commit: [54476d80e88b0324bdc6bc654270fd63314ddd36](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/54476d80e88b0324bdc6bc654270fd63314ddd36)
+* build: Update api-extractor in package-lock and not use ^ versioning
+  * Associated pull request: [34842](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34842)
+  * Commit: [16f01e2ffee0e7e163a12e7c2eff368369f1369d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/16f01e2ffee0e7e163a12e7c2eff368369f1369d)
+* merge: 'releases/2021.09.5' into 'master'
+  * Associated pull request: [34774](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34774)
+  * Commit: [93ec45005f4614c39c46fee8373b352ef3651b4b](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/93ec45005f4614c39c46fee8373b352ef3651b4b)
+
 ## 11.3.0
 
 * build: add build-code script for faster incremental builds while testing
