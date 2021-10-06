@@ -65,7 +65,7 @@
     "@fluidframework/driver-definitions": "^0.40.0",
     "@fluidframework/driver-utils": "^0.49.0",
     "@fluidframework/garbage-collector": "^0.49.0",
-    "@fluidframework/protocol-base": "^0.1032.0-39277",
+    "@fluidframework/protocol-base": "^0.1032.0",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/runtime-definitions": "^0.49.0",
     "@fluidframework/runtime-utils": "^0.49.0",
