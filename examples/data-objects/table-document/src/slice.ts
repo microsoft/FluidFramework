@@ -131,7 +131,7 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
         this.maybeValues = await this.doc.getRange(this.root.get(ConfigKey.valuesKey));
 
         this.root.on("op", this.emitOp);
-        this.doc.on("op", this.emitOp);
+        this.doc.on("sequenceDelta", this.emitSequenceDelta);
     }
 
     private async ensureDoc() {
@@ -164,5 +164,9 @@ export class TableSlice extends DataObject<{}, ITableSliceConfig> implements ITa
 
     private readonly emitOp = (...args: any[]) => {
         this.emit("op", ...args);
+    };
+
+    private readonly emitSequenceDelta = (...args: any[]) => {
+        this.emit("sequenceDelta", ...args);
     };
 }
