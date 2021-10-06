@@ -158,9 +158,20 @@ jobs:
         displayName: 'npm install'
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/azure-client
           customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger fluid-framework cross-env mocha'
           customRegistry: 'useNpmrc'
+
+      # build the tests
+      - task: Npm@1
+        displayName: '[end-to-end tests] npm run test:realsvc:${{ parameters.target }} ${{ variant }}'
+        continueOnError: true
+        env:
+          ${{ parameters.env }}
+        inputs:
+          command: 'custom'
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/azure-client
+          customCommand: 'run build:test'   
 
       # run the test
       - task: Npm@1
