@@ -52,7 +52,7 @@
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct": "^0.49.0",
+    "@fluidframework/aqueduct": "^0.50.0",
     "@fluidframework/azure-local-service": "^0.1.38773",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
