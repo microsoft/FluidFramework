@@ -43,62 +43,14 @@
             "totalSendCount": 10000,
             "readWriteCycleMs": 30000
         },
-        "BaseScenario_2.5": {
-            "opRatePerMin": 30,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 9000,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMinMs": 1800000,
-            "faultInjectionMaxMs": 3600000
-        },
-        "BaseScenario_5": {
-            "opRatePerMin": 68,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 18000,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMinMs": 1800000,
-            "faultInjectionMaxMs": 3600000
-        },
-        "BaseScenario_2.5_nofault": {
-            "opRatePerMin": 30,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 9000,
-            "readWriteCycleMs": 30000
-        },
-        "BaseScenario_5_nofault": {
-            "opRatePerMin": 68,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 18000,
-            "readWriteCycleMs": 30000
-        },
-        "LongScenario_2.5": {
-            "opRatePerMin": 30,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 35000,
-            "readWriteCycleMs": 30000,
-            "faultInjectionMinMs": 1800000,
-            "faultInjectionMaxMs": 3600000
-        },
         "LongScenario_5": {
             "opRatePerMin": 68,
             "progressIntervalMs": 20000,
             "numClients": 10,
             "totalSendCount": 70000,
             "readWriteCycleMs": 30000,
-            "faultInjectionMinMs": 1800000,
-            "faultInjectionMaxMs": 3600000
-        },
-        "LongScenario_2.5_nofault": {
-            "opRatePerMin": 30,
-            "progressIntervalMs": 20000,
-            "numClients": 10,
-            "totalSendCount": 35000,
-            "readWriteCycleMs": 30000
+            "faultInjectionMinMs": 900000,
+            "faultInjectionMaxMs": 1800000
         },
         "LongScenario_5_nofault": {
             "opRatePerMin": 68,
