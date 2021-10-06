@@ -62,11 +62,13 @@ export class Throttler implements IThrottler {
                 },
             });
             Lumberjack.info(
-                `Throttled: ${id}`,                         {
+                `Throttled: ${id}`,
                 {
                     [CommonProperties.telemetryGroupName]: "throttling",
                     [ThrottlingTelemetryProperties.key]: id,
-                }
+                    [ThrottlingTelemetryProperties.reason]: cachedThrottlerResponse.throttleReason,
+                    [ThrottlingTelemetryProperties.retryAfterInSeconds]: retryAfterInSeconds,
+                },
             );
             // eslint-disable-next-line @typescript-eslint/no-throw-literal
             throw new ThrottlingError(
@@ -106,6 +108,7 @@ export class Throttler implements IThrottler {
             const lumberjackProperties = {
                 [CommonProperties.telemetryGroupName]: "throttling",
                 [ThrottlingTelemetryProperties.key]: id,
+                [ThrottlingTelemetryProperties.weight]: countDelta,
             };
             await this.throttlerHelper.updateCount(id, countDelta)
                 .then((throttlerResponse) => {

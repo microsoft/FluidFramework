@@ -62,7 +62,16 @@ export enum CommonProperties {
 
 export enum ThrottlingTelemetryProperties {
     // Use throttleId as key
-    key = "key"
+    key = "key",
+
+    // Throttle reason
+    reason = "reason",
+
+    // Retry after in seconds
+    retryAfterInSeconds = "retryAfterInSeconds",
+
+    // Log throttleOptions.weight
+    weight = "weight",
 }
 
 export enum SessionState {

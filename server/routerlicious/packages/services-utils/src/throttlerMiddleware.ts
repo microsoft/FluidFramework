@@ -71,8 +71,17 @@ export function throttle(
                 weight: 0,
                 eventName: "throttling",
             };
-            logger?.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.", { messageMetaData });
-            Lumberjack.info("Throttle middleware created with 0 weight: Replacing with no-op middleware.", { [CommonProperties.telemetryGroupName]: "throttling" });
+            logger?.info(
+                "Throttle middleware created with 0 weight: Replacing with no-op middleware.",
+                { messageMetaData },
+            );
+            Lumberjack.info(
+                "Throttle middleware created with 0 weight: Replacing with no-op middleware.",
+                {
+                    [CommonProperties.telemetryGroupName]: "throttling",
+                    [ThrottlingTelemetryProperties.weight]: 0,
+                },
+            );
             return noopMiddleware;
         }
 
@@ -94,12 +103,12 @@ export function throttle(
                             },
                         });
                     Lumberjack.error(
-                        `Throttle increment failed`, 
+                        `Throttle increment failed`,
                         {
                             [CommonProperties.telemetryGroupName]: "throttling",
                             [ThrottlingTelemetryProperties.key]: throttleId,
                         },
-                        e
+                        e,
                     );
                 }
             }

@@ -28,7 +28,7 @@ export class ClientManager implements IClientManager {
 
         client.on("error", (error) => {
             winston.error("Client Manager Redis Error:", error);
-            Lumberjack.error("Client Manager Redis Error:", undefined, error);
+            Lumberjack.error("Client Manager Redis Error", undefined, error);
         });
     }
 
