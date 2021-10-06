@@ -15,10 +15,6 @@ import {
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
-const testContainerConfig: ITestContainerConfig = {
-    fluidDataObjectType: DataObjectFactoryType.Test,
-};
-
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
@@ -30,29 +26,35 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let dataObject1: ITestFluidObject;
     let dataObject2: ITestFluidObject;
 
-    const dataStoreName = "rootDataStore";
     const packageName = "default";
-
-    beforeEach(async () => {
-        container1 = await provider.makeTestContainer(testContainerConfig);
-        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
-
-        container2 = await provider.loadTestContainer(testContainerConfig);
-        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
-
-        await provider.ensureSynchronized();
-    });
+    const testContainerConfig: ITestContainerConfig = {
+        fluidDataObjectType: DataObjectFactoryType.Test,
+    };
 
     describe("Name conflict", () => {
+        beforeEach(async () => {
+            container1 = await provider.makeTestContainer(testContainerConfig);
+            dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
+
+            container2 = await provider.loadTestContainer(testContainerConfig);
+            dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+
+            await provider.ensureSynchronized();
+        });
+
+        afterEach(async () => {
+            provider.reset();
+        });
+
         it("Root datastore creation does not fail at attach op", async () => {
             // Cut off communications between the two clients
             await container1.deltaManager.outbound.pause();
             await container2.deltaManager.inbound.pause();
 
             const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, dataStoreName);
+                .createRootDataStore(packageName, "1");
             const rootDataStore2 = await (dataObject2.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, dataStoreName);
+                .createRootDataStore(packageName, "1");
 
             // Restore communications.
             // At this point, two `ContainerMessageType.Attach` messages will be sent and processed.
@@ -68,9 +70,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         it("Root datastore creation does not fail when already attached", async () => {
             const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, dataStoreName);
+                .createRootDataStore(packageName, "2");
             const rootDataStore2 = await (dataObject2.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, dataStoreName);
+                .createRootDataStore(packageName, "2");
 
             await provider.ensureSynchronized();
 
@@ -81,9 +83,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
         it("Root datastore creation does not fail when already attached - same container", async () => {
             const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, dataStoreName);
+                .createRootDataStore(packageName, "3");
             const rootDataStore2 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, dataStoreName);
+                .createRootDataStore(packageName, "3");
 
             await provider.ensureSynchronized();
 
