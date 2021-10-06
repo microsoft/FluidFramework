@@ -700,7 +700,7 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
-    canAppend(segment: ISegment): boolean;
+    canAppend(segment: ISegment): any;
     // (undocumented)
     clone(start?: number, end?: number): SubSequence<T>;
     // (undocumented)
