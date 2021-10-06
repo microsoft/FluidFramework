@@ -44,19 +44,12 @@ export class RedisCache implements ICache {
         }
     }
 
-    public async deleteIfExists(key: string): Promise<void> {
-        const exists = await this.client.exists(this.getKey(key));
-        if (!exists) {
-            return;
-        }
-
+    public async delete(key: string): Promise<boolean> {
         const result = await this.client.del(this.getKey(key));
         // The DEL API in Redis returns the number of keys that were removed.
-        // If the key exists and we try to delete it, we expect a result equal to 1
-        // to indicate success
-        if (result !== 1) {
-            return Promise.reject(new Error(`Unable to delete key ${this.getKey(key)} from Redis.`));
-        }
+        // We always call Redis DEL with one key only, so we expect a result equal to 1
+        // to indicate that the key was removed. 0 would indicate that the key does not exist.
+        return result === 1;
     }
 
     /**

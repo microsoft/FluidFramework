@@ -196,7 +196,7 @@ export class RestGitService {
         const summaryResponse = await this.post<IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
-        this.deleteFromCacheIfExists(this.getSummaryCacheKey(summaryParams.type));
+        this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
         return summaryResponse;
     }
 
@@ -205,8 +205,8 @@ export class RestGitService {
 
         // First, delete any cached summary (including both types, "channel" and "container")
         // from the Redis cache
-        this.deleteFromCacheIfExists(this.getSummaryCacheKey("channel"));
-        this.deleteFromCacheIfExists(this.getSummaryCacheKey("container"));
+        this.deleteFromCache(this.getSummaryCacheKey("channel"));
+        this.deleteFromCache(this.getSummaryCacheKey("container"));
 
         // Finally, delete from storage.
         return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
@@ -393,7 +393,7 @@ export class RestGitService {
     /**
      * Caches the given key/value pair. Will log any errors with the cache.
      */
-    private setCache<T>(key: string, value: T) {
+    private setCache<T>(key: string, value: T): void {
         if (this.cache) {
             // Attempt to cache to Redis - log any errors but don't fail
             this.cache.set(key, value).catch((error) => {
@@ -404,12 +404,12 @@ export class RestGitService {
     }
 
     /**
-     * Deletes the given key from the cache, if it exists. Will log any errors with the cache.
+     * Deletes the given key from the cache. Will log any errors with the cache.
      */
-     private deleteFromCacheIfExists<T>(key: string) {
+     private deleteFromCache(key: string): void {
         if (this.cache) {
             // Attempt to delete the key from Redis - log any errors but don't fail
-            this.cache.deleteIfExists(key).catch((error) => {
+            this.cache.delete(key).catch((error) => {
                 winston.error(`Error deleting key ${key} from Redis cache`, error);
                 Lumberjack.error(`Error deleting key ${key} from Redis cache`, this.lumberProperties, error);
             });
@@ -443,7 +443,7 @@ export class RestGitService {
         }
     }
 
-    private getSummaryCacheKey(type: IWholeSummaryPayloadType) {
+    private getSummaryCacheKey(type: IWholeSummaryPayloadType): string {
         return `${this.tenantId}:${this.documentId}:summary:${type}`;
     }
 }
