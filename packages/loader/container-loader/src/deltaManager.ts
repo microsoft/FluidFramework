@@ -48,6 +48,7 @@ import {
     ITrace,
     MessageType,
     ScopeType,
+    ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     canRetryOnError,
@@ -241,6 +242,12 @@ export class DeltaManager
 
     private readonly closeAbortController = new AbortController();
 
+    // True if there is pending (async) reconnection from "read" to "write"
+    private pendingReconnect = false;
+
+    // downgrade "write" connection to "read"
+    private downgradedConnection = false;
+
     /**
      * Tells if  current connection has checkpoint information.
      * I.e. we know how far behind the client was at the time of establishing connection
@@ -316,7 +323,9 @@ export class DeltaManager
      * The current connection mode, initially read.
      */
     public get connectionMode(): ConnectionMode {
-        if (this.connection === undefined) {
+        assert(!this.downgradedConnection || this.connection?.mode === "write",
+            "Did we forget to reset downgradedConnection on new connection?");
+        if (this.connection === undefined || this.downgradedConnection) {
             return "read";
         }
         return this.connection.mode;
@@ -840,6 +849,30 @@ export class DeltaManager
             this.clientSequenceNumberObserved = 0;
         }
 
+        // If connection is "read" or implicit "read" (got leave op for "write" connection),
+        // then op can't make it through - we will get a nack if op is sent.
+        // We can short-circuit this process.
+        // Note that we also want nacks to be rare and be treated catastrophic failure
+        // Be careful with reentrancy though - disconnected event will be raised in the
+        // middle of the current workflow!
+        if (this.connectionMode === "read") {
+            if (!this.pendingReconnect) {
+                this.pendingReconnect = true;
+                Promise.resolve().then(async () => {
+                    if (this.pendingReconnect) { // still valid?
+                        return this.reconnectOnError(
+                            "write", // connectionMode
+                            new GenericNetworkError("Switch to write", true /* canReconnect */));
+                    }
+                })
+                .catch(() => {});
+            }
+
+            // Can return -1 here, but no other path does it (other than error path in Container),
+            // so it's better not to introduce new states.
+            return ++this.clientSequenceNumber;
+        }
+
         const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
             ? "unknown"
             : this.clientDetails.type;
@@ -1229,6 +1262,9 @@ export class DeltaManager
      * @param reason - Text description of disconnect reason to emit with disconnect event
      */
     private disconnectFromDeltaStream(reason: string) {
+        this.pendingReconnect = false;
+        this.downgradedConnection = false;
+
         if (this.connection === undefined) {
             return false;
         }
@@ -1493,6 +1529,17 @@ export class DeltaManager
             && message.type !== MessageType.ClientLeave
         ) {
             message.contents = JSON.parse(message.contents);
+        }
+
+        if (message.type === MessageType.ClientLeave) {
+            const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+            const clientId = JSON.parse(systemLeaveMessage.data) as string;
+            if (clientId === this.connection?.clientId) {
+                // We have been kicked out from quorum
+                this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
+                this.downgradedConnection = true;
+                assert(this.connectionMode === "read", "connectionMode");
+            }
         }
 
         // Add final ack trace.
