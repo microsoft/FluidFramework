@@ -28,6 +28,7 @@ import { TreeNodeHandle } from '../../TreeNodeHandle';
 import { deserialize, SharedTreeSummary_0_0_2 } from '../../SummaryBackCompatibility';
 import { SharedTreeWithAnchors } from '../../anchored-edits';
 import { RevisionView } from '../../TreeView';
+import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
 import { revert } from '../../default-edits/UndoRedoHandler';
 import {
 	makeEmptyNode,
@@ -929,74 +930,114 @@ export function runSharedTreeOperationsTests<TSharedTree extends SharedTree | Sh
 		});
 
 		describe('telemetry', () => {
-			it('decorates events with the correct properties', async () => {
-				// Test that a handle can wrap a node and retrieve that node's properties
-				const events: ITelemetryBaseEvent[] = [];
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
-					logger: { send: (event) => events.push(event) },
-					allowInvalid: true,
-				});
-				// Invalid edit
-				tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
-				containerRuntimeFactory.processAllMessages();
-				// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-				expect(events.length).is.greaterThan(0);
-				events.forEach((event) => {
-					expect(isSharedTreeEvent(event)).is.true;
-				});
-			});
+			describe('useFailedSequencedEditTelemetry', () => {
+				it('decorates events with the correct properties', async () => {
+					// Test that a handle can wrap a node and retrieve that node's properties
+					const events: ITelemetryBaseEvent[] = [];
+					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+						initialTree: simpleTestTree,
+						logger: { send: (event) => events.push(event) },
+						allowInvalid: true,
+					});
+					useFailedSequencedEditTelemetry(tree);
 
-			it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
-				const events: ITelemetryBaseEvent[] = [];
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
-					logger: { send: (event) => events.push(event) },
-					allowInvalid: true,
-				});
-				// Invalid edit
-				tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
-				expect(events.length).equals(0);
-				containerRuntimeFactory.processAllMessages();
-				// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-				expect(events.length).equals(1);
-				expect(events[0].category).equals('generic');
-				expect(events[0].eventName).equals('SharedTree:InvalidSharedTreeEdit');
-			});
-
-			it('is not logged for valid edits', async () => {
-				const events: ITelemetryBaseEvent[] = [];
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
-					logger: { send: (event) => events.push(event) },
+					// Invalid edit
+					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					containerRuntimeFactory.processAllMessages();
+					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).is.greaterThan(0);
+					events.forEach((event) => {
+						expect(isSharedTreeEvent(event)).is.true;
+					});
 				});
 
-				tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
-				containerRuntimeFactory.processAllMessages();
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-				expect(events.length).equals(0);
-			});
+				it('is logged for invalid locally generated edits when those edits are sequenced', async () => {
+					const events: ITelemetryBaseEvent[] = [];
+					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+						initialTree: simpleTestTree,
+						logger: { send: (event) => events.push(event) },
+						allowInvalid: true,
+					});
+					useFailedSequencedEditTelemetry(tree);
 
-			it('is not logged for remote edits', async () => {
-				const events: ITelemetryBaseEvent[] = [];
-				const { tree, containerRuntimeFactory } = setUpTestSharedTree({
-					initialTree: simpleTestTree,
-					logger: { send: (event) => events.push(event) },
-					allowInvalid: true,
-					localMode: false,
-				});
-				const { tree: secondTree } = setUpTestSharedTree({
-					containerRuntimeFactory,
-					id: 'secondTestSharedTree',
-					localMode: false,
+					// Invalid edit
+					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					expect(events.length).equals(0);
+					containerRuntimeFactory.processAllMessages();
+					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).equals(1);
+					expect(events[0].category).equals('generic');
+					expect(events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 				});
 
-				secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
-				containerRuntimeFactory.processAllMessages();
-				await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-				expect(events.length).equals(0);
+				it('can be disabled and re-enabled', async () => {
+					const events: ITelemetryBaseEvent[] = [];
+					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+						initialTree: simpleTestTree,
+						logger: { send: (event) => events.push(event) },
+						allowInvalid: true,
+					});
+					const { disable } = useFailedSequencedEditTelemetry(tree);
+
+					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					expect(events.length).equals(0);
+					containerRuntimeFactory.processAllMessages();
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).equals(1);
+					expect(events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
+
+					disable();
+
+					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					containerRuntimeFactory.processAllMessages();
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).equals(1);
+
+					useFailedSequencedEditTelemetry(tree);
+
+					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					containerRuntimeFactory.processAllMessages();
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).equals(2);
+					expect(events[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
+				});
+
+				it('is not logged for valid edits', async () => {
+					const events: ITelemetryBaseEvent[] = [];
+					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+						initialTree: simpleTestTree,
+						logger: { send: (event) => events.push(event) },
+					});
+					useFailedSequencedEditTelemetry(tree);
+
+					tree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(left)));
+					containerRuntimeFactory.processAllMessages();
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).equals(0);
+				});
+
+				it('is not logged for remote edits', async () => {
+					const events: ITelemetryBaseEvent[] = [];
+					const { tree, containerRuntimeFactory } = setUpTestSharedTree({
+						initialTree: simpleTestTree,
+						logger: { send: (event) => events.push(event) },
+						allowInvalid: true,
+						localMode: false,
+					});
+					const { tree: secondTree } = setUpTestSharedTree({
+						containerRuntimeFactory,
+						id: 'secondTestSharedTree',
+						localMode: false,
+					});
+					useFailedSequencedEditTelemetry(tree);
+
+					secondTree.applyEdit(...Insert.create([makeEmptyNode()], StablePlace.after(makeEmptyNode())));
+					containerRuntimeFactory.processAllMessages();
+					await tree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					expect(events.length).equals(0);
+				});
 			});
 		});
 

@@ -173,6 +173,8 @@ export interface SequencedEditAppliedEventArguments<TSharedTree> {
 	readonly wasLocal: boolean;
 	/** The tree the edit was applied to. */
 	readonly tree: TSharedTree;
+	/** The telemetry logger associated with sequenced edit application. */
+	readonly logger: ITelemetryLogger;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
 	readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
 	/** The outcome of the sequenced edit being applied. */
@@ -286,6 +288,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 	}
 
 	protected readonly logger: ITelemetryLogger;
+	protected readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
 	public readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>;
 
@@ -303,16 +306,11 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 		result,
 		reconciliationPath,
 	}: SequencedEditResult<TChange, TFailure>): void => {
-		if (wasLocal && result.status !== EditStatus.Applied) {
-			this.logger.send({
-				category: 'generic',
-				eventName: result.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
-			});
-		}
 		const eventArguments: SequencedEditAppliedEventArguments<GenericSharedTree<TChange, TFailure>> = {
 			edit,
 			wasLocal,
 			tree: this,
+			logger: this.sequencedEditAppliedLogger,
 			reconciliationPath,
 			outcome: result,
 		};
@@ -353,6 +351,11 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 		runtime.on('disconnected', this.updateOldest);
 
 		this.logger = ChildLogger.create(runtime.logger, 'SharedTree', sharedTreeTelemetryProperties);
+		this.sequencedEditAppliedLogger = ChildLogger.create(
+			this.logger,
+			'SequencedEditApplied',
+			sharedTreeTelemetryProperties
+		);
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
 			initialSummary,
 			this.processEditResult,

@@ -426,7 +426,6 @@ export namespace Transaction {
 		DetachedSequenceIdAlreadyInUse = 'DetachedSequenceIdAlreadyInUse',
 		DetachedSequenceNotFound = 'DetachedSequenceNotFound',
 		DuplicateIdInBuild = 'DuplicateIdInBuild',
-		MalformedChange = 'MalformedChange',
 		IdAlreadyInUse = 'IdAlreadyInUse',
 		UnknownId = 'UnknownId',
 		BadPlace = 'BadPlace',

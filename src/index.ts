@@ -38,6 +38,7 @@ export { LogViewer, Revision } from './LogViewer';
 export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
 export { BasicCheckout } from './BasicCheckout';
 export * from './ReconciliationPath';
+export * from './MergeHealth';
 export {
 	SharedTree,
 	ChangeType,

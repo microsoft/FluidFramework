@@ -192,6 +192,7 @@ export type EditApplicationOutcome<TSharedTree> = {
 // @public
 export interface EditBase<TChange> {
     readonly changes: readonly TChange[];
+    readonly pastAttemptCount?: number;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "EditChunkOrHandle" should be prefixed with an underscore because the declaration is marked as @internal
@@ -314,6 +315,8 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
     // @internal
     saveSummary(): SharedTreeSummaryBase;
     // (undocumented)
+    protected readonly sequencedEditAppliedLogger: ITelemetryLogger;
+    // (undocumented)
     snapshotCore(serializer: IFluidSerializer): ITree;
     // (undocumented)
     protected readonly summarizeHistory: boolean;
@@ -389,6 +392,30 @@ export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 export interface LogViewer {
     getRevisionView(revision: Revision): Promise<RevisionView>;
     getRevisionViewInSession(revision: Revision): RevisionView;
+}
+
+// @public
+export interface MergeHealthStats {
+    badPlaceCount: number;
+    badRangeCount: number;
+    constraintViolationCount: number;
+    deletedAncestorBadPlaceCount: number;
+    deletedAncestorBadRangeCount: number;
+    deletedSiblingBadPlaceCount: number;
+    deletedSiblingBadRangeCount: number;
+    editCount: number;
+    failedEditCount: number;
+    idAlreadyInUseCount: number;
+    labelConstraintViolationCount: number;
+    lengthConstraintViolationCount: number;
+    malformedEditCount: number;
+    maxAttemptCount: number;
+    parentConstraintViolationCount: number;
+    pathLengths: number[];
+    rangeConstraintViolationCount: number;
+    unknownIdCount: number;
+    updatedRangeHasPlacesInDifferentTraitsCount: number;
+    updatedRangeInvertedCount: number;
 }
 
 // @public
@@ -556,6 +583,7 @@ export function saveUploadedEditChunkContents<TChange>(editLog: OrderedEditSet<T
 // @public
 export interface SequencedEditAppliedEventArguments<TSharedTree> {
     readonly edit: Edit<SharedTreeChangeType<TSharedTree>>;
+    readonly logger: ITelemetryLogger;
     readonly outcome: EditApplicationOutcome<TSharedTree>;
     readonly reconciliationPath: ReconciliationPath<SharedTreeChangeType<TSharedTree>>;
     readonly tree: TSharedTree;
@@ -633,6 +661,19 @@ export interface SharedTreeFactoryOptions {
 
 // @public
 export type SharedTreeFailureType<TSharedTree> = TSharedTree extends GenericSharedTree<any, infer TFailure> ? TFailure : never;
+
+// @public
+export class SharedTreeMergeHealthTelemetryHeartbeat {
+    attachTree(tree: SharedTree): void;
+    clearData(): void;
+    detachAllTrees(): void;
+    detachTree(tree: SharedTree): void;
+    flushHeartbeat(): void;
+    getStats(tree: SharedTree): MergeHealthStats;
+    resetTreeData(tree: SharedTree): void;
+    startHeartbeat(interval?: number): void;
+    stopHeartbeat(): void;
+}
 
 // Warning: (ae-internal-missing-underscore) The name "SharedTreeSummarizer" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -833,8 +874,6 @@ export namespace Transaction {
         // (undocumented)
         IdAlreadyInUse = "IdAlreadyInUse",
         // (undocumented)
-        MalformedChange = "MalformedChange",
-        // (undocumented)
         UnknownId = "UnknownId",
         // (undocumented)
         UnusedDetachedSequence = "UnusedDetachedSequence"
@@ -1003,6 +1042,11 @@ export interface UploadedEditChunkContents<TChange> {
     absolutePath: string;
     chunkContents: EditWithoutId<TChange>[];
 }
+
+// @public
+export function useFailedSequencedEditTelemetry<TSharedTree extends GenericSharedTree<any, any>>(tree: TSharedTree): {
+    disable: () => void;
+};
 
 // @public
 export type UuidString = string & {

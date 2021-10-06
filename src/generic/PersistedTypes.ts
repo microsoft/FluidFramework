@@ -74,6 +74,12 @@ export interface EditBase<TChange> {
 	 */
 	readonly changes: readonly TChange[];
 
+	/**
+	 * For edits which are being re-issued due to a conflict, the number of times this edit has already been attempted.
+	 * Undefined means 0.
+	 */
+	readonly pastAttemptCount?: number;
+
 	// Add more metadata fields as needed in the future.
 	// Include "high level"/"Domain Specific"/"Hierarchal" edits for application/domain use in implementing domain aware merge heuristics.
 }
