@@ -30,7 +30,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.40.0-39046",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.40.0-39010",
+    "@fluidframework/driver-definitions": "^0.40.0",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "@types/node": "^12.19.0"
   },
