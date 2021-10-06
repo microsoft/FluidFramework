@@ -16,7 +16,7 @@ export interface ITenantConfig {
 
     // Timestamp of when this tenant will be hard deleted.
     // The tenant is soft deleted if a deletion timestamp is present.
-    deletionTime?: string;
+    scheduledDeletionTime?: string;
 }
 
 export interface ITenantStorage {

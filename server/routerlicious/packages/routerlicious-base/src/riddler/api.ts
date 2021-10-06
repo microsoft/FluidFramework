@@ -43,12 +43,19 @@ export function create(
     });
 
     /**
+     * Retrieves list of all deleted tenants
+     */
+     router.get("/tenants/disabled", (request, response) => {
+        const disabledTenantsP = manager.getDisabledTenants();
+        handleResponse(disabledTenantsP, response);
+    });
+
+    /**
      * Retrieves details for the given tenant
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const includeDisabled = request.get("Include-Disabled")?.toLowerCase() === "true";
-        const tenantP = manager.getTenant(tenantId, includeDisabled);
+        const tenantP = manager.getTenant(tenantId);
         handleResponse(tenantP, response);
     });
 
@@ -56,8 +63,7 @@ export function create(
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const includeDisabled = request.get("Include-Disabled")?.toLowerCase() === "true";
-        const tenantP = manager.getAllTenants(includeDisabled);
+        const tenantP = manager.getAllTenants();
         handleResponse(tenantP, response);
     });
 
@@ -125,9 +131,11 @@ export function create(
      */
     router.delete("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const deletionTimeStr = request.body.deletionTime;
-        const deletionTime = deletionTimeStr ? new Date(deletionTimeStr) : null;
-        const tenantP = manager.deleteTenant(tenantId, deletionTime);
+        const scheduledDeletionTimeStr = request.body.scheduledDeletionTime;
+        const scheduledDeletionTime = scheduledDeletionTimeStr
+        ? new Date(scheduledDeletionTimeStr)
+        : null;
+        const tenantP = manager.deleteTenant(tenantId, scheduledDeletionTime);
         handleResponse(tenantP, response);
     });
 
