@@ -49,7 +49,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1032.0",
     "@fluidframework/protocol-base": "^0.1032.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/server-services-client": "^0.1032.0",
     "@fluidframework/server-services-core": "^0.1032.0",
     "@fluidframework/server-services-telemetry": "^0.1032.0",

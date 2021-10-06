@@ -61,7 +61,7 @@
     "@fluidframework/driver-definitions": "^0.40.0-39010",
     "@fluidframework/local-driver": "^0.49.0",
     "@fluidframework/map": "^0.49.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/request-handler": "^0.49.0",
     "@fluidframework/routerlicious-driver": "^0.49.0",
     "@fluidframework/runtime-definitions": "^0.49.0",

@@ -63,7 +63,7 @@
     "@fluidframework/container-loader": "^0.49.0",
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/driver-definitions": "^0.40.0-39010",
-    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/telemetry-utils": "^0.49.0",
     "@fluidframework/web-code-loader": "^0.49.0",
     "css-loader": "^1.0.0",
