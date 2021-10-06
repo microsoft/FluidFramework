@@ -14,7 +14,7 @@
       getBaseNodeRef = require('../utils/node_refs').getBaseNodeRef,
       ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet,
       NodeDependencyManager = require('./node_dependency_manager'),
-      stripReversibleChangeSet = require('../../../../services/property-query/src/server/utils/strip_reversible_changeset'),
+      stripReversibleChangeSet = require('../../src/materialized_history_service/change_set_processing/strip_reversible_changeset'),
       { compareChangeSetBoundaries } = require('./change_set_processing/chunk_change_set'),
       ModuleLogger = require('../utils/module_logger'),
       logger = ModuleLogger.getLogger('HFDM.MaterializedHistoryService.BaseNode');

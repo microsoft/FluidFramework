@@ -9,7 +9,7 @@ const { generateGUID } = require('@fluid-experimental/property-common').GuidUtil
 const PluginManager = require('../../src/plugins/PluginManager');
 const settings = require('../../src/server/utils/server_settings');
 const { BackendFactory, StorageManager, BranchWriteQueue,
-     NodeDependencyManager, MaterializedHistoryService } = require('@fluid-experimental/property-query');
+     NodeDependencyManager, MaterializedHistoryService, SerializerFactory } = require('@fluid-experimental/property-query');
 const getExpressApp = require('../utils/get_express_app');
 
 describe('Backwards compatibility tests', () => {

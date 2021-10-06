@@ -13,10 +13,17 @@ const SerializationFactory = require('./materialized_history_service/serializati
 const BackendFactory = require('./materialized_history_service/storage_backends/backend_factory');
 const NodeDependencyManager = require('./materialized_history_service/node_dependency_manager');
 const BranchManager = require('./materialized_history_service/branch_manager');
+const MultipleQueriesExecution = require('./materialized_history_service/query_pipeline/multiple_queries_execution');
+const ComparatorFactory = require('./materialized_history_service/query_pipeline/comparator');
+const SimpleQueryExecution = require('./materialized_history_service/query_pipeline/simple_query_execution');
+const ScanTraversalUtils = require('./materialized_history_service/query_pipeline/scan_traversal_utils');
 
-// ScanTraversalUtils, ComparatorFactory, SimpleQueryExecution, MultipleQueriesExecution, module_logger
 module.exports = {
     MaterializedHistoryService,
+    ScanTraversalUtils,
+    ComparatorFactory,
+    MultipleQueriesExecution,
+    SimpleQueryExecution,
     BranchWriteQueue,
     StorageManager,
     SerializerFactory,

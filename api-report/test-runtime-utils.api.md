@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
@@ -74,7 +72,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
-}
+    }
 
 // @public
 export class MockContainerRuntime {
@@ -164,7 +162,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     setConnectionState(connected: boolean): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
-}
+    }
 
 // @public
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
@@ -532,6 +530,7 @@ export class MockStorage implements IChannelStorageService {
     // (undocumented)
     protected tree?: ITree;
 }
+
 
 // (No @packageDocumentation comment for this package)
 

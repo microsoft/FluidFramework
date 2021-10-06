@@ -12,7 +12,7 @@ const getPort = require('get-port');
 const PluginManager = require('../../src/plugins/PluginManager');
 
 const sinon = require('sinon');
-const { MaterializedHistoryService, BackendFactory, SerializerFactory, BranchWriteQueue, StorageManager } = require('@fluid-experimental/property-query');
+const { MaterializedHistoryService, BackendFactory, SerializerFactory, BranchWriteQueue, StorageManager, NodeDependencyManager } = require('@fluid-experimental/property-query');
 const settings = require('../../src/server/utils/server_settings');
 const PSSClient = require('../../src/server/pss_client');
 const getExpressApp = require('../utils/get_express_app');
