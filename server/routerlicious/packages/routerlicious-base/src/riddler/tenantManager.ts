@@ -39,6 +39,10 @@ export interface ITenantDocument {
 
     // Whether the tenant is disabled
     disabled: boolean;
+
+    // Timestamp of when this tenant will be hard deleted.
+    // Only applicable if the tenant is disabled.
+    scheduledDeletionTime?: string;
 }
 
 export class TenantManager {
@@ -106,6 +110,19 @@ export class TenantManager {
             orderer: tenant.orderer,
             storage: tenant.storage,
             customData: tenant.customData,
+        }));
+    }
+
+    public async getDisabledTenants(): Promise<ITenantConfig[]> {
+        const tenants = await this.getAllTenantDocuments(true);
+        return tenants
+        .filter((tenant) => tenant.disabled)
+        .map((tenant) => ({
+            id: tenant._id,
+            orderer: tenant.orderer,
+            storage: tenant.storage,
+            customData: tenant.customData,
+            scheduledDeletionTime: tenant.scheduledDeletionTime,
         }));
     }
 
@@ -268,7 +285,7 @@ export class TenantManager {
     /**
      * Retrieves all the raw database tenant documents
      */
-    private async getAllTenantDocuments(): Promise<ITenantDocument[]> {
+    private async getAllTenantDocuments(includeDisabled = false): Promise<ITenantDocument[]> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
@@ -278,17 +295,31 @@ export class TenantManager {
             this.attachDefaultsToTenantDocument(found);
         });
 
-        return allFound.filter((found) => !found.disabled);
+        return includeDisabled ? allFound : allFound.filter((found) => !found.disabled);
     }
 
     /**
-     * Flags the given tenant as disabled
+     * Deletes a tenant
+     * @param tenantId: Id of the tenant to delete.
+     * @param scheduledDeletionTimeTime: If present, indicates when to hard-delete the tenant.
+     * If no scheduledDeletionTime is provided the tenant is only soft-deleted.
      */
-    public async disableTenant(tenantId: string): Promise<void> {
+    public async deleteTenant(tenantId: string, scheduledDeletionTime?: Date): Promise<void> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
-
-        await collection.update({ _id: tenantId }, { disabled: true }, null);
+        const softDelete = !scheduledDeletionTime || scheduledDeletionTime.getTime() > Date.now();
+        if (softDelete) {
+            const query = {
+                _id: tenantId,
+                disabled: false,
+            };
+            await collection.update(query, {
+                disabled: true,
+                scheduledDeletionTime: scheduledDeletionTime.toJSON(),
+            }, null);
+        } else {
+            await collection.deleteOne({ _id: tenantId });
+        }
     }
 
     private encryptAccessInfo(accessInfo: any): string {
