@@ -159,7 +159,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger fluid-framework'
+          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
           customRegistry: 'useNpmrc'
 
       # run the test
