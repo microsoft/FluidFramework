@@ -47,8 +47,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("Root datastore creation does not fail at attach op", async () => {
-            // Cut off communications between the two clients
-            await container1.deltaManager.outbound.pause();
+            // Isolate inbound communication
+            await container1.deltaManager.inbound.pause();
             await container2.deltaManager.inbound.pause();
 
             const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
@@ -56,9 +56,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const rootDataStore2 = await (dataObject2.context.containerRuntime as IContainerRuntime)
                 .createRootDataStore(packageName, "1");
 
-            // Restore communications.
+            // Restore inbound communications
             // At this point, two `ContainerMessageType.Attach` messages will be sent and processed.
-            container1.deltaManager.outbound.resume();
+            container1.deltaManager.inbound.resume();
             container2.deltaManager.inbound.resume();
 
             await provider.ensureSynchronized();
