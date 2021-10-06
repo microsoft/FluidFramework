@@ -58,10 +58,12 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
 
     /**
-     * Returns true if Fluid Container has data loss, container is closed at that same moment and
-     * there is no network connection to ordering service
+     * Returns true if Fluid Container has data loss in the container
+     * Possible scenarios where the flag is set to true:
+     * 1. Container is closed while making changes
+     * 2. When there is no network connection while making changes
      */
-     readonly isDirty: boolean;
+     readonly hasPendingOps: boolean;
 
     /**
      * Whether the container is disposed, which permanently disables it.
@@ -120,9 +122,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.isDirty}
+     * {@inheritDoc IFluidContainer.hasPendingOps}
      */
-     public get isDirty(): boolean {
+     public get hasPendingOps(): boolean {
         return this.container.isDirty;
     }
 

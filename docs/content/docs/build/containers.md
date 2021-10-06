@@ -142,14 +142,16 @@ container.on("disposed", () => {
 });
 ```
 
-### dirty
+### hasPendingOps
 
-`isDirty` flag returns a boolean value depending on the data loss in the container. The possible scenarios where the flag is set to true are:
+The container has operations that have not yet been acknowledged by the service. It can lead to data loss. `hasPendingOps` flag returns a boolean value depending on the data loss in the container.
+
+The possible scenarios where the flag is set to true are:
 
 1. Container is closed while making changes
 2. When there is no network connection while making changes
 
-`isDirty` is set to false in scenarios such as,
+`hasPendingOps` is set to false in scenarios such as:
 
 1. Making changes when the container is in the detached state
 2. Attaching the container to the service
