@@ -1,2 +1,6 @@
 dist
 lib
+
+# Code coverage
+nyc
+.nyc_output/
