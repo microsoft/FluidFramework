@@ -20,6 +20,11 @@ import {
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 
+export const getLumberProperties = (documentId: string, tenantId: string) => ({
+    [BaseTelemetryProperties.tenantId]: tenantId,
+    [BaseTelemetryProperties.documentId]: documentId,
+});
+
 export const setQueuedMessageProperties = (message: IQueuedMessage, lumber?: Lumber) => {
     const propertyMap = new Map<string, any>([
         [QueuedMessageProperties.topic, message.topic],
