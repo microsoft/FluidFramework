@@ -158,7 +158,7 @@ jobs:
         displayName: 'npm install'
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/azure-client
+          workingDir: ${{ parameters.testWorkspace }}
           customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger fluid-framework cross-env mocha'
           customRegistry: 'useNpmrc'
 
@@ -171,7 +171,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/azure-client
-          customCommand: 'run build:test'   
+          customCommand: 'run build:test'
 
       # run the test
       - task: Npm@1
