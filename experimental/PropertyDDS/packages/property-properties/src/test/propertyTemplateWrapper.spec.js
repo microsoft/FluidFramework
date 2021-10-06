@@ -9,14 +9,7 @@
  * @fileoverview In this file, we will test the functions of a PropertyTemplateWrapper object
  *    described in /src/property_template_wrapper.js
  */
-var PropertyFactory;
-
-/**
- * Get all the objects we need in this test here.
- */
-before(function () {
-    PropertyFactory = require('..').PropertyFactory;
-});
+const { PropertyFactory } = require('..');
 
 describe('Property Template Wrapper', function () {
     describe('Compiled Template Creation', function () {

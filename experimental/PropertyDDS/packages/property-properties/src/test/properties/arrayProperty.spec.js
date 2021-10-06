@@ -10,16 +10,21 @@
  *    described in /src/properties/baseProperty.js
  */
 
-var PropertyFactory, BaseProperty, ChangeSet, MSG, _, DeterministicRandomGenerator, HashCalulator;
+
+_ = require('lodash');
+const { PropertyFactory } = require('../..');
+const { BaseProperty } = require('../..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { DeterministicRandomGenerator, HashCalculator } = require("@fluid-experimental/property-common");
+const deepCopy = _.cloneDeep;
+const { PATH_TOKENS } = BaseProperty;
 
 var OurArrayTestTemplate;
 var arrayProp;
 var testFailed = false;
 var changeSet2;
 var conflicts;
-var MSG;
-var PATH_TOKENS;
-var deepCopy;
 
 var possibleChanges = {
     0: 'insert',
@@ -154,19 +159,12 @@ var Complex3ArrayTemplate = {
         { id: 'myarray', typeid: 'autodesk.tests:ComplexProp3-1.0.0', context: 'array' }
     ]
 };
+
 describe('ArrayProperty', function () {
     /**
      * Get all the objects we need in this test here.
      */
     before(function () {
-        PropertyFactory = require('../..').PropertyFactory;
-        BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        MSG = require('@fluid-experimental/property-common').constants.MSG
-        PATH_TOKENS = require('../..').BaseProperty.PATH_TOKENS;
-        _ = require('lodash');
-        deepCopy = _.cloneDeep;
-        ({ DeterministicRandomGenerator, HashCalculator } = require("@fluid-experimental/property-common"));
 
         PropertyFactory._reregister(OurArrayTestTemplate);
         PropertyFactory._reregister(TestArrayFloat32);
