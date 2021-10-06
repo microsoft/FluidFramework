@@ -212,20 +212,26 @@ export class MonacoRunner extends DataObject implements
      * SequenceDeltaEvent merge
      */
     private mergeSequenceDelta(ev: SequenceDeltaEvent): void {
-        for(const range of ev.ranges) {
+        for (const range of ev.ranges) {
             const segment = range.segment;
+            if (TextSegment.is(segment)) {
+                switch (range.operation) {
+                    case MergeTreeDeltaType.INSERT: {
+                        const posRange = this.offsetsToRange(range.position);
+                        const text = segment.text || "";
+                        this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                        break;
+                    }
 
-            if (range.operation === MergeTreeDeltaType.INSERT) {
-                if (TextSegment.is(segment)) {
-                    const posRange = this.offsetsToRange(range.position);
-                    const text = segment.text || "";
-                    this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
-                }
-            } else if (range.operation === MergeTreeDeltaType.REMOVE) {
-                if (TextSegment.is(segment)) {
-                    const posRange = this.offsetsToRange(range.position, range.position + segment.text.length);
-                    const text = "";
-                    this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                    case MergeTreeDeltaType.REMOVE: {
+                        const posRange = this.offsetsToRange(range.position, range.position + segment.text.length);
+                        const text = "";
+                        this.codeEditor.executeEdits("remote", [{ range: posRange, text }]);
+                        break;
+                    }
+
+                    default:
+                        break;
                 }
             }
         }
