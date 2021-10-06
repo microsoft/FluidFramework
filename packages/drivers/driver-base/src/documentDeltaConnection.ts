@@ -341,7 +341,7 @@ export class DocumentDeltaConnection
      *  (not on Fluid protocol level)
      * @param reason - reason for disconnect
      */
-    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
+    protected disconnect(socketProtocolError: boolean, reason: any) {
         this.socket.disconnect();
     }
 
