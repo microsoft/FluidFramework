@@ -318,8 +318,10 @@ export const Move = {
  * To be well formed, either `sibling` or `trait` must be defined, but not both.
  *
  * Any given insertion location can be described by two `StablePlace` objects, one with `Side.After` and one with `Side.Before`.
- * For example, in a trait containing two strings "foo" and "bar", there are 6 places corresponding to 3 places into the trait a new node
- * could be inserted: at the start, before "foo", after "foo", before "bar", after "bar", and at the end.
+ * For example, in a trait containing two strings "foo" and "bar", there are 6 different `StablePlace`s corresponding to 3 locations in the
+ * trait a new node could be inserted: at the start, before "foo", after "foo", before "bar", after "bar", and at the end.
+ * Neither of the two ways to specify the same location are considered to be after each other.
+ *
  * The anchor (`referenceSibling` or `referenceTrait`) used for a particular `StablePlace` can have an impact in collaborative scenarios.
  *
  * `StablePlace` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
@@ -352,6 +354,8 @@ export interface StablePlace {
 /**
  * Specifies the range of nodes from `start` to `end` within a trait.
  * Valid iff start and end are valid and are within the same trait and the start does not occur after the end in the trait.
+ *
+ * See {@link (StablePlace:interface)} for what it means for a place to be "after" another place.
  *
  * `StableRange` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
  * @example
