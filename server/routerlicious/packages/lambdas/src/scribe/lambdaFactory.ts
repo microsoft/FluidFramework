@@ -92,7 +92,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             ]);
 
             // If the document doesn't exist or is marked for deletion then we trivially accept every message
-            if (!document || document.deletionTime) {
+            if (!document || document.scheduledDeletionTime) {
                 context.log?.info(`Creating NoOpLambda due to missing document`, { messageMetaData });
                 return new NoOpLambda(context);
             }
