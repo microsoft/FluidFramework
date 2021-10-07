@@ -37,7 +37,7 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     protected disconnect(socketProtocolError: boolean, reason: any): void;
     dispose(): void;
     // (undocumented)
-    protected disposeCore(socketProtocolError: boolean, err: DriverError): void;
+    protected disposeCore(socketProtocolError: boolean, err: any): void;
     // (undocumented)
     get disposed(): boolean;
     protected _disposed: boolean;

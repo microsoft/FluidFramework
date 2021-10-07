@@ -431,7 +431,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     }
 
     protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
-        this.disconnect(true, error);
+        this.disposeCore(true, error);
     };
 
     protected async initialize(connectMessage: IConnect, timeout: number) {
