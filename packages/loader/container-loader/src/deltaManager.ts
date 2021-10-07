@@ -702,12 +702,9 @@ export class DeltaManager
         }
 
         if (docService.policies?.storageOnly === true) {
-            const connection = new NoDeltaStream();
-            this.connectionP = new Promise((resolve) => {
-                this.setupNewSuccessfulConnection(connection, "read");
-                resolve(connection);
-            });
-            return this.connectionP;
+            this.connection = new NoDeltaStream();
+            this.setupNewSuccessfulConnection(this.connection, "read");
+            return this.connection;
         }
 
         // The promise returned from connectCore will settle with a resolved connection or reject with error
@@ -774,6 +771,10 @@ export class DeltaManager
                 });
             }
 
+            // Ensure that if we get a cycle of disconnect/reconnect from within this.setupNewSuccessfulConnection(),
+            // then it will not keep using this.connectionP.
+            this.connectionP = undefined;
+
             this.setupNewSuccessfulConnection(connection, requestedMode);
 
             return connection;
@@ -793,7 +794,6 @@ export class DeltaManager
 
             // Attempt the connection
             connectCore().then((connection) => {
-                this.connectionP = undefined;
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1268,6 +1268,8 @@ export class DeltaManager
         if (this.connection === undefined) {
             return false;
         }
+
+        assert(this.connectionP === undefined, "reentrnacy may result in incorrect behavior");
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
