@@ -702,9 +702,9 @@ export class DeltaManager
         }
 
         if (docService.policies?.storageOnly === true) {
-            this.connection = new NoDeltaStream();
-            this.setupNewSuccessfulConnection(this.connection, "read");
-            return this.connection;
+            const connection = new NoDeltaStream();
+            this.setupNewSuccessfulConnection(connection, "read");
+            return connection;
         }
 
         // The promise returned from connectCore will settle with a resolved connection or reject with error
