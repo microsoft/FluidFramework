@@ -64,7 +64,7 @@ export enum EditValidationResult {
 
 /**
  * A mutable Checkout of a SharedTree, allowing viewing and interactive transactional editing.
- * Provides (snapshot-isolation)[https://en.wikipedia.org/wiki/Snapshot_isolation] while editing.
+ * Provides {@link https://en.wikipedia.org/wiki/Snapshot_isolation | snapshot-isolation} while editing.
  *
  * A Checkout always shows a consistent sequence of versions of the SharedTree, but it may skip intermediate versions, and may fall behind.
  * In this case consistent means the sequence of versions could occur with fully synchronous shared tree access,
