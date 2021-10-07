@@ -40,8 +40,8 @@ export interface IBlob {
     // Contents of the blob
     contents: string;
 
-    // The encoding of the contents string (utf-8 or base64)
-    encoding: string;
+    // The encoding of the contents string
+    encoding: "utf-8" | "base64";
 }
 
 export interface IAttachment {

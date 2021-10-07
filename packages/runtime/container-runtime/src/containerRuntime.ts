@@ -1064,8 +1064,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
-            message: error?.message,
-        });
+        }, error);
 
         if (this.summaryManager !== undefined) {
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
@@ -1573,15 +1572,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     };
 
     /**
-     * @deprecated - // back-compat: marked deprecated in 0.35
-     * Returns true of document is dirty, i.e. there are some pending local changes that
-     * either were not sent out to delta stream or were not yet acknowledged.
-     */
-    public isDocumentDirty(): boolean {
-        return this.dirtyContainer;
-    }
-
-    /**
      * Returns true of container is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
@@ -1999,9 +1989,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.dirtyContainer = dirty;
         if (this.emitDirtyDocumentEvent) {
-            // back-compat: dirtyDocument & savedDocument deprecated in 0.35.
-            this.emit(dirty ? "dirtyDocument" : "savedDocument");
-
             this.emit(dirty ? "dirty" : "saved");
             // back-compat: Loader API added in 0.35 only
             if (this.context.updateDirtyContainerState !== undefined) {
@@ -2195,11 +2182,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
+        summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
+            summaryRefSeq,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 fetchLatest: false,
@@ -2239,6 +2228,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
+            snapshotRefSeq,
             async () => snapshot,
             readAndParseBlob,
             summaryLogger,

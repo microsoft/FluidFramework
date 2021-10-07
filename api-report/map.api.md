@@ -12,6 +12,7 @@ import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -61,7 +62,7 @@ export interface IDirectoryDataObject {
     };
 }
 
-// @public (undocumented)
+// @public
 export interface IDirectoryEvents extends IEvent {
     // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -74,6 +75,12 @@ export interface IDirectoryNewStorageFormat {
     // (undocumented)
     content: IDirectoryDataObject;
 }
+
+// Warning: (ae-forgotten-export) The symbol "IDirectoryStorageOperation" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "IDirectorySubDirectoryOperation" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 // @public
 export interface IDirectoryValueChanged extends IValueChanged {
@@ -100,7 +107,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
@@ -115,7 +122,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
     wait<T = any>(key: string): Promise<T>;
 }
 
-// @public (undocumented)
+// @public
 export interface ISharedMapEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, op: ISequencedDocumentMessage | null, target: IEventThisPlaceHolder) => void): any;
@@ -128,6 +135,14 @@ export interface IValueChanged {
     key: string;
     previousValue: any;
 }
+
+// @public
+export class LocalValueMaker {
+    constructor(serializer: IFluidSerializer);
+    fromInMemory(value: any): ILocalValue;
+    // Warning: (ae-forgotten-export) The symbol "ILocalValue" needs to be exported by the entry point index.d.ts
+    fromSerializable(serializable: ISerializableValue): ILocalValue;
+    }
 
 // @public @sealed
 export class MapFactory implements IChannelFactory {
@@ -151,7 +166,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
-    // (undocumented)
+    // @internal (undocumented)
     protected applyStashedOp(): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
@@ -167,21 +182,27 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     has(key: string): boolean;
     hasSubDirectory(subdirName: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
+    // @internal (undocumented)
+    readonly localValueMaker: LocalValueMaker;
+    // @internal (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
+    // @internal
+    protected populate(data: IDirectoryDataObject): void;
+    // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
-    // (undocumented)
+    // @internal (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+    // @internal
+    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     values(): IterableIterator<any>;
     wait<T = any>(key: string): Promise<T>;
 }
@@ -191,7 +212,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
+    // @internal (undocumented)
     protected applyStashedOp(content: any): unknown;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
@@ -202,19 +223,19 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
+    // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
+    // @internal (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected registerCore(): void;
-    // (undocumented)
+    // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): this;
     get size(): number;
-    // (undocumented)
+    // @internal (undocumented)
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     values(): IterableIterator<any>;
     wait<T = any>(key: string): Promise<T>;

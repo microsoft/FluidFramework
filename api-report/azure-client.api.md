@@ -20,7 +20,7 @@ import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // (undocumented)
+    // @internal (undocumented)
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
@@ -60,7 +60,7 @@ export interface AzureContainerServices {
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
-    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
@@ -88,9 +88,10 @@ export { ITokenResponse }
 
 export { IUser }
 
+// @public
+export const LOCAL_MODE_TENANT_ID = "local";
+
 export { ScopeType }
 
-
-// (No @packageDocumentation comment for this package)
 
 ```

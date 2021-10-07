@@ -118,8 +118,9 @@ describe("Runtime", () => {
                 }
             }
 
+            const summaryRefSeq = 123;
             const blobs = {
-                protocolAttributes: { sequenceNumber: 123 },
+                protocolAttributes: { sequenceNumber: summaryRefSeq },
             } as const;
             const readAndParseBlob = async <T>(id: string) => blobs[id] as T;
             const fakeOp = (sequenceNumber: number): ISequencedDocumentMessage =>
@@ -331,6 +332,7 @@ describe("Runtime", () => {
                     createRoot();
                     const result = await rootNode.refreshLatestSummary(
                         undefined,
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -344,6 +346,7 @@ describe("Runtime", () => {
                     createRoot();
                     const result = await rootNode.refreshLatestSummary(
                         "test-handle",
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -354,9 +357,10 @@ describe("Runtime", () => {
                 });
 
                 it("Should not refresh latest if already passed ref seq number", async () => {
-                    createRoot({ refSeq: 123 });
+                    createRoot({ refSeq: summaryRefSeq });
                     const result = await rootNode.refreshLatestSummary(
                         undefined,
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,
@@ -374,6 +378,7 @@ describe("Runtime", () => {
 
                     const result = await rootNode.refreshLatestSummary(
                         proposalHandle,
+                        summaryRefSeq,
                         getSnapshot,
                         readAndParseBlob,
                         logger,

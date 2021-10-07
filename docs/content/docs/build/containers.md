@@ -30,7 +30,6 @@ This example schema defines two initial objects, `layout` and `text`, and declar
 
 ```typescript
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -44,7 +43,7 @@ const schema = {
 Containers are created from the service-specific client's `createContainer` function. Your code must provide a configuration that is specific to the service and a schema object that defines the container schema. About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
@@ -86,7 +85,6 @@ const containerId = await container.attach();
 ### Loading a container
 
 To load the container created in the above section your code calls the client's `getContainer` method. The call must pass the `id` of the container to load as well as the exact same schema definition used when creating the container. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
-schema is required on all subsequent loads or the container will not be loaded correctly.
 
 Note that when loading an existing container, the container is already attached.
 
@@ -150,7 +148,6 @@ These shared objects are exposed via the `initialObjects` property on the contai
 
 ```typescript {linenos=inline}
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -190,12 +187,6 @@ First, if your application loads two different experiences that have different u
 A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
-{{% callout tip %}}
-
-Use the `name` property on the container to help manage multiple containers.
-
-{{% /callout %}}
-
 ## Container services
 
 When you load a container, the Fluid service will also return a service-specific *services* object. This object contains
@@ -211,17 +202,13 @@ references to useful services you can use to build richer apps. An example of a 
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

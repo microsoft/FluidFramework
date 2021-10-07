@@ -71,7 +71,7 @@
     "webpack:profile": "lerna run --no-sort webpack:profile --stream"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.2.35662",
+    "@fluidframework/build-tools": "^0.2.39666",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.12.7",
     "@microsoft/api-extractor": "^7.16.1",
@@ -120,10 +120,10 @@
       "build": "common/build",
       "common-def": "common/lib/common-definitions",
       "common-utils": "common/lib/common-utils",
-      "container-def": "common/lib/container-definitions",
       "core-interfaces": "common/lib/core-interfaces",
-      "driver-def": "common/lib/driver-definitions",
       "protocol-def": "common/lib/protocol-definitions",
+      "driver-def": "common/lib/driver-definitions",
+      "container-def": "common/lib/container-definitions",
       "server": "server/routerlicious",
       "client": {
         "directory": "",
@@ -132,7 +132,8 @@
       "tools": [
         "tools/benchmark",
         "tools/generator-fluid",
-        "server/tinylicious"
+        "server/tinylicious",
+        "server/azure-local-service"
       ],
       "services": {
         "directory": "server",

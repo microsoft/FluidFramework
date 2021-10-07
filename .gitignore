@@ -1,6 +1,7 @@
 .cache-loader
 node_modules
 dist
+lib
 nyc
 *.log
 .DS_Store

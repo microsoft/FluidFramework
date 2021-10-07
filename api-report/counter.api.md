@@ -37,12 +37,14 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal
     protected onDisconnect(): void;
+    // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected registerCore(): void;
     // @internal
     protected snapshotCore(serializer: IFluidSerializer): ITree;
     get value(): number;
-}
+    }
+
 
 ```

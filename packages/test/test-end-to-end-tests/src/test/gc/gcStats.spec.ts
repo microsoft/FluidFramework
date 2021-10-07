@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -17,21 +16,12 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { TestDataObject } from "./mockSummarizerClient";
 
 /**
- * This data store creates only one DDS (root SharedDirectory created by DataObject). Each of these has 2 GC nodes:
- * 1 for the data store itself and 1 for its DDS.
+ * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
+ * nodes, number of unreferenced data stores, etc.
  */
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
 describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     const dataObjectFactory = new DataObjectFactory(
         "TestDataObject",
@@ -84,11 +74,19 @@ describeFullCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         return summaryStats;
     }
 
-    beforeEach(async () => {
+    before(function() {
         provider = getTestObjectProvider();
+        // These tests validate the GC stats in summary by calling summarize directly on the container runtime.
+        // They do not post these summaries or download them. So, it doesn't need to run against real services.
+        if (provider.driver.type !== "local") {
+            this.skip();
+        }
+    });
+
+    beforeEach(async () => {
         const container = await createContainer() as Container;
         defaultDataStore = await requestFluidObject<TestDataObject>(container, "/");
-        containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+        containerRuntime = defaultDataStore.containerRuntime;
     });
 
     /**

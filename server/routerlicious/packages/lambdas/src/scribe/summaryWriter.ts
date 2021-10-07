@@ -104,20 +104,22 @@ export class SummaryWriter implements ISummaryWriter {
             };
         }
 
-        // We also validate that the parent summary is valid
-        try {
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            await Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary)));
-        } catch (e) {
-            return {
-                message: {
-                    errorMessage: "One or more parent summaries are invalid.",
-                    summaryProposal: {
-                        summarySequenceNumber: op.sequenceNumber,
+        // When using git, we also validate whether the parent summary is valid
+        if (!this.enableWholeSummaryUpload) {
+            try {
+                // eslint-disable-next-line @typescript-eslint/promise-function-async
+                await Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary)));
+            } catch (e) {
+                return {
+                    message: {
+                        errorMessage: "One or more parent summaries are invalid.",
+                        summaryProposal: {
+                            summarySequenceNumber: op.sequenceNumber,
+                        },
                     },
-                },
-                status: false,
-            };
+                    status: false,
+                };
+            }
         }
 
         // We should not accept this summary if it is less than current protocol sequence number
@@ -241,6 +243,12 @@ export class SummaryWriter implements ISummaryWriter {
         // at least one prior client generated summary.
         // TODO: With default createNew() flow, we can remove this check.
         if (!existingRef) {
+            return false;
+        }
+
+        if (!op.additionalContent) {
+            // this is a mixed mode edge case that can occur if the "generateServiceSummary" config
+            // was disabled in a previous deployment and is now enabled in the next one
             return false;
         }
 
@@ -369,7 +377,7 @@ export class SummaryWriter implements ISummaryWriter {
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[],
         sequenceNumber: number): Promise<string> {
-        const fullTree: ISummaryTree =  {
+        const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
                 ".protocol": this.createSummaryTreeFromEntry(protocolEntries),
@@ -393,7 +401,7 @@ export class SummaryWriter implements ISummaryWriter {
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[],
         sequenceNumber: number): Promise<string> {
-        const fullTree: ISummaryTree =  {
+        const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
                 ".logTail": this.createSummaryTreeFromEntry(logTailEntries),
@@ -420,7 +428,7 @@ export class SummaryWriter implements ISummaryWriter {
         const tree: { [path: string]: SummaryObject } = {};
         for (const treeEntry of treeEntries) {
             let summaryObject: SummaryObject;
-            switch(treeEntry.type) {
+            switch (treeEntry.type) {
                 case TreeEntry.Attachment: {
                     summaryObject = {
                         type: SummaryType.Attachment,
@@ -432,8 +440,8 @@ export class SummaryWriter implements ISummaryWriter {
                     summaryObject = {
                         type: SummaryType.Blob,
                         content: treeEntry.value.encoding === "base64" ?
-                                 fromBase64ToUtf8(treeEntry.value.contents) :
-                                 treeEntry.value.contents,
+                            fromBase64ToUtf8(treeEntry.value.contents) :
+                            treeEntry.value.contents,
                     };
                     break;
                 }
