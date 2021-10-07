@@ -771,10 +771,6 @@ export class DeltaManager
                 });
             }
 
-            // Ensure that if we get a cycle of disconnect/reconnect from within this.setupNewSuccessfulConnection(),
-            // then it will not keep using this.connectionP.
-            this.connectionP = undefined;
-
             this.setupNewSuccessfulConnection(connection, requestedMode);
 
             return connection;
@@ -794,6 +790,7 @@ export class DeltaManager
 
             // Attempt the connection
             connectCore().then((connection) => {
+                assert(this.connectionP === undefined, "this.connectionP has been reset on successful connection");
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1150,6 +1147,7 @@ export class DeltaManager
         }
 
         this.connection = connection;
+        this.connectionP = undefined;
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
