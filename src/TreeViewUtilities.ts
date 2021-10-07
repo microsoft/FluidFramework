@@ -73,7 +73,7 @@ function makeTraits(
  *
  * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
  */
-export function compareFiniteNumbers(a: number, b: number): number {
+export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
 	return a - b;
 }
 
@@ -81,6 +81,6 @@ export function compareFiniteNumbers(a: number, b: number): number {
  * Compares strings lexically to form a strict partial ordering.
  * Once https://github.com/qwertie/btree-typescript/pull/15 is merged, we can use the version of this function from it.
  */
-export function compareStrings(a: string, b: string): number {
+export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
 }

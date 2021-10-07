@@ -229,6 +229,17 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 }
 
 /**
+ * Assign a property and value to a given object.
+ * @param object - the object to add the property to
+ * @param property - the property key
+ * @param value - the value of the property
+ * @returns `object` after assigning `value` to the property `property`.
+ */
+export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
+	return Object.assign(object, { [property]: value }) as With<T, K, V>;
+}
+
+/**
  * Redefine a property to have the given value. This is simply a type-safe wrapper around
  * `Object.defineProperty`, but it is useful for caching public getters on first read.
  * @example
@@ -316,6 +327,32 @@ export function compareArrays<T>(
 
 	for (let i = 0; i < arrayA.length; i++) {
 		if (!elementComparator(arrayA[i], arrayB[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Compare two maps and return true if their contents are equivalent.
+ * @param mapA - the first array to compare
+ * @param mapB - the second array to compare
+ * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * Defaults to `Object.is()` equality (a shallow compare)
+ */
+export function compareMaps<K, V>(
+	mapA: ReadonlyMap<K, V>,
+	mapB: ReadonlyMap<K, V>,
+	elementComparator: (a: V, b: V) => boolean = Object.is
+): boolean {
+	if (mapA.size !== mapB.size) {
+		return false;
+	}
+
+	for (const [keyA, valueA] of mapA) {
+		const valueB = mapB.get(keyA);
+		if (valueB === undefined || !elementComparator(valueA, valueB)) {
 			return false;
 		}
 	}
@@ -448,3 +485,9 @@ export namespace Result {
 		readonly error: TError;
 	}
 }
+
+/** Type that removes `readonly` from fields. */
+export type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+/** Type that includes the property K: V on T */
+export type With<T, K extends keyof never, V> = T & { [key in K]: V };

@@ -124,6 +124,11 @@ export enum CheckoutEvent {
 // @public (undocumented)
 export function comparePayloads(a: Payload, b: Payload): boolean;
 
+// Warning: (ae-internal-missing-underscore) The name "CompressedId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type CompressedId = FinalCompressedId | LocalCompressedId;
+
 // @public
 export interface Constraint {
     readonly contentHash?: UuidString;
@@ -281,6 +286,13 @@ export interface FailingTransactionState<TChange, TFailure = unknown> extends Tr
     readonly view: TransactionView;
 }
 
+// Warning: (ae-internal-missing-underscore) The name "FinalCompressedId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type FinalCompressedId = number & {
+    readonly FinalCompressedId: '5d83d1e2-98b7-4e4e-a889-54c855cfa73d';
+};
+
 // @public
 export abstract class GenericSharedTree<TChange, TFailure = unknown> extends SharedObject<ISharedTreeEvents<GenericSharedTree<TChange, TFailure>>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>, attributes: IChannelAttributes, expensiveValidation?: boolean, summarizeHistory?: boolean, writeSummaryFormat?: SharedTreeSummaryWriteFormat, uploadEditChunks?: boolean);
@@ -388,6 +400,13 @@ export interface ISharedTreeEvents<TSharedTree> extends ISharedObjectEvents {
 // @public
 export function isSharedTreeEvent(event: ITelemetryBaseEvent): boolean;
 
+// Warning: (ae-internal-missing-underscore) The name "LocalCompressedId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type LocalCompressedId = number & {
+    readonly LocalCompressedId: '6fccb42f-e2a4-4243-bd29-f13d12b9c6d1';
+};
+
 // @public
 export interface LogViewer {
     getRevisionView(revision: Revision): Promise<RevisionView>;
@@ -417,6 +436,13 @@ export interface MergeHealthStats {
     updatedRangeHasPlacesInDifferentTraitsCount: number;
     updatedRangeInvertedCount: number;
 }
+
+// Warning: (ae-internal-missing-underscore) The name "MinimalUuidString" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type MinimalUuidString = string & {
+    readonly MinimalUuidString: '1b423880d0bb474c9207966fb613c1e2';
+};
 
 // @public
 export const Move: {
@@ -593,6 +619,13 @@ export interface SequencedEditAppliedEventArguments<TSharedTree> {
 // @public
 export type SequencedEditAppliedHandler<TSharedTree> = (args: SequencedEditAppliedEventArguments<TSharedTree>) => void;
 
+// Warning: (ae-internal-missing-underscore) The name "SessionId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type SessionId = StableId & {
+    readonly SessionId: '4498f850-e14e-4be9-8db0-89ec00997e58';
+};
+
 // @public
 export function setTrait(trait: TraitLocation, nodes: TreeNodeSequence<BuildNode>): readonly Change[];
 
@@ -706,6 +739,13 @@ export enum Side {
     // (undocumented)
     Before = 0
 }
+
+// Warning: (ae-internal-missing-underscore) The name "StableId" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
+export type StableId = MinimalUuidString & {
+    readonly StableId: '53172b0da3d541eabd75b43839c97f5a';
+};
 
 // @public
 export interface StablePlace {

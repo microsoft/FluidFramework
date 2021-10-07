@@ -5,6 +5,7 @@
 
 import { Definition, NodeId } from './Identifiers';
 import { ChangeNode } from './generic';
+import { systemReservedUuidBase, stableIdToUuidString } from './id-compressor';
 
 /**
  * The initial tree.
@@ -13,5 +14,6 @@ import { ChangeNode } from './generic';
 export const initialTree: ChangeNode = {
 	traits: {},
 	definition: '51c58718-47b9-4fe4-ad46-56312f3b9e86' as Definition,
-	identifier: '24e26f0b-3c1a-47f8-a7a1-e8461ddb69ce6' as NodeId,
+	// TODO:#63765: handle accidental extra hex character in initialTree identifier when `IdCompressor` is integrated
+	identifier: `${stableIdToUuidString(systemReservedUuidBase)}6` as NodeId,
 };
