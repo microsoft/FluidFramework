@@ -119,6 +119,7 @@ export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
 }
 
 export function createOdspNetworkError(
+    fluidErrorCode: string,
     errorMessage: string,
     statusCode: number,
     retryAfterSeconds?: number,
@@ -142,7 +143,7 @@ export function createOdspNetworkError(
     }
     switch (statusCode) {
         case 400:
-            error = new GenericNetworkError(errorMessage, false, { statusCode });
+            error = new GenericNetworkError(fluidErrorCode, false, { statusCode });
             break;
         case 401:
         case 403:
@@ -150,69 +151,69 @@ export function createOdspNetworkError(
             // database on server becomes readonly. The driver retries for such cases with exponential backup logic.
             if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
                 error = new RetryableError(
-                    errorMessage,
+                    fluidErrorCode,
                     OdspErrorType.serviceReadOnly,
                 );
             } else {
                 const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
                 const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-                error = new AuthorizationError(errorMessage, claims, tenantId, { statusCode });
+                error = new AuthorizationError(fluidErrorCode, claims, tenantId, { statusCode });
             }
             break;
         case 404:
             error = new NonRetryableError(
-                errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
+                fluidErrorCode, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
             break;
         case 406:
             error = new NonRetryableError(
-                errorMessage, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
+                fluidErrorCode, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
             break;
         case 410:
-            error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, OdspErrorType.cannotCatchUp, { statusCode });
             break;
         case fluidEpochMismatchError:
-            error = new NonRetryableError(errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
         case 412:
             // "Precondition Failed" error - happens when uploadSummaryWithContext uses wrong parent.
             // Resubmitting same payload is not going to help, so this is non-recoverable failure!
-            error = new NonRetryableError(errorMessage, DriverErrorType.genericNetworkError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, DriverErrorType.genericNetworkError, { statusCode });
             break;
         case 413:
-            error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, OdspErrorType.snapshotTooBig, { statusCode });
             break;
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.invalidFileNameError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, OdspErrorType.invalidFileNameError, { statusCode });
             break;
         case 500:
-            error = new GenericNetworkError(errorMessage, true, { statusCode });
+            error = new GenericNetworkError(fluidErrorCode, true, { statusCode });
             break;
         case 501:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, OdspErrorType.fluidNotEnabled, { statusCode });
             break;
         case 507:
-            error = new NonRetryableError(errorMessage, OdspErrorType.outOfStorageError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, OdspErrorType.outOfStorageError, { statusCode });
             break;
         case offlineFetchFailureStatusCode:
-            error = new RetryableError(errorMessage, DriverErrorType.offlineError, { statusCode });
+            error = new RetryableError(fluidErrorCode, DriverErrorType.offlineError, { statusCode });
             break;
         case fetchFailureStatusCode:
-            error = new RetryableError(errorMessage, DriverErrorType.fetchFailure, { statusCode });
+            error = new RetryableError(fluidErrorCode, DriverErrorType.fetchFailure, { statusCode });
             break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
-            error = new RetryableError(errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
+            error = new RetryableError(fluidErrorCode, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new RetryableError(errorMessage, OdspErrorType.fetchTimeout, { statusCode });
+            error = new RetryableError(fluidErrorCode, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
-            error = new NonRetryableError(errorMessage, OdspErrorType.fetchTokenError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
-            error = createGenericNetworkError(errorMessage, true, retryAfterMs, { statusCode });
+            error = createGenericNetworkError(fluidErrorCode, true, retryAfterMs, { statusCode });
             break;
     }
     enrichOdspError(error, response, facetCodes, props);
@@ -255,6 +256,7 @@ export function throwOdspNetworkError(
     props?: ITelemetryProperties,
 ): never {
     const networkError = createOdspNetworkError(
+        "fluidErrorCode", //*
         response && response.statusText !== "" ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */

@@ -71,7 +71,7 @@ describe("Odsp Error", () => {
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
-        const error1: any = createOdspNetworkError("Error", 400);
+        const error1: any = createOdspNetworkError("Error", "Error", 400);
         const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });

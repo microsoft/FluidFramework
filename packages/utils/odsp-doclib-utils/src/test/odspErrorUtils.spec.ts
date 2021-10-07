@@ -21,7 +21,7 @@ describe("OdspErrorUtils", () => {
 
     describe("createOdspNetworkError", () => {
         it("GenericNetworkError Test_1", () => {
-            const networkError = createOdspNetworkError("Test Message", 500);
+            const networkError = createOdspNetworkError("Test Error Code", "Test Message", 500);
             assert(networkError.errorType === DriverErrorType.genericNetworkError,
                 "Error should be a genericNetworkError");
             assertCustomPropertySupport(networkError);
@@ -30,6 +30,7 @@ describe("OdspErrorUtils", () => {
 
         it("GenericNetworkError Test_2", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 400 /* statusCode */,
                 undefined /* retryAfterSeconds */);
@@ -40,6 +41,7 @@ describe("OdspErrorUtils", () => {
 
         it("GenericNetworkError Test", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 500 /* statusCode */);
             assertCustomPropertySupport(networkError);
@@ -49,6 +51,7 @@ describe("OdspErrorUtils", () => {
 
         it("AuthorizationError Test 401", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 401 /* statusCode */);
             assert(networkError.errorType === DriverErrorType.authorizationError,
@@ -58,6 +61,7 @@ describe("OdspErrorUtils", () => {
 
         it("AuthorizationError Test 403", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 403 /* statusCode */);
             assert(networkError.errorType === DriverErrorType.authorizationError, "Error should be an authorizationError");
@@ -66,6 +70,7 @@ describe("OdspErrorUtils", () => {
 
         it("OutOfStorageError Test 507", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 507 /* statusCode */);
             assert(networkError.errorType === OdspErrorType.outOfStorageError,
@@ -75,6 +80,7 @@ describe("OdspErrorUtils", () => {
 
         it("FileNotFoundOrAccessDeniedError Test", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 404 /* statusCode */);
             assertCustomPropertySupport(networkError);
@@ -85,6 +91,7 @@ describe("OdspErrorUtils", () => {
 
         it("InvalidFileNameError Test 414", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 414 /* statusCode */);
             assert(networkError.errorType === OdspErrorType.invalidFileNameError,
@@ -94,6 +101,7 @@ describe("OdspErrorUtils", () => {
 
         it("InvalidFileNameError Test", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 invalidFileNameStatusCode /* statusCode */);
             assert(networkError.errorType === OdspErrorType.invalidFileNameError,
@@ -103,6 +111,7 @@ describe("OdspErrorUtils", () => {
 
         it("ThrottlingError 400 Test", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 400 /* statusCode */,
                 100 /* retryAfterSeconds */);
@@ -113,6 +122,7 @@ describe("OdspErrorUtils", () => {
 
         it("ThrottlingError Test", () => {
             const networkError = createOdspNetworkError(
+                "Test Error Code",
                 "Test Message",
                 429,
                 100 /* retryAfterSeconds */) as IThrottlingWarning;
@@ -134,7 +144,8 @@ describe("OdspErrorUtils", () => {
         it("enriched with facetCodes", () => {
             const responseText = '{ "error": { "message":"hello", "code": "foo", "innerError": { "code": "bar" } } }';
             const error = createOdspNetworkError(
-                "Some message",
+                "Test Error Code",
+                "Test Message",
                 400,
                 undefined,
                 undefined, /* response */
@@ -156,7 +167,8 @@ describe("OdspErrorUtils", () => {
                 },
             };
             const error = createOdspNetworkError(
-                "Some message",
+                "Test Error Code",
+                "Test Message",
                 400,
                 undefined,
                 { type: "fooType", headers: mockHeaders } as unknown as Response, /* response */
