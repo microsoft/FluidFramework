@@ -47,17 +47,22 @@ const user = {
     name: "Test User",
 };
 const config = {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
+
+const clientProps = {
+  connection: config,
+}
+
 // This AzureClient instance connects to a local Tinylicious
 // instance rather than a live Azure Fluid Relay service
-const client = new AzureClient(config);
+const client = new AzureClient(clientProps);
 ```
 
-These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
+These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious. `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
 
 ## Automation example
 
@@ -77,12 +82,12 @@ function createAzureClient(): AzureClient {
         orderer: "https://myOrdererUrl",
         storage: "https://myStorageUrl",
     } : {
-        tenantId: "local",
+        tenantId: LOCAL_MODE_TENANT_ID,
         tokenProvider: new InsecureTokenProvider("fooBar", user),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new AzureClient(connectionConfig);
+    return new AzureClient({ connection:connectionConfig });
 }
 ```
 
@@ -101,12 +106,13 @@ describe("ClientTest", () => {
     });
 
     it("can create Azure container successfully", async () => {
-        const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
-            name: documentId,
+            initialObjects: {
+              customMap: SharedMap
+            },
         };
 
-        const containerAndServices  = await client.createContainer(containerConfig, schema);
+        const containerAndServices  = await client.createContainer(schema);
     });
 });
 

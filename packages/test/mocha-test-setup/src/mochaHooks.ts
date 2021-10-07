@@ -6,10 +6,9 @@
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { Context } from "mocha";
-import { getFluidTestVariant } from "../mocharc-common";
 import { pkgName } from "./packageVersion";
 
-const testVariant = getFluidTestVariant();
+const testVariant = process.env.FLUID_TEST_VARIANT;
 
 const _global: any = global;
 class TestLogger implements ITelemetryBufferedLogger {

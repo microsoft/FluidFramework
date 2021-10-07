@@ -7,6 +7,7 @@ import {
     AzureClient,
     AzureConnectionConfig,
     AzureContainerServices,
+    LOCAL_MODE_TENANT_ID,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 import {
@@ -41,13 +42,13 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionProps: AzureConnectionConfig = useAzure ? {
+const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "",
     tokenProvider: new AzureFunctionTokenProvider("", azureUser),
     orderer: "",
     storage: "",
 } : {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
@@ -77,10 +78,10 @@ async function initializeNewContainer(container: IFluidContainer): Promise<void>
 async function start(): Promise<void> {
     // Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
     // and hook to the Telemetry system
-    const azureConfig = {
-        connection: connectionProps,
+    const clientProps = {
+        connection: connectionConfig,
     };
-    const client = new AzureClient(azureConfig);
+    const client = new AzureClient(clientProps);
     let container: IFluidContainer;
     let services: AzureContainerServices;
     let id: string;

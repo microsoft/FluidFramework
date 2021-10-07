@@ -11,7 +11,7 @@ import { IOdspSocketError } from "./contracts";
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
 export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string): OdspError {
-    const message = `socket.io: ${handler}: ${socketError.message}`;
+    const message = `OdspSocketError (${handler}): ${socketError.message}`;
     return createOdspNetworkError(
         message,
         socketError.code,

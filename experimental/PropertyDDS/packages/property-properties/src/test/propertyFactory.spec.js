@@ -5,10 +5,10 @@
 /* globals sinon */
 /* eslint-disable no-unused-expressions */
 
-const PropertyFactory = require('..').PropertyFactory;
-const MSG = require('@fluid-experimental/property-common').constants.MSG
-const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
-const StringProperty = require('../properties/stringProperty');
+const { PropertyFactory } = require('..');
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
+const { StringProperty } = require('../properties/stringProperty');
 
 describe('PropertyFactory', function () {
     beforeEach(() => {
@@ -135,7 +135,7 @@ describe('PropertyFactory', function () {
 
         expect(instance._properties.testMap).to.exist;
         expect(instance._properties.testMap.getContext()).to.equal('map');
-        expect(instance._properties.testMap.getTypeid()).to.equal('ContainerProperty');
+        expect(instance._properties.testMap.getTypeid()).to.equal('BaseProperty');
 
         expect(instance._properties.testSet).to.exist;
         expect(instance._properties.testSet.getContext()).to.equal('set');
@@ -237,8 +237,8 @@ describe('PropertyFactory', function () {
             var square = PropertyFactory.create('SimpleTest:Square-1.0.0');
 
             expect(square._getChildrenCount()).to.equal(2);
-            expect(square._children.props).to.exist;
-            expect(square._children.area).to.exist;
+            expect(square.get('props')).to.exist;
+            expect(square.get('area')).to.exist;
         });
 
         it('should inherit constants', function () {
@@ -265,9 +265,9 @@ describe('PropertyFactory', function () {
             var square = PropertyFactory.create('SimpleTest:SquareWithConstant-1.0.0');
 
             expect(square._getChildrenCount()).to.equal(3);
-            expect(square._children.props).to.exist;
-            expect(square._children.originX).to.exist;
-            expect(square._children.originY).to.exist;
+            expect(square.get('props')).to.exist;
+            expect(square.get('originX')).to.exist;
+            expect(square.get('originY')).to.exist;
 
             expect(square.get('originX').getValue()).to.equal(10);
             expect(square.get('originY').getValue()).to.equal(20);
@@ -313,8 +313,8 @@ describe('PropertyFactory', function () {
 
             var tested = PropertyFactory.create('consttest:template-2.0.0');
             expect(tested._getChildrenCount()).to.equal(2);
-            expect(tested._children.const1).to.exist;
-            expect(tested._children.const2).to.exist;
+            expect(tested.get('const1')).to.exist;
+            expect(tested.get('const2')).to.exist;
             expect(tested.get('const1').getValue()).to.equal('hello2');
             expect(tested.get('const2').getValues()).to.deep.equal(['hello2']);
         });
@@ -404,7 +404,7 @@ describe('PropertyFactory', function () {
             }
         });
 
-        it('Will complete constants definition from multiple inherited templates', function () {
+        it('Will fail if inheriting constants with the same id from multiple templates', function () {
             var template1 = {
                 typeid: 'consttest4:template-1.0.0',
                 constants: [
@@ -452,12 +452,8 @@ describe('PropertyFactory', function () {
             PropertyFactory.register(template1);
             PropertyFactory.register(template2);
 
-            var actual = PropertyFactory.create('consttest4:template-3.0.0');
-            expect(actual._getChildrenCount()).to.equal(2);
-            expect(actual._children.const1).to.exist;
-            expect(actual._children.const2).to.exist;
-            expect(actual.get('const1').getValue()).to.equal('hello2');
-            expect(actual.get('const2').getValue()).to.equal(14);
+            expect(PropertyFactory.create.bind(PropertyFactory, 'consttest4:template-3.0.0'))
+                .to.throw(MSG.OVERWRITING_ID + 'const1');
         });
 
         it('Will allow to register the same inherited template again', function () {
@@ -604,11 +600,11 @@ describe('PropertyFactory', function () {
             var square = PropertyFactory.create('SimpleTest:SquareAbstract-1.0.0');
 
             expect(square._getChildrenCount()).to.equal(4);
-            expect(square._children.area).to.exist;
-            expect(square._children.color).to.exist;
-            expect(square._children.originX).to.exist;
-            expect(square._children.originY).to.exist;
-            expect(square._children.color._children.rgb).to.exist;
+            expect(square.get('area')).to.exist;
+            expect(square.get('color')).to.exist;
+            expect(square.get('originX')).to.exist;
+            expect(square.get('originY')).to.exist;
+            expect(square.get(['color', 'rgb'])).to.exist;
         });
 
         it('should allow multiple inheritance', function () {
@@ -625,10 +621,10 @@ describe('PropertyFactory', function () {
             var square = PropertyFactory.create('SimpleTest:SquareWithColor-1.0.0');
 
             expect(square._getChildrenCount()).to.equal(4);
-            expect(square._children.area).to.exist;
-            expect(square._children.props).to.exist;
-            expect(square._children.stroke).to.exist;
-            expect(square._children.fill).to.exist;
+            expect(square.get('area')).to.exist;
+            expect(square.get('props')).to.exist;
+            expect(square.get('stroke')).to.exist;
+            expect(square.get('fill')).to.exist;
         });
 
         it('should fail when inheriting from multiple types that have the same property name', function () {
@@ -666,7 +662,7 @@ describe('PropertyFactory', function () {
             PropertyFactory.register(ShapeWithOverridesError);
 
             expect(PropertyFactory.create.bind(PropertyFactory, 'SimpleTest:ShapeWithOverridesError-1.0.0'))
-                .to.throw(MSG.OVERRIDDING_INHERITED_TYPES + 'props');
+                .to.throw(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE);
         });
 
         it('should allow extending inherited nested untyped properties', function () {
@@ -698,30 +694,30 @@ describe('PropertyFactory', function () {
             var square = PropertyFactory.create('SimpleTest:SquareWithOverrides-1.0.0');
 
             expect(square._getChildrenCount()).to.equal(4);
-            expect(square._children.normal).to.exist;
-            expect(square._children.props).to.exist;
-            expect(square._children.stroke).to.exist;
-            expect(square._children.fill).to.exist;
+            expect(square.get('normal')).to.exist;
+            expect(square.get('props')).to.exist;
+            expect(square.get('stroke')).to.exist;
+            expect(square.get('fill')).to.exist;
 
-            expect(square._children.props._getChildrenCount()).to.equal(4);
-            expect(square._children.props._children.x).to.exist;
-            expect(square._children.props._children.y).to.exist;
-            expect(square._children.props._children.z).to.exist;
-            expect(square._children.props._children.size).to.exist;
+            expect(square.get('props')._getChildrenCount()).to.equal(4);
+            expect(square.get(['props', 'x'])).to.exist;
+            expect(square.get(['props', 'y'])).to.exist;
+            expect(square.get(['props', 'z'])).to.exist;
+            expect(square.get(['props', 'size'])).to.exist;
 
-            expect(square._children.props._children.size._getChildrenCount()).to.equal(4);
-            expect(square._children.props._children.size._children.unit).to.exist;
-            expect(square._children.props._children.size._children.border).to.exist;
-            expect(square._children.props._children.size._children.width).to.exist;
-            expect(square._children.props._children.size._children.height).to.exist;
+            expect(square.get(['props', 'size'])._getChildrenCount()).to.equal(4);
+            expect(square.get(['props', 'size', 'unit'])).to.exist;
+            expect(square.get(['props', 'size', 'border'])).to.exist;
+            expect(square.get(['props', 'size', 'width'])).to.exist;
+            expect(square.get(['props', 'size', 'height'])).to.exist;
 
-            expect(square._children.props._children.size._children.border._getChildrenCount()).to.equal(2);
-            expect(square._children.props._children.size._children.border._children.color).to.exist;
-            expect(square._children.props._children.size._children.border._children.weight).to.exist;
+            expect(square.get(['props', 'size', 'border'])._getChildrenCount()).to.equal(2);
+            expect(square.get(['props', 'size', 'border', 'color'])).to.exist;
+            expect(square.get(['props', 'size', 'border', 'weight'])).to.exist;
 
-            expect(square._children.fill._getChildrenCount()).to.equal(2);
-            expect(square._children.fill._children.rgb).to.exist;
-            expect(square._children.fill._children.unit).to.exist;
+            expect(square.get('fill')._getChildrenCount()).to.equal(2);
+            expect(square.get(['fill', 'rgb'])).to.exist;
+            expect(square.get(['fill', 'unit'])).to.exist;
         });
 
         it('should support more than one level of inheritance', function () {
@@ -759,19 +755,19 @@ describe('PropertyFactory', function () {
             var square = PropertyFactory.create('SimpleTest:SquareWithArea-1.0.0');
 
             expect(square._getChildrenCount()).to.equal(2);
-            expect(square._children.normal).to.exist;
-            expect(square._children.props).to.exist;
+            expect(square.get('normal')).to.exist;
+            expect(square.get('props')).to.exist;
 
-            expect(square._children.props._getChildrenCount()).to.equal(5);
-            expect(square._children.props._children.x).to.exist;
-            expect(square._children.props._children.y).to.exist;
-            expect(square._children.props._children.size).to.exist;
-            expect(square._children.props._children.color).to.exist;
-            expect(square._children.props._children.area).to.exist;
+            expect(square.get('props')._getChildrenCount()).to.equal(5);
+            expect(square.get(['props', 'x'])).to.exist;
+            expect(square.get(['props', 'y'])).to.exist;
+            expect(square.get(['props', 'size'])).to.exist;
+            expect(square.get(['props', 'color'])).to.exist;
+            expect(square.get(['props', 'area'])).to.exist;
 
-            expect(square._children.props._children.area._getChildrenCount()).to.equal(2);
-            expect(square._children.props._children.area._children.unit).to.exist;
-            expect(square._children.props._children.area._children.length).to.exist;
+            expect(square.get(['props', 'area'])._getChildrenCount()).to.equal(2);
+            expect(square.get(['props', 'area', 'unit'])).to.exist;
+            expect(square.get(['props', 'area', 'length'])).to.exist;
         });
 
         it('should work with properties named "length"', function () {
@@ -1129,7 +1125,7 @@ describe('PropertyFactory', function () {
                 PropertyFactory.register(SquareWithDiffTypeidDefaults);
 
                 expect(PropertyFactory.create.bind(PropertyFactory, 'SimpleTest:SquareWithDiffTypeidDefaults-1.0.0'))
-                    .to.throw(MSG.OVERRIDDING_INHERITED_TYPES + 'num');
+                    .to.throw(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE);
             });
 
             it('should not allow overriding default values when context is different', function () {
@@ -1148,7 +1144,7 @@ describe('PropertyFactory', function () {
                 PropertyFactory.register(SquareWithDiffContextDefaults);
 
                 expect(PropertyFactory.create.bind(PropertyFactory, 'SimpleTest:SquareWithDiffContextDefaults-1.0.0'))
-                    .to.throw(MSG.OVERRIDDING_INHERITED_TYPES + 'num');
+                    .to.throw(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE);
             });
         });
 
@@ -1585,7 +1581,7 @@ describe('PropertyFactory', function () {
                 PropertyFactory.register(SquareWithDiffTypeidConstants);
 
                 expect(PropertyFactory.create.bind(PropertyFactory, 'SimpleTest:SquareWithDiffTypeidConstants-1.0.0'))
-                    .to.throw(MSG.OVERWRITING_ID + 'num');
+                    .to.throw(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE);
             });
 
             it('should not allow overriding constants when context is different', function () {
@@ -1604,7 +1600,7 @@ describe('PropertyFactory', function () {
                 PropertyFactory.register(SquareWithDiffContextConstants);
 
                 expect(PropertyFactory.create.bind(PropertyFactory, 'SimpleTest:SquareWithDiffContextConstants-1.0.0'))
-                    .to.throw(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_CONTEXT_AS_BASE_TYPE + 'num:array');
+                    .to.throw(MSG.OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE);
             });
 
             it('should not allow overriding constants with a typedValue that does not inherit from base type', function () {
@@ -1640,6 +1636,7 @@ describe('PropertyFactory', function () {
             });
         });
     });
+
 
     describe('Default values', function () {
         it('should set default values for primitive property', function () {
@@ -3502,10 +3499,12 @@ describe('inheritsFrom() method', () => {
             expect(result).to.be.true;
         });
 
-    it('should recognize that the test set that inherits from NamedNodeProperty also inherits from ContainerProperty',
+    it('should recognize that the test set that inherits from NamedNodeProperty' +
+        ' also inherits from AbstractStaticCollectionProperty',
         () => {
             PropertyFactory._reregister({ typeid: 'autodesk.examples:test.set-1.0.0', inherits: 'NamedNodeProperty' });
-            const result = PropertyFactory.inheritsFrom('autodesk.examples:test.set-1.0.0', 'ContainerProperty');
+            const result = PropertyFactory.inheritsFrom('autodesk.examples:test.set-1.0.0',
+                'AbstractStaticCollectionProperty');
 
             expect(result).to.be.true;
         });
@@ -3565,8 +3564,16 @@ describe('inheritsFrom() method', () => {
             PropertyFactory.inheritsFrom('autodesk.examples:test.set-2.0.0', 'NamedProperty');
 
             const expectedResults = {
-                'autodesk.examples:test.set-1.0.0': { BaseProperty: true, ContainerProperty: true, NamedProperty: true },
-                'autodesk.examples:test.set-2.0.0': { BaseProperty: true, ContainerProperty: true, NamedProperty: true }
+                'autodesk.examples:test.set-1.0.0': {
+                    BaseProperty: true,
+                    AbstractStaticCollectionProperty: true,
+                    NamedProperty: true
+                },
+                'autodesk.examples:test.set-2.0.0': {
+                    BaseProperty: true,
+                    AbstractStaticCollectionProperty: true,
+                    NamedProperty: true
+                }
             };
 
             expect(PropertyFactory._inheritanceCache).to.deep.equal(expectedResults);
@@ -3582,8 +3589,16 @@ describe('inheritsFrom() method', () => {
             expect(PropertyFactory.inheritsFrom('autodesk.examples:test.set-2.0.0', 'NodeProperty')).to.be.true;
 
             const expectedResults = {
-                'autodesk.examples:test.set-1.0.0': { BaseProperty: true, ContainerProperty: true, NodeProperty: true },
-                'autodesk.examples:test.set-2.0.0': { BaseProperty: true, ContainerProperty: true, NodeProperty: true }
+                'autodesk.examples:test.set-1.0.0': {
+                    BaseProperty: true,
+                    AbstractStaticCollectionProperty: true,
+                    NodeProperty: true
+                },
+                'autodesk.examples:test.set-2.0.0': {
+                    BaseProperty: true,
+                    AbstractStaticCollectionProperty: true,
+                    NodeProperty: true
+                }
             };
 
             expect(PropertyFactory._inheritanceCache).to.deep.equal(expectedResults);

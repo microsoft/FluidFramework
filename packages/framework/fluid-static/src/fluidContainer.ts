@@ -12,6 +12,36 @@ import { RootDataObject } from "./rootDataObject";
 
 /**
  * Events emitted from IFluidContainer.
+ *
+ * ### "connected"
+ *
+ * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "dispose"
+ *
+ * The dispose event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
+ *
+ * ### "disconnected"
+ *
+ * The disconnected event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void;
+ * ```
  */
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
@@ -76,7 +106,6 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     public constructor(
         private readonly container: Container,
         private readonly rootDataObject: RootDataObject,
-        private readonly attachCallback: () => Promise<string>,
     ) {
         super();
         container.on("connected", this.connectedHandler);
@@ -115,13 +144,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     /**
      * {@inheritDoc IFluidContainer.attach}
      */
-    public async attach() {
-        if (this.attachState === AttachState.Detached) {
-            // Consider -- should we emit an attached event after the callback completes?
-            return this.attachCallback();
-        } else {
-            throw new Error("Cannot attach container. Container is not in detached state");
-        }
+    public async attach(): Promise<string> {
+        throw new Error("Cannot attach container. Container is not in detached state");
     }
 
     /**

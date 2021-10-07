@@ -184,6 +184,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
      * @param local - whether the message was sent by the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation && !local) {

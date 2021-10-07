@@ -133,13 +133,13 @@ use_old_InterfaceDeclaration_IAttachment(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IBlob": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IBlob():
     old.IBlob;
 declare function use_current_InterfaceDeclaration_IBlob(
     use: current.IBlob);
 use_current_InterfaceDeclaration_IBlob(
     get_old_InterfaceDeclaration_IBlob());
+*/
 
 /*
 * validate back compat by using current type in place of old type
@@ -1309,13 +1309,13 @@ use_old_InterfaceDeclaration_ITrace(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITree": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_ITree():
     old.ITree;
 declare function use_current_InterfaceDeclaration_ITree(
     use: current.ITree);
 use_current_InterfaceDeclaration_ITree(
     get_old_InterfaceDeclaration_ITree());
+*/
 
 /*
 * validate back compat by using current type in place of old type
@@ -1333,13 +1333,13 @@ use_old_InterfaceDeclaration_ITree(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ITreeEntry": {"forwardCompat": false}
-*/
 declare function get_old_TypeAliasDeclaration_ITreeEntry():
     old.ITreeEntry;
 declare function use_current_TypeAliasDeclaration_ITreeEntry(
     use: current.ITreeEntry);
 use_current_TypeAliasDeclaration_ITreeEntry(
     get_old_TypeAliasDeclaration_ITreeEntry());
+*/
 
 /*
 * validate back compat by using current type in place of old type

@@ -13,9 +13,9 @@ This document will explain how to use the audience APIs and then provide example
 When creating a container, your app is also provided a container services object which holds the audience.  This audience is backed by that same container. The following is an example. Note that `client` is an object of a type that is provided by a service-specific client library.
 
 ```js
-const { fluidContainer, containerServices } =
-    await client.createContainer(serviceConfig, containerSchema);
-const audience = containerServices.audience;
+const { container, services } =
+    await client.createContainer(containerSchema);
+const audience = services.audience;
 ```
 
 ### The IMember
@@ -119,17 +119,13 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -4,5 +4,4 @@
  */
 
 export * from "./container";
-export * from "./deltaManager";
 export * from "./loader";

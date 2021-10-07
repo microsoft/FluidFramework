@@ -22,7 +22,7 @@ export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
 // @public (undocumented)
 export class TinyliciousAudience extends ServiceAudience<TinyliciousMember> implements ITinyliciousAudience {
-    // (undocumented)
+    // @internal (undocumented)
     protected createServiceMember(audienceMember: IClient): TinyliciousMember;
 }
 
@@ -66,7 +66,5 @@ export interface TinyliciousMember extends IMember {
     userName: string;
 }
 
-
-// (No @packageDocumentation comment for this package)
 
 ```
