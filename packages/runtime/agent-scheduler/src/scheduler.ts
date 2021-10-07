@@ -218,7 +218,7 @@ class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> implements
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.consensusRegisterCollection.on("atomicChanged", async (key: string, currentClient: string | null) => {
             // emit on current client change
-            this.emit((!currentClient) ? "taskPicked" : "taskLost", key);
+            this.emit("taskAssigned", key, currentClient);
 
             // Check if this client was chosen.
             if (this.isActive() && currentClient === this.clientId) {
