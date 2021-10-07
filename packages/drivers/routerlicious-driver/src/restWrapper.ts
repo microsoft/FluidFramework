@@ -122,11 +122,12 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
             // Craft credentials using tenant id and token
             const storageToken = await tokenProvider.fetchStorageToken(
                 tenantId,
                 documentId,
+                refresh,
             );
             const credentials = {
                 password: storageToken.jwt,
@@ -170,10 +171,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
             const ordererToken = await tokenProvider.fetchOrdererToken(
                 tenantId,
                 documentId,
+                refresh,
             );
             return `Basic ${ordererToken.jwt}`;
         };
