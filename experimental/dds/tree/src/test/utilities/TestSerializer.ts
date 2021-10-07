@@ -16,6 +16,10 @@ export class TestFluidSerializer implements IFluidSerializer {
 		throw new Error('Method not implemented.');
 	}
 
+	public decode(input: any): any {
+		throw new Error('Method not implemented.');
+	}
+
 	public stringify(value: any, bind: IFluidHandle): string {
 		return JSON.stringify(value);
 	}

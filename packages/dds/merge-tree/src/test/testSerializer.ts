@@ -24,6 +24,10 @@ export class TestSerializer implements IFluidSerializer {
         throw new Error("Method not implemented.");
     }
 
+    public decode(input: any) {
+        throw new Error("Method not implemented.");
+    }
+
     public stringify(value: any, bind: IFluidHandle) {
         assert(bind === undefined, "Test serializer should not be called with bind handles");
         return JSON.stringify(value);
