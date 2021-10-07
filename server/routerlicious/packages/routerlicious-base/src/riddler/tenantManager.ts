@@ -79,8 +79,8 @@ export class TenantManager {
     /**
      * Retrieves the details for the given tenant
      */
-    public async getTenant(tenantId: string): Promise<ITenantConfig> {
-        const tenant = await this.getTenantDocument(tenantId);
+    public async getTenant(tenantId: string, includeDisabled = false): Promise<ITenantConfig> {
+        const tenant = await this.getTenantDocument(tenantId, includeDisabled);
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
@@ -96,20 +96,22 @@ export class TenantManager {
             orderer: tenant.orderer,
             storage: tenant.storage,
             customData: tenant.customData,
+            scheduledDeletionTime: tenant.scheduledDeletionTime,
         };
     }
 
     /**
      * Retrieves the details for all tenants
      */
-    public async getAllTenants(): Promise<ITenantConfig[]> {
-        const tenants = await this.getAllTenantDocuments();
+    public async getAllTenants(includeDisabled = false): Promise<ITenantConfig[]> {
+        const tenants = await this.getAllTenantDocuments(includeDisabled);
 
         return tenants.map((tenant) => ({
             id: tenant._id,
             orderer: tenant.orderer,
             storage: tenant.storage,
             customData: tenant.customData,
+            scheduledDeletionTime: tenant.scheduledDeletionTime,
         }));
     }
 
@@ -207,8 +209,8 @@ export class TenantManager {
     /**
      * Retrieves the secret for the given tenant
      */
-    public async getTenantKey(tenantId: string): Promise<string> {
-        const encryptedTenantKey = (await this.getTenantDocument(tenantId)).key;
+    public async getTenantKey(tenantId: string, includeDisabled = false): Promise<string> {
+        const encryptedTenantKey = (await this.getTenantDocument(tenantId, includeDisabled)).key;
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
@@ -268,12 +270,12 @@ export class TenantManager {
     /**
      * Retrieves the raw database tenant document
      */
-    private async getTenantDocument(tenantId: string): Promise<ITenantDocument> {
+    private async getTenantDocument(tenantId: string, includeDisabled = false): Promise<ITenantDocument> {
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const found = await collection.findOne({ _id: tenantId });
-        if (found.disabled) {
+        if (found.disabled && !includeDisabled) {
             return null;
         }
 

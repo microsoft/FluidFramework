@@ -55,7 +55,8 @@ export function create(
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.getTenant(tenantId);
+        const includeDisabled = getParam(request.params, "includeDisabled")?.toLowerCase() === "true";
+        const tenantP = manager.getTenant(tenantId, includeDisabled);
         handleResponse(tenantP, response);
     });
 
@@ -63,7 +64,8 @@ export function create(
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const tenantP = manager.getAllTenants();
+        const includeDisabled = getParam(request.params, "includeDisabled")?.toLowerCase() === "true";
+        const tenantP = manager.getAllTenants(includeDisabled);
         handleResponse(tenantP, response);
     });
 
@@ -71,7 +73,9 @@ export function create(
      * Retrieves the api key for the tenant
      */
     router.get("/tenants/:id/key", (request, response) => {
-        const tenantP = manager.getTenantKey(getParam(request.params, "id"));
+        const tenantId = getParam(request.params, "id");
+        const includeDisabled = getParam(request.params, "includeDisabled")?.toLowerCase() === "true";
+        const tenantP = manager.getTenantKey(tenantId, includeDisabled);
         handleResponse(tenantP, response);
     });
 
