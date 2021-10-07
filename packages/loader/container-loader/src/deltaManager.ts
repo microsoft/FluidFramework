@@ -860,9 +860,10 @@ export class DeltaManager
                 this.pendingReconnect = true;
                 Promise.resolve().then(async () => {
                     if (this.pendingReconnect) { // still valid?
-                        return this.reconnectOnError(
+                        return this.reconnectOnErrorCore(
                             "write", // connectionMode
-                            new GenericNetworkError("Switch to write", true /* canReconnect */));
+                            "Switch to write", // message
+                        );
                     }
                 })
                 .catch(() => {});
@@ -1320,15 +1321,36 @@ export class DeltaManager
         requestedMode: ConnectionMode,
         error: DriverError,
     ) {
+        return this.reconnectOnErrorCore(
+            requestedMode,
+            error.message,
+            canRetryOnError(error),
+            getRetryDelayFromError(error),
+            error);
+    }
+
+    /**
+     * Disconnect the current connection and reconnect.
+     * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
+     * @param requestedMode - Read or write
+     * @param error - Error reconnect information including whether or not to reconnect
+     * @returns A promise that resolves when the connection is reestablished or we stop trying
+     */
+    private async reconnectOnErrorCore(
+        requestedMode: ConnectionMode,
+        message: string,
+        canRetry = true,
+        delayMs?: number,
+        error?: DriverError,
+    ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         // If we're already disconnected/disconnecting it's not appropriate to call this again.
         assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
-        this.disconnectFromDeltaStream(error.message);
+        this.disconnectFromDeltaStream(message);
 
         // If reconnection is not an option, close the DeltaManager
-        const canRetry = canRetryOnError(error);
         if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
@@ -1342,7 +1364,6 @@ export class DeltaManager
         }
 
         if (this.reconnectMode === ReconnectMode.Enabled) {
-            const delayMs = getRetryDelayFromError(error);
             if (delayMs !== undefined) {
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error);
                 await waitForConnectedState(delayMs);
