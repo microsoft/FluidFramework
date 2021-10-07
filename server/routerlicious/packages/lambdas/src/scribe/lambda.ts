@@ -34,15 +34,13 @@ import {
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
-    BaseTelemetryProperties,
-    CommonProperties,
     Lumber,
     LumberEventName,
     Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { setQueuedMessageProperties, createSessionMetric, logCommonSessionEndMetrics } from "../utils";
+import { getLumberProperties, createSessionMetric, logCommonSessionEndMetrics } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
 
@@ -98,25 +96,10 @@ export class ScribeLambda implements IPartitionLambda {
     }
 
     public async handler(message: IQueuedMessage) {
-        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
-            Lumberjack.newLumberMetric(LumberEventName.ScribeHandler) : undefined;
-
-        if (lumberJackMetric) {
-            lumberJackMetric.setProperties({
-                [BaseTelemetryProperties.tenantId]: this.tenantId,
-                [BaseTelemetryProperties.documentId]: this.documentId,
-            });
-
-            setQueuedMessageProperties(message, lumberJackMetric);
-        }
-
         // Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
         // we had already checkpointed at a given offset.
         if (message.offset <= this.lastOffset) {
             this.context.checkpoint(message);
-
-            lumberJackMetric?.success(`Already processed upto offset ${this.lastOffset}.
-                Current message offset ${message.offset}`);
             return;
         }
 
@@ -134,7 +117,6 @@ export class ScribeLambda implements IPartitionLambda {
                         const lastSummary = await this.summaryReader.readLastSummary();
                         if (!lastSummary.fromSummary) {
                             const errorMsg = `Required summary can't be fetched`;
-                            lumberJackMetric?.error(errorMsg);
                             throw Error(errorMsg);
                         }
                         this.term = lastSummary.term;
@@ -181,7 +163,6 @@ export class ScribeLambda implements IPartitionLambda {
                         const errorMsg = `Invalid message sequence number.`
                             + `Current message @${value.operation.sequenceNumber}.`
                             + `ProtocolHandler @${lastProtocolHandlerSequenceNumber}`;
-                        lumberJackMetric?.error(errorMsg);
                         throw new Error(errorMsg);
                     }
                 }
@@ -238,9 +219,9 @@ export class ScribeLambda implements IPartitionLambda {
                                     await this.sendSummaryConfirmationMessage(operation.sequenceNumber, true, false);
                                     this.updateProtocolHead(this.protocolHandler.sequenceNumber);
                                     this.updateLastSummarySequenceNumber(this.protocolHandler.sequenceNumber);
-                                    lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: true });
+                                    const summaryResult = `Client summary success @${value.operation.sequenceNumber}`;
                                     this.context.log?.info(
-                                        `Client summary success @${value.operation.sequenceNumber}`,
+                                        summaryResult,
                                         {
                                             messageMetaData: {
                                                 documentId: this.documentId,
@@ -248,13 +229,14 @@ export class ScribeLambda implements IPartitionLambda {
                                             },
                                         },
                                     );
+                                    Lumberjack.info(summaryResult, getLumberProperties(this.documentId, this.tenantId));
                                 } else {
                                     const nackMessage = summaryResponse.message as ISummaryNack;
                                     await this.sendSummaryNack(nackMessage);
-                                    lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: false });
+                                    const errorMsg = `Client summary failure @${value.operation.sequenceNumber}. `
+                                        + `Error: ${nackMessage.message ?? nackMessage.errorMessage}`;
                                     this.context.log?.error(
-                                        `Client summary failure @${value.operation.sequenceNumber}. `
-                                        + `Error: ${nackMessage.errorMessage}`,
+                                        errorMsg,
                                         {
                                             messageMetaData: {
                                                 documentId: this.documentId,
@@ -262,14 +244,14 @@ export class ScribeLambda implements IPartitionLambda {
                                             },
                                         },
                                     );
+                                    Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId));
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
                             }
                         } catch (ex) {
-                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}.
-                                Exception: ${inspect(ex)}`;
-                            lumberJackMetric?.setProperties({ [CommonProperties.clientSummarySuccess]: false });
-                            this.context.log?.error(errorMsg);
+                            const errorMsg = `Client summary failure @${value.operation.sequenceNumber}`;
+                            this.context.log?.error(`${errorMsg} Exception: ${inspect(ex)}`);
+                            Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), ex);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.
@@ -283,7 +265,6 @@ export class ScribeLambda implements IPartitionLambda {
                                     },
                                 );
                             } else {
-                                lumberJackMetric?.error(errorMsg);
                                 throw ex;
                             }
                         }
@@ -316,9 +297,9 @@ export class ScribeLambda implements IPartitionLambda {
                                     false,
                                     this.serviceConfiguration.scribe.clearCacheAfterServiceSummary);
                                 this.updateLastSummarySequenceNumber(operation.sequenceNumber);
-                                lumberJackMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: true });
+                                const summaryResult = `Service summary success @${operation.sequenceNumber}`;
                                 this.context.log?.info(
-                                    `Service summary success @${operation.sequenceNumber}`,
+                                    summaryResult,
                                     {
                                         messageMetaData: {
                                             documentId: this.documentId,
@@ -326,25 +307,24 @@ export class ScribeLambda implements IPartitionLambda {
                                         },
                                     },
                                 );
+                                Lumberjack.info(summaryResult, getLumberProperties(this.documentId, this.tenantId));
                             }
                         } catch (ex) {
-                            const errorMsg = `Service summary failure @${operation.sequenceNumber}.
-                                Exception: ${inspect(ex)}`;
-                            lumberJackMetric?.setProperties({ [CommonProperties.serviceSummarySuccess]: false });
+                            const errorMsg = `Service summary failure @${operation.sequenceNumber}`;
 
                             // If this flag is set, we should ignore any storage speciic error and move forward
                             // to process the next message.
                             if (this.serviceConfiguration.scribe.ignoreStorageException) {
                                 this.context.log?.error(
-                                    `Service summary failure @${operation.sequenceNumber}`,
+                                    errorMsg,
                                     {
                                         messageMetaData: {
                                             documentId: this.documentId,
                                             tenantId: this.tenantId,
                                         },
                                     });
+                                Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), ex);
                             } else {
-                                lumberJackMetric?.error(errorMsg);
                                 throw ex;
                             }
                         }
@@ -369,21 +349,6 @@ export class ScribeLambda implements IPartitionLambda {
             message,
             this.clearCache);
         this.lastOffset = message.offset;
-
-        if (lumberJackMetric) {
-            this.setScribeStateMetrics(checkpoint, lumberJackMetric);
-            lumberJackMetric.success(`Message processed successfully at seq no ${checkpoint.sequenceNumber}`);
-        }
-    }
-
-    private setScribeStateMetrics(checkpoint: IScribe, lumberJackMetric: Lumber<LumberEventName.ScribeHandler>) {
-        const scribeState = {
-            [CommonProperties.sequenceNumber]: checkpoint.sequenceNumber,
-            [CommonProperties.minSequenceNumber]: checkpoint.minimumSequenceNumber,
-            [CommonProperties.checkpointOffset]: checkpoint.logOffset,
-            [CommonProperties.lastSummarySequenceNumber]: checkpoint.protocolState.sequenceNumber,
-        };
-        lumberJackMetric?.setProperties(scribeState);
     }
 
     public close(closeType: LambdaCloseType) {
@@ -438,6 +403,7 @@ export class ScribeLambda implements IPartitionLambda {
                             tenantId: this.tenantId,
                         },
                     });
+                Lumberjack.error(`Protocol error`, getLumberProperties(this.documentId, this.tenantId), error);
                 throw new Error(`Protocol error ${error} for ${this.documentId} ${this.tenantId}`);
             }
         }

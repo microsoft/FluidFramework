@@ -11,7 +11,7 @@ import { debug } from "./debug";
 export abstract class RestWrapper {
     constructor(
         protected readonly baseurl?: string,
-        protected defaultQueryString: querystring.ParsedUrlQueryInput = {},
+        protected defaultQueryString: Record<string, unknown> = {},
         protected readonly maxBodyLength = 1000 * 1024 * 1024,
         protected readonly maxContentLength = 1000 * 1024 * 1024,
     ) {
@@ -19,8 +19,8 @@ export abstract class RestWrapper {
 
     public async get<T>(
         url: string,
-        queryString?: querystring.ParsedUrlQueryInput,
-        headers?: querystring.ParsedUrlQueryInput,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -36,8 +36,8 @@ export abstract class RestWrapper {
     public async post<T>(
         url: string,
         requestBody: any,
-        queryString?: querystring.ParsedUrlQueryInput,
-        headers?: querystring.ParsedUrlQueryInput,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -53,8 +53,8 @@ export abstract class RestWrapper {
 
     public async delete<T>(
         url: string,
-        queryString?: querystring.ParsedUrlQueryInput,
-        headers?: querystring.ParsedUrlQueryInput,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -70,8 +70,8 @@ export abstract class RestWrapper {
     public async patch<T>(
         url: string,
         requestBody: any,
-        queryString?: querystring.ParsedUrlQueryInput,
-        headers?: querystring.ParsedUrlQueryInput,
+        queryString?: Record<string, unknown>,
+        headers?: Record<string, unknown>,
     ): Promise<T> {
         const options: AxiosRequestConfig = {
             baseURL: this.baseurl,
@@ -87,7 +87,7 @@ export abstract class RestWrapper {
 
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 
-    protected generateQueryString(queryStringValues: querystring.ParsedUrlQueryInput) {
+    protected generateQueryString(queryStringValues: Record<string, unknown>) {
         if (this.defaultQueryString || queryStringValues) {
             const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
 
@@ -104,13 +104,13 @@ export abstract class RestWrapper {
 export class BasicRestWrapper extends RestWrapper {
     constructor(
         baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
+        defaultQueryString: Record<string, unknown> = {},
         maxBodyLength = 1000 * 1024 * 1024,
         maxContentLength = 1000 * 1024 * 1024,
-        private defaultHeaders: querystring.ParsedUrlQueryInput = {},
+        private defaultHeaders: Record<string, unknown> = {},
         private readonly axios: AxiosInstance = Axios,
-        private readonly refreshDefaultQueryString?: () => querystring.ParsedUrlQueryInput,
-        private readonly refreshDefaultHeaders?: () => querystring.ParsedUrlQueryInput,
+        private readonly refreshDefaultQueryString?: () => Record<string, unknown>,
+        private readonly refreshDefaultHeaders?: () => Record<string, unknown>,
         private readonly getCorrelationId?: () => string | undefined,
     ) {
         super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
@@ -157,9 +157,9 @@ export class BasicRestWrapper extends RestWrapper {
     }
 
     private generateHeaders(
-        headers?: querystring.ParsedUrlQueryInput,
+        headers?: Record<string, unknown>,
         fallbackCorrelationId?: string,
-    ): querystring.ParsedUrlQueryInput {
+    ): Record<string, unknown> {
         let result = headers ?? {};
         if (this.defaultHeaders) {
             result = { ...this.defaultHeaders, ...headers };

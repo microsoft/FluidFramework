@@ -380,7 +380,6 @@ export class RunningSummarizer implements IDisposable {
                 const result = await resultSummarize.receivedSummaryAckOrNack;
 
                 if (result.success) {
-                    assert(result.data.summaryAckNackOp.type === MessageType.SummaryAck, 0x25c /* "not nack" */);
                     return;
                 }
                 // Check for retryDelay that can come from summaryNack or upload summary flow.

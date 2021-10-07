@@ -18,6 +18,11 @@ export interface ICache {
      * Sets a cache value
      */
     set<T>(key: string, value: T): Promise<void>;
+
+    /**
+     * Deletes a cache key/value pair. Returns true if the key was deleted, and false if it does not exist.
+     */
+    delete(key: string): Promise<boolean>;
 }
 
 export interface ITenantService {

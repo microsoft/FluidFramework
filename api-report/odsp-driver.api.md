@@ -62,6 +62,9 @@ export function isOdcUrl(url: string | URL): boolean;
 export function isSpoUrl(url: string): boolean;
 
 // @public (undocumented)
+export const locatorQueryParamName = "nav";
+
+// @public (undocumented)
 export const OdcApiSiteOrigin = "https://api.onedrive.com";
 
 // @public (undocumented)
@@ -86,7 +89,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
-}
+    }
 
 // @public (undocumented)
 export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
