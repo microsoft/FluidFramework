@@ -10,7 +10,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
@@ -24,6 +24,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
+import { InMemoryCache } from "./cache";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -41,6 +42,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
+    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
+    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTree>();
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -163,6 +166,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             tenantId,
             documentId,
-            this.driverPolicies);
+            this.driverPolicies,
+            this.blobCache,
+            this.snapshotTreeCache);
     }
 }
