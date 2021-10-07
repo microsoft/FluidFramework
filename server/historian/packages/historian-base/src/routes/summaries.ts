@@ -61,7 +61,8 @@ export function create(
             utils.handleResponse(
                 summaryP,
                 response,
-                useCache);
+                // Browser caching for summary data should be disabled for now.
+                false);
     });
 
     router.post("/repos/:ignored?/:tenantId/git/summaries",

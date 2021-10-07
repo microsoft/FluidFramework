@@ -465,6 +465,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _closed = false;
 
+    private setAutoReconnectTime = performance.now();
+
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this.submitMessage(type, contents),
         () => this.activeConnection(),
@@ -986,14 +988,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed Container");
         }
+        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+        const currentMode = this._deltaManager.reconnectMode;
 
-        this._deltaManager.setAutomaticReconnect(reconnect);
+        if (currentMode === mode) {
+            return;
+        }
+
+        const now = performance.now();
+        const duration = now - this.setAutoReconnectTime;
+        this.setAutoReconnectTime = now;
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
             connectionMode: this._deltaManager.connectionMode,
             connectionState: ConnectionState[this.connectionState],
+            duration,
         });
+
+        this._deltaManager.setAutoReconnect(mode);
 
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.

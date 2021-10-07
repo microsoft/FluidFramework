@@ -37,6 +37,7 @@ import {
     createRoomLeaveMessage,
     getRandomInt,
     generateClientId,
+    getLumberProperties,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -65,11 +66,6 @@ function getRoomId(room: IRoom) {
 const getMessageMetadata = (documentId: string, tenantId: string) => ({
     documentId,
     tenantId,
-});
-
-const getLumberProperties = (documentId: string, tenantId: string) => ({
-    [BaseTelemetryProperties.tenantId]: tenantId,
-    [BaseTelemetryProperties.documentId]: documentId,
 });
 
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {

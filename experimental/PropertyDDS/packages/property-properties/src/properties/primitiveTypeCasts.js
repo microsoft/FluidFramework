@@ -5,9 +5,9 @@
 /**
  * @fileoverview Helper functions to cast a JavaScript type to a value that is compatible with a given primitive type
  */
+const _ = require('lodash');
 const { MSG } = require('@fluid-experimental/property-common').constants;
 const { Int64, Uint64 } = require('@fluid-experimental/property-common');
-const _ = require('lodash');
 
 var castArrays = {
     Uint32: new Uint32Array(1),
@@ -40,7 +40,7 @@ var _simpleCastFunctor = function (in_array, in_value) {
  * @protected
  * @alias property-properties._castFunctors
  */
-var _castFunctors = {
+const _castFunctors = {
     /**
      * Casts the input value to a Uint64
      * @param {number} in_value - The value to use in the cast
@@ -157,4 +157,4 @@ var _castFunctors = {
     }
 };
 
-module.exports = _castFunctors;
+export { _castFunctors };

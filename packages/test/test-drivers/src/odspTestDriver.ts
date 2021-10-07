@@ -159,6 +159,22 @@ export class OdspTestDriver implements ITestDriver {
         );
     }
 
+    private static async getDriveId(server: string, tokenConfig: TokenConfig) {
+        let driveIdP = this.driveIdPCache.get(server);
+        if (driveIdP) {
+            return driveIdP;
+        }
+
+        driveIdP = this.getDriveIdFromConfig(server, tokenConfig);
+        this.driveIdPCache.set(server, driveIdP);
+        try {
+            return await driveIdP;
+        } catch (e) {
+            this.driveIdPCache.delete(server);
+            throw e;
+        }
+    }
+
     private static async create(
         loginConfig: IOdspTestLoginInfo,
         directory: string,
@@ -170,12 +186,7 @@ export class OdspTestDriver implements ITestDriver {
             ...getMicrosoftConfiguration(),
         };
 
-        let driveIdP = this.driveIdPCache.get(loginConfig.server);
-        if (!driveIdP) {
-            driveIdP = this.getDriveIdFromConfig(loginConfig.server, tokenConfig);
-        }
-
-        const driveId = await driveIdP;
+        const driveId = await this.getDriveId(loginConfig.server, tokenConfig);
         const directoryParts = [directory];
 
         // if we are in a azure dev ops build use the build id in the dir path
