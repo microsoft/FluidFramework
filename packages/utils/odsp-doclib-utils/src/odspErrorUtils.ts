@@ -245,10 +245,21 @@ export function enrichOdspError(
     return error;
 }
 
+export function throwOdspNetworkError(
+    fluidErrorCode: string,
+    statusCode: number,
+    response?: Response,
+    responseText?: string,
+    props?: ITelemetryProperties,
+): never {
+    return throwOdspNetworkError2(fluidErrorCode, fluidErrorCode, statusCode, response, responseText, props);
+}
+
 /**
  * Throws network error - an object with a bunch of network related properties
  */
-export function throwOdspNetworkError(
+export function throwOdspNetworkError2(
+    fluidErrorCode: string,
     errorMessage: string,
     statusCode: number,
     response?: Response,
@@ -256,7 +267,7 @@ export function throwOdspNetworkError(
     props?: ITelemetryProperties,
 ): never {
     const networkError = createOdspNetworkError(
-        "fluidErrorCode", //*
+        fluidErrorCode,
         response && response.statusText !== "" ? `${errorMessage} (${response.statusText})` : errorMessage,
         statusCode,
         response ? numberFromHeader(response.headers.get("retry-after")) : undefined, /* retryAfterSeconds */

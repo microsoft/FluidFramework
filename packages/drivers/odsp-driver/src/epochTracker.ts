@@ -5,7 +5,7 @@
 
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { fluidEpochMismatchError, throwOdspNetworkError2 } from "@fluidframework/odsp-doclib-utils";
 import { ThrottlingError, RateLimiter } from "@fluidframework/driver-utils";
 import { IConnected } from "@fluidframework/protocol-definitions";
 import {
@@ -282,7 +282,7 @@ export class EpochTracker implements IPersistedFileCache {
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-            throwOdspNetworkError(message ?? "epochMismatch", fluidEpochMismatchError);
+            throwOdspNetworkError2("epochMismatch", message ?? "", fluidEpochMismatchError);
         }
     }
 

@@ -15,6 +15,7 @@ import {
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
     throwOdspNetworkError,
+    throwOdspNetworkError2,
     getSPOAndGraphRequestIdsFromResponse,
     fetchTokenErrorCode,
 } from "@fluidframework/odsp-doclib-utils";
@@ -105,11 +106,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`noResponseFromTheServer`, fetchIncorrectResponse);
+            throwOdspNetworkError("noResponseFromTheServer", fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
-            throwOdspNetworkError(
-                `Error ${response.status}`, response.status, response, await response.text());
+            throwOdspNetworkError2(
+                "fetchHelperError", `Error ${response.status}`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -141,7 +142,7 @@ export async function fetchHelper(
         // It is also non-serializable object due to circular references.
         //
         throwOdspNetworkError(
-            `fetchError`,
+            "fetchError",
             online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             undefined, // response
         );
