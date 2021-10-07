@@ -43,6 +43,14 @@ export function create(
     });
 
     /**
+     * Retrieves list of all deleted tenants
+     */
+     router.get("/tenants/disabled", (request, response) => {
+        const disabledTenantsP = manager.getDisabledTenants();
+        handleResponse(disabledTenantsP, response);
+    });
+
+    /**
      * Retrieves details for the given tenant
      */
     router.get("/tenants/:id", (request, response) => {
@@ -119,11 +127,15 @@ export function create(
     });
 
     /**
-     * Deletes a tenant by adding a disabled flag
+     * Deletes a tenant
      */
     router.delete("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.disableTenant(tenantId);
+        const scheduledDeletionTimeStr = request.body.scheduledDeletionTime;
+        const scheduledDeletionTime = scheduledDeletionTimeStr
+        ? new Date(scheduledDeletionTimeStr)
+        : null;
+        const tenantP = manager.deleteTenant(tenantId, scheduledDeletionTime);
         handleResponse(tenantP, response);
     });
 

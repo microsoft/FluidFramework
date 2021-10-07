@@ -52,9 +52,14 @@ const config = {
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
+
+const clientProps = {
+  connection: config,
+}
+
 // This AzureClient instance connects to a local Tinylicious
 // instance rather than a live Azure Fluid Relay service
-const client = new AzureClient(config);
+const client = new AzureClient(clientProps);
 ```
 
 These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious. `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
@@ -82,7 +87,7 @@ function createAzureClient(): AzureClient {
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new AzureClient(connectionConfig);
+    return new AzureClient({ connection:connectionConfig });
 }
 ```
 

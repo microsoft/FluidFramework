@@ -193,7 +193,7 @@ export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 export class InsecureUrlResolver implements IUrlResolver {
     constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
     // (undocumented)
-    createCreateNewRequest(fileName: string): IRequest;
+    createCreateNewRequest(fileName?: string): IRequest;
     // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
     // (undocumented)
