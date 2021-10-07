@@ -192,6 +192,8 @@ class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
     }
 }
 
+const latestSnapshotId: string = "latest";
+
 class WholeSummaryDocumentStorageService implements IDocumentStorageService {
     private readonly summaryUploadManager: ISummaryUploadManager;
     private firstVersionsCall: boolean = true;
@@ -223,7 +225,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         if (this.firstVersionsCall && count === 1) {
             this.firstVersionsCall = false;
             return [{
-                id: (await this.fetchAndCacheSnapshotTree("latest")).id,
+                id: (await this.fetchAndCacheSnapshotTree(latestSnapshotId)).id,
                 treeId: undefined!,
             }];
         }
