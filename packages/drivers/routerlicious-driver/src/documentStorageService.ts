@@ -28,7 +28,6 @@ import {
     convertWholeFlatSummaryToSnapshotTreeAndBlobs,
     GitManager,
     ISummaryUploadManager,
-    IWholeFlatSummary,
     SummaryTreeUploadManager,
     WholeSummaryUploadManager,
 } from "@fluidframework/server-services-client";
@@ -36,6 +35,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DocumentStorageServiceProxy, PrefetchDocumentStorageService } from "@fluidframework/driver-utils";
 import { RetriableGitManager } from "./retriableGitManager";
 import { IRouterliciousDriverPolicies } from "./policies";
+import { ICache, InMemoryCache } from "./cache";
 
 /**
  * Document access to underlying storage for routerlicious driver.
@@ -192,8 +192,6 @@ class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
 }
 
 class WholeSummaryDocumentStorageService implements IDocumentStorageService {
-    private readonly blobCache: Map<string, ArrayBufferLike> = new Map();
-    private readonly summaryCache: Map<string, IWholeFlatSummary> = new Map();
     private readonly summaryUploadManager: ISummaryUploadManager;
 
     public get repositoryUrl(): string {
@@ -204,7 +202,9 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         protected readonly id: string,
         protected readonly manager: GitManager,
         protected readonly logger: ITelemetryLogger,
-        public readonly policies: IDocumentStorageServicePolicies = {}) {
+        public readonly policies: IDocumentStorageServicePolicies = {},
+        private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
+        private readonly snapshotTreeCache: ICache<ISnapshotTree> = new InMemoryCache()) {
         this.summaryUploadManager = new WholeSummaryUploadManager(manager);
     }
 
@@ -246,34 +246,37 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
             requestVersion = versions[0];
         }
 
-        let wholeFlatSummary: IWholeFlatSummary | undefined = this.summaryCache.get(requestVersion.id);
-        if (!wholeFlatSummary) {
-            wholeFlatSummary = await PerformanceEvent.timedExecAsync(
-                this.logger,
-                {
-                    eventName: "getWholeFlatSummary",
-                    treeId: requestVersion.id,
-                },
-                async (event) => {
-                    const response = await this.manager.getSummary(requestVersion!.id);
-                    event.end({
-                        size: response.trees[0]?.entries.length,
-                    });
-                    return response;
-                },
-            );
-            this.summaryCache.set(requestVersion.id, wholeFlatSummary);
+        const cachedSnapshotTree = await this.snapshotTreeCache.get(requestVersion.id);
+        if (cachedSnapshotTree !== undefined) {
+            return cachedSnapshotTree;
         }
 
+        const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+            this.logger,
+            {
+                eventName: "getWholeFlatSummary",
+                treeId: requestVersion.id,
+            },
+            async (event) => {
+                const response = await this.manager.getSummary(requestVersion!.id);
+                event.end({
+                    size: response.trees[0]?.entries.length,
+                });
+                return response;
+            },
+        );
         const normalizedWholeSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
 
-        this.initBlobCache(normalizedWholeSummary.blobs);
+        await Promise.all([
+            this.snapshotTreeCache.put(requestVersion.id, normalizedWholeSummary.snapshotTree),
+            this.initBlobCache(normalizedWholeSummary.blobs),
+        ]);
 
         return normalizedWholeSummary.snapshotTree;
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-        const cachedBlob = this.blobCache.get(blobId);
+        const cachedBlob = await this.blobCache.get(blobId);
         if (cachedBlob !== undefined) {
             return cachedBlob;
         }
@@ -294,7 +297,7 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         );
         const bufferValue = stringToBuffer(blob.content, blob.encoding);
 
-        this.blobCache.set(blob.sha, bufferValue);
+        await this.blobCache.put(blob.sha, bufferValue);
 
         return bufferValue;
     }
@@ -339,10 +342,12 @@ class WholeSummaryDocumentStorageService implements IDocumentStorageService {
         );
     }
 
-    private initBlobCache(blobs: Map<string, ArrayBuffer>): void {
+    private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
+        const blobCachePutPs: Promise<void>[] = [];
         blobs.forEach((value, id) => {
-            this.blobCache.set(id, value);
+            blobCachePutPs.push(this.blobCache.put(id, value));
         });
+        await Promise.all(blobCachePutPs);
     }
 }
 
@@ -358,9 +363,11 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         manager: GitManager,
         logger: ITelemetryLogger,
         policies: IDocumentStorageServicePolicies,
-        driverPolicies?: IRouterliciousDriverPolicies): IDocumentStorageService {
+        driverPolicies?: IRouterliciousDriverPolicies,
+        blobCache?: ICache<ArrayBufferLike>,
+        snapshotTreeCache?: ICache<ISnapshotTree>): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
-            new WholeSummaryDocumentStorageService(id, manager, logger, policies) :
+            new WholeSummaryDocumentStorageService(id, manager, logger, policies, blobCache, snapshotTreeCache) :
             new ShreddedSummaryDocumentStorageService(id, manager, logger, policies);
         // TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
         if (!driverPolicies?.enableWholeSummaryUpload && policies.caching === LoaderCachingPolicy.Prefetch) {
@@ -374,8 +381,18 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         public manager: GitManager,
         logger: ITelemetryLogger,
         policies: IDocumentStorageServicePolicies = {},
-        driverPolicies?: IRouterliciousDriverPolicies) {
-        super(DocumentStorageService.loadInternalDocumentStorageService(id, manager, logger, policies, driverPolicies));
+        driverPolicies?: IRouterliciousDriverPolicies,
+        blobCache?: ICache<ArrayBufferLike>,
+        snapshotTreeCache?: ICache<ISnapshotTree>) {
+        super(DocumentStorageService.loadInternalDocumentStorageService(
+            id,
+            manager,
+            logger,
+            policies,
+            driverPolicies,
+            blobCache,
+            snapshotTreeCache,
+        ));
     }
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {

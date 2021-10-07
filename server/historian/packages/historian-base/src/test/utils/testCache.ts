@@ -16,4 +16,7 @@ export class TestCache implements ICache {
         this.dictionary.set(key, value);
         return Promise.resolve();
     }
+    async delete(key: string): Promise<boolean> {
+        return Promise.resolve(this.dictionary.delete(key));
+    }
 }

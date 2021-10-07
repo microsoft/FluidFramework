@@ -20,7 +20,12 @@ import {
     SummaryObject,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IGitManager, ISummaryTree, WholeSummaryUploadManager } from "@fluidframework/server-services-client";
+import {
+    buildTreePath,
+    IGitManager,
+    ISummaryTree,
+    WholeSummaryUploadManager,
+} from "@fluidframework/server-services-client";
 import {
     ICollection,
     IScribe,
@@ -160,7 +165,8 @@ export class SummaryWriter implements ISummaryWriter {
                 protocolEntries,
                 logTailEntries,
                 serviceProtocolEntries,
-                checkpoint.protocolState.sequenceNumber);
+                checkpoint.protocolState.sequenceNumber,
+                content.details?.includesProtocolTree);
         } else {
             const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
                 this.summaryStorage.createTree({ entries: logTailEntries }),
@@ -370,13 +376,17 @@ export class SummaryWriter implements ISummaryWriter {
         }
     }
 
+    // When 'includesProtocolTree' is set, client uploads two top level nodes: '.app' and '.protocol'.
+    // For now, we are ignoring '.protocol' node and uploading our own version (TODO: validate what client uploads)
+    // However, we still need to refer to '.app' node, which is done by pointing to 'handle/.app'.
     private async updateWholeSummary(
         parentHandle: string,
         appSummaryHandle: string,
         protocolEntries: ITreeEntry[],
         logTailEntries: ITreeEntry[],
         serviceProtocolEntries: ITreeEntry[],
-        sequenceNumber: number): Promise<string> {
+        sequenceNumber: number,
+        includesProtocolTree: boolean | undefined): Promise<string> {
         const fullTree: ISummaryTree = {
             type: SummaryType.Tree,
             tree: {
@@ -385,7 +395,7 @@ export class SummaryWriter implements ISummaryWriter {
                 ".serviceProtocol": this.createSummaryTreeFromEntry(serviceProtocolEntries),
                 ".app": {
                     type: SummaryType.Handle,
-                    handle: appSummaryHandle,
+                    handle: includesProtocolTree ? buildTreePath(appSummaryHandle, ".app") : appSummaryHandle,
                     handleType: SummaryType.Tree,
                     embedded: true,
                 },

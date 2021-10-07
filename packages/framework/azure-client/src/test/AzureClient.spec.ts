@@ -131,7 +131,7 @@ describe("AzureClient", () => {
      */
     it("cannot load improperly created container (cannot load a non-existent container)", async () => {
         const consoleErrorFn = console.error;
-        console.error = () => {};
+        console.error = () => { };
         const containerAndServicesP = client.getContainer("containerConfig", schema);
 
         const errorFn = (error) => {

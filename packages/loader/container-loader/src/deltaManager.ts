@@ -401,11 +401,16 @@ export class DeltaManager
      * Enables or disables automatic reconnecting.
      * Will throw an error if reconnectMode set to Never.
      */
-    public setAutomaticReconnect(reconnect: boolean): void {
-        assert(
-            this._reconnectMode !== ReconnectMode.Never,
-            0x0e1 /* "Cannot toggle automatic reconnect if reconnect is set to Never." */);
-        this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+    public setAutoReconnect(mode: ReconnectMode): void {
+        assert(mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
+            "API is not supported for non-connecting or closed container");
+
+        this._reconnectMode = mode;
+
+        if (mode !== ReconnectMode.Enabled) {
+            // immediately disconnect - do not rely on service eventually dropping connection.
+            this.disconnectFromDeltaStream("setAutoReconnect");
+        }
     }
 
     /**
@@ -434,7 +439,11 @@ export class DeltaManager
         }
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
+
         if (oldValue !== this.readonly) {
+            assert(this._reconnectMode !== ReconnectMode.Never,
+                "API is not supported for non-connecting or closed container");
+
             let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
