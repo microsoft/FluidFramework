@@ -26,7 +26,6 @@
     "coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix",
-    "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
