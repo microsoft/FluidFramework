@@ -208,7 +208,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: this.serializer.stringify(this.data, this.handle),
+                        contents: serializer.stringify(this.data, this.handle),
                         encoding: "utf-8",
                     },
                 },
