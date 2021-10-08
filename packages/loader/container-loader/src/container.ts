@@ -797,6 +797,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 eventName: "ContainerClose",
                 loaded: this.loaded,
+                category: error === undefined ? "generic" : "error",
             },
             error,
         );
