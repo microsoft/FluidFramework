@@ -153,7 +153,7 @@ export interface IConnected {
 export interface ICreateBlobResponse {
     // (undocumented)
     id: string;
-    // (undocumented)
+    // @deprecated (undocumented)
     url: string;
 }
 

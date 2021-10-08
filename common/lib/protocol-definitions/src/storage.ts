@@ -50,7 +50,9 @@ export interface IAttachment {
 
 export interface ICreateBlobResponse {
     id: string;
-    // @deprecated - It is an unused field and could be removed in future versions.
+    /**
+     * @deprecated - It is an unused field and could be removed in future versions.
+    */
     url: string;
 }
 
