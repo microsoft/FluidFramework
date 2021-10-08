@@ -60,6 +60,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		return this.consumer?.isConnected() ? true : false;
 	}
 
+	/**
+	 * Returns the offset of the latest consumsed message
+	 */
+	public getLatestMessageOffset(partitionId: number): number | undefined {
+		return this.latestOffsets.get(partitionId);
+	}
+
 	protected connect() {
 		if (this.closed) {
 			return;

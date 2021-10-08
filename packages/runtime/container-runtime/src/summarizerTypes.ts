@@ -197,17 +197,22 @@ export interface IBroadcastSummaryResult {
     readonly broadcastDuration: number;
 }
 
-export interface IAckNackSummaryResult {
-    readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
+export interface IAckSummaryResult {
+    readonly summaryAckOp: ISummaryAckMessage;
     readonly ackNackDuration: number;
 }
 
-export type SummarizeResultPart<T> = {
+export interface INackSummaryResult {
+    readonly summaryNackOp: ISummaryNackMessage;
+    readonly ackNackDuration: number;
+}
+
+export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
-    data: T;
+    data: TSuccess;
 } | {
     success: false;
-    data: T | undefined;
+    data: TFailure | undefined;
     message: string;
     error: any;
     retryAfterSeconds?: number;
@@ -219,7 +224,7 @@ export interface ISummarizeResults {
     /** Resolves when we observe our summarize op broadcast. */
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     /** Resolves when we receive a summaryAck or summaryNack. */
-    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
+    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
 }
 
 export type OnDemandSummarizeResult = (ISummarizeResults & {

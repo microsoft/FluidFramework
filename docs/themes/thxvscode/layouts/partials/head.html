@@ -22,9 +22,10 @@
     <link rel="manifest" href="/site.webmanifest">
 
     <title>{{.Title}}</title>
-    {{ range .AlternativeOutputFormats -}}
-    {{ printf `<link rel="%s" type="%s+%s" href="%s" title="%s" />` .Rel .MediaType.Type .MediaType.Suffix .Permalink $.Site.Title | safeHTML }}
-    {{ end -}}
+    <!-- RSS feeds are not configured properly, so this is commented out for the time being. Issue #7612 -->
+    {{/* range .AlternativeOutputFormats */}}
+        {{/* printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink | safeHTML */}}
+    {{/* end */}}
 
     <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
     <!-- EU Cookie Compliance CSS -->

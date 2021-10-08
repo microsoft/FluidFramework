@@ -44,7 +44,7 @@ export interface ITestDriver{
      * type, this should only be done it absolutely necessary for complex scenarios
      * as the test may not work against all supported servers if done.
      */
-    createCreateNewRequest(testId: string): IRequest;
+    createCreateNewRequest(testId?: string): IRequest;
 
     /**
      * Creates a container url that can be resolved by the url resolver for this driver.

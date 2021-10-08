@@ -37,9 +37,9 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;framework&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluidframework/tinylicious&#x2011;client&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
-    &nbsp;
+    |fluid&#x2011;framework    |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    |fluidframework/tinylicious&#x2011;client   |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
+    {.table}
 
     Run the following command to install the libraries.
 
@@ -242,19 +242,13 @@ When you make changes to the code the project will automatically rebuild and the
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
 [FluidContainer]: {{< relref "fluidcontainer.md" >}}
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
