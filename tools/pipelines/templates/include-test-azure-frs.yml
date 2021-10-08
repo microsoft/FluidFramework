@@ -101,7 +101,7 @@ jobs:
           runVersion: latestFromBranch
           runBranch: $(Build.SourceBranch)
           artifact: pack
-          patterns: "**/${{ variables.testPackageFilePattern }}"
+          patterns: "**/test-azure-client-pack.tgz"
           path: $(Pipeline.Workspace)/client/pack
 
       - task: Bash@3
