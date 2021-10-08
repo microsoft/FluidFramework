@@ -6,7 +6,6 @@
 import { AxiosRequestConfig } from "axios";
 
 export enum RestLessFieldNames {
-    RestLess = "restless",
     Method = "method",
     Header = "header",
     Body = "body",
@@ -39,7 +38,6 @@ export class RestLessClient {
         const newRequest = { ...request };
         const body = new URLSearchParams();
 
-        body.append(RestLessFieldNames.RestLess, "true");
         body.append(RestLessFieldNames.Method, newRequest.method ?? "GET");
 
         if (newRequest.headers) {
@@ -60,7 +58,7 @@ export class RestLessClient {
         newRequest.method = "POST";
         newRequest.headers = {
             // TODO: when we support blob/file uploads, we should potentially add compatibility with multipart/form-data
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/x-www-form-urlencoded;restless",
         };
 
         return newRequest;
