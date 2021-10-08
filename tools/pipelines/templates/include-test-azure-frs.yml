@@ -104,7 +104,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: '.'
-          customCommand: 'npm run build:fast azure-client'
+          customCommand: 'run build:fast azure-client'
           customRegistry: 'useNpmrc'
 
       # Build the tests
