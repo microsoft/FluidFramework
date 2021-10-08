@@ -159,9 +159,9 @@ stages:
                 fi
 
                 if [ -f "lerna.json" ]; then
-                  grep -e fluid.*-0 `find packages -name 'package.json'`
+                  grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
                 else
-                  grep -e fluid.*-0 `find . -name 'package.json'`
+                  grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
                 fi
 
                 if [[ $? == 0 ]]; then

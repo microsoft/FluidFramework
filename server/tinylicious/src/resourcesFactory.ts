@@ -41,7 +41,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
             collectionNames.documents,
             collectionNames.deltas,
             collectionNames.scribeDeltas);
-        const storage = new DocumentStorage(databaseManager, tenantManager);
+        const storage = new DocumentStorage(databaseManager, tenantManager, false);
         const io = new Server({
             // enable compatibility with socket.io v2 clients
             // https://socket.io/docs/v4/client-installation/
