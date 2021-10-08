@@ -104,9 +104,8 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        if (provider.driver.type === "odsp") {
-            assert.ok(container.id, "No container ID");
-        } else {
+        assert.ok(container.id, "No container ID");
+        if (provider.driver.type === "local") {
             assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
         }
     });
@@ -591,9 +590,8 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         assert.strictEqual(container.attachState, AttachState.Attached, "Container should be attached");
         assert.strictEqual(container.closed, false, "Container should be open");
         assert.strictEqual(container.deltaManager.inbound.length, 0, "Inbound queue should be empty");
-        if (provider.driver.type === "odsp") {
-            assert.ok(container.id, "No container ID");
-        } else {
+        assert.ok(container.id, "No container ID");
+        if (provider.driver.type === "local") {
             assert.strictEqual(container.id, provider.documentId, "Doc id is not matching!!");
         }
         assert.strictEqual(retryTimes, 0, "Should not succeed at first time");

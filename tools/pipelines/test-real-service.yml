@@ -33,7 +33,7 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        target: local
+        testCommand: test:realsvc:local:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
@@ -47,7 +47,7 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        target: tinylicious
+        testCommand: test:realsvc:tinylicious:report
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
@@ -61,7 +61,8 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
-        target: routerlicious
+        testCommand: test:realsvc:routerlicious:report
+        continueOnError: true
         splitTestVariants:
           - --compatVersion=0
           - --compatVersion=-1
@@ -82,7 +83,8 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 360
-        target: frs
+        continueOnError: true
+        testCommand: test:realsvc:frs:report
         splitTestVariants:
           - --compatVersion=0
           - --compatVersion=-1
@@ -103,7 +105,8 @@ stages:
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 360
-        target: odsp
+        continueOnError: true
+        testCommand: test:realsvc:odsp:report
         splitTestVariants:
           - --compatVersion=0
           - --compatVersion=-1

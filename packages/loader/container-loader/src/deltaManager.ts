@@ -1656,12 +1656,6 @@ export class DeltaManager
             // (the other 50%), and thus these errors below should be looked at even if code below results in
             // recovery.
             if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
-                // connectionMode === "read" case is too noisy, so not log it.
-                // It happens because fetch in setupNewSuccessfulConnection get cancelled due to other fetch, and we
-                // never retry (other than here)
-                if (this.connectionMode === "write") {
-                    this.logConnectionIssue({ eventName: "OpsBehind" });
-                }
                 this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
             }
         }
