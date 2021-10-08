@@ -62,8 +62,8 @@ jobs:
       # Setup
       - checkout: self
         clean: true
-        lfs: false
-        submodules: false
+        lfs: true
+        submodules: true
 
       # Print parameters/Vars
       - task: Bash@3
@@ -92,15 +92,23 @@ jobs:
         inputs:
           version: 12.x
 
-
       # Install test and logger package
       - task: Npm@1
         displayName: 'npm install'
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}
+          workingDir: '.'
           customCommand: 'install'
           customRegistry: 'useNpmrc'
+
+      # # Install test and logger package
+      # - task: Npm@1
+      #   displayName: 'npm install'
+      #   inputs:
+      #     command: 'custom'
+      #     workingDir: ${{ parameters.testWorkspace }}
+      #     customCommand: 'install'
+      #     customRegistry: 'useNpmrc'
 
       # Build the tests
       - task: Npm@1
