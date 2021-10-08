@@ -45,8 +45,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
     get disposed(): boolean;
-    get hasPendingOps(): boolean;
     get initialObjects(): Record<string, IFluidLoadable>;
+    get isDirty(): boolean;
     }
 
 // @public
@@ -63,8 +63,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
     dispose(): void;
     readonly disposed: boolean;
-    readonly hasPendingOps: boolean;
     readonly initialObjects: LoadableObjectRecord;
+    readonly isDirty: boolean;
 }
 
 // @public

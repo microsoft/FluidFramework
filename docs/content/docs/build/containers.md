@@ -141,20 +141,22 @@ container.on("disposed", () => {
 });
 ```
 
-### hasPendingOps
+### isDirty
 
-The container has operations that have not yet been acknowledged by the service. It can lead to data loss. `hasPendingOps` flag returns a boolean value depending on the data loss in the container.
+Returns `true` if the container has local changes that have not yet been acknowledged by the service. Closing the container while `isDirty() === true` will result in the loss of any operations that have not yet made it to the service. This can be perceived as data loss from the end user.
+
+It's recommended to check the `isDirty` flag before closing the container or navigating away from the page.
 
 The possible scenarios where the flag is set to true are:
 
-1. Container is closed while making changes
-2. When there is no network connection while making changes
+1. When there is no network connection while making changes
+1. Recent changes that have not yet been acknowledge by the server
 
-`hasPendingOps` is set to false in scenarios such as:
+`isDirty` is set to false in scenarios such as:
 
 1. Making changes when the container is in the detached state
-2. Attaching the container to the service
-3. If the network disconnects without any outstanding changes
+1. Attaching the container to the service
+1. If the network disconnects without any outstanding changes
 
 ### Initial objects
 

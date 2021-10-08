@@ -58,12 +58,14 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
 
     /**
-     * Returns true if Fluid Container has data loss in the container
+     * Returns true if the container has local changes that have not been persisted to the service.
+     * Closing the container while true will result in the loss of these local changes.
+     *
      * Possible scenarios where the flag is set to true:
-     * 1. Container is closed while making changes
-     * 2. When there is no network connection while making changes
+     * 1. Changes are made with no network connection
+     * 2. Recent changes have not yet been acknowledged by the service
      */
-     readonly hasPendingOps: boolean;
+     readonly isDirty: boolean;
 
     /**
      * Whether the container is disposed, which permanently disables it.
@@ -122,9 +124,9 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.hasPendingOps}
+     * {@inheritDoc IFluidContainer.isDirty}
      */
-     public get hasPendingOps(): boolean {
+     public get isDirty(): boolean {
         return this.container.isDirty;
     }
 
