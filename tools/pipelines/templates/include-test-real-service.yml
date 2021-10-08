@@ -19,9 +19,6 @@ parameters:
   type: number
   default: 60
 
-- name: target
-  type: string
-
 - name: env
   type: object
   default:
@@ -30,6 +27,13 @@ parameters:
   type: object
   default:
   - ""
+
+- name: testCommand
+  type: string
+
+- name: continueOnError
+  type: boolean
+  default: false
 
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
@@ -80,7 +84,8 @@ jobs:
               testWorkspace=${{ parameters.testWorkspace }}
               testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}
-              target=${{ parameters.target }}
+              testCommand=${{ parameters.testCommand }}
+              continueOnError=${{ parameters.continueOnError }}
               variant=${{ variant }}
             "
 
@@ -164,14 +169,14 @@ jobs:
 
       # run the test
       - task: Npm@1
-        displayName: '[end-to-end tests] npm run test:realsvc:${{ parameters.target }}:report ${{ variant }}'
-        continueOnError: true
+        displayName: '[test] ${{ parameters.testCommand }} ${{ variant }}'
+        continueOnError: ${{ parameters.continueOnError }}
         env:
           ${{ parameters.env }}
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/test-end-to-end-tests
-          customCommand: 'run test:realsvc:${{ parameters.target }}:report -- ${{ variant }}'
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant }}'
 
       # Upload results
       - task: PublishTestResults@2
