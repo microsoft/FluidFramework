@@ -113,7 +113,8 @@ describe("PropertyDDS", () => {
 		) {
 			for (let i = startTest; i < count; i++) {
                 const seed = createDerivedGuid("", String(i));
-                it(`Generated Test Case #${i} (seed: ${seed})`, async () => {
+                it(`Generated Test Case #${i} (seed: ${seed})`, async function() {
+					this.timeout(10000);
 					let testString = "";
 
 					errorHandler = (err) => {
@@ -197,7 +198,8 @@ describe("PropertyDDS", () => {
 			let ACount: number;
 			let CCount: number;
 
-			beforeEach(async () => {
+			beforeEach(async function() {
+				this.timeout(10000);
 				// Insert and prepare an array within the container
 				await opProcessingController.pauseProcessing();
 				sharedPropertyTree1.root.insert("array", PropertyFactory.create("String", "array"));
