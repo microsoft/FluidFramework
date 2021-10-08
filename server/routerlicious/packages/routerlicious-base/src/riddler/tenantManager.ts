@@ -115,19 +115,6 @@ export class TenantManager {
         }));
     }
 
-    public async getDisabledTenants(): Promise<ITenantConfig[]> {
-        const tenants = await this.getAllTenantDocuments(true);
-        return tenants
-        .filter((tenant) => tenant.disabled)
-        .map((tenant) => ({
-            id: tenant._id,
-            orderer: tenant.orderer,
-            storage: tenant.storage,
-            customData: tenant.customData,
-            scheduledDeletionTime: tenant.scheduledDeletionTime,
-        }));
-    }
-
     /**
      * Generates a random tenant key
      */

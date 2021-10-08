@@ -43,14 +43,6 @@ export function create(
     });
 
     /**
-     * Retrieves list of all deleted tenants
-     */
-     router.get("/tenants/disabled", (request, response) => {
-        const disabledTenantsP = manager.getDisabledTenants();
-        handleResponse(disabledTenantsP, response);
-    });
-
-    /**
      * Retrieves details for the given tenant
      */
     router.get("/tenants/:id", (request, response) => {
