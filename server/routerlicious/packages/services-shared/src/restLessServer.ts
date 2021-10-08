@@ -32,6 +32,9 @@ export class RestLessServer {
             return request;
         }
         const translateRequestFields = (fields: Record<string, any>): void => {
+            if (fields[RestLessFieldNames.RestLess] !== "true") {
+                return;
+            }
             // Parse and override HTTP Method
             const methodOverride = fields[
                 RestLessFieldNames.Method
@@ -53,17 +56,22 @@ export class RestLessServer {
             } else if (typeof headerField === "string") {
                 parseAndSetHeader(headerField);
             }
+            if (!definedNewContentType) {
+                request.headers["content-type"] = "application/json";
+            }
             // Parse and replace request body
             const bodyField = fields[RestLessFieldNames.Body];
             // Tell body-parser middleware not to parse the body
             (request as any)._body = true;
             request.body = bodyField;
+        };
+        const parseRequestBody = () => {
             if (request.body) {
                 // If no new content type was defined, assume it is JSON parseable. Otherwise, parse by content-type.
                 // TODO: not as robust as body-parser middleware,
                 // but body-parser only compatible with request streams, and req stream is exhausted by now
                 const contentType = request.headers["content-type"]?.toLowerCase();
-                if (!definedNewContentType || contentType.includes("application/json")) {
+                if (contentType.includes("application/json")) {
                     try {
                         request.body = JSON.parse(request.body);
                     } catch (e) {
@@ -87,6 +95,7 @@ export class RestLessServer {
                     return;
                 }
                 translateRequestFields(fields);
+                parseRequestBody();
                 resolve();
             });
         });
@@ -96,6 +105,7 @@ export class RestLessServer {
             // It is possible that body-parser.urlencoded has already parsed the body
             if (typeof request.body === "object") {
                 translateRequestFields(request.body);
+                parseRequestBody();
             } else if (!request.complete) {
                 await parseStreamRequestFormBody();
             }

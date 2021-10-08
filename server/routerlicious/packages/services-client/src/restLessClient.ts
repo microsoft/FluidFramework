@@ -6,6 +6,7 @@
 import { AxiosRequestConfig } from "axios";
 
 export enum RestLessFieldNames {
+    RestLess = "restless",
     Method = "method",
     Header = "header",
     Body = "body",
@@ -38,6 +39,7 @@ export class RestLessClient {
         const newRequest = { ...request };
         const body = new URLSearchParams();
 
+        body.append(RestLessFieldNames.RestLess, "true");
         body.append(RestLessFieldNames.Method, newRequest.method ?? "GET");
 
         if (newRequest.headers) {

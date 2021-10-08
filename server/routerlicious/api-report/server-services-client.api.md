@@ -465,7 +465,9 @@ export enum RestLessFieldNames {
     // (undocumented)
     Header = "header",
     // (undocumented)
-    Method = "method"
+    Method = "method",
+    // (undocumented)
+    RestLess = "restless"
 }
 
 // @public (undocumented)
