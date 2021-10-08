@@ -47,8 +47,7 @@ export function create(
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const includeDisabledRaw = request.query.includeDisabled as string;
-        const includeDisabled = includeDisabledRaw?.toLowerCase() === "true";
+        const includeDisabled = getIncludeDisabledFlag(request);
         const tenantP = manager.getTenant(tenantId, includeDisabled);
         handleResponse(tenantP, response);
     });
@@ -57,8 +56,7 @@ export function create(
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const includeDisabledRaw = request.query.includeDisabled as string;
-        const includeDisabled = includeDisabledRaw?.toLowerCase() === "true";
+        const includeDisabled = getIncludeDisabledFlag(request);
         const tenantP = manager.getAllTenants(includeDisabled);
         handleResponse(tenantP, response);
     });
@@ -68,8 +66,7 @@ export function create(
      */
     router.get("/tenants/:id/key", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const includeDisabledRaw = request.query.includeDisabled as string;
-        const includeDisabled = includeDisabledRaw?.toLowerCase() === "true";
+        const includeDisabled = getIncludeDisabledFlag(request);
         const tenantP = manager.getTenantKey(tenantId, includeDisabled);
         handleResponse(tenantP, response);
     });
@@ -137,6 +134,11 @@ export function create(
         const tenantP = manager.deleteTenant(tenantId, scheduledDeletionTime);
         handleResponse(tenantP, response);
     });
+
+    function getIncludeDisabledFlag(request): boolean {
+        const includeDisabledRaw = request.query.includeDisabled as string;
+        return includeDisabledRaw?.toLowerCase() === "true";
+    }
 
     return router;
 }
