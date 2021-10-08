@@ -293,7 +293,6 @@ stages:
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
-                tar -czvf $(Build.ArtifactStagingDirectory)/pack/test-azure-client-pack.tgz ./packages/framework/azure-client
 
           - ${{ if eq(variables.publishNonScopedPackages, true) }}:
             - ${{ each parameter in parameters.nonScopedPackages }}:
