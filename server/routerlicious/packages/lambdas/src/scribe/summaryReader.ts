@@ -7,6 +7,7 @@ import { bufferToString, toUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { convertWholeFlatSummaryToSnapshotTreeAndBlobs, IGitManager } from "@fluidframework/server-services-client";
 import { IDeliState } from "@fluidframework/server-services-core";
+import { CommonProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILatestSummaryState, ISummaryReader } from "./interfaces";
 
 /**
@@ -25,6 +26,7 @@ export class SummaryReader implements ISummaryReader {
     * request, returns a set of defaults with fromSummary flag set to false.
     */
     public async readLastSummary(): Promise<ILatestSummaryState> {
+        const summaryReaderMetric = Lumberjack.newLumberMetric(LumberEventName.SummaryReader);
         if (this.enableWholeSummaryUpload) {
             try {
                 const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
@@ -47,6 +49,15 @@ export class SummaryReader implements ISummaryReader {
                 const term = deli.term;
                 const messages = JSON.parse(bufferToString(opsContent, "utf8")) as ISequencedDocumentMessage[];
 
+                summaryReaderMetric.setProperties({
+                    [CommonProperties.minLogtailSeqno]: Math.min(...messages.map((message) => message.sequenceNumber)),
+                    [CommonProperties.maxLogtailSeqno]: Math.max(...messages.map((message) => message.sequenceNumber)),
+                    [CommonProperties.lastSummarySequenceNumber]: deli.sequenceNumber,
+                    [CommonProperties.clientCount]: deli.clients?.length,
+                });
+
+                summaryReaderMetric.success(`Successfully read summary`);
+
                 return {
                     term,
                     protocolHead: attributes.sequenceNumber,
@@ -55,6 +66,7 @@ export class SummaryReader implements ISummaryReader {
                     fromSummary: true,
                 };
             } catch {
+                summaryReaderMetric.success(`Returning default summary`);
                 return this.getDefaultSummaryState();
             }
         } else {
@@ -74,6 +86,15 @@ export class SummaryReader implements ISummaryReader {
                 const messages = JSON.parse(
                     toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[];
 
+                summaryReaderMetric.setProperties({
+                    [CommonProperties.minLogtailSeqno]: Math.min(...messages.map((message) => message.sequenceNumber)),
+                    [CommonProperties.maxLogtailSeqno]: Math.max(...messages.map((message) => message.sequenceNumber)),
+                    [CommonProperties.lastSummarySequenceNumber]: deli.sequenceNumber,
+                    [CommonProperties.clientCount]: deli.clients?.length,
+                });
+
+                summaryReaderMetric.success(`Successfully read summary`);
+
                 return {
                     term,
                     protocolHead: attributes.sequenceNumber,
@@ -82,6 +103,7 @@ export class SummaryReader implements ISummaryReader {
                     fromSummary: true,
                 };
             } catch {
+                summaryReaderMetric.success(`Returning default summary`);
                 return this.getDefaultSummaryState();
             }
         }

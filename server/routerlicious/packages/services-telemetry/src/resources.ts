@@ -47,11 +47,15 @@ export enum CommonProperties {
     sequenceNumber = "sequenceNumber",
     checkpointOffset = "checkpointOffset",
 
-    // Summary related properties
+    // Summary properties
     clientSummarySuccess = "clientSummarySuccess",
     serviceSummarySuccess = "serviceSummarySuccess",
     maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
     lastSummarySequenceNumber = "lastSummarySequenceNumber",
+
+    // Logtail properties
+    minLogtailSeqno = "minLogtailSeqno",
+    maxLogtailSeqno = "maxLogtailSeqno",
 
     // Request properties
     statusCode = "statusCode",

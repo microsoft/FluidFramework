@@ -31,6 +31,8 @@ import {
     IScribe,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
+import { CommonProperties, Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getLumberProperties } from "..";
 import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
@@ -75,6 +77,8 @@ export class SummaryWriter implements ISummaryWriter {
         checkpoint: IScribe,
         pendingOps: ISequencedOperationMessage[],
     ): Promise<ISummaryWriteResponse> {
+        const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
+        this.setSummaryProperties(clientSummaryMetric, op);
         const content = JSON.parse(op.contents) as ISummaryContent;
 
         // The summary must reference the existing summary to be valid. This guards against accidental sends of
@@ -87,6 +91,7 @@ export class SummaryWriter implements ISummaryWriter {
             // the client code just fetches the last summary which should be the same as existingRef sha.
             if (!existingRef ||
                 (lastSummaryHead !== content.head && existingRef.object.sha !== content.head)) {
+                clientSummaryMetric.error(`Proposed parent summary does not match actual parent summary`);
                 return {
                     message: {
                         errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef ? existingRef.object.sha : "n/a"}".`,
@@ -98,6 +103,7 @@ export class SummaryWriter implements ISummaryWriter {
                 };
             }
         } else if (existingRef) {
+            clientSummaryMetric.error(`Proposed parent summary does not match actual parent summary`);
             return {
                 message: {
                     errorMessage: `Proposed parent summary "${content.head}" does not match actual parent summary "${existingRef.object.sha}".`,
@@ -115,9 +121,10 @@ export class SummaryWriter implements ISummaryWriter {
                 // eslint-disable-next-line @typescript-eslint/promise-function-async
                 await Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary)));
             } catch (e) {
+                clientSummaryMetric.error(`One or more parent summaries are invalid`);
                 return {
                     message: {
-                        errorMessage: "One or more parent summaries are invalid.",
+                        errorMessage: "One or more parent summaries are invalid",
                         summaryProposal: {
                             summarySequenceNumber: op.sequenceNumber,
                         },
@@ -129,6 +136,7 @@ export class SummaryWriter implements ISummaryWriter {
 
         // We should not accept this summary if it is less than current protocol sequence number
         if (op.referenceSequenceNumber < checkpoint.protocolState.sequenceNumber) {
+            clientSummaryMetric.error(`Proposed summary reference sequence number less than current sequence number`);
             return {
                 message: {
                     errorMessage: `Proposed summary reference sequence number ${op.referenceSequenceNumber} is less than current sequence number ${checkpoint.protocolState.sequenceNumber}`,
@@ -215,6 +223,7 @@ export class SummaryWriter implements ISummaryWriter {
             }
         }
 
+        clientSummaryMetric.success(`Client summary success`);
         return {
             message: {
                 handle: uploadHandle,
@@ -225,6 +234,15 @@ export class SummaryWriter implements ISummaryWriter {
             status: true,
         };
     }
+    private setSummaryProperties(summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>, op: ISequencedDocumentAugmentedMessage) {
+        summaryMetric.setProperties(getLumberProperties(this.documentId, this.tenantId));
+        summaryMetric.setProperties({
+            [CommonProperties.clientId]: op.clientId,
+            [CommonProperties.sequenceNumber]: op.sequenceNumber,
+            [CommonProperties.minSequenceNumber]: op.minimumSequenceNumber,
+        });
+    }
+
     /* eslint-enable max-len */
 
     /**
@@ -243,18 +261,22 @@ export class SummaryWriter implements ISummaryWriter {
         currentProtocolHead: number,
         checkpoint: IScribe,
         pendingOps: ISequencedOperationMessage[]): Promise<boolean> {
+        const serviceSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ServiceSummary);
+        this.setSummaryProperties(serviceSummaryMetric, op);
         const existingRef = await this.summaryStorage.getRef(encodeURIComponent(this.documentId));
 
         // Client assumes at least one app generated summary. To keep compatibility for now, service summary requires
         // at least one prior client generated summary.
         // TODO: With default createNew() flow, we can remove this check.
         if (!existingRef) {
+            serviceSummaryMetric.error(`No summaries found`);
             return false;
         }
 
         if (!op.additionalContent) {
             // this is a mixed mode edge case that can occur if the "generateServiceSummary" config
             // was disabled in a previous deployment and is now enabled in the next one
+            serviceSummaryMetric.error(`Additional content is not defined`);
             return false;
         }
 
@@ -324,6 +346,7 @@ export class SummaryWriter implements ISummaryWriter {
             const commit = await this.summaryStorage.createCommit(commitParams);
             await this.summaryStorage.upsertRef(this.documentId, commit.sha);
         }
+        serviceSummaryMetric.success(`Service summary success`);
         return true;
     }
 

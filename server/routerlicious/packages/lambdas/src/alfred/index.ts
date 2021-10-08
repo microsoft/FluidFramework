@@ -400,13 +400,8 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
-            const lumberjackProperties = {
-                [BaseTelemetryProperties.tenantId]: connectionMessage.tenantId,
-                [BaseTelemetryProperties.documentId]: connectionMessage.id,
-            };
-
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
-            connectMetric.setProperties(lumberjackProperties);
+            connectMetric.setProperties(getLumberProperties(connectionMessage.id, connectionMessage.tenantId));
 
             connectDocument(connectionMessage).then(
                 (message) => {
