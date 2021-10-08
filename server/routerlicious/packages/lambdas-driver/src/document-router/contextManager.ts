@@ -36,6 +36,10 @@ export class DocumentContextManager extends EventEmitter {
         super();
     }
 
+    /**
+     * Creates a context that should be used for a single document partition
+     * This class is responsible for the lifetime of the context
+     */
     public createContext(head: IQueuedMessage): DocumentContext {
         // Contexts should only be created within the processing range of the manager
         assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
@@ -49,6 +53,7 @@ export class DocumentContextManager extends EventEmitter {
     }
 
     public removeContext(context: DocumentContext): void {
+        context.close();
         this.contexts.delete(context);
     }
 
