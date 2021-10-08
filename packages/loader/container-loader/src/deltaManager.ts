@@ -410,11 +410,16 @@ export class DeltaManager
      * Enables or disables automatic reconnecting.
      * Will throw an error if reconnectMode set to Never.
      */
-    public setAutomaticReconnect(reconnect: boolean): void {
-        assert(
-            this._reconnectMode !== ReconnectMode.Never,
-            0x0e1 /* "Cannot toggle automatic reconnect if reconnect is set to Never." */);
-        this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+    public setAutoReconnect(mode: ReconnectMode): void {
+        assert(mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
+            "API is not supported for non-connecting or closed container");
+
+        this._reconnectMode = mode;
+
+        if (mode !== ReconnectMode.Enabled) {
+            // immediately disconnect - do not rely on service eventually dropping connection.
+            this.disconnectFromDeltaStream("setAutoReconnect");
+        }
     }
 
     /**
@@ -443,7 +448,11 @@ export class DeltaManager
         }
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
+
         if (oldValue !== this.readonly) {
+            assert(this._reconnectMode !== ReconnectMode.Never,
+                "API is not supported for non-connecting or closed container");
+
             let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
@@ -1715,12 +1724,6 @@ export class DeltaManager
             // (the other 50%), and thus these errors below should be looked at even if code below results in
             // recovery.
             if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
-                // connectionMode === "read" case is too noisy, so not log it.
-                // It happens because fetch in setupNewSuccessfulConnection get cancelled due to other fetch, and we
-                // never retry (other than here)
-                if (this.connectionMode === "write") {
-                    this.logConnectionIssue({ eventName: "OpsBehind" });
-                }
                 this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
             }
         }

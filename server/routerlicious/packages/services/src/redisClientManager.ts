@@ -8,6 +8,7 @@ import { IClientManager } from "@fluidframework/server-services-core";
 import { executeRedisMultiWithHmsetExpire, IRedisParameters } from "@fluidframework/server-services-utils";
 import { Redis } from "ioredis";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 export class ClientManager implements IClientManager {
@@ -27,6 +28,7 @@ export class ClientManager implements IClientManager {
 
         client.on("error", (error) => {
             winston.error("Client Manager Redis Error:", error);
+            Lumberjack.error("Client Manager Redis Error", undefined, error);
         });
     }
 

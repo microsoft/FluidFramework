@@ -50,13 +50,12 @@ import {
     Lumber,
     LumberEventName,
     Lumberjack,
-    BaseTelemetryProperties,
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { setQueuedMessageProperties, logCommonSessionEndMetrics, createSessionMetric } from "../utils";
+import { logCommonSessionEndMetrics, createSessionMetric, getLumberProperties } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
@@ -217,16 +216,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     public handler(rawMessage: IQueuedMessage) {
         let kafkaCheckpointMessage: IQueuedMessage | undefined;
-        const lumberJackMetric = this.serviceConfiguration.enableLambdaMetrics ?
-            Lumberjack.newLumberMetric(LumberEventName.DeliHandler) : undefined;
-
-        if (lumberJackMetric) {
-            lumberJackMetric.setProperties({
-                [BaseTelemetryProperties.tenantId]: this.tenantId,
-                [BaseTelemetryProperties.documentId]: this.documentId,
-            });
-            setQueuedMessageProperties(rawMessage, lumberJackMetric);
-        }
 
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
@@ -235,8 +224,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 this.context.checkpoint(kafkaCheckpointMessage);
             }
 
-            lumberJackMetric?.success(`Already processed upto offset ${this.logOffset}.
-                Current message offset ${rawMessage.offset}`);
             return undefined;
         }
 
@@ -315,26 +302,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 this.checkpointContext.checkpoint(checkpoint);
             },
             (error) => {
-                lumberJackMetric?.setProperties(new Map([[CommonProperties.restart, true]]));
-                lumberJackMetric?.error("Restarting as message could not be sent to scriptorium", error);
+                const errorMsg = `Could not send message to scriptorium`;
                 this.context.log?.error(
-                    `Could not send message to scriptorium: ${JSON.stringify(error)}`,
+                    `${errorMsg}: ${JSON.stringify(error)}`,
                     {
                         messageMetaData: {
                             documentId: this.documentId,
                             tenantId: this.tenantId,
                         },
                     });
+                Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), error);
                 this.context.error(error, {
                     restart: true,
                     tenantId: this.tenantId,
                     documentId: this.documentId,
                 });
             });
-
-        if (lumberJackMetric) {
-            this.setDeliStateMetrics(checkpoint, lumberJackMetric);
-        }
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
@@ -350,13 +333,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 this.sequencedMessagesSinceLastOpEvent += sequencedMessageCount;
 
                 if (this.sequencedMessagesSinceLastOpEvent > maxOps) {
-                    lumberJackMetric?.setProperties({ [CommonProperties.maxOpsSinceLastSummary]: true });
                     this.emitOpEvent(OpEventType.MaxOps);
                 }
             }
         }
-
-        lumberJackMetric?.success(`Message processed successfully at seq no ${checkpoint.deliState.sequenceNumber}`);
     }
 
     public close(closeType: LambdaCloseType) {
@@ -402,7 +382,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 this.sessionStartMetric?.success("Session resumed successfully");
             }
         } else {
-            this.context.log?.info("Not all required lambdas started");
+            const lambdaStatusMsg = "Not all required lambdas started";
+            this.context.log?.info(lambdaStatusMsg);
+            Lumberjack.info(lambdaStatusMsg, getLumberProperties(this.documentId, this.tenantId));
         }
     }
 
@@ -430,17 +412,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             this.durableSequenceNumber,
             this.nackMessages?.identifier,
         );
-    }
-
-    private setDeliStateMetrics(checkpoint: ICheckpointParams, lumberJackMetric?: Lumber<LumberEventName.DeliHandler>) {
-        const deliState = {
-            [CommonProperties.clientCount]: checkpoint.deliState.clients?.length,
-            [CommonProperties.checkpointOffset]: checkpoint.deliState.logOffset,
-            [CommonProperties.sequenceNumber]: checkpoint.deliState.sequenceNumber,
-            [CommonProperties.minSequenceNumber]: checkpoint.deliState.lastSentMSN,
-        };
-
-        lumberJackMetric?.setProperties(deliState);
     }
 
     private ticket(rawMessage: IMessage, trace: ITrace): ITicketedMessageOutput | undefined {
@@ -654,12 +625,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             const controlMessage = dataContent as IControlMessage;
             switch (controlMessage.type) {
                 case ControlMessageType.UpdateDSN: {
-                    this.context.log?.info(`Update DSN: ${JSON.stringify(controlMessage)}`, {
+                    const dsnStatusMsg = `Update DSN: ${JSON.stringify(controlMessage)}`;
+                    this.context.log?.info(dsnStatusMsg, {
                         messageMetaData: {
                             documentId: this.documentId,
                             tenantId: this.tenantId,
                         },
                     });
+                    Lumberjack.info(dsnStatusMsg, getLumberProperties(this.documentId, this.tenantId));
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
                     this.serviceSummaryGenerated = !controlContents.isClientSummary;
@@ -669,12 +642,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         if (controlContents.clearCache && this.noActiveClients) {
                             instruction = InstructionType.ClearCache;
                             this.canClose = true;
-                            this.context.log?.info(`Deli cache will be cleared`, {
+                            const deliCacheMsg = `Deli cache will be cleared`;
+                            this.context.log?.info(deliCacheMsg, {
                                 messageMetaData: {
                                     documentId: this.documentId,
                                     tenantId: this.tenantId,
                                 },
                             });
+                            Lumberjack.info(deliCacheMsg, getLumberProperties(this.documentId, this.tenantId));
                         }
 
                         this.durableSequenceNumber = dsn;
@@ -823,12 +798,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         if (clientSequenceNumber === expectedClientSequenceNumber) {
             return IncomingMessageOrder.ConsecutiveOrSystem;
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
-            this.context.log?.info(
-                `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`, { messageMetaData });
+            const gapDetectionMsg = `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`;
+            this.context.log?.info(gapDetectionMsg, { messageMetaData });
+            Lumberjack.info(gapDetectionMsg, getLumberProperties(this.documentId, this.tenantId));
             return IncomingMessageOrder.Gap;
         } else {
-            this.context.log?.info(
-                `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`, { messageMetaData });
+            const dupDetectionMsg = `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`;
+            this.context.log?.info(dupDetectionMsg, { messageMetaData });
+            Lumberjack.info(dupDetectionMsg, getLumberProperties(this.documentId, this.tenantId));
             return IncomingMessageOrder.Duplicate;
         }
     }
@@ -842,14 +819,16 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         try {
             await this.reverseProducer.send([message], message.tenantId, message.documentId);
         } catch (error) {
+            const errorMsg = `Could not send message to alfred`;
             this.context.log?.error(
-                `Could not send message to alfred: ${JSON.stringify(error)}`,
+                `${errorMsg}: ${JSON.stringify(error)}`,
                 {
                     messageMetaData: {
                         documentId: this.documentId,
                         tenantId: this.tenantId,
                     },
                 });
+            Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), error);
             this.context.error(error, {
                 restart: true,
                 tenantId: this.tenantId,

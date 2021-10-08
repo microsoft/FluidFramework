@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-common",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "description": "common functions used in properties",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -32,6 +32,26 @@
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace"
   },
+  "nyc": {
+    "all": true,
+    "cache-dir": "nyc/.cache",
+    "exclude": [
+      "src/test/**/*.ts",
+      "dist/test/**/*.js"
+    ],
+    "exclude-after-remap": false,
+    "include": [
+      "src/**/*.ts",
+      "dist/**/*.js"
+    ],
+    "report-dir": "nyc/report",
+    "reporter": [
+      "cobertura",
+      "html",
+      "text"
+    ],
+    "temp-directory": "nyc/.nyc_output"
+  },
   "dependencies": {
     "ajv": "7.1.1",
     "async": "^3.2.0",
@@ -45,7 +65,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.49.0",
+    "@fluidframework/mocha-test-setup": "^0.50.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^8.2.2",

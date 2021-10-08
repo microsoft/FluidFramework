@@ -90,6 +90,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             provider.defaultCodeDetails,
             loader,
             provider.driver.createCreateNewRequest(provider.documentId));
+        provider.updateDocumentId(container1.resolvedUrl);
         url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
