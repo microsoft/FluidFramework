@@ -23,9 +23,12 @@ export interface IAgentSchedulerEvents extends IEvent {
      * "lost" - task is lost due to disconnect or data store / container being attached.
      *      Task will be picked up again by some connected client (this client will try as well,
      *      unless release() is called)
+     *  "taskAssigned" - when task is assigned to any client all connected clients will be notified
+     *      with key and currentClient in case we don't have any client for task then currentClient
+     *      will be sent as undefined.
      * @param listener - callback notified when change happened for particular key
      */
-    (event: "picked" | "released" | "lost", listener: (taskId: string) => void)
+    (event: "picked" | "released" | "lost" | "taskAssigned", listener: (taskId: string) => void)
 }
 
 /**
