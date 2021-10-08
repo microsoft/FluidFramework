@@ -1331,8 +1331,6 @@ export class DeltaManager
         return this.reconnectOnErrorCore(
             requestedMode,
             error.message,
-            canRetryOnError(error),
-            getRetryDelayFromError(error),
             error);
     }
 
@@ -1345,9 +1343,7 @@ export class DeltaManager
      */
     private async reconnectOnErrorCore(
         requestedMode: ConnectionMode,
-        message: string,
-        canRetry = true,
-        delayMs?: number,
+        disconnectMessage: string,
         error?: DriverError,
     ) {
         // We quite often get protocol errors before / after observing nack/disconnect
@@ -1355,7 +1351,9 @@ export class DeltaManager
         // If we're already disconnected/disconnecting it's not appropriate to call this again.
         assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
-        this.disconnectFromDeltaStream(message);
+        this.disconnectFromDeltaStream(disconnectMessage);
+
+        const canRetry = error !== undefined ? canRetryOnError(error) : true;
 
         // If reconnection is not an option, close the DeltaManager
         if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
@@ -1371,6 +1369,7 @@ export class DeltaManager
         }
 
         if (this.reconnectMode === ReconnectMode.Enabled) {
+            const delayMs = error !== undefined ? getRetryDelayFromError(error) : undefined;
             if (delayMs !== undefined) {
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error);
                 await waitForConnectedState(delayMs);
