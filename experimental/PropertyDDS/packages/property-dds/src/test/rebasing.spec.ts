@@ -422,8 +422,7 @@ describe("PropertyDDS", () => {
 						await opProcessingController.ensureSynchronized();
 						if (logTest) {
 							testString +=
-								"await opProcessingController.process(container1, " +
-								"container2);\n";
+								"await opProcessingController.ensureSynchronized();\n";
 						}
 					});
 				}
