@@ -16,15 +16,14 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: flattenRuntimeOptions({
+    runtimeOptions: {
         summaryOptions: {
             initialSummarizerDelayMs: 20,
             summaryConfigOverrides: { maxOps: 1 },
         },
-    }),
+    },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
@@ -40,7 +39,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const id = this.size.toString();
         this.blobs.set(id, content);
-        return { id, url: "" };
+        return { id };
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -228,10 +227,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const text = "this is some example text";
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
         const blobHandle = await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
-        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
 
         dataStore._root.set("my blob", blobHandle);
-        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+        assert.strictEqual(bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"), text);
 
         const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
         if (provider.driver.type !== "odsp") {
@@ -244,9 +243,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         detachedBlobStorage.blobs.clear();
 
         // old handle still works
-        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
         // new handle works
-        assert.strictEqual(text, bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"));
+        assert.strictEqual(bufferToString(await (await dataStore._root.wait("my blob")).get(), "utf-8"), text);
     });
 
     it("serialize/rehydrate container with blobs", async function() {
@@ -256,16 +255,15 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const text = "this is some example text";
         const serializeDataStore = await requestFluidObject<ITestDataObject>(serializeContainer, "default");
         const blobHandle = await serializeDataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8"));
-        assert.strictEqual(text, bufferToString(await blobHandle.get(), "utf-8"));
+        assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
 
         serializeDataStore._root.set("my blob", blobHandle);
-        assert.strictEqual(text, bufferToString(await (await serializeDataStore._root.wait("my blob")).get(), "utf-8"));
+        assert.strictEqual(bufferToString(await (await serializeDataStore._root.wait("my blob")).get(), "utf-8"), text);
 
         const snapshot = serializeContainer.serialize();
         const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
         const rehydratedDataStore = await requestFluidObject<ITestDataObject>(rehydratedContainer, "default");
-        assert.strictEqual(text,
-            bufferToString(await (await rehydratedDataStore._root.wait("my blob")).get(), "utf-8"));
+        assert.strictEqual(bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"), text);
     });
 
     it("redirect table saved in snapshot", async function() {
@@ -295,7 +293,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
 
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
-        assert.strictEqual(text, bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"));
+        assert.strictEqual(bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"), text);
     });
 
     it("serialize/rehydrate then attach", async function() {
@@ -320,7 +318,35 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         const url = getUrlFromItemId((rehydratedContainer.resolvedUrl as IOdspResolvedUrl).itemId, provider);
         const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
         const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
-        assert.strictEqual(text, bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"));
+        assert.strictEqual(bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"), text);
+    });
+
+    it("serialize/rehydrate multiple times then attach", async function() {
+        const loader = provider.makeTestLoader(testContainerConfig, new MockDetachedBlobStorage());
+        let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+        const text = "this is some example text";
+        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+        dataStore._root.set("my blob", await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")));
+
+        let snapshot;
+        for (const _ of Array(5)) {
+            snapshot = container.serialize();
+            container.close();
+            container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+        }
+
+        const attachP = container.attach(provider.driver.createCreateNewRequest(provider.documentId));
+        if (provider.driver.type !== "odsp") {
+            // this flow is currently only supported on ODSP, the others should explicitly reject on attach
+            return assert.rejects(attachP, /(0x202)|(0x204)/ /* "create empty file not supported" */);
+        }
+        await attachP;
+
+        const url = getUrlFromItemId((container.resolvedUrl as IOdspResolvedUrl).itemId, provider);
+        const attachedContainer = await provider.makeTestLoader(testContainerConfig).resolve({ url });
+        const attachedDataStore = await requestFluidObject<ITestDataObject>(attachedContainer, "default");
+        assert.strictEqual(bufferToString(await (await attachedDataStore._root.wait("my blob")).get(), "utf-8"), text);
     });
 
     it("rehydrating without detached blob storage results in error", async function() {

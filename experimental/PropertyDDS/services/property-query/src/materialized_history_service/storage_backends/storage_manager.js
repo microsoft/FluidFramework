@@ -352,14 +352,14 @@ class StorageManager {
       // a changeset in the opposite direction
       deltaCS = new ChangeSet(previousEntry.changeSet);
       deltaCS._toReversibleChangeSet(accumulatedCS.getSerializedChangeSet());
-      deltaCS._toInverseChangeSet();
+      deltaCS.toInverseChangeSet();
 
       return deltaCS.getSerializedChangeSet();
     } else if (in_changeSetType === StorageManager.ChangeSetType.FULL_CHANGESET) {
       // Make the resulting changeset reversible
       accumulatedCS._toReversibleChangeSet(node.changeSet);
       // And invert it (currently, it is from the last node to the start)
-      accumulatedCS._toInverseChangeSet();
+      accumulatedCS.toInverseChangeSet();
     }
 
     return accumulatedCS.getSerializedChangeSet();

@@ -5,15 +5,16 @@
 
 import { EventEmitter } from "events";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { IFluidHandle , IRequest, IResponse} from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { SharedPropertyTree, PropertyTreeFactory } from "@fluid-experimental/property-dds";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 
 import { LazyLoadedDataObject, LazyLoadedDataObjectFactory } from "@fluidframework/data-object-base";
-import { BaseProperty } from "@fluid-experimental/property-properties";
+import { BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 export interface IPropertyTree extends EventEmitter {
-    pset: any;
+    pset: NodeProperty;
     tree: SharedPropertyTree;
 
     on(event: "changeSetModified" | "commit", listener: (CS: any) => void): this;
@@ -32,6 +33,7 @@ const propertyKey = "propertyKey";
 export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> implements IPropertyTree {
     private _tree?: SharedPropertyTree;
     private _queryString: string | undefined;
+    private _existing: boolean = false;
 
     stopTransmission(stopped: boolean): void {
         this._tree?.stopTransmission(stopped);
@@ -76,7 +78,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         this.emit("commit");
     }
 
-    resolvePath(path: string, options: any): BaseProperty|undefined {
+    resolvePath(path: string, options: any): BaseProperty | undefined {
         return this.tree.root.resolvePath(path, options);
     }
     public static getFactory(): IFluidDataStoreFactory { return PropertyTreeInstantiationFactory; }
@@ -90,7 +92,8 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         /* this.initialize(false); */
         console.log("A");
     }
-    public async load() {
+    public async load(_context: IFluidDataStoreContext, _runtime: IFluidDataStoreRuntime, existing: boolean) {
+        this._existing = existing;
         /* this.initialize(true); */
         console.log("B");
     }
@@ -99,7 +102,7 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
         const url = request.url;
         console.log(url);
         this._queryString = url.split("?")[1];
-        await this.initialize(false);
+        await this.initialize(this._existing);
         return super.request(request);
     }
 }

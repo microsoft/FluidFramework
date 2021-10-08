@@ -195,7 +195,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         // Emit connected message
                         const connected: IConnectedMessage = {
                             clientId: connection.clientId,
-                            existing: connection.existing,
+                            existing: true,
                             maxMessageSize: this.maxMessageSize,
                             serviceConfiguration: DefaultServiceConfiguration,
                         };

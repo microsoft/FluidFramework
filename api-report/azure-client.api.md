@@ -5,19 +5,22 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { FluidContainer } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { IUser } from '@fluidframework/protocol-definitions';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // (undocumented)
+    // @internal (undocumented)
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
@@ -25,11 +28,11 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 export class AzureClient {
     constructor(props: AzureClientProps);
     createContainer(containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+        container: IFluidContainer;
         services: AzureContainerServices;
     }>;
     getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: FluidContainer;
+        container: IFluidContainer;
         services: AzureContainerServices;
     }>;
     }
@@ -57,7 +60,7 @@ export interface AzureContainerServices {
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
-    fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+    fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
     }
@@ -77,7 +80,18 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
+export { ITokenClaims }
 
-// (No @packageDocumentation comment for this package)
+export { ITokenProvider }
+
+export { ITokenResponse }
+
+export { IUser }
+
+// @public
+export const LOCAL_MODE_TENANT_ID = "local";
+
+export { ScopeType }
+
 
 ```

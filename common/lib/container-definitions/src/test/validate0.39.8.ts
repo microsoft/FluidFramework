@@ -205,13 +205,13 @@ use_old_InterfaceDeclaration_IConnectionDetails(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainer": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IContainer():
     old.IContainer;
 declare function use_current_InterfaceDeclaration_IContainer(
     use: current.IContainer);
 use_current_InterfaceDeclaration_IContainer(
     get_old_InterfaceDeclaration_IContainer());
+*/
 
 /*
 * validate back compat by using current type in place of old type
@@ -685,13 +685,13 @@ use_old_InterfaceDeclaration_IGenericError(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IHostLoader": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IHostLoader():
     old.IHostLoader;
 declare function use_current_InterfaceDeclaration_IHostLoader(
     use: current.IHostLoader);
 use_current_InterfaceDeclaration_IHostLoader(
     get_old_InterfaceDeclaration_IHostLoader());
+*/
 
 /*
 * validate back compat by using current type in place of old type
@@ -709,13 +709,13 @@ use_old_InterfaceDeclaration_IHostLoader(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ILoader": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_ILoader():
     old.ILoader;
 declare function use_current_InterfaceDeclaration_ILoader(
     use: current.ILoader);
 use_current_InterfaceDeclaration_ILoader(
     get_old_InterfaceDeclaration_ILoader());
+*/
 
 /*
 * validate back compat by using current type in place of old type
@@ -877,13 +877,13 @@ use_old_InterfaceDeclaration_IProvideRuntimeFactory(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
     old.IProxyLoaderFactory;
 declare function use_current_InterfaceDeclaration_IProxyLoaderFactory(
     use: current.IProxyLoaderFactory);
 use_current_InterfaceDeclaration_IProxyLoaderFactory(
     get_old_InterfaceDeclaration_IProxyLoaderFactory());
+*/
 
 /*
 * validate back compat by using current type in place of old type
@@ -925,13 +925,13 @@ use_old_InterfaceDeclaration_IResolvedFluidCodeDetails(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRuntime": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IRuntime():
     old.IRuntime;
 declare function use_current_InterfaceDeclaration_IRuntime(
     use: current.IRuntime);
 use_current_InterfaceDeclaration_IRuntime(
     get_old_InterfaceDeclaration_IRuntime());
+*/
 
 /*
 * validate back compat by using current type in place of old type

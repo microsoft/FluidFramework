@@ -5,7 +5,6 @@
 
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
-    IQueuedMessage,
     IServiceConfiguration,
     LambdaCloseType,
     NackMessagesType,
@@ -16,17 +15,13 @@ import {
     Lumber,
     LumberEventName,
     Lumberjack,
-    QueuedMessageProperties,
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 
-export const setQueuedMessageProperties = (message: IQueuedMessage, lumber?: Lumber) => {
-    const propertyMap = new Map<string, any>([
-        [QueuedMessageProperties.topic, message.topic],
-        [QueuedMessageProperties.partition, message.partition],
-        [QueuedMessageProperties.offset, message.offset]]);
-    lumber?.setProperties(propertyMap);
-};
+export const getLumberProperties = (documentId: string, tenantId: string) => ({
+    [BaseTelemetryProperties.tenantId]: tenantId,
+    [BaseTelemetryProperties.documentId]: documentId,
+});
 
 export const createSessionMetric = (
     tenantId: string,

@@ -399,7 +399,7 @@ async function getSingleOpBatch(
                 // ops to storage quick enough, and possibly waiting for summaries, while summarizer can't get
                 // current as it can't get ops.
                 throw createGenericNetworkError(
-                    "Failed to retrieve ops from storage: too many retries",
+                    "failedToRetrieveOpsFromStorage:TooManyRetries",
                     false /* canRetry */,
                     undefined /* retryAfterSeconds */,
                     {
@@ -482,7 +482,15 @@ export function requestOps(
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {
+            // Assert continuing and right start.
+            if (lastFetch === undefined) {
+                assert(deltas[0].sequenceNumber === fromTotal, 0x26d /* "wrong start" */);
+            } else {
+                assert(deltas[0].sequenceNumber === lastFetch + 1, 0x26e /* "wrong start" */);
+            }
             lastFetch = deltas[deltas.length - 1].sequenceNumber;
+            assert(lastFetch - deltas[0].sequenceNumber + 1 === deltas.length,
+                0x26f /* "continuous and no duplicates" */);
             length += deltas.length;
             queue.pushValue(deltas);
         });
@@ -510,6 +518,8 @@ export function requestOps(
             if (manager.canceled) {
                 telemetryEvent.cancel({ ...props, error: "ops request cancelled by client" });
             } else {
+                assert(toTotal === undefined || lastFetch !== undefined && lastFetch >= toTotal - 1,
+                    0x270 /* "All requested ops fetched" */);
                 telemetryEvent.end(props);
             }
             queue.pushDone();

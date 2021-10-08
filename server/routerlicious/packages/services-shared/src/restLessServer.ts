@@ -39,8 +39,12 @@ export class RestLessServer {
             request.method = methodOverride;
             // Parse and add HTTP Headers
             const headerField = fields[RestLessFieldNames.Header];
+            let definedNewContentType: boolean = false;
             const parseAndSetHeader = (header: string) => {
                 const { name, value } = decodeHeader(header);
+                if (name.toLowerCase() === "content-type") {
+                    definedNewContentType = true;
+                }
                 request.headers[name] = value;
                 request.headers[name.toLowerCase()] = value;
             };
@@ -55,20 +59,21 @@ export class RestLessServer {
             (request as any)._body = true;
             request.body = bodyField;
             if (request.body) {
+                // If no new content type was defined, assume it is JSON parseable. Otherwise, parse by content-type.
                 // TODO: not as robust as body-parser middleware,
                 // but body-parser only compatible with request streams, and req stream is exhausted by now
                 const contentType = request.headers["content-type"]?.toLowerCase();
-                if (contentType.includes("application/x-www-form-urlencoded")) {
-                    try {
-                        request.body = qs.parse(request.body);
-                    } catch (e) {
-                        throw new NetworkError(400, "Failed to parse urlencoded body");
-                    }
-                } else if (contentType.includes("application/json")) {
+                if (!definedNewContentType || contentType.includes("application/json")) {
                     try {
                         request.body = JSON.parse(request.body);
                     } catch (e) {
                         throw new NetworkError(400, "Failed to parse json body");
+                    }
+                } else if (contentType.includes("application/x-www-form-urlencoded")) {
+                    try {
+                        request.body = qs.parse(request.body);
+                    } catch (e) {
+                        throw new NetworkError(400, "Failed to parse urlencoded body");
                     }
                 }
             }

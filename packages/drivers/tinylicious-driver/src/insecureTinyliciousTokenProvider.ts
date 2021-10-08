@@ -14,7 +14,7 @@ import { v4 as uuid } from "uuid";
  * to get up and running.
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
-    public async fetchOrdererToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+    public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
         return {
             fromCache: true,
             jwt: this.getSignedToken(tenantId, documentId),
@@ -30,7 +30,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 
     private getSignedToken(
         tenantId: string,
-        documentId: string,
+        documentId: string | undefined,
         lifetime: number = 60 * 60,
         ver: string = "1.0"): string {
         // Current time in seconds
@@ -38,7 +38,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
         const user = { id: uuid(), name: getRandomName() };
 
         const claims: ITokenClaims = {
-            documentId,
+            documentId: documentId ?? "",
             scopes: [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
             tenantId,
             user,

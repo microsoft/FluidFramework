@@ -1,18 +1,8 @@
-distributed-data-structures:
-- "@fluidframework/counter"
-- "@fluidframework/map"
-- "@fluidframework/sequence"
-- custom:
-    title: "SharedString"
-    url: "/docs/apis/sequence/sharedstring/"
-- "@fluid-experimental/task-manager"
 libraries:
 - "fluid-framework"
-- "@fluidframework/aqueduct"
-definitions:
-- "@fluidframework/common-definitions"
-- "@fluidframework/container-definitions"
-- "@fluidframework/core-interfaces"
-- "@fluidframework/driver-definitions"
-- "@fluidframework/protocol-base"
-- "@fluidframework/protocol-definitions"
+serviceClients:
+- "@fluidframework/azure-client"
+- "@fluidframework/tinylicious-client"
+utilities:
+- "@fluidframework/azure-service-utils"
+- "@fluidframework/test-client-utils"

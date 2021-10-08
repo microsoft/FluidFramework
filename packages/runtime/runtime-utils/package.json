@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/runtime-utils",
-  "version": "0.47.0",
+  "version": "0.50.0",
   "description": "Collection of utility functions for Fluid Runtime",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -58,19 +58,20 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.39.8",
-    "@fluidframework/container-runtime-definitions": "^0.47.0",
+    "@fluidframework/container-definitions": "^0.40.0",
+    "@fluidframework/container-runtime-definitions": "^0.50.0",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/datastore-definitions": "^0.47.0",
-    "@fluidframework/garbage-collector": "^0.47.0",
-    "@fluidframework/protocol-base": "^0.1030.0-0",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/runtime-definitions": "^0.47.0"
+    "@fluidframework/datastore-definitions": "^0.50.0",
+    "@fluidframework/garbage-collector": "^0.50.0",
+    "@fluidframework/protocol-base": "^0.1032.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
+    "@fluidframework/runtime-definitions": "^0.50.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0-0",
+    "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/mocha-test-setup": "^0.47.0",
+    "@fluidframework/mocha-test-setup": "^0.50.0",
+    "@fluidframework/telemetry-utils": "^0.50.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/benchmark": "^2.1.0",
     "@types/mocha": "^8.2.2",

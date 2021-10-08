@@ -17,7 +17,7 @@ export interface IConnectionStateHandler {
         (value: ConnectionState, oldState: ConnectionState, reason?: string | undefined) => void,
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
-    triggerConnectionRecovery: (reason: string) => void,
+    logConnectionIssue: (eventName: string) => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -30,6 +30,8 @@ export interface ILocalSequencedClient extends ISequencedClient {
 export interface IConnectionStateHandlerEvents extends IEvent {
     (event: "connectionStateChanged", listener: () => void);
 }
+
+const JoinOpTimer = 45000;
 
 export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
     private _connectionState = ConnectionState.Disconnected;
@@ -73,12 +75,12 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
         // if retrying fixes the problem, we should not see these events.
         this.joinOpTimer = new Timer(
-            45000,
+            JoinOpTimer,
             () => {
                 // I've observed timer firing within couple ms from disconnect event, looks like
                 // queued timer callback is not cancelled if timer is cancelled while callback sits in the queue.
-                if (this.connectionState !== ConnectionState.Disconnected) {
-                    this.handler.triggerConnectionRecovery("NoJoinOp");
+                if (this.connectionState === ConnectionState.Connecting) {
+                    this.handler.logConnectionIssue("NoJoinOp");
                 }
             },
         );
@@ -89,7 +91,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         this.joinOpTimer.start();
     }
 
-    private stopJoinOpTimer(reason: string) {
+    private stopJoinOpTimer() {
         assert(this.joinOpTimer.hasTimer, 0x235 /* "no joinOpTimer" */);
         this.joinOpTimer.clear();
     }
@@ -97,7 +99,13 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     public receivedAddMemberEvent(clientId: string) {
         // This is the only one that requires the pending client ID
         if (clientId === this.pendingClientId) {
-            this.stopJoinOpTimer("joinOp");
+            if (this.joinOpTimer.hasTimer) {
+                this.stopJoinOpTimer();
+            } else {
+                // timer has already fired, meaning it took too long to get join on.
+                // Record how long it actually took to recover.
+                this.handler.logConnectionIssue("ReceivedJoinOp");
+            }
             // Start the event in case we are waiting for leave or timeout.
             if (this.prevClientLeftTimer.hasTimer) {
                 this.waitEvent = PerformanceEvent.start(this.logger, {
@@ -147,7 +155,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
 
     public receivedDisconnectEvent(reason: string) {
         if (this.joinOpTimer.hasTimer) {
-            this.stopJoinOpTimer(`disconnect: ${reason}`);
+            this.stopJoinOpTimer();
         }
         this.setConnectionState(ConnectionState.Disconnected, reason);
     }

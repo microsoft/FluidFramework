@@ -7,20 +7,19 @@
  * @fileoverview In this file, we will test the set property
  *    object described in /src/properties/setProperty.js
  */
+const _ = require('lodash');
+const { PropertyFactory } = require('../..');
+const { BaseProperty } = require('../..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset')
+const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
 
 describe('SetProperty', function () {
-    var PropertyFactory, BaseProperty, ChangeSet, generateGuid, PATH_TOKENS;
-    var changeSetWithTwoChildren, _, changeSetWithTwoChildren_full, removalChangeSet;
+    var PATH_TOKENS;
+    var changeSetWithTwoChildren, changeSetWithTwoChildren_full, removalChangeSet;
     var myNode, childNode1, childNode2, children;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('../..').PropertyFactory;
-        BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        _ = require('lodash');
-        generateGuid = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
-        PATH_TOKENS = require('../..').BaseProperty.PATH_TOKENS;
+        PATH_TOKENS = BaseProperty.PATH_TOKENS;
 
         // Register a template with a set property for the tests
         var TestPropertyTemplate = {
@@ -54,12 +53,12 @@ describe('SetProperty', function () {
 
     // Inserts a new node in the root
     var insertNodeInRoot = function (root) {
-        insertNodeInRootWithGuid(generateGuid(), root);
+        insertNodeInRootWithGuid(generateGUID(), root);
     };
 
     // Returns a function that will insert a node with a constant GUID
     var insertUniqueNodeInRoot = function () {
-        return insertNodeInRootWithGuid.bind(undefined, generateGuid());
+        return insertNodeInRootWithGuid.bind(undefined, generateGUID());
     };
 
     // Inserts a new node as leaf
@@ -159,18 +158,18 @@ describe('SetProperty', function () {
             var guidChild3 = childNode3.getGuid();
             var guidChild4 = childNode4.getGuid();
             expect(function () { myNode1.getValues(); }).to.not.throw();
-            var expectedStr = '{"guid":"' + guid + '",' +
-                '"stringProperty":"",' +
+            var expectedStr = '{"stringProperty":"",' +
                 '"stringProperty2":"",' +
                 '"children":{"' +
-                guidChild3 + '":{"guid":"' + guidChild3 + '",' +
-                '"stringProperty":"",' +
+                guidChild3 + '":{"stringProperty":"",' +
                 '"stringProperty2":"",' +
-                '"children":{}},' +
-                '"' + guidChild4 + '":{"guid":"' + guidChild4 + '",' +
-                '"stringProperty":"",' +
+                '"children":{},' +
+                '"guid":"' + guidChild3 + '"},' +
+                '"' + guidChild4 + '":{"stringProperty":"",' +
                 '"stringProperty2":"",' +
-                '"children":{}}}}';
+                '"children":{},' +
+                '"guid":"' + guidChild4 + '"}},' +
+                '"guid":"' + guid + '"}';
             expect(JSON.stringify(myNode1.getValues())).to.equal(expectedStr);
         });
 
@@ -181,20 +180,20 @@ describe('SetProperty', function () {
 
             var expectedPrettyStr =
                 guid + ' (autodesk.tests:TestPropertyID-1.0.0):\n' +
-                '  guid (String): "' + guid + '"\n' +
                 '  stringProperty (String): ""\n' +
                 '  stringProperty2 (String): ""\n' +
                 '  children (Set of NamedProperty):\n' +
                 '    ' + guidChild1 + ' (autodesk.tests:TestPropertyID-1.0.0):\n' +
-                '      guid (String): "' + guidChild1 + '"\n' +
                 '      stringProperty (String): ""\n' +
                 '      stringProperty2 (String): ""\n' +
                 '      children (Set of NamedProperty):\n' +
+                '      guid (String): "' + guidChild1 + '"\n' +
                 '    ' + guidChild2 + ' (autodesk.tests:TestPropertyID-1.0.0):\n' +
-                '      guid (String): "' + guidChild2 + '"\n' +
                 '      stringProperty (String): ""\n' +
                 '      stringProperty2 (String): ""\n' +
-                '      children (Set of NamedProperty):\n';
+                '      children (Set of NamedProperty):\n' +
+                '      guid (String): "' + guidChild2 + '"\n' +
+                '  guid (String): "' + guid + '"\n';
             var prettyStr = '';
             myNode.prettyPrint(function (str) {
                 prettyStr += str + '\n';

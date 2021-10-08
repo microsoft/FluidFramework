@@ -6,7 +6,7 @@ aliases:
   - "/docs/advanced/feature-detection-iprovide/"
 ---
 
-In an earlier section we introduced the DataObject, a convenient way to combine distributed data structures and our own
+In an earlier section we introduced the Data Object, a convenient way to combine distributed data structures and our own
 code (business logic) into a modular, reusable piece. This in turn enables us to modularize pieces of our application --
 data included.
 
@@ -14,14 +14,14 @@ Fluid can be a very dynamic system. There are scenarios in which your code will 
 and only if*, the object has certain capabilities; that is, it implements certain interfaces. So, your code needs a way
 of detecting whether the object implements specific interfaces. To make this easier, Fluid has a feature detection
 mechanism, which centers around a special interface called `IFluidObject`. Feature detection is a technique by which one
-Fluid object can dynamically determine the capabilities of another Fluid object.
+Data Object can dynamically determine the capabilities of another Data Object.
 
 In order to detect features supported by an unknown object, you cast it to an `IFluidObject` and then query the object
 for a specific interface that it may support. The interfaces exposed via `IFluidObject` include many core Fluid
 interfaces, such as `IFluidHandle` or `IFluidLoadable`, and this list can be augmented using [TypeScript's interface
 merging capabilities](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#merging-interfaces). This
-discovery system (see example below) enables any Fluid object to record what interfaces it implements and make it
-possible for other Fluid objects to discover them. The specifics of how these interfaces are declared is not relevant
+discovery system (see example below) enables any Data Object to record what interfaces it implements and make it
+possible for other Data Objects to discover them. The specifics of how these interfaces are declared is not relevant
 until you want to define your own interfaces, which we'll cover in a later section.
 
 The following is an example of feature detection using `IFluidObject`:
@@ -101,17 +101,13 @@ object of the correct type or `undefined`.
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

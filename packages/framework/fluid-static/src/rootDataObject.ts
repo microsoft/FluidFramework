@@ -103,11 +103,10 @@ export class RootDataObject extends DataObject<{}, RootDataObjectProps> {
 }
 
 const rootDataStoreId = "rootDOId";
+
 /**
- * The DOProviderContainerRuntimeFactory is the container code for our scenario.
- *
- * By including the createRequestHandler, we can create any droplet types we include in the registry on-demand.
- * These can then be retrieved via container.request("/dataObjectId").
+ * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
+ * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     private readonly rootDataObjectFactory; // type is DataObjectFactory

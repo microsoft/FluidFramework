@@ -5,7 +5,7 @@
 const _ = require('lodash');
 const asyncQueue =  require('async').queue;
 const Joi = require('joi');
-const { HashCalculator, OperationError } = require('@fluid-experimental/property-common');
+const { calculateHash, OperationError } = require('@fluid-experimental/property-common');
 const HTTPStatus = require('http-status');
 const { PathHelper, ArrayChangeSetIterator, Utils } = require('@fluid-experimental/property-changeset');
 const ModuleLogger = require('../server/utils/module_logger');
@@ -100,9 +100,7 @@ class IndexManager {
       batch = this._storage.startWriteBatch();
     }
 
-    const hashCalculator = new HashCalculator();
-    hashCalculator.pushString(params.name);
-    const indexGuid = hashCalculator.getHash();
+    const indexGuid = calculateHash(params.name);
     const guidGenerator = new DeterministicGuidGenerator(params.branchGuid, indexGuid);
     const rootNodeRef = this._btreeManager.createBTree(batch, {}, params.branchGuid, guidGenerator);
 
@@ -387,7 +385,7 @@ class IndexManager {
           // 2) Array shifting. Inserting or removing items will require an update of other indexed paths, to point
           //    to the right place.
           if (context.getSplitTypeID().context === 'array') {
-            context.stopTraversal();
+            context._traversalStopped = true;
           }
         }
       }
@@ -406,19 +404,19 @@ class IndexManager {
         const iterator = new ArrayChangeSetIterator(otChangeSet);
         let offset;
         while (!iterator.atEnd()) {
-          switch (iterator.type) {
+          switch (iterator.opDescription.type) {
             case ArrayChangeSetIterator.types.INSERT:
-              offset = iterator._currentOffset + iterator._lastOperationIndex;
-              value = value.substring(0, offset) + iterator.operation[1] + value.substring(offset);
+              offset = iterator.currentOffset + iterator.lastOperationIndex;
+              value = value.substring(0, offset) + iterator.opDescription.operation[1] + value.substring(offset);
               break;
             case ArrayChangeSetIterator.types.MODIFY:
-              offset = iterator._currentOffset + iterator.operation[0];
-              value = value.substring(0, offset) + iterator.operation[1] +
-                value.substring(offset + iterator.operation[1].length);
+              offset = iterator.currentOffset + iterator.opDescription.operation[0];
+              value = value.substring(0, offset) + iterator.opDescription.operation[1] +
+                value.substring(offset + iterator.opDescription.operation[1].length);
               break;
             case ArrayChangeSetIterator.types.REMOVE:
-              offset = iterator._currentOffset + iterator._lastOperationIndex;
-              value = value.substring(0, offset) + value.substring(offset + iterator._lastOperationOffset * -1);
+              offset = iterator.currentOffset + iterator.lastOperationIndex;
+              value = value.substring(0, offset) + value.substring(offset + iterator.lastOperationOffset * -1);
               break;
             default:
               break;
@@ -479,7 +477,7 @@ class IndexManager {
 
           // Don't want to process here either
           if (context.getSplitTypeID().context === 'array') {
-            context.stopTraversal();
+            context._traversalStopped = true;
           }
         }
       });

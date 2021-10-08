@@ -6,8 +6,13 @@
 /**
  * @fileoverview In this file, we will test the functions of the property factory.
  */
+const _ = require('lodash');
+const { PropertyFactory } = require('..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset')
+const { Int64, Uint64 } = require('@fluid-experimental/property-common');
+const deepCopy = _.cloneDeep;
+
 describe('Reversible ChangeSets', function () {
-    var PropertyFactory, ChangeSet, deepCopy, Int64, Uint64, _;
 
     var testRevAndInvCS = function (initialProperty, modificationFunction,
         expectedRevCS, expectedAfterCS, expectedInverseCS) {
@@ -56,7 +61,7 @@ describe('Reversible ChangeSets', function () {
         }
         // now inverse the changeset
         var inverseCS = cs2.clone();
-        inverseCS._toInverseChangeSet();
+        inverseCS.toInverseChangeSet();
         if (expectedInverseCS) {
             expect(inverseCS.getSerializedChangeSet()).to.deep.equal(expectedInverseCS);
         }
@@ -70,12 +75,6 @@ describe('Reversible ChangeSets', function () {
     };
 
     before(function () {
-        PropertyFactory = require('..').PropertyFactory;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        _ = require('lodash');
-        deepCopy = _.cloneDeep;
-        Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-        Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
 
         var TaskSubjectParentTemplate = {
             typeid: 'autodesk.tests:ChangeSetApplyAfterTask.parentTemplate-1.0.0',
@@ -1137,7 +1136,7 @@ describe('Reversible ChangeSets', function () {
         expect(cs.getSerializedChangeSet()).to.deep.equal({ 'insert': { 'Float32': { 'myFloat': 42 } } });
 
         var invCS = cs2Rev.clone();
-        invCS._toInverseChangeSet();
+        invCS.toInverseChangeSet();
         expect(invCS.getSerializedChangeSet()).to.deep.equal(
             { 'modify': { 'Float32': { 'myFloat': { 'value': 23, 'oldValue': 42 } } } });
 
@@ -1380,7 +1379,7 @@ describe('Reversible ChangeSets', function () {
             }
         });
 
-        changeSet._toInverseChangeSet();
+        changeSet.toInverseChangeSet();
 
         expect(changeSet.getSerializedChangeSet()).to.eql({
             'insert': {
@@ -1429,7 +1428,7 @@ describe('Reversible ChangeSets', function () {
         changeSet2._toReversibleChangeSet(parentChangeSet2);
 
         expect(changeSet2.getSerializedChangeSet()).to.eql(changeSet2.getSerializedChangeSet());
-        changeSet2._toInverseChangeSet();
+        changeSet2.toInverseChangeSet();
 
         expect(changeSet2.getSerializedChangeSet()).to.eql({
             'remove': {
@@ -1563,7 +1562,7 @@ describe('Reversible ChangeSets', function () {
             }
         });
 
-        changeSet._toInverseChangeSet();
+        changeSet.toInverseChangeSet();
 
         expect(changeSet.getSerializedChangeSet()).to.eql({
             'modify': {
@@ -1599,7 +1598,7 @@ describe('Reversible ChangeSets', function () {
                 }
             }
         });
-        CS._toInverseChangeSet();
+        CS.toInverseChangeSet();
         expect(CS.getSerializedChangeSet()).to.deep.equal({
             'remove': {
                 'String': {
@@ -1623,7 +1622,7 @@ describe('Reversible ChangeSets', function () {
                 }
             }
         });
-        CS._toInverseChangeSet();
+        CS.toInverseChangeSet();
         expect(CS.getSerializedChangeSet()).to.deep.equal({
             'modify': {
                 'NodeProperty': {

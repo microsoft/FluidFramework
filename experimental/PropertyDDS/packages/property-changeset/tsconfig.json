@@ -5,9 +5,8 @@
     ],
     "compilerOptions": {
         "strict": false,
-        "allowJs": true,
-        "checkJs": false,
 
+        "module": "commonjs",
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist",

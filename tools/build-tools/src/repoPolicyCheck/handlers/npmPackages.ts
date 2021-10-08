@@ -28,10 +28,8 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 `;
 
 function packageShouldBePrivate(name: string): boolean {
-    // See https://github.com/microsoft/FluidFramework/issues/2625
-    if (name === "@fluid-internal/client-api"
-        || name.startsWith("@fluid-internal/test-")         // allow test packages to be packaged
-    ) {
+    // allow test packages to be packaged
+    if (name.startsWith("@fluid-internal/test-")) {
         return false;
     }
 

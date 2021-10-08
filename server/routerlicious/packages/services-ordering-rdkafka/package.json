@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-ordering-rdkafka",
-  "version": "0.1030.0",
+  "version": "0.1033.0",
   "description": "Fluid server services rdkafka orderer implementation",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -25,16 +25,16 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/server-services-core": "^0.1030.0",
-    "@fluidframework/server-services-ordering-zookeeper": "^0.1030.0",
+    "@fluidframework/server-services-core": "^0.1033.0",
+    "@fluidframework/server-services-ordering-zookeeper": "^0.1033.0",
     "moniker": "^0.1.2",
     "nconf": "^0.11.0",
-    "node-rdkafka": "^2.10.1"
+    "node-rdkafka": "^2.11.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0-0",
+    "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/server-test-utils": "^0.1030.0",
+    "@fluidframework/server-test-utils": "^0.1033.0",
     "@types/amqplib": "^0.5.17",
     "@types/debug": "^4.1.5",
     "@types/lru-cache": "^5.1.0",

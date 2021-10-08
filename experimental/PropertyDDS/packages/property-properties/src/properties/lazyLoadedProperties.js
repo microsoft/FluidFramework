@@ -9,9 +9,9 @@
  *               themselves can access the PropertyFactory at runtime.
  */
 
-var lazyLoadedProperties = {
+export const LazyLoadedProperties = {
     PropertyFactory: undefined,
-    ContainerProperty: undefined,
+    AbstractStaticCollectionProperty: undefined,
     ArrayProperty: undefined,
     EnumArrayProperty: undefined,
     ReferenceProperty: undefined,
@@ -23,4 +23,3 @@ var lazyLoadedProperties = {
     IndexedCollectionBaseProperty: undefined,
 };
 
-module.exports = lazyLoadedProperties;

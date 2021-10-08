@@ -230,8 +230,8 @@ const _callCorrespondingHandlers = function(
  * @hidden
  */
 const _generateIndices = function(in_arrayIterator) {
-  return in_arrayIterator.operation[1].map(function(value, index) {
-    return in_arrayIterator.operation[0] + index + in_arrayIterator.offset;
+  return in_arrayIterator.opDescription.operation[1].map(function(value, index) {
+    return in_arrayIterator.opDescription.operation[0] + index + in_arrayIterator.opDescription.offset;
   });
 };
 
@@ -247,23 +247,23 @@ const _generateIndices = function(in_arrayIterator) {
 const _invokeArrayCallbacks = function(in_invokeContext, in_handlers) {
   var arrayIterator = new ArrayChangeSetIterator(in_invokeContext.traversalContext.getNestedChangeSet());
   while (!arrayIterator.atEnd()) {
-    if (ArrayChangeSetIterator.types.INSERT === arrayIterator.type && in_handlers.collectionInsert) {
+    if (ArrayChangeSetIterator.types.INSERT === arrayIterator.opDescription.type && in_handlers.collectionInsert) {
       const indices = _generateIndices(arrayIterator);
       _callCorrespondingHandlers(
-        in_invokeContext, 'insert', in_handlers.collectionInsert, indices, arrayIterator.operation[1]
+        in_invokeContext, 'insert', in_handlers.collectionInsert, indices, arrayIterator.opDescription.operation[1]
       );
     }
-    if (ArrayChangeSetIterator.types.MODIFY === arrayIterator.type && in_handlers.collectionModify) {
+    if (ArrayChangeSetIterator.types.MODIFY === arrayIterator.opDescription.type && in_handlers.collectionModify) {
       const indices = _generateIndices(arrayIterator);
       _callCorrespondingHandlers(
-        in_invokeContext, 'modify', in_handlers.collectionModify, indices, arrayIterator.operation[1]
+        in_invokeContext, 'modify', in_handlers.collectionModify, indices, arrayIterator.opDescription.operation[1]
       );
     }
-    if (ArrayChangeSetIterator.types.REMOVE === arrayIterator.type && in_handlers.collectionRemove) {
+    if (ArrayChangeSetIterator.types.REMOVE === arrayIterator.opDescription.type && in_handlers.collectionRemove) {
       // TODO: This is only invoked when the entries are directly removed from the collection, not
       // TODO: if the collection itself is removed
-      const indices = new Array(arrayIterator.operation[1]);
-      indices.fill(arrayIterator.operation[0] + arrayIterator.offset);
+      const indices = new Array(arrayIterator.opDescription.operation[1]);
+      indices.fill(arrayIterator.opDescription.operation[0] + arrayIterator.opDescription.offset);
       _callCorrespondingHandlers(in_invokeContext, 'remove', in_handlers.collectionRemove, indices);
     }
     arrayIterator.next();

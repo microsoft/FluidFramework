@@ -272,11 +272,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
     protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
         // Note: we suspect the incoming error object is either:
-        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-        //   over it.
-        if (canRetry && typeof error === "object" && error !== null) {
-            return errorObjectFromSocketError(error, handler) as DriverError;
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
+        // - anything else: let base class handle it
+        if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
+            return errorObjectFromSocketError(error as IOdspSocketError, handler) as DriverError;
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }
@@ -331,10 +330,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     ) {
         super(socket, documentId, logger);
         this.socketReference = socketReference;
-        this.requestOpsNoncePrefix = `${this.documentId}-`;
+        this.requestOpsNoncePrefix = `${uuid()}-`;
     }
 
-    public requestOps(from: number, to: number) {
+    /**
+     * Retrieves ops from PUSH
+     * @param from - inclusive
+     * @param to - exclusive
+     * @returns ops retrieved
+     */
+     public requestOps(from: number, to: number) {
+        // Given that to is exclusive, we should be asking for at least something!
+        assert(to > from, 0x272 /* "empty request" */);
+
         // PUSH may disable this functionality
         // back-compat: remove cast to any once latest version of IConnected is consumed
         if ((this.details as any).supportedFeatures?.[feature_get_ops] !== true) {
@@ -353,9 +361,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // So track some number of requests, but log if we get too many in flight - that likely
         // indicates an error somewhere.
         if (this.getOpsMap.size >= 5) {
-            this.logger.sendTelemetryEvent({
-                eventName: "GetOpsTooMany",
-            });
             let time = start;
             let key: string | undefined;
             for (const [keyCandidate, value] of this.getOpsMap.entries()) {
@@ -364,6 +369,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                     key = keyCandidate;
                 }
             }
+            const payloadToDelete = this.getOpsMap.get(key!)!;
+            this.logger.sendErrorEvent({
+                eventName: "GetOpsTooMany",
+                from: payloadToDelete.from,
+                to: payloadToDelete.to,
+                length: payloadToDelete.to - payloadToDelete.from,
+                duration: performance.now() - payloadToDelete.start,
+            });
             this.getOpsMap.delete(key!);
         }
         this.getOpsMap.set(
@@ -377,7 +390,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         this.socket.emit("get_ops", this.clientId, {
             nonce,
             from,
-            to,
+            to: to - 1,
         });
     }
 
@@ -432,18 +445,26 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             // If so, there it most likely does not need these ops (otherwise it already asked for them)
             if (data !== undefined) {
                 this.getOpsMap.delete(result.nonce);
+                const common = {
+                    eventName: "GetOps",
+                    code: result.code,
+                    from: data.from,
+                    to: data.to,
+                    duration: performance.now() - data.start,
+                };
                 if (messages !== undefined && messages.length > 0) {
                     this.logger.sendPerformanceEvent({
-                        eventName: "GetOps",
+                        ...common,
                         first: messages[0].sequenceNumber,
                         last: messages[messages.length - 1].sequenceNumber,
-                        code: result.code,
-                        from: data.from,
-                        to: data.to,
-                        duration: performance.now() - data.start,
                         length: messages.length,
                     });
                     this.emit("op", this.documentId, messages);
+                } else {
+                    this.logger.sendPerformanceEvent({
+                        ...common,
+                        length: 0,
+                    });
                 }
             }
         });

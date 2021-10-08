@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DiceRoller } from "@fluid-example/diceroller";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { TinyliciousClient } from "..";
+import { TestDataObject } from "./TestDataObject";
 
 describe("TinyliciousClient", () => {
     let tinyliciousClient: TinyliciousClient;
@@ -95,7 +95,7 @@ describe("TinyliciousClient", () => {
     });
 
     it("creates a container with detached state", async () => {
-        const { container } = await tinyliciousClient.createContainer(schema);
+        const container = (await tinyliciousClient.createContainer(schema)).container;
         assert.strictEqual(
             container.attachState, AttachState.Detached,
             "Container should be detached after creation",
@@ -103,11 +103,11 @@ describe("TinyliciousClient", () => {
     });
 
     it("creates a container that can only be attached once", async () => {
-        const {container} = await tinyliciousClient.createContainer(schema);
+        const container = (await tinyliciousClient.createContainer(schema)).container;
         const containerId = await container.attach();
 
         assert.strictEqual(
-            typeof(containerId) === "string",
+            typeof(containerId), "string",
             "Attach did not return a string ID",
         );
         assert.strictEqual(
@@ -130,13 +130,12 @@ describe("TinyliciousClient", () => {
      */
     it("can get a container successfully", async () => {
         const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
+        const containerId = await containerCreate.attach();
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
             });
         });
-
-        const containerId = await containerCreate.attach();
 
         const containerGet = (await tinyliciousClient.getContainer(containerId, schema)).container;
         const map1Create = containerCreate.initialObjects.map1 as SharedMap;
@@ -152,13 +151,12 @@ describe("TinyliciousClient", () => {
      */
     it("can change initialObjects value", async () => {
         const containerCreate = (await tinyliciousClient.createContainer(schema)).container;
+        const containerId = await containerCreate.attach();
         await new Promise<void>((resolve, reject) => {
             containerCreate.on("connected", () => {
                 resolve();
             });
         });
-
-        const containerId = await containerCreate.attach();
 
         const initialObjectsCreate = containerCreate.initialObjects;
         const map1Create = initialObjectsCreate.map1 as SharedMap;
@@ -188,12 +186,13 @@ describe("TinyliciousClient", () => {
         };
 
         const container = (await tinyliciousClient.createContainer(dynamicSchema)).container;
-
+        await container.attach();
         await new Promise<void>((resolve, reject) => {
             container.on("connected", () => {
                 resolve();
             });
         });
+
         const map1 = container.initialObjects.map1 as SharedMap;
         const newPair = await container.create(SharedDirectory);
         map1.set("newpair-id", newPair.handle);
@@ -214,17 +213,18 @@ describe("TinyliciousClient", () => {
             initialObjects: {
                 map1: SharedMap,
             },
-            dynamicObjectTypes: [DiceRoller],
+            dynamicObjectTypes: [TestDataObject],
         };
 
         const createFluidContainer = (await tinyliciousClient.createContainer(dynamicSchema)).container;
+        await createFluidContainer.attach();
         await new Promise<void>((resolve, reject) => {
             createFluidContainer.on("connected", () => {
                 resolve();
             });
         });
 
-        const newPair = await createFluidContainer.create(DiceRoller);
+        const newPair = await createFluidContainer.create(TestDataObject);
         assert.ok(newPair?.handle);
 
         const map1 = createFluidContainer.initialObjects.map1 as SharedMap;

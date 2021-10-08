@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import { IClient} from "@fluidframework/protocol-definitions";
+import { IClient, ISnapshotTree} from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -17,6 +17,7 @@ import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
+import { ICache } from "./cache";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -33,6 +34,8 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
+        private readonly blobCache: ICache<ArrayBufferLike>,
+        private readonly snapshotTreeCache: ICache<ISnapshotTree>,
     ) {
     }
 
@@ -57,6 +60,7 @@ export class DocumentService implements api.IDocumentService {
             this.tokenProvider,
             this.logger,
             rateLimiter,
+            this.driverPolicies.enableRestLess,
             this.gitUrl,
         );
         const historian = new Historian(
@@ -77,7 +81,9 @@ export class DocumentService implements api.IDocumentService {
             gitManager,
             this.logger,
             documentStorageServicePolicies,
-            this.driverPolicies);
+            this.driverPolicies,
+            this.blobCache,
+            this.snapshotTreeCache);
         return this.documentStorageService;
     }
 
@@ -91,7 +97,13 @@ export class DocumentService implements api.IDocumentService {
 
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-            this.tenantId, this.documentId, this.tokenProvider, this.logger, rateLimiter);
+            this.tenantId,
+            this.documentId,
+            this.tokenProvider,
+            this.logger,
+            rateLimiter,
+            this.driverPolicies.enableRestLess,
+        );
         const deltaStorage = new DeltaStorageService(this.deltaStorageUrl, ordererRestWrapper, this.logger);
         return new DocumentDeltaStorageService(this.tenantId, this.documentId,
             deltaStorage, this.documentStorageService);

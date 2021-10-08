@@ -53,6 +53,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         schema: 2,
         fluid: {},
     };
+    const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
     function createLoader() {
         const codeDetailsComparer: IFluidCodeDetailsComparer = {
@@ -82,9 +83,15 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
         );
     }
 
-    async function createContainer(code: IFluidCodeDetails): Promise<IContainer> {
+    async function createContainer(): Promise<IContainer> {
         const loader = createLoader();
-        return createAndAttachContainer(code, loader, provider.driver.createCreateNewRequest(provider.documentId));
+        const container = await createAndAttachContainer(
+            codeDetails,
+            loader,
+            provider.driver.createCreateNewRequest(provider.documentId),
+        );
+        provider.updateDocumentId(container.resolvedUrl);
+        return container;
     }
 
     async function loadContainer(): Promise<IContainer> {
@@ -97,10 +104,9 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
     beforeEach(async () => {
         provider = getTestObjectProvider();
         containers = [];
-        const codeDetails: IFluidCodeDetails = { package: packageV1 };
 
         // Create a Container for the first client.
-        containers.push(await createContainer(codeDetails));
+        containers.push(await createContainer());
         await provider.ensureSynchronized();
 
         // Load the Container that was created by the first client.

@@ -11,8 +11,9 @@ import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
-import { InsecureUrlResolver } from '@fluidframework/test-runtime-utils';
+import { InsecureUrlResolver } from '@fluidframework/driver-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IRouterliciousDriverPolicies } from '@fluidframework/routerlicious-driver';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
@@ -23,7 +24,7 @@ import { RouterliciousDocumentServiceFactory } from '@fluidframework/routerlicio
 import { TestDriverTypes } from '@fluidframework/test-driver-definitions';
 
 // @public (undocumented)
-export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<ITestDriver>;
+export function createFluidTestDriver(fluidTestDriverType?: TestDriverTypes, config?: FluidTestDriverConfig, api?: DriverApiType): Promise<LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver>;
 
 // @public (undocumented)
 export type CreateFromEnvConfigParam<T extends (config: any, ...args: any) => any> = T extends (config: infer P, ...args: any) => any ? P : never;
@@ -153,7 +154,7 @@ export type RouterliciousDriverApiType = typeof RouterliciousDriverApi;
 
 // @public (undocumented)
 export class RouterliciousTestDriver implements ITestDriver {
-    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api?: RouterliciousDriverApiType, endpointName?: string | undefined);
+    constructor(tenantId: string, tenantSecret: string, serviceEndpoints: IServiceEndpoint, api: RouterliciousDriverApiType, driverPolicies: IRouterliciousDriverPolicies | undefined, endpointName?: string | undefined);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)

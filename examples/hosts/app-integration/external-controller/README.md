@@ -67,11 +67,11 @@ to generate and sign the token such that the service will accept it.
 ```typescript
 const connectionConfig: AzureConnectionConfig = useAzure ? {
     tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetFrsToken", { userId: "test-user", userName: "Test User" }),
+    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetAzureToken", { userId: "test-user", userName: "Test User" }),
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 } : {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",

@@ -185,11 +185,13 @@ export async function waitContainerToCatchUp(container: Container) {
             const hasCheckpointSequenceNumber = deltaManager.hasCheckpointSequenceNumber;
 
             const connectionOpSeqNumber = deltaManager.lastKnownSeqNumber;
+            assert(deltaManager.lastSequenceNumber <= connectionOpSeqNumber,
+                0x266 /* "lastKnownSeqNumber should never be below last processed sequence number" */);
             if (deltaManager.lastSequenceNumber === connectionOpSeqNumber) {
                 accept(hasCheckpointSequenceNumber);
                 return;
             }
-            const callbackOps = (message) => {
+            const callbackOps = (message: ISequencedDocumentMessage) => {
                 if (connectionOpSeqNumber <= message.sequenceNumber) {
                     accept(hasCheckpointSequenceNumber);
                     deltaManager.off("op", callbackOps);
@@ -357,7 +359,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         container.removeListener("closed", onClosed);
                     })
                     .then((props) => {
-                        event.end(props);
+                        event.end({ ...props, ...loadOptions.loadMode });
                         res(container);
                     },
                     (error) => {
@@ -463,6 +465,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _closed = false;
 
+    private setAutoReconnectTime = performance.now();
+
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this.submitMessage(type, contents),
         () => this.activeConnection(),
@@ -481,7 +485,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * {@inheritDoc DeltaManager.readonly}
+     * Tells if container is in read-only mode.
+     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     *
+     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
+     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
+     *
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
      * @deprecated - use readOnlyInfo
      */
     public get readonly() {
@@ -489,22 +502,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * {@inheritDoc DeltaManager.readonlyPermissions}
+     * Tells if user has no write permissions for file in storage
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
      * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._deltaManager.readonlyPermissions;
     }
 
-    /**
-     * {@inheritDoc DeltaManager.readOnlyInfo}
-     */
     public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
     }
 
     /**
-     * {@inheritDoc DeltaManager.forceReadonly}
+     * Tracks host requiring read-only mode.
      */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
@@ -643,6 +655,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
                     dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
                     dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+                    connectionState: () => ConnectionState[this.connectionState],
+                    connectionStateDuration:
+                        () => performance.now() - this.connectionTransitionTimes[this.connectionState],
                 },
             });
 
@@ -656,15 +671,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logConnectionStateChangeTelemetry(value, oldState, reason),
                 shouldClientJoinWrite: () => this._deltaManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
-                triggerConnectionRecovery: (reason: string) => {
+                logConnectionIssue: (eventName: string) => {
                     // We get here when socket does not receive any ops on "write" connection, including
                     // its own join op. Attempt recovery option.
-                    this._deltaManager.triggerConnectionRecovery(
-                        reason,
-                        {
-                            duration: performance.now() - this.connectionTransitionTimes[this.connectionState],
-                        },
-                    );
+                    this._deltaManager.logConnectionIssue({
+                        eventName,
+                        duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
+                        loaded: this.loaded,
+                    });
                 },
             },
             this.logger,
@@ -783,6 +797,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 eventName: "ContainerClose",
                 loaded: this.loaded,
+                category: error === undefined ? "generic" : "error",
             },
             error,
         );
@@ -971,17 +986,28 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public setAutoReconnect(reconnect: boolean) {
-        if (reconnect && this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed DeltaManager");
+        if (this.closed) {
+            throw new Error("Attempting to setAutoReconnect() a closed Container");
+        }
+        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+        const currentMode = this._deltaManager.reconnectMode;
+
+        if (currentMode === mode) {
+            return;
         }
 
-        this._deltaManager.setAutomaticReconnect(reconnect);
+        const now = performance.now();
+        const duration = now - this.setAutoReconnectTime;
+        this.setAutoReconnectTime = now;
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
             connectionMode: this._deltaManager.connectionMode,
             connectionState: ConnectionState[this.connectionState],
+            duration,
         });
+
+        this._deltaManager.setAutoReconnect(mode);
 
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
@@ -1011,7 +1037,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    protected resumeInternal(args: IConnectionArgs) {
+    private resumeInternal(args: IConnectionArgs) {
         assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
 
         // Resume processing ops
@@ -1230,42 +1256,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         const attributes = await this.getDocumentAttributes(this.storageService, snapshot);
 
-        // Attach op handlers to start processing ops
-        this.attachDeltaManagerOpHandler(attributes);
-
-        // ...load in the existing quorum
-        // Initialize the protocol handler
-        const protocolHandlerP =
-            this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
-
         let opsBeforeReturnP: Promise<void> | undefined;
 
-        // Initialize document details - if loading a snapshot use that - otherwise we need to wait on
-        // the initial details
+        // Attach op handlers to finish initialization and be able to start processing ops
+        // Kick off any ops fetching if required.
         switch (loadMode.opsBeforeReturn) {
             case undefined:
-                if (loadMode.deltaConnection !== "none") {
-                    // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this._deltaManager.preFetchOps(false);
-                }
+                // Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                this.attachDeltaManagerOpHandler(attributes, loadMode.deltaConnection !== "none" ? "all" : "none");
                 break;
             case "cached":
-                opsBeforeReturnP = this._deltaManager.preFetchOps(true);
-                // Keep going with fetching ops from storage once we have all cached ops in.
-                // Ops processing will start once cached ops are in and and will stop when queue is empty
-                // (which in most cases will happen when we are done processing cached ops)
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                opsBeforeReturnP.then(async () => this._deltaManager.preFetchOps(false));
+                opsBeforeReturnP = this.attachDeltaManagerOpHandler(attributes, "cached");
                 break;
             case "all":
-                opsBeforeReturnP = this._deltaManager.preFetchOps(false);
+                opsBeforeReturnP = this.attachDeltaManagerOpHandler(attributes, "all");
                 break;
             default:
                 unreachableCase(loadMode.opsBeforeReturn);
         }
 
-        this._protocolHandler = await protocolHandlerP;
+        // ...load in the existing quorum
+        // Initialize the protocol handler
+        this._protocolHandler =
+            await this.loadAndInitializeProtocolState(attributes, this.storageService, snapshot);
 
         const codeDetails = this.getCodeDetailsFromQuorum();
         await this.instantiateContext(
@@ -1346,7 +1360,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const proposals: [number, ISequencedProposal, string[]][] = [];
         const values: [string, ICommittedProposal][] = [["code", committedCodeProposal]];
 
-        this.attachDeltaManagerOpHandler(attributes);
+        await this.attachDeltaManagerOpHandler(attributes);
 
         // Need to just seed the source data in the code quorum. Quorum itself is empty
         this._protocolHandler = await this.initializeProtocolState(
@@ -1376,7 +1390,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._storage.loadSnapshotForRehydratingContainer(snapshotTree);
         const attributes = await this.getDocumentAttributes(this._storage, snapshotTree);
         assert(attributes.sequenceNumber === 0, 0x0db /* "Seq number in detached container should be 0!!" */);
-        this.attachDeltaManagerOpHandler(attributes);
+        await this.attachDeltaManagerOpHandler(attributes);
 
         // ...load in the existing quorum
         // Initialize the protocol handler
@@ -1650,8 +1664,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return deltaManager;
     }
 
-    private attachDeltaManagerOpHandler(attributes: IDocumentAttributes): void {
-        this._deltaManager.attachOpHandler(
+    private async attachDeltaManagerOpHandler(
+        attributes: IDocumentAttributes,
+        prefetchType?: "cached" | "all" | "none")
+    {
+        return this._deltaManager.attachOpHandler(
             attributes.minimumSequenceNumber,
             attributes.sequenceNumber,
             attributes.term ?? 1,
@@ -1660,7 +1677,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 processSignal: (message) => {
                     this.processSignal(message);
                 },
-            });
+            },
+            prefetchType);
     }
 
     private logConnectionStateChangeTelemetry(

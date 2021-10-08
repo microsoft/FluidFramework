@@ -11,7 +11,8 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { DeltaManager } from "@fluidframework/container-loader";
+// eslint-disable-next-line import/no-internal-modules
+import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 
@@ -74,7 +75,7 @@ describe("Container Runtime", () => {
             scheduleManager.endOperation(undefined, message);
         }
 
-        beforeEach(() => {
+        beforeEach(async () => {
             seq = 1;
             deltaConnection = new MockDocumentDeltaConnection(
                 "test",
@@ -114,7 +115,7 @@ describe("Container Runtime", () => {
                 assert.strictEqual(batchBegin, batchEnd, "Received batchEnd without corresponding batchBegin");
             });
 
-            deltaManager.attachOpHandler(0, 0, 1, {
+            await deltaManager.attachOpHandler(0, 0, 1, {
                 process(message: ISequencedDocumentMessage) {
                     processOp(message);
                     return {};

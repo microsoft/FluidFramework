@@ -11,7 +11,7 @@ import * as utils from "../../utils";
 /**
  * Validates that the input encoding is valid
  */
-function validateEncoding(encoding: string): encoding is BufferEncoding {
+function validateEncoding(encoding: BufferEncoding): boolean {
     return encoding === "utf-8" || encoding === "base64";
 }
 

@@ -16,11 +16,13 @@ import {
     BasicRestWrapper,
     RestWrapper,
     IWholeFlatSummary,
+    IWholeSummaryPayloadType,
 } from "@fluidframework/server-services-client";
 import { ITenantStorage } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
 
@@ -47,6 +49,7 @@ function endsWith(value: string, endings: string[]): boolean {
 
 export class RestGitService {
     private readonly restWrapper: RestWrapper;
+    private readonly lumberProperties: Record<BaseTelemetryProperties, any>;
 
     constructor(
         private readonly storage: ITenantStorage,
@@ -63,8 +66,24 @@ export class RestGitService {
             const token = Buffer.from(`${storage.credentials.user}:${storage.credentials.password}`);
             defaultHeaders.Authorization = `Basic ${token.toString("base64")}`;
         }
+        this.lumberProperties = {
+            [BaseTelemetryProperties.tenantId]: this.tenantId,
+            [BaseTelemetryProperties.documentId]: this.documentId,
+        };
 
-        winston.info(`base url: ${storage.url}, Storage-Routing-Id: ${this.getStorageRoutingHeaderValue()}`);
+        winston.info(
+            `Created RestGitService: ${JSON.stringify({
+                "BaseUrl": storage.url,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            })}`,
+        );
+        Lumberjack.info(
+            `Created RestGitService: ${JSON.stringify({
+                "BaseUrl": storage.url,
+                "Storage-Routing-Id": this.getStorageRoutingHeaderValue(),
+            })}`,
+            this.lumberProperties,
+        );
 
         this.restWrapper = new BasicRestWrapper(
             storage.url,
@@ -94,6 +113,7 @@ export class RestGitService {
         // Fetch the full blob so we can have it in cache
         this.getBlob(createResults.sha, true).catch((error) => {
             winston.error(`Error fetching blob ${createResults.sha}`);
+            Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
         });
 
         return createResults;
@@ -138,10 +158,12 @@ export class RestGitService {
         // Also fetch the tree for the commit to have it in cache
         this.getTree(commit.tree.sha, true, true).catch((error) => {
             winston.error(`Error fetching commit tree ${commit.tree.sha}`);
+            Lumberjack.error(`Error fetching commit tree: ${commit.tree.sha}`, this.lumberProperties);
         });
         // ... as well as pull in the header for it
         this.getHeader(commit.sha, true).catch((error) => {
             winston.error(`Error fetching header ${commit.sha}`);
+            Lumberjack.error(`Error fetching header: ${commit.sha}`, this.lumberProperties);
         });
 
         return commit;
@@ -174,13 +196,29 @@ export class RestGitService {
         const summaryResponse = await this.post<IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
-
+        this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
         return summaryResponse;
+    }
+
+    public async deleteSummary(softDelete: boolean): Promise<boolean> {
+        const headers = { "Soft-Delete": softDelete };
+
+        // First, delete any cached summary (including both types, "channel" and "container")
+        // from the Redis cache
+        this.deleteFromCache(this.getSummaryCacheKey("channel"));
+        this.deleteFromCache(this.getSummaryCacheKey("container"));
+
+        // Finally, delete from storage.
+        return this.delete<boolean>(`/repos/${this.getRepoPath()}/git/summaries`, headers);
     }
 
     public async getSummary(sha: string, useCache: boolean): Promise<IWholeFlatSummary> {
         return this.resolve(
-            `${sha}:summary`,
+            // Currently, only "container" type summaries are retrieved from storage.
+            // In the future, we might want to also retrieve "channels". When that happens,
+            // our APIs will change so we specify what type we want to retrieve during
+            // the request.
+            this.getSummaryCacheKey("container"),
             async () => this.get<IWholeFlatSummary>(
                 `/repos/${this.getRepoPath()}/git/summaries/${encodeURIComponent(sha)}`),
             useCache);
@@ -341,8 +379,8 @@ export class RestGitService {
         }).catch(getRequestErrorTranslator(url, "POST"));
     }
 
-    private async delete<T>(url: string): Promise<T> {
-        return this.restWrapper.delete<T>(url)
+    private async delete<T>(url: string, headers?: any): Promise<T> {
+        return this.restWrapper.delete<T>(url, undefined, headers)
             .catch(getRequestErrorTranslator(url, "DELETE"));
     }
 
@@ -355,11 +393,25 @@ export class RestGitService {
     /**
      * Caches the given key/value pair. Will log any errors with the cache.
      */
-    private setCache<T>(key: string, value: T) {
+    private setCache<T>(key: string, value: T): void {
         if (this.cache) {
             // Attempt to cache to Redis - log any errors but don't fail
             this.cache.set(key, value).catch((error) => {
                 winston.error(`Error caching ${key} to redis`, error);
+                Lumberjack.error(`Error caching ${key} to redis`, this.lumberProperties, error);
+            });
+        }
+    }
+
+    /**
+     * Deletes the given key from the cache. Will log any errors with the cache.
+     */
+     private deleteFromCache(key: string): void {
+        if (this.cache) {
+            // Attempt to delete the key from Redis - log any errors but don't fail
+            this.cache.delete(key).catch((error) => {
+                winston.error(`Error deleting key ${key} from Redis cache`, error);
+                Lumberjack.error(`Error deleting key ${key} from Redis cache`, this.lumberProperties, error);
             });
         }
     }
@@ -369,16 +421,19 @@ export class RestGitService {
             // Attempt to grab the value from the cache. Log any errors but don't fail the request
             const cachedValue: T | undefined = await this.cache.get<T>(key).catch((error) => {
                 winston.error(`Error fetching ${key} from cache`, error);
+                Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
                 return undefined;
             });
 
             if (cachedValue) {
                 winston.info(`Resolving ${key} from cache`);
+                Lumberjack.info(`Resolving ${key} from cache`, this.lumberProperties);
                 return cachedValue;
             }
 
             // Value is not cached - fetch it with the provided function and then cache the value
             winston.info(`Fetching ${key}`);
+            Lumberjack.info(`Fetching ${key}`, this.lumberProperties);
             const value = await fetch();
             this.setCache(key, value);
 
@@ -386,5 +441,9 @@ export class RestGitService {
         } else {
             return fetch();
         }
+    }
+
+    private getSummaryCacheKey(type: IWholeSummaryPayloadType): string {
+        return `${this.tenantId}:${this.documentId}:summary:${type}`;
     }
 }

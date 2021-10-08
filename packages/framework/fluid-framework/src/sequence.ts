@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from  "@fluidframework/sequence";
+export * from "@fluidframework/sequence";

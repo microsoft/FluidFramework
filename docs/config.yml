@@ -36,10 +36,6 @@ menu:
 #  - name: "Updates"
 #    url: "/posts/"
 #    weight: -50
-  - name: "Playground"
-    url: "/playground/"
-    weight: -40
-    title: "Playground: The playground provides a way to interact with Fluid objects running side by side in the browser, see what's possible, and explore the source code for the demos."
 
   old_section:
   - identifier: "quick-start"
@@ -56,7 +52,7 @@ menu:
     weight: -600
 
   # this menu supplements one generated in the apiNav partial
-  section:
+  docs:
   - identifier: "start"
     name: "Getting started"
     weight: -800
@@ -73,10 +69,10 @@ menu:
     name: "Deployment"
     weight: -400
   - identifier: "DDS"
-    name: "Data Structures"
+    name: "Data structures"
     weight: -300
-  - identifier: "deep"
-    name: "The depths 🤿"
+  - identifier: "concepts"
+    name: "Concepts"
     weight: -200
   - identifier: "faq"
     name: "FAQ"
@@ -86,21 +82,28 @@ menu:
     name: "Glossary"
     url: "/docs/glossary/"
     weight: -90
+  - identifier: "updates"
+    name: "What's new"
+    weight: -80
 
 markup:
   goldmark:
+    parser:
+      attribute:
+        # enables adding CSS classes to black elements in markdown
+        block: true
     renderer:
       autoHeadingIDType: "github"
       # mark unsafe html as true since api-documenter uses html snippets in markdown
       unsafe: true
-      extensions:
-        definitionList: true
-        footnote: true
-        linkify: true
-        strikethrough: true
-        table: true
-        taskList: true
-        typographer: true
+    extensions:
+      definitionList: true
+      footnote: true
+      linkify: true
+      strikethrough: true
+      table: true
+      taskList: true
+      typographer: true
 
   highlight:
     codeFences: true
