@@ -102,7 +102,7 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
-import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
+import { formRequestSummarizerFn, ISummarizerRequestOptions, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -1002,12 +1002,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.summaryCollection);
             } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Create the SummaryManager and mark the initial state
+                const requestOptions: ISummarizerRequestOptions =
+                    {
+                        cache: false,
+                        reconnect: false,
+                        summarizingClient: true,
+                    };
                 this.summaryManager = new SummaryManager(
                     this.summarizerClientElection,
                     this, // IConnectedState
                     this.summaryCollection,
                     this.logger,
-                    formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
+                    formRequestSummarizerFn(
+                        this.context.loader,
+                        this.context.deltaManager.lastSequenceNumber,
+                        requestOptions),
                     new Throttler(
                         60 * 1000, // 60 sec delay window
                         30 * 1000, // 30 sec max delay
