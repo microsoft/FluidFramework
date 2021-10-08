@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainer, IContainerLoadMode, ILoaderOptions, LoaderHeader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
     LocalDocumentServiceFactory,
@@ -21,10 +21,17 @@ import {
     LoaderContainerTracker,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
+    timeoutAwait,
 } from "@fluidframework/test-utils";
-import { Container, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import {
+    Container,
+    waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import { generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
+import { IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -34,16 +41,17 @@ describe("No Delta Stream", () => {
         package: "localServerTestPackage",
         config: {},
     };
-    const factory = new TestContainerRuntimeFactory(
-        "",
-        new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]));
 
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let loaderContainerTracker: LoaderContainerTracker;
 
+    const getFactory = (runtimeOptions?: IContainerRuntimeOptions)=> new TestContainerRuntimeFactory(
+            "",
+            new TestFluidObjectFactory([[stringId, SharedString.getFactory()]]),runtimeOptions);
+
     async function createContainer(): Promise<IContainer> {
         const loader = createLoader(
-            [[codeDetails, factory]],
+            [[codeDetails, getFactory()]],
             new LocalDocumentServiceFactory(deltaConnectionServer),
             new LocalResolver());
         loaderContainerTracker.add(loader);
@@ -54,33 +62,49 @@ describe("No Delta Stream", () => {
         return container;
     }
 
-    async function loadContainer(storageOnly: boolean, track = true): Promise<IContainer> {
+    async function loadContainer(
+        storageOnly: boolean,
+        config?: {
+            loaderOptions?: ILoaderOptions,
+            runtimeOptions?: IContainerRuntimeOptions,
+            headers?: IRequestHeader
+        }): Promise<IContainer> {
         const service = new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly });
         const loader = createLoader(
-            [[codeDetails, factory]],
+            [[codeDetails,  getFactory(config?.runtimeOptions)]],
             service,
-            new LocalResolver());
+            new LocalResolver(),
+            undefined,
+            config?.loaderOptions);
         if (!storageOnly) {
             loaderContainerTracker.add(loader);
         }
 
-        // See issue #7426 - need better long term solution
         const container = await loader.resolve({
             url: documentLoadUrl,
-            headers: { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" }},
-        });
+            headers: config?.headers,
+        }) as Container;
+        container.resume();
         await loaderContainerTracker.ensureSynchronized();
         return container;
     }
 
     async function loadContainerWithDocServiceFactory(
         documentServiceFactory: IDocumentServiceFactory,
+        config?: {
+            loaderOptions?: ILoaderOptions,
+            runtimeOptions?: IContainerRuntimeOptions,
+            headers?: IRequestHeader
+        },
     ): Promise<IContainer> {
         const loader = createLoader(
-            [[codeDetails, factory]],
+            [[codeDetails, getFactory(config?.runtimeOptions)]],
             documentServiceFactory,
-            new LocalResolver());
-        const container = await loader.resolve({ url: documentLoadUrl });
+            new LocalResolver(),
+            undefined,
+            config?.loaderOptions);
+        const container = await loader.resolve({ url: documentLoadUrl, headers:config?.headers }) as Container;
+        container.resume();
         await loaderContainerTracker.ensureSynchronized();
         return container;
     }
@@ -185,6 +209,58 @@ describe("No Delta Stream", () => {
 
         container.close();
     });
+
+    const loadOptions = [
+        undefined,
+        ... generatePairwiseOptions<IContainerLoadMode>({
+            deltaConnection: [undefined],// , "none", "delayed"],
+            opsBeforeReturn: [undefined, "cached", "all"],
+        }),
+    ];
+
+    const testConfigs =
+        generatePairwiseOptions({
+            loadOptions,
+            waitForSummary: [true],
+        });
+
+    for(const testConfig of testConfigs) {
+        it.only(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async () => {
+            const normalContainer1 = await loadContainer(false) as Container;
+
+            const normalDataObject1 = await requestFluidObject<ITestFluidObject>(normalContainer1, "default");
+            const summaryCollection =
+                new SummaryCollection(normalContainer1.deltaManager, new TelemetryNullLogger());
+
+            let i = 0;
+            for(i = 0; i < 100; i++) {
+                normalDataObject1.root.set(i.toString(), i);
+            }
+
+            if(testConfig.waitForSummary) {
+                let summary: boolean = false;
+                const summaryP = new Promise<boolean>(
+                    (res)=>{
+                        summaryCollection.once("summaryAck", ()=>res(true));
+                    });
+                while(!summary) {
+                    summary = await timeoutAwait<boolean>(
+                        summaryP,
+                        {reject: false, value: false});
+                    i++;
+                }
+            }
+
+            const storageOnlyContainer = await loadContainer(
+                true,
+                { headers: {[LoaderHeader.loadMode]: testConfig.loadOptions}}) as Container;
+
+            await timeoutAwait(waitContainerToCatchUp(storageOnlyContainer));
+            // const storageOnlyDataObject =
+            // await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
+            // assert.strictEqual(await storageOnlyDataObject.root.wait(i.toString()), i);
+        });
+    }
 
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
