@@ -49,10 +49,10 @@ export class TenantManager implements core.ITenantManager {
         return result.data;
     }
 
-    public async getTenant(tenantId: string, documentId: string): Promise<core.ITenant> {
+    public async getTenant(tenantId: string, documentId: string, includeDisabled = false): Promise<core.ITenant> {
         const [details, key] = await Promise.all([
-            Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`),
-            this.getKey(tenantId)]);
+            Axios.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, { params: { includeDisabled }}),
+            this.getKey(tenantId, includeDisabled)]);
 
         const defaultQueryString = {
             token: fromUtf8ToBase64(`${tenantId}`),
@@ -95,8 +95,10 @@ export class TenantManager implements core.ITenantManager {
             { token });
     }
 
-    public async getKey(tenantId: string): Promise<string> {
-        const result = await Axios.get(`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`);
+    public async getKey(tenantId: string, includeDisabled = false): Promise<string> {
+        const result = await Axios.get(
+            `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/key`,
+            { params: { includeDisabled }});
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return result.data;
     }

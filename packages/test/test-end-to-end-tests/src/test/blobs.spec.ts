@@ -203,6 +203,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     });
 });
 
+// TODO: #7684
 const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string => {
     assert(provider.driver.type === "odsp");
     assert(itemId);
