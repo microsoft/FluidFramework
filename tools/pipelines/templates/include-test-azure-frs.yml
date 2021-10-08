@@ -60,8 +60,10 @@ jobs:
 
       steps:
       # Setup
-      - checkout: none
+      - checkout: self
         clean: true
+        lfs: false
+        submodules: false
 
       # Print parameters/Vars
       - task: Bash@3
