@@ -162,15 +162,6 @@ jobs:
           customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger fluid-framework cross-env mocha @fluidframework/test-client-utils tsc typescript'
           customRegistry: 'useNpmrc'
 
-      # Install test and logger package
-      - task: Npm@1
-        displayName: 'npm install'
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/@fluidframework/azure-client
-          customCommand: 'install'
-          customRegistry: 'useNpmrc'
-
       # Build the tests
       - task: Npm@1
         displayName: 'npm run build:test'
