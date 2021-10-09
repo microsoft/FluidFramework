@@ -858,9 +858,9 @@ export class DeltaManager
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
         // We can short-circuit this process.
-        // Note that we also want nacks to be rare and be treated catastrophic failure
-        // Be careful with reentrancy though - disconnected event will be raised in the
-        // middle of the current workflow!
+        // Note that we also want nacks to be rare and be treated as catastrophic failures.
+        // Be careful with reentrancy though - disconnected event should not be be raised in the
+        // middle of the current workflow, but rather on clean stack!
         if (this.connectionMode === "read") {
             if (!this.pendingReconnect) {
                 this.pendingReconnect = true;
@@ -1567,7 +1567,7 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read", "connectionMode");
+                assert(this.connectionMode === "read", "effective connectionMode should be 'read' after downgrade");
             }
         }
 
