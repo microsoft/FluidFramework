@@ -189,10 +189,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
-        (container.deltaManager as any)._inbound.pause();
-
         const blobOpP = new Promise<void>((res) => container.deltaManager.on("submitOp", (op) => {
             if (op.contents.includes("blobAttach")) {
+                (container.deltaManager as any)._inbound.pause();
                 res();
             }
         }));
