@@ -137,7 +137,11 @@ export class OdspTestDriver implements ITestDriver {
     // (undocumented)
     getUrlFromItemId(itemId: string): string;
     // (undocumented)
+    readonly tenantName?: string | undefined;
+    // (undocumented)
     readonly type = "odsp";
+    // (undocumented)
+    readonly userIndex?: number | undefined;
     // (undocumented)
     get version(): string;
 }

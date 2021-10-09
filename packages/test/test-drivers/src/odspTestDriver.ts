@@ -64,15 +64,16 @@ interface LoginTenants {
 
 /**
  * Get from the env a set of credential to use from a single tenant
+ * @param tenantIndex number [0..1) to choose the tenant from an array
  * @param requestedUserName specific user name to filter to
  */
-function getCredentials(requestedUserName?: string) {
+function getCredentials(tenantIndex: number, requestedUserName?: string) {
     const creds: { [user: string]: string } = {};
     const loginTenants = process.env.login__odsp__test__tenants;
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
-        // Only choose the first one for now
-        const tenant = Object.keys(tenants)[0];
+        const tenantNames = Object.keys(tenants);
+        const tenant = tenantNames[Math.floor(tenantIndex * tenantNames.length)];
         const tenantInfo = tenants[tenant];
         // Translate all the user from that user to the full user principle name by appending the tenant domain
         const range = tenantInfo.range;
@@ -103,6 +104,7 @@ export class OdspTestDriver implements ITestDriver {
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private static readonly driveIdPCache = new Map<string, Promise<string>>();
     // Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
+    private static readonly legacyDriverTenantRandomIndex = Math.random();
     private static readonly legacyDriverUserRandomIndex = Math.random();
     private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
@@ -130,16 +132,18 @@ export class OdspTestDriver implements ITestDriver {
         config?: { directory?: string, username?: string, options?: HostStoragePolicy, supportsBrowserAuth?: boolean },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
-        const creds = getCredentials(config?.username);
+        const tenantIndex = compare(api.version, "0.46.0") >= 0 ? Math.random() : this.legacyDriverTenantRandomIndex;
+        const creds = getCredentials(tenantIndex, config?.username);
         // Pick a random one on the list (only supported for >= 0.46)
         const users = Object.keys(creds);
-        const randomIndex = compare(api.version, "0.46.0") >= 0 ?
+        const randomUserIndex = compare(api.version, "0.46.0") >= 0 ?
             Math.random() : OdspTestDriver.legacyDriverUserRandomIndex;
-        const userIndex = Math.floor(randomIndex * users.length);
+        const userIndex = Math.floor(randomUserIndex * users.length);
         const username = users[userIndex];
 
         const emailServer = username.substr(username.indexOf("@") + 1);
-        const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
+        const tenantName = emailServer.substr(0, emailServer.indexOf("."));
+        const server = `${tenantName}.sharepoint.com`;
 
         // force isolateSocketCache because we are using different users in a single context
         // and socket can't be shared between different users
@@ -156,6 +160,8 @@ export class OdspTestDriver implements ITestDriver {
             config?.directory ?? "",
             api,
             options,
+            tenantName,
+            userIndex,
         );
     }
 
@@ -180,6 +186,8 @@ export class OdspTestDriver implements ITestDriver {
         directory: string,
         api = OdspDriverApi,
         options?: HostStoragePolicy,
+        tenantName?: string,
+        userIndex?: number,
     ) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
@@ -248,7 +256,12 @@ export class OdspTestDriver implements ITestDriver {
     private readonly testIdToUrl = new Map<string, string>();
     private constructor(
         private readonly config: Readonly<IOdspTestDriverConfig>,
-        private readonly api = OdspDriverApi) { }
+        private readonly api = OdspDriverApi,
+        public readonly tenantName?: string,
+        public readonly userIndex?: number,
+    ) {
+
+    }
 
     async createContainerUrl(testId: string): Promise<string> {
         if (!this.testIdToUrl.has(testId)) {
