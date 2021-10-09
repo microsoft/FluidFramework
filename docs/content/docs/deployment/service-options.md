@@ -3,8 +3,9 @@ title: Available Fluid services
 menuPosition: 1
 ---
 
-The Fluid Framework can be used with any compatible service implementation. Some services, like [Tinylicious]() are intended only for testing and development, while other hosted options provide the high scalability needed
-for production-quality applications.
+The Fluid Framework can be used with any compatible service implementation. Some services, like Tinylicious are intended
+only for testing and development, while other hosted options provide the high scalability needed for production-quality
+applications.
 
 ## Tinylicious
 
