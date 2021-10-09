@@ -17,7 +17,7 @@ export interface ITelemetryBufferedLogger extends ITelemetryBaseLogger {
 // @public (undocumented)
 export interface ITestDriver {
     createContainerUrl(testId: string): Promise<string>;
-    createCreateNewRequest(testId: string): IRequest;
+    createCreateNewRequest(testId?: string): IRequest;
     createDocumentServiceFactory(): IDocumentServiceFactory;
     createUrlResolver(): IUrlResolver;
     readonly endpointName?: string;

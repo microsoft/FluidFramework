@@ -60,15 +60,16 @@ export class DocumentContext extends EventEmitter implements IContext {
     }
 
     public checkpoint(message: IQueuedMessage) {
+        if (this.closed) {
+            return;
+        }
+
         // Assert offset is between the current tail and head
         const offset = message.offset;
 
         assert(offset > this.tail.offset && offset <= this.head.offset,
-            `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset}`);
-
-        if (this.closed) {
-            return;
-        }
+            `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
+            `(${message.topic}, ${message.partition})`);
 
         // Update the tail and broadcast the checkpoint
         this.tailInternal = message;

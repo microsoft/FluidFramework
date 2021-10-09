@@ -77,7 +77,7 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 // Only support current version, not baseVersion support
 export const getDataStoreFactory = createGetDataStoreFactoryFunction(getDataRuntimeApi(pkgVersion));
 
-export async function createVersionedFluidTestDriver(
+async function createVersionedFluidTestDriver(
     baseVersion: string,
     driverConfig?: {
         type?: TestDriverTypes,
