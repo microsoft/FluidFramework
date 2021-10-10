@@ -64,7 +64,7 @@ interface LoginTenants {
 
 /**
  * Get from the env a set of credential to use from a single tenant
- * @param tenantIndex number [0..1) to choose the tenant from an array
+ * @param tenantIndex interger to choose the tenant from an array
  * @param requestedUserName specific user name to filter to
  */
 function getCredentials(tenantIndex: number, requestedUserName?: string) {
@@ -73,7 +73,7 @@ function getCredentials(tenantIndex: number, requestedUserName?: string) {
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
         const tenantNames = Object.keys(tenants);
-        const tenant = tenantNames[Math.floor(tenantIndex * tenantNames.length)];
+        const tenant = tenantNames[tenantIndex % tenantNames.length];
         const tenantInfo = tenants[tenant];
         // Translate all the user from that user to the full user principle name by appending the tenant domain
         const range = tenantInfo.range;
@@ -104,7 +104,6 @@ export class OdspTestDriver implements ITestDriver {
     private static readonly odspTokenManager = new OdspTokenManager(odspTokensCache);
     private static readonly driveIdPCache = new Map<string, Promise<string>>();
     // Choose a single random user up front for legacy driver which doesn't support isolateSocketCache
-    private static readonly legacyDriverTenantRandomIndex = Math.random();
     private static readonly legacyDriverUserRandomIndex = Math.random();
     private static async getDriveIdFromConfig(server: string, tokenConfig: TokenConfig): Promise<string> {
         const siteUrl = `https://${tokenConfig.server}`;
@@ -129,10 +128,16 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     public static async createFromEnv(
-        config?: { directory?: string, username?: string, options?: HostStoragePolicy, supportsBrowserAuth?: boolean },
+        config?: {
+            directory?: string,
+            username?: string,
+            options?: HostStoragePolicy,
+            supportsBrowserAuth?: boolean,
+            tenantIndex?: number,
+        },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
-        const tenantIndex = compare(api.version, "0.46.0") >= 0 ? Math.random() : this.legacyDriverTenantRandomIndex;
+        const tenantIndex = config?.tenantIndex ?? 0;
         const creds = getCredentials(tenantIndex, config?.username);
         // Pick a random one on the list (only supported for >= 0.46)
         const users = Object.keys(creds);
@@ -150,6 +155,7 @@ export class OdspTestDriver implements ITestDriver {
         const options = config?.options ?? {};
         options.isolateSocketCache = true;
 
+        console.log(username);
         return this.create(
             {
                 username,

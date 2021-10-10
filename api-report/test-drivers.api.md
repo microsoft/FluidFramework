@@ -131,6 +131,7 @@ export class OdspTestDriver implements ITestDriver {
         username?: string;
         options?: HostStoragePolicy;
         supportsBrowserAuth?: boolean;
+        tenantIndex?: number;
     }, api?: OdspDriverApiType): Promise<OdspTestDriver>;
     // (undocumented)
     createUrlResolver(): IUrlResolver;
