@@ -155,7 +155,6 @@ export class OdspTestDriver implements ITestDriver {
         const options = config?.options ?? {};
         options.isolateSocketCache = true;
 
-        console.log(username);
         return this.create(
             {
                 username,
