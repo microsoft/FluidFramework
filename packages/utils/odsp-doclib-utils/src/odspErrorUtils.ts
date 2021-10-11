@@ -143,7 +143,7 @@ export function createOdspNetworkError(
     }
     switch (statusCode) {
         case 400:
-            error = new GenericNetworkError(fluidErrorCode, false, { statusCode });
+            error = new GenericNetworkError(fluidErrorCode, errorMessage, false, { statusCode });
             break;
         case 401:
         case 403:
@@ -152,68 +152,74 @@ export function createOdspNetworkError(
             if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
                 error = new RetryableError(
                     fluidErrorCode,
+                    errorMessage,
                     OdspErrorType.serviceReadOnly,
                 );
             } else {
                 const claims = response?.headers ? parseAuthErrorClaims(response.headers) : undefined;
                 const tenantId = response?.headers ? parseAuthErrorTenant(response.headers) : undefined;
-                error = new AuthorizationError(fluidErrorCode, claims, tenantId, { statusCode });
+                error = new AuthorizationError(fluidErrorCode, errorMessage, claims, tenantId, { statusCode });
             }
             break;
         case 404:
             error = new NonRetryableError(
-                fluidErrorCode, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
+                fluidErrorCode, errorMessage, DriverErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
             break;
         case 406:
             error = new NonRetryableError(
-                fluidErrorCode, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
+                fluidErrorCode, errorMessage, DriverErrorType.unsupportedClientProtocolVersion, { statusCode });
             break;
         case 410:
-            error = new NonRetryableError(fluidErrorCode, OdspErrorType.cannotCatchUp, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.cannotCatchUp, { statusCode });
             break;
         case fluidEpochMismatchError:
-            error = new NonRetryableError(fluidErrorCode, DriverErrorType.fileOverwrittenInStorage, { statusCode });
+            error = new NonRetryableError(
+                fluidErrorCode, errorMessage, DriverErrorType.fileOverwrittenInStorage, { statusCode });
             break;
         case 412:
             // "Precondition Failed" error - happens when uploadSummaryWithContext uses wrong parent.
             // Resubmitting same payload is not going to help, so this is non-recoverable failure!
-            error = new NonRetryableError(fluidErrorCode, DriverErrorType.genericNetworkError, { statusCode });
+            error = new NonRetryableError(
+                fluidErrorCode, errorMessage, DriverErrorType.genericNetworkError, { statusCode });
             break;
         case 413:
-            error = new NonRetryableError(fluidErrorCode, OdspErrorType.snapshotTooBig, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.snapshotTooBig, { statusCode });
             break;
         case 414:
         case invalidFileNameStatusCode:
-            error = new NonRetryableError(fluidErrorCode, OdspErrorType.invalidFileNameError, { statusCode });
+            error = new NonRetryableError(
+                fluidErrorCode, errorMessage, OdspErrorType.invalidFileNameError, { statusCode });
             break;
         case 500:
-            error = new GenericNetworkError(fluidErrorCode, true, { statusCode });
+            error = new GenericNetworkError(fluidErrorCode, errorMessage, true, { statusCode });
             break;
         case 501:
-            error = new NonRetryableError(fluidErrorCode, OdspErrorType.fluidNotEnabled, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fluidNotEnabled, { statusCode });
             break;
         case 507:
-            error = new NonRetryableError(fluidErrorCode, OdspErrorType.outOfStorageError, { statusCode });
+            error = new NonRetryableError(
+                fluidErrorCode, errorMessage, OdspErrorType.outOfStorageError, { statusCode });
             break;
         case offlineFetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, DriverErrorType.offlineError, { statusCode });
+            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.offlineError, { statusCode });
             break;
         case fetchFailureStatusCode:
-            error = new RetryableError(fluidErrorCode, DriverErrorType.fetchFailure, { statusCode });
+            error = new RetryableError(fluidErrorCode, errorMessage, DriverErrorType.fetchFailure, { statusCode });
             break;
         case fetchIncorrectResponse:
             // Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
-            error = new RetryableError(fluidErrorCode, DriverErrorType.incorrectServerResponse, { statusCode });
+            error = new RetryableError(
+                fluidErrorCode, errorMessage, DriverErrorType.incorrectServerResponse, { statusCode });
             break;
         case fetchTimeoutStatusCode:
-            error = new RetryableError(fluidErrorCode, OdspErrorType.fetchTimeout, { statusCode });
+            error = new RetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTimeout, { statusCode });
             break;
         case fetchTokenErrorCode:
-            error = new NonRetryableError(fluidErrorCode, OdspErrorType.fetchTokenError, { statusCode });
+            error = new NonRetryableError(fluidErrorCode, errorMessage, OdspErrorType.fetchTokenError, { statusCode });
             break;
         default:
             const retryAfterMs = retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
-            error = createGenericNetworkError(fluidErrorCode, true, retryAfterMs, { statusCode });
+            error = createGenericNetworkError(fluidErrorCode, errorMessage, true, retryAfterMs, { statusCode });
             break;
     }
     enrichOdspError(error, response, facetCodes, props);

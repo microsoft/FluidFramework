@@ -134,7 +134,7 @@ describe("OdspErrorUtils", () => {
 
     describe("enrichError", () => {
         it("enriched with online flag", () => {
-            const error = new GenericNetworkError("Some message", false) as GenericNetworkError & OdspError;
+            const error = new GenericNetworkError("Some error code", "Some message", false) as GenericNetworkError & OdspError;
             enrichOdspError(error);
 
             assert(typeof error.online === "string");

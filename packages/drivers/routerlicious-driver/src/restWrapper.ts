@@ -56,7 +56,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     eventName: "CriticalRequestError",
                     correlationId: config.headers["x-correlation-id"] as string,
                 }, reason);
-                throwR11sNetworkError(`Unknown Error on [${config.method}] to [${config.url}]: ${
+                throwR11sNetworkError("requestFailed", `Unknown Error on [${config.method}] to [${config.url}]: ${
                     safeStringify(reason)
                 }`);
             }
@@ -83,7 +83,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
             }
 
             // Allow anything else to be handled upstream
-            throwR11sNetworkError(axiosError.message, axiosError.response?.status);
+            throwR11sNetworkError("axiosError", axiosError.message, axiosError.response?.status);
         }
     }
 
