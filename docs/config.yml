@@ -13,11 +13,10 @@ module:
   mounts:
   - source: content
     target: content
-  imports:
-  - path: github.com/microsoft/FluidFramework
-    mounts:
-    - source: packages/dds/sequence/README.md
-      target: content/docs/sequence-readme.md
+  - source: _replacements
+    target: content
+  - source: ../packages/dds/sequence/README.md
+    target: content/docs/sequence-readme.md
 
 permalinks:
   page: "/:slug"
