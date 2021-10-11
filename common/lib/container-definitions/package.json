@@ -62,56 +62,56 @@
     "version": "0.40.0",
     "broken": {
       "EnumDeclaration_ContainerErrorType": {
-        "backCompat": false
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_ICodeLoader": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IContainer": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IContainerContext": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IFluidModule": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IGenericError": {
-        "backCompat": false
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IHostLoader": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_ILoader": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_ILoaderHeader": {
-        "forwardCompat": false
+        "forwardCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IProvideRuntimeFactory": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IProxyLoaderFactory": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IRuntime": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IRuntimeFactory": {
-        "forwardCompat": false,
-        "backCompat": false
+        "forwardCompat": ["0.39.8"],
+        "backCompat": ["0.39.8"]
       },
       "InterfaceDeclaration_IThrottlingWarning": {
-        "backCompat": false
+        "backCompat": ["0.39.8"]
       }
     }
   }
