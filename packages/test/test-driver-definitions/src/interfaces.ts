@@ -20,6 +20,16 @@ export interface ITestDriver{
     readonly endpointName?: string;
 
     /**
+     * Tenant name if there are any
+     */
+    readonly tenantName?: string;
+
+    /**
+     * User index if there are any
+     */
+    readonly userIndex?: number;
+
+    /**
      * The semantic version of the test drivers package.
      * In general this version will match that of the  client
      * interfaces and implementation exposed and used by the test driver.
