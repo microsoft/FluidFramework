@@ -5,7 +5,7 @@ editor: sdeshpande3
 ---
 
 The token provider is responsible for creating and signing tokens that the `@fluidframework/azure-client` uses to make
-requests to the Azure Fluid Relay service. There are two ways by which you can generate the token:
+requests to the Azure Fluid Relay. There are two ways by which you can generate the token:
 
 - `InsecureTokenProvider`
 - Implement your own `TokenProvider` class for fetching the token and a backend for token generation
@@ -48,7 +48,10 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
 }
 ```
 
-To ensure that the tenant secret key is kept secure, it is stored in a secure backend location and is only accessible from within the Azure Function. One way to fetch a signed token is to make a `GET` request to your Azure Function, providing the `tenantID` and `documentId`, and `userID`/`userName`. The Azure Function is responsible for the mapping between the tenant ID and a tenant key secret to appropriately generate and sign the token such that the Azure Fluid Relay service will accept it.
+To ensure that the tenant secret key is kept secure, it is stored in a secure backend location and is only accessible
+from within the Azure Function. One way to fetch a signed token is to make a `GET` request to your Azure Function,
+providing the `tenantID` and `documentId`, and `userID`/`userName`. The Azure Function is responsible for the mapping
+between the tenant ID and a tenant key secret to appropriately generate and sign the token such that the Azure Fluid Relay will accept it.
 
 ```typescript
 private async getToken(tenantId: string, documentId: string): Promise<string> {
@@ -140,4 +143,4 @@ The `generateToken` function will generate a token for the given user that is si
 
 ## Adding custom data to tokens
 
-You can add custom data such as email id, gender, address, etc for your token generation. See `Token Provider` under [Connect to an Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) for more information.
+You can add custom data such as email id, gender, address, etc for your token generation. See `Token Provider` under [Connect to Azure Fluid Relay]({{< relref "azure-frs.md" >}}) for more information.
