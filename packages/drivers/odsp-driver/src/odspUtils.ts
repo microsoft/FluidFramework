@@ -15,7 +15,6 @@ import {
     fetchFailureStatusCode,
     fetchTimeoutStatusCode,
     throwOdspNetworkError,
-    throwOdspNetworkError2,
     getSPOAndGraphRequestIdsFromResponse,
     fetchTokenErrorCode,
 } from "@fluidframework/odsp-doclib-utils";
