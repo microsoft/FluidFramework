@@ -24,6 +24,12 @@ const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
+    runtimeOptions: {
+        summaryOptions: {
+            // currently these tests will break if we load from a summary that was too recent
+            generateSummaries: false,
+        },
+    },
 };
 
 const lots = 30;
@@ -43,11 +49,14 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
             container.on("connected", () => res());
         }
     });
+    const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+    const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+    [...Array(lots).keys()].map((i) => map.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
+
     await args.ensureSynchronized();
     await args.opProcessingController.pauseProcessing(container);
-    const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
     assert(dataStore.runtime.deltaManager.outbound.paused);
-    const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
     await cb(container, dataStore, map);
 
@@ -334,5 +343,80 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
                 container2.on("connected", () => res());
             }
         });
+    });
+
+    it("correctly handles stashed ops given to two containers", async () => {
+        const stashedOps = await getPendingOps(provider, false, (c, d, map) => {
+            map.set(testKey, testValue);
+        });
+
+        // load container with stashed ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, stashedOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        assert.strictEqual(await map1.wait(testKey), testValue);
+        assert.strictEqual(await map2.wait(testKey), testValue);
+
+        map1.set(testKey, "a different value");
+
+        await provider.ensureSynchronized();
+
+        // give the same stashed ops to another container, which should not resend any
+        const container3 = await loader.resolve({ url }, stashedOps);
+        const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+        const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+
+        await provider.ensureSynchronized();
+
+        assert.strictEqual(await map1.wait(testKey), "a different value");
+        assert.strictEqual(await map2.wait(testKey), "a different value");
+        assert.strictEqual(await map3.wait(testKey), "a different value");
+    });
+
+    it("correctly handles partial resend on new container", async () => {
+        const setCounts = Array(lots).fill(0);
+        map1.on("valueChanged", (changed) => ++setCounts[changed.key]);
+        const stashedOps = await getPendingOps(provider, false, (c, d, map) => {
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+        });
+
+        const halfOps = JSON.parse(stashedOps) as {
+            pendingRuntimeState: { pendingStates: any[], clientId?: string },
+            url: string,
+        };
+        assert(halfOps.pendingRuntimeState.pendingStates.length >= lots);
+        halfOps.pendingRuntimeState.pendingStates.length =
+            Math.trunc(halfOps.pendingRuntimeState.pendingStates.length / 2);
+        assert(halfOps.pendingRuntimeState.pendingStates.length < lots);
+
+        // give half to one container
+        const container2 = await loader.resolve({ url }, JSON.stringify(halfOps));
+        container2.on("connected", () => container2.close());
+        await provider.ensureSynchronized();
+        // give all to another
+        await loader.resolve({ url }, stashedOps);
+        await provider.ensureSynchronized();
+        // every key should only have 1 op
+        setCounts.map((setCount, i) => assert.strictEqual(setCount, 1, `${i} not set exactly once`));
+    });
+
+    it("correctly handles reconnect and resubmit on original container", async () => {
+        const setCounts = Array(lots).fill(0);
+        map1.on("valueChanged", (changed) => ++setCounts[changed.key]);
+        let firstClientId;
+        const stashedOps = await getPendingOps(provider, true, (container, d, map) => {
+            firstClientId = (container as any).clientId;
+            [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+            (container.deltaManager as any).connection.emit("disconnect");
+        });
+
+        await provider.ensureSynchronized();
+        setCounts.map((setCount, i) => assert.strictEqual(setCount, 1, `${i} not set exactly once`));
+
+        assert.strictEqual(firstClientId, JSON.parse(stashedOps).pendingRuntimeState.clientId);
+        await loader.resolve({ url }, stashedOps);
+
+        await provider.ensureSynchronized();
+        setCounts.map((setCount, i) => assert.strictEqual(setCount, 1, `${i} not set exactly once`));
     });
 });
