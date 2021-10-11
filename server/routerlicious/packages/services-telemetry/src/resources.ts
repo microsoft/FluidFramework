@@ -54,8 +54,8 @@ export enum CommonProperties {
     lastSummarySequenceNumber = "lastSummarySequenceNumber",
 
     // Logtail properties
-    minLogtailSeqno = "minLogtailSeqno",
-    maxLogtailSeqno = "maxLogtailSeqno",
+    minLogtailSequenceNumber = "minLogtailSequenceNumber",
+    maxLogtailSequenceNumber = "maxLogtailSequenceNumber",
 
     // Request properties
     statusCode = "statusCode",
@@ -117,3 +117,9 @@ export function handleError(eventName: LumberEventName, errMsg: string, engineLi
         errLumber.error(errMsg, err);
     }
 }
+
+// Helper method to add commonly used Lumber properties
+export const getLumberBaseProperties = (documentId: string, tenantId: string) => ({
+    [BaseTelemetryProperties.tenantId]: tenantId,
+    [BaseTelemetryProperties.documentId]: documentId,
+});

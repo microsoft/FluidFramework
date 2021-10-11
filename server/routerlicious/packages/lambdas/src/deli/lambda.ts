@@ -47,6 +47,7 @@ import {
 } from "@fluidframework/server-services-core";
 import {
     CommonProperties,
+    getLumberBaseProperties,
     Lumber,
     LumberEventName,
     Lumberjack,
@@ -55,7 +56,7 @@ import {
 import { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IEvent } from "@fluidframework/common-definitions";
-import { logCommonSessionEndMetrics, createSessionMetric, getLumberProperties } from "../utils";
+import { logCommonSessionEndMetrics, createSessionMetric } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
@@ -311,7 +312,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                             tenantId: this.tenantId,
                         },
                     });
-                Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), error);
+                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
                 this.context.error(error, {
                     restart: true,
                     tenantId: this.tenantId,
@@ -384,7 +385,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         } else {
             const lambdaStatusMsg = "Not all required lambdas started";
             this.context.log?.info(lambdaStatusMsg);
-            Lumberjack.info(lambdaStatusMsg, getLumberProperties(this.documentId, this.tenantId));
+            Lumberjack.info(lambdaStatusMsg, getLumberBaseProperties(this.documentId, this.tenantId));
         }
     }
 
@@ -632,7 +633,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                             tenantId: this.tenantId,
                         },
                     });
-                    Lumberjack.info(dsnStatusMsg, getLumberProperties(this.documentId, this.tenantId));
+                    Lumberjack.info(dsnStatusMsg, getLumberBaseProperties(this.documentId, this.tenantId));
 
                     const controlContents = controlMessage.contents as IUpdateDSNControlMessageContents;
                     this.serviceSummaryGenerated = !controlContents.isClientSummary;
@@ -649,7 +650,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                                     tenantId: this.tenantId,
                                 },
                             });
-                            Lumberjack.info(deliCacheMsg, getLumberProperties(this.documentId, this.tenantId));
+                            Lumberjack.info(deliCacheMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                         }
 
                         this.durableSequenceNumber = dsn;
@@ -800,12 +801,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         } else if (clientSequenceNumber > expectedClientSequenceNumber) {
             const gapDetectionMsg = `Gap ${clientId}:${expectedClientSequenceNumber} > ${clientSequenceNumber}`;
             this.context.log?.info(gapDetectionMsg, { messageMetaData });
-            Lumberjack.info(gapDetectionMsg, getLumberProperties(this.documentId, this.tenantId));
+            Lumberjack.info(gapDetectionMsg, getLumberBaseProperties(this.documentId, this.tenantId));
             return IncomingMessageOrder.Gap;
         } else {
             const dupDetectionMsg = `Duplicate ${clientId}:${expectedClientSequenceNumber} < ${clientSequenceNumber}`;
             this.context.log?.info(dupDetectionMsg, { messageMetaData });
-            Lumberjack.info(dupDetectionMsg, getLumberProperties(this.documentId, this.tenantId));
+            Lumberjack.info(dupDetectionMsg, getLumberBaseProperties(this.documentId, this.tenantId));
             return IncomingMessageOrder.Duplicate;
         }
     }
@@ -828,7 +829,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         tenantId: this.tenantId,
                     },
                 });
-            Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), error);
+            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
             this.context.error(error, {
                 restart: true,
                 tenantId: this.tenantId,

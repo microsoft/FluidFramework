@@ -31,8 +31,13 @@ import {
     IScribe,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
-import { CommonProperties, Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getLumberProperties } from "..";
+import {
+    CommonProperties,
+    getLumberBaseProperties,
+    Lumber,
+    LumberEventName,
+    Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
@@ -121,7 +126,7 @@ export class SummaryWriter implements ISummaryWriter {
                 // eslint-disable-next-line @typescript-eslint/promise-function-async
                 await Promise.all(content.parents.map((parentSummary) => this.summaryStorage.getCommit(parentSummary)));
             } catch (e) {
-                clientSummaryMetric.error(`One or more parent summaries are invalid`);
+                clientSummaryMetric.error(`One or more parent summaries are invalid`, e);
                 return {
                     message: {
                         errorMessage: "One or more parent summaries are invalid",
@@ -165,62 +170,67 @@ export class SummaryWriter implements ISummaryWriter {
             op.additionalContent,
             JSON.stringify(checkpoint));
 
-        let uploadHandle: string;
-        if (this.enableWholeSummaryUpload) {
-            uploadHandle = await this.updateWholeSummary(
-                content.head,
-                content.handle,
-                protocolEntries,
-                logTailEntries,
-                serviceProtocolEntries,
-                checkpoint.protocolState.sequenceNumber,
-                content.details?.includesProtocolTree);
-        } else {
-            const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
-                this.summaryStorage.createTree({ entries: logTailEntries }),
-                this.summaryStorage.createTree({ entries: protocolEntries }),
-                this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                this.summaryStorage.getTree(content.handle, false),
-            ]);
-
-            // Combine the app summary with .protocol
-            const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
-
-            // Now combine with .logtail and .serviceProtocol
-            newTreeEntries.push({
-                mode: FileMode.Directory,
-                path: ".logTail",
-                sha: logTailTree.sha,
-                type: "tree",
-            });
-            newTreeEntries.push({
-                mode: FileMode.Directory,
-                path: ".serviceProtocol",
-                sha: serviceProtocolTree.sha,
-                type: "tree",
-            });
-
-            // Finally perform the write to git
-            const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
-            const commitParams: ICreateCommitParams = {
-                author: {
-                    date: new Date().toISOString(),
-                    email: "praguertdev@microsoft.com",
-                    name: "Routerlicious Service",
-                },
-                message: content.message,
-                parents: content.parents,
-                tree: gitTree.sha,
-            };
-
-            const commit = await this.summaryStorage.createCommit(commitParams);
-            uploadHandle = commit.sha;
-
-            if (existingRef) {
-                await this.summaryStorage.upsertRef(this.documentId, uploadHandle);
+        let uploadHandle: string = "";
+        try {
+            if (this.enableWholeSummaryUpload) {
+                uploadHandle = await this.updateWholeSummary(
+                    content.head,
+                    content.handle,
+                    protocolEntries,
+                    logTailEntries,
+                    serviceProtocolEntries,
+                    checkpoint.protocolState.sequenceNumber,
+                    content.details?.includesProtocolTree);
             } else {
-                await this.summaryStorage.createRef(this.documentId, uploadHandle);
+                const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
+                    this.summaryStorage.createTree({ entries: logTailEntries }),
+                    this.summaryStorage.createTree({ entries: protocolEntries }),
+                    this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+                    this.summaryStorage.getTree(content.handle, false),
+                ]);
+
+                // Combine the app summary with .protocol
+                const newTreeEntries = mergeAppAndProtocolTree(appSummaryTree, protocolTree);
+
+                // Now combine with .logtail and .serviceProtocol
+                newTreeEntries.push({
+                    mode: FileMode.Directory,
+                    path: ".logTail",
+                    sha: logTailTree.sha,
+                    type: "tree",
+                });
+                newTreeEntries.push({
+                    mode: FileMode.Directory,
+                    path: ".serviceProtocol",
+                    sha: serviceProtocolTree.sha,
+                    type: "tree",
+                });
+
+                // Finally perform the write to git
+                const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
+                const commitParams: ICreateCommitParams = {
+                    author: {
+                        date: new Date().toISOString(),
+                        email: "praguertdev@microsoft.com",
+                        name: "Routerlicious Service",
+                    },
+                    message: content.message,
+                    parents: content.parents,
+                    tree: gitTree.sha,
+                };
+
+                const commit = await this.summaryStorage.createCommit(commitParams);
+                uploadHandle = commit.sha;
+
+                if (existingRef) {
+                    await this.summaryStorage.upsertRef(this.documentId, uploadHandle);
+                } else {
+                    await this.summaryStorage.createRef(this.documentId, uploadHandle);
+                }
             }
+        } catch (error) {
+            clientSummaryMetric.error(`Client summary failed`, error);
+            throw error;
         }
 
         clientSummaryMetric.success(`Client summary success`);
@@ -233,14 +243,6 @@ export class SummaryWriter implements ISummaryWriter {
             },
             status: true,
         };
-    }
-    private setSummaryProperties(summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>, op: ISequencedDocumentAugmentedMessage) {
-        summaryMetric.setProperties(getLumberProperties(this.documentId, this.tenantId));
-        summaryMetric.setProperties({
-            [CommonProperties.clientId]: op.clientId,
-            [CommonProperties.sequenceNumber]: op.sequenceNumber,
-            [CommonProperties.minSequenceNumber]: op.minimumSequenceNumber,
-        });
     }
 
     /* eslint-enable max-len */
@@ -269,7 +271,7 @@ export class SummaryWriter implements ISummaryWriter {
         // at least one prior client generated summary.
         // TODO: With default createNew() flow, we can remove this check.
         if (!existingRef) {
-            serviceSummaryMetric.error(`No summaries found`);
+            serviceSummaryMetric.error(`No prior summaries found`);
             return false;
         }
 
@@ -291,63 +293,78 @@ export class SummaryWriter implements ISummaryWriter {
             op.additionalContent,
             JSON.stringify(checkpoint));
 
-        if (this.enableWholeSummaryUpload) {
-            await this.createWholeServiceSummary(
-                existingRef.object.sha,
-                logTailEntries,
-                serviceProtocolEntries,
-                op.sequenceNumber);
-        } else {
-            // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
-            const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
-            const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
-                this.summaryStorage.createTree({ entries: logTailEntries }),
-                this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
-                this.summaryStorage.getTree(lastCommit.tree.sha, false),
-            ]);
+        try {
+            if (this.enableWholeSummaryUpload) {
+                await this.createWholeServiceSummary(
+                    existingRef.object.sha,
+                    logTailEntries,
+                    serviceProtocolEntries,
+                    op.sequenceNumber);
+            } else {
+                // Fetch the last commit and summary tree. Create new trees with logTail and serviceProtocol.
+                const lastCommit = await this.summaryStorage.getCommit(existingRef.object.sha);
+                const [logTailTree, serviceProtocolTree, lastSummaryTree] = await Promise.all([
+                    this.summaryStorage.createTree({ entries: logTailEntries }),
+                    this.summaryStorage.createTree({ entries: serviceProtocolEntries }),
+                    this.summaryStorage.getTree(lastCommit.tree.sha, false),
+                ]);
 
-            // Combine the last summary tree with .logTail and .serviceProtocol
-            const newTreeEntries = lastSummaryTree.tree.map((value) => {
-                const createTreeEntry: ICreateTreeEntry = {
-                    mode: value.mode,
-                    path: value.path,
-                    sha: value.sha,
-                    type: value.type,
+                // Combine the last summary tree with .logTail and .serviceProtocol
+                const newTreeEntries = lastSummaryTree.tree.map((value) => {
+                    const createTreeEntry: ICreateTreeEntry = {
+                        mode: value.mode,
+                        path: value.path,
+                        sha: value.sha,
+                        type: value.type,
+                    };
+                    return createTreeEntry;
+                });
+                newTreeEntries.push({
+                    mode: FileMode.Directory,
+                    path: ".logTail",
+                    sha: logTailTree.sha,
+                    type: "tree",
+                });
+                newTreeEntries.push({
+                    mode: FileMode.Directory,
+                    path: ".serviceProtocol",
+                    sha: serviceProtocolTree.sha,
+                    type: "tree",
+                });
+
+                // Finally perform the write to git
+                const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
+                const commitParams: ICreateCommitParams = {
+                    author: {
+                        date: new Date().toISOString(),
+                        email: "praguertdev@microsoft.com",
+                        name: "Routerlicious Service",
+                    },
+                    message: `Service Summary @${op.sequenceNumber}`,
+                    parents: [lastCommit.sha],
+                    tree: gitTree.sha,
                 };
-                return createTreeEntry;
-            });
-            newTreeEntries.push({
-                mode: FileMode.Directory,
-                path: ".logTail",
-                sha: logTailTree.sha,
-                type: "tree",
-            });
-            newTreeEntries.push({
-                mode: FileMode.Directory,
-                path: ".serviceProtocol",
-                sha: serviceProtocolTree.sha,
-                type: "tree",
-            });
 
-            // Finally perform the write to git
-            const gitTree = await this.summaryStorage.createGitTree({ tree: newTreeEntries });
-            const commitParams: ICreateCommitParams = {
-                author: {
-                    date: new Date().toISOString(),
-                    email: "praguertdev@microsoft.com",
-                    name: "Routerlicious Service",
-                },
-                message: `Service Summary @${op.sequenceNumber}`,
-                parents: [lastCommit.sha],
-                tree: gitTree.sha,
-            };
-
-            // Finally commit the service summary and update the ref.
-            const commit = await this.summaryStorage.createCommit(commitParams);
-            await this.summaryStorage.upsertRef(this.documentId, commit.sha);
+                // Finally commit the service summary and update the ref.
+                const commit = await this.summaryStorage.createCommit(commitParams);
+                await this.summaryStorage.upsertRef(this.documentId, commit.sha);
+            }
+        } catch (error) {
+            serviceSummaryMetric.error(`Service summary failed`, error);
+            throw error;
         }
         serviceSummaryMetric.success(`Service summary success`);
         return true;
+    }
+
+    private setSummaryProperties(summaryMetric: Lumber<LumberEventName.ClientSummary | LumberEventName.ServiceSummary>
+        , op: ISequencedDocumentAugmentedMessage) {
+        summaryMetric.setProperties(getLumberBaseProperties(this.documentId, this.tenantId));
+        summaryMetric.setProperties({
+            [CommonProperties.clientId]: op.clientId,
+            [CommonProperties.sequenceNumber]: op.sequenceNumber,
+            [CommonProperties.minSequenceNumber]: op.minimumSequenceNumber,
+        });
     }
 
     private async generateLogtailEntries(

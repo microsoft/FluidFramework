@@ -50,13 +50,15 @@ export class SummaryReader implements ISummaryReader {
                 const messages = JSON.parse(bufferToString(opsContent, "utf8")) as ISequencedDocumentMessage[];
 
                 summaryReaderMetric.setProperties({
-                    [CommonProperties.minLogtailSeqno]: Math.min(...messages.map((message) => message.sequenceNumber)),
-                    [CommonProperties.maxLogtailSeqno]: Math.max(...messages.map((message) => message.sequenceNumber)),
+                    [CommonProperties.minLogtailSequenceNumber]: Math.min(...messages.map(
+                        (message) => message.sequenceNumber)),
+                    [CommonProperties.maxLogtailSequenceNumber]: Math.max(...messages.map(
+                        (message) => message.sequenceNumber)),
                     [CommonProperties.lastSummarySequenceNumber]: deli.sequenceNumber,
                     [CommonProperties.clientCount]: deli.clients?.length,
                 });
 
-                summaryReaderMetric.success(`Successfully read summary`);
+                summaryReaderMetric.success(`Successfully read whole summary`);
 
                 return {
                     term,
@@ -87,8 +89,10 @@ export class SummaryReader implements ISummaryReader {
                     toUtf8(opsContent.content, opsContent.encoding)) as ISequencedDocumentMessage[];
 
                 summaryReaderMetric.setProperties({
-                    [CommonProperties.minLogtailSeqno]: Math.min(...messages.map((message) => message.sequenceNumber)),
-                    [CommonProperties.maxLogtailSeqno]: Math.max(...messages.map((message) => message.sequenceNumber)),
+                    [CommonProperties.minLogtailSequenceNumber]: Math.min(...messages.map(
+                        (message) => message.sequenceNumber)),
+                    [CommonProperties.maxLogtailSequenceNumber]: Math.max(...messages.map(
+                        (message) => message.sequenceNumber)),
                     [CommonProperties.lastSummarySequenceNumber]: deli.sequenceNumber,
                     [CommonProperties.clientCount]: deli.clients?.length,
                 });

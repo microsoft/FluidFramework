@@ -4,8 +4,7 @@
  */
 
 import { IContext, IDeliState } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { getLumberProperties } from "..";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
 
 export class CheckpointContext {
@@ -69,7 +68,7 @@ export class CheckpointContext {
                         },
                     });
                 Lumberjack.error(`Error writing checkpoint to MongoDB`,
-                    getLumberProperties(this.id, this.tenantId), error);
+                    getLumberBaseProperties(this.id, this.tenantId), error);
             });
     }
 
@@ -107,7 +106,7 @@ export class CheckpointContext {
                     },
                 });
             Lumberjack.error(`Error writing checkpoint to MongoDB`,
-                getLumberProperties(this.id, this.tenantId), error);
+                getLumberBaseProperties(this.id, this.tenantId), error);
             return new Promise<void>((resolve, reject) => {
                 resolve(this.checkpointCore(checkpoint));
             });
