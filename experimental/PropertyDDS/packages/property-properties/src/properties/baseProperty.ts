@@ -57,20 +57,36 @@ const PATH_TOKENS = {
 
 
 interface IBasePropertyParams {
-    id?: string, // id of the property
-    typeid?: string, // The type unique identifier
-    length: number, // The length of the property. Only valid if the property is an array, otherwise the length defaults to 1
-    context: string, // The type of property this template represents i.e. single, array, map, set.
+    /** id of the property */
+    id?: string,
+    /** The type unique identifier */
+    typeid?: string,
+    /** The length of the property. Only valid if the property is an array, otherwise the length defaults to 1 */
+    length: number,
+    /** The type of property this template represents i.e. single, array, map, set. */
+    context: string,
+
     //TODO: UNUSED PARAMETER ??
-    properties: BaseProperty[],  // List of property templates that are used to define children properties
+    /** List of property templates that are used to define children properties */
+    properties: BaseProperty[],
+
     //TODO: UNUSED PARAMETER ??
-    inherits: string[] // List of property template typeids that this PropertyTemplate inherits from
+    /**  List of property template typeids that this PropertyTemplate inherits from */
+    inherits: string[]
 }
 
 interface ISerializeOptions {
+    /** Only include dirty entries in the serialization */
     dirtyOnly?: boolean,
+    /** Include the typeid of the root of the hierarchy */
     includeRootTypeid?: boolean,
+    /** The type of dirtiness to use when reporting dirty changes. */
     dirtinessType?: MODIFIED_STATE_FLAGS,
+    /**
+     * If this is set to true, the serialize
+     * function will descend into referenced repositories. WARNING: if there are loops in the references
+     * this can result in an infinite loop
+     */
     includeReferencedRepositories?: boolean
 }
 
@@ -86,7 +102,7 @@ interface ISerializeOptions {
  * created by a direct call to a function like `deserialize()` or `createProperty()`.
  *
  */
-export class BaseProperty {
+export abstract class BaseProperty {
     protected _id: string | undefined;
     protected _isConstant: boolean = false;
     protected _dirty: MODIFIED_STATE_FLAGS;
@@ -404,7 +420,7 @@ export class BaseProperty {
      */
     _reapplyDirtyFlags(in_pendingChangeSet: SerializedChangeSet, in_dirtyChangeSet: SerializedChangeSet) {
         this._checkIsNotReadOnly(false);
-        // Here we must walk both changesets in parallell. Sometimes there will be only an entry in one
+        // Here we must walk both changesets in parallel. Sometimes there will be only an entry in one
         // changeset, sometimes only one in the other changeset, sometimes one in both.
         const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
         for (const typeid of typeids) {
@@ -1107,12 +1123,6 @@ export class BaseProperty {
      * Serialize the property
      *
      * @param in_options - Options for the serialization
-     * @param in_options.dirtyOnly - Only include dirty entries in the serialization
-     * @param in_options.includeRootTypeid - Include the typeid of the root of the hierarchy
-     * @param in_options.dirtinessType - The type of dirtiness to use when reporting dirty changes.
-     * @param in_options.includeReferencedRepositories - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
      * @throws if in_options is defined but is not an object.
      * @returns The serialized representation of this property
      */
