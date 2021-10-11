@@ -109,7 +109,7 @@ export async function fetchHelper(
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                "fetchErrorB", response.status, response, await response.text());
+                "fetchErrorWithStatusCode", response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -141,7 +141,7 @@ export async function fetchHelper(
         // It is also non-serializable object due to circular references.
         //
         throwOdspNetworkError(
-            "fetchErrorB",
+            "unableToFetch",
             online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
             undefined, // response
         );
