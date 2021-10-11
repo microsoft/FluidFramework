@@ -59,7 +59,7 @@ export function create(
             deletionPs.push(tenantService.deleteFromCache(tenantId, utils.parseToken(tenantId, authorization)));
         }
         return Promise.all(deletionPs);
-        }
+    }
 
     router.get("/repos/:ignored?/:tenantId/git/summaries/:sha",
         throttle(throttler, winston, commonThrottleOptions),
