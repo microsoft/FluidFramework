@@ -38,7 +38,9 @@ export function create(
      * Clients still need to verify the claims.
      */
     router.post("/tenants/:id/validate", (request, response) => {
-        const validP = manager.validateToken(getParam(request.params, "id"), request.body.token);
+        const tenantId = getParam(request.params, "id");
+        const includeDisabled = getIncludeDisabledFlag(request);
+        const validP = manager.validateToken(tenantId, request.body.token,  includeDisabled);
         handleResponse(validP, response);
     });
 

@@ -11,12 +11,16 @@ import { ITenantService } from "../../services";
 export class TestTenantService implements ITenantService {
     private readonly tenant = new TestTenant("http://test", "http://historian", new TestDb({}));
 
-    async getTenant(tenantId: string, token: string): Promise<ITenantConfig> {
+    async getTenant(tenantId: string, token: string, includeDisabled = false): Promise<ITenantConfig> {
         return Promise.resolve({
             id: "testTenant",
             storage: this.tenant.storage,
             orderer: this.tenant.orderer,
             customData: {},
         });
+    }
+
+    async deleteFromCache(tenantId: string, token: string): Promise<boolean> {
+        return Promise.reject(new Error("Method not implemented."));
     }
 }
