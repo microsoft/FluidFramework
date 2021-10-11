@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { getParam } from "@fluidframework/server-services-utils";
+import winston from "winston";
 import { handleResponse } from "../utils";
 import { TenantManager } from "./tenantManager";
 
@@ -38,7 +39,12 @@ export function create(
      * Clients still need to verify the claims.
      */
     router.post("/tenants/:id/validate", (request, response) => {
-        const validP = manager.validateToken(getParam(request.params, "id"), request.body.token);
+        const tenantId = getParam(request.params, "id");
+        const includeDisabled = getIncludeDisabledFlag(request);
+        // Debug
+        winston.info(`POST VALIDATE: includeDisabled=${includeDisabled}`);
+        // end of Debug
+        const validP = manager.validateToken(tenantId, request.body.token,  includeDisabled);
         handleResponse(validP, response);
     });
 

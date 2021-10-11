@@ -46,9 +46,19 @@ export function create(
     async function deleteSummary(
         tenantId: string,
         authorization: string,
-        softDelete: boolean): Promise<boolean> {
-        const service = await utils.createGitService(tenantId, authorization, tenantService, cache, asyncLocalStorage);
-        return service.deleteSummary(softDelete);
+        softDelete: boolean): Promise<boolean[]> {
+        const service = await utils.createGitService(
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage,
+            true);
+        const deletionPs = [service.deleteSummary(softDelete)];
+        if (!softDelete) {
+            deletionPs.push(tenantService.deleteFromCache(tenantId, utils.parseToken(tenantId, authorization)));
+        }
+        return Promise.all(deletionPs);
         }
 
     router.get("/repos/:ignored?/:tenantId/git/summaries/:sha",

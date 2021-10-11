@@ -59,8 +59,8 @@ export class TenantManager {
     /**
      * Validates a tenant's API token
      */
-    public async validateToken(tenantId: string, token: string): Promise<void> {
-        const tenantKey = await this.getTenantKey(tenantId);
+    public async validateToken(tenantId: string, token: string, includeDisabled = false): Promise<void> {
+        const tenantKey = await this.getTenantKey(tenantId, includeDisabled);
 
         return new Promise<void>((resolve, reject) => {
             jwt.verify(token, tenantKey, (error) => {
