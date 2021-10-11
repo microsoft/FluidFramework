@@ -4,7 +4,7 @@
  */
 
 /**
- * A set of helper utilities for building backend APIs for use with Azure Fluid Relay service.
+ * A set of helper utilities for building backend APIs for use with Azure Fluid Relay.
  *
  * @packageDocumentation
  */

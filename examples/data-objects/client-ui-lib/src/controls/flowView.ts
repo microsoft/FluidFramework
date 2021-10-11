@@ -4745,7 +4745,7 @@ export class FlowView extends ui.Component implements SearchMenu.ISearchMenuHost
         this.sequenceTest = await this.docRoot
             .get<IFluidHandle<Sequence.SharedNumberSequence>>("sequence-test")
             .get();
-        this.sequenceTest.on("op", (op) => {
+        this.sequenceTest.on("sequenceDelta", (ev: Sequence.SequenceDeltaEvent) => {
             this.showSequenceEntries();
         });
         this.render(0, true);
