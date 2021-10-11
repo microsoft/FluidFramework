@@ -14,6 +14,7 @@ import {
     IEntry,
     IFileEntry,
     IPersistedCache,
+    IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isValidLegacyError } from "@fluidframework/telemetry-utils";
@@ -153,7 +154,7 @@ export class EpochTracker implements IPersistedFileCache {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
             // to mark it as epoch error.
             if (epochFromResponse === undefined) {
-                epochFromResponse = error.serverEpoch;
+                epochFromResponse = (error as IOdspError).serverEpoch;
             }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;
@@ -187,7 +188,7 @@ export class EpochTracker implements IPersistedFileCache {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
             // to mark it as epoch error.
             if (epochFromResponse === undefined) {
-                epochFromResponse = error.serverEpoch;
+                epochFromResponse = (error as IOdspError).serverEpoch;
             }
             await this.checkForEpochError(error, epochFromResponse, fetchType);
             throw error;

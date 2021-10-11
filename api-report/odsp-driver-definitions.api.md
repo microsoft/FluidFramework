@@ -66,6 +66,8 @@ export interface IOdspError {
     readonly message: string;
     // (undocumented)
     online?: string;
+    // (undocumented)
+    serverEpoch?: string;
 }
 
 // @public (undocumented)
