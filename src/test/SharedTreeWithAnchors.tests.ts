@@ -30,6 +30,7 @@ import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
 import { runSummaryFormatCompatibilityTests } from './utilities/SummaryFormatCompatibilityTests';
 import { runSummarySizeTests } from './utilities/SummarySizeTests';
 import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests';
+import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests';
 
 /**
  * This file contains tests that verify the behavior or anchors by checking how they are resolved in the face of concurrent edits.
@@ -364,6 +365,7 @@ describe('SharedTreeWithAnchors', () => {
 			setUpTestSharedTreeWithAnchors,
 			setUpLocalServerTestSharedTreeWithAnchors
 		);
+		runSharedTreeVersioningTests<SharedTreeWithAnchors>('Versioning', setUpTestSharedTreeWithAnchors);
 	});
 
 	it('PlaceAnchor builders default to RelativeToNode semantics', () => {

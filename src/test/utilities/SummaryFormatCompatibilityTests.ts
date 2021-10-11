@@ -14,7 +14,6 @@ import {
 	SharedTree,
 	SharedTreeNoHistorySummarizer,
 } from '../../default-edits';
-import { EditId } from '../../Identifiers';
 import {
 	Edit,
 	SharedTreeSummary,
@@ -34,6 +33,7 @@ import {
 	LocalServerSharedTreeTestingOptions,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
+	summaryCompatibilityTestSetupEditId,
 	testDocumentsPathBase,
 } from './TestUtilities';
 import { TestFluidSerializer } from './TestSerializer';
@@ -115,19 +115,33 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 		options: LocalServerSharedTreeTestingOptions
 	) => Promise<LocalServerSharedTreeTestingComponents<TSharedTree>>
 ) {
-	describe(title, () => {
-		const setupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
+	// KLUDGE: Calling ensureSynchronized after too many edits are applied (about 450+) causes it to hang indefinitely,
+	//         bug filed at https://github.com/microsoft/FluidFramework/issues/7575
+	async function applyEdits(tree: TSharedTree, testObjectProvider: TestObjectProvider, history: Edit<Change>[]) {
+		for (const [index, edit] of history.entries()) {
+			tree.processLocalEdit(edit);
+			if (index % 40 === 0) {
+				// Wait for the ops to to be submitted and processed across the containers.
+				await testObjectProvider.ensureSynchronized();
+			}
+		}
 
+		await testObjectProvider.ensureSynchronized();
+	}
+
+	describe(title, () => {
 		const testSerializer = new TestFluidSerializer();
 
 		let expectedTree: TSharedTree;
 		let testObjectProvider: TestObjectProvider;
 		let editsPerChunk: number;
+		// Number of edits per catchup chunk
+		const maxEditsPerChunk = 1000;
 
 		// Resets the tree before each test
 		beforeEach(async () => {
 			const testingComponents = await setUpLocalServerTestSharedTree({
-				setupEditId,
+				setupEditId: summaryCompatibilityTestSetupEditId,
 			});
 			expectedTree = testingComponents.tree;
 			editsPerChunk = (expectedTree.edits as EditLog<Change>).editsPerChunk;
@@ -153,16 +167,11 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 					it(`version ${version} can be written`, async () => {
 						// Use a tree with the correct summary write format
 						const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-							setupEditId,
+							setupEditId: summaryCompatibilityTestSetupEditId,
 							writeSummaryFormat: version,
 						});
 
-						history.forEach((edit) => {
-							tree.processLocalEdit(edit);
-						});
-
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
+						await applyEdits(tree, testObjectProvider, history);
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
 						const newSummary = tree.saveSummary();
@@ -177,12 +186,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 
 				for (const { summarizer, version } of noHistorySupportedSummarizers) {
 					it(`version ${version} with no history can be written`, async () => {
-						history.forEach((edit) => {
-							expectedTree.processLocalEdit(edit);
-						});
-
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
+						await applyEdits(expectedTree, testObjectProvider, history);
 
 						// Save a new summary with the expected tree and use it to load a new SharedTree
 						const newSummary = summarizer(expectedTree.edits, expectedTree.currentView, true);
@@ -202,23 +206,13 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				}
 
 				it('change-node.json matches history.json', async () => {
-					history.forEach((edit) => {
-						expectedTree.processLocalEdit(edit);
-					});
-
-					// Wait for the ops to to be submitted and processed across the containers.
-					await testObjectProvider.ensureSynchronized();
+					await applyEdits(expectedTree, testObjectProvider, history);
 					expect(changeNode).deep.equals(expectedTree.currentView.getChangeNodeTree());
 				});
 
 				for (const [_index, version] of sortedVersions.entries()) {
 					it(`version ${version} can be read`, async () => {
-						history.forEach((edit) => {
-							expectedTree.processLocalEdit(edit);
-						});
-
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
+						await applyEdits(expectedTree, testObjectProvider, history);
 
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
 						const summary = deserialize(serializedSummary, testSerializer);
@@ -233,6 +227,9 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 						const serializedSummary = assertNotUndefined(summaryByVersion.get(version));
 						const summary = deserialize(serializedSummary, testSerializer);
 						const telemetryInfo = getSummaryStatistics(summary);
+
+						// Chunk calculation only applies for non-0.0.2 summaries
+						const totalChunks = Math.ceil(history.length / maxEditsPerChunk);
 						const expectedTelemetryInfo: SummaryStatistics =
 							version === '0.0.2'
 								? {
@@ -242,8 +239,14 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 								: {
 										formatVersion: version,
 										historySize: history.length,
-										totalNumberOfChunks: history.length > 0 ? 1 : 0,
-										uploadedChunks: history.length >= editsPerChunk ? 1 : 0,
+										totalNumberOfChunks: totalChunks,
+										uploadedChunks:
+											// If the last chunk is bigger than the number of edits per chunk, it has also been uploaded
+											history.length -
+												Math.floor(history.length / maxEditsPerChunk) * maxEditsPerChunk <
+												editsPerChunk && totalChunks !== 0
+												? totalChunks - 1
+												: totalChunks,
 								  };
 						expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 					});
@@ -253,12 +256,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 				denormalizedHistoryByType.forEach((file, type) => {
 					it(`load denormalized history type ${type} produces the correct change node`, async () => {
 						const denormalizedHistory: Edit<Change>[] = JSON.parse(file);
-						denormalizedHistory.forEach((edit) => {
-							expectedTree.processLocalEdit(edit);
-						});
-
-						// Wait for the ops to to be submitted and processed across the containers.
-						await testObjectProvider.ensureSynchronized();
+						await applyEdits(expectedTree, testObjectProvider, denormalizedHistory);
 
 						expect(changeNode).deep.equals(expectedTree.currentView.getChangeNodeTree());
 					});
@@ -327,7 +325,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							it(`format version ${writeVersion} can be written by a client that loaded version ${readVersion}`, async () => {
 								// Use a tree with the correct summary write format
 								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-									setupEditId,
+									setupEditId: summaryCompatibilityTestSetupEditId,
 									writeSummaryFormat: supportedWriteVersion,
 								});
 
@@ -371,7 +369,7 @@ export function runSummaryFormatCompatibilityTests<TSharedTree extends SharedTre
 							if (supportedWriteVersion !== undefined) {
 								// Use a tree with the correct summary write format
 								const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
-									setupEditId,
+									setupEditId: summaryCompatibilityTestSetupEditId,
 									writeSummaryFormat: supportedWriteVersion,
 								});
 
@@ -429,7 +427,9 @@ function expectBlobsByVersion(summary: SharedTreeSummaryBase, blobs: string, his
 			assertNotUndefined((summary as SharedTreeSummary<Change>).editHistory).editChunks.forEach(({ chunk }) => {
 				// A "chunk" in the edit history is a handle if it is not an array.
 				if (!Array.isArray(chunk)) {
-					const { absolutePath, chunkContents } = storedBlobs.splice(0)[0];
+					const storedBlob = storedBlobs.shift();
+					expect(storedBlob).to.not.be.undefined;
+					const { absolutePath, chunkContents } = assertNotUndefined(storedBlob);
 
 					// TestSerializer doesn't replace serialized handles with actual handles so the absolutePath is found under 'url'.
 					expect(absolutePath).to.equal((chunk as any).url);

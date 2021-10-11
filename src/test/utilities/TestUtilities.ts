@@ -38,6 +38,7 @@ import {
 	GenericSharedTree,
 	newEdit,
 	NodeData,
+	saveUploadedEditChunkContents,
 	SharedTreeDiagnosticEvent,
 	SharedTreeSummaryWriteFormat,
 	TraitLocation,
@@ -85,6 +86,10 @@ export interface SharedTreeTestingOptions {
 	 * If not set, full history will be preserved.
 	 */
 	summarizeHistory?: boolean;
+	/**
+	 * If not set, summaries will be written in format 0.0.2.
+	 */
+	writeSummaryFormat?: SharedTreeSummaryWriteFormat;
 	/**
 	 * If set, uses the given id as the edit id for tree setup. Only has an effect if initialTree is also set.
 	 */
@@ -169,10 +174,14 @@ function setUpTestSharedTreeGeneric<
 	TSharedTree extends SharedTree | SharedTreeWithAnchors,
 	TSharedTreeFactory extends SharedTreeFactory | SharedTreeWithAnchorsFactory
 >(
-	factoryGetter: (summarizeHistory?: boolean) => TSharedTreeFactory,
+	factoryGetter: (
+		summarizeHistory?: boolean,
+		writeSummaryFormat?: SharedTreeSummaryWriteFormat
+	) => TSharedTreeFactory,
 	options: SharedTreeTestingOptions = { localMode: true }
 ): SharedTreeTestingComponents<TSharedTree> {
-	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId } = options;
+	const { id, initialTree, localMode, containerRuntimeFactory, setupEditId, summarizeHistory, writeSummaryFormat } =
+		options;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -189,7 +198,7 @@ function setUpTestSharedTreeGeneric<
 	}
 
 	// Enable expensiveValidation
-	const factory = factoryGetter(options.summarizeHistory === undefined ? true : options.summarizeHistory);
+	const factory = factoryGetter(summarizeHistory === undefined ? true : summarizeHistory, writeSummaryFormat);
 	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id, true) as TSharedTree;
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
@@ -558,6 +567,9 @@ export function deepCompareNodes(a: ChangeNode, b: ChangeNode): boolean {
 // resource path logic to a single place.
 export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
 
+/** ID used by summary compatibility tests to set up trees. */
+export const summaryCompatibilityTestSetupEditId = '9406d301-7449-48a5-b2ea-9be637b0c6e4' as EditId;
+
 export function getDocumentFiles(document: string): {
 	summaryByVersion: Map<string, string>;
 	noHistorySummaryByVersion: Map<string, string>;
@@ -646,6 +658,64 @@ export function getDocumentFiles(document: string): {
 		changeNode,
 		sortedVersions,
 	};
+}
+
+/** Helper utility used to generate test documents based on a given history. */
+export async function createDocumentFiles(document: string, history: Edit<Change>[]) {
+	const directory = join(testDocumentsPathBase, document);
+	try {
+		fs.accessSync(directory);
+	} catch {
+		fs.mkdirSync(directory);
+	}
+
+	const writeFormats = [SharedTreeSummaryWriteFormat.Format_0_0_2, SharedTreeSummaryWriteFormat.Format_0_1_1];
+
+	fs.writeFileSync(join(directory, 'history.json'), JSON.stringify(history));
+
+	// Load the history into the tree and save the change node
+	const { tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
+		setupEditId: summaryCompatibilityTestSetupEditId,
+	});
+
+	for (const edit of history) {
+		tree.processLocalEdit(edit);
+	}
+
+	await testObjectProvider.ensureSynchronized();
+	fs.writeFileSync(join(directory, 'change-node.json'), JSON.stringify(tree.currentView.getChangeNodeTree()));
+
+	const summary = tree.saveSummary();
+	// Write summaries for each of the write formats supported. Each summary is taken after loading in the summary of the earliest supported write format.
+	for (const format of writeFormats) {
+		const { tree: tree2, testObjectProvider: testObjectProvider2 } = await setUpLocalServerTestSharedTree({
+			setupEditId: summaryCompatibilityTestSetupEditId,
+			writeSummaryFormat: format,
+		});
+
+		tree2.loadSummary(summary);
+		await testObjectProvider2.ensureSynchronized();
+
+		// Write full history summary
+		fs.writeFileSync(join(directory, `summary-${format}.json`), tree2.saveSerializedSummary());
+
+		// Write blob file
+		const blobs = await saveUploadedEditChunkContents(tree2.edits);
+		if (blobs.length > 0) {
+			fs.writeFileSync(join(directory, `blobs-${format}.json`), JSON.stringify(blobs));
+		}
+
+		// Write no history summary
+		const { tree: tree3, testObjectProvider: testObjectProvider3 } = await setUpLocalServerTestSharedTree({
+			setupEditId: summaryCompatibilityTestSetupEditId,
+			summarizeHistory: false,
+			writeSummaryFormat: format,
+		});
+
+		tree3.loadSummary(summary);
+		await testObjectProvider3.ensureSynchronized();
+		fs.writeFileSync(join(directory, `no-history-summary-${format}.json`), tree3.saveSerializedSummary());
+	}
 }
 
 const versionComparator = (versionA: string, versionB: string): number => {

@@ -93,6 +93,7 @@ describe('SharedTree history virtualization', () => {
 		// Load a second tree using the summary
 		const { tree: sharedTree2 } = await setUpLocalServerTestSharedTree({
 			testObjectProvider,
+			writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
 		});
 
 		sharedTree2.loadSummary(summary);
@@ -251,7 +252,7 @@ describe('SharedTree history virtualization', () => {
 		expect(unexpectedHistoryChunk).to.be.false;
 	});
 
-	it('causes misaligned chunks for format version 0.0.2', async () => {
+	it('does not cause misaligned chunks for format version 0.0.2', async () => {
 		await useSharedTreeSummaryFormat_0_0_2();
 		// Add enough edits for a chunk and a half
 		await addNewEditChunks(1, 50);
@@ -272,7 +273,7 @@ describe('SharedTree history virtualization', () => {
 		// Finish off the incomplete chunk
 		await addNewEditChunks();
 
-		expect(unexpectedHistoryChunk).to.be.true;
+		expect(unexpectedHistoryChunk).to.be.false;
 	});
 
 	it('does not upload blobs larger than 4MB', async () => {

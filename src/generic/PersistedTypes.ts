@@ -10,6 +10,7 @@
 // persisted types (as documented below) is followed.
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { Definition, DetachedSequenceId, EditId, NodeId, TraitLabel } from '../Identifiers';
+import { SharedTreeSummaryWriteFormat } from '.';
 
 /**
  * Types for Edits in Fluid Ops and Fluid summaries.
@@ -199,6 +200,8 @@ export enum SharedTreeOpType {
 	Handle,
 	/** An op that does not affect the tree's state. */
 	NoOp,
+	/** Signals that SharedTree contents should be updated to match a new summary write version. */
+	Update,
 }
 
 /**
@@ -206,6 +209,7 @@ export enum SharedTreeOpType {
  */
 export interface SharedTreeOp {
 	readonly type: SharedTreeOpType;
+	readonly version: SharedTreeSummaryWriteFormat;
 }
 
 /**

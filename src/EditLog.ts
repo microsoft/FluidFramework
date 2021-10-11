@@ -223,7 +223,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	private readonly maximumEvictableIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
-	private readonly editAddedHandlers: EditAddedHandler<TChange>[] = [];
+	private readonly _editAddedHandlers: EditAddedHandler<TChange>[] = [];
 
 	private readonly logger?: ITelemetryLogger;
 
@@ -254,12 +254,17 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	public constructor(
 		summary: EditLogSummary<TChange> = { editIds: [], editChunks: [] },
 		logger?: ITelemetryLogger,
+		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		editsPerChunk = 100
 	) {
 		super();
 		const { editChunks, editIds } = summary;
 		this.logger = logger;
 		this.editsPerChunk = editsPerChunk;
+
+		for (const handler of editAddedHandlers) {
+			this.registerEditAddedHandler(handler);
+		}
 
 		this.editChunks = new BTree<number, EditChunk<TChange>>(undefined, compareFiniteNumbers);
 
@@ -294,7 +299,14 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	 * Registers a handler for when an edit is added to this `EditLog`.
 	 */
 	public registerEditAddedHandler(handler: EditAddedHandler<TChange>): void {
-		this.editAddedHandlers.push(handler);
+		this._editAddedHandlers.push(handler);
+	}
+
+	/**
+	 * @returns the `EditAddedHandler`s registered on this `EditLog`.
+	 */
+	public get editAddedHandlers(): readonly EditAddedHandler<TChange>[] {
+		return this._editAddedHandlers;
 	}
 
 	/**
@@ -604,7 +616,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	}
 
 	private emitAdd(editAdded: Edit<TChange>, isLocal: boolean, wasLocal: boolean): void {
-		for (const handler of this.editAddedHandlers) {
+		for (const handler of this._editAddedHandlers) {
 			handler(editAdded, isLocal, wasLocal);
 		}
 	}

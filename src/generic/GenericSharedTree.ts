@@ -15,7 +15,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ISharedObjectEvents, serializeHandles, SharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
-import { assert, assertNotUndefined } from '../Common';
+import { assert, assertNotUndefined, fail } from '../Common';
 import { EditLog, OrderedEditSet } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { RevisionView } from '../TreeView';
@@ -125,6 +125,10 @@ export enum SharedTreeDiagnosticEvent {
 	 * A history chunk has been received that does not have a corresponding edit chunk on the edit log.
 	 */
 	UnexpectedHistoryChunk = 'unexpectedHistoryChunk',
+	/**
+	 * A version update op was successfully processed.
+	 */
+	VersionUpdated = 'versionUpdated',
 }
 
 /**
@@ -139,6 +143,14 @@ export enum SharedTreeSummaryWriteFormat {
 }
 
 /**
+ * Used for version comparison.
+ */
+const sortedSummaryWriteVersions = [
+	SharedTreeSummaryWriteFormat.Format_0_0_2,
+	SharedTreeSummaryWriteFormat.Format_0_1_1,
+];
+
+/**
  * Format versions that SharedTree supports reading.
  * @public
  */
@@ -148,6 +160,11 @@ export enum SharedTreeSummaryReadFormat {
 	/** Supports history virtualization and makes currentView optional. */
 	Format_0_1_1 = '0.1.1',
 }
+
+/**
+ * Used for version comparison.
+ */
+const sortedSummaryReadVersions = [SharedTreeSummaryReadFormat.Format_0_0_2, SharedTreeSummaryReadFormat.Format_0_1_1];
 
 /**
  * The arguments included when the EditCommitted SharedTreeEvent is emitted.
@@ -333,7 +350,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 		attributes: IChannelAttributes,
 		private readonly expensiveValidation = false,
 		protected readonly summarizeHistory = true,
-		protected readonly writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
+		protected writeSummaryFormat = SharedTreeSummaryWriteFormat.Format_0_0_2,
 		private readonly uploadEditChunks = false
 	) {
 		super(id, runtime, attributes);
@@ -357,7 +374,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 			sharedTreeTelemetryProperties
 		);
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
-			initialSummary,
+			initialSummary as SharedTreeSummary<TChange>,
 			this.processEditResult,
 			this.processSequencedEditResult
 		);
@@ -455,36 +472,38 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 	 * Uploads the edit chunk and sends the chunk starting revision along with the resulting handle as an op.
 	 */
 	private async uploadEditChunk(edits: readonly EditWithoutId<TChange>[], startRevision: number): Promise<void> {
-		if (this.uploadEditChunks) {
-			// SPO attachment blob upload limit is set here:
-			// https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=%2Fsts%2Fstsom%2FPrague%2FSPPragueProtocolConfig.cs&version=GBmaster&line=82&lineEnd=82&lineStartColumn=29&lineEndColumn=116&lineStyle=plain&_a=contents
-			// TODO:#59754: Create chunks based on data buffer size instead of number of edits
-			const blobUploadSizeLimit = 4194304;
+		// SPO attachment blob upload limit is set here:
+		// https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=%2Fsts%2Fstsom%2FPrague%2FSPPragueProtocolConfig.cs&version=GBmaster&line=82&lineEnd=82&lineStartColumn=29&lineEndColumn=116&lineStyle=plain&_a=contents
+		// TODO:#59754: Create chunks based on data buffer size instead of number of edits
+		const blobUploadSizeLimit = 4194304;
 
-			try {
-				const buffer = IsoBuffer.from(JSON.stringify({ edits }));
-				const bufferSize = buffer.byteLength;
-				assert(
-					bufferSize <= blobUploadSizeLimit,
-					`Edit chunk size ${bufferSize} is larger than blob upload size limit of ${blobUploadSizeLimit} bytes.`
-				);
-				const editHandle = await this.runtime.uploadBlob(buffer);
-				this.submitLocalMessage({
-					editHandle: serializeHandles(editHandle, this.serializer, this.handle),
-					startRevision,
-					type: SharedTreeOpType.Handle,
-				});
-				this.emit(SharedTreeDiagnosticEvent.EditChunkUploaded);
-			} catch (error) {
-				// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
-				this.logger.sendErrorEvent(
-					{
-						eventName: 'EditChunkUploadFailure',
-					},
-					error
-				);
-				throw error;
-			}
+		try {
+			const buffer = IsoBuffer.from(JSON.stringify({ edits }));
+			const bufferSize = buffer.byteLength;
+			assert(
+				bufferSize <= blobUploadSizeLimit,
+				`Edit chunk size ${bufferSize} is larger than blob upload size limit of ${blobUploadSizeLimit} bytes.`
+			);
+			const editHandle = await this.runtime.uploadBlob(buffer);
+			const handleOp: SharedTreeHandleOp = {
+				editHandle:
+					serializeHandles(editHandle, this.serializer, this.handle) ??
+					fail('Edit chunk handle could not be serialized.'),
+				startRevision,
+				type: SharedTreeOpType.Handle,
+				version: this.writeSummaryFormat,
+			};
+			this.submitLocalMessage(handleOp);
+			this.emit(SharedTreeDiagnosticEvent.EditChunkUploaded);
+		} catch (error) {
+			// If chunk load fails, we will try again later in loadCore on the oldest client so we log the error instead of throwing.
+			this.logger.sendErrorEvent(
+				{
+					eventName: 'EditChunkUploadFailure',
+				},
+				error
+			);
+			throw error;
 		}
 	}
 
@@ -566,8 +585,26 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 	 * @internal
 	 */
 	public loadSummary(summary: SharedTreeSummaryBase): void {
+		const { version: loadedSummaryVersion } = summary;
+
+		if (isUpdateRequired(loadedSummaryVersion, this.writeSummaryFormat)) {
+			this.submitLocalMessage({ type: SharedTreeOpType.Update, version: this.writeSummaryFormat });
+
+			// Sets the write format to the loaded version so that SharedTree continues to write the old version while waiting for the update op to be sequenced.
+			this.writeSummaryFormat = loadedSummaryVersion as SharedTreeSummaryWriteFormat;
+		}
+
+		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
+
+		if (loadedSummaryVersion !== convertedSummary.version) {
+			this.logger.sendTelemetryEvent({
+				eventName: 'SummaryConversion',
+				...getSummaryStatistics(convertedSummary),
+			});
+		}
+
 		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
-			summary,
+			convertedSummary,
 			this.processEditResult,
 			this.processSequencedEditResult
 		);
@@ -588,6 +625,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 				if (this.runtime.getQuorum().getMembers().size === 0) {
 					const noop: SharedTreeOp = {
 						type: SharedTreeOpType.NoOp,
+						version: this.writeSummaryFormat,
 					};
 
 					this.submitLocalMessage(noop);
@@ -614,22 +652,14 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 	}
 
 	private createEditLogFromSummary(
-		summary: SharedTreeSummaryBase,
+		summary: SharedTreeSummary<TChange>,
 		editStatusCallback: EditStatusCallback,
 		sequencedEditResultCallback: SequencedEditResultCallback<TChange, TFailure>
 	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange, TFailure> } {
-		const convertedSummary = convertSummaryToReadFormat<TChange>(summary);
+		const { editHistory, currentTree } = summary;
 
-		if (summary.version !== convertedSummary.version) {
-			this.logger.sendTelemetryEvent({
-				eventName: 'SummaryConversion',
-				...getSummaryStatistics(convertedSummary),
-			});
-		}
-
-		const { editHistory, currentTree } = convertedSummary;
-
-		const editLog = new EditLog(editHistory, this.logger);
+		// Use previously registered EditAddedHandlers if there is an existing EditLog
+		const editLog = new EditLog(editHistory, this.logger, this.editLog?.editAddedHandlers);
 
 		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
 			this.emit(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk);
@@ -661,15 +691,17 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 	 * Upload any full chunks that have yet to be uploaded.
 	 */
 	private uploadCatchUpBlobs(): void {
-		for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
-			this.uploadEditChunk(chunk, startRevision)
-				.then(() => {
-					this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
-					this.logger.sendTelemetryEvent({ eventName: 'CatchUpBlobUpload', chunkSize: chunk.length });
-				})
-				// It is safe to swallow errors from edit chunk upload because the next summary load will
-				// do another attempt to upload the edit chunks that couldn't previously be uploaded
-				.catch((error) => {});
+		if (this.writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2 && this.uploadEditChunks) {
+			for (const [startRevision, chunk] of this.editLog.getEditChunksReadyForUpload()) {
+				this.uploadEditChunk(chunk, startRevision)
+					.then(() => {
+						this.emit(SharedTreeDiagnosticEvent.CatchUpBlobUploaded);
+						this.logger.sendTelemetryEvent({ eventName: 'CatchUpBlobUpload', chunkSize: chunk.length });
+					})
+					// It is safe to swallow errors from edit chunk upload because the next summary load will
+					// do another attempt to upload the edit chunks that couldn't previously be uploaded
+					.catch((error) => {});
+			}
 		}
 	}
 
@@ -718,20 +750,40 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		this.cachingLogViewer.setMinimumSequenceNumber(message.minimumSequenceNumber);
-		const { type } = message.contents;
-		if (type === SharedTreeOpType.Handle) {
-			const { editHandle, startRevision } = message.contents as SharedTreeHandleOp;
-			this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
-		} else if (type === SharedTreeOpType.Edit) {
-			const semiSerializedEdit = message.contents.edit;
-			// semiSerializedEdit may have handles which have been replaced by `serializer.replaceHandles`.
-			// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
-			// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
-			// TODO:Performance:#48025: Avoid this serialization round trip.
-			const stringEdit = JSON.stringify(semiSerializedEdit);
-			const parsedEdit = this.serializer.parse(stringEdit);
-			const edit = parsedEdit as Edit<TChange>;
-			this.processSequencedEdit(edit, message);
+		const { type, version } = message.contents;
+		const resolvedVersion = version ?? SharedTreeSummaryWriteFormat.Format_0_0_2;
+		const sameVersion = resolvedVersion === this.writeSummaryFormat;
+
+		// Edit and handle ops should only be processed if they're the same version as the tree write version.
+		// Update ops should only be processed if they're not the same version.
+		if (sameVersion) {
+			if (type === SharedTreeOpType.Handle) {
+				const { editHandle, startRevision } = message.contents as SharedTreeHandleOp;
+				this.editLog.processEditChunkHandle(this.deserializeHandle(editHandle), startRevision);
+			} else if (type === SharedTreeOpType.Edit) {
+				const semiSerializedEdit = message.contents.edit;
+				// semiSerializedEdit may have handles which have been replaced by `serializer.replaceHandles`.
+				// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
+				// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
+				// TODO:Performance:#48025: Avoid this serialization round trip.
+				const stringEdit = JSON.stringify(semiSerializedEdit);
+				const parsedEdit = this.serializer.parse(stringEdit);
+				const edit = parsedEdit as Edit<TChange>;
+				this.processSequencedEdit(edit, message);
+			}
+		} else if (type === SharedTreeOpType.Update) {
+			this.processVersionUpdate(message.contents.version);
+		} else if (compareSummaryFormatVersions(version, this.writeSummaryFormat) === 1) {
+			// An op version newer than our current version should not be received. If this happens, either an
+			// incorrect op version has been written or an update op was skipped.
+			const error = 'Newer op version received by a client that has yet to be updated.';
+			this.logger.sendErrorEvent(
+				{
+					eventName: 'UnexpectedNewerOpVersion',
+				},
+				error
+			);
+			fail(error);
 		}
 	}
 
@@ -766,22 +818,68 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 		if (wasLocalEdit) {
 			this.editLog.addSequencedEdit(edit, message);
 			// If this client created the edit that filled up a chunk, it is responsible for uploading that chunk.
-			const lastPair = this.editLog.getLastEditChunk();
-			if (lastPair !== undefined) {
-				const [startRevision, chunk] = lastPair;
-				const edits = assertNotUndefined(chunk.edits);
-				if (edits.length === this.editLog.editsPerChunk) {
-					this.uploadEditChunk(edits, startRevision)
-						.then(() => {
-							this.logger.sendTelemetryEvent({ eventName: 'EditChunkUpload', chunkSize: edits.length });
-						})
-						// It is safe to swallow errors from edit chunk upload because the next summary load will
-						// do another attempt to upload the edit chunks that couldn't previously be uploaded
-						.catch((error) => {});
+			if (this.writeSummaryFormat !== SharedTreeSummaryWriteFormat.Format_0_0_2 && this.uploadEditChunks) {
+				const lastPair = this.editLog.getLastEditChunk();
+				if (lastPair !== undefined) {
+					const [startRevision, chunk] = lastPair;
+					const edits = assertNotUndefined(chunk.edits);
+					if (edits.length === this.editLog.editsPerChunk) {
+						this.uploadEditChunk(edits, startRevision)
+							.then(() => {
+								this.logger.sendTelemetryEvent({
+									eventName: 'EditChunkUpload',
+									chunkSize: edits.length,
+								});
+							})
+							// It is safe to swallow errors from edit chunk upload because the next summary load will
+							// do another attempt to upload the edit chunks that couldn't previously be uploaded
+							.catch((error) => {});
+					}
 				}
 			}
 		} else {
 			this.applyEditLocally(edit, { local: false, message });
+		}
+	}
+
+	/**
+	 * Updates SharedTree to the provided version if the version is a valid write version newer than the current version.
+	 * @param version - The version to update to.
+	 */
+	private processVersionUpdate(version: SharedTreeSummaryWriteFormat) {
+		if (isUpdateRequired(this.writeSummaryFormat, version)) {
+			try {
+				const oldSummary = this.saveSummary();
+
+				if (version === SharedTreeSummaryWriteFormat.Format_0_1_1) {
+					const newSummary = convertSummaryToReadFormat<TChange>(oldSummary);
+
+					const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
+						newSummary,
+						this.processEditResult,
+						this.processSequencedEditResult
+					);
+					this.editLog = editLog;
+					this.cachingLogViewer = cachingLogViewer;
+				} else {
+					throw new Error(`Updating to version ${version} is not supported.`);
+				}
+
+				this.writeSummaryFormat = version;
+				if (this.currentIsOldest) {
+					this.uploadCatchUpBlobs();
+				}
+
+				this.emit(SharedTreeDiagnosticEvent.VersionUpdated);
+			} catch (error) {
+				this.logger.sendErrorEvent(
+					{
+						eventName: 'VersionUpdateFailure',
+					},
+					error
+				);
+				throw error;
+			}
 		}
 	}
 
@@ -819,6 +917,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 		const editOp: SharedTreeEditOp<TChange> = {
 			type: SharedTreeOpType.Edit,
 			edit,
+			version: this.writeSummaryFormat,
 		};
 
 		// IFluidHandles are not allowed in Ops.
@@ -853,8 +952,9 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 				this.applyEditLocally(edit, { local: true });
 				break;
 			}
-			// Handle ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
+			// Handle and update ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
 			case SharedTreeOpType.Handle:
+			case SharedTreeOpType.Update:
 			case SharedTreeOpType.NoOp:
 				break;
 			default: {
@@ -863,4 +963,39 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 			}
 		}
 	}
+}
+
+/**
+ * @returns 1 if versionA is newer, -1 if versionB is newer, and 0 if the versions are the same.
+ * @throws if either version isn't a valid SharedTreeSummaryReadFormat version.
+ */
+function compareSummaryFormatVersions(versionA: string, versionB: string): number {
+	const versionAIndex = sortedSummaryReadVersions.indexOf(versionA as SharedTreeSummaryReadFormat);
+	const versionBIndex = sortedSummaryReadVersions.indexOf(versionB as SharedTreeSummaryReadFormat);
+
+	if (versionAIndex === -1 || versionBIndex === -1) {
+		fail('Summary version being compared cannot be read.');
+	}
+
+	if (versionAIndex < versionBIndex) {
+		return -1;
+	} else if (versionAIndex > versionBIndex) {
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * Checks if the summary version needs to be updated.
+ * @returns true if the old version is older than the new version.
+ * @throws if the new version isn't a supported SharedTreeSummaryWriteFormat version.
+ */
+function isUpdateRequired(oldVersion: string, newVersion: string): boolean {
+	const newVersionIndex = sortedSummaryWriteVersions.indexOf(newVersion as SharedTreeSummaryWriteFormat);
+	if (newVersionIndex === -1) {
+		fail('New write version is invalid.');
+	}
+
+	return compareSummaryFormatVersions(oldVersion, newVersion) === -1 ? true : false;
 }

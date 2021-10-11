@@ -7,7 +7,16 @@ import { expect } from 'chai';
 import { IContainer } from '@fluidframework/container-definitions';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import { ITestFluidObject, ITestObjectProvider } from '@fluidframework/test-utils';
-import { Change, EditCommittedEventArguments, Insert, newEdit, SharedTree, SharedTreeEvent, StablePlace } from '../..';
+import {
+	Change,
+	EditCommittedEventArguments,
+	Insert,
+	newEdit,
+	SharedTree,
+	SharedTreeEvent,
+	SharedTreeSummaryWriteFormat,
+	StablePlace,
+} from '../..';
 import { fail } from '../../Common';
 import type { SharedTreeWithAnchors } from '../../anchored-edits';
 import { SharedTreeOp, SharedTreeOpType } from '../../generic/PersistedTypes';
@@ -138,8 +147,13 @@ export function runPendingLocalStateTests<TSharedTree extends SharedTree | Share
 			const { container, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 				id: documentId,
 				initialTree: simpleTestTree,
+				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
 			});
-			await setUpLocalServerTestSharedTree({ id: documentId, testObjectProvider });
+			await setUpLocalServerTestSharedTree({
+				id: documentId,
+				testObjectProvider,
+				writeSummaryFormat: SharedTreeSummaryWriteFormat.Format_0_1_1,
+			});
 
 			const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
 

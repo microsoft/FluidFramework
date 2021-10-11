@@ -335,7 +335,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
     // (undocumented)
     readonly transactionFactory: (view: RevisionView) => GenericTransaction<TChange, TFailure>;
     // (undocumented)
-    protected readonly writeSummaryFormat: SharedTreeSummaryWriteFormat;
+    protected writeSummaryFormat: SharedTreeSummaryWriteFormat;
 }
 
 // @public
@@ -659,7 +659,8 @@ export enum SharedTreeDiagnosticEvent {
     DroppedInvalidEdit = "droppedInvalidEdit",
     DroppedMalformedEdit = "droppedMalformedEdit",
     EditChunkUploaded = "uploadedEditChunk",
-    UnexpectedHistoryChunk = "unexpectedHistoryChunk"
+    UnexpectedHistoryChunk = "unexpectedHistoryChunk",
+    VersionUpdated = "versionUpdated"
 }
 
 // @public

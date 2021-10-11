@@ -89,7 +89,7 @@ export function convertSummaryToReadFormat<TChange>(summary: SharedTreeSummaryBa
 			const maxChunkSize = 1000;
 
 			// This saves all of the edits in the summary as part of the first chunk.
-			const temporaryLog = new EditLog<TChange>(undefined, undefined, maxChunkSize);
+			const temporaryLog = new EditLog<TChange>(undefined, undefined, undefined, maxChunkSize);
 			sequencedEdits.forEach((edit) =>
 				temporaryLog.addSequencedEdit(edit, { sequenceNumber: 1, referenceSequenceNumber: 0 })
 			);

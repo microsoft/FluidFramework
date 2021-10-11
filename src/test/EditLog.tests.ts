@@ -58,7 +58,12 @@ function createEditLogWithHandles(
 		return handle;
 	});
 
-	const editLog = new EditLog<Change>({ editChunks: handlesWithKeys, editIds }, undefined, editsPerChunkOnEditLog);
+	const editLog = new EditLog<Change>(
+		{ editChunks: handlesWithKeys, editIds },
+		undefined,
+		undefined,
+		editsPerChunkOnEditLog
+	);
 
 	return editLog;
 }
