@@ -99,7 +99,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         timeoutLength: number): Promise<INode> {
         debug("Creating node", id);
         Lumberjack.debug(`Creating node: ${id}`);
-        Lumberjack.info("test for lumberjack----------------------------------");
 
         const nodeCollection = await databaseManager.getNodeCollection();
         const node = {

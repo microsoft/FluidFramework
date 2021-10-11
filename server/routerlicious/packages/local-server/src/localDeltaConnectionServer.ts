@@ -177,6 +177,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
             const earlySignalHandler = (msg: ISignalMessage) => {
                 this.logger.info("Queued early signals");
+                Lumberjack.info("Queued early signals");
                 queuedSignals.push(msg);
             };
             socket.on("signal", earlySignalHandler);
