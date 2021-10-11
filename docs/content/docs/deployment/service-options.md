@@ -14,26 +14,28 @@ service that is much smaller (tinier!) than Routerlicious, the reference impleme
 
 Tinylicious is intended for testing and development only.
 
-## Azure Fluid Relay service
+{{% callout tip %}}
 
-Microsoft Azure Fluid Relay service is a hosted Fluid service. You can provision Fluid Relay services as part of your
+The easiest way to try out Fluid is with Tinylicious or Azure Fluid Relay.
+
+{{% /callout %}}
+
+## Azure Fluid Relay
+
+Microsoft Azure Fluid Relay is a hosted Fluid service. You can provision Fluid Relay services as part of your
 Microsoft Azure subscription and use the [@fluidframework/azure-client]({{< relref "azure-client.md" >}}) library to
 create and load Fluid containers.
 
 {{% callout important %}}
 
-Azure Fluid Relay service is currently in *Private Preview*.
+Azure Fluid Relay is currently in *Private Preview*.
 
 {{% /callout %}}
 
 ## Self-hosted Routerlicious
 
-Fluid Framework's original service implementation, called [Routerlicious](https://github.com/microsoft/FluidFramework/tree/main/server), is part of the Fluid Framework open source
+Fluid Framework's original service implementation, called [Routerlicious][r11s]), is part of the Fluid Framework open source
 project. Routerlicious is not formally supported as a production-quality service, but its micro-service architecture is suitable for
 deployment in cloud environments.
 
-{{% callout tip %}}
-
-The easiest way to try out Fluid is with Tinylicious or Azure Fluid Relay service.
-
-{{% /callout %}}
+[r11s]: https://github.com/microsoft/FluidFramework/tree/main/server#readme
