@@ -39,6 +39,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/driver-definitions-0.39.8": "npm:@fluidframework/driver-definitions@0.39.8",
+    "@fluidframework/driver-definitions-0.40.0": "npm:@fluidframework/driver-definitions@0.40.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
@@ -57,9 +58,9 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.40.0",
+    "version": "0.41.0",
     "broken": {
-      "0.39.8":{
+      "0.39.8": {
         "TypeAliasDeclaration_DriverError": {
           "backCompat": false
         },

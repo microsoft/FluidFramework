@@ -38,6 +38,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@fluidframework/protocol-definitions-0.1024.0": "npm:@fluidframework/protocol-definitions@0.1024.0",
+    "@fluidframework/protocol-definitions-0.1025.0": "npm:@fluidframework/protocol-definitions@0.1025.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
@@ -55,9 +56,9 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1025.0",
+    "version": "0.1026.0",
     "broken": {
-      "0.1024.0":{
+      "0.1024.0": {
         "InterfaceDeclaration_ICreateBlobResponse": {
           "backCompat": false
         },
@@ -105,6 +106,16 @@
         "TypeAliasDeclaration_ITreeEntry": {
           "forwardCompat": false
         }
+      },
+      "0.1025.0":{
+        "InterfaceDeclaration_ISummaryAttachment": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_ISummaryBlob": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_ISummaryHandle": {"forwardCompat": false, "backCompat": false},
+        "InterfaceDeclaration_ISummaryTree": {"forwardCompat": false, "backCompat": false},
+        "TypeAliasDeclaration_SummaryObject": {"forwardCompat": false, "backCompat": false},
+        "TypeAliasDeclaration_SummaryTree": {"forwardCompat": false, "backCompat": false},
+        "EnumDeclaration_SummaryType": {"forwardCompat": false, "backCompat": false},
+        "TypeAliasDeclaration_SummaryTypeNoHandle": {"forwardCompat": false,"backCompat": false}
       }
     }
   }
