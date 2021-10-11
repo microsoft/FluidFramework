@@ -67,7 +67,7 @@
     "@fluidframework/map": "^0.49.2",
     "@fluidframework/matrix": "^0.49.2",
     "@fluidframework/ordered-collection": "^0.49.2",
-    "@fluidframework/protocol-definitions": "^0.1025.0",
+    "@fluidframework/protocol-definitions": "^0.1025.1",
     "@fluidframework/register-collection": "^0.49.2",
     "@fluidframework/replay-driver": "^0.49.2",
     "@fluidframework/sequence": "^0.49.2",

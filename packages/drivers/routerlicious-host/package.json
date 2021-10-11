@@ -37,7 +37,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0",
+    "@fluidframework/protocol-definitions": "^0.1025.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",

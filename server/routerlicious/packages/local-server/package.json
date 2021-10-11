@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/protocol-definitions": "^0.1025.0",
+    "@fluidframework/protocol-definitions": "^0.1025.1",
     "@fluidframework/server-lambdas": "^0.1032.1",
     "@fluidframework/server-memory-orderer": "^0.1032.1",
     "@fluidframework/server-services-client": "^0.1032.1",
