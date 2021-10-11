@@ -35,7 +35,7 @@ Azure Fluid Relay is currently in *Private Preview*.
 ## Self-hosted Routerlicious
 
 Fluid Framework's original service implementation, called [Routerlicious][r11s]), is part of the Fluid Framework open source
-project. Routerlicious is not formally supported as a production-quality service, but its micro-service architecture is suitable for
-deployment in cloud environments.
+project. Routerlicious is not formally supported as a production-quality service, but you can run it using Docker. See
+the [Routerlicious readme][r11s] for more information about running it.
 
 [r11s]: https://github.com/microsoft/FluidFramework/tree/main/server#readme
