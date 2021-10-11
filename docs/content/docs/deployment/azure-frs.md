@@ -82,7 +82,7 @@ Your Azure Function will generate the token for the given user that is signed us
 
 ## Managing containers
 
-The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in a _container schema_ that defines the container data model. For the
+The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in a *container schema* that defines the container data model. For the
 `getContainer` function, there is an additional parameter for the container `id` of the container you wish to
 fetch.
 

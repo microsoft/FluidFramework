@@ -14,6 +14,7 @@ const excludedTypography = [
 
 const excludedWords = [
     "FRS",
+    "`Tinylicious`",
 ]
 
 const clamp = (number, min, max) => {
@@ -119,7 +120,9 @@ module.exports = {
                 "npm",
                 "Routerlicious",
                 "Tinylicious",
-                "tinylicious.md", // Without this entry, markdownlint incorrectly flags "tinylicious.md" as an improper spelling of "Tinylicious".
+                // Without the following entries, markdownlint incorrectly flags various correct usages of tinylicious.
+                "tinylicious.md",
+                "tinylicious-client",
             ]
         }
     },
