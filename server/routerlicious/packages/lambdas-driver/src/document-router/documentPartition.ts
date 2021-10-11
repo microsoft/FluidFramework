@@ -13,7 +13,7 @@ import {
     IQueuedMessage,
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { QueueObject, queue } from "async";
 import * as _ from "lodash";
 import { DocumentContext } from "./documentContext";
@@ -150,11 +150,8 @@ export class DocumentPartition {
                 },
             });
 
-        const lumberProperties = {
-                [BaseTelemetryProperties.tenantId]: this.tenantId,
-                [BaseTelemetryProperties.documentId]: this.documentId,
-        };
-        Lumberjack.error(`Marking document as corrupted due to error`, lumberProperties, error);
+        Lumberjack.error(`Marking document as corrupted due to error`,
+            getLumberBaseProperties(this.documentId, this.tenantId), error);
         this.context.error(error, { restart: false, tenantId: this.tenantId, documentId: this.documentId });
         if (message) {
             this.context.checkpoint(message);
