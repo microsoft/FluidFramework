@@ -13,6 +13,7 @@ const excludedTypography = [
 ];
 
 const excludedWords = [
+    "AAD",
     "FRS",
     "`Tinylicious`",
 ]
@@ -110,6 +111,8 @@ module.exports = {
         "proper-names": { // MD044
             "code_blocks": false,
             "names": [
+                "Azure AD",
+                "Azure Active Directory",
                 "Azure Fluid Relay service",
                 "Fluid container",
                 "Fluid containers",

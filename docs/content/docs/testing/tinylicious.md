@@ -27,7 +27,7 @@ Now Tinylicious is listening on port 6502.
 
 ## How to deploy using Tinylicious
 
-You can use TinyliciousClient to create and load Fluid containers with Tinylicious. Check out [FluidHelloWorld]({{< relref "tutorial.md" >}}) example for setting up the Tinylicious client and server.
+You can use TinyliciousClient to create and load Fluid containers with Tinylicious. Check out the [DiceRoller tutorial]({{< relref "tutorial.md" >}}) for an example setting up the Tinylicious client and server.
 
 1. Run Tinylicious by running the following command:
 
