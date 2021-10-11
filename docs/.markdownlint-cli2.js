@@ -13,7 +13,8 @@ const excludedTypography = [
 ];
 
 const excludedWords = [
-    "AAD",
+    "Azure Fluid Relay service",
+    "Azure Relay Service",
     "FRS",
     "`Tinylicious`",
 ]
@@ -113,7 +114,7 @@ module.exports = {
             "names": [
                 "Azure AD",
                 "Azure Active Directory",
-                "Azure Fluid Relay service",
+                "Azure Fluid Relay",
                 "Fluid container",
                 "Fluid containers",
                 "Fluid Framework",
