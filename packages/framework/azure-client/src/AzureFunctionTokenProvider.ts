@@ -9,7 +9,7 @@ import { AzureMember } from "./interfaces";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
- * Azure Fluid Relay service token resolution.
+ * Azure Fluid Relay token resolution.
  */
 export class AzureFunctionTokenProvider implements ITokenProvider {
     /**
