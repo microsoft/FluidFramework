@@ -5,7 +5,15 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { BlobCore, integerBytesToCodeMap, MarkerCodes, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
+import {
+    BlobCore,
+    boolToCodeMap,
+    codeToBytesMap,
+    integerBytesToCodeMap,
+    MarkerCodes,
+    NodeCore,
+    TreeBuilder,
+} from "./zipItDataRepresentationUtils";
 
 /**
  * Buffer class, used to sequentially writ data.
@@ -76,6 +84,15 @@ const binaryBytesToCodeMap = {
 };
 
 /**
+ * This contains mapping of number of bytes representing the corresponding const string id to Marker Codes.
+*/
+const constStringBytesToCodeMap = {
+    1: 17,
+    2: 18,
+    4: 19,
+};
+
+/**
  * Calculate how many bytes are required to encode an integer. This is always multiple of 2.
  * So if 6 bytes are required to store an integer than it will return 8.
  * @param num - number to encode.
@@ -96,16 +113,42 @@ const binaryBytesToCodeMap = {
     return res;
 }
 
-function serializeBlob(buffer: WriteBuffer, blob: BlobCore) {
+function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<string, number>) {
     const data = blob.buffer;
     const lengthLen = calcLength(data.length);
-    // Write Marker code.
-    buffer.write(blob.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : binaryBytesToCodeMap[lengthLen]);
-    // Write actual data if length greater than 0, otherwise Marker Code is enough.
-    if (lengthLen > 0) {
-        buffer.write(data.length, lengthLen);
-        for (const element of data) {
-            buffer.write(element);
+    if (blob.constString) {
+        const content = blob.toString();
+        let id = dictionary.get(content);
+        if (id === undefined) {
+            id = dictionary.size + 1;
+            dictionary.set(content, id);
+            const code = lengthLen > 1 ? MarkerCodes.ConstStringDeclareBig : MarkerCodes.ConstStringDeclare;
+            // Write marker code for const string.
+            buffer.write(code);
+
+            // Assign and write id for const string.
+            buffer.write(id, codeToBytesMap[code]);
+            // Write length of const string.
+            buffer.write(data.length, codeToBytesMap[code]);
+            // Write const string data.
+            for (const element of data) {
+                buffer.write(element);
+            }
+        }
+        const idLength = calcLength(id);
+        // Write Marker Code
+        buffer.write(constStringBytesToCodeMap[idLength]);
+        // Write id of const string
+        buffer.write(id, idLength);
+    } else {
+        // Write Marker code.
+        buffer.write(blob.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : binaryBytesToCodeMap[lengthLen]);
+        // Write actual data if length greater than 0, otherwise Marker Code is enough.
+        if (lengthLen > 0) {
+            buffer.write(data.length, lengthLen);
+            for (const element of data) {
+                buffer.write(element);
+            }
         }
     }
 }
@@ -114,16 +157,16 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore) {
  * Implementation of serialization of buffer with Marker Codes etc.
  * @param buffer - Buffer to serialize.
  */
-function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore) {
+function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: Map<string, number>) {
     for (const child of nodeCore.nodes) {
         if (child instanceof NodeCore) {
-            // For a tree node start and end with ListStart and end marker codes.
-            buffer.write(MarkerCodes.ListStart);
-            serializeNodeCore(buffer, child);
-            buffer.write(MarkerCodes.ListEnd);
+            // For a tree node start and end with set/list start and end marker codes.
+            buffer.write(child.type === "set" ? MarkerCodes.SetStart : MarkerCodes.ListStart);
+            serializeNodeCore(buffer, child, dictionary);
+            buffer.write(child.type === "set" ? MarkerCodes.SetEnd : MarkerCodes.ListEnd);
         } else if (child instanceof BlobCore) {
-            serializeBlob(buffer, child);
-        } else {
+            serializeBlob(buffer, child, dictionary);
+        } else if (typeof child === "number") {
             // Calculate length in which integer will be stored
             const len = calcLength(child);
             // Write corresponding Marker code for length of integer.
@@ -132,6 +175,8 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore) {
             if (len > 0) {
                 buffer.write(child, len);
             }
+        } else if (typeof child === "boolean") {
+            buffer.write(boolToCodeMap[child ? 1 : 0]);
         }
     }
 }
@@ -142,7 +187,7 @@ class NodeCoreSerializer extends NodeCore {
     }
 
     public serialize(buffer: WriteBuffer) {
-        serializeNodeCore(buffer, this);
+        serializeNodeCore(buffer, this, new Map<string, number>());
     }
 }
 
