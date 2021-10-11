@@ -3,45 +3,42 @@
  * Licensed under the MIT License.
  */
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
-const _ = require('lodash');
-const {
+import _ from 'lodash';
+import {
     ChangeSet,
     PathHelper,
+    SerializedChangeSet,
     TypeIdHelper
-} = require('@fluid-experimental/property-changeset');
-const { MSG } = require('@fluid-experimental/property-common').constants;
-const { ConsoleUtils } = require('@fluid-experimental/property-common');
-const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
+} from '@fluid-experimental/property-changeset';
+import { constants } from '@fluid-experimental/property-common';
+import { ConsoleUtils } from '@fluid-experimental/property-common';
+import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 
+const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const BREAK_TRAVERSAL = 'BREAK';
-const PROPERTY_PATH_DELIMITER = require('@fluid-experimental/property-common').constants.PROPERTY_PATH_DELIMITER;
 
 /**
  * Determines in which cases a reference will automatically be resolved
- * @enum {number}
- * @alias property-properties.BaseProperty.REFERENCE_RESOLUTION
  */
-const REFERENCE_RESOLUTION = {
+enum REFERENCE_RESOLUTION {
     /** The resolution will always automatically follow references */
-    ALWAYS: 0,
+    ALWAYS,
     /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
-    NO_LEAFS: 1,
+    NO_LEAFS,
     /** References are never automatically resolved */
-    NEVER: 2
-};
+    NEVER
+}
 
 /**
- * Used to indicate the state of a property. These flags can be connected via OR.
- * @enum {number}
- * @alias property-properties.BaseProperty.MODIFIED_STATE_FLAGS
- */
-const MODIFIED_STATE_FLAGS = {
+  * Used to indicate the state of a property. These flags can be connected via OR.
+  */
+enum MODIFIED_STATE_FLAGS {
     /** No changes to this property at the moment */
-    CLEAN: 0,
+    CLEAN,
     /** The property is marked as changed in the currently pending ChangeSet */
-    PENDING_CHANGE: 1,
+    PENDING_CHANGE,
     /** The property has been modified and the result has not yet been reported to the application for scene updates */
-    DIRTY: 2
+    DIRTY
 };
 
 /**
@@ -58,6 +55,25 @@ const PATH_TOKENS = {
     UP: { 'token': 'UP' }
 };
 
+
+interface IBasePropertyParams {
+    id?: string, // id of the property
+    typeid?: string, // The type unique identifier
+    length: number, // The length of the property. Only valid if the property is an array, otherwise the length defaults to 1
+    context: string, // The type of property this template represents i.e. single, array, map, set.
+    //TODO: UNUSED PARAMETER ??
+    properties: BaseProperty[],  // List of property templates that are used to define children properties
+    //TODO: UNUSED PARAMETER ??
+    inherits: string[] // List of property template typeids that this PropertyTemplate inherits from
+}
+
+interface ISerializeOptions {
+    dirtyOnly?: boolean,
+    includeRootTypeid?: boolean,
+    dirtinessType?: MODIFIED_STATE_FLAGS,
+    includeReferencedRepositories?: boolean
+}
+
 /**
  * The options to selectively create only a subset of a property.
  *
@@ -69,35 +85,25 @@ const PATH_TOKENS = {
  * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
  * created by a direct call to a function like `deserialize()` or `createProperty()`.
  *
- * @typedef {Object} BaseProperty.PathFilteringOptions
- * @property {string} basePath The canonical path of the property we are about to create.
- * @property {array<string>} paths The canonical paths of the properties we are allowed to create.
  */
 export class BaseProperty {
+    protected _id: string | undefined;
+    protected _isConstant: boolean = false;
+    protected _dirty: MODIFIED_STATE_FLAGS;
+    protected _typeid: string;
+    protected _parent: BaseProperty | undefined;
+    protected _noDirtyInBase: boolean;
 
-    /**
-     * Default constructor for BaseProperty
-     * @param {object} in_params List of parameters
-     * @param {string} in_params.id id of the property
-     * @param {string=} [in_params.typeid='BaseProperty'] The type unique identifier
-     * @param {number=} [in_params.length=1] The length of the property. Only valid if
-     *   the property is an array, otherwise the length defaults to 1
-     * @param {string=} [in_params.context='single'] The type of property this template represents
-     *   i.e. single, array, map, set.
-     * @param {Array.<object>} in_params.properties List of property templates that
-     *   are used to define children properties -- UNUSED PARAMETER ??
-     * @param {Array.<string>} in_params.inherits List of property template typeids that this
-     *   PropertyTemplate inherits from -- UNUSED PARAMETER ??
-     * @abstract
-     * @protected
-     */
-    constructor(in_params) {
+    _tree: any;
+    _checkoutView: any;
+    _checkedOutRepositoryInfo: any;
+
+    constructor(in_params: IBasePropertyParams) {
         // Pre-conditions
         ConsoleUtils.assert(in_params, MSG.PROP_CONSTRUCTOR_EXPECTS_OBJECTS);
 
         const defaultParams = {
-            typeid: 'BaseProperty',
-            isConstant: false
+            typeid: 'BaseProperty'
         };
 
         in_params = _.merge(defaultParams, in_params);
@@ -116,8 +122,6 @@ export class BaseProperty {
         }
 
         this._parent = undefined;
-        this._isConstant = in_params.isConstant;
-
         // internal management
         if (!this._noDirtyInBase) {
             this._dirty = MODIFIED_STATE_FLAGS.CLEAN;
@@ -128,29 +132,30 @@ export class BaseProperty {
     static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
     static PATH_TOKENS = PATH_TOKENS;
 
-    get _context() { return 'single'; }
+    get _context() {
+        return 'single';
+    }
 
     /**
-     * @return {string} - The typeid of this property
+     * @returns The typeid of this property
      */
-    getTypeid() {
+    getTypeid(): string {
         return this._typeid;
     };
 
     /**
-     * @return {string} - The context of this property
+     * @returns The context of this property
      */
-    getContext() {
+    getContext(): string {
         return this._context;
     };
 
     /**
      * Get the scope to which this property belongs to.
-     * @return {string|undefined} The guid representing the scope in which the
+     * @returns The guid representing the scope in which the
      * property belongs to
-     * @private
      */
-    _getScope() {
+    protected _getScope(): string | undefined {
         if (this._parent) {
             return this.getRoot()._getScope();
         } else {
@@ -160,21 +165,20 @@ export class BaseProperty {
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
-     * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
-     *                since that is not aplicable here, this param is ignored
-     * @return {string} The typeid
+     * @param in_hideCollection - if true the collection type (if applicable) will be omitted
+     *                since that is not applicable here, this param is ignored
+     * @returns The typeid
      */
-    getFullTypeid(in_hideCollection) {
+    getFullTypeid(in_hideCollection = false): string {
         return this._typeid;
     };
 
     /**
      * Updates the parent for the property
      *
-     * @param {property-properties.BaseProperty} in_property - The parent property
-     * @private
+     * @param in_property - The parent property
      */
-    _setParent(in_property) {
+    protected _setParent(in_property: BaseProperty) {
         this._parent = in_property;
 
         // If the property is dirty but not its parent, dirty the parent. In cases like named properties
@@ -188,9 +192,9 @@ export class BaseProperty {
     /**
      * Is this property the root of the property set tree?
      *
-     * @return {boolean} True if it is a root, otherwise false.
+     * @returns True if it is a root, otherwise false.
      */
-    isRoot() {
+    isRoot(): boolean {
         // This checks, whether this is the root of a CheckOutView
         // (all other properties should have a parent property)
         return this._parent === undefined;
@@ -199,11 +203,11 @@ export class BaseProperty {
     /**
      * Is this property the ancestor of in_otherProperty?
      * Note: A property is not considered an ancestor of itself
-     * @param {property-properties.BaseProperty} in_otherProperty possible descendant
+     * @param in_otherProperty - possible descendant
      * @throws if in_otherProperty is not defined.
-     * @return {boolean} True if it is a ancestor, otherwise false.
+     * @returns True if it is a ancestor, otherwise false.
      */
-    isAncestorOf(in_otherProperty) {
+    isAncestorOf(in_otherProperty: BaseProperty): boolean {
         ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
         var parent = in_otherProperty.getParent();
         while (parent) {
@@ -219,11 +223,11 @@ export class BaseProperty {
     /**
      * Is this property the descendant of in_otherProperty?
      * Note: A property is not considered a descendant of itself
-     * @param {property-properties.BaseProperty} in_otherProperty possible ancestor
+     * @param in_otherProperty - possible ancestor
      * @throws if in_otherProperty is not defined.
-     * @return {boolean} True if it is a descendant, otherwise false.
+     * @returns True if it is a descendant, otherwise false.
      */
-    isDescendantOf(in_otherProperty) {
+    isDescendantOf(in_otherProperty: BaseProperty): boolean {
         ConsoleUtils.assert(in_otherProperty, MSG.MISSING_IN_OTHERPROP);
         return in_otherProperty.isAncestorOf(this);
     };
@@ -233,39 +237,45 @@ export class BaseProperty {
      *
      * TODO: Which semantics should flattening have? It stops at primitive types and collections?
      *
-     * @return {boolean} True if it is a leaf with regard to flattening
+     * @returns True if it is a leaf with regard to flattening
      */
-    _isFlattenLeaf() {
+    _isFlattenLeaf(): boolean {
         return false;
     };
 
     /**
      * Get the parent of this property
      *
-     * @return {property-properties.BaseProperty|undefined} The parent of this property (or undefined if none exist)
+     * @returns The parent of this property (or undefined if none exist)
      */
-    getParent() {
+    getParent(): BaseProperty | undefined {
         return this._parent;
     };
 
     /**
      * checks whether the property is dynamic (only properties inherting from NodeProperty are)
-     * @return {boolean} True if it is a dynamic property.
+     * @returns True if it is a dynamic property.
      */
-    isDynamic() { return false; };
+    isDynamic() {
+        return false;
+    };
 
     /**
      * Sets the property as dirty and/or pending. This will add one or both flags if not already set and will
      * do the same for its parent. This does not clear any flag, it only sets.
      *
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
-     * @param {property-properties.BaseProperty} [in_callingChild] - The child which is dirtying its parent
-     * @param {Number} [in_flags = DIRTY | PENDING_CHANGE] The flags to set.
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
+     *                          and trigger a modified event there. When batching updates, this
+     *                          can be prevented via this flag.
+     * @param in_callingChild - The child which is dirtying its parent
+     * @param in_flags - The flags to set.
      * @private
      */
-    _setDirty(in_reportToView, in_callingChild, in_flags) {
+    _setDirty(
+        in_reportToView = true,
+        in_callingChild: BaseProperty = undefined,
+        in_flags: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE
+    ) {
         if (in_flags === undefined) {
             in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
         }
@@ -291,17 +301,17 @@ export class BaseProperty {
 
     /**
      * Sets the dirty flags for this property
-     * @param {Number} in_flags The dirty flags
+     * @param in_flags - The dirty flags
      */
-    _setDirtyFlags(in_flags) {
+    _setDirtyFlags(in_flags: MODIFIED_STATE_FLAGS) {
         this._dirty = in_flags;
     };
 
     /**
      * Gets the dirty flags for this property
-     * @return {Number} The dirty flags
+     * @returns The dirty flags
      */
-    _getDirtyFlags() {
+    _getDirtyFlags(): MODIFIED_STATE_FLAGS {
         return this._dirty;
     };
 
@@ -313,7 +323,7 @@ export class BaseProperty {
     // Currently, this._tree is set in SharedPropertyTree constructor.
     _reportDirtinessToView() {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let currentNode = this;
+        let currentNode: BaseProperty = this;
 
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         while (currentNode._parent) {
@@ -334,12 +344,12 @@ export class BaseProperty {
     /**
      * Modifies the property according to the given changeset
      *
-     * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
+     * @param in_changeSet - The changeset to apply
      * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
      *    The filtering options to consider while applying the ChangeSet.
      * @throws if in_changeSet is invalid.
      */
-    applyChangeSet(in_changeSet) {
+    applyChangeSet(in_changeSet: SerializedChangeSet) {
         this._checkIsNotReadOnly(false);
 
         // We just forward the call to the internal function
@@ -351,28 +361,25 @@ export class BaseProperty {
      *
      * Internal function.
      *
-     * @param {property-properties.SerializedChangeSet} in_changeSet - The changeset to apply
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
-     *                                             and trigger a modified event there. When batching updates, this
-     *                                             can be prevented via this flag.
+     * @param in_changeSet - The changeset to apply
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
+     *                          and trigger a modified event there. When batching updates, this
+     *                          can be prevented via this flag.
      * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
      *    The filtering options to consider while applying the ChangeSet. For now it is only used to
      *    control property creation, to prevent properties from being created outside the checked out
      *    paths. It does not validate that a value inside the ChangeSet is outside those paths.
      */
-    _applyChangeset(in_changeSet, in_reportToView, in_filteringOptions = undefined) {
+    _applyChangeset(in_changeSet: SerializedChangeSet, in_reportToView = true, in_filteringOptions = undefined) {
         var typeids = _.keys(in_changeSet);
-        for (var i = 0; i < typeids.length; i++) {
-            var typeid = typeids[i];
+        for (const typeid of typeids) {
             if (ChangeSet.isReservedKeyword(typeid)) {
                 continue; // Ignore the special keys
             }
 
             var paths = _.keys(in_changeSet[typeid]);
-            for (var j = 0; j < paths.length; j++) {
-                var path = paths[j];
-                var property = this.resolvePath(path,
-                    { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+            for (const path of paths) {
+                var property = this.resolvePath(path, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
                 if (property) {
                     property._applyChangeset(in_changeSet[typeid][path], false);
                 } else {
@@ -391,17 +398,17 @@ export class BaseProperty {
      *
      * Internal function.
      *
-     * @param {property-properties.SerializedChangeSet} [in_pendingChangeSet] - The pending changeset to apply
-     * @param {property-properties.SerializedChangeSet} [in_dirtyChangeSet] - The dirty changeset to apply
+     * @param in_pendingChangeSet - The pending changeset to apply
+     * @param in_dirtyChangeSet - The dirty changeset to apply
      * @throws if changeset arguments are invalid.
      */
-    _reapplyDirtyFlags(in_pendingChangeSet, in_dirtyChangeSet) {
+    _reapplyDirtyFlags(in_pendingChangeSet: SerializedChangeSet, in_dirtyChangeSet: SerializedChangeSet) {
         this._checkIsNotReadOnly(false);
         // Here we must walk both changesets in parallell. Sometimes there will be only an entry in one
         // changeset, sometimes only one in the other changeset, sometimes one in both.
         const typeids = _.keys(in_pendingChangeSet).concat(_.keys(in_dirtyChangeSet));
-        for (let i = 0; i < typeids.length; i++) {
-            let typeid = typeids[i];
+        for (const typeid of typeids) {
+
             if (ChangeSet.isReservedKeyword(typeid)) {
                 continue; // Ignore the special keys
             }
@@ -409,8 +416,8 @@ export class BaseProperty {
             const dirtyChangeSet = in_dirtyChangeSet && in_dirtyChangeSet[typeid];
 
             const paths = _.keys(pendingChangeSet).concat(_.keys(dirtyChangeSet));
-            for (let j = 0; j < paths.length; j++) {
-                let path = paths[j];
+            for (const path of paths) {
+
                 let property = this.resolvePath(path);
                 if (property) {
                     property._reapplyDirtyFlags(
@@ -421,6 +428,10 @@ export class BaseProperty {
                 }
             }
         }
+    }
+
+    protected resolvePath(path: string, params?: any): BaseProperty {
+        throw new Error("Method not implemented.");
     };
 
     /**
@@ -438,15 +449,16 @@ export class BaseProperty {
     /**
      * Removes the dirtiness flag from this property and recursively from all of its children
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
+     * @param in_flags - The flags to clean, if none are supplied all
      *                                                                       will be removed
      */
-    cleanDirty(in_flags) {
+    cleanDirty(in_flags: MODIFIED_STATE_FLAGS) {
         var dirtyChildren = this._getDirtyChildren(in_flags);
-        var child;
-        for (var i = 0; i < dirtyChildren.length; i++) {
-            child = this.get(dirtyChildren[i],
-                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
+        for (const dirtyChild of dirtyChildren) {
+            const child = this.get(
+                dirtyChild,
+                { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }
+            );
             child.cleanDirty(in_flags);
             child._cleanDirty(in_flags);
         }
@@ -459,13 +471,10 @@ export class BaseProperty {
      * Indicates that the property has been modified and a corresponding modified call has not yet been sent to the
      * application for runtime scene updates.
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to check for. By default this is DIRTY
-     * @return {boolean} Is the property dirty?
-     * @private
+     * @param  in_dirtinessType - The type of dirtiness to check for. By default this is DIRTY
+     * @returns Is the property dirty?
      */
-    _isDirty(in_dirtinessType) {
-        in_dirtinessType = in_dirtinessType === undefined ? MODIFIED_STATE_FLAGS.DIRTY : in_dirtinessType;
+    _isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
         return !!(this._getDirtyFlags() & in_dirtinessType);
     };
 
@@ -473,26 +482,26 @@ export class BaseProperty {
      * Indicates that the property has been modified and a corresponding modified call has not yet been sent to the
      * application for runtime scene updates.
      *
-     * @return {boolean} True if the property is dirty. False otherwise.
+     * @returns True if the property is dirty. False otherwise.
      */
-    isDirty() {
+    isDirty(): boolean {
         return this._isDirty();
     };
 
     /**
      * The property has pending changes in the current ChangeSet.
-     * @return {boolean} True if the property has pending changes. False otherwise.
+     * @returns True if the property has pending changes. False otherwise.
      */
-    hasPendingChanges() {
+    hasPendingChanges(): boolean {
         return this._isDirty(MODIFIED_STATE_FLAGS.PENDING_CHANGE);
     };
 
     /**
      * Returns the ChangeSet of all sub-properties
      *
-     * @return {property-properties.ChangeSet} The serialized changes
+     * @returns The serialized changes
      */
-    getPendingChanges() {
+    getPendingChanges(): ChangeSet {
         var serialized = this._serialize(true, false, BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
         return new ChangeSet(serialized);
     };
@@ -500,9 +509,9 @@ export class BaseProperty {
     /**
      * Get the id of this property
      *
-     * @return {string|undefined} The id of the property
+     * @returns The id of the property
      */
-    getId() {
+    getId(): string | undefined {
         return this._id;
     };
 
@@ -539,7 +548,7 @@ export class BaseProperty {
 
     /**
      * Returns the Workspace
-     * @return {property-properties.Workspace|undefined} The workspace containing the property.
+     * @returns The workspace containing the property.
      */
     getWorkspace() {
         const root = this.getRoot();
@@ -549,12 +558,11 @@ export class BaseProperty {
     /**
      * Returns the path segment for a child
      *
-     * @param {property-properties.BaseProperty} in_childNode - The child for which the path is returned
+     * @param in_childNode - The child for which the path is returned
      *
-     * @return {string} The path segment to resolve the child property under this property
-     * @protected
+     * @returns The path segment to resolve the child property under this property
      */
-    _getPathSegmentForChildNode(in_childNode) {
+    _getPathSegmentForChildNode(in_childNode: BaseProperty): string {
         return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
     };
 
@@ -567,7 +575,7 @@ export class BaseProperty {
      * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
      * @protected
      */
-    _resolvePathSegment(in_segment, in_segmentType) {
+    _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES) {
         // Base Properties only support paths separated via dots
         if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
             throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -603,12 +611,13 @@ export class BaseProperty {
 
     /**
      * Return a clone of this property
-     * @return {BaseProperty} The cloned property
+     * @returns The cloned property
      */
-    clone() {
+    clone(): BaseProperty {
         const PropertyFactory = Property.PropertyFactory;
         var clone = PropertyFactory._createProperty(
-            this.getFullTypeid(), null, undefined, this._getScope(), true);
+            this.getFullTypeid(), null, undefined, this._getScope(), true
+        );
 
         // TODO: this is not very efficient. Clone should be overriden
         // by the child classes
@@ -637,10 +646,9 @@ export class BaseProperty {
      * property of this name).
      * TODO: Do we want to have this feature or is it to dangerous?
      *
-     * @return {Object} the flat representation
-     * @private
+     * @returns the flat representation
      */
-    _flatten() {
+    private _flatten(): object {
         return { propertyNode: this };
     };
 
@@ -672,14 +680,22 @@ export class BaseProperty {
         };
 
         var ids = this.getIds();
-        for (var i = 0; i < ids.length; i++) {
+        for (const id of ids) {
             json.value.push(
-                this.get(ids[i], { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson()
+                this.get(id, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })._toJson()
             );
         }
 
         return json;
     };
+
+    getIds(): string[] {
+        return [];
+    }
+
+    get(id: string, params?: { referenceResolutionMode: REFERENCE_RESOLUTION }): BaseProperty | undefined {
+        return undefined;
+    }
 
     /**
      * Repeatedly calls back the given function with human-readable string
@@ -729,12 +745,12 @@ export class BaseProperty {
         var that = this;
         var referenceProps = [];
         // get all reference properties in the referenceProps array
-        this._getCheckoutView()._forEachCheckedOutRepository(function (repoInfo) {
+        this._getCheckoutView()._forEachCheckedOutRepository(function(repoInfo) {
             var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
-            for (var i = 0; i < keys.length; i++) {
-                if (keys[i]) {
-                    var repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]]
-                        ._repositoryReferenceProperties[keys[i]].property;
+            for (const key of keys) {
+                if (key) {
+                    var repoRef = repoInfo._referencedByPropertyInstanceGUIDs[key]
+                        ._repositoryReferenceProperties[key].property;
                     if (that.getRoot() === repoRef.getReferencedRepositoryRoot()) {
                         referenceProps.push(repoRef);
                     }
@@ -754,8 +770,8 @@ export class BaseProperty {
 
         // find possible paths from in_fromProperty to the referenceProps
         // concatenate each with pathInChildRepo
-        for (var i = 0; i < referenceProps.length; i++) {
-            var pathInParentRepo = referenceProps[i].getRelativePath(in_fromProperty);
+        for (const referenceProp of referenceProps) {
+            var pathInParentRepo = referenceProp.getRelativePath(in_fromProperty);
             if (pathInParentRepo) {
                 if (pathInChildRepo.length > 0) {
                     paths.push(pathInParentRepo + '.' + pathInChildRepo);
@@ -784,7 +800,7 @@ export class BaseProperty {
         var that = this;
         var foundPath = undefined;
 
-        foundPath = in_fromProperty.traverseUp(function (in_node) {
+        foundPath = in_fromProperty.traverseUp(function(in_node) {
             path.push('../');
             if (in_node === that) {
                 return BREAK_TRAVERSAL;
@@ -817,23 +833,21 @@ export class BaseProperty {
         var foundAncestor = undefined;
         if (in_fromProperty === this) {
             foundAncestor = BREAK_TRAVERSAL;
-        } else {
-            if (this.getParent()) {
-                path.push(this.getParent()._getPathSegmentForChildNode(this));
+        } else if (this.getParent()) {
+            path.push(this.getParent()._getPathSegmentForChildNode(this));
 
-                foundAncestor = this.traverseUp(function (in_node) {
-                    // break where we meet the relative reference
-                    if (in_node === in_fromProperty) {
-                        return BREAK_TRAVERSAL;
-                    }
+            foundAncestor = this.traverseUp(function(in_node) {
+                // break where we meet the relative reference
+                if (in_node === in_fromProperty) {
+                    return BREAK_TRAVERSAL;
+                }
 
-                    if (in_node.getParent()) {
-                        path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
-                    }
+                if (in_node.getParent()) {
+                    path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
+                }
 
-                    return undefined;
-                });
-            }
+                return undefined;
+            });
         }
 
         if (foundAncestor === BREAK_TRAVERSAL) {
@@ -882,12 +896,12 @@ export class BaseProperty {
      * ----prop3</code>
      * and call: <code>prop1.getRelativePath(prop3);</code>
      * You will get the path from prop3 to prop1, which would be '../../'
-     * @param {property-properties.BaseProperty} in_fromProperty - The property from which the
+     * @param in_fromProperty - The property from which the
      *     path is computed
-     * @return {string} The path between the given in_fromProperty and this property
+     * @returns The path between the given in_fromProperty and this property
      * @throws if in_fromProperty is not a property
      */
-    getRelativePath(in_fromProperty) {
+    getRelativePath(in_fromProperty: BaseProperty): string {
         ConsoleUtils.assert(in_fromProperty instanceof BaseProperty, MSG.IN_FROMPROPERTY_MUST_BE_PROPERTY);
         var paths = this._getAllRelativePaths(in_fromProperty) || [];
         if (paths.length === 0) {
@@ -913,16 +927,16 @@ export class BaseProperty {
         var referenceProps = [];
         // get all reference properties pointing to the root the repository containing 'this'
         if (this._getCheckoutView()) {
-            this._getCheckoutView()._forEachCheckedOutRepository(function (repoInfo) {
+            this._getCheckoutView()._forEachCheckedOutRepository(function(repoInfo) {
                 var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
-                for (var i = 0; i < keys.length; i++) {
-                    if (keys[i]) {
-                        let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[keys[i]];
+                for (const key of keys) {
+                    if (key) {
+                        let repoRef = repoInfo._referencedByPropertyInstanceGUIDs[key];
                         let refProperty = undefined;
 
                         if (repoRef) {
-                            refProperty = repoRef._repositoryReferenceProperties[keys[i]] ?
-                                repoRef._repositoryReferenceProperties[keys[i]].property : undefined;
+                            refProperty = repoRef._repositoryReferenceProperties[key] ?
+                                repoRef._repositoryReferenceProperties[key].property : undefined;
                         }
 
                         let refRoot;
@@ -942,7 +956,7 @@ export class BaseProperty {
         }
 
         var path = this.isRoot() ? [] : [this.getParent()._getPathSegmentForChildNode(this)];
-        this.traverseUp(function (in_node) {
+        this.traverseUp(function(in_node) {
             if (in_node.getParent()) {
                 path.push(in_node.getParent()._getPathSegmentForChildNode(in_node));
             } else if (referenceProps.length > 0) {
@@ -992,21 +1006,20 @@ export class BaseProperty {
     /**
      * Returns all children which are dirty (this only returns direct children, it does not travers recursively)
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} in_flags - Which types of dirtiness are we looking for?
-     *                                                                     If none is given, all types are regarded as
-     *                                                                     dirty
-     * @return {Array.<String>} The list of keys identifying the dirty children
-     * @private
+     * @param in_flags - Which types of dirtiness are we looking for?
+     *                   If none is given, all types are regarded as
+     *                   dirty
+     * @returns The list of keys identifying the dirty children
      */
-    _getDirtyChildren(in_flags) {
+    private _getDirtyChildren(in_flags: MODIFIED_STATE_FLAGS): string[] {
         return [];
     };
 
     /**
      * Returns the root of the property hierarchy
-     * @return {property-properties.NodeProperty} The root property
+     * @returns The root property
      */
-    getRoot() {
+    getRoot(): BaseProperty {
         return this._parent ? this._parent.getRoot() : this;
     };
 
@@ -1014,13 +1027,13 @@ export class BaseProperty {
      * Traverses all children in the child hierarchy
      * TODO: How should this behave for collections?
      *
-     * @param {function} in_callback             - Callback to invoke for every child
-     * @param {string} in_pathFromTraversalStart - Path from the root of the traversal to this node
-     * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
+     * @param in_callback             - Callback to invoke for every child
+     * @param in_pathFromTraversalStart - Path from the root of the traversal to this node
+     * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
      *                            otherwise undefined
      * @private
      */
-    _traverse(in_callback, in_pathFromTraversalStart) {
+    _traverse(in_callback: Function, in_pathFromTraversalStart: string): string | undefined {
         return undefined;
     };
 
@@ -1029,16 +1042,19 @@ export class BaseProperty {
      * ChangeSet passed as parameter. It will return a ChangeSet that describes the difference between the
      * current state of the property and the passed in normalized property
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply to this node. This
+     * @param in_serializedObj - The serialized changeset to apply to this node. This
      *     has to be a normalized change-set (only containing insertions and property assignments. Deletes and Modify
      *     must not appear)
-     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
+     * @param in_filteringOptions
      *    The filtering options to consider while deserializing the property.
      * @throws if called on a read-only property.
-     * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
+     * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
-    deserialize(in_serializedObj, in_filteringOptions) {
+    deserialize(
+        in_serializedObj: SerializedChangeSet,
+        in_filteringOptions = {}
+    ): SerializedChangeSet {
         this._checkIsNotReadOnly(false);
         return this._deserialize(in_serializedObj, true, in_filteringOptions);
     };
@@ -1046,74 +1062,78 @@ export class BaseProperty {
     /**
      * Sets the property to the state in the given normalized changeset
      *
-     * @param {property-properties.SerializedChangeSet} in_serializedObj - The serialized changeset to apply. This
+     * @param in_serializedObj - The serialized changeset to apply. This
      *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
-     * @param {boolean} in_reportToView - Usually the dirtying should be reported to the checkout view
+     * @param in_reportToView - Usually the dirtying should be reported to the checkout view
      *     and  a modified event there. When batching updates, this can be prevented via this flag.
-     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
+     * @param in_filteringOptions
      *    The filtering options to consider while deserializing the property.
-     * @return {property-properties.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
+     * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
-    _deserialize(in_serializedObj, in_reportToView, in_filteringOptions) {
+    _deserialize(
+        in_serializedObj: SerializedChangeSet,
+        in_reportToView: boolean,
+        in_filteringOptions = {}
+    ): SerializedChangeSet {
         return {};
     };
 
     /**
      * Serialize the property into a changeSet
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
+     * @param in_dirtyOnly - Only include dirty entries in the serialization
+     * @param in_includeRootTypeid - Include the typeid of the root of the hierarchy
+     * @param in_dirtinessType -
      *     The type of dirtiness to use when reporting dirty changes. By default this is
      *     PENDING_CHANGE
-     * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
+     * @param in_includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
      *
-     * @return {Object} The serialized representation of this property
-     * @private
+     * @returns The serialized representation of this property
      */
-    _serialize(in_dirtyOnly,
-        in_includeRootTypeid,
-        in_dirtinessType,
-        in_includeReferencedRepositories) {
+    _serialize(
+        in_dirtyOnly: boolean = false,
+        in_includeRootTypeid: boolean = false,
+        in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_includeReferencedRepositories: boolean = false
+    ): object {
         return {};
     };
+
 
     /**
      * Serialize the property
      *
-     * @param {Object} in_options -
-     *     Options for the serialization
-     * @param {boolean} [in_options.dirtyOnly=false] -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} [in_options.includeRootTypeid=false] -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_options.dirtinessType=PENDING_CHANGE] -
-     *     The type of dirtiness to use when reporting dirty changes.
-     * @param {boolean} [in_options.includeReferencedRepositories=false] - If this is set to true, the serialize
+     * @param in_options - Options for the serialization
+     * @param in_options.dirtyOnly - Only include dirty entries in the serialization
+     * @param in_options.includeRootTypeid - Include the typeid of the root of the hierarchy
+     * @param in_options.dirtinessType - The type of dirtiness to use when reporting dirty changes.
+     * @param in_options.includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
      * @throws if in_options is defined but is not an object.
-     * @return {Object} The serialized representation of this property
+     * @returns The serialized representation of this property
      */
-    serialize(in_options) {
+    serialize(in_options: ISerializeOptions) {
         var opts = {
-            'dirtyOnly': false,
-            'includeRootTypeid': false,
-            'dirtinessType': MODIFIED_STATE_FLAGS.PENDING_CHANGE,
-            'includeReferencedRepositories': false
+            dirtyOnly: false,
+            includeRootTypeid: false,
+            dirtinessType: MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+            includeReferencedRepositories: false
         };
         if (in_options !== undefined) {
             if (typeof in_options !== 'object') throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
             Object.assign(opts, in_options);
         }
 
-        return this._serialize(opts.dirtyOnly, opts.includeRootTypeid,
-            opts.dirtinessType, opts.includeReferencedRepositories);
+        return this._serialize(
+            opts.dirtyOnly,
+            opts.includeRootTypeid,
+            opts.dirtinessType,
+            opts.includeReferencedRepositories
+        );
     };
 
     /**
@@ -1122,8 +1142,7 @@ export class BaseProperty {
      * This function is invoked by the PropertyFactory once all static members have been added to the template
      * @protected
      */
-    _signalAllStaticMembersHaveBeenAdded() {
-    };
+    _signalAllStaticMembersHaveBeenAdded() { };
 
     /**
      * Tests whether this property may be modified
@@ -1152,10 +1171,14 @@ export class BaseProperty {
 
         if (this instanceof Property.AbstractStaticCollectionProperty) {
             // Set all children properties as constants
-            this.traverseDown(function (prop) {
+            this.traverseDown(function(prop) {
                 prop._isConstant = true;
             });
         }
+    }
+
+    traverseDown(arg0: (prop: any) => void) {
+        throw new Error("Method not implemented.");
     };
 
     /**
@@ -1168,7 +1191,7 @@ export class BaseProperty {
 
         if (this instanceof Property.AbstractStaticCollectionProperty) {
             // Unset all children properties as constants
-            this.traverseDown(function (prop) {
+            this.traverseDown(function(prop) {
                 // Deleting this property will make the object
                 // fall back to the entry in the prototype (false)
                 delete prop._isConstant;
@@ -1179,13 +1202,13 @@ export class BaseProperty {
     /**
      * Dirties this node and all of its children
      *
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
      * @private
      */
-    _setDirtyTree(in_reportToView) {
-        this._traverse(function (node) {
+    _setDirtyTree(in_reportToView = true) {
+        this._traverse(function(node) {
             // Set all nodes to dirty, but prevent recursive updates up to the repository for the individual changes
             node._setDirty(false);
         }, '');
@@ -1199,10 +1222,10 @@ export class BaseProperty {
      * Determines whether a property can be inserted as a child of another property
      * This does NOT validate if the parent can accept the child property, it only validates if
      * the child property can be inserted in the parent.
-     * @param {property-properties.BaseProperty} in_targetParent - The parent property
+     * @param in_targetParent - The parent property
      * @throws if the property can not be inserted
      */
-    _validateInsertIn(in_targetParent) {
+    _validateInsertIn(in_targetParent: BaseProperty) {
 
         // A root?
         if (this._getCheckedOutRepositoryInfo() !== undefined) {
@@ -1234,12 +1257,12 @@ export class BaseProperty {
      *
      * This function uses the canonical representation of the property paths.
      *
-     * @param {string} in_basePath - The property's absolute path in canonical form
-     * @param {Array<string>} in_paths - The array of paths that we wonder if it covers the property and its children
-     * @return {Bool} If the property and all its children are included in the paths
+     * @param in_basePath - The property's absolute path in canonical form
+     * @param in_paths - The array of paths that we wonder if it covers the property and its children
+     * @returns If the property and all its children are included in the paths
      * @private
      */
-    _coveredByPaths(in_basePath, in_paths) {
+    _coveredByPaths(in_basePath: string, in_paths: string[]): boolean {
         // First, get the coverage of the base property
         const coverage = PathHelper.getPathCoverage(in_basePath, in_paths);
 
@@ -1248,28 +1271,20 @@ export class BaseProperty {
         } else if (coverage.coverageExtent === PathHelper.CoverageExtent.PARTLY_COVERED) {
             // We know that part of the property is covered, if we don't find any actual children not covered
             // by the paths it's because we're fully covered.
-            let childrenIds, childPath, child;
             if (this.isPrimitiveType()) {
-                // primitive
-                if (this.getContext() === 'single') {
-                    // no children
-                    childrenIds = [];
-                } else {
-                    childrenIds = this.getIds();
-                }
-                for (let i = 0; i < childrenIds.length; i++) {
-                    child = this.get(childrenIds[i]);
-                    childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childrenIds[i]);
-                    if (PathHelper.getPathCoverage(childPath, coverage.pathList) === PathHelper.CoverageExtent.UNCOVERED) {
+                const childrenIds = this.getContext() === 'single' ? [] : this.getIds()
+                for (const childId of childrenIds) {
+                    const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
+                    if (PathHelper.getPathCoverage(childPath, coverage.pathList).coverageExtent === PathHelper.CoverageExtent.UNCOVERED) {
                         // this children is outside the list of paths
                         return false;
                     }
                 }
             } else {
-                childrenIds = this.getIds();
-                for (let i = 0; i < childrenIds.length; i++) {
-                    child = this.get(childrenIds[i]);
-                    childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childrenIds[i]);
+                const childrenIds = this.getIds();
+                for (const childId of childrenIds) {
+                    const child = this.get(childId);
+                    const childPath = PathHelper.getChildAbsolutePathCanonical(in_basePath, childId);
                     if (!child._coveredByPaths(childPath, coverage.pathList)) {
                         return false;
                     }
