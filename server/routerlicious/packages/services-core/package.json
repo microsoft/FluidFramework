@@ -26,7 +26,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1032.1",
-    "@fluidframework/protocol-definitions": "^0.1025.0",
+    "@fluidframework/protocol-definitions": "^0.1025.1",
     "@fluidframework/server-services-client": "^0.1032.1",
     "@fluidframework/server-services-telemetry": "^0.1032.1",
     "@types/nconf": "^0.10.0",

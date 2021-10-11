@@ -39,7 +39,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const id = this.size.toString();
         this.blobs.set(id, content);
-        return { id };
+        return { id, url: "" };
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
