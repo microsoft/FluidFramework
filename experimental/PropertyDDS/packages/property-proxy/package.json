@@ -26,7 +26,8 @@
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "jest",
+    "test": "npm run test:jest",
+    "test:jest": "jest",
     "test:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
     "tsc": "tsc"
   },
