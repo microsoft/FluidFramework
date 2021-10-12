@@ -13,6 +13,8 @@ const excludedTypography = [
 ];
 
 const excludedWords = [
+    "Azure Fluid Relay service",
+    "Azure Relay Service",
     "FRS",
 ]
 
@@ -109,7 +111,7 @@ module.exports = {
         "proper-names": { // MD044
             "code_blocks": false,
             "names": [
-                "Azure Fluid Relay service",
+                "Azure Fluid Relay",
                 "Fluid container",
                 "Fluid containers",
                 "Fluid Framework",

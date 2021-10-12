@@ -39,13 +39,14 @@ import * as current from "../index";
                     ... currentTypeMap.get(getFullTypeName(oldTypeData))!,
 
                 }
+                const brokenData = currentTypeData.packageDetails.broken?.[oldDetails.packageDetails.version]?.[getFullTypeName(currentType)];
 
                 testString.push(`/*`)
                 testString.push(`* validate forward compat by using old type in place of current type`);
-                testString.push(`* to disable, add in package.json under typeValidation.broken:`);
+                testString.push(`* to disable, add in package.json under typeValidation.broken.${oldDetails.packageDetails.version}:`);
                 testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
                 const forwarCompatCase = buildTestCase(oldType, currentType);
-                if(currentTypeData.packageDetails.broken[getFullTypeName(currentType)]?.forwardCompat !== false){
+                if(brokenData?.forwardCompat !== false){
                     testString.push("*/");
                     testString.push(... forwarCompatCase);
                 }else{
@@ -56,10 +57,10 @@ import * as current from "../index";
 
                 testString.push(`/*`)
                 testString.push(`* validate back compat by using current type in place of old type`);
-                testString.push(`* to disable, add in package.json under typeValidation.broken:`);
+                testString.push(`* to disable, add in package.json under typeValidation.broken.${oldDetails.packageDetails.version}:`);
                 testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
                 const backCompatCase = buildTestCase(currentType, oldType);
-                if(currentTypeData.packageDetails.broken[getFullTypeName(currentType)]?.backCompat !== false){
+                if(brokenData?.backCompat !== false){
                     testString.push("*/");
                     testString.push(... backCompatCase)
                 }else{

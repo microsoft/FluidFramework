@@ -154,6 +154,8 @@ export class TestObjectProvider {
                     all: {
                         driverType: this.driver.type,
                         driverEndpointName: this.driver.endpointName,
+                        driverTenantName: this.driver.tenantName,
+                        driverUserIndex: this.driver.userIndex,
                     },
                 });
         }

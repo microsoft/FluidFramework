@@ -13,9 +13,7 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
-import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDetachedBlobStorage } from '@fluidframework/container-loader';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
@@ -36,7 +34,6 @@ import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedMap } from '@fluidframework/map';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
@@ -82,16 +79,7 @@ export enum DataObjectFactoryType {
 export const defaultTimeoutDurationMs = 250;
 
 // @public (undocumented)
-export type DeltaManager = IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-
-// @public (undocumented)
 export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
-
-// @public @deprecated (undocumented)
-export interface IDeltaConnectionServerMonitor {
-    // (undocumented)
-    hasPendingWork(): Promise<boolean>;
-}
 
 // @public (undocumented)
 export interface IOpProcessingController {
@@ -192,20 +180,6 @@ export class LocalCodeLoader implements ICodeLoader {
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, runtimeOptions?: IContainerRuntimeOptions);
     load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
-
-// @public @deprecated
-export class OpProcessingController {
-    constructor(deltaConnectionServerMonitor?: IDeltaConnectionServerMonitor | undefined);
-    addDeltaManagers(...deltaManagers: DeltaManager[]): void;
-    // (undocumented)
-    get isProcessingControlled(): boolean;
-    pauseProcessing(...deltaMangers: DeltaManager[]): Promise<void>;
-    process(...deltaMangers: DeltaManager[]): Promise<void>;
-    processIncoming(...deltaMangers: DeltaManager[]): Promise<void>;
-    processOutgoing(...deltaMangers: DeltaManager[]): Promise<void>;
-    resumeProcessing(...deltaMangers: DeltaManager[]): void;
-    static yield(): Promise<void>;
-    }
 
 // @public (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;
