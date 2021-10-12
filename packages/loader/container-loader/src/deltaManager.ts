@@ -74,11 +74,11 @@ const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
-    const message = `Nack: ${nackContent.message}`;
+    const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
     return createGenericNetworkError(
-        "nackWithMessage", message, canRetry, retryAfterMs, { statusCode: nackContent.code });
+        `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
 const createReconnectError = (fluidErrorCode: string, err: any) =>
@@ -1057,7 +1057,7 @@ export class DeltaManager
         // check message.content for Back-compat with old service.
         const reconnectInfo = message.content !== undefined
             ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError("nack:UnknownReason", undefined, true);
+            createGenericNetworkError("nackReasonUnknown", undefined, true);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(

@@ -131,7 +131,7 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 }
 
 export const createWriteError = (fluidErrorCode: string) =>
-    new NonRetryableError(fluidErrorCode, fluidErrorCode, DriverErrorType.writeError);
+    new NonRetryableError(fluidErrorCode, undefined, DriverErrorType.writeError);
 
 export function createGenericNetworkError(
     fluidErrorCode: string,
