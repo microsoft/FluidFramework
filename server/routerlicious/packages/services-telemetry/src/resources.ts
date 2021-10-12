@@ -65,6 +65,20 @@ export enum CommonProperties {
     telemetryGroupName = "telemetryGroupName",
 }
 
+export enum ThrottlingTelemetryProperties {
+    // Use throttleId as key
+    key = "key",
+
+    // Throttle reason
+    reason = "reason",
+
+    // Retry after in seconds
+    retryAfterInSeconds = "retryAfterInSeconds",
+
+    // Log throttleOptions.weight
+    weight = "weight",
+}
+
 export enum SessionState {
     // State set when the document lambdas are up and first op for the document is ticketed
     started = "started",

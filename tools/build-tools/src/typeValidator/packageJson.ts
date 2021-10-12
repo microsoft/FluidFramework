@@ -8,9 +8,6 @@ import * as fs from "fs";
 export type PackageDetails ={
     readonly name: string;
     readonly version: string;
-    readonly majorVersion: number;
-    readonly minorVersion: number;
-    readonly patchVersion: string;
     readonly oldVersions: readonly string[];
     readonly broken: BrokenCompatTypes;
 }
@@ -20,7 +17,7 @@ export interface BrokenCompatSettings{
     forwardCompat?: false;
 }
 
-export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
+export type BrokenCompatTypes = Partial<Record<string,Record<string, BrokenCompatSettings>>>;
 
 
 interface PackageJson{
@@ -60,14 +57,10 @@ export function getPackageDetails(packageDir: string): PackageDetails {
         }
         pkgJson.typeValidation = {
             version: pkgJson.version,
-            broken: {}
+            broken: pkgJson.typeValidation?.broken ?? {}
         }
         fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
     }
-
-    const versionParts = pkgJson.version.split(".",3);
-    const majorVersion = Number.parseInt(versionParts[0]);
-    const minorVersion = Number.parseInt(versionParts[1]);
 
     const oldVersions: string[] =
         Object.keys(pkgJson.devDependencies).filter((k)=>k.startsWith(pkgJson.name));
@@ -75,9 +68,6 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     return {
         name: pkgJson.name,
         version: pkgJson.version,
-        majorVersion,
-        minorVersion,
-        patchVersion: versionParts[2],
         oldVersions,
         broken: pkgJson.typeValidation.broken
     }
