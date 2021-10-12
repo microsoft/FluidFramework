@@ -41,6 +41,14 @@ export enum SystemOperations {
     Leave,
 }
 
+export interface IRoutingKey {
+    // The tenant the message is intended for
+    tenantId: string;
+
+    // The object the message is intended for
+    documentId: string;
+}
+
 export interface ISystemMessage extends IMessage {
     // Id of the service sending the message
     id: string;
@@ -55,13 +63,7 @@ export interface ISystemMessage extends IMessage {
 /**
  * Message relating to an object
  */
-export interface IObjectMessage extends IMessage {
-    // The tenant the message is intended for
-    tenantId: string;
-
-    // The object the message is intended for
-    documentId: string;
-
+export interface IObjectMessage extends IMessage, IRoutingKey {
     // The client who submitted the message
     clientId: string | null;
 
@@ -92,26 +94,15 @@ export interface IRawOperationMessage extends IObjectMessage {
 /**
  * A group of IRawOperationMessage objects. Used in receiving batches of ops from Kafka.
  */
-export interface IRawOperationMessageBatch {
+export interface IRawOperationMessageBatch extends IRoutingKey {
     // Some ordered index to distinguish different batches. In the Kafka context, it is the Kafka offset.
     index: number;
-
-    // The tenant the message is intended for
-    tenantId: string;
-
-    // The object the message is intended for
-    documentId: string;
 
     contents: IRawOperationMessage[];
 }
 
 // Need to change this name - it isn't necessarily ticketed
-export interface ITicketedMessage extends IMessage {
-    // The tenant the message is intended for
-    tenantId: string;
-
-    // The object the message is intended for
-    documentId: string;
+export interface ITicketedMessage extends IMessage, IRoutingKey {
 }
 
 /**
