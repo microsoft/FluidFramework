@@ -121,6 +121,10 @@
   },
   "typeValidation": {
     "version": "0.33.0",
-    "broken": {}
+    "broken": {
+      "0.32.1":{
+        "ClassDeclaration_EventForwarder": {"forwardCompat": false, "backCompat": false}
+      }
+    }
   }
 }

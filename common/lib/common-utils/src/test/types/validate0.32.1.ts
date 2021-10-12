@@ -17,7 +17,7 @@ import * as current from "../../index";
 declare function get_old_FunctionDeclaration_assert():
     typeof old.assert;
 declare function use_current_FunctionDeclaration_assert(
-    use: typeof old.assert);
+    use: typeof current.assert);
 use_current_FunctionDeclaration_assert(
     get_old_FunctionDeclaration_assert());
 
@@ -29,7 +29,7 @@ use_current_FunctionDeclaration_assert(
 declare function get_current_FunctionDeclaration_assert():
     typeof current.assert;
 declare function use_old_FunctionDeclaration_assert(
-    use: typeof current.assert);
+    use: typeof old.assert);
 use_old_FunctionDeclaration_assert(
     get_current_FunctionDeclaration_assert());
 
@@ -41,7 +41,7 @@ use_old_FunctionDeclaration_assert(
 declare function get_old_ClassDeclaration_BaseTelemetryNullLogger():
     Omit<old.BaseTelemetryNullLogger,"">;
 declare function use_current_ClassDeclaration_BaseTelemetryNullLogger(
-    use: Omit<old.BaseTelemetryNullLogger,"">);
+    use: Omit<current.BaseTelemetryNullLogger,"">);
 use_current_ClassDeclaration_BaseTelemetryNullLogger(
     get_old_ClassDeclaration_BaseTelemetryNullLogger());
 
@@ -53,7 +53,7 @@ use_current_ClassDeclaration_BaseTelemetryNullLogger(
 declare function get_current_ClassDeclaration_BaseTelemetryNullLogger():
     Omit<current.BaseTelemetryNullLogger,"">;
 declare function use_old_ClassDeclaration_BaseTelemetryNullLogger(
-    use: Omit<current.BaseTelemetryNullLogger,"">);
+    use: Omit<old.BaseTelemetryNullLogger,"">);
 use_old_ClassDeclaration_BaseTelemetryNullLogger(
     get_current_ClassDeclaration_BaseTelemetryNullLogger());
 
@@ -65,7 +65,7 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 declare function get_old_ClassDeclaration_BatchManager():
     Omit<old.BatchManager<any>,"">;
 declare function use_current_ClassDeclaration_BatchManager(
-    use: Omit<old.BatchManager<any>,"">);
+    use: Omit<current.BatchManager<any>,"">);
 use_current_ClassDeclaration_BatchManager(
     get_old_ClassDeclaration_BatchManager());
 
@@ -77,7 +77,7 @@ use_current_ClassDeclaration_BatchManager(
 declare function get_current_ClassDeclaration_BatchManager():
     Omit<current.BatchManager<any>,"">;
 declare function use_old_ClassDeclaration_BatchManager(
-    use: Omit<current.BatchManager<any>,"">);
+    use: Omit<old.BatchManager<any>,"">);
 use_old_ClassDeclaration_BatchManager(
     get_current_ClassDeclaration_BatchManager());
 
@@ -89,7 +89,7 @@ use_old_ClassDeclaration_BatchManager(
 declare function get_old_ClassDeclaration_Buffer():
     Omit<old.Buffer,"">;
 declare function use_current_ClassDeclaration_Buffer(
-    use: Omit<old.Buffer,"">);
+    use: Omit<current.Buffer,"">);
 use_current_ClassDeclaration_Buffer(
     get_old_ClassDeclaration_Buffer());
 
@@ -101,7 +101,7 @@ use_current_ClassDeclaration_Buffer(
 declare function get_current_ClassDeclaration_Buffer():
     Omit<current.Buffer,"">;
 declare function use_old_ClassDeclaration_Buffer(
-    use: Omit<current.Buffer,"">);
+    use: Omit<old.Buffer,"">);
 use_old_ClassDeclaration_Buffer(
     get_current_ClassDeclaration_Buffer());
 
@@ -113,7 +113,7 @@ use_old_ClassDeclaration_Buffer(
 declare function get_old_VariableDeclaration_bufferToString():
     typeof old.bufferToString;
 declare function use_current_VariableDeclaration_bufferToString(
-    use: typeof old.bufferToString);
+    use: typeof current.bufferToString);
 use_current_VariableDeclaration_bufferToString(
     get_old_VariableDeclaration_bufferToString());
 
@@ -125,7 +125,7 @@ use_current_VariableDeclaration_bufferToString(
 declare function get_current_VariableDeclaration_bufferToString():
     typeof current.bufferToString;
 declare function use_old_VariableDeclaration_bufferToString(
-    use: typeof current.bufferToString);
+    use: typeof old.bufferToString);
 use_old_VariableDeclaration_bufferToString(
     get_current_VariableDeclaration_bufferToString());
 
@@ -137,7 +137,7 @@ use_old_VariableDeclaration_bufferToString(
 declare function get_old_ClassDeclaration_Deferred():
     Omit<old.Deferred<any>,"">;
 declare function use_current_ClassDeclaration_Deferred(
-    use: Omit<old.Deferred<any>,"">);
+    use: Omit<current.Deferred<any>,"">);
 use_current_ClassDeclaration_Deferred(
     get_old_ClassDeclaration_Deferred());
 
@@ -149,7 +149,7 @@ use_current_ClassDeclaration_Deferred(
 declare function get_current_ClassDeclaration_Deferred():
     Omit<current.Deferred<any>,"">;
 declare function use_old_ClassDeclaration_Deferred(
-    use: Omit<current.Deferred<any>,"">);
+    use: Omit<old.Deferred<any>,"">);
 use_old_ClassDeclaration_Deferred(
     get_current_ClassDeclaration_Deferred());
 
@@ -161,7 +161,7 @@ use_old_ClassDeclaration_Deferred(
 declare function get_old_VariableDeclaration_delay():
     typeof old.delay;
 declare function use_current_VariableDeclaration_delay(
-    use: typeof old.delay);
+    use: typeof current.delay);
 use_current_VariableDeclaration_delay(
     get_old_VariableDeclaration_delay());
 
@@ -173,7 +173,7 @@ use_current_VariableDeclaration_delay(
 declare function get_current_VariableDeclaration_delay():
     typeof current.delay;
 declare function use_old_VariableDeclaration_delay(
-    use: typeof current.delay);
+    use: typeof old.delay);
 use_old_VariableDeclaration_delay(
     get_current_VariableDeclaration_delay());
 
@@ -185,7 +185,7 @@ use_old_VariableDeclaration_delay(
 declare function get_old_FunctionDeclaration_doIfNotDisposed():
     typeof old.doIfNotDisposed;
 declare function use_current_FunctionDeclaration_doIfNotDisposed(
-    use: typeof old.doIfNotDisposed);
+    use: typeof current.doIfNotDisposed);
 use_current_FunctionDeclaration_doIfNotDisposed(
     get_old_FunctionDeclaration_doIfNotDisposed());
 
@@ -197,7 +197,7 @@ use_current_FunctionDeclaration_doIfNotDisposed(
 declare function get_current_FunctionDeclaration_doIfNotDisposed():
     typeof current.doIfNotDisposed;
 declare function use_old_FunctionDeclaration_doIfNotDisposed(
-    use: typeof current.doIfNotDisposed);
+    use: typeof old.doIfNotDisposed);
 use_old_FunctionDeclaration_doIfNotDisposed(
     get_current_FunctionDeclaration_doIfNotDisposed());
 
@@ -209,7 +209,7 @@ use_old_FunctionDeclaration_doIfNotDisposed(
 declare function get_old_TypeAliasDeclaration_EventEmitterEventType():
     old.EventEmitterEventType;
 declare function use_current_TypeAliasDeclaration_EventEmitterEventType(
-    use: old.EventEmitterEventType);
+    use: current.EventEmitterEventType);
 use_current_TypeAliasDeclaration_EventEmitterEventType(
     get_old_TypeAliasDeclaration_EventEmitterEventType());
 
@@ -221,7 +221,7 @@ use_current_TypeAliasDeclaration_EventEmitterEventType(
 declare function get_current_TypeAliasDeclaration_EventEmitterEventType():
     current.EventEmitterEventType;
 declare function use_old_TypeAliasDeclaration_EventEmitterEventType(
-    use: current.EventEmitterEventType);
+    use: old.EventEmitterEventType);
 use_old_TypeAliasDeclaration_EventEmitterEventType(
     get_current_TypeAliasDeclaration_EventEmitterEventType());
 
@@ -229,25 +229,25 @@ use_old_TypeAliasDeclaration_EventEmitterEventType(
 * validate forward compat by using old type in place of current type
 * to disable, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_EventForwarder": {"forwardCompat": false}
-*/
 declare function get_old_ClassDeclaration_EventForwarder():
     Omit<old.EventForwarder,"">;
 declare function use_current_ClassDeclaration_EventForwarder(
-    use: Omit<old.EventForwarder,"">);
+    use: Omit<current.EventForwarder,"">);
 use_current_ClassDeclaration_EventForwarder(
     get_old_ClassDeclaration_EventForwarder());
+*/
 
 /*
 * validate back compat by using current type in place of old type
 * to disable, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_EventForwarder": {"backCompat": false}
-*/
 declare function get_current_ClassDeclaration_EventForwarder():
     Omit<current.EventForwarder,"">;
 declare function use_old_ClassDeclaration_EventForwarder(
-    use: Omit<current.EventForwarder,"">);
+    use: Omit<old.EventForwarder,"">);
 use_old_ClassDeclaration_EventForwarder(
     get_current_ClassDeclaration_EventForwarder());
+*/
 
 /*
 * validate forward compat by using old type in place of current type
@@ -257,7 +257,7 @@ use_old_ClassDeclaration_EventForwarder(
 declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
     typeof old.extractLogSafeErrorProperties;
 declare function use_current_FunctionDeclaration_extractLogSafeErrorProperties(
-    use: typeof old.extractLogSafeErrorProperties);
+    use: typeof current.extractLogSafeErrorProperties);
 use_current_FunctionDeclaration_extractLogSafeErrorProperties(
     get_old_FunctionDeclaration_extractLogSafeErrorProperties());
 
@@ -269,7 +269,7 @@ use_current_FunctionDeclaration_extractLogSafeErrorProperties(
 declare function get_current_FunctionDeclaration_extractLogSafeErrorProperties():
     typeof current.extractLogSafeErrorProperties;
 declare function use_old_FunctionDeclaration_extractLogSafeErrorProperties(
-    use: typeof current.extractLogSafeErrorProperties);
+    use: typeof old.extractLogSafeErrorProperties);
 use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     get_current_FunctionDeclaration_extractLogSafeErrorProperties());
 
@@ -281,7 +281,7 @@ use_old_FunctionDeclaration_extractLogSafeErrorProperties(
 declare function get_old_VariableDeclaration_fromBase64ToUtf8():
     typeof old.fromBase64ToUtf8;
 declare function use_current_VariableDeclaration_fromBase64ToUtf8(
-    use: typeof old.fromBase64ToUtf8);
+    use: typeof current.fromBase64ToUtf8);
 use_current_VariableDeclaration_fromBase64ToUtf8(
     get_old_VariableDeclaration_fromBase64ToUtf8());
 
@@ -293,7 +293,7 @@ use_current_VariableDeclaration_fromBase64ToUtf8(
 declare function get_current_VariableDeclaration_fromBase64ToUtf8():
     typeof current.fromBase64ToUtf8;
 declare function use_old_VariableDeclaration_fromBase64ToUtf8(
-    use: typeof current.fromBase64ToUtf8);
+    use: typeof old.fromBase64ToUtf8);
 use_old_VariableDeclaration_fromBase64ToUtf8(
     get_current_VariableDeclaration_fromBase64ToUtf8());
 
@@ -305,7 +305,7 @@ use_old_VariableDeclaration_fromBase64ToUtf8(
 declare function get_old_VariableDeclaration_fromUtf8ToBase64():
     typeof old.fromUtf8ToBase64;
 declare function use_current_VariableDeclaration_fromUtf8ToBase64(
-    use: typeof old.fromUtf8ToBase64);
+    use: typeof current.fromUtf8ToBase64);
 use_current_VariableDeclaration_fromUtf8ToBase64(
     get_old_VariableDeclaration_fromUtf8ToBase64());
 
@@ -317,7 +317,7 @@ use_current_VariableDeclaration_fromUtf8ToBase64(
 declare function get_current_VariableDeclaration_fromUtf8ToBase64():
     typeof current.fromUtf8ToBase64;
 declare function use_old_VariableDeclaration_fromUtf8ToBase64(
-    use: typeof current.fromUtf8ToBase64);
+    use: typeof old.fromUtf8ToBase64);
 use_old_VariableDeclaration_fromUtf8ToBase64(
     get_current_VariableDeclaration_fromUtf8ToBase64());
 
@@ -329,7 +329,7 @@ use_old_VariableDeclaration_fromUtf8ToBase64(
 declare function get_old_FunctionDeclaration_gitHashFile():
     typeof old.gitHashFile;
 declare function use_current_FunctionDeclaration_gitHashFile(
-    use: typeof old.gitHashFile);
+    use: typeof current.gitHashFile);
 use_current_FunctionDeclaration_gitHashFile(
     get_old_FunctionDeclaration_gitHashFile());
 
@@ -341,7 +341,7 @@ use_current_FunctionDeclaration_gitHashFile(
 declare function get_current_FunctionDeclaration_gitHashFile():
     typeof current.gitHashFile;
 declare function use_old_FunctionDeclaration_gitHashFile(
-    use: typeof current.gitHashFile);
+    use: typeof old.gitHashFile);
 use_old_FunctionDeclaration_gitHashFile(
     get_current_FunctionDeclaration_gitHashFile());
 
@@ -353,7 +353,7 @@ use_old_FunctionDeclaration_gitHashFile(
 declare function get_old_FunctionDeclaration_hashFile():
     typeof old.hashFile;
 declare function use_current_FunctionDeclaration_hashFile(
-    use: typeof old.hashFile);
+    use: typeof current.hashFile);
 use_current_FunctionDeclaration_hashFile(
     get_old_FunctionDeclaration_hashFile());
 
@@ -365,7 +365,7 @@ use_current_FunctionDeclaration_hashFile(
 declare function get_current_FunctionDeclaration_hashFile():
     typeof current.hashFile;
 declare function use_old_FunctionDeclaration_hashFile(
-    use: typeof current.hashFile);
+    use: typeof old.hashFile);
 use_old_FunctionDeclaration_hashFile(
     get_current_FunctionDeclaration_hashFile());
 
@@ -377,7 +377,7 @@ use_old_FunctionDeclaration_hashFile(
 declare function get_old_ClassDeclaration_Heap():
     Omit<old.Heap<any>,"">;
 declare function use_current_ClassDeclaration_Heap(
-    use: Omit<old.Heap<any>,"">);
+    use: Omit<current.Heap<any>,"">);
 use_current_ClassDeclaration_Heap(
     get_old_ClassDeclaration_Heap());
 
@@ -389,7 +389,7 @@ use_current_ClassDeclaration_Heap(
 declare function get_current_ClassDeclaration_Heap():
     Omit<current.Heap<any>,"">;
 declare function use_old_ClassDeclaration_Heap(
-    use: Omit<current.Heap<any>,"">);
+    use: Omit<old.Heap<any>,"">);
 use_old_ClassDeclaration_Heap(
     get_current_ClassDeclaration_Heap());
 
@@ -401,7 +401,7 @@ use_old_ClassDeclaration_Heap(
 declare function get_old_InterfaceDeclaration_IComparer():
     old.IComparer<any>;
 declare function use_current_InterfaceDeclaration_IComparer(
-    use: old.IComparer<any>);
+    use: current.IComparer<any>);
 use_current_InterfaceDeclaration_IComparer(
     get_old_InterfaceDeclaration_IComparer());
 
@@ -413,7 +413,7 @@ use_current_InterfaceDeclaration_IComparer(
 declare function get_current_InterfaceDeclaration_IComparer():
     current.IComparer<any>;
 declare function use_old_InterfaceDeclaration_IComparer(
-    use: current.IComparer<any>);
+    use: old.IComparer<any>);
 use_old_InterfaceDeclaration_IComparer(
     get_current_InterfaceDeclaration_IComparer());
 
@@ -425,7 +425,7 @@ use_old_InterfaceDeclaration_IComparer(
 declare function get_old_InterfaceDeclaration_IHeapNode():
     old.IHeapNode<any>;
 declare function use_current_InterfaceDeclaration_IHeapNode(
-    use: old.IHeapNode<any>);
+    use: current.IHeapNode<any>);
 use_current_InterfaceDeclaration_IHeapNode(
     get_old_InterfaceDeclaration_IHeapNode());
 
@@ -437,7 +437,7 @@ use_current_InterfaceDeclaration_IHeapNode(
 declare function get_current_InterfaceDeclaration_IHeapNode():
     current.IHeapNode<any>;
 declare function use_old_InterfaceDeclaration_IHeapNode(
-    use: current.IHeapNode<any>);
+    use: old.IHeapNode<any>);
 use_old_InterfaceDeclaration_IHeapNode(
     get_current_InterfaceDeclaration_IHeapNode());
 
@@ -449,7 +449,7 @@ use_old_InterfaceDeclaration_IHeapNode(
 declare function get_old_InterfaceDeclaration_IPromiseTimer():
     old.IPromiseTimer;
 declare function use_current_InterfaceDeclaration_IPromiseTimer(
-    use: old.IPromiseTimer);
+    use: current.IPromiseTimer);
 use_current_InterfaceDeclaration_IPromiseTimer(
     get_old_InterfaceDeclaration_IPromiseTimer());
 
@@ -461,7 +461,7 @@ use_current_InterfaceDeclaration_IPromiseTimer(
 declare function get_current_InterfaceDeclaration_IPromiseTimer():
     current.IPromiseTimer;
 declare function use_old_InterfaceDeclaration_IPromiseTimer(
-    use: current.IPromiseTimer);
+    use: old.IPromiseTimer);
 use_old_InterfaceDeclaration_IPromiseTimer(
     get_current_InterfaceDeclaration_IPromiseTimer());
 
@@ -473,7 +473,7 @@ use_old_InterfaceDeclaration_IPromiseTimer(
 declare function get_old_InterfaceDeclaration_IPromiseTimerResult():
     old.IPromiseTimerResult;
 declare function use_current_InterfaceDeclaration_IPromiseTimerResult(
-    use: old.IPromiseTimerResult);
+    use: current.IPromiseTimerResult);
 use_current_InterfaceDeclaration_IPromiseTimerResult(
     get_old_InterfaceDeclaration_IPromiseTimerResult());
 
@@ -485,7 +485,7 @@ use_current_InterfaceDeclaration_IPromiseTimerResult(
 declare function get_current_InterfaceDeclaration_IPromiseTimerResult():
     current.IPromiseTimerResult;
 declare function use_old_InterfaceDeclaration_IPromiseTimerResult(
-    use: current.IPromiseTimerResult);
+    use: old.IPromiseTimerResult);
 use_old_InterfaceDeclaration_IPromiseTimerResult(
     get_current_InterfaceDeclaration_IPromiseTimerResult());
 
@@ -497,7 +497,7 @@ use_old_InterfaceDeclaration_IPromiseTimerResult(
 declare function get_old_InterfaceDeclaration_IRange():
     old.IRange;
 declare function use_current_InterfaceDeclaration_IRange(
-    use: old.IRange);
+    use: current.IRange);
 use_current_InterfaceDeclaration_IRange(
     get_old_InterfaceDeclaration_IRange());
 
@@ -509,7 +509,7 @@ use_current_InterfaceDeclaration_IRange(
 declare function get_current_InterfaceDeclaration_IRange():
     current.IRange;
 declare function use_old_InterfaceDeclaration_IRange(
-    use: current.IRange);
+    use: old.IRange);
 use_old_InterfaceDeclaration_IRange(
     get_current_InterfaceDeclaration_IRange());
 
@@ -521,7 +521,7 @@ use_old_InterfaceDeclaration_IRange(
 declare function get_old_InterfaceDeclaration_IRangeTrackerSnapshot():
     old.IRangeTrackerSnapshot;
 declare function use_current_InterfaceDeclaration_IRangeTrackerSnapshot(
-    use: old.IRangeTrackerSnapshot);
+    use: current.IRangeTrackerSnapshot);
 use_current_InterfaceDeclaration_IRangeTrackerSnapshot(
     get_old_InterfaceDeclaration_IRangeTrackerSnapshot());
 
@@ -533,7 +533,7 @@ use_current_InterfaceDeclaration_IRangeTrackerSnapshot(
 declare function get_current_InterfaceDeclaration_IRangeTrackerSnapshot():
     current.IRangeTrackerSnapshot;
 declare function use_old_InterfaceDeclaration_IRangeTrackerSnapshot(
-    use: current.IRangeTrackerSnapshot);
+    use: old.IRangeTrackerSnapshot);
 use_old_InterfaceDeclaration_IRangeTrackerSnapshot(
     get_current_InterfaceDeclaration_IRangeTrackerSnapshot());
 
@@ -545,7 +545,7 @@ use_old_InterfaceDeclaration_IRangeTrackerSnapshot(
 declare function get_old_VariableDeclaration_IsoBuffer():
     typeof old.IsoBuffer;
 declare function use_current_VariableDeclaration_IsoBuffer(
-    use: typeof old.IsoBuffer);
+    use: typeof current.IsoBuffer);
 use_current_VariableDeclaration_IsoBuffer(
     get_old_VariableDeclaration_IsoBuffer());
 
@@ -557,7 +557,7 @@ use_current_VariableDeclaration_IsoBuffer(
 declare function get_current_VariableDeclaration_IsoBuffer():
     typeof current.IsoBuffer;
 declare function use_old_VariableDeclaration_IsoBuffer(
-    use: typeof current.IsoBuffer);
+    use: typeof old.IsoBuffer);
 use_old_VariableDeclaration_IsoBuffer(
     get_current_VariableDeclaration_IsoBuffer());
 
@@ -569,7 +569,7 @@ use_old_VariableDeclaration_IsoBuffer(
 declare function get_old_TypeAliasDeclaration_IsoBuffer():
     old.IsoBuffer;
 declare function use_current_TypeAliasDeclaration_IsoBuffer(
-    use: old.IsoBuffer);
+    use: current.IsoBuffer);
 use_current_TypeAliasDeclaration_IsoBuffer(
     get_old_TypeAliasDeclaration_IsoBuffer());
 
@@ -581,7 +581,7 @@ use_current_TypeAliasDeclaration_IsoBuffer(
 declare function get_current_TypeAliasDeclaration_IsoBuffer():
     current.IsoBuffer;
 declare function use_old_TypeAliasDeclaration_IsoBuffer(
-    use: current.IsoBuffer);
+    use: old.IsoBuffer);
 use_old_TypeAliasDeclaration_IsoBuffer(
     get_current_TypeAliasDeclaration_IsoBuffer());
 
@@ -593,7 +593,7 @@ use_old_TypeAliasDeclaration_IsoBuffer(
 declare function get_old_TypeAliasDeclaration_IsomorphicPerformance():
     old.IsomorphicPerformance;
 declare function use_current_TypeAliasDeclaration_IsomorphicPerformance(
-    use: old.IsomorphicPerformance);
+    use: current.IsomorphicPerformance);
 use_current_TypeAliasDeclaration_IsomorphicPerformance(
     get_old_TypeAliasDeclaration_IsomorphicPerformance());
 
@@ -605,7 +605,7 @@ use_current_TypeAliasDeclaration_IsomorphicPerformance(
 declare function get_current_TypeAliasDeclaration_IsomorphicPerformance():
     current.IsomorphicPerformance;
 declare function use_old_TypeAliasDeclaration_IsomorphicPerformance(
-    use: current.IsomorphicPerformance);
+    use: old.IsomorphicPerformance);
 use_old_TypeAliasDeclaration_IsomorphicPerformance(
     get_current_TypeAliasDeclaration_IsomorphicPerformance());
 
@@ -617,7 +617,7 @@ use_old_TypeAliasDeclaration_IsomorphicPerformance(
 declare function get_old_InterfaceDeclaration_ITimer():
     old.ITimer;
 declare function use_current_InterfaceDeclaration_ITimer(
-    use: old.ITimer);
+    use: current.ITimer);
 use_current_InterfaceDeclaration_ITimer(
     get_old_InterfaceDeclaration_ITimer());
 
@@ -629,7 +629,7 @@ use_current_InterfaceDeclaration_ITimer(
 declare function get_current_InterfaceDeclaration_ITimer():
     current.ITimer;
 declare function use_old_InterfaceDeclaration_ITimer(
-    use: current.ITimer);
+    use: old.ITimer);
 use_old_InterfaceDeclaration_ITimer(
     get_current_InterfaceDeclaration_ITimer());
 
@@ -641,7 +641,7 @@ use_old_InterfaceDeclaration_ITimer(
 declare function get_old_InterfaceDeclaration_ITraceEvent():
     old.ITraceEvent;
 declare function use_current_InterfaceDeclaration_ITraceEvent(
-    use: old.ITraceEvent);
+    use: current.ITraceEvent);
 use_current_InterfaceDeclaration_ITraceEvent(
     get_old_InterfaceDeclaration_ITraceEvent());
 
@@ -653,7 +653,7 @@ use_current_InterfaceDeclaration_ITraceEvent(
 declare function get_current_InterfaceDeclaration_ITraceEvent():
     current.ITraceEvent;
 declare function use_old_InterfaceDeclaration_ITraceEvent(
-    use: current.ITraceEvent);
+    use: old.ITraceEvent);
 use_old_InterfaceDeclaration_ITraceEvent(
     get_current_InterfaceDeclaration_ITraceEvent());
 
@@ -665,7 +665,7 @@ use_old_InterfaceDeclaration_ITraceEvent(
 declare function get_old_ClassDeclaration_Lazy():
     Omit<old.Lazy<any>,"">;
 declare function use_current_ClassDeclaration_Lazy(
-    use: Omit<old.Lazy<any>,"">);
+    use: Omit<current.Lazy<any>,"">);
 use_current_ClassDeclaration_Lazy(
     get_old_ClassDeclaration_Lazy());
 
@@ -677,7 +677,7 @@ use_current_ClassDeclaration_Lazy(
 declare function get_current_ClassDeclaration_Lazy():
     Omit<current.Lazy<any>,"">;
 declare function use_old_ClassDeclaration_Lazy(
-    use: Omit<current.Lazy<any>,"">);
+    use: Omit<old.Lazy<any>,"">);
 use_old_ClassDeclaration_Lazy(
     get_current_ClassDeclaration_Lazy());
 
@@ -689,7 +689,7 @@ use_old_ClassDeclaration_Lazy(
 declare function get_old_ClassDeclaration_LazyPromise():
     Omit<old.LazyPromise<any>,"">;
 declare function use_current_ClassDeclaration_LazyPromise(
-    use: Omit<old.LazyPromise<any>,"">);
+    use: Omit<current.LazyPromise<any>,"">);
 use_current_ClassDeclaration_LazyPromise(
     get_old_ClassDeclaration_LazyPromise());
 
@@ -701,7 +701,7 @@ use_current_ClassDeclaration_LazyPromise(
 declare function get_current_ClassDeclaration_LazyPromise():
     Omit<current.LazyPromise<any>,"">;
 declare function use_old_ClassDeclaration_LazyPromise(
-    use: Omit<current.LazyPromise<any>,"">);
+    use: Omit<old.LazyPromise<any>,"">);
 use_old_ClassDeclaration_LazyPromise(
     get_current_ClassDeclaration_LazyPromise());
 
@@ -713,7 +713,7 @@ use_old_ClassDeclaration_LazyPromise(
 declare function get_old_VariableDeclaration_NumberComparer():
     typeof old.NumberComparer;
 declare function use_current_VariableDeclaration_NumberComparer(
-    use: typeof old.NumberComparer);
+    use: typeof current.NumberComparer);
 use_current_VariableDeclaration_NumberComparer(
     get_old_VariableDeclaration_NumberComparer());
 
@@ -725,7 +725,7 @@ use_current_VariableDeclaration_NumberComparer(
 declare function get_current_VariableDeclaration_NumberComparer():
     typeof current.NumberComparer;
 declare function use_old_VariableDeclaration_NumberComparer(
-    use: typeof current.NumberComparer);
+    use: typeof old.NumberComparer);
 use_old_VariableDeclaration_NumberComparer(
     get_current_VariableDeclaration_NumberComparer());
 
@@ -737,7 +737,7 @@ use_old_VariableDeclaration_NumberComparer(
 declare function get_old_VariableDeclaration_performance():
     typeof old.performance;
 declare function use_current_VariableDeclaration_performance(
-    use: typeof old.performance);
+    use: typeof current.performance);
 use_current_VariableDeclaration_performance(
     get_old_VariableDeclaration_performance());
 
@@ -749,7 +749,7 @@ use_current_VariableDeclaration_performance(
 declare function get_current_VariableDeclaration_performance():
     typeof current.performance;
 declare function use_old_VariableDeclaration_performance(
-    use: typeof current.performance);
+    use: typeof old.performance);
 use_old_VariableDeclaration_performance(
     get_current_VariableDeclaration_performance());
 
@@ -761,7 +761,7 @@ use_old_VariableDeclaration_performance(
 declare function get_old_ClassDeclaration_PromiseCache():
     Omit<old.PromiseCache<any,any>,"">;
 declare function use_current_ClassDeclaration_PromiseCache(
-    use: Omit<old.PromiseCache<any,any>,"">);
+    use: Omit<current.PromiseCache<any,any>,"">);
 use_current_ClassDeclaration_PromiseCache(
     get_old_ClassDeclaration_PromiseCache());
 
@@ -773,7 +773,7 @@ use_current_ClassDeclaration_PromiseCache(
 declare function get_current_ClassDeclaration_PromiseCache():
     Omit<current.PromiseCache<any,any>,"">;
 declare function use_old_ClassDeclaration_PromiseCache(
-    use: Omit<current.PromiseCache<any,any>,"">);
+    use: Omit<old.PromiseCache<any,any>,"">);
 use_old_ClassDeclaration_PromiseCache(
     get_current_ClassDeclaration_PromiseCache());
 
@@ -785,7 +785,7 @@ use_old_ClassDeclaration_PromiseCache(
 declare function get_old_TypeAliasDeclaration_PromiseCacheExpiry():
     old.PromiseCacheExpiry;
 declare function use_current_TypeAliasDeclaration_PromiseCacheExpiry(
-    use: old.PromiseCacheExpiry);
+    use: current.PromiseCacheExpiry);
 use_current_TypeAliasDeclaration_PromiseCacheExpiry(
     get_old_TypeAliasDeclaration_PromiseCacheExpiry());
 
@@ -797,7 +797,7 @@ use_current_TypeAliasDeclaration_PromiseCacheExpiry(
 declare function get_current_TypeAliasDeclaration_PromiseCacheExpiry():
     current.PromiseCacheExpiry;
 declare function use_old_TypeAliasDeclaration_PromiseCacheExpiry(
-    use: current.PromiseCacheExpiry);
+    use: old.PromiseCacheExpiry);
 use_old_TypeAliasDeclaration_PromiseCacheExpiry(
     get_current_TypeAliasDeclaration_PromiseCacheExpiry());
 
@@ -809,7 +809,7 @@ use_old_TypeAliasDeclaration_PromiseCacheExpiry(
 declare function get_old_InterfaceDeclaration_PromiseCacheOptions():
     old.PromiseCacheOptions;
 declare function use_current_InterfaceDeclaration_PromiseCacheOptions(
-    use: old.PromiseCacheOptions);
+    use: current.PromiseCacheOptions);
 use_current_InterfaceDeclaration_PromiseCacheOptions(
     get_old_InterfaceDeclaration_PromiseCacheOptions());
 
@@ -821,7 +821,7 @@ use_current_InterfaceDeclaration_PromiseCacheOptions(
 declare function get_current_InterfaceDeclaration_PromiseCacheOptions():
     current.PromiseCacheOptions;
 declare function use_old_InterfaceDeclaration_PromiseCacheOptions(
-    use: current.PromiseCacheOptions);
+    use: old.PromiseCacheOptions);
 use_old_InterfaceDeclaration_PromiseCacheOptions(
     get_current_InterfaceDeclaration_PromiseCacheOptions());
 
@@ -833,7 +833,7 @@ use_old_InterfaceDeclaration_PromiseCacheOptions(
 declare function get_old_ClassDeclaration_PromiseTimer():
     Omit<old.PromiseTimer,"">;
 declare function use_current_ClassDeclaration_PromiseTimer(
-    use: Omit<old.PromiseTimer,"">);
+    use: Omit<current.PromiseTimer,"">);
 use_current_ClassDeclaration_PromiseTimer(
     get_old_ClassDeclaration_PromiseTimer());
 
@@ -845,7 +845,7 @@ use_current_ClassDeclaration_PromiseTimer(
 declare function get_current_ClassDeclaration_PromiseTimer():
     Omit<current.PromiseTimer,"">;
 declare function use_old_ClassDeclaration_PromiseTimer(
-    use: Omit<current.PromiseTimer,"">);
+    use: Omit<old.PromiseTimer,"">);
 use_old_ClassDeclaration_PromiseTimer(
     get_current_ClassDeclaration_PromiseTimer());
 
@@ -857,7 +857,7 @@ use_old_ClassDeclaration_PromiseTimer(
 declare function get_old_ClassDeclaration_RangeTracker():
     Omit<old.RangeTracker,"">;
 declare function use_current_ClassDeclaration_RangeTracker(
-    use: Omit<old.RangeTracker,"">);
+    use: Omit<current.RangeTracker,"">);
 use_current_ClassDeclaration_RangeTracker(
     get_old_ClassDeclaration_RangeTracker());
 
@@ -869,7 +869,7 @@ use_current_ClassDeclaration_RangeTracker(
 declare function get_current_ClassDeclaration_RangeTracker():
     Omit<current.RangeTracker,"">;
 declare function use_old_ClassDeclaration_RangeTracker(
-    use: Omit<current.RangeTracker,"">);
+    use: Omit<old.RangeTracker,"">);
 use_old_ClassDeclaration_RangeTracker(
     get_current_ClassDeclaration_RangeTracker());
 
@@ -881,7 +881,7 @@ use_old_ClassDeclaration_RangeTracker(
 declare function get_old_ClassDeclaration_RateLimiter():
     Omit<old.RateLimiter,"">;
 declare function use_current_ClassDeclaration_RateLimiter(
-    use: Omit<old.RateLimiter,"">);
+    use: Omit<current.RateLimiter,"">);
 use_current_ClassDeclaration_RateLimiter(
     get_old_ClassDeclaration_RateLimiter());
 
@@ -893,7 +893,7 @@ use_current_ClassDeclaration_RateLimiter(
 declare function get_current_ClassDeclaration_RateLimiter():
     Omit<current.RateLimiter,"">;
 declare function use_old_ClassDeclaration_RateLimiter(
-    use: Omit<current.RateLimiter,"">);
+    use: Omit<old.RateLimiter,"">);
 use_old_ClassDeclaration_RateLimiter(
     get_current_ClassDeclaration_RateLimiter());
 
@@ -905,7 +905,7 @@ use_old_ClassDeclaration_RateLimiter(
 declare function get_old_FunctionDeclaration_safelyParseJSON():
     typeof old.safelyParseJSON;
 declare function use_current_FunctionDeclaration_safelyParseJSON(
-    use: typeof old.safelyParseJSON);
+    use: typeof current.safelyParseJSON);
 use_current_FunctionDeclaration_safelyParseJSON(
     get_old_FunctionDeclaration_safelyParseJSON());
 
@@ -917,7 +917,7 @@ use_current_FunctionDeclaration_safelyParseJSON(
 declare function get_current_FunctionDeclaration_safelyParseJSON():
     typeof current.safelyParseJSON;
 declare function use_old_FunctionDeclaration_safelyParseJSON(
-    use: typeof current.safelyParseJSON);
+    use: typeof old.safelyParseJSON);
 use_old_FunctionDeclaration_safelyParseJSON(
     get_current_FunctionDeclaration_safelyParseJSON());
 
@@ -929,7 +929,7 @@ use_old_FunctionDeclaration_safelyParseJSON(
 declare function get_old_FunctionDeclaration_stringToBuffer():
     typeof old.stringToBuffer;
 declare function use_current_FunctionDeclaration_stringToBuffer(
-    use: typeof old.stringToBuffer);
+    use: typeof current.stringToBuffer);
 use_current_FunctionDeclaration_stringToBuffer(
     get_old_FunctionDeclaration_stringToBuffer());
 
@@ -941,7 +941,7 @@ use_current_FunctionDeclaration_stringToBuffer(
 declare function get_current_FunctionDeclaration_stringToBuffer():
     typeof current.stringToBuffer;
 declare function use_old_FunctionDeclaration_stringToBuffer(
-    use: typeof current.stringToBuffer);
+    use: typeof old.stringToBuffer);
 use_old_FunctionDeclaration_stringToBuffer(
     get_current_FunctionDeclaration_stringToBuffer());
 
@@ -953,7 +953,7 @@ use_old_FunctionDeclaration_stringToBuffer(
 declare function get_old_ClassDeclaration_TelemetryNullLogger():
     Omit<old.TelemetryNullLogger,"">;
 declare function use_current_ClassDeclaration_TelemetryNullLogger(
-    use: Omit<old.TelemetryNullLogger,"">);
+    use: Omit<current.TelemetryNullLogger,"">);
 use_current_ClassDeclaration_TelemetryNullLogger(
     get_old_ClassDeclaration_TelemetryNullLogger());
 
@@ -965,7 +965,7 @@ use_current_ClassDeclaration_TelemetryNullLogger(
 declare function get_current_ClassDeclaration_TelemetryNullLogger():
     Omit<current.TelemetryNullLogger,"">;
 declare function use_old_ClassDeclaration_TelemetryNullLogger(
-    use: Omit<current.TelemetryNullLogger,"">);
+    use: Omit<old.TelemetryNullLogger,"">);
 use_old_ClassDeclaration_TelemetryNullLogger(
     get_current_ClassDeclaration_TelemetryNullLogger());
 
@@ -977,7 +977,7 @@ use_old_ClassDeclaration_TelemetryNullLogger(
 declare function get_old_ClassDeclaration_Timer():
     Omit<old.Timer,"">;
 declare function use_current_ClassDeclaration_Timer(
-    use: Omit<old.Timer,"">);
+    use: Omit<current.Timer,"">);
 use_current_ClassDeclaration_Timer(
     get_old_ClassDeclaration_Timer());
 
@@ -989,7 +989,7 @@ use_current_ClassDeclaration_Timer(
 declare function get_current_ClassDeclaration_Timer():
     Omit<current.Timer,"">;
 declare function use_old_ClassDeclaration_Timer(
-    use: Omit<current.Timer,"">);
+    use: Omit<old.Timer,"">);
 use_old_ClassDeclaration_Timer(
     get_current_ClassDeclaration_Timer());
 
@@ -1001,7 +1001,7 @@ use_old_ClassDeclaration_Timer(
 declare function get_old_VariableDeclaration_toUtf8():
     typeof old.toUtf8;
 declare function use_current_VariableDeclaration_toUtf8(
-    use: typeof old.toUtf8);
+    use: typeof current.toUtf8);
 use_current_VariableDeclaration_toUtf8(
     get_old_VariableDeclaration_toUtf8());
 
@@ -1013,7 +1013,7 @@ use_current_VariableDeclaration_toUtf8(
 declare function get_current_VariableDeclaration_toUtf8():
     typeof current.toUtf8;
 declare function use_old_VariableDeclaration_toUtf8(
-    use: typeof current.toUtf8);
+    use: typeof old.toUtf8);
 use_old_VariableDeclaration_toUtf8(
     get_current_VariableDeclaration_toUtf8());
 
@@ -1025,7 +1025,7 @@ use_old_VariableDeclaration_toUtf8(
 declare function get_old_ClassDeclaration_Trace():
     Omit<old.Trace,"">;
 declare function use_current_ClassDeclaration_Trace(
-    use: Omit<old.Trace,"">);
+    use: Omit<current.Trace,"">);
 use_current_ClassDeclaration_Trace(
     get_old_ClassDeclaration_Trace());
 
@@ -1037,7 +1037,7 @@ use_current_ClassDeclaration_Trace(
 declare function get_current_ClassDeclaration_Trace():
     Omit<current.Trace,"">;
 declare function use_old_ClassDeclaration_Trace(
-    use: Omit<current.Trace,"">);
+    use: Omit<old.Trace,"">);
 use_old_ClassDeclaration_Trace(
     get_current_ClassDeclaration_Trace());
 
@@ -1049,7 +1049,7 @@ use_old_ClassDeclaration_Trace(
 declare function get_old_ClassDeclaration_TypedEventEmitter():
     Omit<old.TypedEventEmitter<any>,"">;
 declare function use_current_ClassDeclaration_TypedEventEmitter(
-    use: Omit<old.TypedEventEmitter<any>,"">);
+    use: Omit<current.TypedEventEmitter<any>,"">);
 use_current_ClassDeclaration_TypedEventEmitter(
     get_old_ClassDeclaration_TypedEventEmitter());
 
@@ -1061,7 +1061,7 @@ use_current_ClassDeclaration_TypedEventEmitter(
 declare function get_current_ClassDeclaration_TypedEventEmitter():
     Omit<current.TypedEventEmitter<any>,"">;
 declare function use_old_ClassDeclaration_TypedEventEmitter(
-    use: Omit<current.TypedEventEmitter<any>,"">);
+    use: Omit<old.TypedEventEmitter<any>,"">);
 use_old_ClassDeclaration_TypedEventEmitter(
     get_current_ClassDeclaration_TypedEventEmitter());
 
@@ -1073,7 +1073,7 @@ use_old_ClassDeclaration_TypedEventEmitter(
 declare function get_old_TypeAliasDeclaration_TypedEventTransform():
     old.TypedEventTransform<any,any>;
 declare function use_current_TypeAliasDeclaration_TypedEventTransform(
-    use: old.TypedEventTransform<any,any>);
+    use: current.TypedEventTransform<any,any>);
 use_current_TypeAliasDeclaration_TypedEventTransform(
     get_old_TypeAliasDeclaration_TypedEventTransform());
 
@@ -1085,7 +1085,7 @@ use_current_TypeAliasDeclaration_TypedEventTransform(
 declare function get_current_TypeAliasDeclaration_TypedEventTransform():
     current.TypedEventTransform<any,any>;
 declare function use_old_TypeAliasDeclaration_TypedEventTransform(
-    use: current.TypedEventTransform<any,any>);
+    use: old.TypedEventTransform<any,any>);
 use_old_TypeAliasDeclaration_TypedEventTransform(
     get_current_TypeAliasDeclaration_TypedEventTransform());
 
@@ -1097,7 +1097,7 @@ use_old_TypeAliasDeclaration_TypedEventTransform(
 declare function get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer():
     typeof old.Uint8ArrayToArrayBuffer;
 declare function use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    use: typeof old.Uint8ArrayToArrayBuffer);
+    use: typeof current.Uint8ArrayToArrayBuffer);
 use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
     get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer());
 
@@ -1109,7 +1109,7 @@ use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
 declare function get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer():
     typeof current.Uint8ArrayToArrayBuffer;
 declare function use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    use: typeof current.Uint8ArrayToArrayBuffer);
+    use: typeof old.Uint8ArrayToArrayBuffer);
 use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
     get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer());
 
@@ -1121,7 +1121,7 @@ use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
 declare function get_old_FunctionDeclaration_Uint8ArrayToString():
     typeof old.Uint8ArrayToString;
 declare function use_current_FunctionDeclaration_Uint8ArrayToString(
-    use: typeof old.Uint8ArrayToString);
+    use: typeof current.Uint8ArrayToString);
 use_current_FunctionDeclaration_Uint8ArrayToString(
     get_old_FunctionDeclaration_Uint8ArrayToString());
 
@@ -1133,7 +1133,7 @@ use_current_FunctionDeclaration_Uint8ArrayToString(
 declare function get_current_FunctionDeclaration_Uint8ArrayToString():
     typeof current.Uint8ArrayToString;
 declare function use_old_FunctionDeclaration_Uint8ArrayToString(
-    use: typeof current.Uint8ArrayToString);
+    use: typeof old.Uint8ArrayToString);
 use_old_FunctionDeclaration_Uint8ArrayToString(
     get_current_FunctionDeclaration_Uint8ArrayToString());
 
@@ -1145,7 +1145,7 @@ use_old_FunctionDeclaration_Uint8ArrayToString(
 declare function get_old_FunctionDeclaration_unreachableCase():
     typeof old.unreachableCase;
 declare function use_current_FunctionDeclaration_unreachableCase(
-    use: typeof old.unreachableCase);
+    use: typeof current.unreachableCase);
 use_current_FunctionDeclaration_unreachableCase(
     get_old_FunctionDeclaration_unreachableCase());
 
@@ -1157,6 +1157,6 @@ use_current_FunctionDeclaration_unreachableCase(
 declare function get_current_FunctionDeclaration_unreachableCase():
     typeof current.unreachableCase;
 declare function use_old_FunctionDeclaration_unreachableCase(
-    use: typeof current.unreachableCase);
+    use: typeof old.unreachableCase);
 use_old_FunctionDeclaration_unreachableCase(
     get_current_FunctionDeclaration_unreachableCase());

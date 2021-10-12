@@ -99,7 +99,7 @@ function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData){
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType)}`;
     const testString: string[] =[];
     testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType.prefix, getAsType)};`);
-    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(getAsType.prefix, useType)});`);
+    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType.prefix, useType)});`);
     testString.push(`${useSig}(\n    ${getSig}());`)
     return testString
 }
