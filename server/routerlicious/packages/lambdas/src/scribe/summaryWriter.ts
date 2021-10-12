@@ -174,8 +174,7 @@ export class SummaryWriter implements ISummaryWriter {
                     protocolEntries,
                     logTailEntries,
                     serviceProtocolEntries,
-                    checkpoint.protocolState.sequenceNumber,
-                    content.details?.includesProtocolTree);
+                    checkpoint.protocolState.sequenceNumber);
             } else {
                 const [logTailTree, protocolTree, serviceProtocolTree, appSummaryTree] = await Promise.all([
                     this.summaryStorage.createTree({ entries: logTailEntries }),
