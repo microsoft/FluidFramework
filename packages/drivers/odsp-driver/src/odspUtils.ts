@@ -105,11 +105,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError("fetchErrorNoResponse", fetchIncorrectResponse);
+            throwOdspNetworkError("odspFetchErrorNoResponse", fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `fetchError [${response.status}]`, response.status, response, await response.text());
+                `odspFetchError [${response.status}]`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -142,7 +142,7 @@ export async function fetchHelper(
         //
         const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
         throwOdspNetworkError(
-            `fetchThrewError [${failureCode}]`,
+            `odspFetchThrewError [${failureCode}]`,
             failureCode,
         );
     });
