@@ -7,6 +7,7 @@ import * as fs from "fs";
 
 export type PackageDetails ={
     readonly name: string;
+    readonly packageDir: string;
     readonly version: string;
     readonly oldVersions: readonly string[];
     readonly broken: BrokenCompatTypes;
@@ -67,6 +68,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
 
     return {
         name: pkgJson.name,
+        packageDir,
         version: pkgJson.version,
         oldVersions,
         broken: pkgJson.typeValidation.broken
