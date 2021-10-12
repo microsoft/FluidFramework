@@ -1430,6 +1430,7 @@ export class DeltaManager
                     if (message1 !== message2) {
                         const error = new NonRetryableError(
                             "twoMessagesWithSameSeqNumAndDifferentPayload",
+                            undefined,
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,

@@ -245,7 +245,7 @@ export class NetworkErrorBasic<T extends string> extends LoggingError implements
 
 // @public (undocumented)
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
-    constructor(fluidErrorCode: string, message: string, errorType: T, props?: ITelemetryProperties);
+    constructor(fluidErrorCode: string, message: string | undefined, errorType: T, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType: T;
 }
@@ -330,7 +330,7 @@ export function requestOps(get: (from: number, to: number, telemetryProps: ITele
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
-    constructor(fluidErrorCode: string, message: string, errorType: T, props?: ITelemetryProperties);
+    constructor(fluidErrorCode: string, message: string | undefined, errorType: T, props?: ITelemetryProperties);
     // (undocumented)
     readonly errorType: T;
 }

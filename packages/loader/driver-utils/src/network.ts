@@ -93,22 +93,22 @@ export class NetworkErrorBasic<T extends string> extends LoggingError implements
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
         fluidErrorCode: string,
-        message: string,
+        message: string | undefined,
         readonly errorType: T,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, message, errorType, false, props);
+        super(fluidErrorCode, message ?? fluidErrorCode, errorType, false, props);
     }
 }
 
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
         fluidErrorCode: string,
-        message: string,
+        message: string | undefined,
         readonly errorType: T,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, message, errorType, true, props);
+        super(fluidErrorCode, message ?? fluidErrorCode, errorType, true, props);
     }
 }
 
