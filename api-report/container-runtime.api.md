@@ -645,7 +645,7 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection);
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: any);
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];

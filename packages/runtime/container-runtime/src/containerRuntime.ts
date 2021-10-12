@@ -127,6 +127,7 @@ import { ISerializedElection, OrderedClientCollection, OrderedClientElection } f
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
     SubmitSummaryResult,
+    IConnectableRuntime,
     IGeneratedSummaryStats,
     ISubmitSummaryOptions,
     ISummarizer,
@@ -135,6 +136,7 @@ import {
     ISummarizerRuntime,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
+import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -999,7 +1001,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     () => this.summaryConfiguration,
                     this /* ISummarizerInternalsProvider */,
                     this.IFluidHandleContext,
-                    this.summaryCollection);
+                    this.summaryCollection,
+                    async (runtime: IConnectableRuntime) => {
+                        const coord = await RunWhileConnectedCoordinator.create(runtime);
+                        return coord;
+                    });
             } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Create the SummaryManager and mark the initial state
                 this.summaryManager = new SummaryManager(
