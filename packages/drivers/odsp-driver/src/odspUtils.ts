@@ -140,10 +140,10 @@ export async function fetchHelper(
         // It could container PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
+        const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
         throwOdspNetworkError(
-            "fetchThrewError",
-            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
-            undefined, // response
+            `fetchThrewError [${failureCode}]`,
+            failureCode,
         );
     });
 }
