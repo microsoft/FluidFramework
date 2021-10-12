@@ -47,11 +47,15 @@ export enum CommonProperties {
     sequenceNumber = "sequenceNumber",
     checkpointOffset = "checkpointOffset",
 
-    // Summary related properties
+    // Summary properties
     clientSummarySuccess = "clientSummarySuccess",
     serviceSummarySuccess = "serviceSummarySuccess",
     maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
     lastSummarySequenceNumber = "lastSummarySequenceNumber",
+
+    // Logtail properties
+    minLogtailSequenceNumber = "minLogtailSequenceNumber",
+    maxLogtailSequenceNumber = "maxLogtailSequenceNumber",
 
     // Request properties
     statusCode = "statusCode",
@@ -127,3 +131,9 @@ export function handleError(eventName: LumberEventName, errMsg: string, engineLi
         errLumber.error(errMsg, err);
     }
 }
+
+// Helper method to add commonly used Lumber properties
+export const getLumberBaseProperties = (documentId: string, tenantId: string) => ({
+    [BaseTelemetryProperties.tenantId]: tenantId,
+    [BaseTelemetryProperties.documentId]: documentId,
+});

@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { DriverErrorType, IThrottlingWarning } from "@fluidframework/driver-definitions";
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { createOdspNetworkError, invalidFileNameStatusCode, enrichOdspError } from "../odspErrorUtils";
 
@@ -173,6 +173,7 @@ describe("OdspErrorUtils", () => {
             assert.equal(error.getTelemetryProperties().sprequestduration, 5);
             assert.equal(error.getTelemetryProperties().contentsize, 5);
             assert.equal(error.getTelemetryProperties().serverEpoch, "mock header x-fluid-epoch");
+            assert.equal((error as IOdspError).serverEpoch, "mock header x-fluid-epoch");
         });
     });
 

@@ -169,7 +169,7 @@ export class Timer implements ITimer {
 }
 
 export interface IPromiseTimerResult {
-    timerResult: "timeout" | "timerCancelled";
+    timerResult: "timeout" | "cancel";
 }
 
 /**
@@ -215,7 +215,7 @@ export class PromiseTimer implements IPromiseTimer {
     public clear() {
         this.timer.clear();
         if (this.deferred) {
-            this.deferred.resolve({ timerResult: "timerCancelled" });
+            this.deferred.resolve({ timerResult: "cancel" });
             this.deferred = undefined;
         }
     }
