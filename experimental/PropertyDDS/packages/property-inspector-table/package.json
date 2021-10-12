@@ -27,8 +27,8 @@
     "prepack": "npm run webpack",
     "storybook": "start-storybook -p 6006",
     "test": "npm run test:jest",
-    "test:jest": "jest",
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
+    "test:jest": "jest",
     "tsc": "tsc",
     "webpack": "webpack --config webpack.prod.js --env.production"
   },
@@ -114,5 +114,9 @@
     "@fluid-experimental/property-properties": "^0.42.0",
     "@fluid-experimental/property-proxy": "^0.42.0",
     "react": "^16.10.2"
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
   }
 }
