@@ -5,7 +5,7 @@
 
 import * as fs from "fs";
 import { PackageDetails } from "./packageJson";
-import { generateTypeDataForProject, TypeData } from "./typeData";
+import { generateTypeDataForProject, toTypeString, TypeData } from "./typeData";
 
 export function generateTests(packageDetails: PackageDetails, packageDir: string) {
 
@@ -91,16 +91,12 @@ function buildTestCase(getAsType:TestCaseTypeData, useType:TestCaseTypeData){
     const getSig =`get_${getAsType.prefix}_${getFullTypeName(getAsType)}`;
     const useSig =`use_${useType.prefix}_${getFullTypeName(useType)}`;
     const testString: string[] =[];
-    testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType)};`);
-    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(useType)});`);
+    testString.push(`declare function ${getSig}():\n    ${toTypeString(getAsType.prefix, getAsType)};`);
+    testString.push(`declare function ${useSig}(\n    use: ${toTypeString(getAsType.prefix, useType)});`);
     testString.push(`${useSig}(\n    ${getSig}());`)
     return testString
 }
 
 function getFullTypeName(typeData: TypeData){
     return `${typeData.kind}_${typeData.name}`
-}
-
-function toTypeString(typeData: TestCaseTypeData){
-    return `${typeData.needsTypeof ? "typeof " : ""}${typeData.prefix}.${typeData.name}${typeData.typeParams ?? ""}`;
 }
