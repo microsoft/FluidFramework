@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollection } from "./database";
 import { debug } from "./debug";
 
@@ -44,6 +45,7 @@ export class MongoManager {
      */
     public async close(): Promise<void> {
         debug("Call close connection to MongoDB");
+        Lumberjack.info("Call close connection to MongoDB");
         this.shouldReconnect = false;
         const database = await this.databaseP;
         return database.close();
@@ -58,20 +60,24 @@ export class MongoManager {
             .then((db) => {
                 db.on("error", (error) => {
                     debug("DB Error", error);
+                    Lumberjack.error("DB Error", undefined, error);
                     this.reconnect(this.reconnectDelayMs);
                 });
 
                 db.on("close", (value) => {
                     debug("DB Close");
+                    Lumberjack.info("DB Close");
                     this.reconnect(this.reconnectDelayMs);
                 });
 
                 db.on("reconnect", (value) => {
                     debug("DB Reconnect");
+                    Lumberjack.info("DB Reconnect");
                 });
 
                 db.on("reconnectFailed", (value) => {
                     debug("DB Reconnect failed");
+                    Lumberjack.error("DB Reconnect failed", undefined, value);
                 });
 
                 return db;
@@ -79,10 +85,12 @@ export class MongoManager {
 
         databaseP.catch((error) => {
             debug("DB Connection Error", error);
+            Lumberjack.error("DB Connection Error", undefined, error);
             this.reconnect(this.reconnectDelayMs);
         });
 
         debug("Successfully connected to MongoDB");
+        Lumberjack.info("Successfully connected to MongoDB");
         return databaseP;
     }
 
@@ -92,6 +100,7 @@ export class MongoManager {
     private reconnect(delay) {
         if (!this.shouldReconnect) {
             debug("Should not reconnect to MongoDB");
+            Lumberjack.info("Should not reconnect to MongoDB");
             return;
         }
 
