@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IContextErrorData, IQueuedMessage } from "@fluidframework/server-services-core";
+import { IContext, IContextErrorData, IQueuedMessage, IRoutingKey } from "@fluidframework/server-services-core";
 import { DocumentContext } from "./documentContext";
 
 const LastCheckpointedOffset: IQueuedMessage = {
@@ -40,12 +40,12 @@ export class DocumentContextManager extends EventEmitter {
      * Creates a context that should be used for a single document partition
      * This class is responsible for the lifetime of the context
      */
-    public createContext(head: IQueuedMessage): DocumentContext {
+    public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
         // Contexts should only be created within the processing range of the manager
         assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 
         // Create the new context and register for listeners on it
-        const context = new DocumentContext(head, this.partitionContext.log, () => this.tail);
+        const context = new DocumentContext(routingKey, head, this.partitionContext.log, () => this.tail);
         this.contexts.add(context);
         context.addListener("checkpoint", () => this.updateCheckpoint());
         context.addListener("error", (error, errorData: IContextErrorData) => this.emit("error", error, errorData));
