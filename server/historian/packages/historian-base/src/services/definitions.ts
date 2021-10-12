@@ -30,7 +30,7 @@ export interface ITenantService {
      * Retrieves the storage provider details for the given tenant.
      * If the provided token is invalid will return a broken promise.
      */
-    getTenant(tenantId: string, token: string, includeDisabled: boolean): Promise<ITenantConfig>;
+    getTenant(tenantId: string, token: string, includeDisabledTenant: boolean): Promise<ITenantConfig>;
 
     /**
      * Removes any existing cache for the given tenant and token.

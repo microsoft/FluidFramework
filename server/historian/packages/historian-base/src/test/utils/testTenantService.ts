@@ -11,7 +11,7 @@ import { ITenantService } from "../../services";
 export class TestTenantService implements ITenantService {
     private readonly tenant = new TestTenant("http://test", "http://historian", new TestDb({}));
 
-    async getTenant(tenantId: string, token: string, includeDisabled = false): Promise<ITenantConfig> {
+    async getTenant(tenantId: string, token: string, includeDisabledTenant = false): Promise<ITenantConfig> {
         return Promise.resolve({
             id: "testTenant",
             storage: this.tenant.storage,
