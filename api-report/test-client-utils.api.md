@@ -7,7 +7,7 @@
 import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
 import { IUser } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public
 export const generateTestUser: () => IUser & {
     name: string;
 };
