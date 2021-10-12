@@ -41,11 +41,14 @@ export enum SystemOperations {
     Leave,
 }
 
+/**
+ * Object that indicates a specific session/document in the system
+ */
 export interface IRoutingKey {
-    // The tenant the message is intended for
+    // The tenant id
     tenantId: string;
 
-    // The object the message is intended for
+    // The document id
     documentId: string;
 }
 
