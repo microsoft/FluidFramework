@@ -1276,9 +1276,15 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _serializeArray(in_array) {
         var len = in_array.length;
         var result = new Array(len);
+    if (this._isPrimitive) {
         for (var i = 0; i < len; i++) {
             result[i] = this._serializeValue(in_array[i]);
         }
+    } else {
+        for (var i = 0; i < len; i++) {
+            result[i] = {};
+        }
+    }
         return result;
     };
 
