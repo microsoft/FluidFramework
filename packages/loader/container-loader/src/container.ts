@@ -890,10 +890,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.subLogger,
                     ),
                     "containerAttach",
-                    (id: string) => this._deltaManager.refreshDelayInfo(id),
-                    (id: string, delayMs: number, error: any) =>
-                        this._deltaManager.emitDelayInfo(id, delayMs, error),
                     this.logger,
+                    {}, // progress
                 );
             }
             const resolvedUrl = this.service.resolvedUrl;
@@ -1421,7 +1419,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const storageService = await this.service.connectToStorage();
 
         this._storageService =
-            new RetriableDocumentStorageService(storageService, this._deltaManager, this.logger);
+            new RetriableDocumentStorageService(storageService, this.logger);
 
         if(this.options.summarizeProtocolTree === true) {
             this._storageService =
