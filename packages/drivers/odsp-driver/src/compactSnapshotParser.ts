@@ -47,9 +47,13 @@ function readBlobSection(node: NodeCore) {
  */
 function readOpsSection(node: NodeCore) {
     const ops: ISequencedDocumentMessage[] = [];
-    for (let i = 0; i < node.length; ++i) {
-        ops.push(JSON.parse(node.getString(i)));
+    const records = getAndValidateNodeProps(node, ["firstSequenceNumber", "deltas"]);
+    assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
+    assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
+    for (let i = 0; i < records.deltas.length; ++i) {
+        ops.push(JSON.parse(records.deltas.getString(i)));
     }
+    assert(records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber, "Validate first op seq number");
     return ops;
 }
 

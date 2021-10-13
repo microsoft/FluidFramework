@@ -109,11 +109,20 @@ function writeSnapshotSection(
  * @param ops - ops that is being serialized
 */
 function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
-    rootNode.addString("deltas", true);
-    const opsNode = rootNode.addNode("list");
-    ops.forEach((op) => {
-        opsNode.addString(JSON.stringify(op), false);
-    });
+    let firstSequenceNumber: number | undefined;
+    if (ops.length > 0) {
+        firstSequenceNumber = ops[0].sequenceNumber;
+    }
+    if (firstSequenceNumber !== undefined) {
+        rootNode.addString("deltas", true);
+        const opsNode = rootNode.addNode();
+        addNumberProperty(opsNode, "firstSequenceNumber", firstSequenceNumber);
+        opsNode.addString("deltas", true);
+        const deltaNode = opsNode.addNode("list");
+        ops.forEach((op) => {
+            deltaNode.addString(JSON.stringify(op), false);
+        });
+    }
 }
 
 /**
