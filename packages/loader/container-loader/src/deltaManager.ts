@@ -799,7 +799,6 @@ export class DeltaManager
 
             // Attempt the connection
             connectCore().then((connection) => {
-                assert(this.connectionP === undefined, "this.connectionP has been reset on successful connection");
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1141,6 +1140,9 @@ export class DeltaManager
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
+        assert(this.connectionP !== undefined, "reentrnacy may result in incorrect behavior");
+        this.connectionP = undefined;
+
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;
         if (disposable.disposed === true) {
@@ -1156,7 +1158,6 @@ export class DeltaManager
         }
 
         this.connection = connection;
-        this.connectionP = undefined;
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
