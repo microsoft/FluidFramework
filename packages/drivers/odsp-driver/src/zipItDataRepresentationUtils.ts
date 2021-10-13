@@ -101,7 +101,7 @@ export const boolToCodeMap = {
     1: 11, // true
 };
 
-export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
+export function getAndValidateNodeProps(node: NodeCore, props: string[], enforceAllProps = true) {
     const propSet = new Set(props);
     const res: Record<string, NodeTypes> = {};
     for (const [keyNode, valueNode] of node.iteratePairs()) {
@@ -112,7 +112,9 @@ export function getAndValidateNodeProps(node: NodeCore, props: string[]) {
             res[keyStr] = valueNode;
         }
     }
-    assert(propSet.size === 0, 0x22a /* "All properties should exist" */);
+    if (enforceAllProps) {
+        assert(propSet.size === 0, 0x22a /* "All properties should exist" */);
+    }
     return res;
 }
 

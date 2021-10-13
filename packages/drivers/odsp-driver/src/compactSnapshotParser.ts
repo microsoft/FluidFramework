@@ -7,7 +7,15 @@ import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ISnapshotContents } from "./odspUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
-import { BlobCore, getAndValidateNodeProps, NodeCore, TreeBuilder } from "./zipItDataRepresentationUtils";
+import {
+    assertBlobCoreInstance,
+    assertBoolInstance,
+    assertNodeCoreInstance,
+    assertNumberInstance,
+    getAndValidateNodeProps,
+    NodeCore,
+    TreeBuilder,
+} from "./zipItDataRepresentationUtils";
 
 export const snapshotMinReadVersion = "1.0";
 
@@ -24,24 +32,11 @@ interface ISnapshotSection {
 function readBlobSection(node: NodeCore) {
     const blobs: Map<string, ArrayBuffer> = new Map();
     for (let count = 0; count < node.length; ++count) {
-        let id: string | undefined;
         const blob = node.getNode(count);
-        for (let i = 0; i < blob.length;) {
-            const key = blob.getString(i++);
-            switch (key) {
-                case "id":
-                    assert(id === undefined, "id should be undefined here");
-                    id = blob.getString(i++);
-                    break;
-                case "data":
-                    assert(id !== undefined, "id should be defined before reading contents");
-                    blobs.set(id, blob.getBlob(i++).arrayBuffer);
-                    break;
-                default:
-                    throw new Error(`unkonwnPropertyWhileReadingBlobs: ${key}`);
-            }
-        }
-        id = undefined;
+        const records = getAndValidateNodeProps(blob, ["id", "data"]);
+        assertBlobCoreInstance(records.data, "data should be of BlobCore type");
+        assertBlobCoreInstance(records.id, "blob id should be of BlobCore type");
+        blobs.set(records.id.toString(), records.data.arrayBuffer);
     }
     return blobs;
 }
@@ -63,42 +58,32 @@ function readOpsSection(node: NodeCore) {
  * @param node - tree node to de-serialize from
  */
 function readTreeSection(node: NodeCore) {
-    const tree: ISnapshotTree = {
+    const snapshotTree: ISnapshotTree = {
         blobs: {},
         commits: {},
         trees: {},
     };
-    for (let count = 0; count < node.length;) {
-        const treeNode = node.getNode(count++);
-        let path: string | undefined;
-        for (let i = 0; i < treeNode.length;) {
-            const prop = treeNode.getString(i++);
-            switch(prop) {
-                case "name":
-                    path = treeNode.getString(i++);
-                    break;
-                case "value":
-                    assert(path !== undefined, "path should be defined to put value");
-                    tree.blobs[path] = treeNode.getString(i++);
-                    break;
-                case "children":
-                    assert(path !== undefined, "path should be defined to put value");
-                    tree.trees[path] = readTreeSection(treeNode.getNode(i++));
-                    break;
-                case "unreferenced":
-                {
-                    const unreferenced = treeNode.getBool(i++);
-                    assert(unreferenced, "Unreferenced if present should be true");
-                    tree.unreferenced = unreferenced;
-                    break;
-                }
-                default:
-                    throw new Error(`unkonwnPropertyWhileReadingTree: ${prop}`);
-            }
+    for (let count = 0; count < node.length; count++) {
+        const treeNode = node.getNode(count);
+        const records = getAndValidateNodeProps(treeNode,
+            ["name", "value", "children", "unreferenced"], false);
+        assertBlobCoreInstance(records.name, "Path should be of BlobCore");
+        const path = records.name.toString();
+        if (records.value !== undefined) {
+            assertBlobCoreInstance(records.value, "Blob value should be BlobCore");
+            snapshotTree.blobs[path] = records.value.toString();
+        } else {
+            assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
+            snapshotTree.trees[path] = readTreeSection(records.children);
         }
-        path = undefined;
+        if (snapshotTree.unreferenced !== undefined) {
+            assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
+            const unreferenced = records.unreferenced.valueOf();
+            assert(unreferenced, "Unreferenced if present should be true");
+            snapshotTree.unreferenced = unreferenced;
+        }
     }
-    return tree;
+    return snapshotTree;
 }
 
 /**
@@ -106,40 +91,19 @@ function readTreeSection(node: NodeCore) {
  * @param node - tree node to de-serialize from
  */
 function readSnapshotSection(node: NodeCore): ISnapshotSection {
-    let snapshotTree: ISnapshotTree | undefined;
-    let snapshotId: string | undefined;
-    let sequenceNumber: number | undefined;
-    let blobs: Map<string, ArrayBuffer> | undefined;
-    for (let count = 0; count < node.length;) {
-        const prop = node.getString(count++);
-        switch(prop) {
-            case "snapshotId":
-                snapshotId = node.getString(count++);
-                break;
-            case "sequenceNumber":
-                sequenceNumber = node.getNumber(count++);
-                break;
-            case "message":
-                node.getString(count++);
-                break;
-            case "treeNodes":
-                snapshotTree = readTreeSection(node.getNode(count++));
-                break;
-            case "treeBlobs":
-                blobs = readBlobSection(node.getNode(count++));
-                break;
-            default:
-                throw new Error(`unkonwnPropertyWhileReadingSnapshot: ${prop}`);
-        }
-    }
-    assert(snapshotTree !== undefined, "Tree structure should be present");
-    assert(snapshotId !== undefined, "Snapshot id should be present");
-    snapshotTree.id = snapshotId;
-    assert(sequenceNumber !== undefined, "seqNum should be present in snapshot");
-    assert(blobs !== undefined, "Blobs should be present in snapshot");
+    const records = getAndValidateNodeProps(node,
+        ["snapshotId", "sequenceNumber", "treeNodes", "blobs"]);
+
+    assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
+    assertNodeCoreInstance(records.blobs, "TreeBlobs should be of type NodeCore");
+    assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
+    assertBlobCoreInstance(records.snapshotId, "snapshotId should be BlobCore");
+    const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
+    snapshotTree.id = records.snapshotId.toString();
+    const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
-        blobs,
+        blobs: readBlobSection(records.blobs),
         snapshotTree,
     };
 }
@@ -153,50 +117,22 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const builder = TreeBuilder.load(buffer);
     assert(builder.length === 1, 0x219 /* "1 root should be there" */);
     const root = builder.getNode(0);
-    let snapshotSection: ISnapshotSection | undefined;
-    let ops: ISequencedDocumentMessage[] | undefined;
 
-    for (let count = 0; count < root.length;) {
-        const prop = root.getString(count++);
-        switch(prop) {
-            case "minReadVersion":
-            {
-                const minReadVersion = root.getString(count++);
-                assert(snapshotMinReadVersion >= minReadVersion,
-                    0x20f /* "Driver min read version should >= to server minReadVersion" */);
-                break;
-            }
-            case "createVersion":
-            {
-                const createVersion = root.getString(count++);
-                assert(createVersion >= snapshotMinReadVersion,
-                    0x210 /* "Snapshot should be created with minReadVersion or above" */);
-                break;
-            }
-            case "latestSequenceNumber":
-                root.getNumber(count++);
-                break;
-            case "snapshot":
-                snapshotSection = readSnapshotSection(root.getNode(count++));
-                break;
-            case "deltas":
-                ops = readOpsSection(root.getNode(count++));
-                break;
-            default:
-                throw new Error(`unkonwnPropertyWhileReadingSnapshotResponse: ${prop}`);
-        }
-    }
-    assert(snapshotSection !== undefined, "snapshot section should be present in snapshot");
+    const records = getAndValidateNodeProps(root,
+        ["minReadVersion", "createVersion", "snapshot", "deltas"]);
+
+    assertBlobCoreInstance(records.minReadVersion, "minReadVersion should be of BlobCore type");
+    assertBlobCoreInstance(records.createVersion, "createVersion should be of BlobCore type");
+    assert(snapshotMinReadVersion >= records.minReadVersion.toString(),
+        0x20f /* "Driver min read version should >= to server minReadVersion" */);
+    assert(records.createVersion.toString() >= snapshotMinReadVersion,
+        0x210 /* "Snapshot should be created with minReadVersion or above" */);
+
+    assertNodeCoreInstance(records.snapshot, "Snapshot should be of type NodeCore");
+    assertNodeCoreInstance(records.deltas, "Deltas should be of type NodeCore");
+
     return {
-        ...snapshotSection,
-        ops: ops ?? [],
+        ...readSnapshotSection(records.snapshot),
+        ops: readOpsSection(records.deltas),
     };
-}
-
-interface IWholeSnapshot {
-    minReadVersion: string,
-    createVersion: string,
-    latestSequenceNumber: number,
-    snapshot: NodeCore,
-    deltas: NodeCore,
 }

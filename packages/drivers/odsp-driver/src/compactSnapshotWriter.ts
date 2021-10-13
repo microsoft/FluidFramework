@@ -28,7 +28,7 @@ function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number) {
  * @param blobs - blobs that is being serialized
 */
 function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>) {
-    snapshotNode.addString("treeBlobs", true);
+    snapshotNode.addString("blobs", true);
     const blobsNode = snapshotNode.addNode("list");
     for (const [storageBlobId, blob] of blobs) {
         const blobNode = blobsNode.addNode();
@@ -54,8 +54,8 @@ function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree) {
 }
 
 function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) {
-    const treeNode = treesNode.addNode();
     for (const [path, value] of Object.entries(snapshotTree.trees)) {
+        const treeNode = treesNode.addNode();
         addStringProperty(treeNode, "name", path);
         if (snapshotTree.unreferenced) {
             addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
@@ -67,8 +67,9 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
 
     if (snapshotTree.blobs) {
         for (const [path, id] of Object.entries(snapshotTree.blobs)) {
-            addStringProperty(treeNode, "name", path);
-            addStringProperty(treeNode, "value", id, true);
+            const blobNode = treesNode.addNode();
+            addStringProperty(blobNode, "name", path);
+            addStringProperty(blobNode, "value", id, true);
         }
     }
 }
