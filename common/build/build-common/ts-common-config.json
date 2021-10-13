@@ -18,6 +18,7 @@
         "types": [],
         "strict": true,
         "pretty": true,
+        "useDefineForClassFields": true,
         "lib": [ "ES2017", "ES2018.Promise", "DOM", "DOM.Iterable" ]
     }
 }
