@@ -906,7 +906,7 @@ class PropertyFactory {
      * @return {property-properties.PropertyTemplate|undefined} Template identified by the typeid.
      */
     getTemplate(in_typeid) {
-        if (this._localPrimitivePropertiesAndTemplates.has(in_typeid)) {
+        if (this._localPrimitivePropertiesAndTemplates.has(in_typeid) && !TypeIdHelper.isPrimitiveType(in_typeid)) {
             return this._localPrimitivePropertiesAndTemplates.item(in_typeid).getPropertyTemplate();
         } else return undefined;
     };
