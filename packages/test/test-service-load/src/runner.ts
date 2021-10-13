@@ -200,7 +200,7 @@ async function runnerProcess(
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {
-                logger.sendErrorEvent({ eventName: "RunnerFailed" }, error);
+                loader.services.subLogger.sendErrorEvent({ eventName: "RunnerFailed" }, error);
             } finally {
                 if (!container.closed) {
                     container.close();

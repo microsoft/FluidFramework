@@ -18,6 +18,7 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { timeoutAwait } from "@fluidframework/test-utils";
 import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
@@ -98,13 +99,17 @@ export class LoadTestDataStoreModel {
         let gcDataStore: LoadTestDataStore | undefined;
         if (!root.has(gcDataStoreIdKey)) {
             // The data store for this pair doesn't exist, create it and store its url.
-            gcDataStore = await LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime);
+            gcDataStore = await timeoutAwait<LoadTestDataStore>(
+                LoadTestDataStoreInstantiationFactory.createInstance(containerRuntime),
+                {errorMsg:"timeout:getGCDataStore@createInstance", durationMs: 30 * 1000});
             root.set(gcDataStoreIdKey, gcDataStore.id);
         }
         // If we did not create the data store above, load it by getting its url.
         if (gcDataStore === undefined) {
             const gcDataStoreId = root.get(gcDataStoreIdKey);
-            const response = await containerRuntime.request({ url: `/${gcDataStoreId}` });
+            const response = await timeoutAwait(
+                containerRuntime.request({ url: `/${gcDataStoreId}` }),
+                {errorMsg:"timeout:getGCDataStore@request", durationMs: 30 * 1000});
             if (response.status !== 200 || response.mimeType !== "fluid/object") {
                 throw new Error("GC data store not available");
             }
