@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, performance, Deferred } from "@fluidframework/common-utils";
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { DocumentDeltaConnection, EventHandlerNameForErrorLogging } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
 import {
     IClient,
@@ -270,7 +270,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: EventHandlerNameForErrorLogging, error?: any, canRetry = true): DriverError {
         // Note: we suspect the incoming error object is either:
         // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
         // - anything else: let base class handle it

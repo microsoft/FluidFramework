@@ -31,7 +31,7 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     get clientId(): string;
     // (undocumented)
     close(): void;
-    protected createErrorObject(handler: string, error?: any, canRetry?: boolean): DriverError;
+    protected createErrorObject(handler: EventHandlerNameForErrorLogging, error?: any, canRetry?: boolean): DriverError;
     // (undocumented)
     get details(): IConnected;
     protected disconnect(socketProtocolError: boolean, reason: DriverError): void;
@@ -82,6 +82,9 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }
+
+// @public
+export type EventHandlerNameForErrorLogging = "connectDocumentSuccess" | "connectDocumentError" | "connectError" | "connectTimeout" | "disconnect" | "error" | "orderingServiceHandshakeTimeout";
 
 
 // (No @packageDocumentation comment for this package)

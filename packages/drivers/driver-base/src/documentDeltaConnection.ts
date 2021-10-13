@@ -508,7 +508,7 @@ export class DocumentDeltaConnection
     /**
      * Error raising for socket.io issues
      */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
+    protected createErrorObject(handler: EventHandlerNameForErrorLogging, error?: any, canRetry = true): DriverError {
         // Note: we suspect the incoming error object is either:
         // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
         // - an Error object thrown by socket.io engine. Be careful with not recording PII!
@@ -524,7 +524,7 @@ export class DocumentDeltaConnection
             message = `${message}: [object omitted]`;
         }
         const errorObj = createGenericNetworkError(
-            "socketError",
+            `socketError [${handler}]`,
             message,
             canRetry,
         );
@@ -532,3 +532,13 @@ export class DocumentDeltaConnection
         return errorObj;
     }
 }
+
+/** Constrained list of handler names to be used when logging errors */
+export type EventHandlerNameForErrorLogging =
+    | "connectDocumentSuccess"
+    | "connectDocumentError"
+    | "connectError"
+    | "connectTimeout"
+    | "disconnect"
+    | "error"
+    | "orderingServiceHandshakeTimeout";
