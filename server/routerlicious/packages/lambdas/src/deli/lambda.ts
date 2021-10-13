@@ -580,8 +580,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         // Store the previous minimum sequence number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
-        this.noActiveClients = msn === -1;
-        this.minimumSequenceNumber = this.noActiveClients ? sequenceNumber : msn;
+        if (msn === -1) {
+            this.minimumSequenceNumber = sequenceNumber;
+            this.noActiveClients = true;
+        } else {
+            this.minimumSequenceNumber = msn;
+            this.noActiveClients = false;
+        }
 
         let sendType = SendType.Immediate;
         let instruction = InstructionType.NoOp;
