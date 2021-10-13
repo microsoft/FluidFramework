@@ -580,13 +580,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         // Store the previous minimum sequence number we returned and then update it. If there are no clients
         // then set the MSN to the next SN.
         const msn = this.clientSeqManager.getMinimumSequenceNumber();
-        if (msn === -1) {
-            this.minimumSequenceNumber = sequenceNumber;
-            this.noActiveClients = true;
-        } else {
-            this.minimumSequenceNumber = msn;
-            this.noActiveClients = false;
-        }
+        this.noActiveClients = msn === -1;
+        this.minimumSequenceNumber = this.noActiveClients ? sequenceNumber : msn;
 
         let sendType = SendType.Immediate;
         let instruction = InstructionType.NoOp;
@@ -952,7 +947,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * @returns The queued message for the kafka checkpoint
      */
     private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
-        const kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+        if (this.noActiveClients) {
+            // If noActiveClients is set, that means we sent a NoClient message
+            // so we should checkpoint the current message/offset
+
+            // we need to explicitly set nextKafkaCheckpointMessage to undefined!
+            // because once we checkpoint the current message, DocumentContext.hasPendingWork() will be false
+            // that means that the partition will keep occuring since this lambda is up to date
+            // if we don't clear nextKafkaCheckpointMessage,
+            // it will try to checkpoint an old offset once the next message arrives
+            this.nextKafkaCheckpointMessage = undefined;
+
+            return rawMessage;
+        }
+
+        // Keep the kafka checkpoint behind by 1 message until there are no active clients
+        const kafkaCheckpointMessage = this.nextKafkaCheckpointMessage;
         this.nextKafkaCheckpointMessage = rawMessage;
         return kafkaCheckpointMessage;
     }
