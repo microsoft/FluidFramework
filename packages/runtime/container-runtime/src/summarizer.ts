@@ -32,6 +32,7 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
+import { IConnectableRuntime } from ".";
 
 const summarizingError = "summarizingError";
 
@@ -90,7 +91,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly internalsProvider: ISummarizerInternalsProvider,
         handleContext: IFluidHandleContext,
         public readonly summaryCollection: SummaryCollection,
-        private readonly runCoordinatorCreateFn,
+        private readonly runCoordinatorCreateFn:
+            (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>,
     ) {
         super();
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");

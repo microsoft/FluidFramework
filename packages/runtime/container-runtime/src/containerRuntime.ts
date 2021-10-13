@@ -1002,10 +1002,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this /* ISummarizerInternalsProvider */,
                     this.IFluidHandleContext,
                     this.summaryCollection,
-                    async (runtime: IConnectableRuntime) => {
-                        const coord = await RunWhileConnectedCoordinator.create(runtime);
-                        return coord;
-                    });
+                    async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
+                );
             } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Create the SummaryManager and mark the initial state
                 this.summaryManager = new SummaryManager(
