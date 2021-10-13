@@ -32,12 +32,12 @@ describe("Odsp Error", () => {
     } as Response;
 
     function createOdspNetworkErrorWithResponse(
-        errorMessage: string,
+        fluidErrorCode: string,
         statusCode: number,
     ) {
         try {
             throwOdspNetworkError(
-                errorMessage,
+                fluidErrorCode,
                 statusCode,
                 testResponse,
             );
@@ -49,13 +49,13 @@ describe("Odsp Error", () => {
 
     it("throwOdspNetworkError first-class properties", async () => {
         const networkError = createOdspNetworkErrorWithResponse(
-            "TestMessage",
+            "someErrorCode",
             400,
         );
         if (networkError.errorType !== DriverErrorType.genericNetworkError) {
             assert.fail("networkError should be a genericNetworkError");
         } else {
-            assert.notEqual(-1, networkError.message.indexOf("TestMessage"),
+            assert.notEqual(-1, networkError.message.indexOf("someErrorCode"),
                 "message should contain original message");
             assert.notEqual(-1, networkError.message.indexOf("testStatusText"),
                 "message should contain Response.statusText");
@@ -65,13 +65,13 @@ describe("Odsp Error", () => {
     });
 
     it("throwOdspNetworkError sprequestguid exists", async () => {
-        const error1: any = createOdspNetworkErrorWithResponse("Error", 400);
+        const error1: any = createOdspNetworkErrorWithResponse("someErrorCode", 400);
         const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
     });
 
     it("throwOdspNetworkError sprequestguid undefined", async () => {
-        const error1: any = createOdspNetworkError("Error", "Error", 400);
+        const error1: any = createOdspNetworkError("someErrorCode", "Error", 400);
         const errorBag = { ...error1.getTelemetryProperties() };
         assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
     });
@@ -267,8 +267,8 @@ describe("Odsp Error", () => {
     });
 
     it("Check Epoch Mismatch error props", async () => {
-        const error: any = createOdspNetworkErrorWithResponse("Epoch Mismatch", 409);
-        assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should be epoch mismatch");
+        const error: any = createOdspNetworkErrorWithResponse("epochMismatch", 409);
+        assert.strictEqual(error.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should be fileOverwrittenInStorage");
         const errorBag = { ...error.getTelemetryProperties() };
         assert.strictEqual(errorBag.errorType, DriverErrorType.fileOverwrittenInStorage, "Error type should exist in prop bag");
     });

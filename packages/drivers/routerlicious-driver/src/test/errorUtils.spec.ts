@@ -78,7 +78,7 @@ describe("ErrorUtils", () => {
         it("throws non-retriable authorization error on 401", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 401);
+                throwR11sNetworkError("errorCode", message, 401);
             }, {
                 errorType: DriverErrorType.authorizationError,
                 canRetry: false,
@@ -87,7 +87,7 @@ describe("ErrorUtils", () => {
         it("throws non-retriable authorization error on 403", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 403);
+                throwR11sNetworkError("errorCode", message, 403);
             }, {
                 errorType: DriverErrorType.authorizationError,
                 canRetry: false,
@@ -96,7 +96,7 @@ describe("ErrorUtils", () => {
         it("throws non-retriable not-found error on 404", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 404);
+                throwR11sNetworkError("errorCode", message, 404);
             }, {
                 errorType: R11sErrorType.fileNotFoundOrAccessDeniedError,
                 canRetry: false,
@@ -105,7 +105,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 429 with retry-after", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 429, 5000);
+                throwR11sNetworkError("errorCode", message, 429, 5000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
@@ -115,7 +115,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 429 without retry-after", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 429);
+                throwR11sNetworkError("errorCode", message, 429);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: true,
@@ -124,7 +124,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on 500", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 500);
+                throwR11sNetworkError("errorCode", message, 500);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: true,
@@ -133,7 +133,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on Network Error", () => {
             const message = "Network Error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message);
+                throwR11sNetworkError("errorCode", message);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: true,
@@ -142,7 +142,7 @@ describe("ErrorUtils", () => {
         it("throws retriable error on anything else with retryAfter", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 400, 200000);
+                throwR11sNetworkError("errorCode", message, 400, 200000);
             }, {
                 errorType: DriverErrorType.throttlingError,
                 canRetry: true,
@@ -152,13 +152,13 @@ describe("ErrorUtils", () => {
         it("throws non-retriable error on anything else", () => {
             const message = "test error";
             assert.throws(() => {
-                throwR11sNetworkError(message, message);
+                throwR11sNetworkError("errorCode", message);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: false,
             });
             assert.throws(() => {
-                throwR11sNetworkError(message, message, 400);
+                throwR11sNetworkError("errorCode", message, 400);
             }, {
                 errorType: DriverErrorType.genericNetworkError,
                 canRetry: false,
