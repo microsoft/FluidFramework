@@ -74,16 +74,17 @@ const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
-    const reason = `Nack: ${nackContent.message}`;
+    const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
-    return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
+    return createGenericNetworkError(
+        `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
-const createReconnectError = (prefix: string, err: any) =>
+const createReconnectError = (fluidErrorCode: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => new GenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
     );
 
 export interface IConnectionArgs {
@@ -1058,13 +1059,13 @@ export class DeltaManager
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.close(createWriteError("WriteOnReadOnlyDocument"));
+            this.close(createWriteError("writeOnReadOnlyDocument"));
         }
 
         // check message.content for Back-compat with old service.
         const reconnectInfo = message.content !== undefined
             ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError("nack:UnknownReason", true);
+            createGenericNetworkError("nackReasonUnknown", undefined, true);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
@@ -1080,7 +1081,7 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("Disconnect", disconnectReason),
+            createReconnectError("dmDocumentDeltaConnectionDisconnected", disconnectReason),
         );
     };
 
@@ -1092,7 +1093,7 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("error", error),
+            createReconnectError("dmDocumentDeltaConnectionError", error),
         );
     };
 
@@ -1437,6 +1438,7 @@ export class DeltaManager
                     if (message1 !== message2) {
                         const error = new NonRetryableError(
                             "twoMessagesWithSameSeqNumAndDifferentPayload",
+                            undefined,
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,

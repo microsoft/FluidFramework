@@ -13,6 +13,7 @@ import { IOdspSocketError } from "./contracts";
 export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: string): OdspError {
     const message = `OdspSocketError (${handler}): ${socketError.message}`;
     return createOdspNetworkError(
+        `odspSocketError [${handler}]`,
         message,
         socketError.code,
         socketError.retryAfter);

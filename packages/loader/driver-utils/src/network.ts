@@ -37,10 +37,11 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
 
     constructor(
         readonly fluidErrorCode: string,
+        message: string,
         readonly canRetry: boolean,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, props);
+        super(message, props);
     }
 }
 
@@ -67,46 +68,51 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
 
     constructor(
         readonly fluidErrorCode: string,
+        message: string,
         readonly claims: string | undefined,
         readonly tenantId: string | undefined,
         props?: ITelemetryProperties,
     ) {
         // don't log claims or tenantId
-        super(fluidErrorCode, props, new Set(["claims", "tenantId"]));
+        super(message, props, new Set(["claims", "tenantId"]));
     }
 }
 
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
     constructor(
         readonly fluidErrorCode: string,
+        message: string,
         readonly errorType: T,
         readonly canRetry: boolean,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, props);
+        super(message, props);
     }
 }
 
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
         fluidErrorCode: string,
+        message: string | undefined,
         readonly errorType: T,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, errorType, false, props);
+        super(fluidErrorCode, message ?? fluidErrorCode, errorType, false, props);
     }
 }
 
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(
         fluidErrorCode: string,
+        message: string | undefined,
         readonly errorType: T,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, errorType, true, props);
+        super(fluidErrorCode, message ?? fluidErrorCode, errorType, true, props);
     }
 }
 
+//* Check
 /**
  * Throttling error class - used to communicate all throttling errors
  */
@@ -116,26 +122,28 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 
     constructor(
         readonly fluidErrorCode: string,
+        message: string,
         readonly retryAfterSeconds: number,
         props?: ITelemetryProperties,
     ) {
-        super(fluidErrorCode, props);
+        super(message, props);
     }
 }
 
-export const createWriteError = (errorMessage: string) =>
-    new NonRetryableError(errorMessage, DriverErrorType.writeError);
+export const createWriteError = (fluidErrorCode: string) =>
+    new NonRetryableError(fluidErrorCode, undefined, DriverErrorType.writeError);
 
 export function createGenericNetworkError(
     fluidErrorCode: string,
+    message: string | undefined,
     canRetry: boolean,
     retryAfterMs?: number,
     props?: ITelemetryProperties,
 ): ThrottlingError | GenericNetworkError {
     if (retryAfterMs !== undefined && canRetry) {
-        return new ThrottlingError(fluidErrorCode, retryAfterMs / 1000, props);
+        return new ThrottlingError(fluidErrorCode, message ?? fluidErrorCode, retryAfterMs / 1000, props);
     }
-    return new GenericNetworkError(fluidErrorCode, canRetry, props);
+    return new GenericNetworkError(fluidErrorCode, message ?? fluidErrorCode, canRetry, props);
 }
 
 /**
