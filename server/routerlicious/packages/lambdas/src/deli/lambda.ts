@@ -952,7 +952,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * @returns The queued message for the kafka checkpoint
      */
     private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
-        const kafkaCheckpointMessage = this.noActiveClients ? rawMessage : this.nextKafkaCheckpointMessage;
+        if (this.noActiveClients) {
+            // If noActiveClients is set, that means we sent a NoClient message
+            // so we should checkpoint the current message/offset
+
+            // we need to explicitly set nextKafkaCheckpointMessage to undefined!
+            // because once we checkpoint the current message, DocumentContext.hasPendingWork() will be false
+            // that means that the partition will keep checkpointing since this lambda is up to date
+            // if we don't clear nextKafkaCheckpointMessage,
+            // it will try to checkpoint that old message offset once the next message arrives
+            this.nextKafkaCheckpointMessage = undefined;
+
+            return rawMessage;
+        }
+
+        // Keep the kafka checkpoint behind by 1 message until there are no active clients
+        const kafkaCheckpointMessage = this.nextKafkaCheckpointMessage;
         this.nextKafkaCheckpointMessage = rawMessage;
         return kafkaCheckpointMessage;
     }
