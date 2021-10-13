@@ -958,9 +958,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
             // we need to explicitly set nextKafkaCheckpointMessage to undefined!
             // because once we checkpoint the current message, DocumentContext.hasPendingWork() will be false
-            // that means that the partition will keep occuring since this lambda is up to date
+            // that means that the partition will keep checkpointing since this lambda is up to date
             // if we don't clear nextKafkaCheckpointMessage,
-            // it will try to checkpoint an old offset once the next message arrives
+            // it will try to checkpoint that old message offset once the next message arrives
             this.nextKafkaCheckpointMessage = undefined;
 
             return rawMessage;
