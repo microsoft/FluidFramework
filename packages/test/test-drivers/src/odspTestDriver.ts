@@ -219,6 +219,8 @@ export class OdspTestDriver implements ITestDriver {
         return new OdspTestDriver(
             driverConfig,
             api,
+            tenantName,
+            userIndex,
         );
     }
 
