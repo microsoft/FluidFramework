@@ -1,5 +1,23 @@
 # Change Log
 
+## 12.2.0
+
+* feat: BREAKING CHANGE Migration mechanism for breaking changes to SharedTree summaries/ops
+  * Associated pull request: [34652](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34652)
+  * Commit: [f79a9202b6fc092a568bf512f56564e100c88bcf](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f79a9202b6fc092a568bf512f56564e100c88bcf)
+* feat: distributed UUID compression
+  * Associated pull request: [33953](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/33953)
+  * Commit: [8eb3922af44022752f0a1cb0cd217475c21cf641](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/8eb3922af44022752f0a1cb0cd217475c21cf641)
+* docs: fix a link and link to generated docs
+  * Associated pull request: [35030](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35030)
+  * Commit: [b921db340d845e3598f26924c8344a1d71d345e8](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/b921db340d845e3598f26924c8344a1d71d345e8)
+* docs: clarify `StablePlace` ordering in trait
+  * Associated pull request: [35035](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35035)
+  * Commit: [530751f0b8c9d9eeaccedadf01f30a023b70c727](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/530751f0b8c9d9eeaccedadf01f30a023b70c727)
+* feat: BREAKING CHANGE: merge health telemetry
+  * Associated pull request: [34927](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/34927)
+  * Commit: [7b0ae83ac35ff776d3adb63ab1ca4e481741c7e2](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/7b0ae83ac35ff776d3adb63ab1ca4e481741c7e2)
+
 ## 11.5.2
 
 * build: update dependencies
