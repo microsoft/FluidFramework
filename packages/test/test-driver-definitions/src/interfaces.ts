@@ -20,6 +20,16 @@ export interface ITestDriver{
     readonly endpointName?: string;
 
     /**
+     * Tenant name if there are any
+     */
+    readonly tenantName?: string;
+
+    /**
+     * User index if there are any
+     */
+    readonly userIndex?: number;
+
+    /**
      * The semantic version of the test drivers package.
      * In general this version will match that of the  client
      * interfaces and implementation exposed and used by the test driver.
@@ -44,7 +54,7 @@ export interface ITestDriver{
      * type, this should only be done it absolutely necessary for complex scenarios
      * as the test may not work against all supported servers if done.
      */
-    createCreateNewRequest(testId: string): IRequest;
+    createCreateNewRequest(testId?: string): IRequest;
 
     /**
      * Creates a container url that can be resolved by the url resolver for this driver.

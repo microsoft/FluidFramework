@@ -8,7 +8,7 @@ module.exports = {
         "@fluidframework/eslint-config-fluid/eslint7"
     ],
     "parserOptions": {
-        "project": [ "./tsconfig.json", "./src/test/mocha/tsconfig.json", "./src/test/jest/tsconfig.json" ]
+        "project": [ "./tsconfig.json", "./src/test/mocha/tsconfig.json", "./src/test/jest/tsconfig.json", "./src/test/types/tsconfig.json" ]
     },
     "rules": {
         "@typescript-eslint/no-non-null-assertion": "off",
@@ -16,6 +16,7 @@ module.exports = {
         "no-bitwise": "off",
         "no-null/no-null": "off",
         "prefer-arrow/prefer-arrow-functions": "off",
-        "prefer-rest-params": "off"
+        "prefer-rest-params": "off",
+        "import/no-extraneous-dependencies": ["error", {"devDependencies": ["./src/test/**/*.ts"]}]
     }
 }

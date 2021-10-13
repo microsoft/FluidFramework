@@ -15,7 +15,7 @@ import {
     NonRetryableError,
     OnlineStatus,
 } from "@fluidframework/driver-utils";
-import { OdspErrorType, OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorType, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
 import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
 
@@ -244,7 +244,7 @@ export function enrichOdspError(
             for (const key of Object.keys(headers))  {
                 props[key] = headers[key];
             }
-            props.serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
+            (error as IOdspError).serverEpoch = response.headers.get("x-fluid-epoch") ?? undefined;
         }
     }
     error.addTelemetryProperties(props);

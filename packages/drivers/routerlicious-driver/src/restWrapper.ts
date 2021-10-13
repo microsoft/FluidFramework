@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import * as querystring from "querystring";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
@@ -29,7 +29,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
         private readonly useRestLess: boolean,
         baseurl?: string,
-        defaultQueryString: Record<string, unknown> = {},
+        defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
         super(baseurl, defaultQueryString);
     }
@@ -105,7 +105,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
         baseurl?: string,
-        defaultQueryString: Record<string, unknown> = {},
+        defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
         super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
@@ -122,11 +122,12 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
             // Craft credentials using tenant id and token
             const storageToken = await tokenProvider.fetchStorageToken(
                 tenantId,
                 documentId,
+                refresh,
             );
             const credentials = {
                 password: storageToken.jwt,
@@ -156,7 +157,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         getAuthorizationHeader: AuthorizationHeaderGetter,
         useRestLess: boolean,
         baseurl?: string,
-        defaultQueryString: Record<string, unknown> = {},
+        defaultQueryString: querystring.ParsedUrlQueryInput = {},
     ) {
         super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
     }
@@ -170,10 +171,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
             const ordererToken = await tokenProvider.fetchOrdererToken(
                 tenantId,
                 documentId,
+                refresh,
             );
             return `Basic ${ordererToken.jwt}`;
         };

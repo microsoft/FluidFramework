@@ -4,14 +4,13 @@
  */
 
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { EventHandlerNameForErrorLogging as HandlerName } from "@fluidframework/driver-base";
 import { IOdspSocketError } from "./contracts";
 
 /**
  * Returns network error based on error object from ODSP socket (IOdspSocketError)
  */
-export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: HandlerName): OdspError {
+export function errorObjectFromSocketError(socketError: IOdspSocketError, handler: HandlerName) {
     const message = `OdspSocketError (${handler}): ${socketError.message}`;
     return createOdspNetworkError(
         `odspSocketError [${handler}]`,

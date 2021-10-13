@@ -26,13 +26,13 @@ import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 
 /**
- * Strongly typed id for connecting to a local Azure Fluid Relay service
+ * Strongly typed id for connecting to a local Azure Fluid Relay.
  */
 export const LOCAL_MODE_TENANT_ID = "local";
 
 /**
- * AzureClient provides the ability to have a Fluid object backed by the Azure Relay Service or,
- * when running with local tenantId, have it be backed by a Tinylicious local service instance
+ * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
+ * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
  */
 export class AzureClient {
     private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -48,7 +48,7 @@ export class AzureClient {
             this.props.connection.orderer,
             this.props.connection.storage,
         );
-        // The local service implementation differs from the Azure Fluid Relay service in blob
+        // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
         const enableWholeSummaryUpload = this.props.connection.tenantId !== LOCAL_MODE_TENANT_ID;
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
@@ -58,7 +58,7 @@ export class AzureClient {
     }
 
     /**
-     * Creates a new detached container instance in the Azure Relay Service.
+     * Creates a new detached container instance in the Azure Fluid Relay.
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
@@ -92,8 +92,8 @@ export class AzureClient {
     }
 
     /**
-     * Accesses the existing container given its unique ID in the Azure Fluid Relay service.
-     * @param id - Unique ID of the container in Azure Fluid Relay service
+     * Accesses the existing container given its unique ID in the Azure Fluid Relay.
+     * @param id - Unique ID of the container in Azure Fluid Relay.
      * @param containerSchema - Container schema used to access data objects in the container.
      * @returns Existing container instance along with associated services.
      */
