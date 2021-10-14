@@ -66,6 +66,11 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
         testDbFactory: ITestDbFactory = new TestDbFactory({}),
         serviceConfiguration?: Partial<IServiceConfiguration>,
     ): ILocalDeltaConnectionServer {
+        if (!Lumberjack.isSetupCompleted())
+        {
+            Lumberjack.setup([new TestEngine1()]);
+        }
+
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
         const deltasCollectionName = "deltas";
@@ -100,13 +105,6 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             logger,
             serviceConfiguration,
             pubsub);
-
-            const lumberjackEngine = new TestEngine1();
-
-            if (!Lumberjack.isSetupCompleted())
-            {
-                Lumberjack.setup([lumberjackEngine]);
-            }
 
         configureWebSocketServices(
             webSocketServer,
