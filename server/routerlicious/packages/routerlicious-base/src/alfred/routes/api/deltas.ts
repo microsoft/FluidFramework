@@ -64,7 +64,7 @@ async function getDeltasFromStorage(
     toTerm: number,
     fromSeq?: number,
     toSeq?: number): Promise<ISequencedDocumentMessage[]> {
-    const query: any = { documentId, tenantId };
+    const query: any = { documentId, tenantId, scheduledDeletionTime: { $exists: false } };
     query["operation.term"] = {};
     query["operation.sequenceNumber"] = {};
     query["operation.term"].$gte = fromTerm;

@@ -32,6 +32,20 @@ export class TestCollection implements ICollection<any> {
         _.extend(value, set);
     }
 
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        const values = this.findInternal(filter);
+        try {
+            values.forEach((value) => {
+                if (!value) {
+                    throw new Error("Not found");
+                }
+                _.extend(value, set);
+            });
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+
     public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
         const value = this.findOneInternal(filter);
         if (!value) {
@@ -76,6 +90,10 @@ export class TestCollection implements ICollection<any> {
             this.removeOneInternal(value);
         });
         return values;
+    }
+
+    public async distinct(key: any, filter: any): Promise<any> {
+        throw new Error("Method not implemented.");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

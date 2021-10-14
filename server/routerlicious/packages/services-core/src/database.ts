@@ -81,6 +81,17 @@ export interface ICollection<T> {
     update(filter: any, set: any, addToSet: any): Promise<void>;
 
     /**
+     * Finds the query in the database. If it exists, update all the values to set.
+     * Throws if query cannot be found.
+     *
+     * @param filter - data we want to find
+     * @param set - new values to change to
+     * @param addToSet - an operator that adds a value to the database unless the value already exists;
+     * only used in mongodb.ts
+     */
+    updateMany(filter: any, set: any, addToSet: any): Promise<void>;
+
+    /**
      * Finds the value that satisfies query. If it exists, update the value to new set.
      * Otherwise inserts the set to the datbase.
      *
@@ -110,6 +121,8 @@ export interface ICollection<T> {
     deleteOne(filter: any): Promise<any>;
 
     deleteMany(filter: any): Promise<any>;
+
+    distinct(key: any, query: any): Promise<any>;
 
     createIndex(index: any, unique: boolean): Promise<void>;
 

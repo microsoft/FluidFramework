@@ -37,8 +37,17 @@ export class MongoCollection<T> implements core.ICollection<T> {
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types
+    public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
+        return this.updateManyCore(filter, set, addToSet, false);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
         return this.updateCore(filter, set, addToSet, true);
+    }
+
+    public async distinct(key: any, query: any): Promise<any> {
+        return this.collection.distinct(key, query);
     }
 
     public async deleteOne(filter: any): Promise<any> {
@@ -97,6 +106,21 @@ export class MongoCollection<T> implements core.ICollection<T> {
         const options = { upsert };
 
         await this.collection.updateOne(filter, update, options);
+    }
+
+    private async updateManyCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
+        const update: any = {};
+        if (set) {
+            update.$set = set;
+        }
+
+        if (addToSet) {
+            update.$addToSet = addToSet;
+        }
+
+        const options = { upsert };
+
+        await this.collection.updateMany(filter, update, options);
     }
 }
 
