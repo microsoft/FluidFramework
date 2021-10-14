@@ -106,8 +106,9 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     constructor(
         public id: string,
         protected runtime: IFluidDataStoreRuntime,
-        public readonly attributes: IChannelAttributes) {
-        super();
+        public readonly attributes: IChannelAttributes)
+    {
+        super((eventName, error) => this.runtime.raiseContainerWarning(error));
 
         this.handle = new SharedObjectHandle(
             this,
@@ -126,10 +127,6 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     }
 
     private attachListeners() {
-        this.on("error", (error: any) => {
-            this.runtime.raiseContainerWarning(error);
-        });
-
         // Only listen to these events if not attached.
         if (!this.isAttached()) {
             this.runtime.once("attaching", () => {

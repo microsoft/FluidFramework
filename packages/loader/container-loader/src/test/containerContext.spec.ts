@@ -48,9 +48,13 @@ describe("ContainerContext Tests", () => {
         }
     })();
 
+    const defaultErrorHandler = (event, error) => {
+        throw error;
+    };
+
     const mockContainer = new (class extends EventEmitterWithErrorHandling<IContainerEvents> {
         subLogger = DebugLogger.create("fluid:test");
-    })();
+    })(defaultErrorHandler);
 
     const createTestContext = async (
         codeLoader: unknown, /* ICodeDetailsLoader */
