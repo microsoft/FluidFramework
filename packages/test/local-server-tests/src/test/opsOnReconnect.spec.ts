@@ -114,7 +114,7 @@ describe("Ops on Reconnect", () => {
                 const batch = message.metadata?.batch;
                 let value1: string | number;
                 let value2: string;
-                // Add special handling for SharedString. SharedMap and SharedDirecory content structure is same.
+                // Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
                 if (address === stringId) {
                     value1 = content.pos1;
                     value2 = content.seg;
@@ -600,8 +600,10 @@ describe("Ops on Reconnect", () => {
             container1Object1Map1.set("key1", "value1");
             container1Object1Map2.set("key2", "value2");
             container1Object1Directory.set("key3", "value3");
-            container1.forceReadonly(true);
-            assert(!!container1.readOnlyInfo.readonly);
+
+            // Disconnect the client.
+            assert(container1.clientId);
+            documentServiceFactory.disconnectClient(container1.clientId, "Disconnected for testing");
 
             // At this point, the delta manager should have the messages
             // in its buffer but not in its outbound queue,
@@ -609,11 +611,8 @@ describe("Ops on Reconnect", () => {
             assert.strictEqual(container1.deltaManager.outbound.length, 0);
             assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
-            // Wait for the container to send its pending ops
-            await new Promise<void>((resolve) => container1.once("dirty", () => resolve()));
-
-            // The container should be reconnected by now
-            assert(container1.readOnlyInfo.readonly);
+            // Wait for the Container to get reconnected.
+            await waitForContainerReconnection(container1);
 
             // Wait for the ops to get processed by both the containers.
             await loaderContainerTracker.ensureSynchronized();
