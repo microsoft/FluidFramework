@@ -49,7 +49,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-definitions": "^0.40.0",
     "@fluidframework/container-runtime": "^0.50.0",
-    "@fluidframework/core-interfaces": "^0.39.7",
+    "@fluidframework/core-interfaces": "^0.40.0-0",
     "@fluidframework/datastore": "^0.50.0",
     "@fluidframework/datastore-definitions": "^0.50.0",
     "@fluidframework/ink": "^0.50.0",
