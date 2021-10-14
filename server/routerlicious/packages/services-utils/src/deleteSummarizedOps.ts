@@ -55,6 +55,7 @@ export async function deleteSummarizedOps(
                 });
         } catch (error) {
             Lumberjack.error(`Error while trying to delete ops`, lumberjackProperties, error);
+            throw error;
         }
     }
 }
