@@ -108,7 +108,11 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
-import { DataStores, getSummaryForDatastores } from "./dataStores";
+import {
+    DataStores,
+    IDataStoreNameMapping,
+    getSummaryForDatastores,
+} from "./dataStores";
 import {
     blobsTreeName,
     chunksBlobName,
@@ -147,6 +151,9 @@ export enum ContainerMessageType {
     ChunkedOp = "chunkedOp",
 
     BlobAttach = "blobAttach",
+
+    // Sets the id of a store
+    SetStoreId = "setStoreId",
 }
 
 export interface IChunkedOp {
@@ -1339,6 +1346,28 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    private async newAckBasedPromise<T>(
+        executor: (resolve: (value: T | PromiseLike<T>) => void,
+        reject: (reason?: any) => void) => void,
+    ): Promise<T> {
+        let rejectBecauseDispose: () => void;
+        return new Promise<T>((resolve, reject) => {
+            rejectBecauseDispose =
+                () => reject(new Error("FluidDataStoreRuntime disposed while this ack-based Promise was pending"));
+
+            if (this.disposed) {
+                rejectBecauseDispose();
+                return;
+            }
+
+            this.on("dispose", rejectBecauseDispose);
+            executor(resolve, reject);
+        }).finally(() => {
+            // Note: rejectBecauseDispose will never be undefined here
+            this.off("dispose", rejectBecauseDispose);
+        });
+    }
+
     public setConnectionState(connected: boolean, clientId?: string) {
         this.verifyNotClosed();
 
@@ -1394,9 +1423,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.updateDocumentDirtyState(false);
             }
 
+            type PendingResolve = (value: boolean) => void;
+            const resolve = localOpMetadata as PendingResolve;
+            let aliasResult: IDataStoreNameMapping;
             switch (message.type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
+                    break;
+                case ContainerMessageType.SetStoreId:
+                    aliasResult = this.dataStores.processAliasMessage(message, local || localAck);
+                    if (local) {
+                        resolve(aliasResult);
+                    }
+
                     break;
                 case ContainerMessageType.FluidDataStoreOp:
                     // if localAck === true, treat this as a local op because it's one we sent on a previous container

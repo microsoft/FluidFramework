@@ -52,6 +52,12 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
+export interface IDataStoreNameMapping {
+    readonly name: string;
+    readonly proposedId: string;
+    readonly currentId?: string | undefined;
+}
+
  /**
   * This class encapsulates data store handling. Currently it is only used by the container runtime,
   * but eventually could be hosted on any channel once we formalize the channel api boundary.
