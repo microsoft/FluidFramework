@@ -181,13 +181,13 @@ use_old_VariableDeclaration_IFluidHandle(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidHandle": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IFluidHandle():
     old.IFluidHandle;
 declare function use_current_InterfaceDeclaration_IFluidHandle(
     use: current.IFluidHandle);
 use_current_InterfaceDeclaration_IFluidHandle(
     get_old_InterfaceDeclaration_IFluidHandle());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -277,13 +277,13 @@ use_old_VariableDeclaration_IFluidLoadable(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidLoadable": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IFluidLoadable():
     old.IFluidLoadable;
 declare function use_current_InterfaceDeclaration_IFluidLoadable(
     use: current.IFluidLoadable);
 use_current_InterfaceDeclaration_IFluidLoadable(
     get_old_InterfaceDeclaration_IFluidLoadable());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -301,13 +301,13 @@ use_old_InterfaceDeclaration_IFluidLoadable(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidObject": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IFluidObject():
     old.IFluidObject;
 declare function use_current_InterfaceDeclaration_IFluidObject(
     use: current.IFluidObject);
 use_current_InterfaceDeclaration_IFluidObject(
     get_old_InterfaceDeclaration_IFluidObject());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -493,13 +493,13 @@ use_old_VariableDeclaration_IFluidSerializer(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidSerializer": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IFluidSerializer():
     old.IFluidSerializer;
 declare function use_current_InterfaceDeclaration_IFluidSerializer(
     use: current.IFluidSerializer);
 use_current_InterfaceDeclaration_IFluidSerializer(
     get_old_InterfaceDeclaration_IFluidSerializer());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -565,13 +565,13 @@ use_old_InterfaceDeclaration_IProvideFluidConfiguration(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideFluidHandle": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IProvideFluidHandle():
     old.IProvideFluidHandle;
 declare function use_current_InterfaceDeclaration_IProvideFluidHandle(
     use: current.IProvideFluidHandle);
 use_current_InterfaceDeclaration_IProvideFluidHandle(
     get_old_InterfaceDeclaration_IProvideFluidHandle());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -613,13 +613,13 @@ use_old_InterfaceDeclaration_IProvideFluidHandleContext(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideFluidLoadable": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IProvideFluidLoadable():
     old.IProvideFluidLoadable;
 declare function use_current_InterfaceDeclaration_IProvideFluidLoadable(
     use: current.IProvideFluidLoadable);
 use_current_InterfaceDeclaration_IProvideFluidLoadable(
     get_old_InterfaceDeclaration_IProvideFluidLoadable());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
@@ -685,13 +685,13 @@ use_old_InterfaceDeclaration_IProvideFluidRunnable(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideFluidSerializer": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_IProvideFluidSerializer():
     old.IProvideFluidSerializer;
 declare function use_current_InterfaceDeclaration_IProvideFluidSerializer(
     use: current.IProvideFluidSerializer);
 use_current_InterfaceDeclaration_IProvideFluidSerializer(
     get_old_InterfaceDeclaration_IProvideFluidSerializer());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
