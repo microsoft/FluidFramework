@@ -28,7 +28,6 @@ import {
     LocalCodeLoader,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { delay } from "@fluidframework/common-utils";
 
 describe("Ops on Reconnect", () => {
     const documentId = "opsOnReconnectTest";
@@ -603,13 +602,17 @@ describe("Ops on Reconnect", () => {
             container1Object1Directory.set("key3", "value3");
             container1.forceReadonly(true);
             assert(!!container1.readOnlyInfo.readonly);
+
             // At this point, the delta manager should have the messages
             // in its buffer but not in its outbound queue,
             // as ops have not been flushed yet
             assert.strictEqual(container1.deltaManager.outbound.length, 0);
+            assert.deepStrictEqual(receivedValues, [], "Values have been sent unexpectedly");
 
-            // Wait for the Container to get reconnected.
-            await waitForContainerReconnection(container1);
+            // Wait for the container to send its pending ops
+            await new Promise<void>((resolve) => container1.once("dirty", () => resolve()));
+
+            // The container should be reconnected by now
             assert(container1.readOnlyInfo.readonly);
 
             // Wait for the ops to get processed by both the containers.
@@ -620,8 +623,6 @@ describe("Ops on Reconnect", () => {
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
             ];
-
-            await delay(1500);
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were re-sent");
         });
