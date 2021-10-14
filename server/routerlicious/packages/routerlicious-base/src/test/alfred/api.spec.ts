@@ -7,6 +7,7 @@ import assert from "assert";
 import express from "express";
 import request from "supertest";
 import nconf from "nconf";
+import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka } from "@fluidframework/server-test-utils";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";
@@ -40,6 +41,11 @@ const defaultProvider = new nconf.Provider({}).defaults({
         blobStorageUrl: "http://localhost:3001"
     }
 });
+
+if (!Lumberjack.isSetupCompleted())
+{
+    Lumberjack.setup([new TestEngine1()]);
+}
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {

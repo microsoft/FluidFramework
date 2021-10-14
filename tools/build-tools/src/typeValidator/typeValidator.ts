@@ -12,6 +12,7 @@ import { getPackageDetails } from "./packageJson";
  */
 program
     .option("-d|--packageDir <dir>","The root directory of the package")
+    .option("-o|--outDir <dir>","The relative path from the root to output the tests")
     .option('-v|--verbose', 'Verbose logging mode')
     .parse(process.argv);
 
@@ -26,4 +27,4 @@ writeOutLine("Loading and Refresh existing type data");
 const packageData = getPackageDetails(program.packageDir);
 
 writeOutLine("Generating Tests");
-generateTests(packageData, program.packageDir)
+generateTests(packageData, program.outDir)

@@ -55,26 +55,7 @@
   "typeValidation": {
     "version": "0.40.0",
     "broken": {
-      "InterfaceDeclaration_IFluidHandle": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IFluidLoadable": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IFluidObject": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IFluidSerializer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IProvideFluidHandle": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IProvideFluidLoadable": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IProvideFluidSerializer": {
-        "forwardCompat": false
+      "0.39.8": {
       }
     }
   }

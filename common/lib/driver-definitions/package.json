@@ -33,12 +33,13 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.39.5",
+    "@fluidframework/core-interfaces": "^0.40.0-0",
     "@fluidframework/protocol-definitions": "^0.1025.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/driver-definitions-0.39.8": "npm:@fluidframework/driver-definitions@0.39.8",
+    "@fluidframework/driver-definitions-0.40.0": "npm:@fluidframework/driver-definitions@0.40.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
@@ -57,43 +58,45 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.40.0",
+    "version": "0.41.0",
     "broken": {
-      "TypeAliasDeclaration_DriverError": {
-        "backCompat": false
-      },
-      "EnumDeclaration_DriverErrorType": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IAuthorizationError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDocumentDeltaConnection": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IDocumentService": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDocumentServiceFactory": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDocumentStorageService": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDriverBasicError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IDriverErrorBase": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IGenericNetworkError": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IThrottlingWarning": {
-        "backCompat": false
+      "0.39.8": {
+        "TypeAliasDeclaration_DriverError": {
+          "backCompat": false
+        },
+        "EnumDeclaration_DriverErrorType": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IAuthorizationError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentDeltaConnection": {
+          "forwardCompat": false
+        },
+        "InterfaceDeclaration_IDocumentService": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentServiceFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDocumentStorageService": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverBasicError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IDriverErrorBase": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IGenericNetworkError": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        }
       }
     }
   }
