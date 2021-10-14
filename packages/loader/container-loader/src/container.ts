@@ -106,7 +106,6 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
-import { stringify } from "querystring";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1887,12 +1886,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private validateAudienceHeartBeat() {
         this.audienceHeartBeat.forEach((lastPongReceivedAt: Date, clientId: string) => {
             const diff = new Date().valueOf() - lastPongReceivedAt.valueOf();
-            if (diff > this.beatInEveryNSecs * 3) {
+            if (diff > this.beatInEveryNSecs * 5) {
                 // client Lost
                 this._deltaManager.getClients();
+                return;
             }
         });
-        return;
     }
 
     private enableHeartBeat() {

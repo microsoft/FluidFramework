@@ -229,7 +229,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     addConnectionListener?(event: string, listener: (...args: any[]) => void);
 
     /**
-      * get clients signal to the server
+      * send get_clients signal to the server
       */
     getClients?(): void;
 

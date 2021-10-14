@@ -313,9 +313,7 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Submits a new signal to the server
-     *
-     * @param message - signal to submit
+     * Sends get_clients signal to the server
      */
     public getClients(): void {
         this.checkNotClosed();
