@@ -84,7 +84,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	 *
 	 * When this changes, emitChange must be called.
 	 */
-	protected abstract readonly latestCommittedView: Snapshot;
+	protected abstract get latestCommittedView(): Snapshot;
 
 	/**
 	 * The last view for which invalidation was sent.
