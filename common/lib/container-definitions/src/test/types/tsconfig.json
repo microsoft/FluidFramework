@@ -6,6 +6,7 @@
         "declaration": false,
         "declarationMap": false,
         "skipLibCheck": true,
+        "noEmit": true,
     },
     "include": [
         "./**/*"
