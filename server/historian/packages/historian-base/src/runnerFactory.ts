@@ -70,12 +70,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
             };
         }
         const redisClientForThrottling = new Redis(redisOptionsForThrottling);
+        const redisParamsForThrottling = {
+            expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as number | undefined,
+        };
 
         const throttleMaxRequestsPerMs = config.get("throttling:maxRequestsPerMs") as number | undefined;
         const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as number | undefined;
         const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as number | undefined;
         const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as number | undefined;
-        const throttleStorageManager = new services.RedisThrottleStorageManager(redisClientForThrottling);
+        const throttleStorageManager =
+            new services.RedisThrottleStorageManager(redisClientForThrottling, redisParamsForThrottling);
         const throttlerHelper = new services.ThrottlerHelper(
             throttleStorageManager,
             throttleMaxRequestsPerMs,
