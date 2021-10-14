@@ -124,7 +124,9 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 		currentView: Snapshot,
 		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>
 	) {
-		super();
+		super((error: unknown) => {
+			this.tree.emit('error', error);
+		});
 		this.tree = tree;
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;
@@ -134,9 +136,6 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 
 		// If there is an ongoing edit, emitChange will no-op, which is fine.
 		this.tree.on(SharedTreeEvent.EditCommitted, this.editCommittedHandler);
-		this.on('error', (error: unknown) => {
-			this.tree.emit('error', error);
-		});
 	}
 
 	/**
