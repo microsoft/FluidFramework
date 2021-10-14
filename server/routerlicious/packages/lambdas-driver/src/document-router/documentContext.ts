@@ -5,7 +5,13 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
+import {
+    IContext,
+    IQueuedMessage,
+    ILogger,
+    IContextErrorData,
+    IRoutingKey,
+} from "@fluidframework/server-services-core";
 
 export class DocumentContext extends EventEmitter implements IContext {
     // We track two offsets - head and tail. Head represents the largest offset related to this document we
@@ -18,6 +24,7 @@ export class DocumentContext extends EventEmitter implements IContext {
     private contextError = undefined;
 
     constructor(
+        private readonly routingKey: IRoutingKey,
         head: IQueuedMessage,
         public readonly log: ILogger | undefined,
         private readonly getLatestTail: () => IQueuedMessage) {
@@ -48,7 +55,9 @@ export class DocumentContext extends EventEmitter implements IContext {
      * Updates the head offset for the context.
      */
     public setHead(head: IQueuedMessage) {
-        assert(head.offset > this.head.offset, `${head.offset} > ${this.head.offset}`);
+        assert(head.offset > this.head.offset,
+            `${head.offset} > ${this.head.offset} ` +
+            `(${head.topic}, ${head.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`);
 
         // When moving back to a state where head and tail differ we set the tail to be the old head, as in the
         // constructor, to make tail represent the inclusive top end of the checkpoint range.
@@ -69,7 +78,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
         assert(offset > this.tail.offset && offset <= this.head.offset,
             `${offset} > ${this.tail.offset} && ${offset} <= ${this.head.offset} ` +
-            `(${message.topic}, ${message.partition})`);
+            `(${message.topic}, ${message.partition}, ${this.routingKey.tenantId}/${this.routingKey.documentId})`);
 
         // Update the tail and broadcast the checkpoint
         this.tailInternal = message;

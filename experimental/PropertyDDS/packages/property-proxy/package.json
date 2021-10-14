@@ -26,8 +26,9 @@
     "eslint:fix": "eslint --format stylish src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "jest",
+    "test": "npm run test:jest",
     "test:coverage": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+    "test:jest": "jest",
     "tsc": "tsc"
   },
   "dependencies": {
@@ -61,5 +62,9 @@
     "ts-jest": "^26.4.4",
     "ts-loader": "^6.1.2",
     "typescript": "~4.1.3"
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
   }
 }
