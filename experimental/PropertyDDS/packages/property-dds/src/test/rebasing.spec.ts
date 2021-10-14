@@ -278,7 +278,8 @@ describe("PropertyDDS", () => {
 				await opProcessingController.ensureSynchronized();
 			});
 
-			it("Should work when doing two batches without synchronization inbetween", async () => {
+			// Issue #7856
+			it.skip("Should work when doing two batches without synchronization inbetween", async () => {
 				insertInArray(sharedPropertyTree1, "A");
 				insertInArray(sharedPropertyTree1, "A");
 				insertInArray(sharedPropertyTree1, "A");
@@ -503,7 +504,8 @@ describe("PropertyDDS", () => {
 				}
 			}
 
-			it("inserting properties into both trees", async () => {
+			// Issue #7856
+			it.skip("inserting properties into both trees", async () => {
 				insertProperties(sharedPropertyTree1, 0);
 				insertProperties(sharedPropertyTree1, 1);
 				insertProperties(sharedPropertyTree2, 0);
