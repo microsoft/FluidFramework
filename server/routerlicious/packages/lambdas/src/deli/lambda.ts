@@ -285,8 +285,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     }
                 }
                 const sequencedMessage = ticketedMessage.message as ISequencedDocumentMessage;
-                this.lastHash = getNextHash(sequencedMessage, this.lastHash);
-                sequencedMessage.expHash1 = this.lastHash;
+                if (this.serviceConfiguration.deli.enableOpHashing) {
+                    this.lastHash = getNextHash(sequencedMessage, this.lastHash);
+                    sequencedMessage.expHash1 = this.lastHash;
+                }
 
                 outgoingMessage = {
                     documentId: this.documentId,
