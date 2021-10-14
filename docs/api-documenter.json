@@ -4,19 +4,13 @@
   "uriRoot": "/docs/apis",
   "onlyPackagesStartingWith": [
     "fluid-framework",
-    "@fluid-experimental/task-manager",
-    "@fluidframework/core-interfaces",
-    "@fluidframework/common-definitions",
-    "@fluidframework/container-definitions",
-    "@fluidframework/datastore-definitions",
-    "@fluidframework/driver-definitions",
-    "@fluidframework/protocol-base",
-    "@fluidframework/protocol-definitions",
-    "@fluidframework/cell",
-    "@fluidframework/counter",
+    "tinylicious",
+    "@fluidframework/azure-client",
+    "@fluidframework/azure-local-service",
+    "@fluidframework/azure-service-utils",
     "@fluidframework/map",
     "@fluidframework/sequence",
-    "@fluidframework/shared-object-base",
-    "@fluidframework/aqueduct"
+    "@fluidframework/test-client-utils",
+    "@fluidframework/tinylicious-client"
   ]
 }

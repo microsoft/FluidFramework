@@ -6,6 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 import { IDocumentMessage } from "@fluidframework/protocol-definitions";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     IDatabaseManager,
     IDocumentStorage,
@@ -97,6 +98,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         databaseManager: IDatabaseManager,
         timeoutLength: number): Promise<INode> {
         debug("Creating node", id);
+        Lumberjack.debug(`Creating node: ${id}`);
 
         const nodeCollection = await databaseManager.getNodeCollection();
         const node = {
@@ -167,6 +169,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         // Connections will arrive from remote nodes
         this.webSocketServer.on("connection", (wsSocket, request) => {
             debug(`New inbound web socket connection ${request.url}`);
+            Lumberjack.debug(`New inbound web socket connection ${request.url}`);
             const socket = new Socket<INodeMessage>(wsSocket);
             const subscriber = new RemoteSubscriber(socket);
 
@@ -195,7 +198,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         // Emit connected message
                         const connected: IConnectedMessage = {
                             clientId: connection.clientId,
-                            existing: connection.existing,
+                            existing: true,
                             maxMessageSize: this.maxMessageSize,
                             serviceConfiguration: DefaultServiceConfiguration,
                         };
@@ -231,6 +234,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 
         this.webSocketServer.on("error", (error) => {
             debug("wss error", error);
+            Lumberjack.error("wss error", undefined, error);
         });
     }
 
@@ -238,6 +242,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         const fullId = `${tenantId}/${documentId}`;
         // Our node is responsible for sequencing messages
         debug(`${this.id} Becoming leader for ${fullId}`);
+        Lumberjack.debug(`${this.id} Becoming leader for ${fullId}`);
         const orderer = await LocalOrderer.load(
             this.storage,
             this.databaseManager,
@@ -261,6 +266,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
         if (now > this.node.expiration) {
             // Have lost the node. Need to shutdown everything and close down
             debug(`${this.node._id} did not renew before expiration`);
+            Lumberjack.debug(`${this.node._id} did not renew before expiration`);
             this.emit("expired");
 
             // TODO close the web socket server
@@ -284,6 +290,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
                         (error) => {
                             // Try again immediately.
                             debug(`Failed to renew expiration for ${this.node._id}`, error);
+                            Lumberjack.error(`Failed to renew expiration for ${this.node._id}`, undefined, error);
                             this.scheduleHeartbeat();
                         });
                 },

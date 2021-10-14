@@ -87,8 +87,8 @@ export function buildHierarchy(
         } else if (entry.type === "blob") {
             node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
             blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
-        } else if (entry.type === "commit") {
-            node.commits[decodeURIComponent(entryPathBase)] = entry.sha;
+        } else {
+            throw new Error("Unknown entry type!!");
         }
     }
 
@@ -109,24 +109,9 @@ export class BlobTreeEntry {
      * @param contents - blob contents
      * @param encoding - encoding of contents; defaults to utf-8
      */
-    constructor(public readonly path: string, contents: string, encoding: string = "utf-8") {
+    constructor(public readonly path: string, contents: string, encoding: "utf-8" | "base64" = "utf-8") {
         this.value = { contents, encoding };
     }
-}
-
-/**
- * Basic implementation of a commit ITreeEntry
- */
-export class CommitTreeEntry {
-    public readonly mode = FileMode.Commit;
-    public readonly type = TreeEntry.Commit;
-
-    /**
-     * Creates a commit ITreeEntry
-     * @param path - path of entry
-     * @param value - commit value
-     */
-    constructor(public readonly path: string, public readonly value: string) { }
 }
 
 /**

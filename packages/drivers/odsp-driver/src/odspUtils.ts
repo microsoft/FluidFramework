@@ -25,6 +25,7 @@ import {
     tokenFromResponse,
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
+    ShareLinkTypes,
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
@@ -105,11 +106,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`No response from the server`, fetchIncorrectResponse);
+            throwOdspNetworkError("odspFetchErrorNoResponse", fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status}`, response.status, response, await response.text());
+                `odspFetchError [${response.status}]`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -129,10 +130,10 @@ export async function fetchHelper(
             online = OnlineStatus.Offline;
         }
         if (error.name === "AbortError") {
-            throwOdspNetworkError("Timeout during fetch", fetchTimeoutStatusCode);
+            throwOdspNetworkError("timeoutDuringFetch", fetchTimeoutStatusCode);
         }
         if (errorText.indexOf("ETIMEDOUT") !== -1) {
-            throwOdspNetworkError("Timeout during fetch (ETIMEDOUT)", fetchTimeoutStatusCode);
+            throwOdspNetworkError("timeoutDuringFetch(ETIMEDOUT)", fetchTimeoutStatusCode);
         }
 
         //
@@ -140,10 +141,10 @@ export async function fetchHelper(
         // It could container PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
+        const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
         throwOdspNetworkError(
-            `Fetch error`,
-            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
-            undefined, // response
+            `odspFetchThrewError [${failureCode}]`,
+            failureCode,
         );
     });
 }
@@ -195,7 +196,13 @@ export async function fetchAndParseAsJSONHelper<T>(
         };
         return res;
     } catch (e) {
-        throwOdspNetworkError(`Error while parsing fetch response: ${e}`, fetchIncorrectResponse, content);
+        throwOdspNetworkError(
+            "errorWhileParsingFetchResponse",
+            fetchIncorrectResponse,
+            content,
+            undefined,
+            { error: Object(e) },
+        );
     }
 }
 
@@ -204,6 +211,12 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+    /**
+     * application can request creation of a share link along with the creation of a new file
+     * by passing in an optional param to specify the kind of sharing link
+     * (at the time of adding this comment Sept/2021), odsp only supports csl
+     */
+    createLinkType?: ShareLinkTypes;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
@@ -279,7 +292,7 @@ export function toInstrumentedOdspTokenFetcher(
                     event.end({ fromCache: isTokenFromCache(tokenResponse), isNull: token === null });
                 }
                 if (token === null && throwOnNullToken) {
-                    throwOdspNetworkError(`${name} Token is null`, fetchTokenErrorCode);
+                    throwOdspNetworkError("tokenIsNull", fetchTokenErrorCode, undefined, undefined, { method: name });
                 }
                 return token;
             }),

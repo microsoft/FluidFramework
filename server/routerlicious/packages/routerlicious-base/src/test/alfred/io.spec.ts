@@ -37,6 +37,7 @@ import {
     MongoManager,
     RawOperationType,
 } from "@fluidframework/server-services-core";
+import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     MessageFactory,
     TestClientManager,
@@ -47,6 +48,11 @@ import {
     TestThrottler,
 } from "@fluidframework/server-test-utils";
 import { OrdererManager } from "../../alfred";
+
+const lumberjackEngine = new TestEngine1();
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 describe("Routerlicious", () => {
     describe("Alfred", () => {
@@ -124,7 +130,7 @@ describe("Routerlicious", () => {
                     const connectMessage: IConnect = {
                         client: undefined,
                         id,
-                        mode: "read",
+                        mode: "write",
                         tenantId,
                         token,
                         versions: ["^0.3.0", "^0.2.0", "^0.1.0"],
@@ -165,7 +171,7 @@ describe("Routerlicious", () => {
                         const socket = webSocketServer.createConnection();
                         const connectMessage = await connectToServer(testId, testTenantId, testSecret, socket);
                         assert.ok(connectMessage.clientId);
-                        assert.equal(connectMessage.existing, false);
+                        assert.equal(connectMessage.existing, true);
 
                         // Verify a connection message was sent
                         const message = deliKafka.getLastMessage();
@@ -177,12 +183,12 @@ describe("Routerlicious", () => {
                         assert.equal(JoinMessage.clientId, connectMessage.clientId);
                     });
 
-                    it("Should connect to and set existing flag to true when connecting to an existing document",
+                    it("Should support multiple connections to an existing document",
                         async () => {
                             const firstSocket = webSocketServer.createConnection();
                             const firstConnectMessage = await connectToServer(
                                 testId, testTenantId, testSecret, firstSocket);
-                            assert.equal(firstConnectMessage.existing, false);
+                            assert.equal(firstConnectMessage.existing, true);
 
                             const secondSocket = webSocketServer.createConnection();
                             const secondConnectMessage = await connectToServer(
@@ -197,7 +203,7 @@ describe("Routerlicious", () => {
                             const socket = webSocketServer.createConnection();
                             const connectMessage = await connectToServer(id, testTenantId, testSecret, socket);
                             assert.ok(connectMessage.clientId);
-                            assert.equal(connectMessage.existing, false);
+                            assert.equal(connectMessage.existing, true);
 
                             // Verify a connection message was sent
                             const message = deliKafka.getLastMessage();
@@ -235,7 +241,7 @@ describe("Routerlicious", () => {
                         // There is no ack for the disconnect, but the message will be ordered with future messages.
                         await connectToServer(testId, testTenantId, testSecret, webSocketServer.createConnection());
 
-                        assert.equal(deliKafka.getRawMessages().length, 2);
+                        assert.equal(deliKafka.getRawMessages().length, 3);
                         const message = deliKafka.getMessage(1);
                         assert.equal(message.documentId, testId);
                         const systemLeaveMessage = message.operation as ISequencedDocumentSystemMessage;

@@ -42,7 +42,7 @@ export class AttachmentTreeEntry {
 
 // @public
 export class BlobTreeEntry {
-    constructor(path: string, contents: string, encoding?: string);
+    constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
     // (undocumented)
     readonly mode = FileMode.File;
     // (undocumented)
@@ -55,19 +55,6 @@ export class BlobTreeEntry {
 
 // @public
 export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
-
-// @public
-export class CommitTreeEntry {
-    constructor(path: string, value: string);
-    // (undocumented)
-    readonly mode = FileMode.Commit;
-    // (undocumented)
-    readonly path: string;
-    // (undocumented)
-    readonly type = TreeEntry.Commit;
-    // (undocumented)
-    readonly value: string;
-}
 
 // @public (undocumented)
 export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];

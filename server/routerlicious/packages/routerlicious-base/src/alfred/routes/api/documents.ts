@@ -27,6 +27,9 @@ export function create(
     tenantManager: ITenantManager): Router {
     const router: Router = Router();
 
+    // Whether to enforce server-generated document ids in create doc flow
+    const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
+
     const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
         throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
         throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
@@ -42,6 +45,9 @@ export function create(
                 getParam(request.params, "id"));
             documentP.then(
                 (document) => {
+                    if (!document || document.scheduledDeletionTime) {
+                        response.status(404);
+                    }
                     response.status(200).json(document);
                 },
                 (error) => {
@@ -63,7 +69,10 @@ export function create(
         (request, response, next) => {
             // Tenant and document
             const tenantId = getParam(request.params, "tenantId");
-            const id = request.body.id as string || uuid();
+            // If enforcing server generated document id, ignore id parameter
+            const id = enforceServerGeneratedDocumentId
+                ? uuid()
+                : request.body.id as string || uuid();
 
             // Summary information
             const summary = request.body.summary;

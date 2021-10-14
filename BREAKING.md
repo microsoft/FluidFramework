@@ -1,8 +1,58 @@
+## Adding breaking change notes
+
+Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+
+### Writing a change note
+
+There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
+- Provide a concise title.  It should make clear what the topic of the change is.
+- Ensure the affected packages are named or clearly identifiable within the body.
+- Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
+- Consider providing code examples as part of guidance for non-trivial changes.
+
+## 0.50 Breaking changes
+- [OpProcessingController removed](#OpProcessingController-removed)
+
+### OpProcessingController removed
+OpProcessingController has been deprecated for very long time. It's being removed in this release.
+Please use LoaderContainerTracker instead (see https://github.com/microsoft/FluidFramework/pull/7784 as an example of changes required)
+If you can't make this transition, you can always copy implementation of LoaderContainerTracker to your repo and maintain it. That said, it has bugs and tests using it are easily broken but subtle changes in reconnection logic, as evident from PRs #7753, #7393)
+
+## 0.49 Breaking changes
+- [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
+- [Removed deltaManager.ts from @fluidframework/container-loader export](#deltamanager-removed-from-fluid-framework-export)
+- [Container class protected function resumeInternal made private](#resumeinternal-made-private)
+- [url removed from ICreateBlobResponsee](#url-removed-from-ICreateBlobResponse)
+- [encoding type change](#encoding-type-change)
+
+### Deprecated dirty document events and property removed from ContainerRuntime
+The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
+
+### DeltaManager removed from fluid-framework export
+The `DeltaManager` class, the `IConnectionArgs` interface, the `IDeltaManagerInternalEvents` interface, and the `ReconnectedMode` enum have been removed from `@fluidframework/container-loader` package exports. Instead of `DeltaManager`, `IDeltaManager` should be used where appropriate.
+
+### resumeInternal made private
+The `protected` function `resumeInternal` under the class `Container` has been made `private`.
+
+### `url` removed from ICreateBlobResponse
+The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-definitions` has been removed
+
+### `encoding` type change
+The `encoding` property of `IBlob` in `@fluidframework/protocol-definitions` has changed type from `string` to `"utf-8" | "base64"` to match the only supported values.
+
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
+- [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
+- [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
 
 ### client-api package removed
 The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
+
+### SignalManager removed from fluid-framework export
+The `SignalManager` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package.  This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`.  Users should instead import the classes from the `@fluid-experimental/data-objects` package.
+
+### MockLogger removed from @fluidframework/test-runtime-utils
+MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
 
 ## 0.47 Breaking changes
 - [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)

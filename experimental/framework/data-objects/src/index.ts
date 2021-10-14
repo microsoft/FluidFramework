@@ -4,3 +4,4 @@
  */
 
 export * from "./kvpair";
+export * from "./signalManager";

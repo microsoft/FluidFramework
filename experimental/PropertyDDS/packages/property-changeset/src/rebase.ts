@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import _ from "lodash"
+import cloneDeep from "lodash/cloneDeep";
+import isEqual from "lodash/isEqual";
+
 import { ChangeSet } from "./changeset";
 
 class SyncPromise {
@@ -99,12 +101,12 @@ export function rebaseToRemoteChanges(
                         let applyAfterMetaInformation;
 
                         if (alreadyRebasedChanges[0] !== undefined && alreadyRebasedChanges[0].guid === c.guid) {
-                            const invertedChange = new ChangeSet(_.cloneDeep(alreadyRebasedChanges[0].changeSet));
+                            const invertedChange = new ChangeSet(cloneDeep(alreadyRebasedChanges[0].changeSet));
                             invertedChange.toInverseChangeSet();
                             invertedChange.applyChangeSet(rebaseBaseChangeSetForAlreadyRebasedChanges);
                             applyAfterMetaInformation = new Map();
                             const conflicts2 = [];
-                            changeset = _.cloneDeep(alreadyRebasedChanges[0].changeSet);
+                            changeset = cloneDeep(alreadyRebasedChanges[0].changeSet);
                             rebaseBaseChangeSetForAlreadyRebasedChanges._rebaseChangeSet(changeset, conflicts2, {
                                 applyAfterMetaInformation,
                             });
@@ -132,7 +134,7 @@ export function rebaseToRemoteChanges(
         .then(() => makePromise(getRebasedChanges(change.remoteHeadGuid)))
         .then((remoteChanges) => {
             const conflicts = [];
-            if (!_.isEqual(changesOnOtherLocalBranch.map((change) => change.guid),
+            if (!isEqual(changesOnOtherLocalBranch.map((change) => change.guid),
                 remoteChanges.map((change) => change.guid))) {
                 for (const remoteChange of remoteChanges) {
                     let applyAfterMetaInformation =
@@ -142,16 +144,16 @@ export function rebaseToRemoteChanges(
 
                     let changeset = remoteChange.changeSet;
                     if (changesOnOtherLocalBranch[0] !== undefined && changesOnOtherLocalBranch[0].guid === remoteChange.guid) {
-                        const invertedChange = new ChangeSet(_.cloneDeep(changesOnOtherLocalBranch[0].changeSet));
+                        const invertedChange = new ChangeSet(cloneDeep(changesOnOtherLocalBranch[0].changeSet));
                         invertedChange.toInverseChangeSet();
                         invertedChange.applyChangeSet(rebaseBaseChangeSet);
 
                         applyAfterMetaInformation = new Map();
-                        changeset = _.cloneDeep(changesOnOtherLocalBranch[0].changeSet);
+                        changeset = cloneDeep(changesOnOtherLocalBranch[0].changeSet);
                         rebaseBaseChangeSet._rebaseChangeSet(changeset, conflicts, { applyAfterMetaInformation });
 
                         // This is disabled for performance reasons. Only used during debugging
-                        // assert(_.isEqual(changeset,this.remoteChanges[i].changeSet),
+                        // assert(isEqual(changeset,this.remoteChanges[i].changeSet),
                         //                 "Failed Rebase in rebaseToRemoteChanges");
                         rebaseBaseChangeSet = invertedChange;
                         changesOnOtherLocalBranch.shift();
@@ -173,7 +175,7 @@ export function rebaseToRemoteChanges(
 function rebaseChangeArrays(baseChangeSet, changesToRebase) {
     let rebaseBaseChangeSet = baseChangeSet;
     for (const change of changesToRebase) {
-        const copiedChangeSet = new ChangeSet(_.cloneDeep(change.changeSet));
+        const copiedChangeSet = new ChangeSet(cloneDeep(change.changeSet));
         copiedChangeSet.toInverseChangeSet();
 
         const conflicts = [];

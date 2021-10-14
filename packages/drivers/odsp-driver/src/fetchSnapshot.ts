@@ -105,6 +105,13 @@ export async function fetchSnapshotWithRedeem(
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
+            if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
+                odspResolvedUrlWithoutShareLink.shareLinkInfo = {
+                    ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
+                    sharingLinkToRedeem: undefined,
+                };
+            }
+
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
                 storageTokenFetcher,
@@ -139,9 +146,10 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(!!odspResolvedUrl.sharingLinkToRedeem, 0x1ed /* "Share link should be present" */);
+                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+                    0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
                 headers.prefer = "redeemSharingLink";
@@ -297,8 +305,9 @@ async function fetchLatestSnapshotCore(
                     networktime: networkTime,
                     clienttime: clientTime,
                     // Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
-                    // FRS; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem, FRS is the redeem
-                    // status (S means success), and FRP is a flag to indicate if the permission has changed.
+                    // Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
+                    // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
+                    // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
                     attempts: tokenFetchOptions.refresh ? 2 : 1,
                     ...response.odspSnapshotResponse.commonSpoHeaders,
@@ -355,8 +364,8 @@ async function fetchSnapshotContentsCoreV1(
             }
         });
     }
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
@@ -402,9 +411,9 @@ async function fetchSnapshotContentsCoreV2(
     const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
         odspResolvedUrl.itemId}/opStream/attachments/latest/content`;
     const queryParams = { ...snapshotOptions };
-    if (odspResolvedUrl.sharingLinkToRedeem) {
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
         // eslint-disable-next-line @typescript-eslint/dot-notation
-        queryParams["sl"] = odspResolvedUrl.sharingLinkToRedeem;
+        queryParams["sl"] = odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem;
     }
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);

@@ -48,6 +48,7 @@ const DefaultScribe: IScribe = {
         values: [],
     },
     sequenceNumber: 0,
+    lastSummarySequenceNumber: 0,
 };
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
@@ -90,9 +91,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 this.documentCollection.findOne({ documentId, tenantId }),
             ]);
 
-            // If the document doesn't exist then we trivially accept every message
-            if (!document) {
-                context.log?.info(`Creating NoOpLambda due to missing`, { messageMetaData });
+            // If the document doesn't exist or is marked for deletion then we trivially accept every message
+            if (!document || document.scheduledDeletionTime) {
+                context.log?.info(`Creating NoOpLambda due to missing document`, { messageMetaData });
                 return new NoOpLambda(context);
             }
 
@@ -132,6 +133,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
+            context.log?.info(`Restoring checkpoint from db. Seq no: ${lastCheckpoint.sequenceNumber}`);
         }
 
         // Filter and keep ops after protocol state
@@ -181,7 +183,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             protocolHandler,
             latestSummary.term,
             latestSummary.protocolHead,
-            opMessages,
+            opsSinceLastSummary,
             scribeSessionMetric);
 
         await this.sendLambdaStartResult(tenantId, documentId, {lambdaName: LambdaName.Scribe, success: true});

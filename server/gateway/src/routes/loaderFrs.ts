@@ -37,7 +37,7 @@ export function create(
     const jwtKey = config.get("gateway:key");
     const codeResolver = new SemVerCdnCodeResolver();
 
-    // FRS
+    // Azure Fluid Relay
     const blobStorage = config.get("worker:frsBlobStorageUrl");
     const serverUrl = config.get("worker:frsServerUrl");
     if (blobStorage !== undefined && serverUrl !== undefined) {

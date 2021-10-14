@@ -80,11 +80,13 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-doclib-utils"
+                    "@fluidframework/odsp-doclib-utils",
+                    "@fluidframework/azure-service-utils"
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Server-Shared-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -255,6 +257,7 @@
                 "packages": [
                     "@fluid-internal/test-dds-utils",
                     "@fluidframework/local-driver",
+                    "@fluidframework/test-client-utils",
                     "@fluidframework/test-runtime-utils",
                     "@fluid-tools/webpack-fluid-loader"
                 ],
@@ -285,6 +288,7 @@
             },
             "Server-Tools": {
                 "packages": [
+                    "@fluidframework/azure-local-service",
                     "tinylicious"
                 ],
                 "deps": [

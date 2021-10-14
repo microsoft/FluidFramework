@@ -15,7 +15,8 @@ import {
     MessageType,
     SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockDeltaManager, MockLogger } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { neverCancelledSummaryToken } from  "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { ISummarizerOptions } from "../summarizerTypes";
@@ -620,9 +621,9 @@ describe("Runtime", () => {
                     await emitAck();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
                     assert(ackNackResult.success, "on-demand summary should succeed");
-                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                    assert(ackNackResult.data.summaryAckOp.type === MessageType.SummaryAck,
                         "should be ack");
-                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                    assert(ackNackResult.data.summaryAckOp.contents.handle === "test-ack-handle",
                         "summary ack handle should be test-ack-handle");
                 });
 
@@ -682,9 +683,9 @@ describe("Runtime", () => {
                     await emitNack();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
                     assert(!ackNackResult.success, "on-demand summary should fail");
-                    assert(ackNackResult.data?.summaryAckNackOp.type === MessageType.SummaryNack,
+                    assert(ackNackResult.data?.summaryNackOp.type === MessageType.SummaryNack,
                         "should be nack");
-                    assert(ackNackResult.data.summaryAckNackOp.contents.errorMessage === "test-nack",
+                    assert(ackNackResult.data.summaryNackOp.contents.errorMessage === "test-nack",
                         "summary nack error should be test-nack");
                 });
 
@@ -803,9 +804,9 @@ describe("Runtime", () => {
                     await emitAck();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
                     assert(ackNackResult.success, "enqueued summary should succeed");
-                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                    assert(ackNackResult.data.summaryAckOp.type === MessageType.SummaryAck,
                         "should be ack");
-                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                    assert(ackNackResult.data.summaryAckOp.contents.handle === "test-ack-handle",
                         "summary ack handle should be test-ack-handle");
                 });
 
@@ -860,9 +861,9 @@ describe("Runtime", () => {
                     await emitAck();
                     const ackNackResult = await result.receivedSummaryAckOrNack;
                     assert(ackNackResult.success, "enqueued summary should succeed");
-                    assert(ackNackResult.data.summaryAckNackOp.type === MessageType.SummaryAck,
+                    assert(ackNackResult.data.summaryAckOp.type === MessageType.SummaryAck,
                         "should be ack");
-                    assert(ackNackResult.data.summaryAckNackOp.contents.handle === "test-ack-handle",
+                    assert(ackNackResult.data.summaryAckOp.contents.handle === "test-ack-handle",
                         "summary ack handle should be test-ack-handle");
                 });
 

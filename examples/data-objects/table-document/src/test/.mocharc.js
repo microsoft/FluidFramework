@@ -7,6 +7,6 @@
 
 const packageDir = `${__dirname}/../..`;
 
-const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common.js");
-const config = getFluidTestMochaConfig(packageDir, ["@fluidframework/test-version-utils"]);
+const getFluidTestMochaConfig = require("@fluidframework/test-version-utils/mocharc-common.js");
+const config = getFluidTestMochaConfig(packageDir);
 module.exports = config;

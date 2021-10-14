@@ -4,7 +4,7 @@
  */
 
 import commander from "commander";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import random from "random-js";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -25,12 +25,19 @@ function printStatus(runConfig: IRunConfig, message: string) {
 }
 
 async function main() {
+    const parseIntArg = (value: any): number => {
+        if (isNaN(parseInt(value, 10))) {
+            throw new commander.InvalidArgumentError("Not a number.");
+        }
+        return parseInt(value, 10);
+    };
     commander
         .version("0.0.1")
         .requiredOption("-d, --driver <driver>", "Which test driver info to use", "odsp")
         .requiredOption("-p, --profile <profile>", "Which test profile to use from testConfig.json", "ci")
         .requiredOption("-u --url <url>", "Load an existing data store from the url")
-        .requiredOption("-r, --runId <runId>", "run a child process with the given id. Requires --url option.")
+        .requiredOption("-r, --runId <runId>",
+            "run a child process with the given id. Requires --url option.", parseIntArg)
         .requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
         .option("-l, --log <filter>", "Filter debug logging. If not provided, uses DEBUG env variable.")
         .option("-v, --verbose", "Enables verbose logging")
@@ -129,7 +136,7 @@ async function runnerProcess(
         const loaderOptions = generateLoaderOptions(seed);
         const containerOptions = generateRuntimeOptions(seed);
 
-        const testDriver = await createTestDriver(driver, seed, runConfig.runId);
+        const testDriver: ITestDriver = await createTestDriver(driver, seed, runConfig.runId);
         const baseLogger = await loggerP;
         const logger = ChildLogger.create(baseLogger, undefined,
             {

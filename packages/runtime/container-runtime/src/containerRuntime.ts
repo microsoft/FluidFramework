@@ -102,7 +102,7 @@ import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
-import { formRequestSummarizerFn, SummaryManager } from "./summaryManager";
+import { formRequestSummarizerFn, ISummarizerRequestOptions, SummaryManager } from "./summaryManager";
 import { DeltaScheduler } from "./deltaScheduler";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
@@ -127,6 +127,7 @@ import { ISerializedElection, OrderedClientCollection, OrderedClientElection } f
 import { SummarizerClientElection, summarizerClientType } from "./summarizerClientElection";
 import {
     SubmitSummaryResult,
+    IConnectableRuntime,
     IGeneratedSummaryStats,
     ISubmitSummaryOptions,
     ISummarizer,
@@ -135,6 +136,7 @@ import {
     ISummarizerRuntime,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
+import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -216,6 +218,12 @@ export interface IGCRuntimeOptions {
     runFullGC?: boolean;
 
     /**
+     * Flag that if true, will run sweep which may delete unused objects that meet certain criteria. Only takes
+     * effect if GC is enabled.
+     */
+    runSweep?: boolean;
+
+    /**
      * Allows additional GC options to be passed.
      */
     [key: string]: any;
@@ -277,6 +285,8 @@ interface IRuntimeMessageMetadata {
 const runGCKey = "FluidRunGC";
 // Local storage key to turn GC test mode on / off.
 const gcTestModeKey = "FluidGCTestMode";
+// Local storage key to turn GC sweep on / off.
+const runSweepKey = "FluidRunSweep";
 // Local storage key to set the default flush mode to TurnBased
 const turnBasedFlushModeKey = "FluidFlushModeTurnBased";
 
@@ -780,6 +790,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private latestSummaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
+    // This is the source of truth for whether GC sweep phase should run or not.
+    private readonly shouldRunSweep: boolean;
     /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
@@ -836,13 +848,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
 
-        // Can override with localStorage flag.
+        // Whether GC should run or not. Can override with localStorage flag.
         this.shouldRunGC = getLocalStorageFeatureGate(runGCKey) ?? (
             // GC must be enabled for the document.
             this.gcEnabled
             // Must not be disabled by runtime option.
             && !this.runtimeOptions.gcOptions.disableGC
         );
+
+        // Whether GC sweep phase should run or not. If this is false, only GC mark phase is run. Can override with
+        // localStorage flag.
+        this.shouldRunSweep = this.shouldRunGC &&
+            (getLocalStorageFeatureGate(runSweepKey) ?? this.runtimeOptions.gcOptions.runSweep === true);
 
         // Default to false (enabled).
         this.disableIsolatedChannels = this.runtimeOptions.summaryOptions.disableIsolatedChannels ?? false;
@@ -873,6 +890,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 throwOnFailure: true,
                 // If GC is disabled, let the summarizer node know so that it does not track GC state.
                 gcDisabled: !this.shouldRunGC,
+                // The max duration for which objects can be unreferenced before they are eligible for deletion.
+                maxUnreferencedDurationMs: this.runtimeOptions.gcOptions.maxUnreferencedDurationMs,
             },
         );
 
@@ -982,15 +1001,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     () => this.summaryConfiguration,
                     this /* ISummarizerInternalsProvider */,
                     this.IFluidHandleContext,
-                    this.summaryCollection);
+                    this.summaryCollection,
+                    async (runtime: IConnectableRuntime) => RunWhileConnectedCoordinator.create(runtime),
+                );
             } else if (SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)) {
                 // Create the SummaryManager and mark the initial state
+                const requestOptions: ISummarizerRequestOptions =
+                    {
+                        cache: false,
+                        reconnect: false,
+                        summarizingClient: true,
+                    };
                 this.summaryManager = new SummaryManager(
                     this.summarizerClientElection,
                     this, // IConnectedState
                     this.summaryCollection,
                     this.logger,
-                    formRequestSummarizerFn(this.context.loader, this.context.deltaManager),
+                    formRequestSummarizerFn(
+                        this.context.loader,
+                        this.context.deltaManager.lastSequenceNumber,
+                        requestOptions),
                     new Throttler(
                         60 * 1000, // 60 sec delay window
                         30 * 1000, // 30 sec max delay
@@ -1047,8 +1077,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             isDirty: this.isDirty,
             lastSequenceNumber: this.deltaManager.lastSequenceNumber,
             attachState: this.attachState,
-            message: error?.message,
-        });
+        }, error);
 
         if (this.summaryManager !== undefined) {
             this.summaryManager.off("summarizerWarning", this.raiseContainerWarning);
@@ -1556,15 +1585,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     };
 
     /**
-     * @deprecated - // back-compat: marked deprecated in 0.35
-     * Returns true of document is dirty, i.e. there are some pending local changes that
-     * either were not sent out to delta stream or were not yet acknowledged.
-     */
-    public isDocumentDirty(): boolean {
-        return this.dirtyContainer;
-    }
-
-    /**
      * Returns true of container is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
@@ -1734,6 +1754,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         runGC?: boolean,
         /** True to generate full GC data; defaults to false */
         fullGC?: boolean,
+        /** True to run GC sweep phase after the mark phase; defaults to false */
+        runSweep?: boolean,
     }): Promise<ISummaryTreeWithStats> {
         const { summaryLogger, fullTree = false, trackState = true, runGC = true, fullGC = false } = options;
 
@@ -1838,6 +1860,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     trackState: true,
                     runGC: this.shouldRunGC,
                     fullGC: this.runtimeOptions.gcOptions.runFullGC || forceRegenerateData,
+                    runSweep: this.shouldRunSweep,
                 });
             } catch (error) {
                 return { stage: "base", referenceSequenceNumber: summaryRefSeqNum, error };
@@ -1979,9 +2002,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.dirtyContainer = dirty;
         if (this.emitDirtyDocumentEvent) {
-            // back-compat: dirtyDocument & savedDocument deprecated in 0.35.
-            this.emit(dirty ? "dirtyDocument" : "savedDocument");
-
             this.emit(dirty ? "dirty" : "saved");
             // back-compat: Loader API added in 0.35 only
             if (this.context.updateDirtyContainerState !== undefined) {
@@ -2175,11 +2195,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async refreshLatestSummaryAck(
         proposalHandle: string | undefined,
         ackHandle: string,
+        summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
+            summaryRefSeq,
             async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 fetchLatest: false,
@@ -2219,6 +2241,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
+            snapshotRefSeq,
             async () => snapshot,
             readAndParseBlob,
             summaryLogger,

@@ -228,28 +228,6 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 
         public async writeOutFullSnapshot(tree: api.ITree) {
             const commits: { [key: string]: api.ITree } = {};
-            for (const entry of tree.entries) {
-                if (entry.type === api.TreeEntry.Commit) {
-                    const commitId = entry.value;
-                    let commit = this.commitsWriter[commitId];
-                    if (commit === undefined) {
-                        // Read from disk any commits that were referenced in original snapshot
-                        const version = await this.getVersions(commitId, 1);
-                        if (version.length > 0) {
-                            const commitTree = await this.getSnapshotTree(version[0]);
-                            if (commitTree) {
-                                commit = await this.buildTree(commitTree);
-                                this.sortTree(commit);
-                                this.commitsWriter[commitId] = commit;
-                            }
-                        }
-                        if (commit === undefined) {
-                            console.error(`Can't resolve commit ${commitId}`);
-                        }
-                    }
-                    commits[commitId] = commit;
-                }
-            }
 
             // Sort keys. This does not guarantees that JSON.stringify() would produce sorted result,
             // but in practice it does.

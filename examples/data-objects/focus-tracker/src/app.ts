@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { SignalManager } from "@fluid-experimental/data-objects";
 import {
-    FluidContainer,
+    IFluidContainer,
     ContainerSchema,
-    SignalManager,
 } from "fluid-framework";
 import {
     TinyliciousClient,
@@ -50,7 +50,7 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const client = new TinyliciousClient();
-    let container: FluidContainer;
+    let container: IFluidContainer;
     let services: TinyliciousContainerServices;
     let containerId: string;
 

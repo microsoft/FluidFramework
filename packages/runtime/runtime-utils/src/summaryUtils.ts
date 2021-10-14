@@ -215,9 +215,6 @@ export function convertToSummaryTreeWithStats(
                 break;
             }
 
-            case TreeEntry.Commit:
-                throw new Error("Should not have Commit TreeEntry in summary");
-
             default:
                 throw new Error("Unexpected TreeEntry type");
         }
@@ -303,7 +300,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
         switch (value.type) {
             case SummaryType.Blob: {
                 let parsedContent: string;
-                let encoding: string = "utf-8";
+                let encoding: "utf-8" | "base64" = "utf-8";
                 if (typeof value.content === "string") {
                     parsedContent = value.content;
                 } else {

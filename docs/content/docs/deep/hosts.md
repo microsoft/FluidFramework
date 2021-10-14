@@ -31,7 +31,7 @@ You may also want to host your Fluid container on a standalone website.
 The Fluid loader loads Fluid containers by connecting to the Fluid service and fetching Fluid container code. From a
 system architecture perspective, the Fluid loader sits in between the Fluid service and a Fluid container.
 
-<img src="/docs/deep/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
+<img src="/images/architecture.png" alt="The Fluid architecture consists of a client and service. The
 client contains the Fluid loader and the Fluid container. The Fluid loader contains a document service factory, code
 loader, scopes, and a URL resolver. The Fluid runtime is encapsulated within a container, which is built using Fluid
 objects and distributed data structures.">
@@ -49,8 +49,8 @@ A Fluid host creates a Fluid loader with a URL resolver, Fluid service driver, a
 Fluid container from the loader. Finally, the host *does something* with the Fluid containers. A host can request
 multiple containers from the loader.
 
-<img src="/docs/deep/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
-service driver, and a container code loader. It then returns a Fluid container or Fluid object.">
+<img src="/images/load-flow.png" alt="The Fluid loader connects to a URL using a container resolver, a
+service driver, and a container code loader. It then returns a Fluid container or shared object.">
 
 We'll talk about each of these parts, starting with the request and loader dependencies, over the next sections.
 
@@ -126,17 +126,13 @@ As the Fluid Framework expands, we intend to make further use of these responses
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

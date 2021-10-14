@@ -61,12 +61,13 @@ export async function createNewFluidFile(
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
-        throwOdspNetworkError("Invalid filename. Please try again.", invalidFileNameStatusCode);
+        throwOdspNetworkError("invalidFilename", invalidFileNameStatusCode);
     }
 
     let itemId: string;
     let summaryHandle: string = "";
-
+    let sharingLink: string | undefined;
+    let sharingLinkErrorReason: string | undefined;
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(getStorageToken, newFileInfo, logger, epochTracker);
     } else {
@@ -74,6 +75,8 @@ export async function createNewFluidFile(
             getStorageToken, newFileInfo, logger, createNewSummary, epochTracker);
         itemId = content.itemId;
         summaryHandle = content.id;
+        sharingLink = content.sharingLink;
+        sharingLinkErrorReason = content.sharingLinkErrorReason;
     }
 
     const odspUrl = createOdspUrl({... newFileInfo, itemId, dataStorePath: "/"});
@@ -82,6 +85,16 @@ export async function createNewFluidFile(
     fileEntry.docId = odspResolvedUrl.hashedDocumentId;
     fileEntry.resolvedUrl = odspResolvedUrl;
 
+    if(sharingLink || sharingLinkErrorReason) {
+        odspResolvedUrl.shareLinkInfo = {
+            createLink: {
+                type: newFileInfo.createLinkType,
+                link: sharingLink,
+                error: sharingLinkErrorReason,
+            },
+        };
+    }
+
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
         // converting summary and getting sequence number
@@ -89,7 +102,6 @@ export async function createNewFluidFile(
         // caching the converted summary
         await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
-
     return odspResolvedUrl;
 }
 
@@ -132,7 +144,7 @@ export async function createNewEmptyFluidFile(
 
                 const content = fetchResponse.content;
                 if (!content || !content.id) {
-                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
@@ -158,7 +170,8 @@ export async function createNewFluidFileFromSummary(
         `${filePath}/${encodedFilename}`;
 
     const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot`;
+    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${newFileInfo.createLinkType ?
+        `?createLinkType=${newFileInfo.createLinkType}` : ""}`;
 
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");
@@ -186,7 +199,7 @@ export async function createNewFluidFileFromSummary(
 
                 const content = fetchResponse.content;
                 if (!content || !content.itemId) {
-                    throwOdspNetworkError("Could not parse item from Vroom response", fetchIncorrectResponse);
+                    throwOdspNetworkError("couldNotParseItemFromVroomResponse", fetchIncorrectResponse);
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,

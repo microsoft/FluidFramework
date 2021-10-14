@@ -423,17 +423,29 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
-                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        // Ensure that failures on both paths are ignored initially.
+                        // I.e. if cache fails for some reason, we will proceed with network result.
+                        // And vice versa - if (for example) client is offline and network request fails first, we
+                        // do want to attempt to succeed with cached data!
+                        const promiseRaceWinner = await promiseRaceWithWinner([
+                            cachedSnapshotP.catch(() => undefined),
+                            snapshotP.catch(() => undefined),
+                        ]);
                         cachedSnapshot = promiseRaceWinner.value;
+                        method = promiseRaceWinner.index === 0 ? "cache" : "network";
 
                         if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await snapshotP;
+                            // if network failed -> wait for cache ( then return network failure)
+                            // If cache returned empty or failed -> wait for network (success of failure)
+                            if (promiseRaceWinner.index === 1) {
+                                cachedSnapshot = await cachedSnapshotP;
+                                method = "cache";
+                            }
+                            if (cachedSnapshot === undefined) {
+                                cachedSnapshot = await snapshotP;
+                                method = "network";
+                            }
                         }
-                        else {
-                            snapshotP.catch(() => {});
-                        }
-
-                        method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
@@ -485,10 +497,10 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
             );
             const versionsResponse = response.content;
             if (!versionsResponse) {
-                throwOdspNetworkError("getVersions returned no response", 400);
+                throwOdspNetworkError("getVersionsReturnedNoResponse", 400);
             }
             if (!Array.isArray(versionsResponse.value)) {
-                throwOdspNetworkError("getVersions returned non-array response", 400);
+                throwOdspNetworkError("getVersionsReturnedNonArrayResponse", 400);
             }
             return versionsResponse.value.map((version) => {
                 // Parse the date from the message
@@ -660,19 +672,19 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
 
     private checkSnapshotUrl() {
         if (!this.snapshotUrl) {
-            throwOdspNetworkError("Method not supported because no snapshotUrl was provided", 400);
+            throwOdspNetworkError("methodNotSupportedBecauseNoSnapshotUrlWasProvided", 400);
         }
     }
 
     private checkAttachmentPOSTUrl() {
         if (!this.attachmentPOSTUrl) {
-            throwOdspNetworkError("Method not supported because no attachmentPOSTUrl was provided", 400);
+            throwOdspNetworkError("methodNotSupportedBecauseNoAttachmentPOSTUrlWasProvided", 400);
         }
     }
 
     private checkAttachmentGETUrl() {
         if (!this.attachmentGETUrl) {
-            throwOdspNetworkError("Method not supported because no attachmentGETUrl was provided", 400);
+            throwOdspNetworkError("methodNotSupportedBecauseNoAttachmentGETUrlWasProvided", 400);
         }
     }
 

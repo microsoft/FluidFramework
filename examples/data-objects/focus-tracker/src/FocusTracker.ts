@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { SignalManager } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    FluidContainer,
+    IFluidContainer,
     IMember,
     IServiceAudience,
-    SignalManager,
 } from "fluid-framework";
 
 export interface IFocusTrackerEvents extends IEvent {
@@ -43,7 +43,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     };
 
     public constructor(
-        container: FluidContainer,
+        container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
         private readonly signalManager: SignalManager,
     ) {

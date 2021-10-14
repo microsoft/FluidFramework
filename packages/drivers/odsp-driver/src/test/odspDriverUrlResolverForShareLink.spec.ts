@@ -182,7 +182,8 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
             return urlResolverWithShareLinkFetcher.resolve(
                 { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
         });
-        assert.strictEqual(resolvedUrl.sharingLinkToRedeem, url.toString(), "Sharing link should be set in resolved url");
+        assert(resolvedUrl.sharingLinkToRedeem !== undefined, "Sharing link should be set in resolved url");
+        assert(resolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined, "Sharing link should be set in resolved url");
     });
 
     it("Encode and decode nav param", async () => {
@@ -194,5 +195,17 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
         assert.strictEqual(locator?.itemId, itemId, "Item id should be equal");
         assert.strictEqual(locator?.dataStorePath, dataStorePath, "DataStore path should be equal");
         assert.strictEqual(locator?.siteUrl, siteUrl, "SiteUrl should be equal");
+    });
+
+    it("Check nav param removal for share link", async () => {
+        const customShareLink = `${sharelink}?query1=q1`;
+        const url = new URL(customShareLink);
+        storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
+        const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+            return urlResolverWithShareLinkFetcher.resolve(
+                { url: url.toString(), headers: { [SharingLinkHeader.isSharingLinkToRedeem]: true } });
+        });
+        assert.strictEqual(
+            resolvedUrl.sharingLinkToRedeem, customShareLink, "Nav param should not exist on sharelink");
     });
 });

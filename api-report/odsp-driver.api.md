@@ -20,13 +20,14 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
+import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
 // @public
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
-// @public (undocumented)
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string): IRequest;
+// @public
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
 
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
@@ -62,6 +63,9 @@ export function isOdcUrl(url: string | URL): boolean;
 export function isSpoUrl(url: string): boolean;
 
 // @public (undocumented)
+export const locatorQueryParamName = "nav";
+
+// @public (undocumented)
 export const OdcApiSiteOrigin = "https://api.onedrive.com";
 
 // @public (undocumented)
@@ -86,7 +90,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected persistedCache: IPersistedCache;
     // (undocumented)
     readonly protocolName = "fluid-odsp:";
-}
+    }
 
 // @public (undocumented)
 export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {

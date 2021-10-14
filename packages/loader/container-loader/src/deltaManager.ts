@@ -48,6 +48,7 @@ import {
     ITrace,
     MessageType,
     ScopeType,
+    ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
     canRetryOnError,
@@ -74,16 +75,17 @@ const InitialReconnectDelayInMs = 1000;
 const DefaultChunkSize = 16 * 1024;
 
 function getNackReconnectInfo(nackContent: INackContent) {
-    const reason = `Nack: ${nackContent.message}`;
+    const message = `Nack (${nackContent.type}): ${nackContent.message}`;
     const canRetry = nackContent.code !== 403;
     const retryAfterMs = nackContent.retryAfter !== undefined ? nackContent.retryAfter * 1000 : undefined;
-    return createGenericNetworkError(reason, canRetry, retryAfterMs, { statusCode: nackContent.code });
+    return createGenericNetworkError(
+        `nack [${nackContent.code}]`, message, canRetry, retryAfterMs, { statusCode: nackContent.code });
 }
 
-const createReconnectError = (prefix: string, err: any) =>
+const createReconnectError = (fluidErrorCode: string, err: any) =>
     wrapError(
         err,
-        (errorMessage: string) => new GenericNetworkError(`${prefix}: ${errorMessage}`, true /* canRetry */),
+        (errorMessage: string) => new GenericNetworkError(fluidErrorCode, errorMessage, true /* canRetry */),
     );
 
 export interface IConnectionArgs {
@@ -241,6 +243,12 @@ export class DeltaManager
 
     private readonly closeAbortController = new AbortController();
 
+    // True if there is pending (async) reconnection from "read" to "write"
+    private pendingReconnect = false;
+
+    // downgrade "write" connection to "read"
+    private downgradedConnection = false;
+
     /**
      * Tells if  current connection has checkpoint information.
      * I.e. we know how far behind the client was at the time of establishing connection
@@ -316,7 +324,9 @@ export class DeltaManager
      * The current connection mode, initially read.
      */
     public get connectionMode(): ConnectionMode {
-        if (this.connection === undefined) {
+        assert(!this.downgradedConnection || this.connection?.mode === "write",
+            "Did we forget to reset downgradedConnection on new connection?");
+        if (this.connection === undefined || this.downgradedConnection) {
             return "read";
         }
         return this.connection.mode;
@@ -380,13 +390,17 @@ export class DeltaManager
      * about current or last connection (if there is no connection at the moment)
     */
     public connectionProps(): ITelemetryProperties {
+        const common = {
+            sequenceNumber: this.lastSequenceNumber,
+        };
         if (this.connection !== undefined) {
             return {
-                sequenceNumber: this.lastSequenceNumber,
+                ...common,
                 connectionMode: this.connectionMode,
             };
         } else {
             return {
+                ...common,
                 // Report how many ops this client sent in last disconnected session
                 sentOps: this.clientSequenceNumber,
             };
@@ -397,11 +411,16 @@ export class DeltaManager
      * Enables or disables automatic reconnecting.
      * Will throw an error if reconnectMode set to Never.
      */
-    public setAutomaticReconnect(reconnect: boolean): void {
-        assert(
-            this._reconnectMode !== ReconnectMode.Never,
-            0x0e1 /* "Cannot toggle automatic reconnect if reconnect is set to Never." */);
-        this._reconnectMode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+    public setAutoReconnect(mode: ReconnectMode): void {
+        assert(mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
+            "API is not supported for non-connecting or closed container");
+
+        this._reconnectMode = mode;
+
+        if (mode !== ReconnectMode.Enabled) {
+            // immediately disconnect - do not rely on service eventually dropping connection.
+            this.disconnectFromDeltaStream("setAutoReconnect");
+        }
     }
 
     /**
@@ -430,7 +449,11 @@ export class DeltaManager
         }
         const oldValue = this.readonly;
         this._forceReadonly = readonly;
+
         if (oldValue !== this.readonly) {
+            assert(this._reconnectMode !== ReconnectMode.Never,
+                "API is not supported for non-connecting or closed container");
+
             let reconnect = false;
             if (this.readonly === true) {
                 // If we switch to readonly while connected, we should disconnect first
@@ -552,11 +575,12 @@ export class DeltaManager
     /**
      * Sets the sequence number from which inbound messages should be returned
      */
-    public attachOpHandler(
+    public async attachOpHandler(
         minSequenceNumber: number,
         sequenceNumber: number,
         term: number,
         handler: IDeltaHandlerStrategy,
+        prefetchType: "cached" | "all" | "none" = "none",
     ) {
         this.initSequenceNumber = sequenceNumber;
         this.lastProcessedSequenceNumber = sequenceNumber;
@@ -571,24 +595,36 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         assert(!!(this.handler as any), 0x0e3 /* "Newly set op handler is null/undefined!" */);
 
+        // There should be no pending fetch!
+        // This API is called right after attachOpHandler by Container.load().
+        // We might have connection already and it might have called fetchMissingDeltas() from
+        // setupNewSuccessfulConnection. But it should do nothing, because there is no way to fetch ops before
+        // we know snapshot sequence number that is set in attachOpHandler. So all such calls should be noop.
+        assert(this.fetchReason === undefined, 0x268 /* "There can't be pending fetch that early in boot sequence!" */);
+
+        if (this.closed) {
+            return;
+        }
+
         this._inbound.resume();
         this._inboundSignal.resume();
 
-        // We could have connected to delta stream before getting here
-        // If so, it's time to process any accumulated ops, as there might be no other event that
-        // will force these pending ops to be processed.
-        // Or request OPs from snapshot / or point zero (if we have no ops at all)
-        if (this.pending.length > 0) {
-            this.processPendingOps("DocumentOpen");
-        }
-    }
+        if (prefetchType !== "none") {
+            const cacheOnly = prefetchType === "cached";
+            await this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber);
 
-    public async preFetchOps(cacheOnly: boolean) {
-        // Note that might already got connected to delta stream by now.
-        // If we did, then we proactively fetch ops at the end of setupNewSuccessfulConnection to ensure
-        if (this.connection === undefined) {
-            return this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber, undefined);
+            // Keep going with fetching ops from storage once we have all cached ops in.
+            // But do not block load and make this request async / not blocking this api.
+            // Ops processing will start once cached ops are in and and will stop when queue is empty
+            // (which in most cases will happen when we are done processing cached ops)
+            if (cacheOnly) {
+                // fire and forget
+                this.fetchMissingDeltas("DocumentOpen", this.lastQueuedSequenceNumber);
+            }
         }
+
+        // Ensure there is no need to call this.processPendingOps() at the end of boot sequence
+        assert(this.fetchReason !== undefined || this.pending.length === 0, 0x269 /* "pending ops are not dropped" */);
     }
 
     private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
@@ -630,6 +666,8 @@ export class DeltaManager
     }
 
     private async connectCore(args: IConnectionArgs): Promise<IDocumentDeltaConnection> {
+        assert(!this.closed, 0x26a /* "not closed" */);
+
         if (this.connection !== undefined) {
             return this.connection;
         }
@@ -664,7 +702,7 @@ export class DeltaManager
             this.handler !== undefined || !fetchOpsFromStorage,
             this.logger,
             "CantFetchWithoutBaseline"); // can't fetch if no baseline
-        if (fetchOpsFromStorage && this.handler !== undefined) {
+        if (fetchOpsFromStorage) {
             this.fetchMissingDeltas(args.reason, this.lastQueuedSequenceNumber);
         }
 
@@ -675,11 +713,8 @@ export class DeltaManager
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
-            this.connectionP = new Promise((resolve) => {
-                this.setupNewSuccessfulConnection(connection, "read");
-                resolve(connection);
-            });
-            return this.connectionP;
+            this.setupNewSuccessfulConnection(connection, "read");
+            return connection;
         }
 
         // The promise returned from connectCore will settle with a resolved connection or reject with error
@@ -765,7 +800,7 @@ export class DeltaManager
 
             // Attempt the connection
             connectCore().then((connection) => {
-                this.connectionP = undefined;
+                assert(this.connectionP === undefined, "this.connectionP has been reset on successful connection");
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -819,6 +854,31 @@ export class DeltaManager
             this.lastSubmittedClientId = this.connection?.clientId;
             this.clientSequenceNumber = 0;
             this.clientSequenceNumberObserved = 0;
+        }
+
+        // If connection is "read" or implicit "read" (got leave op for "write" connection),
+        // then op can't make it through - we will get a nack if op is sent.
+        // We can short-circuit this process.
+        // Note that we also want nacks to be rare and be treated as catastrophic failures.
+        // Be careful with reentrancy though - disconnected event should not be be raised in the
+        // middle of the current workflow, but rather on clean stack!
+        if (this.connectionMode === "read") {
+            if (!this.pendingReconnect) {
+                this.pendingReconnect = true;
+                Promise.resolve().then(async () => {
+                    if (this.pendingReconnect) { // still valid?
+                        return this.reconnectOnErrorCore(
+                            "write", // connectionMode
+                            "Switch to write", // message
+                        );
+                    }
+                })
+                .catch(() => {});
+            }
+
+            // Can return -1 here, but no other path does it (other than error path in Container),
+            // so it's better not to introduce new states.
+            return ++this.clientSequenceNumber;
         }
 
         const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
@@ -1031,13 +1091,13 @@ export class DeltaManager
         // TODO: we should remove this check when service updates?
         // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (this._readonlyPermissions) {
-            this.close(createWriteError("WriteOnReadOnlyDocument"));
+            this.close(createWriteError("writeOnReadOnlyDocument"));
         }
 
         // check message.content for Back-compat with old service.
         const reconnectInfo = message.content !== undefined
             ? getNackReconnectInfo(message.content) :
-            createGenericNetworkError(`Nack: unknown reason`, true);
+            createGenericNetworkError("nackReasonUnknown", undefined, true);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
@@ -1053,7 +1113,7 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("Disconnect", disconnectReason),
+            createReconnectError("dmDocumentDeltaConnectionDisconnected", disconnectReason),
         );
     };
 
@@ -1065,7 +1125,7 @@ export class DeltaManager
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.reconnectOnError(
             this.defaultReconnectionMode,
-            createReconnectError("error", error),
+            createReconnectError("dmDocumentDeltaConnectionError", error),
         );
     };
 
@@ -1097,6 +1157,7 @@ export class DeltaManager
         }
 
         this.connection = connection;
+        this.connectionP = undefined;
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
@@ -1210,9 +1271,14 @@ export class DeltaManager
      * @param reason - Text description of disconnect reason to emit with disconnect event
      */
     private disconnectFromDeltaStream(reason: string) {
+        this.pendingReconnect = false;
+        this.downgradedConnection = false;
+
         if (this.connection === undefined) {
             return false;
         }
+
+        assert(this.connectionP === undefined, "reentrnacy may result in incorrect behavior");
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
@@ -1263,15 +1329,34 @@ export class DeltaManager
         requestedMode: ConnectionMode,
         error: DriverError,
     ) {
+        return this.reconnectOnErrorCore(
+            requestedMode,
+            error.message,
+            error);
+    }
+
+    /**
+     * Disconnect the current connection and reconnect.
+     * @param connection - The connection that wants to reconnect - no-op if it's different from this.connection
+     * @param requestedMode - Read or write
+     * @param error - Error reconnect information including whether or not to reconnect
+     * @returns A promise that resolves when the connection is reestablished or we stop trying
+     */
+    private async reconnectOnErrorCore(
+        requestedMode: ConnectionMode,
+        disconnectMessage: string,
+        error?: DriverError,
+    ) {
         // We quite often get protocol errors before / after observing nack/disconnect
         // we do not want to run through same sequence twice.
         // If we're already disconnected/disconnecting it's not appropriate to call this again.
         assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
-        this.disconnectFromDeltaStream(error.message);
+        this.disconnectFromDeltaStream(disconnectMessage);
+
+        const canRetry = error !== undefined ? canRetryOnError(error) : true;
 
         // If reconnection is not an option, close the DeltaManager
-        const canRetry = canRetryOnError(error);
         if (this.reconnectMode === ReconnectMode.Never || !canRetry) {
             // Do not raise container error if we are closing just because we lost connection.
             // Those errors (like IdleDisconnect) would show up in telemetry dashboards and
@@ -1285,7 +1370,7 @@ export class DeltaManager
         }
 
         if (this.reconnectMode === ReconnectMode.Enabled) {
-            const delayMs = getRetryDelayFromError(error);
+            const delayMs = error !== undefined ? getRetryDelayFromError(error) : undefined;
             if (delayMs !== undefined) {
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error);
                 await waitForConnectedState(delayMs);
@@ -1409,7 +1494,8 @@ export class DeltaManager
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
                         const error = new NonRetryableError(
-                            "Two messages with same seq# and different payload!",
+                            "twoMessagesWithSameSeqNumAndDifferentPayload",
+                            undefined,
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connection?.clientId,
@@ -1476,6 +1562,17 @@ export class DeltaManager
             message.contents = JSON.parse(message.contents);
         }
 
+        if (message.type === MessageType.ClientLeave) {
+            const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+            const clientId = JSON.parse(systemLeaveMessage.data) as string;
+            if (clientId === this.connection?.clientId) {
+                // We have been kicked out from quorum
+                this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
+                this.downgradedConnection = true;
+                assert(this.connectionMode === "read", "effective connectionMode should be 'read' after downgrade");
+            }
+        }
+
         // Add final ack trace.
         if (message.traces !== undefined && message.traces.length > 0) {
             const service = this.clientDetails.type === undefined || this.clientDetails.type === ""
@@ -1531,8 +1628,9 @@ export class DeltaManager
      * Retrieves the missing deltas between the given sequence numbers
      */
      private fetchMissingDeltas(reasonArg: string, lastKnowOp: number, to?: number) {
-         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, lastKnowOp, to);
+         this.fetchMissingDeltasCore(reasonArg, false /* cacheOnly */, lastKnowOp, to).catch((error) => {
+             this.logger.sendErrorEvent({ eventName: "fetchMissingDeltasException" }, error);
+         });
      }
 
      /**
@@ -1551,6 +1649,12 @@ export class DeltaManager
 
         if (this.closed) {
             this.logger.sendTelemetryEvent({ eventName: "fetchMissingDeltasClosedConnection", reason });
+            return;
+        }
+
+        if (this.handler === undefined) {
+            // We do not poses yet any information
+            assert(lastKnowOp === 0, 0x26b /* "initial state" */);
             return;
         }
 
@@ -1595,12 +1699,34 @@ export class DeltaManager
      * Sorts pending ops and attempts to apply them
      */
     private processPendingOps(reason?: string): void {
-        if (this.handler !== undefined) {
-            const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
-            this.pending = [];
-            // Given that we do not track where these ops came from any more, it's not very
-            // actionably to report gaps in this range.
-            this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+        if (this.closed) {
+            return;
+        }
+
+        assert(this.handler !== undefined, 0x26c /* "handler should be installed" */);
+
+        const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+        this.pending = [];
+        // Given that we do not track where these ops came from any more, it's not very
+        // actionably to report gaps in this range.
+        this.enqueueMessages(pendingSorted, `${reason}_pending`, true /* allowGaps */);
+
+        // Re-entrancy is ignored by fetchMissingDeltas, execution will come here when it's over
+        if (this.fetchReason === undefined) {
+            // See issue #7312 for more details
+            // We observe cases where client gets into situation where it is not aware of missing ops
+            // (i.e. client being behind), and as such, does not attempt to fetch them.
+            // In some cases client may not have enough signal (example - "read" connection that is silent -
+            // there is no easy way for client to realize it's behind, see a bit of commentary / logic at the
+            // end of setupNewSuccessfulConnection). In other cases it should be able to learn that info ("write"
+            // connection, learn by receiving its own join op), but data suggest it does not happen.
+            // In 50% of these cases we do know we are behind through checkpointSequenceNumber on connection object
+            // and thus can leverage that to trigger recovery. But this is not going to solve all the problems
+            // (the other 50%), and thus these errors below should be looked at even if code below results in
+            // recovery.
+            if (this.lastQueuedSequenceNumber < this.lastObservedSeqNumber) {
+                this.fetchMissingDeltas("OpsBehind", this.lastQueuedSequenceNumber);
+            }
         }
     }
 

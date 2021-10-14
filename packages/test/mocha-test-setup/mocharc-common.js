@@ -8,12 +8,8 @@
 const { existsSync } = require("fs");
 const path = require("path");
 
-function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
+function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 
-    const testDriver = process.env.fluid__test__driver ? process.env.fluid__test__driver : "local";
-    const r11sEndpointName = process.env.fluid__test__r11sEndpointName;
-    const testVariant = (testDriver === "r11s" || testDriver === "routerlicious")
-        && (r11sEndpointName !== undefined && r11sEndpointName !== "r11s") ? `r11s-${r11sEndpointName}` : testDriver;
     const moduleDir = `${packageDir}/node_modules`;
 
     const requiredModules = [
@@ -54,12 +50,20 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules) {
     if (process.env.FLUID_TEST_REPORT === "1") {
         const packageJson = require(`${packageDir}/package.json`);
         config["reporter"] = `xunit`;
-        config["reporter-options"] = [
-            // give the report file a unique name based on driver config
-            `output=${packageDir}/nyc/${testVariant}-junit-report.xml`,
-            `suiteName=${packageJson.name} - ${testVariant}`
-        ];
+        if (testReportPrefix) {
+            config["reporter-options"] = [
+                // give the report file a unique name based on testReportPrefix
+                `output=${packageDir}/nyc/${testReportPrefix}-junit-report.xml`,
+                `suiteName=${packageJson.name} - ${testReportPrefix}`
+            ];
+        } else {
+            config["reporter-options"] = [
+                `output=${packageDir}/nyc/junit-report.xml`,
+                `suiteName=${packageJson.name}`
+            ];
+        }
     }
+
     return config;
 }
 

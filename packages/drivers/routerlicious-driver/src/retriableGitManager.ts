@@ -140,6 +140,13 @@ export class RetriableGitManager implements IGitManager {
         );
     }
 
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        return this.runWithRetry(
+            async () => this.internalGitManager.deleteSummary(softDelete),
+            "gitManager_deleteSummary",
+        );
+    }
+
     public async getSummary(sha: string): Promise<IWholeFlatSummary> {
         return this.runWithRetry(
             async () => this.internalGitManager.getSummary(sha),
