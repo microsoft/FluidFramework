@@ -11,7 +11,7 @@ import * as current from "../index";
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_AttachState": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_AttachState():
@@ -23,7 +23,7 @@ use_current_EnumDeclaration_AttachState(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_AttachState": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_AttachState():
@@ -35,7 +35,7 @@ use_old_EnumDeclaration_AttachState(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_BindState": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_BindState():
@@ -47,7 +47,7 @@ use_current_EnumDeclaration_BindState(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_BindState": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_BindState():
@@ -59,7 +59,7 @@ use_old_EnumDeclaration_BindState(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_ContainerErrorType": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ContainerErrorType():
@@ -71,7 +71,7 @@ use_current_EnumDeclaration_ContainerErrorType(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_ContainerErrorType": {"backCompat": false}
 declare function get_current_EnumDeclaration_ContainerErrorType():
     current.ContainerErrorType;
@@ -83,7 +83,7 @@ use_old_EnumDeclaration_ContainerErrorType(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ContainerWarning": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ContainerWarning():
@@ -95,7 +95,7 @@ use_current_InterfaceDeclaration_ContainerWarning(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ContainerWarning": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ContainerWarning():
@@ -107,7 +107,7 @@ use_old_InterfaceDeclaration_ContainerWarning(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IAudience": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAudience():
@@ -119,7 +119,7 @@ use_current_InterfaceDeclaration_IAudience(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IAudience": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IAudience():
@@ -131,7 +131,7 @@ use_old_InterfaceDeclaration_IAudience(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ICodeAllowList": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICodeAllowList():
@@ -143,7 +143,7 @@ use_current_InterfaceDeclaration_ICodeAllowList(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ICodeAllowList": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ICodeAllowList():
@@ -155,7 +155,7 @@ use_old_InterfaceDeclaration_ICodeAllowList(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_ICodeLoader():
     old.ICodeLoader;
@@ -167,7 +167,7 @@ use_current_InterfaceDeclaration_ICodeLoader(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_ICodeLoader():
     current.ICodeLoader;
@@ -179,7 +179,7 @@ use_old_InterfaceDeclaration_ICodeLoader(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IConnectionDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IConnectionDetails():
@@ -191,7 +191,7 @@ use_current_InterfaceDeclaration_IConnectionDetails(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IConnectionDetails": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IConnectionDetails():
@@ -203,7 +203,7 @@ use_old_InterfaceDeclaration_IConnectionDetails(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainer": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IContainer():
     old.IContainer;
@@ -215,7 +215,7 @@ use_current_InterfaceDeclaration_IContainer(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainer": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IContainer():
     current.IContainer;
@@ -227,7 +227,7 @@ use_old_InterfaceDeclaration_IContainer(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerContext": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IContainerContext():
     old.IContainerContext;
@@ -239,7 +239,7 @@ use_current_InterfaceDeclaration_IContainerContext(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerContext": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IContainerContext():
     current.IContainerContext;
@@ -251,7 +251,7 @@ use_old_InterfaceDeclaration_IContainerContext(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerEvents():
@@ -263,7 +263,7 @@ use_current_InterfaceDeclaration_IContainerEvents(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IContainerEvents():
@@ -275,7 +275,7 @@ use_old_InterfaceDeclaration_IContainerEvents(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerLoadMode": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerLoadMode():
@@ -287,7 +287,7 @@ use_current_InterfaceDeclaration_IContainerLoadMode(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IContainerLoadMode": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IContainerLoadMode():
@@ -299,7 +299,7 @@ use_old_InterfaceDeclaration_IContainerLoadMode(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_ICriticalContainerError": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ICriticalContainerError():
@@ -311,7 +311,7 @@ use_current_TypeAliasDeclaration_ICriticalContainerError(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_ICriticalContainerError": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ICriticalContainerError():
@@ -323,7 +323,7 @@ use_old_TypeAliasDeclaration_ICriticalContainerError(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaHandlerStrategy": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaHandlerStrategy():
@@ -335,7 +335,7 @@ use_current_InterfaceDeclaration_IDeltaHandlerStrategy(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaHandlerStrategy": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaHandlerStrategy():
@@ -347,7 +347,7 @@ use_old_InterfaceDeclaration_IDeltaHandlerStrategy(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaManager": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaManager():
@@ -359,7 +359,7 @@ use_current_InterfaceDeclaration_IDeltaManager(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaManager": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaManager():
@@ -371,7 +371,7 @@ use_old_InterfaceDeclaration_IDeltaManager(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaManagerEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaManagerEvents():
@@ -383,7 +383,7 @@ use_current_InterfaceDeclaration_IDeltaManagerEvents(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaManagerEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaManagerEvents():
@@ -395,7 +395,7 @@ use_old_InterfaceDeclaration_IDeltaManagerEvents(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaQueue": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaQueue():
@@ -407,7 +407,7 @@ use_current_InterfaceDeclaration_IDeltaQueue(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaQueue": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaQueue():
@@ -419,7 +419,7 @@ use_old_InterfaceDeclaration_IDeltaQueue(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaQueueEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaQueueEvents():
@@ -431,7 +431,7 @@ use_current_InterfaceDeclaration_IDeltaQueueEvents(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaQueueEvents": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaQueueEvents():
@@ -443,7 +443,7 @@ use_old_InterfaceDeclaration_IDeltaQueueEvents(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_IDeltaSender": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IDeltaSender():
@@ -455,7 +455,7 @@ use_current_VariableDeclaration_IDeltaSender(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_IDeltaSender": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IDeltaSender():
@@ -467,7 +467,7 @@ use_old_VariableDeclaration_IDeltaSender(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaSender": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaSender():
@@ -479,7 +479,7 @@ use_current_InterfaceDeclaration_IDeltaSender(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IDeltaSender": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IDeltaSender():
@@ -491,7 +491,7 @@ use_old_InterfaceDeclaration_IDeltaSender(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IErrorBase": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IErrorBase():
@@ -503,7 +503,7 @@ use_current_InterfaceDeclaration_IErrorBase(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IErrorBase": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IErrorBase():
@@ -515,7 +515,7 @@ use_old_InterfaceDeclaration_IErrorBase(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidBrowserPackage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidBrowserPackage():
@@ -527,7 +527,7 @@ use_current_InterfaceDeclaration_IFluidBrowserPackage(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidBrowserPackage": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidBrowserPackage():
@@ -539,7 +539,7 @@ use_old_InterfaceDeclaration_IFluidBrowserPackage(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidBrowserPackageEnvironment": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidBrowserPackageEnvironment():
@@ -551,7 +551,7 @@ use_current_InterfaceDeclaration_IFluidBrowserPackageEnvironment(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidBrowserPackageEnvironment": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidBrowserPackageEnvironment():
@@ -563,7 +563,7 @@ use_old_InterfaceDeclaration_IFluidBrowserPackageEnvironment(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidCodeResolver": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidCodeResolver():
@@ -575,7 +575,7 @@ use_current_InterfaceDeclaration_IFluidCodeResolver(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidCodeResolver": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidCodeResolver():
@@ -587,7 +587,7 @@ use_old_InterfaceDeclaration_IFluidCodeResolver(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidModule": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IFluidModule():
     old.IFluidModule;
@@ -599,7 +599,7 @@ use_current_InterfaceDeclaration_IFluidModule(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidModule": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IFluidModule():
     current.IFluidModule;
@@ -611,7 +611,7 @@ use_old_InterfaceDeclaration_IFluidModule(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_IFluidTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidTokenProvider():
@@ -623,7 +623,7 @@ use_current_VariableDeclaration_IFluidTokenProvider(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_IFluidTokenProvider": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IFluidTokenProvider():
@@ -635,7 +635,7 @@ use_old_VariableDeclaration_IFluidTokenProvider(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidTokenProvider():
@@ -647,7 +647,7 @@ use_current_InterfaceDeclaration_IFluidTokenProvider(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IFluidTokenProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IFluidTokenProvider():
@@ -659,7 +659,7 @@ use_old_InterfaceDeclaration_IFluidTokenProvider(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGenericError():
@@ -671,7 +671,7 @@ use_current_InterfaceDeclaration_IGenericError(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IGenericError": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IGenericError():
     current.IGenericError;
@@ -683,7 +683,7 @@ use_old_InterfaceDeclaration_IGenericError(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IHostLoader": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IHostLoader():
     old.IHostLoader;
@@ -695,7 +695,7 @@ use_current_InterfaceDeclaration_IHostLoader(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IHostLoader": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IHostLoader():
     current.IHostLoader;
@@ -707,7 +707,7 @@ use_old_InterfaceDeclaration_IHostLoader(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoader": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_ILoader():
     old.ILoader;
@@ -719,7 +719,7 @@ use_current_InterfaceDeclaration_ILoader(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoader": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_ILoader():
     current.ILoader;
@@ -731,7 +731,7 @@ use_old_InterfaceDeclaration_ILoader(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoaderHeader": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_ILoaderHeader():
     old.ILoaderHeader;
@@ -743,7 +743,7 @@ use_current_InterfaceDeclaration_ILoaderHeader(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_ILoaderHeader": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ILoaderHeader():
@@ -755,7 +755,7 @@ use_old_InterfaceDeclaration_ILoaderHeader(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_ILoaderOptions": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ILoaderOptions():
@@ -767,7 +767,7 @@ use_current_TypeAliasDeclaration_ILoaderOptions(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_ILoaderOptions": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ILoaderOptions():
@@ -779,7 +779,7 @@ use_old_TypeAliasDeclaration_ILoaderOptions(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPendingLocalState():
@@ -791,7 +791,7 @@ use_current_InterfaceDeclaration_IPendingLocalState(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IPendingLocalState": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IPendingLocalState():
@@ -803,7 +803,7 @@ use_old_InterfaceDeclaration_IPendingLocalState(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideDeltaSender():
@@ -815,7 +815,7 @@ use_current_InterfaceDeclaration_IProvideDeltaSender(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideDeltaSender": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideDeltaSender():
@@ -827,7 +827,7 @@ use_old_InterfaceDeclaration_IProvideDeltaSender(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidTokenProvider():
@@ -839,7 +839,7 @@ use_current_InterfaceDeclaration_IProvideFluidTokenProvider(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideFluidTokenProvider": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IProvideFluidTokenProvider():
@@ -851,7 +851,7 @@ use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideRuntimeFactory": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
     old.IProvideRuntimeFactory;
@@ -863,7 +863,7 @@ use_current_InterfaceDeclaration_IProvideRuntimeFactory(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProvideRuntimeFactory": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IProvideRuntimeFactory():
     current.IProvideRuntimeFactory;
@@ -875,7 +875,7 @@ use_old_InterfaceDeclaration_IProvideRuntimeFactory(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IProxyLoaderFactory():
     old.IProxyLoaderFactory;
@@ -887,7 +887,7 @@ use_current_InterfaceDeclaration_IProxyLoaderFactory(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IProxyLoaderFactory():
     current.IProxyLoaderFactory;
@@ -899,7 +899,7 @@ use_old_InterfaceDeclaration_IProxyLoaderFactory(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IResolvedFluidCodeDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IResolvedFluidCodeDetails():
@@ -911,7 +911,7 @@ use_current_InterfaceDeclaration_IResolvedFluidCodeDetails(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IResolvedFluidCodeDetails": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IResolvedFluidCodeDetails():
@@ -923,7 +923,7 @@ use_old_InterfaceDeclaration_IResolvedFluidCodeDetails(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntime": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IRuntime():
     old.IRuntime;
@@ -935,7 +935,7 @@ use_current_InterfaceDeclaration_IRuntime(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntime": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IRuntime():
     current.IRuntime;
@@ -947,7 +947,7 @@ use_old_InterfaceDeclaration_IRuntime(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_IRuntimeFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IRuntimeFactory():
@@ -959,7 +959,7 @@ use_current_VariableDeclaration_IRuntimeFactory(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_IRuntimeFactory": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IRuntimeFactory():
@@ -971,7 +971,7 @@ use_old_VariableDeclaration_IRuntimeFactory(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntimeFactory": {"forwardCompat": false}
 declare function get_old_InterfaceDeclaration_IRuntimeFactory():
     old.IRuntimeFactory;
@@ -983,7 +983,7 @@ use_current_InterfaceDeclaration_IRuntimeFactory(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IRuntimeFactory": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IRuntimeFactory():
     current.IRuntimeFactory;
@@ -995,7 +995,7 @@ use_old_InterfaceDeclaration_IRuntimeFactory(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_isFluidBrowserPackage": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidBrowserPackage():
@@ -1007,7 +1007,7 @@ use_current_VariableDeclaration_isFluidBrowserPackage(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "VariableDeclaration_isFluidBrowserPackage": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_isFluidBrowserPackage():
@@ -1019,7 +1019,7 @@ use_old_VariableDeclaration_isFluidBrowserPackage(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IThrottlingWarning": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IThrottlingWarning():
@@ -1031,7 +1031,7 @@ use_current_InterfaceDeclaration_IThrottlingWarning(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "InterfaceDeclaration_IThrottlingWarning": {"backCompat": false}
 declare function get_current_InterfaceDeclaration_IThrottlingWarning():
     current.IThrottlingWarning;
@@ -1043,7 +1043,7 @@ use_old_InterfaceDeclaration_IThrottlingWarning(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_LoaderHeader": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_LoaderHeader():
@@ -1055,7 +1055,7 @@ use_current_EnumDeclaration_LoaderHeader(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "EnumDeclaration_LoaderHeader": {"backCompat": false}
 */
 declare function get_current_EnumDeclaration_LoaderHeader():
@@ -1067,7 +1067,7 @@ use_old_EnumDeclaration_LoaderHeader(
 
 /*
 * validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_ReadOnlyInfo": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ReadOnlyInfo():
@@ -1079,7 +1079,7 @@ use_current_TypeAliasDeclaration_ReadOnlyInfo(
 
 /*
 * validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken:
+* to disable, add in package.json under typeValidation.broken.0.39.8:
 * "TypeAliasDeclaration_ReadOnlyInfo": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_ReadOnlyInfo():

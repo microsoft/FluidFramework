@@ -64,15 +64,16 @@ interface LoginTenants {
 
 /**
  * Get from the env a set of credential to use from a single tenant
+ * @param tenantIndex interger to choose the tenant from an array
  * @param requestedUserName specific user name to filter to
  */
-function getCredentials(requestedUserName?: string) {
+function getCredentials(tenantIndex: number, requestedUserName?: string) {
     const creds: { [user: string]: string } = {};
     const loginTenants = process.env.login__odsp__test__tenants;
     if (loginTenants !== undefined) {
         const tenants: LoginTenants = JSON.parse(loginTenants);
-        // Only choose the first one for now
-        const tenant = Object.keys(tenants)[0];
+        const tenantNames = Object.keys(tenants);
+        const tenant = tenantNames[tenantIndex % tenantNames.length];
         const tenantInfo = tenants[tenant];
         // Translate all the user from that user to the full user principle name by appending the tenant domain
         const range = tenantInfo.range;
@@ -127,19 +128,27 @@ export class OdspTestDriver implements ITestDriver {
     }
 
     public static async createFromEnv(
-        config?: { directory?: string, username?: string, options?: HostStoragePolicy, supportsBrowserAuth?: boolean },
+        config?: {
+            directory?: string,
+            username?: string,
+            options?: HostStoragePolicy,
+            supportsBrowserAuth?: boolean,
+            tenantIndex?: number,
+        },
         api: OdspDriverApiType = OdspDriverApi,
     ) {
-        const creds = getCredentials(config?.username);
+        const tenantIndex = config?.tenantIndex ?? 0;
+        const creds = getCredentials(tenantIndex, config?.username);
         // Pick a random one on the list (only supported for >= 0.46)
         const users = Object.keys(creds);
-        const randomIndex = compare(api.version, "0.46.0") >= 0 ?
+        const randomUserIndex = compare(api.version, "0.46.0") >= 0 ?
             Math.random() : OdspTestDriver.legacyDriverUserRandomIndex;
-        const userIndex = Math.floor(randomIndex * users.length);
+        const userIndex = Math.floor(randomUserIndex * users.length);
         const username = users[userIndex];
 
         const emailServer = username.substr(username.indexOf("@") + 1);
-        const server = `${emailServer.substr(0, emailServer.indexOf("."))}.sharepoint.com`;
+        const tenantName = emailServer.substr(0, emailServer.indexOf("."));
+        const server = `${tenantName}.sharepoint.com`;
 
         // force isolateSocketCache because we are using different users in a single context
         // and socket can't be shared between different users
@@ -156,7 +165,25 @@ export class OdspTestDriver implements ITestDriver {
             config?.directory ?? "",
             api,
             options,
+            tenantName,
+            userIndex,
         );
+    }
+
+    private static async getDriveId(server: string, tokenConfig: TokenConfig) {
+        let driveIdP = this.driveIdPCache.get(server);
+        if (driveIdP) {
+            return driveIdP;
+        }
+
+        driveIdP = this.getDriveIdFromConfig(server, tokenConfig);
+        this.driveIdPCache.set(server, driveIdP);
+        try {
+            return await driveIdP;
+        } catch (e) {
+            this.driveIdPCache.delete(server);
+            throw e;
+        }
     }
 
     private static async create(
@@ -164,18 +191,15 @@ export class OdspTestDriver implements ITestDriver {
         directory: string,
         api = OdspDriverApi,
         options?: HostStoragePolicy,
+        tenantName?: string,
+        userIndex?: number,
     ) {
         const tokenConfig: TokenConfig = {
             ...loginConfig,
             ...getMicrosoftConfiguration(),
         };
 
-        let driveIdP = this.driveIdPCache.get(loginConfig.server);
-        if (!driveIdP) {
-            driveIdP = this.getDriveIdFromConfig(loginConfig.server, tokenConfig);
-        }
-
-        const driveId = await driveIdP;
+        const driveId = await this.getDriveId(loginConfig.server, tokenConfig);
         const directoryParts = [directory];
 
         // if we are in a azure dev ops build use the build id in the dir path
@@ -237,7 +261,12 @@ export class OdspTestDriver implements ITestDriver {
     private readonly testIdToUrl = new Map<string, string>();
     private constructor(
         private readonly config: Readonly<IOdspTestDriverConfig>,
-        private readonly api = OdspDriverApi) { }
+        private readonly api = OdspDriverApi,
+        public readonly tenantName?: string,
+        public readonly userIndex?: number,
+    ) {
+
+    }
 
     async createContainerUrl(testId: string): Promise<string> {
         if (!this.testIdToUrl.has(testId)) {

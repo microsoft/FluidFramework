@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Redis } from "ioredis";
 import * as winston from "winston";
-import { ICache, IRedisParameters } from "./definitions";
+import { ICache } from "./definitions";
 
 /**
  * Redis based cache client
@@ -42,6 +43,14 @@ export class RedisCache implements ICache {
         if (result !== "OK") {
             return Promise.reject(result);
         }
+    }
+
+    public async delete(key: string): Promise<boolean> {
+        const result = await this.client.del(this.getKey(key));
+        // The DEL API in Redis returns the number of keys that were removed.
+        // We always call Redis DEL with one key only, so we expect a result equal to 1
+        // to indicate that the key was removed. 0 would indicate that the key does not exist.
+        return result === 1;
     }
 
     /**

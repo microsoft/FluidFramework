@@ -10,7 +10,7 @@ import {
     IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
     ensureFluidResolvedUrl,
     getDocAttributesFromProtocolSummary,
@@ -24,6 +24,7 @@ import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath } from "./urlUtils";
+import { InMemoryCache } from "./cache";
 
 const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
     enablePrefetch: true,
@@ -41,6 +42,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     public readonly protocolName = "fluid:";
     private readonly driverPolicies: IRouterliciousDriverPolicies;
+    private readonly blobCache = new InMemoryCache<ArrayBufferLike>();
+    private readonly snapshotTreeCache = new InMemoryCache<ISnapshotTree>();
 
     constructor(
         private readonly tokenProvider: ITokenProvider,
@@ -64,14 +67,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         if (!parsedUrl.pathname) {
             throw new Error("Parsed url should contain tenant and doc Id!!");
         }
-        // extract tenant and document IDs from the parsed URL.
-        const [, tenantId, newDocumentId] = parsedUrl.pathname.split("/");
-        // TODO: This logic to determine ID helps with back-compat of the legacy container create flow.
-        // Will ignore the new document ID provided by the application as r11s will not honor it.
-        // The literal "new" document ID interpreted as a request to generate the ID
-        // by the server and therefore is replaced with `undefined` value.
-        // Any other value will be transmitted as-is to support the legacy container create flow.
-        const id = newDocumentId !== "new" ? newDocumentId : undefined;
+        const [, tenantId] = parsedUrl.pathname.split("/");
 
         const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
         const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
@@ -85,7 +81,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
         const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
             tenantId,
-            id,
+            undefined,
             this.tokenProvider,
             logger2,
             rateLimiter,
@@ -96,7 +92,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
         const documentId = await ordererRestWrapper.post<string>(
             `/documents/${tenantId}`,
             {
-                id,
                 summary: convertSummaryToCreateNewSummary(appSummary),
                 sequenceNumber: documentAttributes.sequenceNumber,
                 values: quorumValues,
@@ -163,6 +158,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
             this.tokenProvider,
             tenantId,
             documentId,
-            this.driverPolicies);
+            this.driverPolicies,
+            this.blobCache,
+            this.snapshotTreeCache);
     }
 }

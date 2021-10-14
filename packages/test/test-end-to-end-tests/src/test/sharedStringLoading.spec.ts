@@ -34,7 +34,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
         };
         const text = "hello world";
-        const documentId = createDocumentId();
+        let documentId: string;
         const provider = getTestObjectProvider();
         const logger = provider.logger;
 
@@ -57,7 +57,8 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             assert(sharedString);
             sharedString.insertText(0, text);
 
-            await container.attach(provider.driver.createCreateNewRequest(documentId));
+            await container.attach(provider.driver.createCreateNewRequest(createDocumentId()));
+            documentId = container.id;
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };
@@ -94,8 +95,9 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
                             // throw when trying to load the header blob
                             if (blobObj.headerMetadata !== undefined) {
                                 throw new NonRetryableError(
+                                    "notFound",
                                     "Not Found",
-                                    "",
+                                    "someErrorType",
                                     { statusCode: 404 });
                             }
                             return blob;
@@ -134,7 +136,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
         };
         const text = "hello world";
-        const documentId = createDocumentId();
+        let documentId: string;
         const provider = getTestObjectProvider();
         const logger = provider.logger;
 
@@ -172,7 +174,8 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
             }
             initialText = sharedString.getText();
 
-            await container.attach(provider.driver.createCreateNewRequest(documentId));
+            await container.attach(provider.driver.createCreateNewRequest(createDocumentId()));
+            documentId = container.id;
         }
         { // normal load client
             const codeDetails = { package: "no-dynamic-pkg" };

@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance, Deferred } from "@fluidframework/common-utils";
+import { ITelemetryLogger, IEvent } from "@fluidframework/common-definitions";
+import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { DriverError } from "@fluidframework/driver-definitions";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
     IClient,
     IConnect,
@@ -32,7 +34,11 @@ export interface FlushResult {
 // This allows reconnection after receiving a nack to be smooth
 const socketReferenceBufferTime = 2000;
 
-class SocketReference {
+export interface ISocketEvents extends IEvent {
+    (event: "server_disconnect", listener: (error: LoggingError & OdspError) => void);
+}
+
+class SocketReference extends TypedEventEmitter<ISocketEvents> {
     private references: number = 1;
     private delayDeleteTimeout: ReturnType<typeof setTimeout> | undefined;
     private _socket: SocketIOClient.Socket | undefined;
@@ -100,6 +106,8 @@ class SocketReference {
     }
 
     public constructor(public readonly key: string, socket: SocketIOClient.Socket) {
+        super();
+
         this._socket = socket;
         assert(!SocketReference.socketIoSockets.has(key), 0x220 /* "socket key collision" */);
         SocketReference.socketIoSockets.set(key, this);
@@ -117,7 +125,7 @@ class SocketReference {
             // comes in from "disconnect" listener below, before we close socket.
             this.isPendingInitialConnection = false;
 
-            socket.emit("disconnect", error);
+            this.emit("server_disconnect", error);
             this.closeSocket();
         });
     }
@@ -272,11 +280,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
     protected createErrorObject(handler: string, error?: any, canRetry = true): DriverError {
         // Note: we suspect the incoming error object is either:
-        // - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason
-        //   over it.
-        if (canRetry && typeof error === "object" && error !== null) {
-            return errorObjectFromSocketError(error, handler) as DriverError;
+        // - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
+        // - anything else: let base class handle it
+        if (canRetry && Number.isInteger(error?.code) && typeof error?.message === "string") {
+            return errorObjectFromSocketError(error as IOdspSocketError, handler) as DriverError;
         } else {
             return super.createErrorObject(handler, error, canRetry);
         }
@@ -342,7 +349,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
      public requestOps(from: number, to: number) {
         // Given that to is exclusive, we should be asking for at least something!
-        assert(to > from, "empty request");
+        assert(to > from, 0x272 /* "empty request" */);
 
         // PUSH may disable this functionality
         // back-compat: remove cast to any once latest version of IConnected is consumed
@@ -423,6 +430,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         return this.flushDeferred.promise;
     }
 
+    protected serverDisconnectHandler = (error: LoggingError & OdspError) => {
+        this.disposeCore(true, error);
+    };
+
     protected async initialize(connectMessage: IConnect, timeout: number) {
         if (this.enableMultiplexing) {
             // multiplex compatible early handlers
@@ -438,6 +449,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                 }
             };
         }
+
+        this.socketReference!.once("server_disconnect", this.serverDisconnectHandler);
 
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
@@ -543,10 +556,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     /**
      * Disconnect from the websocket
      */
-    protected disconnect(socketProtocolError: boolean, reason: DriverError) {
+    protected disconnect(socketProtocolError: boolean, reason: any) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
         this.socketReference = undefined;
+
+        this.socket.off("server_disconnect", this.serverDisconnectHandler);
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document

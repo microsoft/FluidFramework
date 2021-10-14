@@ -14,7 +14,7 @@
  import includes from "lodash/includes";
 
 //@ts-ignore
-import { constants, Strings } from "@fluid-experimental/property-common";
+import { constants, joinPaths } from "@fluid-experimental/property-common";
 import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset";
 import { TypeIdHelper } from "../helpers/typeidHelper";
 import { PathHelper } from "../pathHelper";
@@ -22,7 +22,6 @@ import { ConflictType } from "./changesetConflictTypes";
 import { isEmptyChangeSet } from "./isEmptyChangeset";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
-const { joinPaths } = Strings;
 
 /**
  * @namespace property-changeset.ChangeSetOperations.IndexedCollectionOperations
@@ -462,7 +461,7 @@ export namespace ChangeSetIndexedCollectionFunctions {
         };
 
         // Helper function which adds the Changes for a ChangeSet that is ordered by typeid
-        const addChangesWithTypeids = function(in_collection, in_changeIdentifier, in_changePrefix) {
+        const addChangesWithTypeids = function (in_collection, in_changeIdentifier, in_changePrefix) {
             if (in_collection === undefined) {
                 return;
             }

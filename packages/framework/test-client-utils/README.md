@@ -29,3 +29,13 @@ const tokenProvider = new InsecureTokenProvider("YOUR-TENANT-KEY-HERE", { id: "1
 ```
 
 Again, this should ONLY be used for local development as including the tenant key in the client code risks allowing malicious users to sniff it from the client bundle. Please consider using the [AzureFunctionTokenProvider](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/azure-client/src/AzureFunctionTokenProvider.ts) or your own implementation that fulfills the `ITokenProvider` interface as an alternative for production scenarios.
+
+## generateTestUser
+
+A simple function that will generate a test user. This is to be used in conjuntion with `InsecureTokenProvider`. The response object will be `{ id: string, name: string}`. `id` will be a uuid and `name` will be a randomly generated friendly first and last name  seperated by a space.
+
+### Usage
+
+```javascript
+const tokenProvider = new InsecureTokenProvider("YOUR-TENANT-KEY-HERE", generateTestUser());
+```

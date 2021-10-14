@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-inspector-table",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "description": "Property Inspector Table component",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -26,8 +26,9 @@
     "lint:fix": "npm run eslint:fix",
     "prepack": "npm run webpack",
     "storybook": "start-storybook -p 6006",
-    "test": "jest",
+    "test": "npm run test:jest",
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
+    "test:jest": "jest",
     "tsc": "tsc",
     "webpack": "webpack --config webpack.prod.js --env.production"
   },
@@ -47,11 +48,11 @@
     "@babel/core": "^7.12.10",
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.2.0",
-    "@fluid-experimental/property-binder": "^0.49.0",
-    "@fluid-experimental/property-changeset": "^0.49.0",
-    "@fluid-experimental/property-dds": "^0.49.0",
-    "@fluid-experimental/property-properties": "^0.49.0",
-    "@fluid-experimental/property-proxy": "^0.49.0",
+    "@fluid-experimental/property-binder": "^0.50.0",
+    "@fluid-experimental/property-changeset": "^0.50.0",
+    "@fluid-experimental/property-dds": "^0.50.0",
+    "@fluid-experimental/property-properties": "^0.50.0",
+    "@fluid-experimental/property-proxy": "^0.50.0",
     "@fluidframework/build-common": "^0.23.0",
     "@hig/fonts": "^1.0.2",
     "@material-ui/core": "^4.0.0",
@@ -113,5 +114,9 @@
     "@fluid-experimental/property-properties": "^0.42.0",
     "@fluid-experimental/property-proxy": "^0.42.0",
     "react": "^16.10.2"
+  },
+  "jest-junit": {
+    "outputDirectory": "nyc",
+    "outputName": "jest-junit-report.xml"
   }
 }

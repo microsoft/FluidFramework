@@ -465,6 +465,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _closed = false;
 
+    private setAutoReconnectTime = performance.now();
+
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this.submitMessage(type, contents),
         () => this.activeConnection(),
@@ -795,6 +797,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 eventName: "ContainerClose",
                 loaded: this.loaded,
+                category: error === undefined ? "generic" : "error",
             },
             error,
         );
@@ -986,14 +989,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed Container");
         }
+        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+        const currentMode = this._deltaManager.reconnectMode;
 
-        this._deltaManager.setAutomaticReconnect(reconnect);
+        if (currentMode === mode) {
+            return;
+        }
+
+        const now = performance.now();
+        const duration = now - this.setAutoReconnectTime;
+        this.setAutoReconnectTime = now;
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
             connectionMode: this._deltaManager.connectionMode,
             connectionState: ConnectionState[this.connectionState],
+            duration,
         });
+
+        this._deltaManager.setAutoReconnect(mode);
 
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
@@ -1601,7 +1615,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * If it's not true, runtime is not in position to send ops.
      */
     private activeConnection() {
-        return this.connectionState === ConnectionState.Connected && this._deltaManager.connectionMode === "write";
+        const active = this.connectionState === ConnectionState.Connected &&
+            this._deltaManager.connectionMode === "write";
+
+        // Check for presence of current client in quorum for "write" connections - inactive clients
+        // would get leave op after some long timeout (5 min) and that should automatically transition
+        // state to "read" mode.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
+            "active connection not present in quorum");
+
+        return active;
     }
 
     private createDeltaManager() {

@@ -30,6 +30,7 @@ import {
     CommonProperties,
     LumberEventName,
     Lumberjack,
+    getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
     createRoomJoinMessage,
@@ -67,14 +68,9 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
     tenantId,
 });
 
-const getLumberProperties = (documentId: string, tenantId: string) => ({
-    [BaseTelemetryProperties.tenantId]: tenantId,
-    [BaseTelemetryProperties.documentId]: documentId,
-});
-
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
     logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
-    Lumberjack.error(errorMessage, getLumberProperties(documentId, tenantId));
+    Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
     // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject({ code: 500, message: "Failed to connect client to document." });
 };
@@ -338,7 +334,7 @@ export function configureWebSocketServices(
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
-                        getLumberProperties(connection.documentId, connection.tenantId),
+                        getLumberBaseProperties(connection.documentId, connection.tenantId),
                         error,
                     );
                     clearExpirationTimer();
@@ -404,13 +400,8 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
-            const lumberjackProperties = {
-                [BaseTelemetryProperties.tenantId]: connectionMessage.tenantId,
-                [BaseTelemetryProperties.documentId]: connectionMessage.id,
-            };
-
             const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
-            connectMetric.setProperties(lumberjackProperties);
+            connectMetric.setProperties(getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId));
 
             connectDocument(connectionMessage).then(
                 (message) => {
@@ -533,7 +524,7 @@ export function configureWebSocketServices(
                 logger.info(`Disconnect of ${clientId}`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId}`,
-                    getLumberProperties(connection.documentId, connection.tenantId),
+                    getLumberBaseProperties(connection.documentId, connection.tenantId),
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
@@ -545,7 +536,7 @@ export function configureWebSocketServices(
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,
-                    getLumberProperties(room.documentId, room.tenantId),
+                    getLumberBaseProperties(room.documentId, room.tenantId),
                 );
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
