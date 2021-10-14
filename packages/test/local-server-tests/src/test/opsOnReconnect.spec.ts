@@ -28,6 +28,7 @@ import {
     LocalCodeLoader,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { delay } from "@fluidframework/common-utils";
 
 describe("Ops on Reconnect", () => {
     const documentId = "opsOnReconnectTest";
@@ -619,6 +620,8 @@ describe("Ops on Reconnect", () => {
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
             ];
+
+            await delay(1500);
             assert.deepStrictEqual(
                 receivedValues, expectedValues, "Did not receive the ops that were re-sent");
         });
