@@ -594,6 +594,7 @@ describe("Ops on Reconnect", () => {
         it("can resend batch ops after reconnect if disconnect happened during the batch", async () => {
             // Create a second container and set up a listener to store the received map / directory values.
             await setupSecondContainersDataObject();
+            container1Object1.context.containerRuntime.setFlushMode(FlushMode.TurnBased);
 
             // Set values in the DDSes so that they are batched together.
             container1Object1Map1.set("key1", "value1");
