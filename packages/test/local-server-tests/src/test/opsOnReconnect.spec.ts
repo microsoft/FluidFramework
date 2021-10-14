@@ -619,8 +619,11 @@ describe("Ops on Reconnect", () => {
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
             ];
-            assert.deepStrictEqual(
-                receivedValues, expectedValues, "Did not receive the ops that were re-sent");
+
+            setTimeout(() => {
+                assert.deepStrictEqual(
+                    receivedValues, expectedValues, "Did not receive the ops that were re-sent");
+            }, 0);
         });
     });
 
