@@ -22,7 +22,7 @@
     "build": "tsc -b",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
-    "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md",
+    "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md ./docs",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
     "policy-check": "cd ../.. && node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js ",
