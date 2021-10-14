@@ -203,11 +203,12 @@ export async function createNewFluidFileFromSummary(
                 }
                 event.end({
                     headers: Object.keys(headers).length !== 0 ? true : undefined,
+                    attempts: options.refresh ? 2 : 1,
                     ...fetchResponse.commonSpoHeaders,
                 });
                 return content;
             },
-            { end: true, cancel: "error" });
+        );
     });
 }
 
