@@ -7,8 +7,14 @@ import assert from "assert";
 import { Redis } from "ioredis";
 import RedisMock from "ioredis-mock";
 import { IThrottlingMetrics } from "@fluidframework/server-services-core";
+import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { RedisThrottleStorageManager } from "../redisThrottleStorageManager";
 import Sinon from "sinon";
+
+const lumberjackEngine = new TestEngine1();
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 describe("RedisThrottleStorageManager", () => {
     let mockRedisClient: Redis;

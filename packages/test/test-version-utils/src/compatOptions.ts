@@ -75,6 +75,9 @@ const options = {
     r11sEndpointName: {
         type: "string",
     },
+    tenantIndex: {
+        type: "number",
+    },
     baseVersion: {
         type: "string",
     },
@@ -119,6 +122,7 @@ nconf.argv({
                 driver: "local",
                 baseVersion: pkgVersion,
                 r11sEndpointName: "r11s",
+                tenantIndex: 0,
             },
         },
     },
@@ -130,3 +134,4 @@ export const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
 export const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as string;
 export const baseVersion = resolveVersion(nconf.get("fluid:test:baseVersion") as string, false);
 export const reinstall = nconf.get("fluid:test:reinstall");
+export const tenantIndex = nconf.get("fluid:test:tenantIndex") as number;

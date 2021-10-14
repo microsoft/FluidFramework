@@ -54,6 +54,9 @@
   },
   "typeValidation": {
     "version": "0.40.0",
-    "broken": {}
+    "broken": {
+      "0.39.8": {
+      }
+    }
   }
 }

@@ -5,7 +5,6 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap } from "@fluidframework/map";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import * as Sequence from "@fluidframework/sequence";
 import { IIntelligentService } from "./analytics";
 import { RateLimiter } from "./rateLimiter";
@@ -28,7 +27,7 @@ export class IntelligentServicesManager {
     }
 
     public process() {
-        this.sharedString.on("op", (msg: ISequencedDocumentMessage) => {
+        this.sharedString.on("sequenceDelta", (ev: Sequence.SequenceDeltaEvent) => {
             if (!this.intelInvoked) {
                 // And then run plugin insights rate limited
                 this.rateLimiter = new RateLimiter(
