@@ -74,3 +74,17 @@ export function getPackageDetails(packageDir: string): PackageDetails {
         broken: pkgJson.typeValidation.broken
     }
 }
+
+export function findPackagesUnderPath(path: string) {
+    const searchPaths = [path];
+    const packages: string[] = [];
+    while(searchPaths.length > 0){
+        const search = searchPaths.shift()!;
+        if(fs.existsSync(`${search}/package.json`)){
+            packages.push(search);
+        }else{
+            searchPaths.push(...fs.readdirSync(search).map((d)=>`${search}/${d}`));
+        }
+    }
+    return packages;
+}
