@@ -25,7 +25,9 @@ function writeOutLine(output: string) {
 
 const packageDirs: string[] = [];
 if(program.monoRepoDir){
+    writeOutLine(`Finding packages in mono repo ${program.monoRepoDir}`);
     packageDirs.push(...findPackagesUnderPath(program.monoRepoDir));
+    packageDirs.forEach((d)=>writeOutLine(d));
 }else{
     packageDirs.push(program.packageDir);
 }

@@ -64,7 +64,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     }
 
     const oldVersions: string[] =
-        Object.keys(pkgJson.devDependencies).filter((k)=>k.startsWith(pkgJson.name));
+        Object.keys(pkgJson.devDependencies ?? {}).filter((k)=>k.startsWith(pkgJson.name));
 
     return {
         name: pkgJson.name,
@@ -83,7 +83,10 @@ export function findPackagesUnderPath(path: string) {
         if(fs.existsSync(`${search}/package.json`)){
             packages.push(search);
         }else{
-            searchPaths.push(...fs.readdirSync(search).map((d)=>`${search}/${d}`));
+            searchPaths.push(
+                ...fs.readdirSync(search, {withFileTypes: true})
+                .filter((t)=>t.isDirectory())
+                .map((d)=>`${search}/${d.name}`));
         }
     }
     return packages;
