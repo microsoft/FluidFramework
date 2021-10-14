@@ -219,6 +219,21 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     submitSignal(message: any): void;
 
     /**
+     * send ping signal to the server
+     */
+    ping?(): void;
+
+    /**
+     * Attach listener to any event coming from server
+     */
+    addConnectionListener?(event: string, listener: (...args: any[]) => void);
+
+    /**
+      * get clients signal to the server
+      */
+    getClients?(): void;
+
+    /**
      * Disconnects the given delta connection
      * @deprecated in 0.45, please use dispose()
      */

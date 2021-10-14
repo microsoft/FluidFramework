@@ -144,6 +144,19 @@ class NoDeltaStream
             content: { message: "Cannot submit signal with storage-only connection", code: 403 },
         });
     }
+    ping(): void {
+        this.emit("nack", this.clientId, {
+            operation: "ping",
+            content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+        });
+    }
+
+    getClients(): void {
+        this.emit("nack", this.clientId, {
+            operation: "get_clients",
+            content: { message: "Cannot submit signal with storage-only connection", code: 403 },
+        });
+    }
 
     private _disposed = false;
     public get disposed() { return this._disposed; }
@@ -926,6 +939,30 @@ export class DeltaManager
             this.connection.submitSignal(content);
         } else {
             this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
+        }
+    }
+
+    public ping() {
+        if (this.connection !== undefined) {
+            this.connection.ping();
+        } else {
+            this.logger.sendErrorEvent({ eventName: "pingDisconnected" });
+        }
+    }
+
+    public addConnectionListener(event: string, listener: (...args: any[]) => void) {
+        if (this.connection !== undefined) {
+            this.connection.addConnectionListener(event, listener);
+        } else {
+            this.logger.sendErrorEvent({ eventName: "addConnectionListenerDisconnected" });
+        }
+    }
+
+    public getClients() {
+        if (this.connection !== undefined) {
+            this.connection.getClients();
+        } else {
+            this.logger.sendErrorEvent({ eventName: "getClientsDisconnected" });
         }
     }
 

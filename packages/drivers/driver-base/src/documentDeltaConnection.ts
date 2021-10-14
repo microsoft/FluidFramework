@@ -305,6 +305,24 @@ export class DocumentDeltaConnection
     }
 
     /**
+     * Sends a ping to the server
+     */
+    public ping(): void {
+        this.checkNotClosed();
+        this.submitCore("ping", []);
+    }
+
+    /**
+     * Submits a new signal to the server
+     *
+     * @param message - signal to submit
+     */
+    public getClients(): void {
+        this.checkNotClosed();
+        this.submitCore("get_clients", []);
+    }
+
+    /**
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public dispose() {
@@ -465,7 +483,7 @@ export class DocumentDeltaConnection
         this.socket.removeListener("signal", this.earlySignalHandler);
     }
 
-    private addConnectionListener(event: string, listener: (...args: any[]) => void) {
+    public addConnectionListener(event: string, listener: (...args: any[]) => void) {
         assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event),
             0x247 /* "Use addTrackedListener instead" */);
         assert(!DocumentDeltaConnection.eventsToForward.includes(event),

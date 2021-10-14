@@ -106,6 +106,7 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
 import { getSnapshotTreeFromSerializedContainer } from "./utils";
 import { QuorumProxy } from "./quorum";
+import { stringify } from "querystring";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -319,6 +320,8 @@ const getCodeProposal =
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
+    private readonly beatInEveryNSecs: number = 30000; // 30 secs
+    private audienceHeartBeat: Map<string, Date> = new Map<>();
 
     /**
      * Load an existing container.
@@ -1655,7 +1658,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
+                this.audienceHeartBeat.set(priorClient.clientId, new Date());
             }
+
+            this.enableHeartBeat();
         });
 
         deltaManager.on("disconnect", (reason: string) => {
@@ -1866,14 +1872,65 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
+                this.audienceHeartBeat.set(newClient.clientId, new Date());
             } else if (innerContent.type === MessageType.ClientLeave) {
                 const leftClientId = innerContent.content as string;
                 this._audience.removeMember(leftClientId);
+                this.audienceHeartBeat.delete(leftClientId);
             }
         } else {
             const local = this.clientId === message.clientId;
             this.context.processSignal(message, local);
         }
+    }
+
+    private validateAudienceHeartBeat() {
+        this.audienceHeartBeat.forEach((lastPongReceivedAt: Date, clientId: string) => {
+            const diff = new Date().valueOf() - lastPongReceivedAt.valueOf();
+            if (diff > this.beatInEveryNSecs * 3) {
+                // client Lost
+                this._deltaManager.getClients();
+            }
+        });
+        return;
+    }
+
+    private enableHeartBeat() {
+        setInterval(() => {
+            this._deltaManager.ping();
+            this.validateAudienceHeartBeat();
+        }, this.beatInEveryNSecs);
+
+        // Listen for heartbeats
+        this._deltaManager.addConnectionListener("pong", (clientId) => {
+            this.audienceHeartBeat.set(clientId, new Date());
+        });
+
+        // Listen for audience list
+        this._deltaManager.addConnectionListener("connected_clients", (clients: ISignalClient[]) => {
+            // In case client missed addMember event.
+            for (const client of clients) {
+                if (!this._audience.getMember(client.clientId)) {
+                    this._audience.addMember(client.clientId, client.client);
+                    this.audienceHeartBeat.set(client.clientId, new Date());
+                }
+            }
+
+            // In case client missed removeMember event.
+            for (const clientId of this._audience.getMembers().keys()) {
+                let hasClient: boolean = false;
+                for (const client of clients) {
+                    if (clientId === client.clientId) {
+                        hasClient = true;
+                        break;
+                    }
+                }
+                if (!hasClient) {
+                    this._audience.removeMember(clientId);
+                    this.audienceHeartBeat.delete(clientId);
+                }
+            }
+        });
     }
 
     /**
