@@ -64,11 +64,15 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         if (filePath === undefined || filePath === null) {
             throw new Error("File path should be provided!!");
         }
-        const newFileParams: INewFileInfo = {
+        const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
+            // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
+            // so that share link creation with create file can be enabled
+            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
+            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
         };
 
         const odspLogger = createOdspLogger(logger);
@@ -94,7 +98,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                         this.getStorageToken,
                         true /* throwOnNullToken */,
                     ),
-                    newFileParams,
+                    newFileInfo,
                     odspLogger,
                     createNewSummary,
                     cacheAndTracker.epochTracker,

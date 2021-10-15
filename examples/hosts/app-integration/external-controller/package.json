@@ -37,8 +37,7 @@
     "@fluidframework/azure-client": "^0.50.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/test-client-utils": "^0.50.0",
-    "fluid-framework": "^0.50.0",
-    "uuid": "^8.3.1"
+    "fluid-framework": "^0.50.0"
   },
   "devDependencies": {
     "@fluid-experimental/get-container": "^0.50.0",

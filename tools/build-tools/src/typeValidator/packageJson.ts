@@ -7,6 +7,7 @@ import * as fs from "fs";
 
 export type PackageDetails ={
     readonly name: string;
+    readonly packageDir: string;
     readonly version: string;
     readonly oldVersions: readonly string[];
     readonly broken: BrokenCompatTypes;
@@ -63,12 +64,30 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     }
 
     const oldVersions: string[] =
-        Object.keys(pkgJson.devDependencies).filter((k)=>k.startsWith(pkgJson.name));
+        Object.keys(pkgJson.devDependencies ?? {}).filter((k)=>k.startsWith(pkgJson.name));
 
     return {
         name: pkgJson.name,
+        packageDir,
         version: pkgJson.version,
         oldVersions,
         broken: pkgJson.typeValidation.broken
     }
+}
+
+export function findPackagesUnderPath(path: string) {
+    const searchPaths = [path];
+    const packages: string[] = [];
+    while(searchPaths.length > 0){
+        const search = searchPaths.shift()!;
+        if(fs.existsSync(`${search}/package.json`)){
+            packages.push(search);
+        }else{
+            searchPaths.push(
+                ...fs.readdirSync(search, {withFileTypes: true})
+                .filter((t)=>t.isDirectory())
+                .map((d)=>`${search}/${d.name}`));
+        }
+    }
+    return packages;
 }
