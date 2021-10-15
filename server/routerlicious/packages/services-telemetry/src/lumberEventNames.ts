@@ -30,4 +30,5 @@ export enum LumberEventName {
 
     // Miscellaneous
     ConnectDocument = "ConnectDocument",
+    HttpRequest = "HttpRequest",
 }
