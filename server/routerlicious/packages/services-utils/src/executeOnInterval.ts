@@ -5,47 +5,63 @@
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-export function executeOnInterval(
-    api: () => Promise<any>,
-    intervalInMs: number,
-    callName: string,
-    retryCount = 0,
-    onErrorFn?: () => void,
-    shouldRetryError?: (error) => boolean,
-    shouldBackOffRetry?: (error, retryCount) => boolean): void {
-    let error;
-    let retries = retryCount;
-    let interval = intervalInMs;
-    api()
-        .then((res) => {
-            Lumberjack.info(`Success executing ${callName}`, undefined);
-            // reset the retries count if api call succeeded
-            retries = 0;
-        })
-        .catch((err) => {
-            error = err;
-            Lumberjack.error(`Error running ${callName}`, undefined, err);
-            if (onErrorFn !== undefined) {
-                onErrorFn();
-            }
-        })
-        .finally(() => {
-            if (error === undefined || shouldRetryError === undefined) {
-                // if no error or no retry logic is defined, always make the next call (retries will be 0)
-                setTimeout(() => executeOnInterval(api, intervalInMs, callName, retries), intervalInMs);
-                return;
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class Scheduler {
+    public static executeOnInterval(
+        api: () => Promise<any>,
+        intervalInMs: number,
+        callName: string,
+        onErrorFn?: () => void,
+        shouldRetryError?: (error) => boolean): ScheduledJob {
+        let error;
+
+        const scheduledJob = new ScheduledJob();
+
+        const execute = () => {
+            if (!scheduledJob.isJobRunning()) {
+                Lumberjack.info(`Job has been killed ${callName}`);
+                return scheduledJob;
             }
 
-            if (!shouldRetryError(error)) {
-                return;
-            }
+            api()
+                .then((res) => {
+                    Lumberjack.info(`Success executing ${callName}`);
+                })
+                .catch((err) => {
+                    error = err;
+                    Lumberjack.error(`Error running ${callName}`, undefined, err);
+                    if (onErrorFn !== undefined) {
+                        onErrorFn();
+                    }
+                })
+                .finally(() => {
+                    if (shouldRetryError !== undefined && !shouldRetryError(error)) {
+                        Lumberjack.info(`Should not retry error ${callName}`);
+                        scheduledJob.killJob();
+                        return;
+                    }
 
-            Lumberjack.info(`Will retry error ${error}, retryCount is ${retries}`);
-            if (shouldBackOffRetry !== undefined && shouldBackOffRetry(error, retries)) {
-                interval = interval * 2 ** retries;
-                Lumberjack.info(`Will backoff next retry, interval is ${interval} milliseconds`);
-            }
-            retries += 1;
-            setTimeout(() => executeOnInterval(api, intervalInMs, callName, retries), interval);
-        });
+                    setTimeout(() => execute(), intervalInMs);
+                });
+            return scheduledJob;
+        };
+
+        return execute();
+    }
+}
+
+export class ScheduledJob {
+    private _jobRunning: boolean;
+
+    constructor() {
+        this._jobRunning = true;
+    }
+
+    public isJobRunning(): boolean {
+        return this._jobRunning;
+    }
+
+    public killJob() {
+        this._jobRunning = false;
+    }
 }
