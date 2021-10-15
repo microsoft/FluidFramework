@@ -88,8 +88,9 @@ export type RouteOptions =
     | IOdspRouteOptions;
 
 function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
-    if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
+    const fluidExport: IFluidObject = fluidModule.fluidExport;
+    if (fluidExport.IRuntimeFactory === undefined) {
+        const dataStoreFactory = fluidExport.IFluidDataStoreFactory;
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 
