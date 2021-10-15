@@ -117,6 +117,28 @@
         "InterfaceDeclaration_IThrottlingWarning": {
           "backCompat": false
         }
+      },
+      "0.40.0": {
+        "InterfaceDeclaration_ICodeLoader": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        }
       }
     }
   }
