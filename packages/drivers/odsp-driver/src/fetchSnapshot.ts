@@ -172,18 +172,6 @@ async function fetchLatestSnapshotCore(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 ): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-        if (tokenFetchOptions.refresh) {
-            // This is the most critical code path for boot.
-            // If we get incorrect / expired token first time, that adds up to latency of boot
-            logger.sendErrorEvent({
-                eventName: "TreeLatest_SecondCall",
-                hasClaims: !!tokenFetchOptions.claims,
-                hasTenantId: !!tokenFetchOptions.tenantId,
-                // We have two "TreeLatest_SecondCall" events and the other one uses errorType to differentiate cases
-                // Continue that pattern here.
-                errorType: "access denied",
-            }, tokenFetchOptions.previousError);
-        }
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
@@ -195,21 +183,21 @@ async function fetchLatestSnapshotCore(
                 snapshotOptions.timeout,
             );
         }
-        const logOptions = {};
+        const perfEvent = {
+            eventName: "TreesLatest",
+            attempts: tokenFetchOptions.refresh ? 2 : 1,
+        };
         if (snapshotOptions !== undefined) {
             Object.entries(snapshotOptions).forEach(([key, value]) => {
                 if (value !== undefined) {
-                    logOptions[`snapshotOption_${key}`] = value;
+                    perfEvent[`snapshotOption_${key}`] = value;
                 }
             });
         }
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         return PerformanceEvent.timedExecAsync(
             logger,
-            {
-                eventName: "TreesLatest",
-                ...logOptions,
-            },
+            perfEvent,
             async (event) => {
                 const startTime = performance.now();
                 const response = await snapshotDownloader(
@@ -309,7 +297,6 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    attempts: tokenFetchOptions.refresh ? 2 : 1,
                     ...response.odspSnapshotResponse.commonSpoHeaders,
                 });
                 return snapshot;
