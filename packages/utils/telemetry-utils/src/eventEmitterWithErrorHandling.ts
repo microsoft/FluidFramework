@@ -11,7 +11,7 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  * Any exception thrown by "error" listeners will propagate to the caller.
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
-    constructor(protected errorHandler: (eventName: EventEmitterEventType, error: any) => void) {
+    constructor(private readonly  errorHandler: (eventName: EventEmitterEventType, error: any) => void) {
         super();
     }
 

@@ -28,7 +28,10 @@ describe("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(passedArg, 3);
     });
     it("converts exception in listener to error event, some other listeners succeed", ()=> {
-        const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
+        const emitter = new EventEmitterWithErrorHandling((event, error: any) => {
+            passedErrorMsg = error.message;
+            passedEventArg = error.eventArg;
+        });
         let passedErrorMsg: string | undefined;
         let passedEventArg: number | undefined;
         let earlyListenerCallCount: number = 0;
@@ -46,11 +49,6 @@ describe("EventEmitterWithErrorHandling", () => {
         // Innocent bystander - late (registered after throwing one)
         emitter.on("foo", (_arg) => {
             ++lateListenerCallCount;
-        });
-        // error listener
-        emitter.on("error", (error) => {
-            passedErrorMsg = error.message;
-            passedEventArg = error.eventArg;
         });
 
         emitter.emit("foo", 3);  // listener above will throw. Expect error listener to be invoked
