@@ -110,11 +110,11 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * Fluid object so that it can create a shared object for each.
  *
  * For example, the following will create a Fluid object that creates and loads a SharedString and SharedDirectory. It
- * will add SparseMatrix to the data store's factory so that it can be created later.
+ * will add SharedMatrix to the data store's factory so that it can be created later.
  *      new TestFluidObjectFactory([
  *          [ "sharedString", SharedString.getFactory() ],
  *          [ "sharedDirectory", SharedDirectory.getFactory() ],
-*          [ undefined, SparseMatrix.getFactory() ],
+*          [ undefined, SharedMatrix.getFactory() ],
  *      ]);
  *
  * The SharedString and SharedDirectory can be retrieved via getSharedObject() on the TestFluidObject as follows:

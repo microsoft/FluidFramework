@@ -643,37 +643,6 @@ export class SharedStringFactory implements IChannelFactory {
 export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker;
 
 // @public @deprecated (undocumented)
-export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    // (undocumented)
-    annotatePosition(row: number, col: number, props: PropertySet): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle<IFluidObject & IFluidLoadable>>;
-    // (undocumented)
-    getPositionProperties(row: number, col: number): PropertySet;
-    // (undocumented)
-    getTag(row: number, col: number): any;
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    insertCols(col: number, numCols: number): void;
-    // (undocumented)
-    insertRows(row: number, numRows: number): void;
-    // (undocumented)
-    get numRows(): number;
-    // (undocumented)
-    removeCols(col: number, numCols: number): void;
-    // (undocumented)
-    removeRows(row: number, numRows: number): void;
-    // (undocumented)
-    setItems(row: number, col: number, values: SparseMatrixItem[], props?: PropertySet): void;
-    // (undocumented)
-    setTag(row: number, col: number, tag: any): void;
-}
-
-// @public @deprecated (undocumented)
 export class SparseMatrixFactory implements IChannelFactory {
     // (undocumented)
     static Attributes: IChannelAttributes;

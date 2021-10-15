@@ -57,13 +57,13 @@ The usual flow is to create a `LocalLoader` by calling `createLocalLoader` and t
 `testFluidObject.ts` provides `TestFluidObject` and `TestFluidObjectFactory` that help in the testing of Distributed Data Structures (DDS).
 It can be used to create a Fluid object (TestFluidObject) with a given set of DDSes which can then be retrieved later as required.
 
-For example, if you need a Fluid object with couple of SharedStrings, a SharedDirectory and a SparseMatrix, create a `TestFluidObjectFactory` as follows and use this factory to create the Fluid object:
+For example, if you need a Fluid object with couple of SharedStrings, a SharedDirectory and a SharedMatrix, create a `TestFluidObjectFactory` as follows and use this factory to create the Fluid object:
 ```typeScript
 new TestFluidObjectFactory([
     [ "sharedString1" /* id */, SharedString.getFactory() ],
     [ "sharedString2" /* id */, SharedString.getFactory() ],
     [ "directory" /* id */, SharedDirectory.getFactory() ],
-    [ "matrix" /* id */, SparseMatrix.getFactory() ],
+    [ "matrix" /* id */, SharedMatrix.getFactory() ],
 ]);
 ```
 
@@ -72,7 +72,7 @@ The `TestFluidObject` will then create the above DDSes when initializing and the
 const sharedString1 = testFluidObject.getSharedObject<SharedString>("sharedString1");
 const sharedString1 = testFluidObject.getSharedObject<SharedString>("sharedString2");
 const directory = testFluidObject.getSharedObject<SharedDirectory>("directory");
-const matrix = testFluidObject.getSharedObject<SparseMatrix>("matrix");
+const matrix = testFluidObject.getSharedObject<SharedMatrix>("matrix");
 ```
 
 > If you want a DDS to be part of the registry so that it can be created later but don't want `TestFluidObject` to create it during initialization, use `id` as `undefined` in the `TestFluidObjectFactory` creation.

@@ -35,17 +35,6 @@ For example, to store the following matrix:
                     4 | C . . F
 ```
 
-The SparseMatrix allocates 3 rows and 2 columns from the physical storage:
-
-```
-                     0 . . 1 <- column allocs
-                   +--------
-                 0 | . . . 3
-                 . | . . . .
-   row allocs -> 1 | 8 . . .
-                 2 | C . . F
-```
-
 And writes the cell values to these locations:
 
 ```
