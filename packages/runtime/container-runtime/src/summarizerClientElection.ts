@@ -21,7 +21,7 @@ export interface ISummarizerClientElection extends IEventProvider<ISummarizerCli
 
 /**
  * This class encapsulates logic around tracking the elected summarizer client.
- * It will handle updated the elected client when a summary ack hasn't been seen
+ * It will handle updating the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
 export class SummarizerClientElection
