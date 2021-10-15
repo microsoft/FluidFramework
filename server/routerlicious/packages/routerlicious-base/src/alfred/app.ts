@@ -23,7 +23,7 @@ import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
-import { logRequestMetadata } from "@fluidframework/server-services-telemetry";
+import { logRequestMetric } from "@fluidframework/server-services-telemetry";
 import { catch404, getDocumentIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -84,7 +84,8 @@ export function create(
                 serviceName: "alfred",
                 eventName: "http_requests",
              };
-             logRequestMetadata(messageMetaData);
+             logRequestMetric(messageMetaData);
+             winston.info("request log generated", { messageMetaData });
              return undefined;
         }, { stream }));
     } else {
