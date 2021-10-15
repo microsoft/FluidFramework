@@ -211,6 +211,14 @@ describe("Rebasing", () => {
     sharedPropertyTree2 = await dataObject2.getSharedObject(propertyDdsId);
     (sharedPropertyTree2).__id = 2; // Add an id to simplify debugging via conditional breakpoints
 
+    // Issue #7856
+    // Should not be required and most likely points to bugs in propertyDDS!
+    // This hack generates an op, that forces container to reconnect as "write" connection.
+    // Without that certain tests fail.
+    // Also note that a similar hack from rebasing.spec.ts is not working here - it causes exception
+    //    Error: Failed to fetch parent commit: Commit does not exist!
+    // Given that these tests are very similar, this is fishy.
+    dataObject2.runtime.createChannel("empty", SharedPropertyTree.getFactory().type).bindToContext();
 
     // Attach error handlers to make debugging easier and ensure that internal failures cause the test to fail
     errorHandler = (err) => { }; // This enables the create random tests function to register its own handler
@@ -236,7 +244,6 @@ describe("Rebasing", () => {
 
     beforeEach(async () => {
       // Insert and prepare an array within the container
-      await opProcessingController.pauseProcessing();
       sharedPropertyTree1.root.insert("array", PropertyFactory.create("String", "array"));
 
       const array = sharedPropertyTree1.root.get("array");
@@ -323,8 +330,7 @@ describe("Rebasing", () => {
       await opProcessingController.ensureSynchronized();
     });
 
-    // Issue #7856
-    it.skip("Should work when doing two batches without synchronization inbetween", async () => {
+    it("Should work when doing two batches without synchronization inbetween", async () => {
       insertInArray(sharedPropertyTree1, "A");
       insertInArray(sharedPropertyTree1, "A");
       insertInArray(sharedPropertyTree1, "A");
@@ -491,12 +497,12 @@ describe("Rebasing", () => {
         properties: [],
       });
 
-      await opProcessingController.pauseProcessing();
       sharedPropertyTree1.root.insert("array", PropertyFactory.create("test:namedEntry-1.0.0", "array"));
       sharedPropertyTree1.commit();
 
       // Make sure both shared trees are in sync
       await opProcessingController.ensureSynchronized();
+      await opProcessingController.pauseProcessing();
     });
     afterEach(async () => {
       // We expect the internal representation to be the same between both properties
@@ -551,8 +557,7 @@ describe("Rebasing", () => {
       }
     }
 
-    // Issue #7856
-    it.skip("inserting properties into both trees", async () => {
+    it("inserting properties into both trees", async () => {
       insertProperties(sharedPropertyTree1, 0);
       insertProperties(sharedPropertyTree1, 1);
       insertProperties(sharedPropertyTree2, 0);

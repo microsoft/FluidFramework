@@ -192,6 +192,13 @@ describe("PropertyDDS", () => {
 					throw err;
 				}
 			});
+
+			// Issue #7856
+			// Should not be required and most likely points to bugs in propertyDDS!
+			// This hack generates an op, that forces container to reconnect as "write" connection.
+			// Without that certain tests fail.
+			sharedPropertyTree2.root.insert("something", PropertyFactory.create("String", "array"));
+			sharedPropertyTree2.commit();
 		});
 
 		describe("with non overlapping inserts", () => {
@@ -201,7 +208,6 @@ describe("PropertyDDS", () => {
 			beforeEach(async function() {
 				this.timeout(10000);
 				// Insert and prepare an array within the container
-				await opProcessingController.pauseProcessing();
 				sharedPropertyTree1.root.insert("array", PropertyFactory.create("String", "array"));
 
 				const array = sharedPropertyTree1.root.get("array") as StringArrayProperty;
@@ -278,8 +284,7 @@ describe("PropertyDDS", () => {
 				await opProcessingController.ensureSynchronized();
 			});
 
-			// Issue #7856
-			it.skip("Should work when doing two batches without synchronization inbetween", async () => {
+			it("Should work when doing two batches without synchronization inbetween", async () => {
 				insertInArray(sharedPropertyTree1, "A");
 				insertInArray(sharedPropertyTree1, "A");
 				insertInArray(sharedPropertyTree1, "A");
@@ -504,8 +509,7 @@ describe("PropertyDDS", () => {
 				}
 			}
 
-			// Issue #7856
-			it.skip("inserting properties into both trees", async () => {
+			it("inserting properties into both trees", async () => {
 				insertProperties(sharedPropertyTree1, 0);
 				insertProperties(sharedPropertyTree1, 1);
 				insertProperties(sharedPropertyTree2, 0);
