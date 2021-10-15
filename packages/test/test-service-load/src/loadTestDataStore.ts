@@ -58,11 +58,11 @@ export class LoadTestDataStoreModel {
                     resolve();
                 };
                 const disposeListener = () => {
-                    runtime.deltaManager.off("connect", connectListener);
+                    runtime.off("connected", connectListener);
                     reject(new Error("disposed"));
                 };
 
-                runtime.deltaManager.once("connect", connectListener);
+                runtime.once("connected", connectListener);
                 runtime.once("dispose", disposeListener);
             });
         }
