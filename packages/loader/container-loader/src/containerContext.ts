@@ -25,6 +25,7 @@ import {
     ILoaderOptions,
     IRuntimeFactory,
     ICodeLoader,
+    IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
@@ -298,7 +299,8 @@ export class ContainerContext implements IContainerContext {
     // #region private
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-        const fluidExport: IFluidObject | undefined = (await this._fluidModuleP).module?.fluidExport;
+        const fluidExport: Partial<IProvideRuntimeFactory> | undefined =
+            (await this._fluidModuleP)?.module.fluidExport;
         const runtimeFactory = fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
