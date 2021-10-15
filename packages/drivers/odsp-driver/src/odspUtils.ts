@@ -106,11 +106,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`noResponseFromTheServer`, fetchIncorrectResponse);
+            throwOdspNetworkError("odspFetchErrorNoResponse", fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status}`, response.status, response, await response.text());
+                `odspFetchError [${response.status}]`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -141,10 +141,10 @@ export async function fetchHelper(
         // It could container PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
+        const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
         throwOdspNetworkError(
-            `fetchError`,
-            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
-            undefined, // response
+            `odspFetchThrewError [${failureCode}]`,
+            failureCode,
         );
     });
 }

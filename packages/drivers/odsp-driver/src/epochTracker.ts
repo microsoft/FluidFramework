@@ -17,7 +17,7 @@ import {
     IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent, isValidLegacyError } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, isValidLegacyError, isFluidError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
@@ -248,15 +248,15 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private async checkForEpochError(
-        error: any,
+        error: unknown,
         epochFromResponse: string | null | undefined,
         fetchType: FetchTypeInternal,
         fromCache: boolean = false,
     ) {
-        if (error.errorType === DriverErrorType.fileOverwrittenInStorage) {
+        if (isFluidError(error) && error.errorType === DriverErrorType.fileOverwrittenInStorage) {
             try {
                 // This will only throw if it is an epoch error.
-                this.checkForEpochErrorCore(epochFromResponse, error.errorMessage);
+                this.checkForEpochErrorCore(epochFromResponse);
             } catch (epochError) {
                 assert(isValidLegacyError(epochError),
                     0x21f /* "epochError expected to be thrown by throwOdspNetworkError and of known type" */);
@@ -274,16 +274,16 @@ export class EpochTracker implements IPersistedFileCache {
             // If it was categorized as epoch error but the epoch returned in response matches with the client epoch
             // then it was coherency 409, so rethrow it as throttling error so that it can retried. Default throttling
             // time is 1s.
-            throw new ThrottlingError(error.errorMessage ?? "Coherency409", 1, { [Odsp409Error]: true });
+            throw new ThrottlingError("coherency409", error.message, 1, { [Odsp409Error]: true });
         }
     }
 
-    private checkForEpochErrorCore(epochFromResponse: string | null | undefined, message?: string) {
+    private checkForEpochErrorCore(epochFromResponse: string | null | undefined) {
         // If epoch is undefined, then don't compare it because initially for createNew or TreesLatest
         // initializes this value. Sometimes response does not contain epoch as it is still in
         // implementation phase at server side. In that case also, don't compare it with our epoch value.
         if (this.fluidEpoch && epochFromResponse && (this.fluidEpoch !== epochFromResponse)) {
-            throwOdspNetworkError(message ?? "epochMismatch", fluidEpochMismatchError);
+            throwOdspNetworkError("epochMismatch", fluidEpochMismatchError);
         }
     }
 

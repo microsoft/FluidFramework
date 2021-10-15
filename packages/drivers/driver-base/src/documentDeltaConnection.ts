@@ -310,7 +310,7 @@ export class DocumentDeltaConnection
     public dispose() {
         this.disposeCore(
             false, // socketProtocolError
-            createGenericNetworkError("clientClosingConnection", true /* canRetry */));
+            createGenericNetworkError("clientClosingConnection", undefined, true /* canRetry */));
     }
 
     // back-compat: became @deprecated in 0.45 / driver-definitions 0.40
@@ -524,6 +524,7 @@ export class DocumentDeltaConnection
             message = `${message}: [object omitted]`;
         }
         const errorObj = createGenericNetworkError(
+            `socketError [${handler}]`,
             message,
             canRetry,
         );
