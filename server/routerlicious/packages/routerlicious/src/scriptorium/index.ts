@@ -5,7 +5,8 @@
 
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
-import { IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import { ICollection, IDocument, IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import { deleteSummarizedOps } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
@@ -50,6 +51,9 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
             );
         }
     }
+
+    const documentsCollection: ICollection<IDocument> = db.collection(config.get("mongo:collectionNames:documents"));
+    await deleteSummarizedOps(opCollection, documentsCollection, 60000, 60000, true);
 
     return new ScriptoriumLambdaFactory(mongoManager, opCollection);
 }
