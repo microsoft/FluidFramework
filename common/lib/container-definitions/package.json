@@ -17,7 +17,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:test": "tsc --project ./src/test/tsconfig.json",
+    "build:test": "tsc --project ./src/test/types/tsconfig.json",
     "ci:build": "npm run build:compile",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "ci:test": "echo No test for this package",
@@ -34,15 +34,15 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.39.5",
-    "@fluidframework/driver-definitions": "^0.40.0",
+    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/driver-definitions": "^0.41.0-0",
     "@fluidframework/protocol-definitions": "^0.1025.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/container-definitions-0.39.8": "npm:@fluidframework/container-definitions@0.39.8",
     "@fluidframework/container-definitions-0.40.0": "npm:@fluidframework/container-definitions@0.40.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
@@ -115,6 +115,28 @@
           "backCompat": false
         },
         "InterfaceDeclaration_IThrottlingWarning": {
+          "backCompat": false
+        }
+      },
+      "0.40.0": {
+        "InterfaceDeclaration_ICodeLoader": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IContainerContext": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IFluidModule": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IProvideRuntimeFactory": {
+          "forwardCompat": false,
+          "backCompat": false
+        },
+        "InterfaceDeclaration_IRuntimeFactory": {
+          "forwardCompat": false,
           "backCompat": false
         }
       }

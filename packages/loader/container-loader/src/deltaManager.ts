@@ -1058,7 +1058,7 @@ export class DeltaManager
      * Emit info about a delay in service communication on account of throttling.
      * @param id - Id of the connection that is delayed
      * @param delayMs - Duration of the delay
-     * @param error - error objecct indicating the throttling
+     * @param error - error object indicating the throttling
      */
     public emitDelayInfo(id: string, delayMs: number, error: unknown) {
         const timeNow = Date.now();
@@ -1291,13 +1291,6 @@ export class DeltaManager
         connection.off("disconnect", this.disconnectHandler);
         connection.off("error", this.errorHandler);
         connection.off("pong", this.pongHandler);
-
-        // We cancel all ops on lost of connectivity, and rely on DDSes to resubmit them.
-        // Semantics are not well defined for batches (and they are broken right now on disconnects anyway),
-        // but it's safe to assume (until better design is put into place) that batches should not exist
-        // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
-        // state. As requirements change, so should these checks.
-        assert(this.messageBuffer.length === 0, 0x0ea /* "messageBuffer is not empty on disconnect" */);
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.pause();
