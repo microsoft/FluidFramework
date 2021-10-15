@@ -7,16 +7,11 @@ import * as fs from "fs";
 import { PackageDetails } from "./packageJson";
 import { generateTypeDataForProject, toTypeString, TypeData } from "./typeData";
 
-export function generateTests(packageDetails: PackageDetails, outDir: string | undefined) {
+export function generateTests(packageDetails: PackageDetails) {
 
     const currentTypeData = generateTypeDataForProject(packageDetails.packageDir, undefined);
 
-    let indexPath = "..";
-    if(outDir){
-        while(!fs.existsSync(`${packageDetails.packageDir}/${outDir}/${indexPath}/index.ts`)){
-            indexPath +="/.."
-        }
-    }
+    let indexPath = "../..";
 
     for(const oldVersion of packageDetails.oldVersions){
             const testString: string[]=[
@@ -49,8 +44,8 @@ import * as current from "${indexPath}/index";
                 const brokenData = currentTypeData.packageDetails.broken?.[oldDetails.packageDetails.version]?.[getFullTypeName(currentType)];
 
                 testString.push(`/*`)
-                testString.push(`* validate forward compat by using old type in place of current type`);
-                testString.push(`* to disable, add in package.json under typeValidation.broken.${oldDetails.packageDetails.version}:`);
+                testString.push(`* Validate forward compat by using old type in place of current type`);
+                testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldDetails.packageDetails.version}:`);
                 testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
                 const forwarCompatCase = buildTestCase(oldType, currentType);
                 if(brokenData?.forwardCompat !== false){
@@ -63,8 +58,8 @@ import * as current from "${indexPath}/index";
                 testString.push("");
 
                 testString.push(`/*`)
-                testString.push(`* validate back compat by using current type in place of old type`);
-                testString.push(`* to disable, add in package.json under typeValidation.broken.${oldDetails.packageDetails.version}:`);
+                testString.push(`* Validate back compat by using current type in place of old type`);
+                testString.push(`* If breaking change required, add in package.json under typeValidation.broken.${oldDetails.packageDetails.version}:`);
                 testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
                 const backCompatCase = buildTestCase(currentType, oldType);
                 if(brokenData?.backCompat !== false){
@@ -78,7 +73,7 @@ import * as current from "${indexPath}/index";
 
             }
         }
-        const testPath =`${packageDetails.packageDir}/${outDir ? outDir : "/src/test"}`;
+        const testPath =`${packageDetails.packageDir}/src/test/types`;
         if(!fs.existsSync(testPath)){
             fs.mkdirSync(testPath);
         }
