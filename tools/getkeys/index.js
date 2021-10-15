@@ -10,42 +10,53 @@ const { exec } = require('child_process');
 
 async function getKeys(keyVaultClient, rc, vaultUri) {
     const secretList = await keyVaultClient.getSecrets(vaultUri);
+    const p = [];
     for (const secret of secretList) {
         if (secret.attributes.enabled) {
             const secretName = secret.id.split('/').pop();
             // exclude secrets with automation prefix, which should only be used in automation
-            if(!secretName.startsWith("automation")){
-                keyVaultClient.getSecret(vaultUri, secretName, '').then((response) => {
+            if (!secretName.startsWith("automation")) {
+                p.push((async () => {
+                    const response = await keyVaultClient.getSecret(vaultUri, secretName, '');
                     const envName = secretName.split('-').join('__'); // secret name can't contain underscores
                     console.log(`Setting environment variable ${envName}...`);
-                    setEnv(envName, response.value);
+                    await setEnv(envName, response.value);
                     rc.secrets[envName] = response.value;
-                });
+                })());;
             }
         }
     }
+
+    return Promise.all(p);
 }
 
 function setEnv(name, value) {
-    const shell = process.env.SHELL ? process.env.SHELL.split('/').pop() : null;
-    const termProgram = process.env.TERM_PROGRAM;
-    const setString = `export ${name}="${value}"`;
-    switch (shell) {
-        case "bash":
-            const destFile = termProgram === "Apple_Terminal" ? "~/.bash_profile" : "~/.bashrc";
-            return exec(`${setString} && echo '${setString}' >> ${destFile}`, stdResponse);
-        case "zsh":
-            return exec(`${setString} && echo '${setString}' >> ~/.zshrc`, stdResponse);
-        case "fish":
-            return exec(`set -xU '${name}' '${value}'`, {"shell": process.env.SHELL}, stdResponse);
-        default: // windows
-            const escapedValue = value.split('"').join('\\"');
-            return exec(`setx ${name} "${escapedValue}"`, stdResponse);
-    }
-}
-
-function stdResponse(err, stdout, stderr) {
-    console.log(err ? err : (stderr || stdout) ? stderr + stdout : "done");
+    return new Promise((res, rej) => {
+        const callback = (err, stdout, stderr) => {
+            if (err) {
+                rej(err);
+            }
+            if (stderr) {
+                console.log(stderr + stdout);
+            }
+            res();
+        }
+        const shell = process.env.SHELL ? process.env.SHELL.split('/').pop() : null;
+        const termProgram = process.env.TERM_PROGRAM;
+        const setString = `export ${name}="${value}"`;
+        switch (shell) {
+            case "bash":
+                const destFile = termProgram === "Apple_Terminal" ? "~/.bash_profile" : "~/.bashrc";
+                exec(`${setString} && echo '${setString}' >> ${destFile}`, callback);
+            case "zsh":
+                exec(`${setString} && echo '${setString}' >> ~/.zshrc`, callback);
+            case "fish":
+                exec(`set -xU '${name}' '${value}'`, { "shell": process.env.SHELL }, callback);
+            default: // windows
+                const escapedValue = value.split('"').join('\\"');
+                exec(`setx ${name} "${escapedValue}"`, callback);
+        }
+    });
 }
 
 (async () => {
@@ -64,7 +75,10 @@ function stdResponse(err, stdout, stderr) {
     try {
         // Key Vault with restricted access for the FF dev team only
         await getKeys(client, rc, "https://ff-internal-dev-secrets.vault.azure.net/");
-        console.log("Overriding defaults with values from the FF internal keyvault.")
-    } catch (e) {}
+        console.log("Overrode defaults with values from the FF internal keyvault.");
+    } catch (e) { }
     await rcTools.saveRC(rc);
-})();
+})().catch(e => {
+    console.error(`FATAL ERROR: ${e.stack}`);
+    process.exit(-1);
+});
