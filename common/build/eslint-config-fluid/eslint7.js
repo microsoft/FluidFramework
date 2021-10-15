@@ -232,7 +232,7 @@ module.exports = {
         "import/no-extraneous-dependencies": [
             "error",
             {
-                "devDependencies": ["**/*.spec.ts", "src/test/**.ts"]
+                "devDependencies": ["**/*.spec.ts", "src/test/**"]
             }
         ],
         "import/no-internal-modules": "error",

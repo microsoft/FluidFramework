@@ -137,8 +137,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
-    // @deprecated (undocumented)
-    isDocumentDirty(): boolean;
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: IFluidObject, existing?: boolean): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
@@ -248,11 +246,11 @@ export interface IAckedSummary {
 }
 
 // @public (undocumented)
-export interface IAckNackSummaryResult {
+export interface IAckSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
     // (undocumented)
-    readonly summaryAckNackOp: ISummaryAckMessage | ISummaryNackMessage;
+    readonly summaryAckOp: ISummaryAckMessage;
 }
 
 // @public
@@ -269,6 +267,12 @@ export interface IBroadcastSummaryResult {
     readonly broadcastDuration: number;
     // (undocumented)
     readonly summarizeOp: ISummaryOpMessage;
+}
+
+// @public (undocumented)
+export interface ICancellableSummarizerController extends ISummaryCancellationToken {
+    // (undocumented)
+    stop(reason: SummarizerStopReason): void;
 }
 
 // @public
@@ -359,6 +363,14 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly stage: "generate";
     readonly summaryStats: IGeneratedSummaryStats;
     readonly summaryTree: ISummaryTree;
+}
+
+// @public (undocumented)
+export interface INackSummaryResult {
+    // (undocumented)
+    readonly ackNackDuration: number;
+    // (undocumented)
+    readonly summaryNackOp: ISummaryNackMessage;
 }
 
 // @public (undocumented)
@@ -475,7 +487,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidRo
 
 // @public (undocumented)
 export interface ISummarizeResults {
-    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckNackSummaryResult>>;
+    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult>>;
 }
@@ -639,7 +651,7 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 export class Summarizer extends EventEmitter implements ISummarizer {
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection);
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
@@ -663,12 +675,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     }
 
 // @public (undocumented)
-export type SummarizeResultPart<T> = {
+export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
-    data: T;
+    data: TSuccess;
 } | {
     success: false;
-    data: T | undefined;
+    data: TFailure | undefined;
     message: string;
     error: any;
     retryAfterSeconds?: number;

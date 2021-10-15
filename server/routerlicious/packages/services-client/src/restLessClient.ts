@@ -58,7 +58,7 @@ export class RestLessClient {
         newRequest.method = "POST";
         newRequest.headers = {
             // TODO: when we support blob/file uploads, we should potentially add compatibility with multipart/form-data
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/x-www-form-urlencoded;restless",
         };
 
         return newRequest;

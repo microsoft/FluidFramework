@@ -253,6 +253,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.snapshotCore}
+     * @internal
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         let currentSize = 0;
@@ -328,6 +329,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+     * @internal
      */
     protected async loadCore(storage: IChannelStorageService) {
         // eslint-disable-next-line @typescript-eslint/ban-types
@@ -346,16 +348,21 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+     * @internal
      */
     protected onDisconnect() {}
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+     * @internal
      */
     protected reSubmitCore(content: any, localOpMetadata: unknown) {
         this.kernel.trySubmitMessage(content, localOpMetadata);
     }
 
+    /**
+     * @internal
+     */
     protected applyStashedOp(content: any): unknown {
         this.kernel.tryProcessMessage(content, false, undefined, undefined);
         return this.kernel.tryGetStashedOpLocalMetadata(content);
@@ -363,6 +370,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+     * @internal
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
@@ -372,6 +380,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
+     * @internal
      */
     protected registerCore() {
         for (const value of this.values()) {

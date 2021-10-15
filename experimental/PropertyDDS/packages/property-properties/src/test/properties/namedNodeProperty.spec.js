@@ -9,10 +9,10 @@
  *    object described in /src/properties/namedNodeProperty.js
  */
 
-const PropertyFactory = require('../..').PropertyFactory;
-const NamedNodeProperty = require('../../properties/namedNodeProperty');
+const { PropertyFactory } = require('../..');
+const { NamedNodeProperty } = require('../../properties/namedNodeProperty');
 const { isGUID } = require('@fluid-experimental/property-common').GuidUtils;
-const ContainerProperty = require('../..').ContainerProperty;
+const { ContainerProperty } = require('../..');
 
 describe('NamedNodeProperty', function () {
 

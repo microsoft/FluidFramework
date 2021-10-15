@@ -7,7 +7,7 @@ import { IDisposable, IEvent, IEventProvider, ITelemetryLogger } from "@fluidfra
 import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
-import { IDeltaManager, LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { createSummarizingWarning } from "./summarizer";
@@ -266,15 +266,9 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
             0x265 /* "Expected: Starting or Running" */);
         this.state = SummaryManagerState.Stopping;
 
-        if (this.summarizer !== undefined) {
-            // Stopping the running summarizer client should trigger a change
-            // in states when the running summarizer closes
-            this.summarizer.stop(reason);
-        } else {
-            // Should not be possible to hit this case
-            this.logger.sendErrorEvent({ eventName: "StopCalledWithoutRunningSummarizer", reason });
-            this.state = SummaryManagerState.Off;
-        }
+        // Stopping the running summarizer client should trigger a change
+        // in states when the running summarizer closes
+        this.summarizer?.stop(reason);
     }
 
     /**
@@ -285,7 +279,7 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     private async delayBeforeCreatingSummarizer(): Promise<boolean> {
         // throttle creation of new summarizer containers to prevent spamming the server with websocket connections
         let delayMs = this.startThrottler.getDelay();
-        if (delayMs > 0 && delayMs >= this.startThrottler.maxDelayMs) {
+        if (delayMs > 0 && delayMs > this.startThrottler.maxDelayMs) {
             this.emit(
                 "summarizerWarning",
                 createSummarizingWarning("summaryManagerCreateSummarizerMaxThrottleDelay", false),
@@ -364,26 +358,36 @@ export class SummaryManager extends TypedEventEmitter<ISummaryManagerEvents> imp
     }
 }
 
+export interface ISummarizerRequestOptions {
+    cache: boolean,
+    reconnect: boolean,
+    summarizingClient: boolean,
+}
+
 /**
  * Forms a function that will request a Summarizer.
  * @param loaderRouter - the loader acting as an IFluidRouter
- * @param deltaManager - delta manager to get last sequence number
+ * @param lastSequenceNumber - the last sequence number (e.g., from DeltaManager)
+ * @param cache - use cache to retrieve summarizer
+ * @param summarizingClient - is summarizer client
+ * @param reconnect - can reconnect on connection loss
  */
 export const formRequestSummarizerFn = (
     loaderRouter: IFluidRouter,
-    deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
+    lastSequenceNumber: number,
+    { cache, reconnect, summarizingClient }: ISummarizerRequestOptions,
 ) => async () => {
     // TODO eventually we may wish to spawn an execution context from which to run this
     const request: IRequest = {
         headers: {
-            [LoaderHeader.cache]: false,
+            [LoaderHeader.cache]: cache,
             [LoaderHeader.clientDetails]: {
                 capabilities: { interactive: false },
                 type: summarizerClientType,
             },
-            [DriverHeader.summarizingClient]: true,
-            [LoaderHeader.reconnect]: false,
-            [LoaderHeader.sequenceNumber]: deltaManager.lastSequenceNumber,
+            [DriverHeader.summarizingClient]: summarizingClient,
+            [LoaderHeader.reconnect]: reconnect,
+            [LoaderHeader.sequenceNumber]: lastSequenceNumber,
         },
         url: "/_summarizer",
     };

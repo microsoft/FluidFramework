@@ -8,15 +8,6 @@
 import { Params } from "express-serve-static-core";
 import { getParam } from "@fluidframework/server-services-utils";
 
-export function getTenantIdFromRequest(params: Params) {
-    const tenantId = getParam(params, "tenantId");
-    if (tenantId !== undefined) {
-        return tenantId;
-    }
-    const id = getParam(params, "id");
-    if (id !== undefined) {
-        return id;
-    }
-
-    return "-";
-}
+const getParamFromRequest = (params: Params, paramName: string) => getParam(params, paramName) ?? "-";
+export const getDocumentIdFromRequest = (params: Params) => getParamFromRequest(params, "id");
+export const getTenantIdFromRequest = (params: Params) => getParamFromRequest(params, "tenantId");
