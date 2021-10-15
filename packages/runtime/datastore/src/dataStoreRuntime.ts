@@ -759,6 +759,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         return this.deferredAttached.promise;
     }
 
+    // @deprecated Warnings are being deprecated
     public raiseContainerWarning(warning: ContainerWarning): void {
         this.dataStoreContext.raiseContainerWarning(warning);
     }
