@@ -11,6 +11,10 @@ export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {
     }
 
+    public async aggregate(group: any, options?: any) {
+        throw new Error("Method not implemented.");
+    }
+
     public async find(query: any, sort: any): Promise<any[]> {
         return this.findInternal(query, sort);
     }

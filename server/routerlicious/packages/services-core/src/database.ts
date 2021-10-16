@@ -39,6 +39,14 @@ export interface IDatabaseManager {
  */
 export interface ICollection<T> {
     /**
+     * Executes an aggregration framework pipeline against the collection
+     *
+     * @param pipeline - array containing the aggregation framework commands for the execution
+     * @param options - optional settings
+     * @returns - cursor you can use to iterate over aggregated results
+     */
+    aggregate(group: any, options?: any): any;
+    /**
      * Finds queries in the database
      *
      * @param query - data we want to find

@@ -16,15 +16,19 @@ export async function deleteSummarizedOps(
         if (!softDeletionEnabled) {
             return Promise.reject(new Error(`Operation deletion is not enabled`));
         }
-        // eslint-disable-next-line no-null/no-null
-        const documentsArray = await documentsCollection.distinct("documentId", { documentId : { $ne : null } });
+
+        const uniqueDocuments = await documentsCollection.aggregate(
+            { _id: { documentId: "$documentId", tenantId: "$tenantId"}},
+        ).toArray();
+
         const currentEpochTime = new Date().getTime();
         const epochTimeBeforeOfflineWindow =  currentEpochTime - offlineWindowMs;
         const scheduledDeletionEpochTime = currentEpochTime + softDeleteRetentionPeriodMs;
         let lumberjackProperties;
 
-        for (const docId of documentsArray) {
+        for (const doc of uniqueDocuments) {
             try {
+                const docId = doc.documentId;
                 const document = await documentsCollection.findOne({ documentId: docId });
                 lumberjackProperties = getLumberBaseProperties(docId, document.tenantId);
                 const lastSummarySequenceNumber = JSON.parse(document.scribe).lastSummarySequenceNumber;

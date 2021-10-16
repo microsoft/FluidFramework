@@ -4,12 +4,18 @@
  */
 
 import * as core from "@fluidframework/server-services-core";
-import { Collection, MongoClient, MongoClientOptions } from "mongodb";
+import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 
 const MaxFetchSize = 2000;
 
 export class MongoCollection<T> implements core.ICollection<T> {
     constructor(private readonly collection: Collection<T>) {
+    }
+
+    public aggregate(group: any, options?: any): AggregationCursor<T> {
+        const pipeline: any = [];
+        pipeline.$group = group;
+        return this.collection.aggregate(pipeline, options);
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types,@typescript-eslint/promise-function-async
