@@ -224,7 +224,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<any>(storage, snapshotFileName);
 
-        this.data = this.serializer.decode(content);
+        this.data = this.decode(content);
     }
 
     /**
@@ -275,7 +275,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
             switch (op.type) {
                 case "setCell":
-                    this.setCore(this.serializer.decode(op.value));
+                    this.setCore(this.decode(op.value));
                     break;
 
                 case "deleteCell":
@@ -296,6 +296,19 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     private deleteCore() {
         this.data = undefined;
         this.emit("delete");
+    }
+
+    // IFluidSerializer.decode can be directly used instead of this method once it is not optional
+    private decode(value: any) {
+        if (this.serializer.decode !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return this.serializer.decode(value);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return value !== undefined
+            ? this.serializer.parse(JSON.stringify(value))
+            : value;
     }
 
     protected applyStashedOp() {
