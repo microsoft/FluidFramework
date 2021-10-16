@@ -11,6 +11,7 @@
         "endpoint": "mongodb://mongodb:27017",
         "expireAfterSeconds": -1,
         "createCosmosDBIndexes": false,
+        "bufferMaxEntries": -1,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",

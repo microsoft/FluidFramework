@@ -120,14 +120,14 @@ export class MongoDb implements core.IDb {
 }
 
 export class MongoDbFactory implements core.IDbFactory {
-    constructor(private readonly endpoint: string) {
+    constructor(private readonly endpoint: string, private readonly bufferMaxEntries: number) {
     }
 
     public async connect(): Promise<core.IDb> {
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
         const options: MongoClientOptions = {
             autoReconnect: true,
-            bufferMaxEntries: 0,
+            bufferMaxEntries: this.bufferMaxEntries,
             keepAlive: true,
             keepAliveInitialDelay: 180000,
             reconnectInterval: 1000,

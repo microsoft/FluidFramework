@@ -151,7 +151,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
         // Database connection
         const mongoUrl = config.get("mongo:endpoint") as string;
-        const mongoFactory = new services.MongoDbFactory(mongoUrl);
+        const bufferMaxEntries = config.get("mongo:bufferMaxEntries");
+        const mongoFactory = new services.MongoDbFactory(mongoUrl, bufferMaxEntries);
         const mongoManager = new core.MongoManager(mongoFactory);
         const documentsCollectionName = config.get("mongo:collectionNames:documents");
 
