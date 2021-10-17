@@ -4,6 +4,7 @@
  */
 
 import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
@@ -21,6 +22,7 @@ const split = require("split");
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
         winston.info(message);
+        Lumberjack.info(message);
     }
 });
 
@@ -52,6 +54,7 @@ export function create(
                 eventName: "http_requests",
             };
             winston.info("request log generated", { messageMetaData });
+            Lumberjack.info("request log generated", messageMetaData);
             return undefined;
         }));
     } else {

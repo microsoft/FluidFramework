@@ -23,7 +23,7 @@ import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
-import { logRequestMetric } from "@fluidframework/server-services-telemetry";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { catch404, getDocumentIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
@@ -36,6 +36,7 @@ const split = require("split");
 const stream = split().on("data", (message) => {
     if (message !== undefined) {
         winston.info(message);
+        Lumberjack.info(message);
     }
 });
 
@@ -86,6 +87,7 @@ export function create(
              };
              logRequestMetric(messageMetaData);
              winston.info("request log generated", { messageMetaData });
+             Lumberjack.info("request log generated", messageMetaData );
              return undefined;
         }, { stream }));
     } else {
