@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.40774",
+    "@fluidframework/build-tools": "^0.2.40870",
     "@fluidframework/container-definitions-0.39.8": "npm:@fluidframework/container-definitions@0.39.8",
     "@fluidframework/container-definitions-0.40.0": "npm:@fluidframework/container-definitions@0.40.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0-0",
