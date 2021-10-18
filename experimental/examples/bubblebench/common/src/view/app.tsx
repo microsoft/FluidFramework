@@ -106,7 +106,7 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
         // 23.98, the lowest display refresh rate typically encountered on modern displays.
         if (!(stats.smoothFps > 23)) {
             app.decreaseBubbles();
-        } else if (stats.smoothFps > 23) {
+        } else if (stats.smoothFps > 24) {
             app.increaseBubbles();
         }
 
