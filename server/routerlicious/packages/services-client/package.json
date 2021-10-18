@@ -56,7 +56,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1033.0",
     "@fluidframework/protocol-base": "^0.1033.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
     "axios": "^0.21.1",
     "debug": "^4.1.1",
     "jsrsasign": "^10.2.0",
@@ -67,6 +67,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@microsoft/api-extractor": "^7.16.1",
     "@types/debug": "^4.1.5",
     "@types/jsrsasign": "^8.0.8",
     "@types/jwt-decode": "^2.2.1",

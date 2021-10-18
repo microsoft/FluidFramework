@@ -41,26 +41,10 @@ export async function createGitService(
     tenantService: ITenantService,
     cache?: ICache,
     asyncLocalStorage?: AsyncLocalStorage<string>,
+    allowDisabledTenant = false,
 ): Promise<RestGitService> {
-    let token: string;
-    if (authorization) {
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const base64TokenMatch = authorization.match(/Basic (.+)/);
-        if (!base64TokenMatch) {
-            return Promise.reject(new NetworkError(403, "Malformed authorization token"));
-        }
-        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
-
-        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-        const tokenMatch = encoded.match(/(.+):(.+)/);
-        if (!tokenMatch || tenantId !== tokenMatch[1]) {
-            return Promise.reject(new NetworkError(403, "Malformed authorization token"));
-        }
-
-        token = tokenMatch[2];
-    }
-
-    const details = await tenantService.getTenant(tenantId, token);
+    const token = parseToken(tenantId, authorization);
+    const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
     const customData: ITenantCustomDataExternal = details.customData;
     const writeToExternalStorage = !!customData.externalStorageData;
     const decoded = jwt.decode(token) as ITokenClaims;
@@ -73,6 +57,28 @@ export async function createGitService(
          asyncLocalStorage);
 
     return service;
+}
+
+export function parseToken(tenantId: string, authorization: string): string {
+    let token: string;
+    if (authorization) {
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        const base64TokenMatch = authorization.match(/Basic (.+)/);
+        if (!base64TokenMatch) {
+            throw new NetworkError(403, "Malformed authorization token");
+        }
+        const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+
+        // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+        const tokenMatch = encoded.match(/(.+):(.+)/);
+        if (!tokenMatch || tenantId !== tokenMatch[1]) {
+            throw new NetworkError(403, "Malformed authorization token");
+        }
+
+        token = tokenMatch[2];
+    }
+
+    return token;
 }
 
 /**
