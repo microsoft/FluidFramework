@@ -270,6 +270,11 @@ export class OdspTestDriver implements ITestDriver {
 
     }
 
+    /**
+     * Returns the url to container which can be used to load the container through loader.
+     * @param testId - Filename of the fluid file. Note: This is not the container id as for odsp
+     *  container id is the hashed id generated using driveId and itemId. Container id is not the filename.
+     */
     async createContainerUrl(testId: string): Promise<string> {
         if (!this.testIdToUrl.has(testId)) {
             const siteUrl = `https://${this.config.server}`;
@@ -281,7 +286,7 @@ export class OdspTestDriver implements ITestDriver {
                     accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
                     refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
                 },
-                true,
+                false,
                 this.config.driveId);
 
             this.testIdToUrl.set(
