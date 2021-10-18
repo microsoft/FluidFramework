@@ -21,7 +21,9 @@ export interface ITestDriver {
     createDocumentServiceFactory(): IDocumentServiceFactory;
     createUrlResolver(): IUrlResolver;
     readonly endpointName?: string;
+    readonly tenantName?: string;
     readonly type: TestDriverTypes;
+    readonly userIndex?: number;
     readonly version: string;
 }
 

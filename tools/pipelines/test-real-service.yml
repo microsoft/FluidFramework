@@ -64,10 +64,14 @@ stages:
         testCommand: test:realsvc:routerlicious:report
         continueOnError: true
         splitTestVariants:
-          - --compatVersion=0
-          - --compatVersion=-1
-          - --compatVersion=-2
-          - --compatVersion=LTS
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: N-1
+            flags: --compatVersion=-1
+          - name: N-2
+            flags: --compatVersion=-2
+          - name: LTS
+            flags: --compatVersion=LTS
         env:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -86,10 +90,14 @@ stages:
         continueOnError: true
         testCommand: test:realsvc:frs:report
         splitTestVariants:
-          - --compatVersion=0
-          - --compatVersion=-1
-          - --compatVersion=-2
-          - --compatVersion=LTS
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: N-1
+            flags: --compatVersion=-1
+          - name: N-2
+            flags: --compatVersion=-2
+          - name: LTS
+            flags: --compatVersion=LTS
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -108,10 +116,14 @@ stages:
         continueOnError: true
         testCommand: test:realsvc:odsp:report
         splitTestVariants:
-          - --compatVersion=0
-          - --compatVersion=-1
-          - --compatVersion=-2
-          - --compatVersion=LTS
+          - name: Non-compat
+            flags: --compatVersion=0 --tenantIndex=0
+          - name: N-1
+            flags: --compatVersion=-1 --tenantIndex=1
+          - name: N-2
+            flags: --compatVersion=-2 --tenantIndex=2
+          - name: LTS
+            flags: --compatVersion=LTS --tenantIndex=3
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)

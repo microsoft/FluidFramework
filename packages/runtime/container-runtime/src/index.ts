@@ -10,4 +10,4 @@ export * from "./pendingStateManager";
 export * from "./summarizer";
 export * from "./summarizerTypes";
 export * from "./summaryCollection";
-export { neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
+export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";

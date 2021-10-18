@@ -19,6 +19,9 @@ export enum LumberEventName {
     // Lambdas
     DeliHandler = "DeliHandler",
     ScribeHandler = "ScribeHandler",
+    ClientSummary = "ClientSummary",
+    ServiceSummary = "ServiceSummary",
+    SummaryReader = "SummaryReader",
 
     // Reliability
     SessionResult = "SessionResult",
@@ -27,4 +30,5 @@ export enum LumberEventName {
 
     // Miscellaneous
     ConnectDocument = "ConnectDocument",
+    HttpRequest = "HttpRequest",
 }
