@@ -18,6 +18,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:gen": "npm run build:gen:typetests",
     "build:gen:bump": "npm run build:gen:typetests:prepare",
     "build:gen:typetests": "fluid-type-validator -d .",
     "build:gen:typetests:prepare": "fluid-type-validator -d . -p",
