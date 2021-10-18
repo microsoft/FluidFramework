@@ -28,8 +28,6 @@
     {{/* end */}}
 
     <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
-    <!-- EU Cookie Compliance CSS -->
-    <link rel="stylesheet" href="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.css">
 
     {{ $style := resources.Get "scss/style.scss" | resources.ExecuteAsTemplate "css/style.css" . | toCSS | minify | fingerprint -}}
     <link rel="stylesheet" href="{{ $style.Permalink | relURL }}"

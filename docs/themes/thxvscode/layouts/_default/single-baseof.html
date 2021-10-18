@@ -4,7 +4,7 @@
 
 <body>
     <!-- EU Cookie Compliance JS -->
-    <script src="//uhf.microsoft.com/mscc/statics/mscc-0.3.6.min.js"></script>
+    <script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
     <div id="main">
         {{- partial "header.html" . -}}
         <div {{ if .IsHome}}class="home" {{ end}}>
@@ -50,6 +50,8 @@
 </body>
 
 {{ $script := resources.Get "js/bundle.js" | resources.ExecuteAsTemplate "js/main.js" . | minify |fingerprint -}}
-<script src="{{ $script.Permalink | relURL }}" {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr }}></script>
-
+<script src="{{ $script.Permalink | relURL }}"
+    {{ printf "integrity=%q" $script.Data.Integrity | safeHTMLAttr }}>
+</script>
+{{- partial "cookies.html" . -}}
 </html>
