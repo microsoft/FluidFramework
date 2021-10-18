@@ -17,6 +17,7 @@
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
+    "build:gentypetests": "fluid-type-validator -d .",
     "build:test": "tsc --project ./src/test/types/tsconfig.json",
     "ci:build": "npm run build:compile",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-tools": "^0.2.40774",
     "@fluidframework/container-definitions-0.39.8": "npm:@fluidframework/container-definitions@0.39.8",
     "@fluidframework/container-definitions-0.40.0": "npm:@fluidframework/container-definitions@0.40.0",
     "@fluidframework/eslint-config-fluid": "^0.24.0-0",
