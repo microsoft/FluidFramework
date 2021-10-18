@@ -938,7 +938,7 @@ export class DeltaManager
 
     public getClients() {
         if (this.connection !== undefined) {
-            this.connection.getClients();
+            this.connection?.getClients();
         } else {
             this.logger.sendErrorEvent({ eventName: "getClientsDisconnected" });
         }

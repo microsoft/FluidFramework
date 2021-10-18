@@ -320,7 +320,8 @@ const getCodeProposal =
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
     private readonly beatInEveryNSecs: number = 30000; // 30 secs
-    private audienceHeartBeat: Map<string, Date> = new Map<>();
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly
+    private audienceHeartBeat: Map<string, Date> = new Map();
 
     /**
      * Load an existing container.
@@ -1888,7 +1889,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             const diff = new Date().valueOf() - lastPingReceivedAt.valueOf();
             if (diff > this.beatInEveryNSecs * 5) {
                 // client Lost
-                this._deltaManager.getClients();
+                this._deltaManager?.getClients();
                 return;
             }
         });
@@ -1901,14 +1902,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }, this.beatInEveryNSecs);
 
         // Listen for heartbeats
-        this._deltaManager.addConnectionListener("signal", (msg: ISignalMessage) => {
+        this._deltaManager?.addConnectionListener("signal", (msg: ISignalMessage) => {
             if (msg.clientId !== null && msg.content === "ping") {
                 this.audienceHeartBeat.set(msg.clientId, new Date());
             }
         });
 
         // Listen for audience list
-        this._deltaManager.addConnectionListener("connected_clients", (clients: ISignalClient[]) => {
+        this._deltaManager?.addConnectionListener("connected_clients", (clients: ISignalClient[]) => {
             // In case client missed addMember event.
             for (const client of clients) {
                 if (!this._audience.getMember(client.clientId)) {
