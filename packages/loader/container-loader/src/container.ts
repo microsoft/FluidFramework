@@ -1884,8 +1884,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private validateAudienceHeartBeat() {
-        this.audienceHeartBeat.forEach((lastPongReceivedAt: Date, clientId: string) => {
-            const diff = new Date().valueOf() - lastPongReceivedAt.valueOf();
+        this.audienceHeartBeat.forEach((lastPingReceivedAt: Date, clientId: string) => {
+            const diff = new Date().valueOf() - lastPingReceivedAt.valueOf();
             if (diff > this.beatInEveryNSecs * 5) {
                 // client Lost
                 this._deltaManager.getClients();
