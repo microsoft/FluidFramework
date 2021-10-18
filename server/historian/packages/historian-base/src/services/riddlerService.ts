@@ -36,12 +36,22 @@ export class RiddlerService implements ITenantService {
         );
     }
 
-    public async getTenant(tenantId: string, token: string): Promise<ITenantConfig> {
-        const [tenant] = await Promise.all([this.getTenantDetails(tenantId), this.verifyToken(tenantId, token)]);
+    public async getTenant(tenantId: string, token: string, includeDisabledTenant = false): Promise<ITenantConfig> {
+        const [tenant] = await Promise.all([
+            this.getTenantDetails(tenantId, includeDisabledTenant),
+            this.verifyToken(tenantId, token, includeDisabledTenant)]);
         return tenant;
     }
 
-    private async getTenantDetails(tenantId: string): Promise<ITenantConfig> {
+    public async deleteFromCache(tenantId: string, token: string): Promise<boolean> {
+        const results = await Promise.all([
+            this.cache.delete(tenantId),
+            this.cache.delete(token)]);
+
+        return results.every(Boolean);
+    }
+
+    private async getTenantDetails(tenantId: string, includeDisabledTenant = false): Promise<ITenantConfig> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         const cachedDetail = await this.cache.get(tenantId).catch((error) => {
             winston.error(`Error fetching tenant details from cache`, error);
@@ -58,7 +68,7 @@ export class RiddlerService implements ITenantService {
             return JSON.parse(cachedDetail) as ITenantConfig;
         }
         const tenantUrl = `/api/tenants/${tenantId}`;
-        const details = await this.restWrapper.get<ITenantConfig>(tenantUrl)
+        const details = await this.restWrapper.get<ITenantConfig>(tenantUrl, { includeDisabledTenant })
             .catch(getRequestErrorTranslator(tenantUrl, "GET"));
         this.cache.set(tenantId, JSON.stringify(details)).catch((error) => {
             winston.error(`Error caching tenant details to redis`, error);
@@ -71,7 +81,7 @@ export class RiddlerService implements ITenantService {
         return details;
     }
 
-    private async verifyToken(tenantId: string, token: string): Promise<void> {
+    private async verifyToken(tenantId: string, token: string, includeDisabledTenant = false): Promise<void> {
         const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
         const cachedToken = await this.cache.exists(token).catch((error) => {
             winston.error(`Error fetching token from cache`, error);
@@ -90,7 +100,7 @@ export class RiddlerService implements ITenantService {
         }
 
         const tokenValidationUrl = `/api/tenants/${tenantId}/validate`;
-        await this.restWrapper.post(tokenValidationUrl, { token })
+        await this.restWrapper.post(tokenValidationUrl, { token }, { includeDisabledTenant })
             .catch(getRequestErrorTranslator(tokenValidationUrl, "POST"));
 
         // TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`

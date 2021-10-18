@@ -33,9 +33,9 @@ export function createSharedStringWithInterception(
     let executingCallback: boolean = false;
 
     /**
-     * Inserts a marker at a relative postition.
+     * Inserts a marker at a relative position.
      *
-     * @param relativePos1 - The relative postition to insert the marker at
+     * @param relativePos1 - The relative position to insert the marker at
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
@@ -59,9 +59,9 @@ export function createSharedStringWithInterception(
     };
 
     /**
-     * Inserts a marker at the postition.
+     * Inserts a marker at the position.
      *
-     * @param pos - The postition to insert the marker at
+     * @param pos - The position to insert the marker at
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
@@ -88,9 +88,9 @@ export function createSharedStringWithInterception(
     };
 
     /**
-     * Inserts the text at a relative postition.
+     * Inserts the text at a relative position.
      *
-     * @param relativePos1 - The relative postition to insert the text at
+     * @param relativePos1 - The relative position to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
@@ -114,9 +114,9 @@ export function createSharedStringWithInterception(
     };
 
     /**
-     * Inserts the text at the postition.
+     * Inserts the text at the position.
      *
-     * @param pos - The postition to insert the text at
+     * @param pos - The position to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
@@ -219,7 +219,7 @@ export function createSharedStringWithInterception(
     /**
      * Annotates the range with the provided properties.
      *
-     * @param start - The inclusive start postition of the range to annotate
+     * @param start - The inclusive start position of the range to annotate
      * @param end - The exclusive end position of the range to annotate
      * @param props - The properties to annotate the range with
      * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.

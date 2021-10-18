@@ -5,6 +5,7 @@
 
 import { KeyCode, Scheduler, Template } from "@fluid-example/flow-util-lib";
 import { colIndexToName, TableDocument } from "@fluid-example/table-document";
+import { SequenceDeltaEvent } from "@fluidframework/sequence";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
@@ -64,7 +65,7 @@ export class GridView {
     ]);
     private readonly maxRows = 10;
 
-    private readonly invalidate: (op, local) => void;
+    private readonly invalidate: (ev: SequenceDeltaEvent) => void;
 
     private readonly sheetlet: ISheetlet;
 
@@ -76,8 +77,8 @@ export class GridView {
 
         const refreshGrid = scheduler.coalesce(scheduler.onLayout, this.refreshCells);
 
-        this.invalidate = (op, local) => {
-            if (!local) {
+        this.invalidate = (ev: SequenceDeltaEvent) => {
+            if (!ev.isLocal) {
                 // Temporarily, we invalidate the entire matrix when we receive a remote op.
                 // This can be improved w/the new SparseMatrix, which makes it easier to decode
                 // the range of cells impacted by matrix ops.
@@ -96,7 +97,7 @@ export class GridView {
         this.inputBox.addEventListener("keydown", this.cellKeyDown);
         this.inputBox.addEventListener("input", this.cellInput);
 
-        this.doc.on("op", this.invalidate);
+        this.doc.on("sequenceDelta", this.invalidate);
 
         const blank = headerTemplate.clone();
         this.cols.appendChild(blank);

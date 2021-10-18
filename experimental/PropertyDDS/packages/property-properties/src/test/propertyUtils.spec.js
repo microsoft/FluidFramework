@@ -13,15 +13,11 @@
  *    described in /src/utils.js
  */
 
-describe('PropertyUtils', function () {
-    var PropertyFactory, PropertyUtils, _;
+const _ = require('lodash');
+const { PropertyFactory } = require('..');
+const { PropertyUtils } = require('..');
 
-    before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('..').PropertyFactory;
-        PropertyUtils = require('..').PropertyUtils;
-        _ = require('lodash');
-    });
+describe('PropertyUtils', function () {
 
     describe('PropertyUtils.gatherProperties', function () {
         it('should return a list of properties that match the predicate', function () {

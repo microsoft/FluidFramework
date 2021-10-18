@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/fluid-static",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
   "homepage": "https://fluidframework.com",
   "repository": "https://github.com/microsoft/FluidFramework",
@@ -29,21 +29,21 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^0.49.0",
+    "@fluidframework/aqueduct": "^0.50.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^0.39.8",
-    "@fluidframework/container-loader": "^0.49.0",
-    "@fluidframework/container-runtime-definitions": "^0.49.0",
+    "@fluidframework/container-definitions": "^0.40.0",
+    "@fluidframework/container-loader": "^0.50.0",
+    "@fluidframework/container-runtime-definitions": "^0.50.0",
     "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/datastore-definitions": "^0.49.0",
-    "@fluidframework/protocol-definitions": "^0.1024.0",
-    "@fluidframework/request-handler": "^0.49.0",
-    "@fluidframework/runtime-definitions": "^0.49.0",
-    "@fluidframework/runtime-utils": "^0.49.0"
+    "@fluidframework/datastore-definitions": "^0.50.0",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
+    "@fluidframework/request-handler": "^0.50.0",
+    "@fluidframework/runtime-definitions": "^0.50.0",
+    "@fluidframework/runtime-utils": "^0.50.0"
   },
   "devDependencies": {
-    "@fluid-experimental/get-container": "^0.49.0",
+    "@fluid-experimental/get-container": "^0.50.0",
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@microsoft/api-extractor": "^7.16.1",

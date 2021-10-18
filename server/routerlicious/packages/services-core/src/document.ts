@@ -15,7 +15,7 @@ export interface IDocumentDetails {
 }
 
 export interface IDocumentStorage {
-    getDocument(tenantId: string, documentId: string): Promise<any>;
+    getDocument(tenantId: string, documentId: string): Promise<IDocument>;
 
     getOrCreateDocument(tenantId: string, documentId: string): Promise<IDocumentDetails>;
 
@@ -115,4 +115,8 @@ export interface IDocument {
 
     // Deli state
     deli: string;
+
+    // Timestamp of when this document and related data will be hard deleted.
+    // The document is soft deleted if a scheduled deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }

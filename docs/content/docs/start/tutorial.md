@@ -9,7 +9,7 @@ aliases:
 In this walkthrough, you'll learn about using the Fluid Framework by examining the DiceRoller application at <https://github.com/microsoft/FluidHelloWorld>. To get started, go through the [Quick Start]({{< relref "quick-start.md" >}}) guide.
 
 {{< fluid_bundle_loader idPrefix="dice-roller"
-    bundleName="dice-roller.12142020.js" >}}
+    bundleName="dice-roller.2021-09-24.js" >}}
 
 In the DiceRoller app, users are shown a die with a button to roll it. When the die is rolled, the Fluid Framework syncs the data across clients so everyone sees the same result. To do this, complete the following steps:
 
@@ -41,7 +41,7 @@ const containerSchema = {
 const root = document.getElementById("root")
 ```
 
-\* To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
+\* To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}).
 
 ## Create a Fluid container
 
@@ -122,7 +122,7 @@ function renderDiceRoller(diceMap, elem) {
     const dice = elem.querySelector(".dice");
 
     rollButton.onclick = () => updateDice(Math.floor(Math.random() * 6)+1);
-    
+
     const updateDice = (value) => {
         // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
         dice.textContent = String.fromCodePoint(0x267f + value);
@@ -178,19 +178,13 @@ The [full code for this application is available](https://github.com/microsoft/F
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
 [FluidContainer]: {{< relref "fluidcontainer.md" >}}
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

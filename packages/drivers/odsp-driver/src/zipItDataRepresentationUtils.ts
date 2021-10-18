@@ -478,7 +478,8 @@ function throwBufferParseException(
     message: string,
 ): never {
     const error = createOdspNetworkError(
-        `BufferParsingException: ${message}`,
+        "bufferParsingException",
+        message,
         fetchIncorrectResponse,
         undefined,
         undefined,

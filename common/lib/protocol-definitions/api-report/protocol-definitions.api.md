@@ -47,7 +47,7 @@ export interface IBlob {
     // (undocumented)
     contents: string;
     // (undocumented)
-    encoding: BufferEncoding;
+    encoding: "utf-8" | "base64";
 }
 
 // @public
@@ -153,6 +153,8 @@ export interface IConnected {
 export interface ICreateBlobResponse {
     // (undocumented)
     id: string;
+    // @deprecated (undocumented)
+    url: string;
 }
 
 // @public (undocumented)

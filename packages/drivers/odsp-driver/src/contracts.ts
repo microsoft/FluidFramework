@@ -197,6 +197,8 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+    sharingLink?: string;
+    sharingLinkErrorReason?: string
 }
 
 export interface IVersionedValueWithEpoch {

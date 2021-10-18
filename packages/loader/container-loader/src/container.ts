@@ -359,7 +359,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         container.removeListener("closed", onClosed);
                     })
                     .then((props) => {
-                        event.end(props);
+                        event.end({ ...props, ...loadOptions.loadMode });
                         res(container);
                     },
                     (error) => {
@@ -371,7 +371,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "generic" },
+            { start: true, end: true, cancel: "error" },
         );
     }
 
@@ -465,6 +465,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _closed = false;
 
+    private setAutoReconnectTime = performance.now();
+
     private readonly collabWindowTracker = new CollabWindowTracker(
         (type, contents) => this.submitMessage(type, contents),
         () => this.activeConnection(),
@@ -483,7 +485,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * {@inheritDoc DeltaManager.readonly}
+     * Tells if container is in read-only mode.
+     * Data stores should listen for "readonly" notifications and disallow user making changes to data stores.
+     * Readonly state can be because of no storage write permission,
+     * or due to host forcing readonly mode for container.
+     *
+     * We do not differentiate here between no write access to storage vs. host disallowing changes to container -
+     * in all cases container runtime and data stores should respect readonly state and not allow local changes.
+     *
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
      * @deprecated - use readOnlyInfo
      */
     public get readonly() {
@@ -491,22 +502,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     /**
-     * {@inheritDoc DeltaManager.readonlyPermissions}
+     * Tells if user has no write permissions for file in storage
+     * It is undefined if we have not yet established websocket connection
+     * and do not know if user has write access to a file.
      * @deprecated - use readOnlyInfo
      */
     public get readonlyPermissions() {
         return this._deltaManager.readonlyPermissions;
     }
 
-    /**
-     * {@inheritDoc DeltaManager.readOnlyInfo}
-     */
     public get readOnlyInfo(): ReadOnlyInfo {
         return this._deltaManager.readOnlyInfo;
     }
 
     /**
-     * {@inheritDoc DeltaManager.forceReadonly}
+     * Tracks host requiring read-only mode.
      */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
@@ -787,6 +797,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             {
                 eventName: "ContainerClose",
                 loaded: this.loaded,
+                category: error === undefined ? "generic" : "error",
             },
             error,
         );
@@ -950,9 +961,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            return this.context.request(path);
-        });
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "Request" },
+            async () => this.context.request(path),
+            { end: true, cancel: "error" },
+        );
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -978,14 +992,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.closed) {
             throw new Error("Attempting to setAutoReconnect() a closed Container");
         }
+        const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
+        const currentMode = this._deltaManager.reconnectMode;
 
-        this._deltaManager.setAutomaticReconnect(reconnect);
+        if (currentMode === mode) {
+            return;
+        }
+
+        const now = performance.now();
+        const duration = now - this.setAutoReconnectTime;
+        this.setAutoReconnectTime = now;
 
         this.logger.sendTelemetryEvent({
             eventName: reconnect ? "AutoReconnectEnabled" : "AutoReconnectDisabled",
             connectionMode: this._deltaManager.connectionMode,
             connectionState: ConnectionState[this.connectionState],
+            duration,
         });
+
+        this._deltaManager.setAutoReconnect(mode);
 
         // If container state is not attached and resumed, then don't connect to delta stream. Also don't set the
         // manual reconnection flag to true as we haven't made the initial connection yet.
@@ -1015,7 +1040,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    protected resumeInternal(args: IConnectionArgs) {
+    private resumeInternal(args: IConnectionArgs) {
         assert(!this.closed, 0x0d9 /* "Attempting to setAutoReconnect() a closed DeltaManager" */);
 
         // Resume processing ops
@@ -1593,7 +1618,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * If it's not true, runtime is not in position to send ops.
      */
     private activeConnection() {
-        return this.connectionState === ConnectionState.Connected && this._deltaManager.connectionMode === "write";
+        const active = this.connectionState === ConnectionState.Connected &&
+            this._deltaManager.connectionMode === "write";
+
+        // Check for presence of current client in quorum for "write" connections - inactive clients
+        // would get leave op after some long timeout (5 min) and that should automatically transition
+        // state to "read" mode.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
+            "active connection not present in quorum");
+
+        return active;
     }
 
     private createDeltaManager() {
