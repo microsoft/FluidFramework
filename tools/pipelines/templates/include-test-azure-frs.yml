@@ -89,7 +89,7 @@ jobs:
         inputs:
           version: 12.x
 
-      # Install test and logger package
+      # Install dependencies
       - task: Npm@1
         displayName: 'npm install'
         inputs:
@@ -98,7 +98,7 @@ jobs:
           customCommand: 'install'
           customRegistry: 'useNpmrc'
 
-      # Build the package
+      # Build the azure-client package
       - task: Npm@1
         displayName: 'npm run build:fast azure-client'
         inputs:
@@ -116,9 +116,9 @@ jobs:
           customCommand: 'run build:test'
           customRegistry: 'useNpmrc'
 
-      # run the test
+      # Run the tests
       - task: Npm@1
-        displayName: '[end-to-end tests] npm run test:realsvc:${{ parameters.target }} ${{ variant }}'
+        displayName: '[azure-client tests] npm run test:realsvc:${{ parameters.target }} ${{ variant }}'
         continueOnError: true
         env:
           ${{ parameters.env }}
