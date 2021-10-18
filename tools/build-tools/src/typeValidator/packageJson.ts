@@ -4,7 +4,6 @@
  */
 
 import * as fs from "fs";
-import * as semver from "semver";
 
 export type PackageDetails ={
     readonly name: string;
