@@ -91,31 +91,35 @@ export class LoaderContainerTracker implements IOpProcessingController {
             for (const msg of messages) {
                 if (msg.type === MessageType.NoOp) {
                     // Track the NoOp that was sent.
-                    if (record.startTrailingNoOps === 0) {
+                    if (record.trailingNoOps === 0) {
+                        // record the starting sequence number of the trailing no ops if we haven't been tracking yet.
                         record.startTrailingNoOps = msg.clientSequenceNumber;
                     }
                     record.trailingNoOps++;
                 } else {
                     // Other ops has been sent. We would like to see those ack'ed, so no more need to track NoOps
-                    record.startTrailingNoOps = 0;
                     record.trailingNoOps = 0;
                 }
             }
         });
 
         container.deltaManager.inbound.on("push", (message) => {
-            // Received the no op back, update the record.
+            // Received the no op back, update the record if we are tracking
             if (message.type === MessageType.NoOp
                 && message.clientId === (container as Container).clientId
-                && message.clientSequenceNumber === record.startTrailingNoOps) {
-                record.trailingNoOps--;
-                record.startTrailingNoOps++;
+                && record.trailingNoOps !== 0
+                && record.startTrailingNoOps <= message.clientSequenceNumber
+            ) {
+                // NoOp might have coalesced and skipped ahead some sequence number
+                // update the record and skip ahead as well
+                const oldStartTrailingNoOps = record.startTrailingNoOps;
+                record.startTrailingNoOps = message.clientSequenceNumber + 1;
+                record.trailingNoOps -= (record.startTrailingNoOps - oldStartTrailingNoOps);
             }
         });
 
         container.on("disconnected", () => {
             // reset on disconnect.
-            record.startTrailingNoOps = 0;
             record.trailingNoOps = 0;
         });
     }

@@ -26,7 +26,7 @@
   "dependencies": {
     "@fluidframework/core-interfaces": "^0.39.7",
     "@fluidframework/map": "^0.50.0",
-    "@fluidframework/protocol-definitions": "^0.1025.0-38844",
+    "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/sequence": "^0.50.0",
     "request": "^2.88.0"
   },

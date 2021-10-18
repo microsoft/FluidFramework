@@ -70,7 +70,7 @@ export class DataStores implements IDisposable {
 
     private readonly logger: ITelemetryLogger;
 
-    private readonly disposeOnce = new Lazy<void>(()=>this.contexts.dispose());
+    private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,

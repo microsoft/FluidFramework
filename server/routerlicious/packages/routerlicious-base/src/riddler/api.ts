@@ -38,16 +38,10 @@ export function create(
      * Clients still need to verify the claims.
      */
     router.post("/tenants/:id/validate", (request, response) => {
-        const validP = manager.validateToken(getParam(request.params, "id"), request.body.token);
+        const tenantId = getParam(request.params, "id");
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const validP = manager.validateToken(tenantId, request.body.token,  includeDisabledTenant);
         handleResponse(validP, response);
-    });
-
-    /**
-     * Retrieves list of all deleted tenants
-     */
-     router.get("/tenants/disabled", (request, response) => {
-        const disabledTenantsP = manager.getDisabledTenants();
-        handleResponse(disabledTenantsP, response);
     });
 
     /**
@@ -55,7 +49,8 @@ export function create(
      */
     router.get("/tenants/:id", (request, response) => {
         const tenantId = getParam(request.params, "id");
-        const tenantP = manager.getTenant(tenantId);
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const tenantP = manager.getTenant(tenantId, includeDisabledTenant);
         handleResponse(tenantP, response);
     });
 
@@ -63,7 +58,8 @@ export function create(
      * Retrieves list of all tenants
      */
     router.get("/tenants", (request, response) => {
-        const tenantP = manager.getAllTenants();
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const tenantP = manager.getAllTenants(includeDisabledTenant);
         handleResponse(tenantP, response);
     });
 
@@ -71,7 +67,9 @@ export function create(
      * Retrieves the api key for the tenant
      */
     router.get("/tenants/:id/key", (request, response) => {
-        const tenantP = manager.getTenantKey(getParam(request.params, "id"));
+        const tenantId = getParam(request.params, "id");
+        const includeDisabledTenant = getIncludeDisabledFlag(request);
+        const tenantP = manager.getTenantKey(tenantId, includeDisabledTenant);
         handleResponse(tenantP, response);
     });
 
@@ -138,6 +136,11 @@ export function create(
         const tenantP = manager.deleteTenant(tenantId, scheduledDeletionTime);
         handleResponse(tenantP, response);
     });
+
+    function getIncludeDisabledFlag(request): boolean {
+        const includeDisabledRaw = request.query.includeDisabledTenant as string;
+        return includeDisabledRaw?.toLowerCase() === "true";
+    }
 
     return router;
 }
