@@ -41,6 +41,10 @@ export enum MarkerCodes {
     UInt16 = 5, // unsigned-16-bit little-endian follows
     UInt32 = 7, // unsigned-32-bit little-endian follows
     UInt64 = 9, // unsigned-64-bit little-endian follows
+    Int8 = 2,   // signed-8-bit little-endian follows
+    Int16 = 4,  // signed-16-bit little-endian follows
+    Int32 = 6,  // signed-32-bit little-endian follows
+    Int64 = 8,  // signed-64-bit little-endian follows
 
     BinaryEmpty = 32,        // value = byte[]
     BinarySingle8 = 33,      // unsigned-8-bit little-endian length, follows by bytes of length
@@ -56,9 +60,13 @@ export enum MarkerCodes {
 export const codeToBytesMap = {
     // Integer code to bytes
     1: 0,
+    2: 1,
     3: 1,
+    4: 2,
     5: 2,
+    6: 4,
     7: 4,
+    8: 8,
     9: 8,
 
     // String code to Bytes
@@ -385,6 +393,10 @@ export class NodeCore {
                 case MarkerCodes.UInt16:
                 case MarkerCodes.UInt32:
                 case MarkerCodes.UInt64:
+                case MarkerCodes.Int8:
+                case MarkerCodes.Int16:
+                case MarkerCodes.Int32:
+                case MarkerCodes.Int64:
                 {
                     childValue = buffer.read(codeToBytesMap[code]);
                     this.children.push(childValue);
