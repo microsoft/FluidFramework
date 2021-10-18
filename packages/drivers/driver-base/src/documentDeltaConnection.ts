@@ -305,14 +305,6 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Sends a ping to the server
-     */
-    public ping(): void {
-        this.checkNotClosed();
-        this.submitCore("ping", []);
-    }
-
-    /**
      * Sends get_clients signal to the server
      */
     public getClients(): void {

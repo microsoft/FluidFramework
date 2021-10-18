@@ -566,16 +566,5 @@ export function configureWebSocketServices(
                     });
             }
         });
-
-        socket.on("ping", (clientId: string) => {
-            // Verify the user has subscription to the room.
-            const room = roomMap.get(clientId);
-            if (!room) {
-                const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
-                socket.emit("nack", "", [nackMessage]);
-            } else {
-                socket.emitToRoom(getRoomId(room),"pong", clientId);
-            }
-        });
     });
 }

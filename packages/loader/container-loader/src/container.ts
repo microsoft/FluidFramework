@@ -1896,13 +1896,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private enableHeartBeat() {
         setInterval(() => {
-            this._deltaManager.ping();
+            this._deltaManager.submitSignal("ping");
             this.validateAudienceHeartBeat();
         }, this.beatInEveryNSecs);
 
         // Listen for heartbeats
-        this._deltaManager.addConnectionListener("pong", (clientId) => {
-            this.audienceHeartBeat.set(clientId, new Date());
+        this._deltaManager.addConnectionListener("signal", (msg: ISignalMessage) => {
+            if (msg.clientId !== null && msg.content === "ping") {
+                this.audienceHeartBeat.set(msg.clientId, new Date());
+            }
         });
 
         // Listen for audience list
