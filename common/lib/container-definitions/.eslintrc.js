@@ -4,6 +4,9 @@
  */
 
 module.exports = {
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./src/test/types/tsconfig.json"]
+    },
     "extends": [
         "@fluidframework/eslint-config-fluid/eslint7"
     ]

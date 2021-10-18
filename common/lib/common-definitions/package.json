@@ -37,7 +37,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/common-definitions-0.20.0": "npm:@fluidframework/common-definitions@0.20.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
@@ -57,20 +57,22 @@
   "typeValidation": {
     "version": "0.21.0",
     "broken": {
-      "InterfaceDeclaration_ITelemetryBaseEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryErrorEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryGenericEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryPerformanceEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryProperties": {
-        "backCompat": false
+      "0.20.0": {
+        "InterfaceDeclaration_ITelemetryBaseEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryErrorEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryGenericEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryPerformanceEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryProperties": {
+          "backCompat": false
+        }
       }
     }
   }

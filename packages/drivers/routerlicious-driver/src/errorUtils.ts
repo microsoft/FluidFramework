@@ -47,6 +47,7 @@ export interface IR11sError {
 export type R11sError = DriverError | IR11sError;
 
 export function createR11sNetworkError(
+    fluidErrorCode: string,
     errorMessage: string,
     statusCode?: number,
     retryAfterMs?: number,
@@ -56,30 +57,33 @@ export function createR11sNetworkError(
             // If a service is temporarily down or a browser resource limit is reached, Axios will throw
             // a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
             // error message, "Network Error".
-            return new GenericNetworkError(errorMessage, errorMessage === "Network Error", { statusCode });
+            return new GenericNetworkError(
+                fluidErrorCode, errorMessage, errorMessage === "Network Error", { statusCode });
         case 401:
         case 403:
-            return new AuthorizationError(errorMessage, undefined, undefined, { statusCode });
+            return new AuthorizationError(fluidErrorCode, errorMessage, undefined, undefined, { statusCode });
         case 404:
             return new NonRetryableError(
-                errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
+                fluidErrorCode, errorMessage, R11sErrorType.fileNotFoundOrAccessDeniedError, { statusCode });
         case 429:
             return createGenericNetworkError(
-                errorMessage, true, retryAfterMs, { statusCode });
+                fluidErrorCode, errorMessage, true, retryAfterMs, { statusCode });
         case 500:
-            return new GenericNetworkError(errorMessage, true, { statusCode });
+            return new GenericNetworkError(fluidErrorCode, errorMessage, true, { statusCode });
         default:
             return createGenericNetworkError(
-                errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
+                fluidErrorCode, errorMessage, retryAfterMs !== undefined, retryAfterMs, { statusCode });
     }
 }
 
 export function throwR11sNetworkError(
+    fluidErrorCode: string,
     errorMessage: string,
     statusCode?: number,
     retryAfterMs?: number,
 ): never {
     const networkError = createR11sNetworkError(
+        fluidErrorCode,
         errorMessage,
         statusCode,
         retryAfterMs);
@@ -94,6 +98,7 @@ export function throwR11sNetworkError(
 export function errorObjectFromSocketError(socketError: IR11sSocketError, handler: string): R11sError {
     const message = `R11sSocketError (${handler}): ${socketError.message}`;
     return createR11sNetworkError(
+        "r11sSocketError",
         message,
         socketError.code,
         socketError.retryAfterMs,
