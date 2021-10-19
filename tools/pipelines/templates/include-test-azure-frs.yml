@@ -55,10 +55,8 @@ jobs:
 
       steps:
       # Setup
-      - checkout: self
+      - checkout: none
         clean: true
-        lfs: true
-        submodules: true
 
       # Print parameters/Vars
       - task: Bash@3
@@ -104,6 +102,7 @@ jobs:
           targetType: 'inline'
           script: |
             mkdir ${{ parameters.testWorkspace }}
+            echo "tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz ${{ parameters.testWorkspace }}"
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz ${{ parameters.testWorkspace }}
 
       # Run the tests
