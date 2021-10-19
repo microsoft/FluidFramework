@@ -8,6 +8,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { getPackageDetails, PackageDetails } from "./packageJson";
 import { type } from "os";
+import { Modifier } from "@ts-morph/common/node_modules/typescript";
 
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
@@ -183,8 +184,9 @@ function decomposeTypes(
 /**
  * Create a stripped down version of a class declaration
  *
- * TODO: nested types e.g. Promise<{a: ICustomInterface, b: CustomClass}>
+ * TODO: inline object types e.g. Promise<{a: ICustomInterface, b: CustomClass}>
  * TODO: conditionals, extensions on generics
+ * TODO: access modifier changes (e.g. making readonly)
  * @param node
  * @returns
  */
@@ -217,80 +219,114 @@ function stripClassDeclaration(typeChecker: TypeChecker, node: ClassDeclaration)
     });
 
     for (const member of node.getMembers()) {
-        if (Node.isModifierableNode(member)) {
-            // Pass over Private properties because they don't affect the public API
-            const modifierList = member.getModifiers().map((val) => val.getText());
-            if (modifierList.indexOf(Scope.Private) != -1) {
-                continue;
+        // Pass over Private properties because they don't affect the public API
+        const modifierList = member.getModifiers().map((val) => val.getText());
+        if (modifierList.indexOf(Scope.Private) != -1) {
+            continue;
+        }
+
+        // TODO: handle decorators?, asterisk tokens, overloads, abstract classes
+        let propNamePrefix = "";
+        const modifiers = modifierList.filter((modifier) => {
+            switch (modifier) {
+                case Scope.Protected:
+                case "static": {
+                    propNamePrefix += `__${modifier}__`;
+                    return false;
+                }
+                case "async":
+                    return false;
+                default:
+                    return true;
+            }
+        }).join(" ");
+        if (Node.isMethodDeclaration(member)) {
+            // Handle type params/generics
+            let typeArgsString = "";
+            if (member.getTypeParameters().length > 0) {
+                const typeArgsResult = decomposeTypes(
+                    typeChecker,
+                    member.getTypeParameters().map((tp) => tp.getType()),
+                    ", ",
+                );
+                mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
+                mergeIntoSet(requiredGenerics, typeArgsResult.requiredGenerics);
+                typeArgsString = `<${typeArgsResult.typeAsString}>`;
             }
 
-            // TODO: handle statics, protected methods
-            // decorators, asterisk tokens
+            // Handle parameters
+            let paramsString = "";
+            paramsString = member.getParameters().map((p) => {
+                const subResult = decomposeType(typeChecker, p.getType());
+                mergeIntoSet(replacedTypes, subResult.replacedTypes);
+                mergeIntoSet(requiredGenerics, subResult.requiredGenerics);
+                return `${p.getName()}: ${subResult.typeAsString}`;
+            }).join(", ");
 
-            const modifiers = modifierList.join(" ");
-            if (Node.isMethodDeclaration(member)) {
-                // Handle type params/generics
-                let typeArgsString = "";
-                if (member.getTypeParameters().length > 0) {
-                    const typeArgsResult = decomposeTypes(
-                        typeChecker,
-                        member.getTypeParameters().map((tp) => tp.getType()),
-                        ", ",
-                    );
-                    mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
-                    mergeIntoSet(requiredGenerics, typeArgsResult.requiredGenerics);
-                    typeArgsString = `<${typeArgsResult.typeAsString}>`;
+            // Handle return type
+            const returnResult = decomposeType(typeChecker, member.getReturnType());
+            mergeIntoSet(replacedTypes, returnResult.replacedTypes);
+            mergeIntoSet(requiredGenerics, returnResult.requiredGenerics);
+
+            // Other stuff
+            const qToken = member.hasQuestionToken() ? "?" : "";
+
+            const method = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}${typeArgsString}(${paramsString}): ${returnResult.typeAsString};`;
+
+            replacedProperties.push(method);
+        } else if (Node.isConstructorDeclaration(member)) {
+            // Handle parameters
+            let paramsString = "";
+            paramsString = member.getParameters().map((p) => {
+                const subResult = decomposeType(typeChecker, p.getType());
+                mergeIntoSet(replacedTypes, subResult.replacedTypes);
+                mergeIntoSet(requiredGenerics, subResult.requiredGenerics);
+
+                // Handle inline property declarations
+                const paramModifiers = p.getModifiers().map((val) => val.getText());
+                if (paramModifiers.length > 0 && paramModifiers.indexOf(Scope.Private) === -1) {
+                    let prefix = "__ctorProp__";
+                    const protectedIndex = paramModifiers.indexOf(Scope.Protected);
+                    if (protectedIndex !== -1) {
+                        paramModifiers.splice(protectedIndex, 1);
+                        prefix += "__protected__";
+                    }
+                    const qToken = p.hasQuestionToken() ? "?" : "";
+                    const ctorProperty = `${paramModifiers.join(" ")} ${prefix}${p.getName()}${qToken}: ${subResult.typeAsString};`;
+                    replacedProperties.push(ctorProperty);
                 }
 
-                // Handle parameters
-                let paramsString = "";
-                if (member.getParameters().length > 0) {
-                    paramsString = member.getParameters().map((p) => {
-                        const subResult = decomposeType(typeChecker, p.getType());
-                        mergeIntoSet(replacedTypes, subResult.replacedTypes);
-                        mergeIntoSet(requiredGenerics, subResult.requiredGenerics);
-                        return `${p.getName()}: ${subResult.typeAsString}`;
-                    }).join(", ");
-                }
+                return `${p.getName()}: ${subResult.typeAsString}`;
+            }).join(", ");
 
-                // Handle return type
-                const returnResult = decomposeType(typeChecker, member.getReturnType());
-                mergeIntoSet(replacedTypes, returnResult.replacedTypes);
-                mergeIntoSet(requiredGenerics, returnResult.requiredGenerics);
+            const method = `${modifiers} __ctorDecl__(${paramsString}): void;`;
 
-                // Other stuff
-                const qToken = member.hasQuestionToken() ? "?" : "";
+            replacedProperties.push(method);
+        } else if (Node.isPropertyDeclaration(member)) {
+            const result = decomposeType(typeChecker, member.getType());
+            mergeIntoSet(replacedTypes, result.replacedTypes);
+            mergeIntoSet(requiredGenerics, result.requiredGenerics);
+            const qToken = member.hasQuestionToken() ? "?" : "";
+            const property = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}: ${result.typeAsString};`;
 
-                const method = `${modifiers} ${member.getName()}${qToken}${typeArgsString}(${paramsString}): ${returnResult.typeAsString};`;
+            replacedProperties.push(property);
+        } else if (Node.isGetAccessorDeclaration(member)) {
+            // return type should always exist for a getter
+            const result = decomposeType(typeChecker, member.getReturnType());
+            mergeIntoSet(replacedTypes, result.replacedTypes);
+            mergeIntoSet(requiredGenerics, result.requiredGenerics);
+            const getter = `${modifiers} get ${propNamePrefix}${member.getName()}(): ${result.typeAsString}`;
 
-                replacedProperties.push(method);
-            } else if (Node.isPropertyDeclaration(member)) {
-                const result = decomposeType(typeChecker, member.getType());
-                mergeIntoSet(replacedTypes, result.replacedTypes);
-                mergeIntoSet(requiredGenerics, result.requiredGenerics);
-                const qToken = member.hasQuestionToken() ? "?" : "";
-                const property = `${modifiers} ${member.getName()}${qToken}: ${result.typeAsString};`;
+            replacedProperties.push(getter);
+        } else if (Node.isSetAccessorDeclaration(member)) {
+            // setter always has exactly one param
+            const param = member.getParameters()[0];
+            const paramResult = decomposeType(typeChecker, param.getType());
+            mergeIntoSet(replacedTypes, paramResult.replacedTypes);
+            mergeIntoSet(requiredGenerics, paramResult.requiredGenerics);
+            const setter = `${modifiers} set ${propNamePrefix}${member.getName()}(${param.getName()}: ${paramResult.typeAsString});`;
 
-                replacedProperties.push(property);
-            } else if (Node.isGetAccessorDeclaration(member)) {
-                // return type should always exist for a getter
-                const result = decomposeType(typeChecker, member.getReturnType());
-                mergeIntoSet(replacedTypes, result.replacedTypes);
-                mergeIntoSet(requiredGenerics, result.requiredGenerics);
-                const getter = `${modifiers} get ${member.getName()}(): ${result.typeAsString}`;
-
-                replacedProperties.push(getter);
-            } else if (Node.isSetAccessorDeclaration(member)) {
-                // setter always has exactly one param
-                const param = member.getParameters()[0];
-                const paramResult = decomposeType(typeChecker, param.getType());
-                mergeIntoSet(replacedTypes, paramResult.replacedTypes);
-                mergeIntoSet(requiredGenerics, paramResult.requiredGenerics);
-                const setter = `${modifiers} set ${member.getName()}(${param.getName()}: ${paramResult.typeAsString});`;
-
-                replacedProperties.push(setter);
-            }
-
+            replacedProperties.push(setter);
         }
     }
 
