@@ -121,7 +121,7 @@ jobs:
           ${{ parameters.env }}
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
+          workingDir: $(Pipeline.Workspace)
           customCommand: 'run test:realsvc:${{ parameters.target }} -- ${{ variant }}'
 
       # Upload results
