@@ -59,9 +59,9 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 
      /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
-     * acknowledged by the service. Closing the container while `isDirty === true` will result in the loss of these local
-     * changes. You should always check the `isDirty` flag before closing the container or navigating away from the
-     * page.
+     * acknowledged by the service. Closing the container while `isDirty === true` will result in the loss of these
+     * local changes. You should always check the `isDirty` flag before closing the container or navigating away
+     * from the page.
      *
      * A container is considered dirty in the following cases:
      *
