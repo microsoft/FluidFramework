@@ -14,6 +14,9 @@ parameters:
 - name: testWorkspace
   type: string
 
+- name: buildDirectory
+  type: string
+
 - name: timeoutInMinutes
   type: number
   default: 60
@@ -75,6 +78,7 @@ jobs:
               feed=${{ variables.feed }}
               target=${{ parameters.target }}
               variant=${{ variant }}
+              buildDirectory=${{ parameters.buildDirectory }}
             "
       # Install
       - task: UseNode@1
@@ -121,7 +125,7 @@ jobs:
           ${{ parameters.env }}
         inputs:
           command: 'custom'
-          workingDir: $(Pipeline.Workspace)
+          workingDir: ${{ parameters.buildDirectory }}
           customCommand: 'run test:realsvc:${{ parameters.target }} -- ${{ variant }}'
 
       # Upload results
