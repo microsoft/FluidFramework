@@ -58,13 +58,19 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly connected: boolean;
 
     /**
-     * Returns true if the container has local changes that have not been persisted to the service.
-     * Closing the container while true will result in the loss of these local changes.
+     * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
+     * acknowledged by the service. Closing the container while `isDirty === true` will result in
+     * the loss of these local changes. You should always check the `isDirty` flag before closing the container or
+     * navigating away from the page.
      *
-     * Possible scenarios where the flag is set to true:
-     * 1. Changes are made with no network connection
-     * 2. Recent changes have not yet been acknowledged by the service
-     */
+     * A container is considered dirty in the following cases:
+     *
+     * 1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged
+     * changes will be lost if the container is closed.
+     *
+     * 1. There is no network connection while making changes to the container. These changes cannot be
+     * acknowledged by the service until the network connection is restored.
+	*/
      readonly isDirty: boolean;
 
     /**
