@@ -11,14 +11,12 @@ export class Scheduler {
         api: () => Promise<any>,
         intervalInMs: number,
         callName: string,
-        onErrorFn?: () => void,
+        onErrorFn?: (error) => void,
         shouldRetryError?: (error) => boolean): ScheduledJob {
-        let error;
-
         const scheduledJob = new ScheduledJob();
 
         const execute = () => {
-            if (!scheduledJob.isJobRunning()) {
+            if (!scheduledJob.isRunning()) {
                 Lumberjack.info(`Job has been killed ${callName}`);
                 return scheduledJob;
             }
@@ -27,21 +25,21 @@ export class Scheduler {
                 .then((res) => {
                     Lumberjack.info(`Success executing ${callName}`);
                 })
-                .catch((err) => {
-                    error = err;
-                    Lumberjack.error(`Error running ${callName}`, undefined, err);
+                .catch((error) => {
+                    Lumberjack.error(`Error running ${callName}`, undefined, error);
                     if (onErrorFn !== undefined) {
-                        onErrorFn();
+                        onErrorFn(error);
+                    }
+                    if (shouldRetryError !== undefined && !shouldRetryError(error)) {
+                        Lumberjack.info(`Should not retry error ${callName}`);
+                        scheduledJob.kill();
+                        return;
                     }
                 })
                 .finally(() => {
-                    if (shouldRetryError !== undefined && !shouldRetryError(error)) {
-                        Lumberjack.info(`Should not retry error ${callName}`);
-                        scheduledJob.killJob();
-                        return;
+                    if (scheduledJob.isRunning()) {
+                        setTimeout(() => execute(), intervalInMs);
                     }
-
-                    setTimeout(() => execute(), intervalInMs);
                 });
             return scheduledJob;
         };
@@ -57,11 +55,11 @@ export class ScheduledJob {
         this._jobRunning = true;
     }
 
-    public isJobRunning(): boolean {
+    public isRunning(): boolean {
         return this._jobRunning;
     }
 
-    public killJob() {
+    public kill() {
         this._jobRunning = false;
     }
 }
