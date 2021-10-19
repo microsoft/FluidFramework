@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { fluidEpochMismatchError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
@@ -43,7 +44,9 @@ export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
 
     public readonly rateLimiter: RateLimiter;
-
+    private readonly driverId = uuid();
+    // This tracks the request number made by the driver instance.
+    private networkCallNumber = 1;
     constructor(
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
@@ -140,8 +143,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
+        const networkCallNumber = this.networkCallNumber++;
         // Add epoch in fetch request.
-        const request = this.addEpochInRequest(url, fetchOptions, addInBody);
+        const request = this.addEpochInRequest(url, fetchOptions, addInBody, networkCallNumber);
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
@@ -149,6 +153,11 @@ export class EpochTracker implements IPersistedFileCache {
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
+            response.commonSpoHeaders = {
+                ...response.commonSpoHeaders,
+                driverId: this.driverId,
+                networkCallNumber,
+            };
             return response;
         } catch (error) {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
@@ -174,8 +183,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ) {
+        const networkCallNumber = this.networkCallNumber++;
         // Add epoch in fetch request.
-        const request = this.addEpochInRequest(url, fetchOptions, addInBody);
+        const request = this.addEpochInRequest(url, fetchOptions, addInBody, networkCallNumber);
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
@@ -183,6 +193,11 @@ export class EpochTracker implements IPersistedFileCache {
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
+            response.commonSpoHeaders = {
+                ...response.commonSpoHeaders,
+                driverId: this.driverId,
+                networkCallNumber,
+            };
             return response;
         } catch (error) {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
@@ -198,7 +213,9 @@ export class EpochTracker implements IPersistedFileCache {
     private addEpochInRequest(
         url: string,
         fetchOptions: RequestInit,
-        addInBody: boolean): {url: string, fetchOptions: {[index: string]: any}} {
+        addInBody: boolean,
+        networkCallNumber: number,
+    ): {url: string, fetchOptions: {[index: string]: any}} {
         if (this.fluidEpoch !== undefined) {
             if (addInBody) {
                 // We use multi part form request for post body where we want to use this.
@@ -226,11 +243,22 @@ export class EpochTracker implements IPersistedFileCache {
                 } else {
                     return {
                         url: urlWithEpoch,
-                        fetchOptions,
+                        fetchOptions: {
+                            ...fetchOptions,
+                            headers: {
+                                ...fetchOptions.headers,
+                                "X-RequestStats": `driverId=${
+                                    this.driverId}, RequestNumber=${networkCallNumber}`,
+                            },
+                        },
                     };
                 }
             }
         }
+        fetchOptions.headers = {
+            ...fetchOptions.headers,
+            "X-RequestStats": `driverId=${this.driverId}, RequestNumber=${networkCallNumber}`,
+        };
         return { url, fetchOptions };
     }
 
