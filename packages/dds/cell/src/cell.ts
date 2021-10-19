@@ -32,11 +32,16 @@ type ICellOperation = ISetCellOperation | IDeleteCellOperation;
 
 interface ISetCellOperation {
     type: "setCell";
-    value: any;
+    value: ICellValue;
 }
 
 interface IDeleteCellOperation {
     type: "deleteCell";
+}
+
+interface ICellValue {
+    // The actual value contained in the cell which needs to be wrapped to handle undefined
+    value: any;
 }
 
 const snapshotFileName = "header";
@@ -153,7 +158,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         }
 
         // Serialize the value if required.
-        const operationValue = this.serializer.replaceHandles(value, this.handle);
+        const operationValue: ICellValue = {
+            value: this.serializer.replaceHandles(value, this.handle),
+        };
 
         // Set the value locally.
         this.setCore(value);
@@ -201,6 +208,10 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @returns the snapshot of the current state of the cell
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
+        const content: ICellValue = {
+            value: this.data,
+        };
+
         const tree: ITree = {
             entries: [
                 {
@@ -208,7 +219,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: serializer.stringify(this.data, this.handle),
+                        contents: serializer.stringify(content, this.handle),
                         encoding: "utf-8",
                     },
                 },
@@ -222,7 +233,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
      */
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
-        const content = await readAndParse<any>(storage, snapshotFileName);
+        const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
         this.data = this.decode(content);
     }
@@ -298,13 +309,15 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         this.emit("delete");
     }
 
-    // IFluidSerializer.decode can be directly used instead of this method once it is not optional
-    private decode(value: any) {
+    private decode(cellValue: ICellValue) {
+        const value = cellValue.value;
+
         if (this.serializer.decode !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return this.serializer.decode(value);
         }
 
+        // This code can be removed once IFluidSerializer.decode is not optional
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value !== undefined
             ? this.serializer.parse(JSON.stringify(value))
