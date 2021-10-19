@@ -102,8 +102,16 @@ jobs:
           targetType: 'inline'
           script: |
             mkdir ${{ parameters.testWorkspace }}
-            echo "tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz ${{ parameters.testWorkspace }}"
-            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz ${{ parameters.testWorkspace }}
+
+      # Unpack package
+      - task: Bash@3
+        displayName: Create test directory and unpack package
+        inputs:
+          workingDir: ${{ parameters.testWorkspace }}
+          targetType: 'inline'
+          script: |
+            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz
+
 
       # Run the tests
       - task: Npm@1
