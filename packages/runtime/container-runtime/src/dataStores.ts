@@ -52,14 +52,14 @@ import {
 } from "./dataStoreContext";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
-export interface IDataStoreNameMapping {
+export interface IDataStoreAliasMapping {
     readonly proposedId: string;
     readonly alias: string;
     readonly actualId: string;
 }
 
-export interface IDataStoreNameMappingMessage {
-    readonly proposedId: string;
+export interface IDataStoreAliasMessage {
+    readonly id: string;
     readonly alias: string;
 }
 
@@ -206,25 +206,25 @@ export class DataStores implements IDisposable {
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
     }
 
-    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreNameMapping {
-        const aliasMessage = message.contents as IDataStoreNameMappingMessage;
+    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreAliasMapping {
+        const aliasMessage = message.contents as IDataStoreAliasMessage;
 
         const existingContext = this.contexts.get(aliasMessage.alias);
         if (existingContext !== undefined) {
             return  {
-                proposedId: aliasMessage.proposedId,
+                proposedId: aliasMessage.id,
                 alias: aliasMessage.alias,
                 actualId: existingContext.id,
             };
         }
 
-        const currentContext = this.contexts.get(aliasMessage.proposedId);
+        const currentContext = this.contexts.get(aliasMessage.id);
         if (currentContext === undefined) {
-            const request = { url: aliasMessage.proposedId };
+            const request = { url: aliasMessage.id };
             throw responseToException(create404Response(request), request);
         }
 
-        this.contexts.aliasContext(aliasMessage.proposedId, aliasMessage.alias);
+        this.contexts.aliasContext(aliasMessage.id, aliasMessage.alias);
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
