@@ -110,9 +110,9 @@ import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
 import {
     DataStores,
-    IDataStoreNameMapping,
+    IDataStoreAliasMapping,
     getSummaryForDatastores,
-    IDataStoreNameMappingMessage,
+    IDataStoreAliasMessage,
 } from "./dataStores";
 import {
     blobsTreeName,
@@ -155,8 +155,8 @@ export enum ContainerMessageType {
 
     BlobAttach = "blobAttach",
 
-    // Sets the id of a store
-    SetStoreId = "setStoreId",
+    // Sets the alias of a store
+    SetStoreAlias = "SetStoreAlias",
 }
 
 export interface IChunkedOp {
@@ -303,7 +303,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
-        case ContainerMessageType.SetStoreId:
+        case ContainerMessageType.SetStoreAlias:
         case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
@@ -1352,7 +1352,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
-            // [TODO:andre4i]: Figure out if ContainerMessageType.SetStoreId is needed here
+            // [TODO:andre4i]: Figure out if ContainerMessageType.SetStoreAlias is needed here
+            case ContainerMessageType.SetStoreAlias:
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1441,14 +1442,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.updateDocumentDirtyState(false);
             }
 
-            type PendingAliasResolve = (value: IDataStoreNameMapping) => void;
+            type PendingAliasResolve = (value: IDataStoreAliasMapping) => void;
             const resolve = localOpMetadata as PendingAliasResolve;
-            let aliasResult: IDataStoreNameMapping;
+            let aliasResult: IDataStoreAliasMapping;
             switch (message.type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
-                case ContainerMessageType.SetStoreId:
+                case ContainerMessageType.SetStoreAlias:
                     aliasResult = this.dataStores.processAliasMessage(message);
                     if (local) {
                         resolve(aliasResult);
@@ -1584,15 +1585,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public async trySetAliasForDataStore(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
         assert(this.attachState === AttachState.Attached, "Trying to submit message while detached!");
-        const message = {
-            proposedId: dataStore.id,
+        const message: IDataStoreAliasMessage = {
+            id: dataStore.id,
             alias,
         };
 
-        const aliasResult = await this.newAckBasedPromise<IDataStoreNameMapping>((resolve) => {
+        const aliasResult = await this.newAckBasedPromise<IDataStoreAliasMapping>((resolve) => {
             // Send the resolve function as the localOpMetadata. This will be provided back to us when the
             // op is ack'd.
-            this.submit(ContainerMessageType.SetStoreId, message, resolve);
+            this.submit(ContainerMessageType.SetStoreAlias, message, resolve);
             // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
         }).catch(() => undefined);
 
@@ -1669,7 +1670,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         }
 
-        // [TODO:andre4i]: Figure out if ContainerMessageType.SetStoreId is needed here
+        // [TODO:andre4i]: Figure out if ContainerMessageType.SetStoreAlias is needed here
         return true;
     }
 
@@ -2239,7 +2240,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-            case ContainerMessageType.SetStoreId:
+            case ContainerMessageType.SetStoreAlias:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:

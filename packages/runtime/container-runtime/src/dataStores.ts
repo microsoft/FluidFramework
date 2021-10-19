@@ -211,7 +211,7 @@ export class DataStores implements IDisposable {
 
         const existingContext = this.contexts.get(aliasMessage.alias);
         if (existingContext !== undefined) {
-            return  {
+            return {
                 proposedId: aliasMessage.id,
                 alias: aliasMessage.alias,
                 actualId: existingContext.id,
@@ -225,6 +225,11 @@ export class DataStores implements IDisposable {
         }
 
         this.contexts.aliasContext(aliasMessage.id, aliasMessage.alias);
+        return {
+            proposedId: aliasMessage.id,
+            alias: aliasMessage.alias,
+            actualId: aliasMessage.id,
+        };
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {
