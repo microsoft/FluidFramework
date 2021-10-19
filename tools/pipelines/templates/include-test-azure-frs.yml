@@ -98,8 +98,9 @@ jobs:
           patterns: "*"
           path: $(Pipeline.Workspace)/azure-frs-test
 
-       task: Bash@3
-        displayName: Create test directory
+      # Create test directory and unpack package
+      - task: Bash@3
+        displayName: Create test directory and unpack package
         inputs:
           targetType: 'inline'
           script: |
