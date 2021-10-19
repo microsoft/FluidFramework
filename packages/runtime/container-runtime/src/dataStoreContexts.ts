@@ -168,4 +168,12 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         this.ensureDeferred(id);
         this.resolveDeferred(id);
     }
+
+    public aliasContext(id: string, alias: string) {
+        assert(!this._contexts.has(alias), "Linking store with existing alias");
+        assert(this._contexts.has(id), "Linking non-existing store");
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this._contexts.set(alias, this._contexts.get(id)!);
+    }
 }

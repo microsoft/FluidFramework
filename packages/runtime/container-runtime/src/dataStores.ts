@@ -53,9 +53,14 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 
 export interface IDataStoreNameMapping {
-    readonly name: string;
     readonly proposedId: string;
-    readonly currentId?: string | undefined;
+    readonly alias: string;
+    readonly actualId: string;
+}
+
+export interface IDataStoreNameMappingMessage {
+    readonly proposedId: string;
+    readonly alias: string;
 }
 
  /**
@@ -199,6 +204,27 @@ export class DataStores implements IDisposable {
         // Equivalent of nextTick() - Prefetch once all current ops have completed
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.resolve().then(async () => remotedFluidDataStoreContext.realize());
+    }
+
+    public processAliasMessage(message: ISequencedDocumentMessage): IDataStoreNameMapping {
+        const aliasMessage = message.contents as IDataStoreNameMappingMessage;
+
+        const existingContext = this.contexts.get(aliasMessage.alias);
+        if (existingContext !== undefined) {
+            return  {
+                proposedId: aliasMessage.proposedId,
+                alias: aliasMessage.alias,
+                actualId: existingContext.id,
+            };
+        }
+
+        const currentContext = this.contexts.get(aliasMessage.proposedId);
+        if (currentContext === undefined) {
+            const request = { url: aliasMessage.proposedId };
+            throw responseToException(create404Response(request), request);
+        }
+
+        this.contexts.aliasContext(aliasMessage.proposedId, aliasMessage.alias);
     }
 
     public bindFluidDataStore(fluidDataStoreRuntime: IFluidDataStoreChannel): void {

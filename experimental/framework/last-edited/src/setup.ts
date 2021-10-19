@@ -11,6 +11,7 @@ import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
 // than "Attach" and "Operation" type messages should be discarded.
 function shouldDiscardMessageDefault(message: ISequencedDocumentMessage) {
+    // [TODO:andre4i]: Add ContainerMessageType.SetStoreId
     if (message.type === ContainerMessageType.Attach || message.type === ContainerMessageType.FluidDataStoreOp) {
         return false;
     }

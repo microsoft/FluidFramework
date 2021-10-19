@@ -112,6 +112,7 @@ import {
     DataStores,
     IDataStoreNameMapping,
     getSummaryForDatastores,
+    IDataStoreNameMappingMessage,
 } from "./dataStores";
 import {
     blobsTreeName,
@@ -302,6 +303,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
         case ContainerMessageType.FluidDataStoreOp:
         case ContainerMessageType.ChunkedOp:
         case ContainerMessageType.Attach:
+        case ContainerMessageType.SetStoreId:
         case ContainerMessageType.BlobAttach:
         case MessageType.Operation:
             return true;
@@ -1350,6 +1352,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return this.dataStores.applyStashedOp(op);
             case ContainerMessageType.Attach:
                 return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+            // [TODO:andre4i]: Figure out if ContainerMessageType.SetStoreId is needed here
             case ContainerMessageType.BlobAttach:
                 return;
             case ContainerMessageType.ChunkedOp:
@@ -1359,6 +1362,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
+    // [TODO:andre4i]: Copied from SharedObject.
+    // This needs to be extracted into a common package.
     private async newAckBasedPromise<T>(
         executor: (resolve: (value: T | PromiseLike<T>) => void,
         reject: (reason?: any) => void) => void,
@@ -1436,15 +1441,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.updateDocumentDirtyState(false);
             }
 
-            type PendingResolve = (value: boolean) => void;
-            const resolve = localOpMetadata as PendingResolve;
+            type PendingAliasResolve = (value: IDataStoreNameMapping) => void;
+            const resolve = localOpMetadata as PendingAliasResolve;
             let aliasResult: IDataStoreNameMapping;
             switch (message.type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local || localAck);
                     break;
                 case ContainerMessageType.SetStoreId:
-                    aliasResult = this.dataStores.processAliasMessage(message, local || localAck);
+                    aliasResult = this.dataStores.processAliasMessage(message);
                     if (local) {
                         resolve(aliasResult);
                     }
@@ -1577,6 +1582,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    public async trySetAliasForDataStore(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
+        assert(this.attachState === AttachState.Attached, "Trying to submit message while detached!");
+        const message = {
+            proposedId: dataStore.id,
+            alias,
+        };
+
+        const aliasResult = await this.newAckBasedPromise<IDataStoreNameMapping>((resolve) => {
+            // Send the resolve function as the localOpMetadata. This will be provided back to us when the
+            // op is ack'd.
+            this.submit(ContainerMessageType.SetStoreId, message, resolve);
+            // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
+        }).catch(() => undefined);
+
+        return aliasResult !== undefined && aliasResult.actualId === aliasResult.proposedId;
+    }
+
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached
@@ -1646,6 +1668,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return false;
             }
         }
+
+        // [TODO:andre4i]: Figure out if ContainerMessageType.SetStoreId is needed here
         return true;
     }
 
@@ -1742,7 +1766,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.deltaManager.lastMessage?.timestamp,
             );
 
-            // Update stats to be reported in the peformance event.
+            // Update stats to be reported in the performance event.
             gcStats.deletedNodes = deletedNodeIds.length;
             gcStats.totalNodes = referencedNodeIds.length + deletedNodeIds.length;
             gcStats.deletedDataStores = unusedDataStoreCount;
@@ -2215,6 +2239,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
+            case ContainerMessageType.SetStoreId:
                 this.submit(type, content, localOpMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:
