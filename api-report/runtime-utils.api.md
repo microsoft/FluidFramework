@@ -9,6 +9,7 @@ import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidObject } from '@fluidframework/core-interfaces';
@@ -36,6 +37,7 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
+import { LoggingError } from '@fluidframework/telemetry-utils';
 import { SummaryType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
@@ -46,6 +48,17 @@ export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, su
 
 // @public (undocumented)
 export function calculateStats(summary: ISummaryTree): ISummaryStats;
+
+// @public (undocumented)
+export class ChannelContextRealizeError extends LoggingError implements IChannelContextRealizeError {
+    constructor(fluidErrorCode: string, packageName?: string);
+    // (undocumented)
+    errorType: RuntimeErrorType;
+    // (undocumented)
+    fluidErrorCode: string;
+    // (undocumented)
+    usageError: true;
+}
 
 // @public
 export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats;
@@ -109,6 +122,14 @@ export function getNormalizedObjectStoragePathParts(path: string): string[];
 
 // @public (undocumented)
 export function getStack(): string | undefined;
+
+// @public (undocumented)
+export interface IChannelContextRealizeError extends IFluidErrorBase {
+    // (undocumented)
+    errorType: RuntimeErrorType.channelContextRealizeError;
+    // (undocumented)
+    usageError: true;
+}
 
 // @public (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
@@ -187,6 +208,11 @@ export class RequestParser implements IRequest {
 
 // @public (undocumented)
 export function responseToException(response: IResponse, request: IRequest): Error;
+
+// @public
+export enum RuntimeErrorType {
+    channelContextRealizeError = "channelContextRealizeError"
+}
 
 // @public (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
