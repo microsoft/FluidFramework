@@ -54,39 +54,52 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
 
         const [text, setText] = useState<string>(sharedStringHelper.getText());
 
+        // There's been a local change to the textarea content (e.g. typing)
+        // This means the most-recent state (text and selection) is in the textarea, and we need to
+        // 1. Store the text and selection state in React
+        // 2. Store the text state in the SharedString
         const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
+            // First get and stash the new textarea state
             if (!textAreaRef.current) {
-                throw new Error("Handling change but null current ref?");
+                throw new Error("Handling change without current textarea ref?");
             }
             const textareaElement = textAreaRef.current;
-            const selectionStart = selectionStartRef.current;
-            const selectionEnd = selectionEndRef.current;
-
-            // We need to set the value here to keep the input responsive to the user
             const newText = textareaElement.value;
-            const charactersModifiedCount = text.length - newText.length;
+            // After a change to the textarea content we assume the selection is gone (just a caret)
+            // This is a bad assumption (e.g. performing undo will select the re-added content).
+            const newCaretPosition = textareaElement.selectionStart;
+
+            // Next get and stash the old React state
+            const oldText = text;
+            const oldSelectionStart = selectionStartRef.current;
+            const oldSelectionEnd = selectionEndRef.current;
+
+            // Next update the React state with the values from the textarea
+            storeSelectionInReact();
             setText(newText);
 
-            // Get the new caret position and use that to get the text that was inserted
-            const newPosition = textareaElement.selectionStart ? textareaElement.selectionStart : 0;
-            const isTextInserted = newPosition - selectionStart > 0;
+            // Finally update the SharedString with the values after deducing what type of change it was.
+            // If the caret moves to the right of the prior left bound of the selection, we assume an insert occurred
+            // This is also a bad assumption, in the undo case.
+            const isTextInserted = newCaretPosition - oldSelectionStart > 0;
             if (isTextInserted) {
-                const insertedText = newText.substring(selectionStart, newPosition);
-                const changeRangeLength = selectionEnd - selectionStart;
-                if (changeRangeLength === 0) {
-                    sharedStringHelper.insertText(insertedText, selectionStart);
+                const insertedText = newText.substring(oldSelectionStart, newCaretPosition);
+                const isTextReplaced = oldSelectionEnd - oldSelectionStart > 0;
+                if (!isTextReplaced) {
+                    sharedStringHelper.insertText(insertedText, oldSelectionStart);
                 } else {
-                    sharedStringHelper.replaceText(insertedText, selectionStart, selectionEnd);
+                    sharedStringHelper.replaceText(insertedText, oldSelectionStart, oldSelectionEnd);
                 }
             } else {
                 // Text was removed
-                sharedStringHelper.removeText(newPosition, newPosition + charactersModifiedCount);
+                const charactersDeleted = oldText.length - newText.length;
+                sharedStringHelper.removeText(newCaretPosition, newCaretPosition + charactersDeleted);
             }
         };
 
-        const setCaretPosition = (newStart: number, newEnd: number) => {
+        const setTextareaSelection = (newStart: number, newEnd: number) => {
             if (!textAreaRef.current) {
-                throw new Error("Trying to set caret position without current ref?");
+                throw new Error("Trying to set selection without current textarea ref?");
             }
             const textareaElement = textAreaRef.current;
 
@@ -94,15 +107,14 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
             textareaElement.selectionEnd = newEnd;
         };
 
-        const rememberSelection = () => {
+        const storeSelectionInReact = () => {
             if (!textAreaRef.current) {
-                throw new Error("Trying to update selection without current ref?");
+                throw new Error("Trying to remember selection without current textarea ref?");
             }
             const textareaElement = textAreaRef.current;
 
             const textareaSelectionStart = textareaElement.selectionStart;
             const textareaSelectionEnd = textareaElement.selectionEnd;
-            console.log(`rememberSelection: ${textareaSelectionStart}, ${textareaSelectionEnd}`);
             selectionStartRef.current = textareaSelectionStart;
             selectionEndRef.current = textareaSelectionEnd;
         };
@@ -111,24 +123,18 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
             () => {
                 const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
                     const newText = sharedStringHelper.getText();
-                    // We only need to insert if the text changed.
-                    if (newText === text) {
-                        return;
-                    }
-
-                    // If the event is our own then just insert the text
-                    if (event.isLocal) {
-                        setText(newText);
-                        return;
-                    }
-
-                    const newSelectionStart = event.transformPosition(selectionStartRef.current);
-                    const newSelectionEnd = event.transformPosition(selectionEndRef.current);
-
                     setText(newText);
-                    setCaretPosition(newSelectionStart, newSelectionEnd);
-                    rememberSelection();
+
+                    // If the event was our own then the caret will already be in the new location.
+                    // Otherwise, transform our selection position based on the change.
+                    if (!event.isLocal) {
+                        const newSelectionStart = event.transformPosition(selectionStartRef.current);
+                        const newSelectionEnd = event.transformPosition(selectionEndRef.current);
+                        setTextareaSelection(newSelectionStart, newSelectionEnd);
+                        storeSelectionInReact();
+                    }
                 };
+
                 sharedStringHelper.on("textChanged", handleTextChanged);
                 return () => {
                     sharedStringHelper.off("textChanged", handleTextChanged);
@@ -149,10 +155,10 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
                 className={className}
                 style={style}
                 spellCheck={spellCheck ? spellCheck : false}
-                onBeforeInput={rememberSelection}
-                onKeyDown={rememberSelection}
-                onClick={rememberSelection}
-                onContextMenu={rememberSelection}
+                onBeforeInput={storeSelectionInReact}
+                onKeyDown={storeSelectionInReact}
+                onClick={storeSelectionInReact}
+                onContextMenu={storeSelectionInReact}
                 // onChange is recommended over onInput for React controls
                 // https://medium.com/capital-one-tech/how-to-work-with-forms-inputs-and-events-in-react-c337171b923b
                 onChange={handleChange}

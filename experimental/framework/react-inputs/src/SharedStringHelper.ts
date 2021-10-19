@@ -69,7 +69,8 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
                 // This should mean that a deletion occurred.
                 newPosition = changeStartPosition;
             }
-            console.log(`Transform: ${oldPosition} -> ${newPosition}`);
+            // eslint-disable-next-line max-len
+            // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeEndPosition}, Transform: ${oldPosition} -> ${newPosition}`);
             return newPosition;
         };
 
