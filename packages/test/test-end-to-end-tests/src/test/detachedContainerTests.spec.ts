@@ -378,14 +378,15 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
     });
 
     it("Fire ops during container attach for shared cell", async () => {
-        const op = { type: "setCell", value: { type: "Plain", value: "b" } };
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
             assert.strictEqual(contents.contents.contents.content.address,
                 sharedCellId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
+            assert.strictEqual(contents.contents.contents.content.contents.type,
+                "setCell", "Op type should be setCell");
+            assert.strictEqual(contents.contents.contents.content.contents.value.value,
+                "b", "Op should set value to b");
             defPromise.resolve();
             return 0;
         };
