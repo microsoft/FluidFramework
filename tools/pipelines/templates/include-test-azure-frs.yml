@@ -125,7 +125,7 @@ jobs:
           ${{ parameters.env }}
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.buildDirectory }}/packages/framework/azure-client
+          workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
           customCommand: 'run test:realsvc:${{ parameters.target }} -- ${{ variant }}'
 
       # Upload results
