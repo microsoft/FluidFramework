@@ -114,9 +114,10 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}
           targetType: 'inline'
           script: |
-            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz
+            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ./
             echo $PWD
             ls
+            ls ./
 
 
       # Run the tests
