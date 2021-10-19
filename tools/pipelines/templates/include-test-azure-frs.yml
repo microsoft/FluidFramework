@@ -114,10 +114,8 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}
           targetType: 'inline'
           script: |
-            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ./
-            echo $PWD
-            ls
-            ls ./
+            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
+            ls ${{ parameters.testWorkspace }}
 
 
       # Run the tests
@@ -127,8 +125,8 @@ jobs:
         env:
           ${{ parameters.env }}
         inputs:
-          command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
+          command: 'custom'
           customCommand: 'run test:realsvc:${{ parameters.target }} -- ${{ variant }}'
 
       # Upload results
