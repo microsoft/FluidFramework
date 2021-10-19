@@ -119,7 +119,6 @@ export type OdspDriverApiType = typeof OdspDriverApi;
 
 // @public (undocumented)
 export class OdspTestDriver implements ITestDriver {
-    // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
