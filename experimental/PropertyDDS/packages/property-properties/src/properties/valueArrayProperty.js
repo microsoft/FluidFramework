@@ -609,7 +609,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
      * @category Arrays
      */
     constructor(in_params) {
-        super({ ...in_params, typeid: 'Uint32' }, Array, true);
+        super({ ...in_params, typeid: 'Bool' }, Array, true);
     };
 
     /**

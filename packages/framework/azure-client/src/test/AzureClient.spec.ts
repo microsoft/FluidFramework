@@ -6,16 +6,22 @@ import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
+import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
 
 describe("AzureClient", () => {
-    const client = createAzureClient();
-    const schema: ContainerSchema = {
-        initialObjects: {
-            map1: SharedMap,
-        },
-    };
+    let client: AzureClient;
+    let schema: ContainerSchema;
+
+    beforeEach(() => {
+        client = createAzureClient();
+        schema = {
+            initialObjects: {
+                map1: SharedMap,
+            },
+        };
+    });
 
     /**
      * Scenario: test when Azure Client is instantiated correctly, it can create

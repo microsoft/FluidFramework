@@ -11,15 +11,19 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:gen && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:ci": "npm run build:compile",
     "build:compile": "concurrently npm:tsc npm:build:esnext",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:esnext": "tsc --project ./tsconfig.esnext.json",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "bump-version": "lerna version minor --no-push --no-git-tag-version",
-    "ci:build": "npm run build:compile",
+    "build:gen": "npm run build:gen:typetests",
+    "build:gen:bump": "npm run build:gen:typetests:prepare",
+    "build:gen:typetests": "fluid-type-validator -d .",
+    "build:gen:typetests:prepare": "fluid-type-validator -d . -p",
+    "bump-version": "lerna version minor --no-push --no-git-tag-version && npm run build:gen:bump",
+    "ci:build": "npm run build:gen && npm run build:compile",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "ci:test": "echo No test for this package",
     "ci:test:coverage": "echo No test for this package",
@@ -36,8 +40,9 @@
   "dependencies": {},
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
+    "@fluidframework/build-tools": "^0.2.40870",
     "@fluidframework/common-definitions-0.20.0": "npm:@fluidframework/common-definitions@0.20.0",
-    "@fluidframework/eslint-config-fluid": "^0.23.0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
@@ -57,20 +62,22 @@
   "typeValidation": {
     "version": "0.21.0",
     "broken": {
-      "InterfaceDeclaration_ITelemetryBaseEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryErrorEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryGenericEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryPerformanceEvent": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ITelemetryProperties": {
-        "backCompat": false
+      "0.20.0": {
+        "InterfaceDeclaration_ITelemetryBaseEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryErrorEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryGenericEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryPerformanceEvent": {
+          "backCompat": false
+        },
+        "InterfaceDeclaration_ITelemetryProperties": {
+          "backCompat": false
+        }
       }
     }
   }

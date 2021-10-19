@@ -148,7 +148,7 @@ export class Lumber<T extends string = LumberEventName> {
             this._exception = new Error(safeStringify(exception));
         }
 
-        this._durationInMs = performance.now() - this._startTime;
+        this._durationInMs = this.properties.get("durationInMs") ?? performance.now() - this._startTime;
 
         this._engineList.forEach((engine) => engine.emit(this));
         this._completed = true;

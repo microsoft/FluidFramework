@@ -15,7 +15,7 @@
     "index.d.ts"
   ],
   "scripts": {
-    "build": "npm run build:compile",
+    "build": "concurrently npm:build:compile npm:lint",
     "postbuild": "npm run gen:tscdef",
     "build:commonjs": "npm run tsc && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",

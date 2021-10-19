@@ -26,7 +26,8 @@ parameters:
 - name: splitTestVariants
   type: object
   default:
-  - ""
+  - name: ""
+    flags: ""
 
 - name: testCommand
   type: string
@@ -38,7 +39,7 @@ parameters:
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
-      displayName: Run ${{ variant }}
+      displayName: Run ${{ variant.name }}
       pool: ${{ parameters.poolBuild }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
@@ -86,7 +87,7 @@ jobs:
               feed=${{ variables.feed }}
               testCommand=${{ parameters.testCommand }}
               continueOnError=${{ parameters.continueOnError }}
-              variant=${{ variant }}
+              variant.flag=${{ variant.flags }}
             "
 
       # Install
@@ -169,14 +170,14 @@ jobs:
 
       # run the test
       - task: Npm@1
-        displayName: '[test] ${{ parameters.testCommand }} ${{ variant }}'
+        displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
         continueOnError: ${{ parameters.continueOnError }}
         env:
           ${{ parameters.env }}
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant }}'
+          customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
       # Upload results
       - task: PublishTestResults@2

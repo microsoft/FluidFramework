@@ -25,8 +25,8 @@ import {
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
     private  readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
-    public get protocolName() { return this.internal.protocolName;}
-    public get documentServices() {return this._documentServices;}
+    public get protocolName() { return this.internal.protocolName; }
+    public get documentServices() { return this._documentServices; }
 
     constructor(private readonly internal: IDocumentServiceFactory) { }
 
@@ -94,20 +94,20 @@ extends EventForwarder<IDocumentDeltaConnectionEvents> implements IDocumentDelta
 
     public get disposed() { return this._disposed; }
 
-    public get clientId() { return this.internal.clientId;}
+    public get clientId() { return this.internal.clientId; }
 
-    public get claims() { return this.internal.claims;}
+    public get claims() { return this.internal.claims; }
 
-    public get mode() { return this.internal.mode;}
-    public get existing() { return this.internal.existing;}
-    public get maxMessageSize() { return this.internal.maxMessageSize;}
-    public get version() { return this.internal.version;}
-    public get initialMessages() { return this.internal.initialMessages;}
+    public get mode() { return this.internal.mode; }
+    public get existing() { return this.internal.existing; }
+    public get maxMessageSize() { return this.internal.maxMessageSize; }
+    public get version() { return this.internal.version; }
+    public get initialMessages() { return this.internal.initialMessages; }
 
-    public get initialSignals() { return this.internal.initialSignals;}
-    public get initialClients() { return this.internal.initialClients;}
-    public get serviceConfiguration() { return this.internal.serviceConfiguration;}
-    public get checkpointSequenceNumber() { return this.internal.checkpointSequenceNumber;}
+    public get initialSignals() { return this.internal.initialSignals; }
+    public get initialClients() { return this.internal.initialClients; }
+    public get serviceConfiguration() { return this.internal.serviceConfiguration; }
+    public get checkpointSequenceNumber() { return this.internal.checkpointSequenceNumber; }
 
     /**
      * Submit a new message to the server

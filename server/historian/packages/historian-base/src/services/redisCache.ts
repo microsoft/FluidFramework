@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Redis } from "ioredis";
 import * as winston from "winston";
-import { ICache, IRedisParameters } from "./definitions";
+import { ICache } from "./definitions";
 
 /**
  * Redis based cache client

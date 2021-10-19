@@ -56,7 +56,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
                     eventName: "CriticalRequestError",
                     correlationId: config.headers["x-correlation-id"] as string,
                 }, reason);
-                throwR11sNetworkError(`Unknown Error on [${config.method}] to [${config.url}]: ${
+                throwR11sNetworkError("r11sRequestFailed", `Unknown Error on [${config.method}] to [${config.url}]: ${
                     safeStringify(reason)
                 }`);
             }
@@ -83,7 +83,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
             }
 
             // Allow anything else to be handled upstream
-            throwR11sNetworkError(axiosError.message, axiosError.response?.status);
+            throwR11sNetworkError("r11sAxiosError", axiosError.message, axiosError.response?.status);
         }
     }
 
@@ -122,11 +122,12 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
         const defaultQueryString = {
             token: `${fromUtf8ToBase64(tenantId)}`,
         };
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
             // Craft credentials using tenant id and token
             const storageToken = await tokenProvider.fetchStorageToken(
                 tenantId,
                 documentId,
+                refresh,
             );
             const credentials = {
                 password: storageToken.jwt,
@@ -170,10 +171,11 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
         useRestLess: boolean,
         baseurl?: string,
     ): Promise<RouterliciousOrdererRestWrapper> {
-        const getAuthorizationHeader: AuthorizationHeaderGetter = async (): Promise<string> => {
+        const getAuthorizationHeader: AuthorizationHeaderGetter = async (refresh?: boolean): Promise<string> => {
             const ordererToken = await tokenProvider.fetchOrdererToken(
                 tenantId,
                 documentId,
+                refresh,
             );
             return `Basic ${ordererToken.jwt}`;
         };

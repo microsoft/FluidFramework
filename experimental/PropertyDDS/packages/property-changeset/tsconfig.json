@@ -5,8 +5,6 @@
     ],
     "compilerOptions": {
         "strict": false,
-
-        "module": "commonjs",
         "declarationDir": "./dist",
         "rootDir": "./src",
         "outDir": "./dist",

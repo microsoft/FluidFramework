@@ -119,7 +119,6 @@ export type OdspDriverApiType = typeof OdspDriverApi;
 
 // @public (undocumented)
 export class OdspTestDriver implements ITestDriver {
-    // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
     createCreateNewRequest(testId: string): IRequest;
@@ -131,13 +130,18 @@ export class OdspTestDriver implements ITestDriver {
         username?: string;
         options?: HostStoragePolicy;
         supportsBrowserAuth?: boolean;
+        tenantIndex?: number;
     }, api?: OdspDriverApiType): Promise<OdspTestDriver>;
     // (undocumented)
     createUrlResolver(): IUrlResolver;
     // (undocumented)
     getUrlFromItemId(itemId: string): string;
     // (undocumented)
+    readonly tenantName?: string | undefined;
+    // (undocumented)
     readonly type = "odsp";
+    // (undocumented)
+    readonly userIndex?: number | undefined;
     // (undocumented)
     get version(): string;
 }

@@ -58,7 +58,7 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/odsp-doclib-utils": "^0.50.0",
-    "@fluidframework/protocol-base": "^0.1032.0",
+    "@fluidframework/protocol-base": "^0.1033.0-40116",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "async-mutex": "^0.3.1",
     "debug": "^4.1.1",
