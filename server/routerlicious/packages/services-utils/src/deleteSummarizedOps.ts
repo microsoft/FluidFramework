@@ -28,17 +28,18 @@ export async function deleteSummarizedOps(
 
         for (const doc of uniqueDocuments) {
             try {
-                const docId = doc.documentId;
-                const document = await documentsCollection.findOne({ documentId: docId });
-                lumberjackProperties = getLumberBaseProperties(docId, document.tenantId);
-                const lastSummarySequenceNumber = JSON.parse(document.scribe).lastSummarySequenceNumber;
+                lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
+                const lastSummarySequenceNumber = JSON.parse(doc.scribe).lastSummarySequenceNumber;
 
                 // first "soft delete" operations older than the offline window, which have been summarised
                 // soft delete is done by setting a scheduled deletion time
                 await opCollection.updateMany({
                     $and: [
                         {
-                            documentId: docId,
+                            documentId: doc.documentId,
+                        },
+                        {
+                            tenantId: doc.tenantId,
                         },
                         {
                             "operation.timestamp": { $lte: epochTimeBeforeOfflineWindow },
@@ -57,7 +58,8 @@ export async function deleteSummarizedOps(
                     // then permanently delete ops that have passed their retention period
                     // delete if current epoch time is greater than the scheduled deletion time of the op
                     await opCollection.deleteMany({
-                        documentId: docId,
+                        documentId: doc.documentId,
+                        tenantId: doc.tenantId,
                         scheduledDeletionTime: { $lte: currentEpochTime },
                     });
                 }
