@@ -21,7 +21,7 @@ import {
     Serializable,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
@@ -40,7 +40,10 @@ interface IDeleteCellOperation {
 }
 
 interface ICellValue {
-    // The actual value contained in the cell which needs to be wrapped to handle undefined
+    // The type of the value
+    type: string;
+
+    // The actual value
     value: any;
 }
 
@@ -159,6 +162,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
         // Serialize the value if required.
         const operationValue: ICellValue = {
+            type: ValueType[ValueType.Plain],
             value: this.serializer.replaceHandles(value, this.handle),
         };
 
@@ -209,6 +213,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
         const content: ICellValue = {
+            type: ValueType[ValueType.Plain],
             value: this.data,
         };
 
@@ -311,6 +316,14 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
     private decode(cellValue: ICellValue) {
         const value = cellValue.value;
+
+        // Convert any old stored shared object to updated handle
+        if (cellValue.type === ValueType[ValueType.Shared]) {
+            return {
+                type: "__fluid_handle__",
+                url: value as string,
+            };
+        }
 
         if (this.serializer.decode !== undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
