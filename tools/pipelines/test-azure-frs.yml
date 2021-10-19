@@ -33,7 +33,7 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/azure-client"
         testWorkspace: ${{ variables.testWorkspace }}
-        buildDirectory: .
+        buildDirectory: $(Pipeline.Workspace)
         target: azure
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
