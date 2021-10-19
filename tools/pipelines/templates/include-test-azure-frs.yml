@@ -102,15 +102,6 @@ jobs:
           customCommand: 'run build:fast azure-client'
           customRegistry: 'useNpmrc'
 
-      # Build the tests
-      - task: Npm@1
-        displayName: 'npm run build:test'
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'run build:test'
-          customRegistry: 'useNpmrc'
-
       # Run the tests
       - task: Npm@1
         displayName: '[azure-client tests] npm run test:realsvc:${{ parameters.target }} ${{ variant }}'
