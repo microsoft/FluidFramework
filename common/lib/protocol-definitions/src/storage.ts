@@ -50,6 +50,10 @@ export interface IAttachment {
 
 export interface ICreateBlobResponse {
     id: string;
+    /**
+     * @deprecated This will be removed in future.
+     */
+    url: string;
 }
 
 /**

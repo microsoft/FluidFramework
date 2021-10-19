@@ -400,6 +400,7 @@ async function getSingleOpBatch(
                 // current as it can't get ops.
                 throw createGenericNetworkError(
                     "failedToRetrieveOpsFromStorage:TooManyRetries",
+                    undefined,
                     false /* canRetry */,
                     undefined /* retryAfterSeconds */,
                     {

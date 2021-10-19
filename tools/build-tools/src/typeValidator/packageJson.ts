@@ -7,10 +7,8 @@ import * as fs from "fs";
 
 export type PackageDetails ={
     readonly name: string;
+    readonly packageDir: string;
     readonly version: string;
-    readonly majorVersion: number;
-    readonly minorVersion: number;
-    readonly patchVersion: string;
     readonly oldVersions: readonly string[];
     readonly broken: BrokenCompatTypes;
 }
@@ -20,7 +18,7 @@ export interface BrokenCompatSettings{
     forwardCompat?: false;
 }
 
-export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
+export type BrokenCompatTypes = Partial<Record<string,Record<string, BrokenCompatSettings>>>;
 
 
 interface PackageJson{
@@ -51,7 +49,14 @@ export function getPackageDetails(packageDir: string): PackageDetails {
 
     const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
 
-    if(pkgJson.version !== pkgJson.typeValidation?.version){
+    // normalize the version to remove any pre-release version info,
+    // as we shouldn't change the type validation version for pre-release versions
+    const normalizedVersion =
+        pkgJson.version.includes("-") ?
+            pkgJson.version.substring(0, pkgJson.version.indexOf("-")) :
+            pkgJson.version;
+
+    if(normalizedVersion !== pkgJson.typeValidation?.version){
         if(pkgJson.typeValidation !== undefined){
             pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
                 `npm:${pkgJson.name}@${pkgJson.typeValidation.version}`;
@@ -59,26 +64,37 @@ export function getPackageDetails(packageDir: string): PackageDetails {
             pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
         }
         pkgJson.typeValidation = {
-            version: pkgJson.version,
-            broken: {}
+            version: normalizedVersion,
+            broken: pkgJson.typeValidation?.broken ?? {}
         }
         fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
     }
 
-    const versionParts = pkgJson.version.split(".",3);
-    const majorVersion = Number.parseInt(versionParts[0]);
-    const minorVersion = Number.parseInt(versionParts[1]);
-
     const oldVersions: string[] =
-        Object.keys(pkgJson.devDependencies).filter((k)=>k.startsWith(pkgJson.name));
+        Object.keys(pkgJson.devDependencies ?? {}).filter((k)=>k.startsWith(pkgJson.name));
 
     return {
         name: pkgJson.name,
-        version: pkgJson.version,
-        majorVersion,
-        minorVersion,
-        patchVersion: versionParts[2],
+        packageDir,
+        version: normalizedVersion,
         oldVersions,
         broken: pkgJson.typeValidation.broken
     }
+}
+
+export function findPackagesUnderPath(path: string) {
+    const searchPaths = [path];
+    const packages: string[] = [];
+    while(searchPaths.length > 0){
+        const search = searchPaths.shift()!;
+        if(fs.existsSync(`${search}/package.json`)){
+            packages.push(search);
+        }else{
+            searchPaths.push(
+                ...fs.readdirSync(search, {withFileTypes: true})
+                .filter((t)=>t.isDirectory())
+                .map((d)=>`${search}/${d.name}`));
+        }
+    }
+    return packages;
 }

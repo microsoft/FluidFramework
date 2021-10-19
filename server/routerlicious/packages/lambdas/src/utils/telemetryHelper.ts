@@ -18,11 +18,6 @@ import {
     SessionState,
 } from "@fluidframework/server-services-telemetry";
 
-export const getLumberProperties = (documentId: string, tenantId: string) => ({
-    [BaseTelemetryProperties.tenantId]: tenantId,
-    [BaseTelemetryProperties.documentId]: documentId,
-});
-
 export const createSessionMetric = (
     tenantId: string,
     documentId: string,

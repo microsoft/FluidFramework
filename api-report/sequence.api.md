@@ -236,25 +236,25 @@ export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any): void;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type MatrixSegment = RunSegment | PaddingSegment;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const maxCellPosition: number;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const maxCol = 2097152;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const maxCols: number;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const maxRow = 4294967295;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const maxRows: number;
 
-// @public (undocumented)
+// @public @deprecated
 export class PaddingSegment extends BaseSegment {
     constructor(size: number);
     // (undocumented)
@@ -284,16 +284,16 @@ export class PaddingSegment extends BaseSegment {
     static readonly typeString = "PaddingSegment";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function positionToRowCol(position: number): {
     row: number;
     col: number;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const rowColToPosition: (row: number, col: number) => number;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class RunSegment extends SubSequence<SparseMatrixItem> {
     constructor(items: SparseMatrixItem[]);
     // (undocumented)
@@ -691,7 +691,7 @@ export class SparseMatrixFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type SparseMatrixItem = Serializable;
 
 // @public (undocumented)

@@ -15,7 +15,7 @@ import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
 	createAndAttachContainer,
 	createLoader,
-	OpProcessingController,
+	LoaderContainerTracker,
 	ITestFluidObject,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
@@ -34,7 +34,7 @@ describe("PropertyTree", () => {
 
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let urlResolver: LocalResolver;
-	let opProcessingController: OpProcessingController;
+	let opProcessingController: LoaderContainerTracker;
 	let container1: IContainer;
 	let container2: IContainer;
 	let dataObject1: ITestFluidObject;
@@ -55,11 +55,13 @@ describe("PropertyTree", () => {
 
 	async function createContainer(): Promise<IContainer> {
 		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		opProcessingController.add(loader);
 		return createAndAttachContainer(codeDetails, loader, urlResolver.createCreateNewRequest(documentId));
 	}
 
 	async function loadContainer(): Promise<IContainer> {
 		const loader = createLocalLoader([[codeDetails, factory]], deltaConnectionServer, urlResolver);
+		opProcessingController.add(loader);
 		return loader.resolve({ url: documentLoadUrl });
 	}
 
@@ -67,6 +69,7 @@ describe("PropertyTree", () => {
 		let propertyTree: SharedPropertyTree;
 
 		beforeEach(async () => {
+			opProcessingController = new LoaderContainerTracker();
 			deltaConnectionServer = LocalDeltaConnectionServer.create();
 			urlResolver = new LocalResolver();
 
@@ -79,9 +82,6 @@ describe("PropertyTree", () => {
 			container2 = await loadContainer();
 			dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 			sharedPropertyTree2 = await dataObject2.getSharedObject<SharedPropertyTree>(propertyDdsId);
-
-			opProcessingController = new OpProcessingController();
-			opProcessingController.addDeltaManagers(container1.deltaManager, container2.deltaManager);
 		});
 
 		describe("APIs", () => {
@@ -106,7 +106,7 @@ describe("PropertyTree", () => {
 
 				sharedPropertyTree1.commit();
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
 
 				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
 			});
@@ -122,7 +122,7 @@ describe("PropertyTree", () => {
 				sharedPropertyTree1.commit({someKey: "some data"});
                 expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
 
 				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
                 expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
@@ -133,7 +133,7 @@ describe("PropertyTree", () => {
 				sharedPropertyTree1.commit({someKey: "some data"});
                 expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
                 expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
 			});
 
@@ -142,7 +142,7 @@ describe("PropertyTree", () => {
 				sharedPropertyTree1.commit({someKey: "some data"}, false);
                 expect(sharedPropertyTree1.activeCommit).to.equal(undefined);
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
                 expect(sharedPropertyTree2.activeCommit).to.equal(undefined);
 			});
 
@@ -151,7 +151,7 @@ describe("PropertyTree", () => {
 				sharedPropertyTree1.commit({someKey: "some data"}, true);
                 expect(sharedPropertyTree1.activeCommit.metadata).to.deep.equal({someKey: "some data"});
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
                 expect(sharedPropertyTree2.activeCommit.metadata).to.deep.equal({someKey: "some data"});
 			});
 
@@ -160,7 +160,7 @@ describe("PropertyTree", () => {
 
 				sharedPropertyTree1.commit();
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(0);
 			});
 
@@ -169,7 +169,7 @@ describe("PropertyTree", () => {
 
 				sharedPropertyTree1.commit(true);
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
 				expect(_.isEmpty(_.last(sharedPropertyTree2.remoteChanges)?.changeSet)).to.equal(true);
 			});
@@ -183,13 +183,13 @@ describe("PropertyTree", () => {
 
 				sharedPropertyTree1.commit();
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
 
 				expect(sharedPropertyTree2.root.get("test")).to.equal(undefined);
 
 				sharedPropertyTree1.stopTransmission(false);
 
-				await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+				await opProcessingController.ensureSynchronized();
 
 				expect((sharedPropertyTree2.root.get("test") as StringProperty).getValue()).to.equal("Magic");
 			});
@@ -251,7 +251,7 @@ describe("PropertyTree", () => {
                 await opProcessingController.pauseProcessing();
                 sharedPropertyTree1.root.insert("test", PropertyFactory.create("String", undefined, "Magic"));
 				sharedPropertyTree1.commit();
-                await opProcessingController.process(container1.deltaManager, container2.deltaManager);
+                await opProcessingController.ensureSynchronized();
                 const result = sharedPropertyTree1.getRebasedChanges("", "");
                 expect(result.length).to.equal(0);
             });

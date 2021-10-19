@@ -18,7 +18,7 @@ export function createAzureClient(): AzureClient {
     const useAzure = process.env.FLUID_CLIENT === "azure";
     const tenantId = useAzure ? process.env.azure__fluid__relay__service__tenantId as string : "frs-client-tenant";
 
-    // use AzureClient remote mode will run against live Azure Relay Service.
+    // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
     const connectionProps = useAzure ? {
