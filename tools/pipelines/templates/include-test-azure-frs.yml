@@ -126,7 +126,7 @@ jobs:
         inputs:
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
           command: 'custom'
-          customCommand: 'install cross-env --no-package-lock --no-save'
+          customCommand: 'install cross-env mocha --no-package-lock --no-save'
 
       # Run the tests
       - task: Npm@1
