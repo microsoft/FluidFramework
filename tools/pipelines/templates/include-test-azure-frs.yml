@@ -99,9 +99,9 @@ jobs:
           artifact: pack-azure-frs-test
           path: $(Pipeline.Workspace)/azure-frs-test
 
-      # Create test directory and unpack package
+      # Create test directory
       - task: Bash@3
-        displayName: Create test directory and unpack package
+        displayName: Create test directory
         inputs:
           targetType: 'inline'
           script: |
@@ -109,7 +109,7 @@ jobs:
 
       # Unpack package
       - task: Bash@3
-        displayName: Create test directory and unpack package
+        displayName: Unpack package
         inputs:
           workingDir: ${{ parameters.testWorkspace }}
           targetType: 'inline'
@@ -120,14 +120,13 @@ jobs:
       # Install
       - task: Npm@1
         displayName: 'npm install'
-        continueOnError: true
         env:
           ${{ parameters.env }}
         inputs:
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
           command: 'custom'
-          customCommand: 'install'
-          # customCommand: 'install cross-env mocha --no-package-lock --no-save'
+          # customCommand: 'install'
+          customCommand: 'install cross-env mocha --no-package-lock --no-save'
 
       # Run the tests
       - task: Npm@1
