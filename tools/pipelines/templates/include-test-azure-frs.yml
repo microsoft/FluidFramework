@@ -8,10 +8,6 @@ parameters:
   type: object
   default: Lite
 
-- name: testPackage
-  type: string
-  default: "@fluidframework/test-end-to-end-tests"
-
 - name: testWorkspace
   type: string
 
@@ -45,10 +41,6 @@ jobs:
         value: 1
       - name: testPackageDir
         value: '${{ parameters.testWorkspace }}'
-      - name: testPackageFilePattern
-        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
-      - name: testPackagePathPattern
-        value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
         value: true
       - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
@@ -75,10 +67,8 @@ jobs:
             echo "
             Pipeline Parameters:
               poolBuild=${{ parameters.poolBuild }}
-              testPackage=${{ parameters.testPackage }}
             Pipeline Variables:
               testWorkspace=${{ parameters.testWorkspace }}
-              testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}
               target=${{ parameters.target }}
               variant=${{ variant }}
