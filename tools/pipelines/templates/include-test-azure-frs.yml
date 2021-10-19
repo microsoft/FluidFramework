@@ -115,6 +115,8 @@ jobs:
           targetType: 'inline'
           script: |
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz
+            echo $PWD
+            ls
 
 
       # Run the tests
