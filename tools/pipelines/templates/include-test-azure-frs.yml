@@ -84,23 +84,27 @@ jobs:
         inputs:
           version: 12.x
 
-      # Install dependencies
-      - task: Npm@1
-        displayName: 'npm install'
+      # Download artifact
+      - task: DownloadPipelineArtifact@2
+        displayName: Download test package
         inputs:
-          command: 'custom'
-          workingDir: '.'
-          customCommand: 'install'
-          customRegistry: 'useNpmrc'
+          source: specific
+          project: internal
+          pipeline: Build - client packages
+          preferTriggeringPipeline: true
+          runVersion: latestFromBranch
+          runBranch: $(Build.SourceBranch)
+          artifact: pack-azure-frs-test
+          patterns: "*"
+          path: $(Pipeline.Workspace)/azure-frs-test
 
-      # Build the azure-client package
-      - task: Npm@1
-        displayName: 'npm run build:fast azure-client'
+       task: Bash@3
+        displayName: Create test directory
         inputs:
-          command: 'custom'
-          workingDir: '.'
-          customCommand: 'run build:fast azure-client'
-          customRegistry: 'useNpmrc'
+          targetType: 'inline'
+          script: |
+            mkdir ${{ parameters.testWorkspace }}
+            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz ${{ parameters.testWorkspace }}
 
       # Run the tests
       - task: Npm@1
