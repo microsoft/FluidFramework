@@ -95,7 +95,6 @@ jobs:
           runVersion: latestFromBranch
           runBranch: $(Build.SourceBranch)
           artifact: pack-azure-frs-test
-          patterns: "*"
           path: $(Pipeline.Workspace)/azure-frs-test
 
       # Create test directory and unpack package
