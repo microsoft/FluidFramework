@@ -59,11 +59,9 @@ import {
     ISummarizerNodeWithGC,
     SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { addBlobToSummary, convertSummaryTreeToITree, ChannelContextRealizeError } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
-    LoggingError,
-    TelemetryDataTag,
     ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
 import { CreateProcessingError } from "@fluidframework/container-utils";
@@ -267,10 +265,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         }
     }
 
-    private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData }});
-    }
-
     public async realize(): Promise<IFluidDataStoreChannel> {
         assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
         if (!this.channelDeferred) {
@@ -283,29 +277,28 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this.channelDeferred.promise;
     }
 
-    protected async factoryFromPackagePath(packages?: readonly string[]) {
-        assert(this.pkg === packages, 0x13e /* "Unexpected package path" */);
-        if (packages === undefined) {
-            this.rejectDeferredRealize("packages is undefined");
+    protected async factoryFromPackagePath() {
+        if (this.pkg === undefined) {
+            throw new ChannelContextRealizeError("packagePathNotInitialized");
         }
 
         let entry: FluidDataStoreRegistryEntry | undefined;
         let registry: IFluidDataStoreRegistry | undefined = this._containerRuntime.IFluidDataStoreRegistry;
         let lastPkg: string | undefined;
-        for (const pkg of packages) {
+        for (const pkg of this.pkg) {
             if (!registry) {
-                this.rejectDeferredRealize("No registry for package", lastPkg);
+                throw new ChannelContextRealizeError("noRegistryForPackage", lastPkg);
             }
             lastPkg = pkg;
             entry = await registry.get(pkg);
             if (!entry) {
-                this.rejectDeferredRealize("Registry does not contain entry for the package", pkg);
+                throw new ChannelContextRealizeError("registryDoesNotContainEntryForPackage", pkg);
             }
             registry = entry.IFluidDataStoreRegistry;
         }
         const factory = entry?.IFluidDataStoreFactory;
         if (factory === undefined) {
-            this.rejectDeferredRealize("Can't find factory for package", lastPkg);
+            throw new ChannelContextRealizeError("cannotFindFactoryForPackage", lastPkg);
         }
 
         return { factory, registry };
@@ -317,9 +310,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         // It is important that this be in sync with the pending ops, and also
         // that it is set here, before bindRuntime is called.
         this._baseSnapshot = details.snapshot;
-        const packages = details.pkg;
+        assert(this.pkg === details.pkg, "getInitialSnapshotDetails should ensure this.pkg is set properly");
 
-        const { factory, registry } = await this.factoryFromPackagePath(packages);
+        const { factory, registry } = await this.factoryFromPackagePath();
 
         assert(this.registry === undefined, 0x13f /* "datastore context registry is already set" */);
         this.registry = registry;
@@ -979,7 +972,7 @@ export class LocalDetachedFluidDataStoreContext
 
         const factory = registry.IFluidDataStoreFactory;
 
-        const entry = await this.factoryFromPackagePath(this.pkg);
+        const entry = await this.factoryFromPackagePath();
         assert(entry.factory === factory, 0x156 /* "Unexpected factory for package path" */);
 
         assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);

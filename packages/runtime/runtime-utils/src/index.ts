@@ -10,6 +10,7 @@ export * from "./objectstorageutils";
 export * from "./requestParser";
 export * from "./runtimeFactoryHelper";
 export * from "./serializer";
+export * from "./runtimeError";
 export * from "./summarizerNode";
 export * from "./summaryUtils";
 export * from "./utils";
