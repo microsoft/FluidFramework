@@ -57,17 +57,20 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
         const charactersModifiedCount = this._latestText.length - previousText.length;
 
         const transformPosition = (oldPosition: number): number => {
+            let newPosition: number;
             if (oldPosition <= changeStartPosition) {
                 // Position is unmoved by the change if it is before the change
-                return oldPosition;
+                newPosition = oldPosition;
             } else if (oldPosition > (changeEndPosition - 1)) {
                 // Position is moved by the distance of the change if it is after the change
-                return oldPosition + charactersModifiedCount;
+                newPosition = oldPosition + charactersModifiedCount;
             } else {
                 // Position snaps to the left side of the change if it is fully encompassed by the change.
                 // This should mean that a deletion occurred.
-                return changeStartPosition;
+                newPosition = changeStartPosition;
             }
+            console.log(`Transform: ${oldPosition} -> ${newPosition}`);
+            return newPosition;
         };
 
         this.emit("textChanged", { isLocal, transformPosition });

@@ -48,17 +48,19 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
         } = props;
 
         // eslint-disable-next-line no-null/no-null
-        const ref = useRef<HTMLTextAreaElement>(null);
+        const textAreaRef = useRef<HTMLTextAreaElement>(null);
+        const selectionStartRef = useRef<number>(0);
+        const selectionEndRef = useRef<number>(0);
 
         const [text, setText] = useState<string>(sharedStringHelper.getText());
-        const [selectionStart, setSelectionStart] = useState<number>(0);
-        const [selectionEnd, setSelectionEnd] = useState<number>(0);
 
         const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
-            if (!ref.current) {
+            if (!textAreaRef.current) {
                 throw new Error("Handling change but null current ref?");
             }
-            const textareaElement = ref.current;
+            const textareaElement = textAreaRef.current;
+            const selectionStart = selectionStartRef.current;
+            const selectionEnd = selectionEndRef.current;
 
             // We need to set the value here to keep the input responsive to the user
             const newText = textareaElement.value;
@@ -83,25 +85,26 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
         };
 
         const setCaretPosition = (newStart: number, newEnd: number) => {
-            if (!ref.current) {
+            if (!textAreaRef.current) {
                 throw new Error("Trying to set caret position without current ref?");
             }
-            const textareaElement = ref.current;
+            const textareaElement = textAreaRef.current;
 
             textareaElement.selectionStart = newStart;
             textareaElement.selectionEnd = newEnd;
         };
 
-        const updateSelection = () => {
-            if (!ref.current) {
+        const rememberSelection = () => {
+            if (!textAreaRef.current) {
                 throw new Error("Trying to update selection without current ref?");
             }
-            const textareaElement = ref.current;
+            const textareaElement = textAreaRef.current;
 
-            const textareaSelectionStart = textareaElement.selectionStart ? textareaElement.selectionStart : 0;
-            const textareaSelectionEnd = textareaElement.selectionEnd ? textareaElement.selectionEnd : 0;
-            setSelectionStart(textareaSelectionStart);
-            setSelectionEnd(textareaSelectionEnd);
+            const textareaSelectionStart = textareaElement.selectionStart;
+            const textareaSelectionEnd = textareaElement.selectionEnd;
+            console.log(`rememberSelection: ${textareaSelectionStart}, ${textareaSelectionEnd}`);
+            selectionStartRef.current = textareaSelectionStart;
+            selectionEndRef.current = textareaSelectionEnd;
         };
 
         useEffect(
@@ -119,12 +122,12 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
                         return;
                     }
 
-                    updateSelection(); // stores the current selection from the textarea element in the state
-                    const newSelectionStart = event.transformPosition(selectionStart);
-                    const newSelectionEnd = event.transformPosition(selectionEnd);
+                    const newSelectionStart = event.transformPosition(selectionStartRef.current);
+                    const newSelectionEnd = event.transformPosition(selectionEndRef.current);
 
                     setText(newText);
                     setCaretPosition(newSelectionStart, newSelectionEnd);
+                    rememberSelection();
                 };
                 sharedStringHelper.on("textChanged", handleTextChanged);
                 return () => {
@@ -142,14 +145,14 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
             <textarea
                 rows={20}
                 cols={50}
-                ref={ref}
+                ref={textAreaRef}
                 className={className}
                 style={style}
                 spellCheck={spellCheck ? spellCheck : false}
-                onBeforeInput={updateSelection}
-                onKeyDown={updateSelection}
-                onClick={updateSelection}
-                onContextMenu={updateSelection}
+                onBeforeInput={rememberSelection}
+                onKeyDown={rememberSelection}
+                onClick={rememberSelection}
+                onContextMenu={rememberSelection}
                 // onChange is recommended over onInput for React controls
                 // https://medium.com/capital-one-tech/how-to-work-with-forms-inputs-and-events-in-react-c337171b923b
                 onChange={handleChange}
