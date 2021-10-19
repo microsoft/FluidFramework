@@ -6,3 +6,4 @@
 export * from "./CollaborativeCheckbox";
 export * from "./CollaborativeInput";
 export * from "./CollaborativeTextArea";
+export * from "./SharedStringHelper";

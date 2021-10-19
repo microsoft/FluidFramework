@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { SharedString } from "@fluidframework/sequence";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { ISharedStringHelperTextChangedEventArgs, SharedStringHelper } from "./SharedStringHelper";
 
 export interface ICollaborativeTextAreaProps {
     /**
@@ -23,6 +24,138 @@ export interface ICollaborativeTextAreaState {
     selectionStart: number;
     text: string;
 }
+
+export interface ICollaborativeTextAreaFunctionProps {
+    /**
+     * The SharedString that will store the text from the textarea.
+     */
+    sharedStringHelper: SharedStringHelper;
+    /**
+     * Whether spellCheck should be enabled.  Defaults to false.
+     */
+    spellCheck?: boolean;
+    className?: string;
+    style?: React.CSSProperties;
+}
+
+export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunctionProps> =
+    (props: ICollaborativeTextAreaFunctionProps) => {
+        const {
+            sharedStringHelper,
+            spellCheck,
+            className,
+            style,
+        } = props;
+
+        // eslint-disable-next-line no-null/no-null
+        const ref = useRef<HTMLTextAreaElement>(null);
+
+        const [text, setText] = useState<string>(sharedStringHelper.getText());
+        const [selectionStart, setSelectionStart] = useState<number>(0);
+        const [selectionEnd, setSelectionEnd] = useState<number>(0);
+
+        const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
+            if (!ref.current) {
+                throw new Error("Handling change but null current ref?");
+            }
+            const textareaElement = ref.current;
+
+            // We need to set the value here to keep the input responsive to the user
+            const newText = textareaElement.value;
+            const charactersModifiedCount = text.length - newText.length;
+            setText(newText);
+
+            // Get the new caret position and use that to get the text that was inserted
+            const newPosition = textareaElement.selectionStart ? textareaElement.selectionStart : 0;
+            const isTextInserted = newPosition - selectionStart > 0;
+            if (isTextInserted) {
+                const insertedText = newText.substring(selectionStart, newPosition);
+                const changeRangeLength = selectionEnd - selectionStart;
+                if (changeRangeLength === 0) {
+                    sharedStringHelper.insertText(insertedText, selectionStart);
+                } else {
+                    sharedStringHelper.replaceText(insertedText, selectionStart, selectionEnd);
+                }
+            } else {
+                // Text was removed
+                sharedStringHelper.removeText(newPosition, newPosition + charactersModifiedCount);
+            }
+        };
+
+        const setCaretPosition = (newStart: number, newEnd: number) => {
+            if (!ref.current) {
+                throw new Error("Trying to set caret position without current ref?");
+            }
+            const textareaElement = ref.current;
+
+            textareaElement.selectionStart = newStart;
+            textareaElement.selectionEnd = newEnd;
+        };
+
+        const updateSelection = () => {
+            if (!ref.current) {
+                throw new Error("Trying to update selection without current ref?");
+            }
+            const textareaElement = ref.current;
+
+            const textareaSelectionStart = textareaElement.selectionStart ? textareaElement.selectionStart : 0;
+            const textareaSelectionEnd = textareaElement.selectionEnd ? textareaElement.selectionEnd : 0;
+            setSelectionStart(textareaSelectionStart);
+            setSelectionEnd(textareaSelectionEnd);
+        };
+
+        useEffect(
+            () => {
+                const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
+                    const newText = sharedStringHelper.getText();
+                    // We only need to insert if the text changed.
+                    if (newText === text) {
+                        return;
+                    }
+
+                    // If the event is our own then just insert the text
+                    if (event.isLocal) {
+                        setText(newText);
+                        return;
+                    }
+
+                    updateSelection(); // stores the current selection from the textarea element in the state
+                    const newSelectionStart = event.transformPosition(selectionStart);
+                    const newSelectionEnd = event.transformPosition(selectionEnd);
+
+                    setText(newText);
+                    setCaretPosition(newSelectionStart, newSelectionEnd);
+                };
+                sharedStringHelper.on("textChanged", handleTextChanged);
+                return () => {
+                    sharedStringHelper.off("textChanged", handleTextChanged);
+                };
+            },
+            [sharedStringHelper],
+        );
+
+        return (
+            // There are a lot of different ways content can be inserted into a textarea
+            // and not all of them trigger a onBeforeInput event. To ensure we are grabbing
+            // the correct selection before we modify the shared string we need to make sure
+            // this.updateSelection is being called for multiple cases.
+            <textarea
+                rows={20}
+                cols={50}
+                ref={ref}
+                className={className}
+                style={style}
+                spellCheck={spellCheck ? spellCheck : false}
+                onBeforeInput={updateSelection}
+                onKeyDown={updateSelection}
+                onClick={updateSelection}
+                onContextMenu={updateSelection}
+                // onChange is recommended over onInput for React controls
+                // https://medium.com/capital-one-tech/how-to-work-with-forms-inputs-and-events-in-react-c337171b923b
+                onChange={handleChange}
+                value={text} />
+        );
+    };
 
 /**
  * Given a SharedString will produce a collaborative textarea.
