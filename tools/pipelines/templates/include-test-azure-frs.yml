@@ -117,6 +117,16 @@ jobs:
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
             ls ${{ parameters.testWorkspace }}
 
+      # Install
+      - task: Npm@1
+        displayName: 'npm install'
+        continueOnError: true
+        env:
+          ${{ parameters.env }}
+        inputs:
+          workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
+          command: 'custom'
+          customCommand: 'install'
 
       # Run the tests
       - task: Npm@1
