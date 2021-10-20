@@ -122,6 +122,7 @@ jobs:
         inputs:
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
           command: 'custom'
+          customRegistry: 'useNpmrc'
           customCommand: 'install --use-npm'
           # customCommand: 'install cross-env mocha fluid-framework @fluidframework/container-definitions @fluidframework/map@latest --no-package-lock --no-save'
 
