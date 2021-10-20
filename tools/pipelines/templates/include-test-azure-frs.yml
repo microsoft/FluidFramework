@@ -104,6 +104,19 @@ jobs:
           patterns: "**/${{ variables.testPackageFilePattern }}"
           path: $(Pipeline.Workspace)/client/pack
 
+      # Auth to internal feed
+      - task: npmAuthenticate@0
+        displayName: 'npm authenticate (internal feed)'
+        inputs:
+          workingFile: ${{ parameters.testWorkspace }}/.npmrc
+
+      # Auth to Office feed
+      - task: npmAuthenticate@0
+        displayName: 'npm authenticate (office feed)'
+        inputs:
+          workingFile: ${{ parameters.testWorkspace }}/.npmrc
+          customEndpoint: 'Office Packages - Readonly'
+
       # Download artifact - Test files
       - task: DownloadPipelineArtifact@2
         displayName: Download artifact - Test files
