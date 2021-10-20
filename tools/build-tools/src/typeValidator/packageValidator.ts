@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Diagnostic, DiagnosticCategory, Project } from "ts-morph";
-import { test } from "../buildVersion/buildVersionTests";
+import { DiagnosticCategory, Project } from "ts-morph";
 import { PackageDetails } from "./packageJson";
+import { ClassData } from "./classDecomposition";
 import {
-    ClassData,
     generateTypeDataForProject,
     getFullTypeName,
     PackageAndTypeData,
-    TestCaseTypeData,
-    toTypeString,
     TypeData,
 } from "./typeData";
 
@@ -25,7 +22,7 @@ export enum BreakingIncrement {
 type BrokenTypes = Map<string, BreakingIncrement>;
 
 /**
- *
+ * TODO: handle cross-package/transitive type breaks
  * TODO: currently symbol map assumes no duplicated symbols
  * TODO: ensure all types from exported public APIs are also exported?
  * TODO: ensure type replacement accounts for broken types from the same package when
@@ -52,9 +49,15 @@ export function validatePackage(
     const newTypeMap = new Map<string, TypeData>(newDetails.typeData.map((v) => [getFullTypeName(v), v]));
     const oldTypeMap = new Map<string, TypeData>(oldDetails.typeData.map((v) => [getFullTypeName(v), v]));
 
+    // Create a project for the package to use for test sources and checking diagnostics
+    let tsConfigPath =`${packageDir}/tsconfig.json`;
+    const project = new Project({
+        skipFileDependencyResolution: true,
+        tsConfigFilePath: tsConfigPath,
+    });
+
     // Check old types first because these are the only ones that can cause a major increment
     for (const oldTypeData of oldDetails.typeData) {
-
         const newTypeData = newTypeMap.get(getFullTypeName(oldTypeData));
         if (newTypeData === undefined) {
             // Type has been removed, package requires major increment
@@ -62,12 +65,12 @@ export function validatePackage(
         } else {
             // Check for major increment.  This may also tell us a minor increment is required
             // in some situations
-            const typeIncrement = checkMajorIncrement(packageDetails, packageDir, oldTypeData, newTypeData);
+            const typeIncrement = checkMajorIncrement(project, packageDir, oldTypeData, newTypeData);
             if (typeIncrement !== BreakingIncrement.none) {
                 console.log(`major increment check found break for ${oldTypeData.name}`);
                 pkgIncrement |= typeIncrement;
                 pkgBrokenTypes.set(oldTypeData.name, typeIncrement);
-            } else if (checkMinorIncrement(packageDetails, packageDir, oldTypeData, newTypeData)) {
+            } else if (checkMinorIncrement(project, packageDir, oldTypeData, newTypeData)) {
                 // If no major increment, check for minor increment
                 console.log(`minor increment check found break for ${oldTypeData.name}`);
                 pkgIncrement |= BreakingIncrement.minor;
@@ -81,7 +84,7 @@ export function validatePackage(
         newTypeMap.delete(getFullTypeName(oldTypeData));
     }
 
-    // All remaining symbols are new and should be marked for minor increment
+    // All remaining exports are new and should be marked for minor increment
     newTypeMap.forEach((value, key) => {
         pkgIncrement |= BreakingIncrement.minor;
         pkgBrokenTypes.set(key, BreakingIncrement.minor);
@@ -91,7 +94,7 @@ export function validatePackage(
 }
 
 function checkMajorIncrement(
-    pkgDetails: PackageDetails,
+    project: Project,
     pkgDir: string,
     oldTypeData: TypeData,
     newTypeData: TypeData,
@@ -109,13 +112,7 @@ function checkMajorIncrement(
     }
     console.log(testFile);
 
-    // Create a source file for the current project and check for diagnostics
-    let tsConfigPath =`${pkgDir}/tsconfig.json`;
-    const project = new Project({
-        skipFileDependencyResolution: true,
-        tsConfigFilePath: tsConfigPath,
-    });
-
+    // Create a source file in the project and check for diagnostics
     const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;
     const sourceFile = project.createSourceFile(sourcePath, testFile);
     const diagnostics = sourceFile.getPreEmitDiagnostics();
@@ -136,7 +133,7 @@ function checkMajorIncrement(
 }
 
 function checkMinorIncrement(
-    pkgDetails: PackageDetails,
+    project: Project,
     pkgDir: string,
     oldTypeData: TypeData,
     newTypeData: TypeData,
@@ -153,13 +150,7 @@ function checkMinorIncrement(
     }
     console.log(testFile);
 
-    // Create a source file for the current project and check for diagnostics
-    let tsConfigPath =`${pkgDir}/tsconfig.json`;
-    const project = new Project({
-        skipFileDependencyResolution: true,
-        tsConfigFilePath: tsConfigPath,
-    });
-
+    // Create a source file in the project and check for diagnostics
     const sourcePath = `${pkgDir}/src/test/typeValidation.spec.ts`;
     const sourceFile = project.createSourceFile(sourcePath, testFile);
     const diagnostics = sourceFile.getPreEmitDiagnostics();

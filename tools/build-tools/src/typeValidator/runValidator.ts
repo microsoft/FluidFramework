@@ -7,16 +7,11 @@ import program from "commander";
 import { getPackageDetails } from "./packageJson";
 import { BreakingIncrement, validatePackage } from "./packageValidator";
 
-function writeOutLine(output: string) {
-    if (program.verbose) {
-        console.log(output);
-    }
-}
-
 function runOnPackage(packageDir: string) {
     const packageData = getPackageDetails(packageDir);
     const [increment, types] = validatePackage(packageData, packageDir, new Map());
-    console.log(`major:${increment & BreakingIncrement.major} minor:${increment & BreakingIncrement.minor}`);
+    console.log(`major:${increment & BreakingIncrement.major ? "yes" : "no"}`);
+    console.log(`minor:${increment & BreakingIncrement.minor ? "yes" : "no"}`);
     console.log(types.keys());
 }
 
@@ -28,5 +23,4 @@ program
     .option('-v|--verbose', 'Verbose logging mode')
     .parse(process.argv);
 
-// const needsMinor = needsMinorIncrement(program.packageDir, false);
 runOnPackage(program.packageDir);
