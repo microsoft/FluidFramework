@@ -31,6 +31,7 @@
     "@fluidframework/cell": "^0.50.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/merge-tree": "^0.50.0",
     "@fluidframework/sequence": "^0.50.0",
     "react": "^16.10.2"
   },

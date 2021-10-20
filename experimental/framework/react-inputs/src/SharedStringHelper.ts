@@ -5,6 +5,7 @@
 
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 
 export interface ISharedStringHelperTextChangedEventArgs {
@@ -48,31 +49,65 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
 
     // Needs to update _latestText with the change and emit the event
     private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent) => {
-        const previousText = this._latestText;
+        // const previousText = this._latestText;
         this._latestText = this._sharedString.getText();
         const isLocal = event.isLocal;
 
-        const changeStartPosition = event.first.position;
-        const changeEndPosition = event.last.position + event.last.segment.cachedLength;
-        const charactersModifiedCount = this._latestText.length - previousText.length;
-
-        const transformPosition = (oldPosition: number): number => {
-            let newPosition: number;
-            if (oldPosition <= changeStartPosition) {
-                // Position is unmoved by the change if it is before the change
-                newPosition = oldPosition;
-            } else if (oldPosition > (changeEndPosition - 1)) {
-                // Position is moved by the distance of the change if it is after the change
-                newPosition = oldPosition + charactersModifiedCount;
-            } else {
-                // Position snaps to the left side of the change if it is fully encompassed by the change.
-                // This should mean that a deletion occurred.
-                newPosition = changeStartPosition;
-            }
-            // eslint-disable-next-line max-len
-            // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeEndPosition}, Transform: ${oldPosition} -> ${newPosition}`);
-            return newPosition;
-        };
+        const op = event.opArgs.op;
+        let transformPosition: (oldPosition: number) => number;
+        if (op.type === MergeTreeDeltaType.INSERT) {
+            transformPosition = (oldPosition: number): number => {
+                if (op.pos1 === undefined) {
+                    throw new Error("pos1 undefined");
+                }
+                if (op.seg === undefined) {
+                    throw new Error("seg undefined");
+                }
+                const changeStartPosition = op.pos1;
+                const changeLength = (op.seg as string).length;
+                let newPosition: number;
+                if (oldPosition <= changeStartPosition) {
+                    // Position is unmoved by the insertion if it is before the insertion's start
+                    newPosition = oldPosition;
+                } else {
+                    // Position is moved by the length of the insertion if it is after the insertion's start
+                    newPosition = oldPosition + changeLength;
+                }
+                // eslint-disable-next-line max-len
+                // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeStartPosition + changeLength}, Transform: ${oldPosition} -> ${newPosition}`);
+                // console.log(op);
+                return newPosition;
+            };
+        } else if (op.type === MergeTreeDeltaType.REMOVE) {
+            transformPosition = (oldPosition: number): number => {
+                if (op.pos1 === undefined) {
+                    throw new Error("pos1 undefined");
+                }
+                if (op.pos2 === undefined) {
+                    throw new Error("pos2 undefined");
+                }
+                const changeStartPosition = op.pos1;
+                const changeEndPosition = op.pos2;
+                const changeLength = changeEndPosition - changeStartPosition;
+                let newPosition: number;
+                if (oldPosition <= changeStartPosition) {
+                    // Position is unmoved by the deletion if it is before the deletion's start
+                    newPosition = oldPosition;
+                } else if (oldPosition > (changeEndPosition - 1)) {
+                    // Position is moved by the size of the deletion if it is after the deletion's end
+                    newPosition = oldPosition - changeLength;
+                } else {
+                    // Position snaps to the left side of the deletion if it is inside the deletion.
+                    newPosition = changeStartPosition;
+                }
+                // eslint-disable-next-line max-len
+                // console.log(`previousText: ${previousText} newText: ${this._latestText} ChangeRange: ${changeStartPosition}-${changeEndPosition}, Transform: ${oldPosition} -> ${newPosition}`);
+                // console.log(op);
+                return newPosition;
+            };
+        } else {
+            throw new Error("Don't know how to handle op types beyond insert and remove");
+        }
 
         this.emit("textChanged", { isLocal, transformPosition });
     };
