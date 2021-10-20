@@ -52,7 +52,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
     const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-    [...Array(lots).keys()].map((i) => map.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
+    [...Array(lots).keys()].map((i) => dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
 
     await args.ensureSynchronized();
     await args.opProcessingController.pauseProcessing(container);
@@ -374,26 +374,32 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("correctly handles partial resend on new container", async () => {
-        const setCounts = Array(lots).fill(0);
+        const setCounts: number[] = Array(lots).fill(0);
         map1.on("valueChanged", (changed) => ++setCounts[changed.key]);
         const stashedOps = await getPendingOps(provider, false, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
         });
+        assert(setCounts.reduce((a, b) => a + b) === 0);
 
-        const halfOps = JSON.parse(stashedOps) as {
-            pendingRuntimeState: { pendingStates: any[], clientId?: string },
-            url: string,
-        };
-        assert(halfOps.pendingRuntimeState.pendingStates.length >= lots);
-        halfOps.pendingRuntimeState.pendingStates.length =
-            Math.trunc(halfOps.pendingRuntimeState.pendingStates.length / 2);
-        assert(halfOps.pendingRuntimeState.pendingStates.length < lots);
+        // send half with one container
+        const halfP = new Promise<void>((res) => container1.on("op", (op) => {
+            if (op.clientSequenceNumber === Math.trunc(lots / 2)) {
+                res();
+            }
+        }));
+        const container2 = await loader.resolve({ url }, stashedOps);
+        container2.deltaManager.outbound.on("op", (ops) => {
+            if (ops[0].clientSequenceNumber >= lots / 2) {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                container2.deltaManager.outbound.pause();
+            }
+        });
+        await halfP;
+        container2.close();
+        assert(setCounts.reduce((a, b) => a + b) > 0);
+        assert(setCounts.reduce((a, b) => a + b) < lots);
 
-        // give half to one container
-        const container2 = await loader.resolve({ url }, JSON.stringify(halfOps));
-        container2.on("connected", () => container2.close());
-        await provider.ensureSynchronized();
-        // give all to another
+        // give same ops to another container
         await loader.resolve({ url }, stashedOps);
         await provider.ensureSynchronized();
         // every key should only have 1 op
