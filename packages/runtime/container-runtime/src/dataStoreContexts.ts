@@ -173,7 +173,20 @@ import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreCo
         assert(!this._contexts.has(alias), "Linking store with existing alias");
         assert(this._contexts.has(id), "Linking non-existing store");
 
+        // The intention here is to just clone the internal state
+        // of the context by copying references.
+        // This function should not change the state of the context itself.
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this._contexts.set(alias, this._contexts.get(id)!);
+
+        const deferred = this.deferredContexts.get(id);
+        if (deferred) {
+            this.deferredContexts.set(alias, deferred);
+        }
+
+        if (this.notBoundContexts.has(id)) {
+            this.notBoundContexts.add(alias);
+        }
     }
 }

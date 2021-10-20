@@ -194,7 +194,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
     // (undocumented)
-    trySetAliasForDataStore(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean>;
+    trySetDataStoreAlias(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean>;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }
