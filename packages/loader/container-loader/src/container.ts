@@ -464,6 +464,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly connectionStateHandler: ConnectionStateHandler;
 
     private _closed = false;
+    private _doneClosing = false; // for logging, to distinguish between the top and bottom of close()
 
     private setAutoReconnectTime = performance.now();
 
@@ -641,6 +642,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,
+                    containerClosed: () => this._closed ? (this._doneClosing ? "closed" : "closing") : "notClosed",
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -796,7 +798,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.logger.sendTelemetryEvent(
             {
                 eventName: "ContainerClose",
-                loaded: this.loaded,
                 category: error === undefined ? "generic" : "error",
             },
             error,
@@ -805,6 +806,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.emit("closed", error);
 
         this.removeAllListeners();
+
+        this._doneClosing = true;
     }
 
     public closeAndGetPendingLocalState(): string {
