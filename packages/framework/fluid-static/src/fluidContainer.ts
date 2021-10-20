@@ -57,6 +57,22 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      */
     readonly connected: boolean;
 
+     /**
+     * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
+     * acknowledged by the service. Closing the container while `isDirty === true` will result in the loss of these
+     * local changes. You should always check the `isDirty` flag before closing the container or navigating away
+     * from the page.
+     *
+     * A container is considered dirty in the following cases:
+     *
+     * 1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged
+     * changes will be lost if the container is closed.
+     *
+     * 1. There is no network connection while making changes to the container. These changes cannot be
+     * acknowledged by the service until the network connection is restored.
+     */
+     readonly isDirty: boolean;
+
     /**
      * Whether the container is disposed, which permanently disables it.
      */
@@ -111,6 +127,13 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
+    }
+
+    /**
+     * {@inheritDoc IFluidContainer.isDirty}
+     */
+     public get isDirty(): boolean {
+        return this.container.isDirty;
     }
 
     /**

@@ -684,6 +684,30 @@ use_old_InterfaceDeclaration_IQuorum(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
+* "RemovedInterfaceDeclaration_IQuorumEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IQuorumEvents():
+    old.IQuorumEvents;
+declare function use_current_RemovedInterfaceDeclaration_IQuorumEvents(
+    use: current.IQuorumEvents);
+use_current_RemovedInterfaceDeclaration_IQuorumEvents(
+    get_old_InterfaceDeclaration_IQuorumEvents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
+* "RemovedInterfaceDeclaration_IQuorumEvents": {"backCompat": false}
+*/
+declare function get_current_RemovedInterfaceDeclaration_IQuorumEvents():
+    current.IQuorumEvents;
+declare function use_old_InterfaceDeclaration_IQuorumEvents(
+    use: old.IQuorumEvents);
+use_old_InterfaceDeclaration_IQuorumEvents(
+    get_current_RemovedInterfaceDeclaration_IQuorumEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISequencedClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedClient():

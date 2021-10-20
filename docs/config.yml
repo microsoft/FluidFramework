@@ -90,7 +90,7 @@ markup:
   goldmark:
     parser:
       attribute:
-        # enables adding CSS classes to black elements in markdown
+        # enables adding CSS classes to block elements in markdown
         block: true
     renderer:
       autoHeadingIDType: "github"
