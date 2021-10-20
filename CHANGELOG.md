@@ -1,5 +1,11 @@
 # Change Log
 
+## 12.4.1
+
+* build: Update fluid framework to version 0.49.2
+  * Associated pull request: [35306](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35306)
+  * Commit: [f10e6dd9245e7ae789cc8d897736faff0e134366](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/f10e6dd9245e7ae789cc8d897736faff0e134366)
+
 ## 12.2.0
 
 * feat: BREAKING CHANGE Migration mechanism for breaking changes to SharedTree summaries/ops
