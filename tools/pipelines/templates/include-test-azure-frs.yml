@@ -88,7 +88,7 @@ jobs:
 
       # Download artifact
       - task: DownloadPipelineArtifact@2
-        displayName: Download test package
+        displayName: Download artifact
         inputs:
           source: specific
           project: internal
@@ -107,7 +107,7 @@ jobs:
           script: |
             mkdir ${{ parameters.testWorkspace }}
 
-      # Unpack package
+      # Unpack package from artifact
       - task: Bash@3
         displayName: Unpack package
         inputs:
@@ -122,7 +122,7 @@ jobs:
         inputs:
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
           command: 'custom'
-          customCommand: 'install'
+          customCommand: 'install --use-npm'
           # customCommand: 'install cross-env mocha fluid-framework @fluidframework/container-definitions @fluidframework/map@latest --no-package-lock --no-save'
 
       # # See installed packages
