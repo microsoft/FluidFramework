@@ -55,7 +55,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.23.0",
     "@types/marked": "^2.0.2",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.14.0",
     "@types/simplemde": "^1.11.7",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

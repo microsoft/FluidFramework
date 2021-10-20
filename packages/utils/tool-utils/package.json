@@ -73,7 +73,7 @@
     "@types/debug": "^4.1.5",
     "@types/jwt-decode": "^2.2.1",
     "@types/mocha": "^8.2.2",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.14.0",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",
     "concurrently": "^5.2.0",

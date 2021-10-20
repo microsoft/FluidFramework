@@ -60,7 +60,7 @@
     "@fluidframework/server-services-ordering-rdkafka": "^0.1033.0",
     "@fluidframework/server-services-telemetry": "^0.1033.0",
     "@fluidframework/server-services-utils": "^0.1033.0",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.14.0",
     "body-parser": "^1.17.1",
     "bytes": "^3.0.0",
     "compression": "^1.7.2",

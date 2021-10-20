@@ -69,7 +69,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
 // @public (undocumented)
 export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(Base: TBase) => {
     new (...args: any[]): {
-        blobsWriter: Map<string, ArrayBufferLike>;
+        blobsWriter: Map<string, ArrayBuffer | SharedArrayBuffer>;
         commitsWriter: {
             [key: string]: api.ITree;
         };
@@ -87,7 +87,7 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
-        createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+        createBlob(file: ArrayBuffer | SharedArrayBuffer): Promise<api.ICreateBlobResponse>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
     };
@@ -110,7 +110,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
 // @public (undocumented)
 export const FluidFetchReaderFileSnapshotWriter: {
     new (...args: any[]): {
-        blobsWriter: Map<string, ArrayBufferLike>;
+        blobsWriter: Map<string, ArrayBuffer | SharedArrayBuffer>;
         commitsWriter: {
             [key: string]: api.ITree;
         };
@@ -128,7 +128,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
-        createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
+        createBlob(file: ArrayBuffer | SharedArrayBuffer): Promise<api.ICreateBlobResponse>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
     };

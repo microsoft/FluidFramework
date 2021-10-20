@@ -42,7 +42,7 @@
     "@fluidframework/runtime-definitions": "^0.50.0",
     "@fluidframework/sequence": "^0.50.0",
     "@fluidframework/view-interfaces": "^0.50.0",
-    "@types/node": "^12.19.0",
+    "@types/node": "^14.14.0",
     "monaco-editor": "^0.15.6"
   },
   "devDependencies": {
