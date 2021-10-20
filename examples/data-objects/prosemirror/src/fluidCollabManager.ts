@@ -213,7 +213,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.text.on(
             "pre-op",
-            (op, local) => {
+            (_, local) => {
                 if (local) {
                     return;
                 }
@@ -237,7 +237,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
         this.text.on(
             "op",
-            (op, local) => {
+            (_, local) => {
                 this.emit("valueChanged");
 
                 if (local) {

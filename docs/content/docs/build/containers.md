@@ -141,6 +141,23 @@ container.on("disposed", () => {
 });
 ```
 
+### isDirty
+
+A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service. Closing the container while `isDirty === true` will result in the loss of any operations that have not yet been acknowledged by the service. Closing the container while true will result in the loss of these local changes.
+
+You should always check the `isDirty` flag before closing the container or navigating away from the page.
+
+A container is considered dirty in the following cases:
+
+1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged changes will be lost if the container is closed.
+1. There is no network connection while making changes to the container. These changes cannot be acknowledged by the service until the network connection is restored.
+
+Note that a container is *not* considered dirty in the following cases:
+
+1. The container is in the *detached* state. Changes to a detached container are not sent to the service until the container is *attached*, but the container is not considered dirty because it is detached. Stated differently, a detached container will never be dirty.
+1. The container is being attached. While it is being attached, the container's outstanding operations are sent to the service. However, the container will not be dirty in this case. Once the container is attached, then further changes to it will cause it to become dirty.
+1. The network connection disconnects without any outstanding changes to the container. In this case, the container is not considered dirty because it has no local changes that haven't been sent to the service.
+
 ### Initial objects
 
 Initial objects are shared objects that your code defines in a container's schema and which exist for the lifetime of the container.

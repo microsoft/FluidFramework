@@ -18,7 +18,7 @@ import {
     NackErrorType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { canSummarize } from "@fluidframework/server-services-client";
+import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
     ControlMessageType,
     extractBoxcar,
@@ -80,7 +80,7 @@ enum InstructionType {
 
 interface ITicketedMessageOutput {
 
-    message: ITicketedMessage;
+    message: ISequencedDocumentMessage | INackMessage;
 
     msn: number;
 
@@ -125,6 +125,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private lastSendP = Promise.resolve();
     private lastNoClientP = Promise.resolve();
     private lastSentMSN = 0;
+    private lastHash: string;
     private lastInstruction = InstructionType.NoOp;
 
     private activityIdleTimer: any;
@@ -182,6 +183,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Initialize counting context
         this.sequenceNumber = lastCheckpoint.sequenceNumber;
+        this.lastHash = lastCheckpoint.expHash1 ?? defaultHash;
         this.term = lastCheckpoint.term;
         this.epoch = lastCheckpoint.epoch;
         this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
@@ -245,6 +247,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
             this.lastInstruction = ticketedMessage.instruction;
 
+            let outgoingMessage: ISequencedOperationMessage | INackMessage;
             if (!ticketedMessage.nacked) {
                 // Check for idle clients.
                 this.checkIdleClients(ticketedMessage);
@@ -281,13 +284,26 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         };
                     }
                 }
+                const sequencedMessage = ticketedMessage.message as ISequencedDocumentMessage;
+                if (this.serviceConfiguration.deli.enableOpHashing) {
+                    this.lastHash = getNextHash(sequencedMessage, this.lastHash);
+                    sequencedMessage.expHash1 = this.lastHash;
+                }
 
+                outgoingMessage = {
+                    documentId: this.documentId,
+                    operation: sequencedMessage,
+                    tenantId: this.tenantId,
+                    type: SequencedOperationType,
+                };
                 sequencedMessageCount++;
+            } else {
+                outgoingMessage = ticketedMessage.message as INackMessage;
             }
 
             // Update the msn last sent.
             this.lastSentMSN = ticketedMessage.msn;
-            this.lastSendP = this.sendToScriptorium(ticketedMessage.message);
+            this.lastSendP = this.sendToScriptorium(outgoingMessage);
         }
 
         kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
@@ -699,16 +715,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         // And now craft the output message
         const outputMessage = this.createOutputMessage(message, undefined /* origin */, sequenceNumber, dataContent);
 
-        const sequencedMessage: ISequencedOperationMessage = {
-            documentId: message.documentId,
-            operation: outputMessage,
-            tenantId: message.tenantId,
-            type: SequencedOperationType,
-        };
-
         return {
             instruction,
-            message: sequencedMessage,
+            message: outputMessage,
             msn: this.minimumSequenceNumber,
             nacked: false,
             send: sendType,
@@ -990,6 +999,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             clients: this.clientSeqManager.cloneValues(),
             durableSequenceNumber: this.durableSequenceNumber,
             epoch: this.epoch,
+            expHash1: this.lastHash,
             logOffset: this.logOffset,
             sequenceNumber: this.sequenceNumber,
             term: this.term,

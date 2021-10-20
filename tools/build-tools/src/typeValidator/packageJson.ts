@@ -49,7 +49,14 @@ export function getPackageDetails(packageDir: string): PackageDetails {
 
     const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
 
-    if(pkgJson.version !== pkgJson.typeValidation?.version){
+    // normalize the version to remove any pre-release version info,
+    // as we shouldn't change the type validation version for pre-release versions
+    const normalizedVersion =
+        pkgJson.version.includes("-") ?
+            pkgJson.version.substring(0, pkgJson.version.indexOf("-")) :
+            pkgJson.version;
+
+    if(normalizedVersion !== pkgJson.typeValidation?.version){
         if(pkgJson.typeValidation !== undefined){
             pkgJson.devDependencies[`${pkgJson.name}-${pkgJson.typeValidation.version}`] =
                 `npm:${pkgJson.name}@${pkgJson.typeValidation.version}`;
@@ -57,7 +64,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
             pkgJson.devDependencies = createSortedObject(pkgJson.devDependencies);
         }
         pkgJson.typeValidation = {
-            version: pkgJson.version,
+            version: normalizedVersion,
             broken: pkgJson.typeValidation?.broken ?? {}
         }
         fs.writeFileSync(packagePath, JSON.stringify(pkgJson, undefined, 2));
@@ -69,7 +76,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
     return {
         name: pkgJson.name,
         packageDir,
-        version: pkgJson.version,
+        version: normalizedVersion,
         oldVersions,
         broken: pkgJson.typeValidation.broken
     }
