@@ -39,24 +39,41 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
         this._sharedString.on("sequenceDelta", this.sequenceDeltaHandler);
     }
 
+    /**
+     * @returns The full text stored in the SharedString as a string.
+     */
     public getText(): string {
         return this._latestText;
     }
 
+    /**
+     * Insert the string provided at the given position.
+     */
     public insertText(text: string, pos: number): void {
         this._sharedString.insertText(pos, text);
     }
 
+    /**
+     * Remove the text within the given range.
+     */
     public removeText(start: number, end: number): void {
         this._sharedString.removeText(start, end);
     }
 
-    // consider hiding
+    /**
+     * Insert the string provided at the given start position, and remove the text that (prior to the insertion) is
+     * within the given range.  Equivalent to doing the two operations sequentially.
+     * Consider removing?
+     */
     public replaceText(text: string, start: number, end: number) {
         this._sharedString.replaceText(start, end, text);
     }
 
-    // Needs to update _latestText with the change and emit the event
+    /**
+     * Called when the data of the SharedString changes.  We update our cached text and emit the "textChanged" event.
+     * Most of the work is to build up the appropriate transformPosition function, which allows the caller to translate
+     * pre-update positions to post-update positions (e.g. to find where a caret should move to).
+     */
     private readonly sequenceDeltaHandler = (event: SequenceDeltaEvent) => {
         // const previousText = this._latestText;
         this._latestText = this._sharedString.getText();
