@@ -20,6 +20,7 @@ import {
     getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
+import { defaultHash } from "@fluidframework/server-services-client";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
 
@@ -70,6 +71,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
             appSummary,
             sequenceNumber,
             documentAttributes.term ?? 1,
+            defaultHash,
             quorumValues,
         );
         return this.createDocumentService(resolvedUrl, logger);
