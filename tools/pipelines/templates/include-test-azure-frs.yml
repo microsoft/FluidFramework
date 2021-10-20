@@ -186,11 +186,10 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}
           targetType: 'inline'
           script: |
-            mkdir ./src
-            mkdir ./src/test
+            ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/src/test
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
             ls ${{ parameters.testWorkspace }}
-            ls ${{ parameters.testWorkspace }}/src
 
       # Run the tests
       - task: Npm@1
