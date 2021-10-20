@@ -304,7 +304,7 @@ export class TenantManager {
             };
             await collection.update(query, {
                 disabled: true,
-                scheduledDeletionTime: scheduledDeletionTime.toJSON(),
+                scheduledDeletionTime: scheduledDeletionTime?.toJSON(),
             }, null);
         } else {
             await collection.deleteOne({ _id: tenantId });
