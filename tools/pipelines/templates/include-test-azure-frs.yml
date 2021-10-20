@@ -90,9 +90,23 @@ jobs:
         inputs:
           version: 12.x
 
-      # Download artifact
+      # Download artifact - Package
       - task: DownloadPipelineArtifact@2
-        displayName: Download artifact
+        displayName: Download - Package
+        inputs:
+          source: specific
+          project: internal
+          pipeline: Build - client packages
+          preferTriggeringPipeline: true
+          runVersion: latestFromBranch
+          runBranch: $(Build.SourceBranch)
+          artifact: pack
+          patterns: "**/${{ variables.testPackageFilePattern }}"
+          path: $(Pipeline.Workspace)/client/pack
+
+      # Download artifact - Test files
+      - task: DownloadPipelineArtifact@2
+        displayName: Download artifact - Test files
         inputs:
           source: specific
           project: internal
