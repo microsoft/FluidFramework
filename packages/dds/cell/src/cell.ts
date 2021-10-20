@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IFluidSerializer } from "@fluidframework/core-interfaces";
+import { IFluidSerializer, ISerializedHandle } from "@fluidframework/core-interfaces";
 
 import {
     FileMode,
@@ -21,7 +21,7 @@ import {
     Serializable,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import { ISharedCell, ISharedCellEvents } from "./interfaces";
 
@@ -40,7 +40,10 @@ interface IDeleteCellOperation {
 }
 
 interface ICellValue {
-    // The actual value contained in the cell which needs to be wrapped to handle undefined
+    // The type of the value
+    type: string;
+
+    // The actual value
     value: any;
 }
 
@@ -159,7 +162,8 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
         // Serialize the value if required.
         const operationValue: ICellValue = {
-            value: this.serializer.replaceHandles(value, this.handle),
+            type: ValueType[ValueType.Plain],
+            value: this.toSerializable(value, this.serializer),
         };
 
         // Set the value locally.
@@ -208,10 +212,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * @returns the snapshot of the current state of the cell
      */
     protected snapshotCore(serializer: IFluidSerializer): ITree {
+        // Get a serializable form of data
         const content: ICellValue = {
-            value: this.data,
+            type: ValueType[ValueType.Plain],
+            value: this.toSerializable(this.data, serializer),
         };
 
+        // And then construct the tree for it
         const tree: ITree = {
             entries: [
                 {
@@ -219,7 +226,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
                     path: snapshotFileName,
                     type: TreeEntry.Blob,
                     value: {
-                        contents: serializer.stringify(content, this.handle),
+                        contents: JSON.stringify(content),
                         encoding: "utf-8",
                     },
                 },
@@ -235,7 +242,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected async loadCore(storage: IChannelStorageService): Promise<void> {
         const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-        this.data = this.decode(content);
+        this.data = this.fromSerializable(content);
     }
 
     /**
@@ -286,7 +293,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
             switch (op.type) {
                 case "setCell":
-                    this.setCore(this.decode(op.value));
+                    this.setCore(this.fromSerializable(op.value));
                     break;
 
                 case "deleteCell":
@@ -309,15 +316,30 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         this.emit("delete");
     }
 
-    private decode(cellValue: ICellValue) {
-        const value = cellValue.value;
-
-        if (this.serializer.decode !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return this.serializer.decode(value);
+    private toSerializable(value: T | undefined, serializer: IFluidSerializer) {
+        if (value === undefined) {
+            return value;
         }
 
-        // This code can be removed once IFluidSerializer.decode is not optional
+        // Stringify to convert to the serialized handle values - and then parse in order to create
+        // a POJO for the op
+        const stringified = serializer.stringify(value, this.handle);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return JSON.parse(stringified);
+    }
+
+    private fromSerializable(operation: ICellValue) {
+        let value = operation.value;
+
+        // Convert any stored shared object to updated handle
+        if (operation.type === ValueType[ValueType.Shared]) {
+            const handle: ISerializedHandle = {
+                type: "__fluid_handle__",
+                url: operation.value as string,
+            };
+            value = handle;
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value !== undefined
             ? this.serializer.parse(JSON.stringify(value))

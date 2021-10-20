@@ -13,20 +13,12 @@ There are a few steps you can take to write a good change note and avoid needing
 ## 0.50 Breaking changes
 
 - [OpProcessingController removed](#OpProcessingController-removed)
-- [decode added to IFluidSerializer](#decode-added-to-ifluidserializer)
-- [SharedCell serialization](#sharedcell-serialization)
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
 
 ### OpProcessingController removed
 OpProcessingController has been deprecated for very long time. It's being removed in this release.
 Please use LoaderContainerTracker instead (see https://github.com/microsoft/FluidFramework/pull/7784 as an example of changes required)
 If you can't make this transition, you can always copy implementation of LoaderContainerTracker to your repo and maintain it. That said, it has bugs and tests using it are easily broken but subtle changes in reconnection logic, as evident from PRs #7753, #7393)
-
-### decode added to IFluidSerializer
-`IFluidSerializer` has a new optional method `decode`. This does the converse of `replaceHandles` by decoding encoded handles.
-
-### SharedCell serialization
-`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
 
 ### Expose isDirty flag in the FluidContainer
 The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
