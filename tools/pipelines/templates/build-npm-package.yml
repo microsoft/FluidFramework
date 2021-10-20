@@ -321,7 +321,7 @@ stages:
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/azure-frs-test/
 
-                tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-test/azure-client.tgz --exclude='./packages/framework/azure-client/node_modules' ./packages/framework/azure-client
+                tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-test/azure-client.tgz ./packages/framework/azure-client
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack azure frs tests
