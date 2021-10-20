@@ -49,7 +49,7 @@ export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, su
 // @public (undocumented)
 export function calculateStats(summary: ISummaryTree): ISummaryStats;
 
-// @public (undocumented)
+// @public
 export class ChannelContextRealizeError extends LoggingError implements IChannelContextRealizeError {
     constructor(fluidErrorCode: string, packageName?: string);
     // (undocumented)
@@ -123,7 +123,7 @@ export function getNormalizedObjectStoragePathParts(path: string): string[];
 // @public (undocumented)
 export function getStack(): string | undefined;
 
-// @public (undocumented)
+// @public
 export interface IChannelContextRealizeError extends IFluidErrorBase {
     // (undocumented)
     errorType: RuntimeErrorType.channelContextRealizeError;
