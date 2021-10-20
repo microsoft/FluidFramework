@@ -85,7 +85,7 @@ export class TenantManager {
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
             Lumberjack.error(
-                "Tenant is disabled or does not exist.", 
+                "Tenant is disabled or does not exist.",
                 { [BaseTelemetryProperties.tenantId]: tenantId },
             );
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
