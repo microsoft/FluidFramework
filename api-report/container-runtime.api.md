@@ -66,7 +66,9 @@ export enum ContainerMessageType {
     // (undocumented)
     ChunkedOp = "chunkedOp",
     // (undocumented)
-    FluidDataStoreOp = "component"
+    FluidDataStoreOp = "component",
+    // (undocumented)
+    SetStoreAlias = "SetStoreAlias"
 }
 
 // @public
@@ -191,6 +193,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"];
     get summarizerClientId(): string | undefined;
+    // (undocumented)
+    trySetAliasForDataStore(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean>;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
     }

@@ -13,7 +13,7 @@ import {
     DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -31,66 +31,68 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         fluidDataObjectType: DataObjectFactoryType.Test,
     };
 
-    describe("Name conflict", () => {
-        beforeEach(async () => {
-            container1 = await provider.makeTestContainer(testContainerConfig);
-            dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
+    const setupContainers = async () => {
+        container1 = await provider.makeTestContainer(testContainerConfig);
+        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
 
-            container2 = await provider.loadTestContainer(testContainerConfig);
-            dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+        container2 = await provider.loadTestContainer(testContainerConfig);
+        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
 
-            await provider.ensureSynchronized();
-        });
+        await provider.ensureSynchronized();
+    };
 
-        afterEach(async () => {
-            provider.reset();
-        });
+    const reset = async () => provider.reset();
 
-        it("Root datastore creation does not fail at attach op", async () => {
+    const anyDataCorruption = async (containers: IContainer[]) => Promise.race(
+        containers.map(async (c) => new Promise<boolean>((res) => c.once("closed", (error) => {
+            res(error?.errorType === ContainerErrorType.dataCorruptionError);
+        }))));
+
+    describe("Name conflict expected failures", () => {
+        beforeEach(async () => setupContainers());
+        afterEach(async () => reset());
+
+        it("Root datastore creation fails at attach op", async () => {
             // Isolate inbound communication
             await container1.deltaManager.inbound.pause();
             await container2.deltaManager.inbound.pause();
 
-            const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, "1");
-            const rootDataStore2 = await (dataObject2.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, "1");
+            await (dataObject1.context.containerRuntime as IContainerRuntime).createRootDataStore(packageName, "1");
+            await (dataObject2.context.containerRuntime as IContainerRuntime).createRootDataStore(packageName, "1");
 
             // Restore inbound communications
             // At this point, two `ContainerMessageType.Attach` messages will be sent and processed.
             container1.deltaManager.inbound.resume();
             container2.deltaManager.inbound.resume();
 
-            await provider.ensureSynchronized();
-
-            assert(!container1.closed);
-            assert(!container2.closed);
-            assert.strictEqual(rootDataStore2, rootDataStore1);
+            const container3 = await provider.loadTestContainer(testContainerConfig);
+            const dataCorruption = await anyDataCorruption([container1, container2, container3]);
+            assert(dataCorruption);
         });
 
-        it("Root datastore creation does not fail when already attached", async () => {
-            const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
+        it("Root datastore creation fails when already attached", async () => {
+            await (dataObject1.context.containerRuntime as IContainerRuntime)
                 .createRootDataStore(packageName, "2");
-            const rootDataStore2 = await (dataObject2.context.containerRuntime as IContainerRuntime)
+            await (dataObject2.context.containerRuntime as IContainerRuntime)
                 .createRootDataStore(packageName, "2");
 
-            await provider.ensureSynchronized();
-
-            assert(!container1.closed);
-            assert(!container2.closed);
-            assert.strictEqual(rootDataStore2, rootDataStore1);
+            const dataCorruption = await anyDataCorruption([container1, container2]);
+            assert(dataCorruption);
         });
 
-        it("Root datastore creation does not fail when already attached - same container", async () => {
-            const rootDataStore1 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, "3");
-            const rootDataStore2 = await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, "3");
+        it("Root datastore creation fails when already attached - same container", async () => {
+            let error: Error | undefined;
+            try {
+                await (dataObject1.context.containerRuntime as IContainerRuntime)
+                    .createRootDataStore(packageName, "3");
+                await (dataObject1.context.containerRuntime as IContainerRuntime)
+                    .createRootDataStore(packageName, "3");
+                await provider.ensureSynchronized();
+            } catch (err) {
+                error = err as Error;
+            }
 
-            await provider.ensureSynchronized();
-
-            assert(!container1.closed);
-            assert.strictEqual(rootDataStore2, rootDataStore1);
+            assert(error);
         });
     });
 });

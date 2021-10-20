@@ -7,6 +7,7 @@
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -228,6 +229,9 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 // @public (undocumented)
 export function utf8ByteLength(str: string): number;
+
+// @public (undocumented)
+export const waitAndCreateRootDataStore: (runtime: IContainerRuntime, pkg: string | string[], rootDataStoreId: string) => Promise<IFluidDataStoreChannel>;
 
 
 // (No @packageDocumentation comment for this package)

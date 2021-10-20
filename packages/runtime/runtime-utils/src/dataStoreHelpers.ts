@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
     IFluidObject,
     IFluidRouter,
@@ -11,6 +12,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
+    IFluidDataStoreChannel,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
@@ -114,3 +116,10 @@ export function createDataStoreFactory(
         get: async (name: string) => (await factory).IFluidDataStoreRegistry?.get(name),
     };
 }
+
+export const waitAndCreateRootDataStore = async (
+    runtime: IContainerRuntime,
+    pkg: string | string[],
+    rootDataStoreId: string,
+): Promise<IFluidDataStoreChannel> =>
+    runtime.createRootDataStore(pkg, rootDataStoreId) as unknown as IFluidDataStoreChannel;
