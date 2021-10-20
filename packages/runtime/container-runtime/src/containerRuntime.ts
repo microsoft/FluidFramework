@@ -1562,7 +1562,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
-            fluidDataStore.bindToContext();
+            fluidDataStore.attachGraph();
         }
         return fluidDataStore;
     }
