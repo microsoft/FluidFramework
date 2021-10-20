@@ -53,7 +53,10 @@ export class OrdererManager implements core.IOrdererManager {
 
         const messageMetaData = { documentId, tenantId };
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-        Lumberjack.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, getLumberBaseProperties(tenantId, documentId));
+        Lumberjack.info(
+            `tenant orderer: ${JSON.stringify(tenant.orderer)}`,
+            getLumberBaseProperties(tenantId, documentId),
+        );
 
         if (tenant.orderer.url !== this.ordererUrl) {
             return Promise.reject(new Error("Invalid ordering service endpoint"));
