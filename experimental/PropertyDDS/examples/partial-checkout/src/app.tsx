@@ -2,11 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import _ from "lodash";
 
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
-import { getTinyliciousContainer } from "@fluid-experimental/get-container";
-import _ from "lodash";
-import { getFRSContainer, hasFRSEndpoints } from "./utils/getFRSContainer";
+import {
+    getFluidRelayContainer,
+    getTinyliciousContainer,
+    hasFluidRelayEndpoints,
+} from "@fluid-experimental/get-container";
 
 import { PropertyTreeContainerRuntimeFactory as ContainerFactory } from "./containerCode";
 import { IPropertyTree } from "./dataObject";
@@ -34,8 +37,8 @@ async function start(): Promise<void> {
     // production service, but ultimately we'll still be getting a reference to a Container object.  The helper
     // function takes the ID of the document we're creating or loading, the container code to load into it, and a
     // flag to specify whether we're creating a new document or loading an existing one.
-    const [container, containerId] = hasFRSEndpoints()
-        ? await getFRSContainer(documentId, ContainerFactory, shouldCreateNew)
+    const [container, containerId] = hasFluidRelayEndpoints()
+        ? await getFluidRelayContainer(documentId, ContainerFactory, shouldCreateNew)
         : await getTinyliciousContainer(documentId, ContainerFactory, shouldCreateNew);
 
     // update the browser URL and the window title with the actual container ID

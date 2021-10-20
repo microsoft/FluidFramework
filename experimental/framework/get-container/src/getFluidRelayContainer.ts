@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { createContainer, getContainer } from "@fluid-experimental/get-container";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
@@ -11,6 +9,7 @@ import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { createContainer, getContainer } from "./getContainer";
 
 const createAzureCreateNewRequest = (): IRequest => (
     {
@@ -21,35 +20,23 @@ const createAzureCreateNewRequest = (): IRequest => (
     }
 );
 
-export async function getFRSContainer(
-    documentId: string,
-    containerRuntimeFactory: IRuntimeFactory,
-    createNew: boolean,
-): Promise<[Container, string]> {
+const verifyEnvConfig = () => {
     if (process.env.ID === undefined) { throw Error("Define ID in .env file"); }
     if (process.env.KEY === undefined) { throw Error("Define KEY in .env file"); }
     if (process.env.ORDERER === undefined) { throw Error("Define ORDERER in .env file"); }
     if (process.env.STORAGE === undefined) { throw Error("Define STORAGE in .env file"); }
+};
+
+export async function getFluidRelayContainer(
+    documentId: string,
+    containerRuntimeFactory: IRuntimeFactory,
+    createNew: boolean,
+): Promise<[Container, string]> {
+    verifyEnvConfig();
 
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
     const urlResolver = new InsecureTinyliciousUrlResolver();
-
-    /* const user = {
-        id: "unique-id",
-        name: "Unique Idee",
-    };
-
-    const tenantId = process.env.ID;
-    const key = process.env.KEY;
-    const hostToken = jwt.sign(
-        {
-            user,
-            documentId,
-            tenantId: tenantId,
-            scopes: ["doc:read", "doc:write", "summary:write"],
-        },
-        key); */
 
     let container: Container;
     if (createNew) {
@@ -73,14 +60,11 @@ export async function getFRSContainer(
     return [container, containerId];
 }
 
-export function hasFRSEndpoints() {
+export function hasFluidRelayEndpoints() {
     try {
-        if (process.env.ID === undefined) { throw Error("Define ID in .env file"); }
-        if (process.env.KEY === undefined) { throw Error("Define KEY in .env file"); }
-        if (process.env.ORDERER === undefined) { throw Error("Define ORDERER in .env file"); }
-        if (process.env.STORAGE === undefined) { throw Error("Define STORAGE in .env file"); }
+        verifyEnvConfig();
+        return true;
     } catch {
         return false;
     }
-    return true;
 }
