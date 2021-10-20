@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
 import { Provider } from "nconf";
@@ -53,7 +53,7 @@ export class OrdererManager implements core.IOrdererManager {
 
         const messageMetaData = { documentId, tenantId };
         winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-        Lumberjack.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, messageMetaData);
+        Lumberjack.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, getLumberBaseProperties(tenantId, documentId));
 
         if (tenant.orderer.url !== this.ordererUrl) {
             return Promise.reject(new Error("Invalid ordering service endpoint"));

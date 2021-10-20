@@ -5,7 +5,7 @@
 
 import * as services from "@fluidframework/server-services";
 import { getOrCreateRepository } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
     MongoManager,
     ISecretManager,
@@ -63,7 +63,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
                 } catch (err) {
                     // This is okay to fail since the repos are alreay created in production.
                     winston.error(`Error creating repos`);
-                    Lumberjack.error(`Error creating repos`);
+                    Lumberjack.error(`Error creating repos`, { [BaseTelemetryProperties.tenantId]: tenant._id }, err);
                 }
             }
         });

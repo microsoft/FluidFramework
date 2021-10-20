@@ -13,7 +13,7 @@ import {
     ISecretManager,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as jwt from "jsonwebtoken";
 import * as _ from "lodash";
 import * as winston from "winston";
@@ -84,7 +84,7 @@ export class TenantManager {
         const tenant = await this.getTenantDocument(tenantId, includeDisabledTenant);
         if (!tenant) {
             winston.error("Tenant is disabled or does not exist.");
-            Lumberjack.error("Tenant is disabled or does not exist.");
+            Lumberjack.error("Tenant is disabled or does not exist.",  { [BaseTelemetryProperties.tenantId]: tenantId });
             return Promise.reject(new Error("Tenant is disabled or does not exist."));
         }
 
@@ -140,7 +140,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");
-            Lumberjack.error("Tenant key encryption failed.");
+            Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
             return Promise.reject(new Error("Tenant key encryption failed."));
         }
 
@@ -204,7 +204,7 @@ export class TenantManager {
         const tenantKey = this.secretManager.decryptSecret(encryptedTenantKey);
         if (tenantKey == null) {
             winston.error("Tenant key decryption failed.");
-            Lumberjack.error("Tenant key decryption failed.");
+            Lumberjack.error("Tenant key decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
             return Promise.reject(new Error("Tenant key decryption failed."));
         }
 
@@ -222,7 +222,7 @@ export class TenantManager {
         const encryptedTenantKey = this.secretManager.encryptSecret(tenantKey);
         if (encryptedTenantKey == null) {
             winston.error("Tenant key encryption failed.");
-            Lumberjack.error("Tenant key encryption failed.");
+            Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
             return Promise.reject(new Error("Tenant key encryption failed."));
         }
 

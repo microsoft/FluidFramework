@@ -4,7 +4,7 @@
  */
 
 import { MongoManager, ISecretManager } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { logRequestMetric, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as bodyParser from "body-parser";
 import express from "express";
 import morgan from "morgan";
@@ -53,8 +53,8 @@ export function create(
                 serviceName: "riddler",
                 eventName: "http_requests",
             };
+            logRequestMetric(messageMetaData);
             winston.info("request log generated", { messageMetaData });
-            Lumberjack.info("request log generated", messageMetaData);
             return undefined;
         }));
     } else {

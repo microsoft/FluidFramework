@@ -87,7 +87,6 @@ export function create(
              };
              logRequestMetric(messageMetaData);
              winston.info("request log generated", { messageMetaData });
-             Lumberjack.info("request log generated", messageMetaData);
              return undefined;
         }, { stream }));
     } else {
