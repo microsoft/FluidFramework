@@ -11,7 +11,6 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
 import { IThrottlingWarning } from '@fluidframework/container-definitions';
-import { IUsageError } from '@fluidframework/container-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
 // @public
@@ -74,10 +73,10 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 }
 
 // @public
-export class UsageError extends LoggingError implements IFluidErrorBase, IUsageError {
+export class UsageError extends LoggingError implements IFluidErrorBase {
     constructor(fluidErrorCode: string);
     // (undocumented)
-    readonly errorType = ContainerErrorType.usageError;
+    readonly errorType = "usageError";
     // (undocumented)
     readonly fluidErrorCode: string;
 }
