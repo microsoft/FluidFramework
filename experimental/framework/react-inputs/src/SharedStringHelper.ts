@@ -9,7 +9,16 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 
 export interface ISharedStringHelperTextChangedEventArgs {
+    /**
+     * Whether the change originated from the local client.
+     */
     isLocal: boolean;
+
+    /**
+     * A callback function for this particular change that translates pre-change positions in the sequence into
+     * post-change positions.  For example, to track where a user's caret should move to after a remote change
+     * in order for it to remain in the same portion of the text.
+     */
     transformPosition: (oldPosition: number) => number;
 }
 
