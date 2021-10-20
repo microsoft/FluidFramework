@@ -557,12 +557,15 @@ export function configureWebSocketServices(
                 const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
                 socket.emit("nack", "", [nackMessage]);
             } else {
-                void getClients(room.tenantId, room.documentId).then(
+                getClients(room.tenantId, room.documentId).then(
                     (clients) => {
                         socket.emitToRoom(
                             getRoomId(room),
                             "connected_clients",
                             clients);
+                    }).catch(async (err) => {
+                        const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+                        return handleServerError(logger, errMsg, room.documentId, room.tenantId);
                     });
             }
         });
