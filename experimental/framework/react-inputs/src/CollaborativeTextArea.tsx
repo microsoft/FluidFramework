@@ -48,22 +48,24 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
         } = props;
 
         // eslint-disable-next-line no-null/no-null
-        const textAreaRef = useRef<HTMLTextAreaElement>(null);
+        const textareaRef = useRef<HTMLTextAreaElement>(null);
         const selectionStartRef = useRef<number>(0);
         const selectionEndRef = useRef<number>(0);
 
         const [text, setText] = useState<string>(sharedStringHelper.getText());
 
-        // There's been a local change to the textarea content (e.g. typing)
-        // This means the most-recent state (text and selection) is in the textarea, and we need to
-        // 1. Store the text and selection state in React
-        // 2. Store the text state in the SharedString
+        /**
+         * There's been a local change to the textarea content (e.g. user did some typing)
+         * This means the most-recent state (text and selection) is in the textarea, and we need to
+         * 1. Store the text and selection state in React
+         * 2. Store the text state in the SharedString
+         */
         const handleChange = (ev: React.FormEvent<HTMLTextAreaElement>) => {
             // First get and stash the new textarea state
-            if (!textAreaRef.current) {
+            if (!textareaRef.current) {
                 throw new Error("Handling change without current textarea ref?");
             }
-            const textareaElement = textAreaRef.current;
+            const textareaElement = textareaRef.current;
             const newText = textareaElement.value;
             // After a change to the textarea content we assume the selection is gone (just a caret)
             // This is a bad assumption (e.g. performing undo will select the re-added content).
@@ -97,21 +99,27 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
             }
         };
 
+        /**
+         * Set the selection in the DOM textarea itself (updating the UI).
+         */
         const setTextareaSelection = (newStart: number, newEnd: number) => {
-            if (!textAreaRef.current) {
+            if (!textareaRef.current) {
                 throw new Error("Trying to set selection without current textarea ref?");
             }
-            const textareaElement = textAreaRef.current;
+            const textareaElement = textareaRef.current;
 
             textareaElement.selectionStart = newStart;
             textareaElement.selectionEnd = newEnd;
         };
 
+        /**
+         * Take the current selection from the DOM textarea and store it in our React ref.
+         */
         const storeSelectionInReact = () => {
-            if (!textAreaRef.current) {
+            if (!textareaRef.current) {
                 throw new Error("Trying to remember selection without current textarea ref?");
             }
-            const textareaElement = textAreaRef.current;
+            const textareaElement = textareaRef.current;
 
             const textareaSelectionStart = textareaElement.selectionStart;
             const textareaSelectionEnd = textareaElement.selectionEnd;
@@ -121,6 +129,13 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
 
         useEffect(
             () => {
+                /**
+                 * There's been a change to the SharedString's data.  This means the most recent state of the text
+                 * is in the SharedString, and we need to
+                 * 1. Store the text state in React
+                 * 2. If the change came from a remote source, it may have moved our selection.  Compute it, update
+                 *    the textarea, and store it in React
+                 */
                 const handleTextChanged = (event: ISharedStringHelperTextChangedEventArgs) => {
                     const newText = sharedStringHelper.getText();
                     setText(newText);
@@ -151,7 +166,7 @@ export const CollaborativeTextAreaFunction: React.FC<ICollaborativeTextAreaFunct
             <textarea
                 rows={20}
                 cols={50}
-                ref={textAreaRef}
+                ref={textareaRef}
                 className={className}
                 style={style}
                 spellCheck={spellCheck ? spellCheck : false}
