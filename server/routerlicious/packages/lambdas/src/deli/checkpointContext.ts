@@ -22,7 +22,7 @@ export class CheckpointContext {
 
     /**
      * Checkpoints to the database & kafka
-     * Note: This is an async method, but youshould not await this
+     * Note: This is an async method, but you should not await this
      */
     public async checkpoint(checkpoint: ICheckpointParams) {
         // Exit early if already closed
