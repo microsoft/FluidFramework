@@ -186,10 +186,12 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}
           targetType: 'inline'
           script: |
-            ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/src/test
+            ls {{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist
+            mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
-            ls ${{ parameters.testWorkspace }}
+            ls ./packages/framework/azure-client/dist/test/
+            mv ./packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+            ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
       # Run the tests
       - task: Npm@1
@@ -198,7 +200,7 @@ jobs:
         env:
           ${{ parameters.env }}
         inputs:
-          workingDir: ${{ parameters.testWorkspace }}
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           command: 'custom'
           customCommand: 'run test:realsvc:${{ parameters.target }} -- ${{ variant }}'
 
