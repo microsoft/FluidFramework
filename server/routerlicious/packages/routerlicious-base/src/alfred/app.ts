@@ -23,7 +23,8 @@ import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
-import { catch404, getTenantIdFromRequest, handleError } from "../utils";
+import { logRequestMetric } from "@fluidframework/server-services-telemetry";
+import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -77,11 +78,13 @@ export function create(
                 url: tokens.url(req, res),
                 status: tokens.status(req, res),
                 contentLength: tokens.res(req, res, "content-length"),
-                responseTime: tokens["response-time"](req, res),
+                durationInMs: tokens["response-time"](req, res),
                 tenantId: getTenantIdFromRequest(req.params),
+                documentId: getIdFromRequest(req.params),
                 serviceName: "alfred",
                 eventName: "http_requests",
              };
+             logRequestMetric(messageMetaData);
              winston.info("request log generated", { messageMetaData });
              return undefined;
         }, { stream }));

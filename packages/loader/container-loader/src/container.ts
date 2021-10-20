@@ -371,7 +371,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "generic" },
+            { start: true, end: true, cancel: "error" },
         );
     }
 
@@ -961,9 +961,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            return this.context.request(path);
-        });
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "Request" },
+            async () => this.context.request(path),
+            { end: true, cancel: "error" },
+        );
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {

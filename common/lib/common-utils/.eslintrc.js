@@ -16,7 +16,6 @@ module.exports = {
         "no-bitwise": "off",
         "no-null/no-null": "off",
         "prefer-arrow/prefer-arrow-functions": "off",
-        "prefer-rest-params": "off",
-        "import/no-extraneous-dependencies": ["error", {"devDependencies": ["./src/test/**/*.ts"]}]
+        "prefer-rest-params": "off"
     }
 }
