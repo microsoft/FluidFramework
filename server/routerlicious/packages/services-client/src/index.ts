@@ -12,6 +12,7 @@ export * from "./interfaces";
 export * from "./promiseTimeout";
 export * from "./restLessClient";
 export * from "./restWrapper";
+export * from "./rollingHash";
 export * from "./scopes";
 export * from "./storage";
 export * from "./storageContracts";

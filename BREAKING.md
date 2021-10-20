@@ -11,9 +11,11 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.50 Breaking changes
+
 - [OpProcessingController removed](#OpProcessingController-removed)
 - [decode added to IFluidSerializer](#decode-added-to-ifluidserializer)
 - [SharedCell serialization](#sharedcell-serialization)
+- [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
 
 ### OpProcessingController removed
 OpProcessingController has been deprecated for very long time. It's being removed in this release.
@@ -25,6 +27,9 @@ If you can't make this transition, you can always copy implementation of LoaderC
 
 ### SharedCell serialization
 `SharedCell` serialization format has changed. Values stored from previous versions will be broken.
+
+### Expose isDirty flag in the FluidContainer
+The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
 
 ## 0.49 Breaking changes
 - [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
