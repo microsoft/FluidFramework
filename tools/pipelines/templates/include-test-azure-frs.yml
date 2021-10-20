@@ -48,7 +48,7 @@ jobs:
       - name: testPackageDir
         value: '${{ parameters.testWorkspace }}'
       - name: testPackageFilePattern
-        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}*.tgz
+        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
       - name: testPackagePathPattern
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
@@ -133,6 +133,8 @@ jobs:
             echo "@ms:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
             echo "always-auth=true" >> ./.npmrc
             cat .npmrc
+
+            ls $(Pipeline.Workspace)/client/pack/scoped
 
             if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
               echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
