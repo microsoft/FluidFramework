@@ -3,54 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import { createContainer, getContainer } from "@fluid-experimental/get-container";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-// import jwt from "jsonwebtoken";
 import { IRuntimeFactory } from "@fluidframework/container-definitions";
-// import { IUrlResolver, IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
-// import { IRequest } from "@fluidframework/core-interfaces";
-// import { getContainer } from "@fluidframework/get-tinylicious-container";
-import { getContainer } from "@fluid-experimental/get-container";
-import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { Container } from "@fluidframework/container-loader";
+import { DriverHeader } from "@fluidframework/driver-definitions";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { InsecureTinyliciousTokenProvider, InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
+import { IRequest } from "@fluidframework/core-interfaces";
 
-/* class RouterliciousUrlResolver implements IUrlResolver {
-    constructor(private readonly token: string, private readonly tenant: string) {
+const createAzureCreateNewRequest = (): IRequest => (
+    {
+        url: "",
+        headers: {
+            [DriverHeader.createNew]: true,
+        },
     }
-
-    public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
-        const documentUrl = `${process.env.ORDERER}/${this.tenant}/${request.url}`;
-
-        return Promise.resolve({
-            endpoints: {
-                deltaStorageUrl: `${process.env.ORDERER}/deltas/${this.tenant}/${request.url}`,
-                ordererUrl: `${process.env.ORDERER}`,
-                storageUrl: `${process.env.STORAGE}/repos/${this.tenant}`,
-            },
-            tokens: { jwt: this.token },
-            type: "fluid",
-            url: documentUrl,
-        });
-    }
-    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-        if (resolvedUrl.type !== "fluid") {
-            throw Error("Invalid Resolved Url");
-        }
-        return `${resolvedUrl.url}/${relativeUrl}`;
-    }
-} */
+);
 
 export async function getFRSContainer(
     documentId: string,
     containerRuntimeFactory: IRuntimeFactory,
     createNew: boolean,
-): Promise<Container> {
-    if (process.env.ID === undefined) {throw Error("Define ID in .env file");}
-    if (process.env.KEY === undefined) {throw Error("Define KEY in .env file");}
-    if (process.env.ORDERER === undefined) {throw Error("Define ORDERER in .env file");}
-    if (process.env.STORAGE === undefined) {throw Error("Define STORAGE in .env file");}
+): Promise<[Container, string]> {
+    if (process.env.ID === undefined) { throw Error("Define ID in .env file"); }
+    if (process.env.KEY === undefined) { throw Error("Define KEY in .env file"); }
+    if (process.env.ORDERER === undefined) { throw Error("Define ORDERER in .env file"); }
+    if (process.env.STORAGE === undefined) { throw Error("Define STORAGE in .env file"); }
 
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
+    const urlResolver = new InsecureTinyliciousUrlResolver();
 
     /* const user = {
         id: "unique-id",
@@ -68,25 +51,34 @@ export async function getFRSContainer(
         },
         key); */
 
-    const urlResolver = new InsecureTinyliciousUrlResolver();
-    const containerService = {
-        documentServiceFactory,
-        urlResolver,
-    };
-    return getContainer(
-        containerService,
-        documentId,
-        containerRuntimeFactory,
-        createNew,
-    );
+    let container: Container;
+    if (createNew) {
+        container = await createContainer({
+            documentServiceFactory,
+            urlResolver,
+            containerRuntimeFactory,
+            request: createAzureCreateNewRequest(),
+        });
+    } else {
+        container = await getContainer({
+            documentServiceFactory,
+            urlResolver,
+            containerRuntimeFactory,
+            request: { url: documentId },
+        });
+    }
+    const resolved = container.resolvedUrl;
+    ensureFluidResolvedUrl(resolved);
+    const containerId = resolved.id;
+    return [container, containerId];
 }
 
 export function hasFRSEndpoints() {
     try {
-        if (process.env.ID === undefined) {throw Error("Define ID in .env file");}
-        if (process.env.KEY === undefined) {throw Error("Define KEY in .env file");}
-        if (process.env.ORDERER === undefined) {throw Error("Define ORDERER in .env file");}
-        if (process.env.STORAGE === undefined) {throw Error("Define STORAGE in .env file");}
+        if (process.env.ID === undefined) { throw Error("Define ID in .env file"); }
+        if (process.env.KEY === undefined) { throw Error("Define KEY in .env file"); }
+        if (process.env.ORDERER === undefined) { throw Error("Define ORDERER in .env file"); }
+        if (process.env.STORAGE === undefined) { throw Error("Define STORAGE in .env file"); }
     } catch {
         return false;
     }
