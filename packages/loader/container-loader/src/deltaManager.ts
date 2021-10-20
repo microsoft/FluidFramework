@@ -936,8 +936,16 @@ export class DeltaManager
         }
     }
 
+    public addConnectionListener(event: string, listener: (...args: any[]) => void) {
+        if (this.connection !== undefined && this.connection?.addConnectionListener !== undefined) {
+            this.connection?.addConnectionListener(event, listener);
+        } else {
+            this.logger.sendErrorEvent({ eventName: "addConnectionListenerDisconnected" });
+        }
+    }
+
     public getClients() {
-        if (this.connection !== undefined) {
+        if (this.connection !== undefined && this.connection?.getClients !== undefined) {
             this.connection?.getClients();
         } else {
             this.logger.sendErrorEvent({ eventName: "getClientsDisconnected" });
