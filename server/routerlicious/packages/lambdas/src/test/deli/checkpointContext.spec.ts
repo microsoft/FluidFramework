@@ -6,7 +6,11 @@
 import { defaultHash } from "@fluidframework/server-services-client";
 import * as testUtils from "@fluidframework/server-test-utils";
 import { CheckpointContext } from "../../deli/checkpointContext";
-import { createDeliCheckpointManagerFromCollection, ICheckpointParams } from "../../deli/checkpointManager";
+import {
+    createDeliCheckpointManagerFromCollection,
+    DeliCheckpointReason,
+    ICheckpointParams,
+} from "../../deli/checkpointManager";
 
 describe("Routerlicious", () => {
     describe("Deli", () => {
@@ -26,6 +30,7 @@ describe("Routerlicious", () => {
                 };
 
                 return {
+                    reason: DeliCheckpointReason.EveryMessage,
                     deliState: {
                         clients: undefined,
                         durableSequenceNumber: 0,
