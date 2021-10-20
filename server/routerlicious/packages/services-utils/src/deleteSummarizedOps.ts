@@ -24,11 +24,10 @@ export async function deleteSummarizedOps(
         const currentEpochTime = new Date().getTime();
         const epochTimeBeforeOfflineWindow =  currentEpochTime - offlineWindowMs;
         const scheduledDeletionEpochTime = currentEpochTime + softDeleteRetentionPeriodMs;
-        let lumberjackProperties;
 
         for (const doc of uniqueDocuments) {
+            const lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
             try {
-                lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
                 const lastSummarySequenceNumber = JSON.parse(doc.scribe).lastSummarySequenceNumber;
 
                 // first "soft delete" operations older than the offline window, which have been summarised
