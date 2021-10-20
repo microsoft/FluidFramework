@@ -36,7 +36,7 @@ export function executeOnInterval(
             })
             .finally(() => {
                 if (scheduledJob.isRunning()) {
-                    setTimeout(() => execute(), intervalInMs);
+                    setTimeout(execute, intervalInMs);
                 }
             });
         return scheduledJob;
