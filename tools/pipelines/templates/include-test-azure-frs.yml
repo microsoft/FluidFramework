@@ -117,16 +117,25 @@ jobs:
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
             ls ${{ parameters.testWorkspace }}
 
+      # # Install
+      # - task: Npm@1
+      #   displayName: 'npm install'
+      #   env:
+      #     ${{ parameters.env }}
+      #   inputs:
+      #     workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
+      #     command: 'custom'
+      #     # customCommand: 'install'
+      #     customCommand: 'install cross-env mocha fluid-framework @fluidframework/container-definitions @fluidframework/map --no-package-lock --no-save'
+
       # Install
-      - task: Npm@1
-        displayName: 'npm install'
-        env:
-          ${{ parameters.env }}
+      - task: Bash@3
+        displayName: npm install
         inputs:
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
-          command: 'custom'
-          # customCommand: 'install'
-          customCommand: 'install cross-env mocha fluid-framework @fluidframework/container-definitions @fluidframework/map --no-package-lock --no-save'
+          targetType: 'inline'
+          script: |
+            npm install
 
       # Run the tests
       - task: Npm@1
