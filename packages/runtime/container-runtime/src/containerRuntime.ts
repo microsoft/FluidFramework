@@ -1583,7 +1583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
-    public async trySetAliasForDataStore(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
+    public async trySetDataStoreAlias(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
         assert(this.attachState === AttachState.Attached, "Trying to submit message while detached!");
         const message: IDataStoreAliasMessage = {
             id: dataStore.id,
@@ -1734,7 +1734,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /**
-     * Runs garbage collection and udpates the reference / used state of the nodes in the container.
+     * Runs garbage collection and updates the reference / used state of the nodes in the container.
      * @returns the number of data stores that have been marked as unreferenced.
      */
     public async collectGarbage(logger: ITelemetryLogger, fullGC: boolean = false): Promise<IGCStats> {

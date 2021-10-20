@@ -14,6 +14,8 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -48,6 +50,15 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             res(error?.errorType === ContainerErrorType.dataCorruptionError);
         }))));
 
+    const createRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
+        (dataObject.context.containerRuntime as IContainerRuntime).createRootDataStore(packageName, id);
+
+    const aliasDataStore = async (dataObject: ITestFluidObject, dataStore: IFluidDataStoreChannel, alias: string) =>
+        (dataObject.context.containerRuntime as ContainerRuntime).trySetDataStoreAlias(dataStore, alias);
+
+    const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
+        (dataObject.context.containerRuntime as IContainerRuntime).getRootDataStore(id);
+
     describe("Name conflict expected failures", () => {
         beforeEach(async () => setupContainers());
         afterEach(async () => reset());
@@ -57,9 +68,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             await container1.deltaManager.inbound.pause();
             await container2.deltaManager.inbound.pause();
 
-            await (dataObject1.context.containerRuntime as IContainerRuntime).createRootDataStore(packageName, "1");
-            await (dataObject2.context.containerRuntime as IContainerRuntime).createRootDataStore(packageName, "1");
-
+            await createRootDataStore(dataObject1, "1");
+            await createRootDataStore(dataObject2, "1");
             // Restore inbound communications
             // At this point, two `ContainerMessageType.Attach` messages will be sent and processed.
             container1.deltaManager.inbound.resume();
@@ -71,10 +81,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("Root datastore creation fails when already attached", async () => {
-            await (dataObject1.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, "2");
-            await (dataObject2.context.containerRuntime as IContainerRuntime)
-                .createRootDataStore(packageName, "2");
+            await createRootDataStore(dataObject1, "2");
+            await createRootDataStore(dataObject2, "2");
 
             const dataCorruption = await anyDataCorruption([container1, container2]);
             assert(dataCorruption);
@@ -83,16 +91,52 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         it("Root datastore creation fails when already attached - same container", async () => {
             let error: Error | undefined;
             try {
-                await (dataObject1.context.containerRuntime as IContainerRuntime)
-                    .createRootDataStore(packageName, "3");
-                await (dataObject1.context.containerRuntime as IContainerRuntime)
-                    .createRootDataStore(packageName, "3");
+                await createRootDataStore(dataObject1, "3");
+                await createRootDataStore(dataObject1, "3");
                 await provider.ensureSynchronized();
             } catch (err) {
                 error = err as Error;
             }
 
             assert(error);
+        });
+    });
+
+    describe("Aliasing", () => {
+        beforeEach(async () => setupContainers());
+        afterEach(async () => reset());
+
+        const alias = "alias";
+
+        it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
+            const ds1 = await createRootDataStore(dataObject1, "1");
+            const ds2 = await createRootDataStore(dataObject1, "2");
+
+            const aliasResult1 = await aliasDataStore(dataObject1, ds1 as unknown as IFluidDataStoreChannel, alias);
+            const aliasResult2 = await aliasDataStore(dataObject1, ds2 as unknown as IFluidDataStoreChannel, alias);
+
+            assert(aliasResult1);
+            assert(!aliasResult2);
+
+            const ds = await getRootDataStore(dataObject1, alias);
+            assert.deepStrictEqual(ds, ds1);
+        });
+
+        it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
+            const ds1 = await createRootDataStore(dataObject1, "1");
+            const ds2 = await createRootDataStore(dataObject2, "2");
+
+            const aliasResult1 = await aliasDataStore(dataObject1, ds1 as unknown as IFluidDataStoreChannel, "alias");
+            const aliasResult2 = await aliasDataStore(dataObject2, ds2 as unknown as IFluidDataStoreChannel, "alias");
+
+            assert(aliasResult1);
+            assert(!aliasResult2);
+
+            const container3 = await provider.loadTestContainer(testContainerConfig);
+            const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+
+            const ds = await getRootDataStore(dataObject3, alias);
+            assert.deepStrictEqual(ds, ds1);
         });
     });
 });
