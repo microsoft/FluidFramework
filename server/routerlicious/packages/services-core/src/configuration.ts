@@ -22,11 +22,28 @@ export interface IDeliServerConfiguration {
     // Timeout for sending consolidated no-ops
     noOpConsolidationTimeout: number;
 
+    // Controller how often deli should checkpoint
+    checkpointHeuristics: IDeliCheckpointHeuristicsServerConfiguration;
+
     // Controls how deli should track of certain op events
     opEvent: IDeliOpEventServerConfiguration;
 
     // Controls if ops should be nacked if a summary hasn't been made for a while
     summaryNackMessages: IDeliSummaryNackMessagesServerConfiguration;
+}
+
+export interface IDeliCheckpointHeuristicsServerConfiguration {
+    // Enables checkpointing based on the heuristics
+    enable: boolean;
+
+    // Checkpoint after not processing any messages after this amount of time
+    idleTime: number;
+
+    // Checkpoint if there hasn't been a checkpoint for this amount of time
+    maxTime: number;
+
+    // Checkpoint after processing this amount of messages since the last checkpoint
+    maxMessages: number;
 }
 
 export interface IDeliOpEventServerConfiguration {
@@ -137,6 +154,12 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
+        checkpointHeuristics: {
+            enable: false,
+            idleTime: 10 * 1000,
+            maxTime: 1 * 60 * 1000,
+            maxMessages: 500,
+        },
         opEvent: {
             enable: false,
             idleTime: 15 * 1000,

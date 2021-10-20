@@ -131,16 +131,38 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     private activityIdleTimer: any;
     private noopEvent: any;
 
-    // Op event properties
+    /**
+     * Op event properties
+     */
+
     private opIdleTimer: any | undefined;
     private opMaxTimeTimer: any | undefined;
     private sequencedMessagesSinceLastOpEvent: number = 0;
+
+    /**
+     * Checkpoint properties
+     */
+
+    // message that will be used when checkpoints
+    private currentDeliCheckpointMessage: IQueuedMessage | undefined;
+    private currentKafkaCheckpointMessage: IQueuedMessage | undefined;
+
+    // used for ensuring the lambda remains open while clients are connected
+    private nextKafkaCheckpointMessage: IQueuedMessage | undefined;
+
+    // time fired due that should kick off a checkpoint when deli is idle
+    private checkpointIdleTimeTimer: any | undefined;
+
+    // raw messages since the last checkpoint
+    private rawMessagesSinceCheckpoint: number = 0;
+
+    // time in milliseconds since the last checkpoint
+    private lastCheckpointTime: number = Date.now();
 
     private noActiveClients: boolean;
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     private canClose = false;
-    private nextKafkaCheckpointMessage: IQueuedMessage | undefined;
 
     // when set, messages will be nacked based on the provided info
     private nackMessages: INackMessagesControlMessageContents | undefined;
@@ -218,13 +240,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     public handler(rawMessage: IQueuedMessage) {
-        let kafkaCheckpointMessage: IQueuedMessage | undefined;
-
         // In cases where we are reprocessing messages we have already checkpointed exit early
         if (rawMessage.offset <= this.logOffset) {
-            kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
-            if (kafkaCheckpointMessage) {
-                this.context.checkpoint(kafkaCheckpointMessage);
+            this.updateCheckpointMessages(rawMessage);
+
+            if (this.currentKafkaCheckpointMessage) {
+                this.context.checkpoint(this.currentKafkaCheckpointMessage);
             }
 
             return undefined;
@@ -255,7 +276,24 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 // Check for document inactivity.
                 if (!(ticketedMessage.type === MessageType.NoClient || ticketedMessage.type === MessageType.Control)
                     && this.noActiveClients) {
-                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient));
+                    this.lastNoClientP = this.sendToAlfred(this.createOpMessage(MessageType.NoClient))
+                        .catch((error) => {
+                            const errorMsg = "Could not send no client message";
+                            this.context.log?.error(
+                                `${errorMsg}: ${JSON.stringify(error)}`,
+                                {
+                                    messageMetaData: {
+                                        documentId: this.documentId,
+                                        tenantId: this.tenantId,
+                                    },
+                                });
+                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                            this.context.error(error, {
+                                restart: true,
+                                tenantId: this.tenantId,
+                                documentId: this.documentId,
+                            });
+                        });
                 }
 
                 // Return early if sending is not required.
@@ -301,40 +339,37 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 outgoingMessage = ticketedMessage.message as INackMessage;
             }
 
-            // Update the msn last sent.
+            // Update the msn last sent
             this.lastSentMSN = ticketedMessage.msn;
-            this.lastSendP = this.sendToScriptorium(outgoingMessage);
+            this.lastSendP = this.sendToScriptorium(outgoingMessage)
+                .catch((error) => {
+                    const errorMsg = "Could not send message to scriptorium";
+                    this.context.log?.error(
+                        `${errorMsg}: ${JSON.stringify(error)}`,
+                        {
+                            messageMetaData: {
+                                documentId: this.documentId,
+                                tenantId: this.tenantId,
+                            },
+                        });
+                    Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                    this.context.error(error, {
+                        restart: true,
+                        tenantId: this.tenantId,
+                        documentId: this.documentId,
+                    });
+                });
         }
 
-        kafkaCheckpointMessage = this.getKafkaCheckpointMessage(rawMessage);
-        const checkpoint = this.generateCheckpoint(rawMessage, kafkaCheckpointMessage);
+        this.rawMessagesSinceCheckpoint++;
+        this.updateCheckpointMessages(rawMessage);
 
-        // TODO optimize this to avoid doing per message
-        // Checkpoint the current state
-        Promise.all([this.lastSendP, this.lastNoClientP]).then(
-            () => {
-                if (this.lastInstruction === InstructionType.ClearCache) {
-                    checkpoint.clear = true;
-                }
-                this.checkpointContext.checkpoint(checkpoint);
-            },
-            (error) => {
-                const errorMsg = `Could not send message to scriptorium`;
-                this.context.log?.error(
-                    `${errorMsg}: ${JSON.stringify(error)}`,
-                    {
-                        messageMetaData: {
-                            documentId: this.documentId,
-                            tenantId: this.tenantId,
-                        },
-                    });
-                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
-                this.context.error(error, {
-                    restart: true,
-                    tenantId: this.tenantId,
-                    documentId: this.documentId,
-                });
-            });
+        if (this.shouldCheckpoint()) {
+            // checkpoint the current up to date state
+            this.checkpoint();
+        } else {
+            this.updateCheckpointIdleTimer();
+        }
 
         // Start a timer to check inactivity on the document. To trigger idle client leave message,
         // we send a noop back to alfred. The noop should trigger a client leave message if there are any.
@@ -361,7 +396,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         this.clearActivityIdleTimer();
         this.clearNoopConsolidationTimer();
-
+        this.clearCheckpointIdleTimer();
         this.clearOpIdleTimer();
         this.clearOpMaxTimeTimer();
 
@@ -958,9 +993,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * This keeps the kafka checkpoint behind by 1 message until there are no active clients
      * It ensures that the idle timer and subsequent leave & NoClient messages are created
      * If noActiveClients is set, that means we sent a NoClient message. so checkpoint the current offset
-     * @returns The queued message for the kafka checkpoint
      */
-    private getKafkaCheckpointMessage(rawMessage: IQueuedMessage): IQueuedMessage | undefined {
+    private updateCheckpointMessages(rawMessage: IQueuedMessage) {
+        this.currentDeliCheckpointMessage = rawMessage;
+
         if (this.noActiveClients) {
             // If noActiveClients is set, that means we sent a NoClient message
             // so we should checkpoint the current message/offset
@@ -972,25 +1008,23 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             // it will try to checkpoint that old message offset once the next message arrives
             this.nextKafkaCheckpointMessage = undefined;
 
-            return rawMessage;
+            this.currentKafkaCheckpointMessage = rawMessage;
+        } else {
+            // Keep the kafka checkpoint behind by 1 message until there are no active clients
+            const kafkaCheckpointMessage = this.nextKafkaCheckpointMessage;
+            this.nextKafkaCheckpointMessage = rawMessage;
+            this.currentKafkaCheckpointMessage = kafkaCheckpointMessage;
         }
-
-        // Keep the kafka checkpoint behind by 1 message until there are no active clients
-        const kafkaCheckpointMessage = this.nextKafkaCheckpointMessage;
-        this.nextKafkaCheckpointMessage = rawMessage;
-        return kafkaCheckpointMessage;
     }
 
     /**
-     * Generates a checkpoint of the given state
+     * Generates a checkpoint for the current state
      */
-    private generateCheckpoint(
-        deliCheckpointMessage: IQueuedMessage,
-        kafkaCheckpointMessage: IQueuedMessage | undefined): ICheckpointParams {
+    private generateCheckpoint(): ICheckpointParams {
         return {
             deliState: this.generateDeliCheckpoint(),
-            deliCheckpointMessage,
-            kafkaCheckpointMessage,
+            deliCheckpointMessage: this.currentDeliCheckpointMessage as IQueuedMessage,
+            kafkaCheckpointMessage: this.currentKafkaCheckpointMessage,
         };
     }
 
@@ -1145,6 +1179,103 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 // stop nacking future messages
                 this.nackMessages = undefined;
             }
+        }
+    }
+
+    /**
+     * Checks if we should checkpoint now
+     */
+    private shouldCheckpoint(): boolean {
+        const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
+        if (!checkpointHeuristics.enable) {
+            // always checkpoint since heuristics are disabled
+            return true;
+        }
+
+        if (this.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
+            // exceeded max messages since last checkpoint
+            return true;
+        }
+
+        if ((Date.now() - this.lastCheckpointTime) >= checkpointHeuristics.maxTime) {
+            // exceeded max time since last checkpoint
+            return true;
+        }
+
+        if (this.lastInstruction === InstructionType.ClearCache) {
+            // last instruction is for clearing the cache
+            // checkpoint now to ensure that happens
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checkpoints the current state once the pending kafka messages are produced
+     */
+    private checkpoint() {
+        this.clearCheckpointIdleTimer();
+
+        this.lastCheckpointTime = Date.now();
+        this.rawMessagesSinceCheckpoint = 0;
+
+        const checkpointParams = this.generateCheckpoint();
+
+        Promise.all([this.lastSendP, this.lastNoClientP]).then(
+            () => {
+                if (this.lastInstruction === InstructionType.ClearCache) {
+                    checkpointParams.clear = true;
+                }
+                this.checkpointContext.checkpoint(checkpointParams);
+            },
+            (error) => {
+                const errorMsg = `Could not send message to scriptorium`;
+                this.context.log?.error(
+                    `${errorMsg}: ${JSON.stringify(error)}`,
+                    {
+                        messageMetaData: {
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        },
+                    });
+                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), error);
+                this.context.error(error, {
+                    restart: true,
+                    tenantId: this.tenantId,
+                    documentId: this.documentId,
+                });
+            });
+    }
+
+    /**
+     * Updates the time until the state is checkpointed when idle
+     * @param rawMessage The current raw message that is initiating the timer
+     */
+    private updateCheckpointIdleTimer() {
+        this.clearCheckpointIdleTimer();
+
+        const initialDeliCheckpointMessage = this.currentDeliCheckpointMessage;
+
+        this.checkpointIdleTimeTimer = setTimeout(() => {
+            this.checkpointIdleTimeTimer = undefined;
+
+            // verify that the current deli message matches the raw message that kicked off this timer
+            // if it matches, that means that delis state is for the raw message
+            // this means our checkpoint will result in the correct state
+            if (initialDeliCheckpointMessage === this.currentDeliCheckpointMessage) {
+                this.checkpoint();
+            }
+        }, this.serviceConfiguration.deli.checkpointHeuristics.idleTime);
+    }
+
+    /**
+     * Clears the timer used for checkpointing when deli is idle
+     */
+    private clearCheckpointIdleTimer() {
+        if (this.checkpointIdleTimeTimer !== undefined) {
+            clearTimeout(this.checkpointIdleTimeTimer);
+            this.checkpointIdleTimeTimer = undefined;
         }
     }
 }
