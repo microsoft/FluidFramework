@@ -48,7 +48,7 @@ jobs:
       - name: testPackageDir
         value: '${{ parameters.testWorkspace }}'
       - name: testPackageFilePattern
-        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}*.tgz
       - name: testPackagePathPattern
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
