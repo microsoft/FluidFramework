@@ -186,8 +186,8 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}
           targetType: 'inline'
           script: |
-            ls {{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist
             mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+            ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
             ls ./packages/framework/azure-client/dist/test/
             mv ./packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
