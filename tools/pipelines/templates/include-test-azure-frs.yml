@@ -126,7 +126,7 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}/packages/framework/azure-client
           command: 'custom'
           # customCommand: 'install'
-          customCommand: 'install cross-env mocha fluid-framework @fluid-frameowrk/common-definitions --no-package-lock --no-save'
+          customCommand: 'install cross-env mocha fluid-framework @fluidframework/common-definitions --no-package-lock --no-save'
 
       # Run the tests
       - task: Npm@1
