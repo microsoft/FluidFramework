@@ -5,47 +5,44 @@
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class Scheduler {
-    public static executeOnInterval(
-        api: () => Promise<any>,
-        intervalInMs: number,
-        callName: string,
-        onErrorFn?: (error) => void,
-        shouldRetryError?: (error) => boolean): ScheduledJob {
-        const scheduledJob = new ScheduledJob();
+export function executeOnInterval(
+    api: () => Promise<any>,
+    intervalInMs: number,
+    callName: string,
+    onErrorFn?: (error) => void,
+    shouldTerminateOnError?: (error) => boolean): ScheduledJob {
+    const scheduledJob = new ScheduledJob();
 
-        const execute = () => {
-            if (!scheduledJob.isRunning()) {
-                Lumberjack.info(`Job has been killed ${callName}`);
-                return scheduledJob;
-            }
-
-            api()
-                .then((res) => {
-                    Lumberjack.info(`Success executing ${callName}`);
-                })
-                .catch((error) => {
-                    Lumberjack.error(`Error running ${callName}`, undefined, error);
-                    if (onErrorFn !== undefined) {
-                        onErrorFn(error);
-                    }
-                    if (shouldRetryError !== undefined && !shouldRetryError(error)) {
-                        Lumberjack.info(`Should not retry error ${callName}`);
-                        scheduledJob.kill();
-                        return;
-                    }
-                })
-                .finally(() => {
-                    if (scheduledJob.isRunning()) {
-                        setTimeout(() => execute(), intervalInMs);
-                    }
-                });
+    const execute = () => {
+        if (!scheduledJob.isRunning()) {
+            Lumberjack.info(`Job has been killed ${callName}`);
             return scheduledJob;
-        };
+        }
 
-        return execute();
-    }
+        (async () => api())()
+            .then((res) => {
+                Lumberjack.info(`Success executing ${callName}`);
+            })
+            .catch((error) => {
+                Lumberjack.error(`Error running ${callName}`, undefined, error);
+                if (onErrorFn !== undefined) {
+                    onErrorFn(error);
+                }
+                if (shouldTerminateOnError !== undefined && shouldTerminateOnError(error)) {
+                    Lumberjack.info(`Terminating job on error ${error} for ${callName}`);
+                    scheduledJob.kill();
+                    return;
+                }
+            })
+            .finally(() => {
+                if (scheduledJob.isRunning()) {
+                    setTimeout(() => execute(), intervalInMs);
+                }
+            });
+        return scheduledJob;
+    };
+
+    return execute();
 }
 
 export class ScheduledJob {
