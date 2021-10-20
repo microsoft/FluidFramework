@@ -16,7 +16,7 @@ export enum DeliCheckpointReason {
 }
 
 export interface IDeliCheckpointManager {
-    writeCheckpoint(checkpoint: IDeliState): Promise<void>;
+    writeCheckpoint(checkpoint: IDeliState, reason: DeliCheckpointReason): Promise<void>;
     deleteCheckpoint(checkpointParams: ICheckpointParams): Promise<void>;
 }
 

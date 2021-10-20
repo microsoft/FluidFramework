@@ -91,7 +91,7 @@ export class CheckpointContext {
             // clone the checkpoint
             const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
 
-            updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint);
+            updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint, checkpoint.reason);
         }
 
         // Retry the checkpoint on error
