@@ -320,8 +320,8 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/azure-frs-test/
-
-                tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-test/azure-client.tgz ./packages/framework/azure-client
+                npm pack ./packages/framework/azure-client --pack-destination $(Build.ArtifactStagingDirectory)/azure-frs-test
+                tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-test/azure-client.tgz ./packages/framework/azure-client/src/test
 
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifact - pack azure frs tests
