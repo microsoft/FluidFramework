@@ -60,6 +60,7 @@ import { logCommonSessionEndMetrics, createSessionMetric } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
 import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
+import { DeliCheckpointReason } from ".";
 
 enum IncomingMessageOrder {
     Duplicate,
@@ -364,9 +365,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.rawMessagesSinceCheckpoint++;
         this.updateCheckpointMessages(rawMessage);
 
-        if (this.shouldCheckpoint()) {
+        const checkpointReason = this.shouldCheckpoint();
+        if (checkpointReason !== undefined) {
             // checkpoint the current up to date state
-            this.checkpoint();
+            this.checkpoint(checkpointReason);
         } else {
             this.updateCheckpointIdleTimer();
         }
@@ -1020,8 +1022,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     /**
      * Generates a checkpoint for the current state
      */
-    private generateCheckpoint(): ICheckpointParams {
+    private generateCheckpoint(reason: DeliCheckpointReason): ICheckpointParams {
         return {
+            reason,
             deliState: this.generateDeliCheckpoint(),
             deliCheckpointMessage: this.currentDeliCheckpointMessage as IQueuedMessage,
             kafkaCheckpointMessage: this.currentKafkaCheckpointMessage,
@@ -1185,42 +1188,42 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     /**
      * Checks if we should checkpoint now
      */
-    private shouldCheckpoint(): boolean {
+    private shouldCheckpoint(): DeliCheckpointReason | undefined {
         const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
-            return true;
+            return DeliCheckpointReason.EveryMessage;
         }
 
         if (this.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
             // exceeded max messages since last checkpoint
-            return true;
+            return DeliCheckpointReason.MaxMessages;
         }
 
         if ((Date.now() - this.lastCheckpointTime) >= checkpointHeuristics.maxTime) {
             // exceeded max time since last checkpoint
-            return true;
+            return DeliCheckpointReason.MaxTime;
         }
 
         if (this.lastInstruction === InstructionType.ClearCache) {
             // last instruction is for clearing the cache
             // checkpoint now to ensure that happens
-            return true;
+            return DeliCheckpointReason.ClearCache;
         }
 
-        return false;
+        return undefined;
     }
 
     /**
      * Checkpoints the current state once the pending kafka messages are produced
      */
-    private checkpoint() {
+    private checkpoint(reason: DeliCheckpointReason) {
         this.clearCheckpointIdleTimer();
 
         this.lastCheckpointTime = Date.now();
         this.rawMessagesSinceCheckpoint = 0;
 
-        const checkpointParams = this.generateCheckpoint();
+        const checkpointParams = this.generateCheckpoint(reason);
 
         Promise.all([this.lastSendP, this.lastNoClientP]).then(
             () => {
@@ -1264,7 +1267,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             // if it matches, that means that delis state is for the raw message
             // this means our checkpoint will result in the correct state
             if (initialDeliCheckpointMessage === this.currentDeliCheckpointMessage) {
-                this.checkpoint();
+                this.checkpoint(DeliCheckpointReason.IdleTime);
             }
         }, this.serviceConfiguration.deli.checkpointHeuristics.idleTime);
     }
