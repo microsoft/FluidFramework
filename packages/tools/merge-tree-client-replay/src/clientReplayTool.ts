@@ -188,7 +188,7 @@ export class ClientReplayTool {
                         message.contents as IAttachMessage,
                         mergeTreeAttachTrees);
                     break;
-                // [TODO:andre4i] Figure out what to do with ContainerMessageType.SetStoreAlias:
+                // [TODO:andre4i] Figure out what to do with ContainerMessageType.SetRootDataStoreAlias:
                 default:
             }
         }

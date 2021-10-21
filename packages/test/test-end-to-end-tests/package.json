@@ -34,7 +34,7 @@
     "test:realsvc:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc",
     "test:realsvc:routerlicious": "npm run test:realsvc:r11s",
     "test:realsvc:routerlicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:r11s --",
-    "test:realsvc:run": "mocha dist/test/rootDatastores.spec.js --config src/test/.mocharc.js",
+    "test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
     "test:realsvc:t9s": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
     "test:realsvc:tinylicious": "npm run test:realsvc:t9s",
     "test:realsvc:tinylicious:report": "cross-env FLUID_TEST_REPORT=1 npm run test:realsvc:t9s",
