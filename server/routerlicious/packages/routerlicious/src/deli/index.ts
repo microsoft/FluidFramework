@@ -8,6 +8,7 @@ import { createDocumentRouter } from "@fluidframework/server-routerlicious-base"
 import { LocalKafka, LocalContext, LocalLambdaController } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
@@ -75,6 +76,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const publisher = new services.SocketIoRedisPublisher(redisOptions);
     publisher.on("error", (err) => {
         winston.error("Error with Redis Publisher:", err);
+        Lumberjack.error("Error with Redis Publisher:", undefined, err);
     });
 
     const localContext = new LocalContext(winston);

@@ -62,45 +62,10 @@
     "version": "0.1026.0",
     "broken": {
       "0.1024.0": {
-        "InterfaceDeclaration_ICreateBlobResponse": {
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IQuorum": {
+        "InterfaceDeclaration_IBlob": {
           "forwardCompat": false
         },
-        "InterfaceDeclaration_ISummaryAttachment": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISummaryBlob": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISummaryHandle": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISummaryTree": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_SummaryObject": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_SummaryTree": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "EnumDeclaration_SummaryType": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_SummaryTypeNoHandle": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_IBlob": {
+        "InterfaceDeclaration_IQuorum": {
           "forwardCompat": false
         },
         "InterfaceDeclaration_ITree": {
@@ -108,40 +73,6 @@
         },
         "TypeAliasDeclaration_ITreeEntry": {
           "forwardCompat": false
-        }
-      },
-      "0.1025.1": {
-        "InterfaceDeclaration_ISummaryAttachment": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISummaryBlob": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISummaryHandle": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "InterfaceDeclaration_ISummaryTree": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_SummaryObject": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_SummaryTree": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "EnumDeclaration_SummaryType": {
-          "forwardCompat": false,
-          "backCompat": false
-        },
-        "TypeAliasDeclaration_SummaryTypeNoHandle": {
-          "forwardCompat": false,
-          "backCompat": false
         }
       }
     }
