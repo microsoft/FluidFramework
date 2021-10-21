@@ -780,6 +780,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private latestSummaryGCVersion: GCVersion;
     // This is the source of truth for whether GC is enabled or not.
     private readonly shouldRunGC: boolean;
+    // This is the runtime version when doc is first created
+    private readonly createDocRuntimeVersion: string;
+    // This is the time stamp of when doc is first created
+    private readonly createDocTimeStamp: number;
     /**
      * True if generating summaries with isolated channels is
      * explicitly disabled. This only affects how summaries are written,
@@ -809,6 +813,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this._summarizer;
     }
 
+    private getCreateVersion(metadata?: IContainerRuntimeMetadata): string {
+        if(!metadata) {
+            return pkgVersion;
+        }
+        return metadata.createDocRuntimeVersion ?? pkgVersion;
+    }
+
+    private getTimeStamp(metadata?: IContainerRuntimeMetadata): number {
+        if(!metadata) {
+            return performance.now();
+        }
+        return metadata.createDocTimeStamp ?? performance.now();
+    }
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -832,6 +850,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
           * For new documents, we get this value based on the gcAllowed flag in runtimeOptions.
           */
         const prevSummaryGCVersion = existing ? getGCVersion(metadata) : undefined;
+
+        this.createDocRuntimeVersion = existing ? this.getCreateVersion(metadata) : pkgVersion;
+        this.createDocTimeStamp = existing ? this.getTimeStamp(metadata) : performance.now();
+
         // Default to false for now.
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
             (this.runtimeOptions.gcOptions.gcAllowed === true ? this.currentGCVersion : 0);
@@ -1172,7 +1194,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // The last message processed at the time of summary. If there are no messages, nothing has changed from
             // the base summary we loaded from. So, use the message from its metadata blob.
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
-            runtimeVersion: pkgVersion,
+            createDocRuntimeVersion: this.createDocRuntimeVersion,
+            createDocTimeStamp: this.createDocTimeStamp,
         };
     }
 

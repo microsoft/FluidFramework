@@ -324,6 +324,7 @@ export class Loader implements IHostLoader {
             this,
             codeDetails,
         );
+        // timestamp here
 
         if (this.cachingEnabled) {
             container.once("attached", () => {

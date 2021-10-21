@@ -83,7 +83,8 @@ export interface IContainerRuntimeMetadata {
     readonly disableIsolatedChannels?: true;
     /** 0 to disable GC, > 0 to enable GC, undefined defaults to disabled. */
     readonly gcFeature?: GCVersion;
-    readonly runtimeVersion?: string;
+    readonly createDocRuntimeVersion?: string;
+    readonly createDocTimeStamp?: number;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
@@ -143,11 +144,6 @@ export function getGCVersion(metadata?: IContainerRuntimeMetadata): GCVersion {
         return 0;
     }
     return metadata.gcFeature ?? 0;
-}
-
-// eslint-disable-next-line prefer-arrow/prefer-arrow-functions
-export function getRuntimeVersion(metadata?: IContainerRuntimeMetadata): string {
-    return metadata?.runtimeVersion ?? "0";
 }
 
 export const protocolTreeName = ".protocol";
