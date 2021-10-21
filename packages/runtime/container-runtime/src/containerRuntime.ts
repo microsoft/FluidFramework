@@ -1555,8 +1555,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
         isRoot = false,
     ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores._createFluidDataStoreContext(
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+        if (isRoot) {
+            fluidDataStore.bindToContext();
+        }
+        return fluidDataStore;
     }
 
     private async _createDataStore(
@@ -1681,47 +1685,43 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 deletedDataStores?: number,
                 totalDataStores?: number,
             } = {};
-            try {
-                // Get the container's GC data and run GC on the reference graph in it.
-                const gcData = await this.dataStores.getGCData(fullGC);
-                const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
-                    gcData.gcNodes, [ "/" ],
-                    this.logger,
-                );
+            // Get the container's GC data and run GC on the reference graph in it.
+            const gcData = await this.dataStores.getGCData(fullGC);
+            const { referencedNodeIds, deletedNodeIds } = runGarbageCollection(
+                gcData.gcNodes, [ "/" ],
+                this.logger,
+            );
 
-                // Update our summarizer node's used routes. Updating used routes in summarizer node before
-                // summarizing is required and asserted by the the summarizer node. We are the root and are
-                // always referenced, so the used routes is only self-route (empty string).
-                this.summarizerNode.updateUsedRoutes([""]);
+            // Update our summarizer node's used routes. Updating used routes in summarizer node before
+            // summarizing is required and asserted by the the summarizer node. We are the root and are
+            // always referenced, so the used routes is only self-route (empty string).
+            this.summarizerNode.updateUsedRoutes([""]);
 
-                // Remove this node's route ("/") and notify data stores of routes that are used in it.
-                const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
-                const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(
-                    usedRoutes,
-                    // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
-                    // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
-                    // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
-                    this.deltaManager.lastMessage?.timestamp,
-                );
+            // Remove this node's route ("/") and notify data stores of routes that are used in it.
+            const usedRoutes = referencedNodeIds.filter((id: string) => { return id !== "/"; });
+            const { dataStoreCount, unusedDataStoreCount } = this.dataStores.updateUsedRoutes(
+                usedRoutes,
+                // For now, we use the timestamp of the last op for gcTimestamp. However, there can be cases where
+                // we don't have an op (on demand summaries for instance). In those cases, we will use the timestamp
+                // of this client's connection - https://github.com/microsoft/FluidFramework/issues/7152.
+                this.deltaManager.lastMessage?.timestamp,
+            );
 
-                // Update stats to be reported in the peformance event.
-                gcStats.deletedNodes = deletedNodeIds.length;
-                gcStats.totalNodes = referencedNodeIds.length + deletedNodeIds.length;
-                gcStats.deletedDataStores = unusedDataStoreCount;
-                gcStats.totalDataStores = dataStoreCount;
+            // Update stats to be reported in the peformance event.
+            gcStats.deletedNodes = deletedNodeIds.length;
+            gcStats.totalNodes = referencedNodeIds.length + deletedNodeIds.length;
+            gcStats.deletedDataStores = unusedDataStoreCount;
+            gcStats.totalDataStores = dataStoreCount;
 
-                // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
-                // involving access to deleted data.
-                if (this.gcTestMode) {
-                    this.dataStores.deleteUnusedRoutes(deletedNodeIds);
-                }
-            } catch (error) {
-                event.cancel(gcStats, error);
-                throw error;
+            // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
+            // involving access to deleted data.
+            if (this.gcTestMode) {
+                this.dataStores.deleteUnusedRoutes(deletedNodeIds);
             }
             event.end(gcStats);
             return gcStats as IGCStats;
-        });
+        },
+        { end: true, cancel: "error" });
     }
 
     private async summarizeInternal(fullTree: boolean, trackState: boolean): Promise<ISummarizeInternalResult> {
@@ -2273,10 +2273,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async fetchSnapshotFromStorage(versionId: string, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
-        const perfEvent = PerformanceEvent.start(logger, event);
-        const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
-        let snapshot: ISnapshotTree;
-        try {
+        return PerformanceEvent.timedExecAsync(logger, event, async (perfEvent) => {
+            const stats: { getVersionDuration?: number; getSnapshotDuration?: number } = {};
             const trace = Trace.start();
 
             const versions = await this.storage.getVersions(versionId, 1);
@@ -2287,14 +2285,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
             stats.getSnapshotDuration = trace.trace().duration;
 
-            snapshot = maybeSnapshot;
-        } catch (error) {
-            perfEvent.cancel(stats, error);
-            throw error;
-        }
-
-        perfEvent.end(stats);
-        return snapshot;
+            perfEvent.end(stats);
+            return maybeSnapshot;
+        });
     }
 
     public getPendingLocalState() {

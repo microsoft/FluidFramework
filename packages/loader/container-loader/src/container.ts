@@ -371,7 +371,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "generic" },
+            { start: true, end: true, cancel: "error" },
         );
     }
 
@@ -463,7 +463,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
 
-    private _closed = false;
+    private _closed: "notClosed" | "closing" | "closed" = "notClosed";
 
     private setAutoReconnectTime = performance.now();
 
@@ -523,7 +523,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        return this._closed;
+        return (this._closed !== "notClosed");
     }
 
     public get id(): string {
@@ -641,6 +641,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,
+                    containerClosed: () => this._closed,
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -677,7 +678,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
-                        loaded: this.loaded,
                     });
                 },
             },
@@ -767,10 +767,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
-        if (this._closed) {
+        if (this.closed) {
             return;
         }
-        this._closed = true;
+        this._closed = "closing";
 
         // Ensure that we raise all key events even if one of these throws
         try {
@@ -796,15 +796,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.logger.sendTelemetryEvent(
             {
                 eventName: "ContainerClose",
-                loaded: this.loaded,
                 category: error === undefined ? "generic" : "error",
             },
             error,
         );
 
-        this.emit("closed", error);
-
-        this.removeAllListeners();
+        try {
+            this.emit("closed", error);
+            this.removeAllListeners();
+        } finally {
+            this._closed = "closed";
+        }
     }
 
     public closeAndGetPendingLocalState(): string {
@@ -961,9 +963,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            return this.context.request(path);
-        });
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "Request" },
+            async () => this.context.request(path),
+            { end: true, cancel: "error" },
+        );
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -1623,7 +1628,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // state to "read" mode.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
-            "active connection not present in quorum");
+            0x276 /* "active connection not present in quorum" */);
 
         return active;
     }
