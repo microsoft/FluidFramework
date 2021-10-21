@@ -33,7 +33,6 @@ stages:
         poolBuild: Lite
         testPackage: "@fluidframework/azure-client"
         testWorkspace: ${{ variables.testWorkspace }}
-        buildDirectory: $(Pipeline.Workspace)
         testCommand: test:realsvc:azure
         downloadTestFiles: true
         env:
