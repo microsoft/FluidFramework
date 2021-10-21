@@ -525,8 +525,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readyForAttach() {
-        assert(this._lifecycleState === "loading", "readyForAttach should only be called when in loading state");
-        this._lifecycleState = "loaded";
+        if (this._lifecycleState === "loading")
+        {
+            this._lifecycleState = "loaded";
+        }
     }
 
     public get closed(): boolean {
