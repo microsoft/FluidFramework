@@ -198,7 +198,7 @@ jobs:
               tar -xvf $(Pipeline.Workspace)/azure-frs-tests/azure-client.tgz -C $(Pipeline.Workspace)/azure-frs-tests
               echo "---------------"
               ls $(Pipeline.Workspace)/azure-frs-tests/test
-              mv $(Pipeline.Workspace)/azure-frs-tests/test* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/azure-frs-tests/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               echo "---------------"
               ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               echo "---------------"
