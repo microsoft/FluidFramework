@@ -397,15 +397,6 @@ export function configureWebSocketServices(
             };
         }
 
-        async function getClients(tenantId: string, documentId: string): Promise<ISignalClient[]> {
-            const clients = await clientManager.getClients(tenantId, documentId)
-                .catch(async (err) => {
-                    const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
-                    return handleServerError(logger, errMsg, documentId, tenantId);
-                });
-            return clients;
-        }
-
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
