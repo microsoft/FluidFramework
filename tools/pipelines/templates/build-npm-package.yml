@@ -287,12 +287,14 @@ stages:
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
+                mkdir $(Build.ArtifactStagingDirectory)/test-files/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*.tar
                 else
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
@@ -315,23 +317,12 @@ stages:
               ArtifactName: 'pack'
               publishLocation: 'Container'
 
-          - ${{ if eq(parameters.packTestFiles, true) }}:
-            # Pack - Azure FRS Test Files
-            - task: Bash@3
-              displayName: Pack - Azure FRS Test Files
-              inputs:
-                targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
-                script: |
-                  mkdir $(Build.ArtifactStagingDirectory)/azure-frs-tests/
-                  cd ./packages/framework/azure-client/dist && tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-tests/azure-client.tgz ./test
-
-            - task: PublishBuildArtifacts@1
-              displayName: Publish Artifact - Azure FRS Test Files
-              inputs:
-                PathtoPublish: '$(Build.ArtifactStagingDirectory)/azure-frs-tests'
-                ArtifactName: 'azure-frs-tests'
-                publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - Test Files
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
+              ArtifactName: 'test-files'
+              publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
