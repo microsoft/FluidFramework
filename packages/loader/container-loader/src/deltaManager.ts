@@ -325,7 +325,7 @@ export class DeltaManager
      */
     public get connectionMode(): ConnectionMode {
         assert(!this.downgradedConnection || this.connection?.mode === "write",
-            "Did we forget to reset downgradedConnection on new connection?");
+            0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
         if (this.connection === undefined || this.downgradedConnection) {
             return "read";
         }
@@ -413,7 +413,7 @@ export class DeltaManager
      */
     public setAutoReconnect(mode: ReconnectMode): void {
         assert(mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
-            "API is not supported for non-connecting or closed container");
+            0x278 /* "API is not supported for non-connecting or closed container" */);
 
         this._reconnectMode = mode;
 
@@ -452,7 +452,7 @@ export class DeltaManager
 
         if (oldValue !== this.readonly) {
             assert(this._reconnectMode !== ReconnectMode.Never,
-                "API is not supported for non-connecting or closed container");
+                0x279 /* "API is not supported for non-connecting or closed container" */);
 
             let reconnect = false;
             if (this.readonly === true) {
@@ -800,7 +800,8 @@ export class DeltaManager
 
             // Attempt the connection
             connectCore().then((connection) => {
-                assert(this.connectionP === undefined, "this.connectionP has been reset on successful connection");
+                assert(this.connectionP === undefined,
+                    0x27a /* "this.connectionP has been reset on successful connection" */);
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1278,7 +1279,7 @@ export class DeltaManager
             return false;
         }
 
-        assert(this.connectionP === undefined, "reentrnacy may result in incorrect behavior");
+        assert(this.connectionP === undefined, 0x27b /* "reentrnacy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
@@ -1562,7 +1563,8 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read", "effective connectionMode should be 'read' after downgrade");
+                assert(this.connectionMode === "read",
+                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
 
