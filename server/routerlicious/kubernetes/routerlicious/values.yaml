@@ -71,6 +71,11 @@ mongodb:
   url: mongodb_url
   expireAfterSeconds: -1
   createCosmosDBIndexes: false
+  softDeletionRetentionPeriodMs: 60000
+  offlineWindowMs: 60000
+  softDeletionEnabled: false
+  permanentDeletionEnabled: false
+  deletionIntervalMs: 70000
 
 rabbitmq:
   connectionString: ""

@@ -23,6 +23,11 @@ data:
             "endpoint": "{{ .Values.mongodb.url }}",
             "expireAfterSeconds": "{{ .Values.mongodb.expireAfterSeconds }}",
             "createCosmosDBIndexes": "{{ .Values.mongodb.createCosmosDBIndexes }}",
+            "softDeletionRetentionPeriodMs": "{{ .Values.mongodb.softDeletionRetentionPeriodMs }}",
+            "offlineWindowMs": "{{ .Values.mongodb.offlineWindowMs }}",
+            "softDeletionEnabled": "{{ .Values.mongodb.softDeletionEnabled }}",
+            "permanentDeletionEnabled": "{{ .Values.mongodb.permanentDeletionEnabled }}",
+            "deletionIntervalMs": "{{ .Values.mongodb.deletionIntervalMs }}",
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
