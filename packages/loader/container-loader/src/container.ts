@@ -1626,7 +1626,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // state to "read" mode.
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
-            "active connection not present in quorum");
+            0x276 /* "active connection not present in quorum" */);
 
         return active;
     }
