@@ -678,7 +678,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
-                        loaded: this.loaded,
                     });
                 },
             },
