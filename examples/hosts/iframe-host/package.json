@@ -47,6 +47,7 @@
     "@fluidframework/routerlicious-driver": "^0.50.0",
     "@fluidframework/runtime-utils": "^0.50.0",
     "@fluidframework/test-runtime-utils": "^0.50.0",
+    "@fluidframework/tinylicious-driver": "^0.50.0",
     "@fluidframework/view-adapters": "^0.50.0",
     "@fluidframework/web-code-loader": "^0.50.0",
     "comlink": "^4.3.0"

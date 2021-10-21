@@ -14,6 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
 - [OpProcessingController removed](#OpProcessingController-removed)
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
+- [get-container API changed](#get-container-api-changed)
 - [Expose saved and dirty events in FluidContainer](#Expose-saved-and-dirty-events-in-FluidContainer)
 
 ### OpProcessingController removed
@@ -23,6 +24,10 @@ If you can't make this transition, you can always copy implementation of LoaderC
 
 ### Expose isDirty flag in the FluidContainer
 The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
+
+### get-container API changed
+The signature of methods `getTinyliciousContainer` and `getFRSContainer` exported from the `get-container` package has been changed to accomodate the new container create flow. Both methods now return a tuple of the container instance and container ID associated with it. The `documentId` parameter is ignored when a new container is requested. Client applications need to use the ID returned by the API.
+The `get-container` API is widely used in multiple sample applications across the repository. All samples were refactored to reflect the change in the API. External samples consuming these methods should be updated accordingly.
 
 ### Expose saved and dirty events in FluidContainer
 The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.

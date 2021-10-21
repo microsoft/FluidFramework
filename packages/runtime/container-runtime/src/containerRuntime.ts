@@ -1555,8 +1555,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         id = uuid(),
         isRoot = false,
     ): Promise<IFluidDataStoreChannel> {
-        return this.dataStores._createFluidDataStoreContext(
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+        if (isRoot) {
+            fluidDataStore.bindToContext();
+        }
+        return fluidDataStore;
     }
 
     private async _createDataStore(
