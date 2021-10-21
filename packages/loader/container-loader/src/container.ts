@@ -652,6 +652,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
+                    containerConnectionState: () => ConnectionState[this.connectionState],
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
