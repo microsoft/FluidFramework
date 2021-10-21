@@ -34,7 +34,7 @@ stages:
         testPackage: "@fluidframework/azure-client"
         testWorkspace: ${{ variables.testWorkspace }}
         buildDirectory: $(Pipeline.Workspace)
-        target: azure
+        testCommand: test:realsvc:azure
         downloadTestFiles: true
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
