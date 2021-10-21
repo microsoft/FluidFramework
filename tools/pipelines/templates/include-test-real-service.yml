@@ -184,7 +184,7 @@ jobs:
             preferTriggeringPipeline: true
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
-            artifact: pack-azure-frs-test
+            artifact: azure-frs-tests
             path: $(Pipeline.Workspace)/azure-frs-tests
 
         # Unpack test files
