@@ -164,7 +164,6 @@ The container emits the saved event to notify the caller that all the local chan
 
 ```typescript {linenos=inline}
 container.on("saved", () => {
-    // handle ops
     // allow the user to edit
 });
 ```
@@ -175,7 +174,6 @@ The container emits the dirty event to notify the caller that there are local ch
 
 ```typescript {linenos=inline}
 container.on("dirty", () => {
-    // handle ops
     // prevent the user from editing to avoid data loss
 });
 ```
