@@ -116,7 +116,7 @@ interface ICheckpoint {
     nextKafkaCheckpointMessage?: IQueuedMessage;
 
     // time fired due that should kick off a checkpoint when deli is idle
-    idleTimeTimer?: any;
+    idleTimer?: any;
 
     // raw messages since the last checkpoint
     rawMessagesSinceCheckpoint: number;
@@ -1274,8 +1274,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         const initialDeliCheckpointMessage = this.checkpointInfo.currentDeliCheckpointMessage;
 
-        this.checkpointInfo.idleTimeTimer = setTimeout(() => {
-            this.checkpointInfo.idleTimeTimer = undefined;
+        this.checkpointInfo.idleTimer = setTimeout(() => {
+            this.checkpointInfo.idleTimer = undefined;
 
             // verify that the current deli message matches the raw message that kicked off this timer
             // if it matches, that means that delis state is for the raw message
@@ -1290,9 +1290,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Clears the timer used for checkpointing when deli is idle
      */
     private clearCheckpointIdleTimer() {
-        if (this.checkpointInfo.idleTimeTimer !== undefined) {
-            clearTimeout(this.checkpointInfo.idleTimeTimer);
-            this.checkpointInfo.idleTimeTimer = undefined;
+        if (this.checkpointInfo.idleTimer !== undefined) {
+            clearTimeout(this.checkpointInfo.idleTimer);
+            this.checkpointInfo.idleTimer = undefined;
         }
     }
 }
