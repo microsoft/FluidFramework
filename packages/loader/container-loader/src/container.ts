@@ -419,10 +419,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
 
     private get loaded(): boolean {
-        return (this._lifecycleState !== "loading");
+        return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
     }
 
-    private markLoadingDone() {
+    private set loaded(t: boolean) {
+        assert(t, "Setting loaded state to false is not supported");
+        assert(this._lifecycleState !== "created", "Must go through loading state before loaded");
+
         // It's conceivable the container could be closed when this is called
         // Only transition states if currently loading
         if (this._lifecycleState === "loading")
@@ -1316,7 +1319,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
 
         // Internal context is fully loaded at this point
-        this.markLoadingDone();
+        this.loaded = true;
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1399,7 +1402,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.propagateConnectionState();
 
-        this.markLoadingDone();
+        this.loaded = true;
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1425,7 +1428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this.markLoadingDone();
+        this.loaded = true;
 
         this.propagateConnectionState();
     }
