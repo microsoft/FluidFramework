@@ -413,7 +413,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly logger: ITelemetryLogger;
 
-    private loaded = false;
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
     private _attachState = AttachState.Detached;
 
     private readonly _storage: ContainerStorageAdapter;
@@ -462,8 +462,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
-
-    private _closed: "notClosed" | "closing" | "closed" = "notClosed";
 
     private setAutoReconnectTime = performance.now();
 
@@ -522,8 +520,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.forceReadonly(readonly);
     }
 
+    public get loaded(): boolean {
+        return (this._lifecycleState !== "loading");
+    }
+
+    private readyForAttach() {
+        assert(this._lifecycleState === "loading", "readyForAttach should only be called when in loading state");
+        this._lifecycleState = "loaded";
+    }
+
     public get closed(): boolean {
-        return (this._closed !== "notClosed");
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
     }
 
     public get id(): string {
@@ -640,8 +647,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerId: uuid(),
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
-                    containerLoaded: () => this.loaded,
-                    containerClosed: () => this._closed,
+                    containerLifecycleState: () => this._lifecycleState,
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -678,7 +684,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
-                        loaded: this.loaded,
                     });
                 },
             },
@@ -771,7 +776,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.closed) {
             return;
         }
-        this._closed = "closing";
+        this._lifecycleState = "closing";
 
         // Ensure that we raise all key events even if one of these throws
         try {
@@ -806,7 +811,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("closed", error);
             this.removeAllListeners();
         } finally {
-            this._closed = "closed";
+            this._lifecycleState = "closed";
         }
     }
 
@@ -846,12 +851,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (!this.loaded) {
-            throw new UsageError("containerMustBeLoadedBeforeAttaching");
-        }
-
-        if (this.closed) {
-            throw new UsageError("cannotAttachClosedContainer");
+        if (this._lifecycleState !== "loaded") {
+            throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
         }
 
         // If container is already attached or attach is in progress, throw an error.
@@ -1304,7 +1305,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
 
         // Internal context is fully loaded at this point
-        this.loaded = true;
+        this.readyForAttach();
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1387,7 +1388,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.propagateConnectionState();
 
-        this.loaded = true;
+        this.readyForAttach();
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1413,7 +1414,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this.loaded = true;
+        this.readyForAttach();
 
         this.propagateConnectionState();
     }
