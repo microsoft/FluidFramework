@@ -25,7 +25,7 @@ parameters:
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
-  default: 
+  default:
   - fluid-framework
 
 trigger:
@@ -84,6 +84,7 @@ extends:
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
+    packTestFiles: true
 
     preCG:
     - task: UseNode@1

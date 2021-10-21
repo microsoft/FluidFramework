@@ -47,6 +47,10 @@ parameters:
   type: stepList
   default: []
 
+- name: packTestFiles
+  type: boolean
+  default: false
+
 # These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
 - name: additionalTests
   type: stepList
@@ -311,7 +315,7 @@ stages:
               ArtifactName: 'pack'
               publishLocation: 'Container'
 
-          - ${{ if eq(parameters.taskBuild, 'ci:build') }}:
+          - ${{ if eq(parameters.packTestFiles, true) }}:
             # Pack - Azure FRS Test Files
             - task: Bash@3
               displayName: Pack - Azure FRS Test Files
