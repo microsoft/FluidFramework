@@ -197,8 +197,8 @@ jobs:
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
               mv ${{ parameters.testWorkspace }}/packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        # Install extra dependencies
-        - task: Npm@1
+      # Install extra dependencies
+      - task: Npm@1
         displayName: 'npm install - extra dependencies'
         inputs:
           command: 'custom'
