@@ -373,7 +373,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 			'SequencedEditApplied',
 			sharedTreeTelemetryProperties
 		);
-		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
+		const { editLog, cachingLogViewer } = this.initializeNewEditLogFromSummary(
 			initialSummary as SharedTreeSummary<TChange>,
 			this.processEditResult,
 			this.processSequencedEditResult
@@ -603,13 +603,7 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 			});
 		}
 
-		const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
-			convertedSummary,
-			this.processEditResult,
-			this.processSequencedEditResult
-		);
-		this.editLog = editLog;
-		this.cachingLogViewer = cachingLogViewer;
+		this.initializeNewEditLogFromSummary(convertedSummary, this.processEditResult, this.processSequencedEditResult);
 
 		if (this.runtime.connected) {
 			const noChunksReadyForUpload = this.editLog.getEditChunksReadyForUpload()[Symbol.iterator]().next().done;
@@ -651,14 +645,21 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 		}
 	}
 
-	private createEditLogFromSummary(
+	/**
+	 * Initializes a new `EditLog` and `CachingLogViewer` on this `SharedTree`, replacing and disposing of any previously existing ones.
+	 * @returns the initialized values (this is mostly to keep the constructor happy)
+	 */
+	private initializeNewEditLogFromSummary(
 		summary: SharedTreeSummary<TChange>,
 		editStatusCallback: EditStatusCallback,
 		sequencedEditResultCallback: SequencedEditResultCallback<TChange, TFailure>
 	): { editLog: EditLog<TChange>; cachingLogViewer: CachingLogViewer<TChange, TFailure> } {
 		const { editHistory, currentTree } = summary;
 
-		// Use previously registered EditAddedHandlers if there is an existing EditLog
+		// Dispose the current log viewer if it exists. This ensures that re-used EditAddedHandlers below don't retain references to old
+		// log viewers.
+		this.cachingLogViewer?.detachFromEditLog();
+		// Use previously registered EditAddedHandlers if there is an existing EditLog.
 		const editLog = new EditLog(editHistory, this.logger, this.editLog?.editAddedHandlers);
 
 		editLog.on(SharedTreeDiagnosticEvent.UnexpectedHistoryChunk, () => {
@@ -684,6 +685,8 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 			0
 		);
 
+		this.editLog = editLog;
+		this.cachingLogViewer = logViewer;
 		return { editLog, cachingLogViewer: logViewer };
 	}
 
@@ -854,13 +857,11 @@ export abstract class GenericSharedTree<TChange, TFailure = unknown> extends Sha
 				if (version === SharedTreeSummaryWriteFormat.Format_0_1_1) {
 					const newSummary = convertSummaryToReadFormat<TChange>(oldSummary);
 
-					const { editLog, cachingLogViewer } = this.createEditLogFromSummary(
+					this.initializeNewEditLogFromSummary(
 						newSummary,
 						this.processEditResult,
 						this.processSequencedEditResult
 					);
-					this.editLog = editLog;
-					this.cachingLogViewer = cachingLogViewer;
 				} else {
 					throw new Error(`Updating to version ${version} is not supported.`);
 				}

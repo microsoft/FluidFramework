@@ -223,7 +223,7 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 	private readonly maximumEvictableIndex: number;
 
 	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
-	private readonly _editAddedHandlers: EditAddedHandler<TChange>[] = [];
+	private readonly _editAddedHandlers: Set<EditAddedHandler<TChange>> = new Set();
 
 	private readonly logger?: ITelemetryLogger;
 
@@ -297,16 +297,18 @@ export class EditLog<TChange> extends EventEmitterWithErrorHandling implements O
 
 	/**
 	 * Registers a handler for when an edit is added to this `EditLog`.
+	 * @returns A callback which can be invoked to unregister this handler.
 	 */
-	public registerEditAddedHandler(handler: EditAddedHandler<TChange>): void {
-		this._editAddedHandlers.push(handler);
+	public registerEditAddedHandler(handler: EditAddedHandler<TChange>): () => void {
+		this._editAddedHandlers.add(handler);
+		return () => this._editAddedHandlers.delete(handler);
 	}
 
 	/**
 	 * @returns the `EditAddedHandler`s registered on this `EditLog`.
 	 */
 	public get editAddedHandlers(): readonly EditAddedHandler<TChange>[] {
-		return this._editAddedHandlers;
+		return Array.from(this._editAddedHandlers);
 	}
 
 	/**

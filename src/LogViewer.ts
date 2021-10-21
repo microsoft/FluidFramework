@@ -183,6 +183,9 @@ export interface LogViewer {
 
 /**
  * Creates views for revisions associated with an EditLog and caches the results.
+ *
+ * Does so by listening for edits added to the log. If the underlying EditLog or its listeners need to be reused beyond the lifetime of
+ * a CachingLogViewer instance, that instance should be disposed with `detachFromEditLog` to ensure it is garbage-collectable.
  * @internal
  */
 export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer {
@@ -248,6 +251,12 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 	private highestRevisionCacheEntry?: EditCacheEntry<TChange, TFailure>;
 
 	/**
+	 * Removes this log viewer from the set of handleEditAdded listeners on its underlying log.
+	 * This should be called if the underlying log or its listeners are re-used past the lifetime of this log viewer.
+	 */
+	public readonly detachFromEditLog: () => void;
+
+	/**
 	 * @returns true if the highest revision is cached.
 	 */
 	public highestRevisionCached(): boolean {
@@ -294,7 +303,7 @@ export class CachingLogViewer<TChange, TFailure = unknown> implements LogViewer 
 		this.processSequencedEditResult = processSequencedEditResult ?? noop;
 		this.expensiveValidation = expensiveValidation;
 		this.transactionFactory = transactionFactory;
-		this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
+		this.detachFromEditLog = this.log.registerEditAddedHandler(this.handleEditAdded.bind(this));
 	}
 
 	/**
