@@ -149,7 +149,7 @@ The Fluid Framework sends events in the following categories:
 
 ### EventName
 
-This property contains a unique name for the event.
+This property contains a unique name for the event. The name may be namespaced, delimitted by a colon ':'.
 
 ### Customizing logged events
 

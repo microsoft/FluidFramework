@@ -1701,6 +1701,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             prefetchType);
     }
 
+    /**
+     * When the container's connect state changes (see enum ConnectionState for possible states),
+     * it logs an event named `Container:ConnectionStateChange_{state}`
+     * with the new connection state filled in, e.g. `Container:ConnectionStateChange_Connecting`.
+     * This event includes many useful properties, such as
+     * `opsBehind`, `connectionInitiationReason`, and `connectionMode` (read/write).
+     */
     private logConnectionStateChangeTelemetry(
         value: ConnectionState,
         oldState: ConnectionState,
@@ -1738,7 +1745,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             }
         }
 
-        // Documented in containerLoadTelemetry.md
+        // NOTE: Please keep this event in sync with this function's doc comment above
         this.logger.sendPerformanceEvent({
             eventName: `ConnectionStateChange_${ConnectionState[value]}`,
             from: ConnectionState[oldState],
