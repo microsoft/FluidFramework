@@ -109,11 +109,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         const alias = "alias";
 
         it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
-            const ds1 = await createRootDataStore(dataObject1, "1");
-            const ds2 = await createRootDataStore(dataObject1, "2");
+            const ds1 = await createRootDataStore(dataObject1, "1") as unknown as IFluidDataStoreChannel;
+            const ds2 = await createRootDataStore(dataObject1, "2") as unknown as IFluidDataStoreChannel;
 
-            const aliasResult1 = await aliasDataStore(dataObject1, ds1 as unknown as IFluidDataStoreChannel, alias);
-            const aliasResult2 = await aliasDataStore(dataObject1, ds2 as unknown as IFluidDataStoreChannel, alias);
+            const aliasResult1 = await aliasDataStore(dataObject1, ds1, alias);
+            const aliasResult2 = await aliasDataStore(dataObject1, ds2, alias);
 
             assert(aliasResult1);
             assert(!aliasResult2);
@@ -123,11 +123,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         });
 
         it("Assign multiple data stores to the same alias, first write wins, different containers", async () => {
-            const ds1 = await createRootDataStore(dataObject1, "1");
-            const ds2 = await createRootDataStore(dataObject2, "2");
+            const ds1 = await createRootDataStore(dataObject1, "1") as unknown as IFluidDataStoreChannel;
+            const ds2 = await createRootDataStore(dataObject2, "2") as unknown as IFluidDataStoreChannel;
 
-            const aliasResult1 = await aliasDataStore(dataObject1, ds1 as unknown as IFluidDataStoreChannel, "alias");
-            const aliasResult2 = await aliasDataStore(dataObject2, ds2 as unknown as IFluidDataStoreChannel, "alias");
+            const aliasResult1 = await aliasDataStore(dataObject1, ds1, "alias");
+            const aliasResult2 = await aliasDataStore(dataObject2, ds2, "alias");
 
             assert(aliasResult1);
             assert(!aliasResult2);
@@ -136,7 +136,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
 
             const ds = await getRootDataStore(dataObject3, alias);
-            assert.deepStrictEqual(ds, ds1);
+            assert.strictEqual(ds.id, ds1.id);
         });
     });
 });
