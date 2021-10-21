@@ -340,6 +340,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((res, rej) => {
+                container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -385,6 +386,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
+        container._lifecycleState = "loading";
         await container.createDetached(codeDetails);
         return container;
     }
@@ -401,6 +403,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             {});
         const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+        container._lifecycleState = "loading";
         await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
@@ -413,7 +416,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly logger: ITelemetryLogger;
 
-    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
+    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
 
     private get loaded(): boolean {
         return (this._lifecycleState !== "loading");
