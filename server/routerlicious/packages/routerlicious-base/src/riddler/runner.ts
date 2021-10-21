@@ -6,6 +6,7 @@
 import * as http from "http";
 import { Deferred } from "@fluidframework/common-utils";
 import { MongoManager, IRunner, ISecretManager } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as winston from "winston";
 import * as app from "./app";
 
@@ -92,5 +93,6 @@ export class RiddlerRunner implements IRunner {
             ? `pipe ${addr}`
             : `port ${addr.port}`;
         winston.info(`Listening on ${bind}`);
+        Lumberjack.info(`Listening on ${bind}`);
     }
 }
