@@ -173,38 +173,39 @@ jobs:
           customRegistry: 'useNpmrc'
 
       # Download Test Files & Install Extra Dependencies
-      # Download Artifact - Test Files
-      - task: DownloadPipelineArtifact@2
-        displayName: Download test files
-        inputs:
-          source: specific
-          project: internal
-          pipeline: Build - client packages
-          preferTriggeringPipeline: true
-          runVersion: latestFromBranch
-          runBranch: $(Build.SourceBranch)
-          artifact: pack-azure-frs-test
-          path: $(Pipeline.Workspace)/azure-frs-test
+      - ${{ if eq(parameters.downloadTestFiles, true) }}:
+        # Download Artifact - Test Files
+        - task: DownloadPipelineArtifact@2
+          displayName: Download test files
+          inputs:
+            source: specific
+            project: internal
+            pipeline: Build - client packages
+            preferTriggeringPipeline: true
+            runVersion: latestFromBranch
+            runBranch: $(Build.SourceBranch)
+            artifact: pack-azure-frs-test
+            path: $(Pipeline.Workspace)/azure-frs-test
 
-      # Unpack test files
-      - task: Bash@3
-        displayName: Unpack test files
-        inputs:
-          workingDir: ${{ parameters.testWorkspace }}
-          targetType: 'inline'
-          script: |
-            mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-            tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
-              mv ${{ parameters.testWorkspace }}/packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+        # Unpack test files
+        - task: Bash@3
+          displayName: Unpack test files
+          inputs:
+            workingDir: ${{ parameters.testWorkspace }}
+            targetType: 'inline'
+            script: |
+              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
+                mv ${{ parameters.testWorkspace }}/packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-      # Install extra dependencies
-      - task: Npm@1
-        displayName: 'npm install - extra dependencies'
-        inputs:
-          command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install cross-env mocha @fluidframework/test-client-utils'
-          customRegistry: 'useNpmrc'
+        # Install extra dependencies
+        - task: Npm@1
+          displayName: 'npm install - extra dependencies'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.testWorkspace }}
+            customCommand: 'install cross-env mocha @fluidframework/test-client-utils'
+            customRegistry: 'useNpmrc'
 
       # run the test
       - task: Npm@1
