@@ -1902,7 +1902,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }, this.beatInEveryNSecs);
 
         // Listen for heartbeats
-        this._deltaManager.on("signal", (msg: ISignalMessage) => {
+        this._deltaManager.on("signal", (msg) => {
             if (msg.clientId !== null && msg.content.msg === "ping") {
                 this.audienceHeartBeat.set(msg.clientId, new Date());
 
