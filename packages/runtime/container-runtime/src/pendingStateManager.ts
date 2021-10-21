@@ -70,7 +70,8 @@ export class PendingStateManager implements IDisposable {
     private readonly pendingStates = new Deque<IPendingState>();
     private readonly initialStates: Deque<IPendingState>;
     private readonly previousClientIds = new Set<string>();
-    private initialClientSeqNum: number;
+    private firstStashedCSN = -1;
+    private stashedCount = 0;
     private readonly disposeOnce = new Lazy<void>(() => {
         this.initialStates.clear();
         this.pendingStates.clear();
@@ -119,19 +120,15 @@ export class PendingStateManager implements IDisposable {
     ) {
         this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
 
-        if (initialState?.clientId !== undefined) {
-            this.previousClientIds.add(initialState.clientId);
-        }
-
-        // get client sequence number of first actual message
-        this.initialClientSeqNum = -1;
-        for (let i = 0; i < this.initialStates.length; ++i) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const state = this.initialStates.get(i)!;
-            if (state.type === "message") {
-                this.initialClientSeqNum = state.clientSequenceNumber;
-                break;
+        if (initialState) {
+            if (initialState?.clientId !== undefined) {
+                this.previousClientIds.add(initialState.clientId);
             }
+            // get stashed op count and client sequence number of first op
+            const messages = initialState.pendingStates
+                .filter((state) => state.type === "message") as IPendingMessage[];
+            this.stashedCount = messages.length;
+            this.firstStashedCSN = messages[0].clientSequenceNumber;
         }
     }
 
@@ -275,12 +272,19 @@ export class PendingStateManager implements IDisposable {
     private processRemoteMessage(message: ISequencedDocumentMessage) {
         // if this is an ack for a stashed op, dequeue one message.
         // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
-        if (this.previousClientIds.has(message.clientId) && message.clientSequenceNumber >= this.initialClientSeqNum) {
+        const isOriginalClient = message.clientId === Array.from(this.previousClientIds)[0] &&
+            message.clientSequenceNumber === this.firstStashedCSN;
+        // rejoin op CSN = 1, resubmitted stashed/pending ops CSN >= 2
+        const isNewClient = this.previousClientIds.has(message.clientId) && message.clientSequenceNumber >= 2;
+
+        if (isOriginalClient || isNewClient) {
             while (!this.pendingStates.isEmpty()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const nextState = this.pendingStates.shift()!;
                 // if it's not a message just drop it and keep looking
                 if (nextState.type === "message") {
+                    --this.stashedCount;
+                    ++this.firstStashedCSN;
                     return { localAck: true, localOpMetadata: nextState.localOpMetadata };
                 }
             }
@@ -288,8 +292,6 @@ export class PendingStateManager implements IDisposable {
 
         if (message.type === ContainerMessageType.Rejoin && this.previousClientIds.has(message.contents?.clientId)) {
             this.previousClientIds.add(message.clientId);
-            // rejoin op CSN = 1, resubmitted stashed/pending ops CSN >= 2
-            this.initialClientSeqNum = 2;
         }
 
         return { localAck: false, localOpMetadata: undefined };
@@ -435,11 +437,27 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
+        // if this is first connect, verify we are about to "resubmit" only stashed ops
+        if (!prevClientId) {
+            let csn = this.firstStashedCSN;
+            for (let i = 0; i < this.pendingStates.length; ++i) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const state = this.pendingStates.get(i)!;
+                if (state.type === "message") {
+                    assert(state.clientSequenceNumber === csn++,
+                        `expected ${csn - 1}, got ${state.clientSequenceNumber}`);
+                }
+            }
+            assert(csn - this.firstStashedCSN === this.stashedCount,
+                "unexpected message queued before first connect");
+        }
+
+        // add a rejoin op so future clients provided with our stashed ops recognize them
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstState = this.pendingStates.peekFront()!;
         if (!prevClientId && this.previousClientIds.size > 0) {
             // No previous client ID implies first connect. If we have stashed ops w/ clientId, submit a rejoin op.
-            const clientId = Array.from(this.previousClientIds.values())[0];
+            const clientId = Array.from(this.previousClientIds)[0];
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             this.pendingStates.unshift({
                 type: "message",

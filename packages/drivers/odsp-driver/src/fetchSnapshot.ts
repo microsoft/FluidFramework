@@ -105,6 +105,13 @@ export async function fetchSnapshotWithRedeem(
             await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
             const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl =
                 { ...odspResolvedUrl, sharingLinkToRedeem: undefined };
+            if(odspResolvedUrlWithoutShareLink.shareLinkInfo) {
+                odspResolvedUrlWithoutShareLink.shareLinkInfo = {
+                    ...odspResolvedUrlWithoutShareLink.shareLinkInfo,
+                    sharingLinkToRedeem: undefined,
+                };
+            }
+
             return fetchLatestSnapshotCore(
                 odspResolvedUrlWithoutShareLink,
                 storageTokenFetcher,
@@ -139,9 +146,10 @@ async function redeemSharingLink(
             eventName: "RedeemShareLink",
         },
         async () => getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-                assert(!!odspResolvedUrl.sharingLinkToRedeem, 0x1ed /* "Share link should be present" */);
+                assert(!!odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
+                    0x1ed /* "Share link should be present" */);
                 const storageToken = await storageTokenFetcher(tokenFetchOptions, "RedeemShareLink");
-                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.sharingLinkToRedeem);
+                const encodedShareUrl = getEncodedShareUrl(odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem);
                 const redeemUrl = `${odspResolvedUrl.siteUrl}/_api/v2.0/shares/${encodedShareUrl}`;
                 const { url, headers } = getUrlAndHeadersWithAuth(redeemUrl, storageToken);
                 headers.prefer = "redeemSharingLink";
@@ -164,18 +172,6 @@ async function fetchLatestSnapshotCore(
     putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 ): Promise<ISnapshotContents> {
     return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-        if (tokenFetchOptions.refresh) {
-            // This is the most critical code path for boot.
-            // If we get incorrect / expired token first time, that adds up to latency of boot
-            logger.sendErrorEvent({
-                eventName: "TreeLatest_SecondCall",
-                hasClaims: !!tokenFetchOptions.claims,
-                hasTenantId: !!tokenFetchOptions.tenantId,
-                // We have two "TreeLatest_SecondCall" events and the other one uses errorType to differentiate cases
-                // Continue that pattern here.
-                errorType: "access denied",
-            }, tokenFetchOptions.previousError);
-        }
         const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
         assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
@@ -187,21 +183,21 @@ async function fetchLatestSnapshotCore(
                 snapshotOptions.timeout,
             );
         }
-        const logOptions = {};
+        const perfEvent = {
+            eventName: "TreesLatest",
+            attempts: tokenFetchOptions.refresh ? 2 : 1,
+        };
         if (snapshotOptions !== undefined) {
             Object.entries(snapshotOptions).forEach(([key, value]) => {
                 if (value !== undefined) {
-                    logOptions[`snapshotOption_${key}`] = value;
+                    perfEvent[`snapshotOption_${key}`] = value;
                 }
             });
         }
         // This event measures only successful cases of getLatest call (no tokens, no retries).
         return PerformanceEvent.timedExecAsync(
             logger,
-            {
-                eventName: "TreesLatest",
-                ...logOptions,
-            },
+            perfEvent,
             async (event) => {
                 const startTime = performance.now();
                 const response = await snapshotDownloader(
@@ -301,7 +297,6 @@ async function fetchLatestSnapshotCore(
                     // Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
                     // if the permission has changed.
                     sltelemetry: response.odspSnapshotResponse.headers.get("x-fluid-sltelemetry"),
-                    attempts: tokenFetchOptions.refresh ? 2 : 1,
                     ...response.odspSnapshotResponse.commonSpoHeaders,
                 });
                 return snapshot;
@@ -356,8 +351,8 @@ async function fetchSnapshotContentsCoreV1(
             }
         });
     }
-    if (odspResolvedUrl.sharingLinkToRedeem) {
-        formParams.push(`sl: ${odspResolvedUrl.sharingLinkToRedeem}`);
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
+        formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem}`);
     }
     formParams.push(`_post: 1`);
     formParams.push(`\r\n--${formBoundary}--`);
@@ -403,9 +398,9 @@ async function fetchSnapshotContentsCoreV2(
     const fullUrl = `${odspResolvedUrl.siteUrl}/_api/v2.1/drives/${odspResolvedUrl.driveId}/items/${
         odspResolvedUrl.itemId}/opStream/attachments/latest/content`;
     const queryParams = { ...snapshotOptions };
-    if (odspResolvedUrl.sharingLinkToRedeem) {
+    if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
         // eslint-disable-next-line @typescript-eslint/dot-notation
-        queryParams["sl"] = odspResolvedUrl.sharingLinkToRedeem;
+        queryParams["sl"] = odspResolvedUrl.shareLinkInfo.sharingLinkToRedeem;
     }
     const queryString = getQueryString(queryParams);
     const { url, headers } = getUrlAndHeadersWithAuth(`${fullUrl}${queryString}`, storageToken);

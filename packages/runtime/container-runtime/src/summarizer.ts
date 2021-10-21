@@ -19,7 +19,7 @@ import {
     ISummaryConfiguration,
 } from "@fluidframework/protocol-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
+import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
@@ -32,6 +32,7 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummarizeHeuristicData } from "./summarizerHeuristics";
+import { IConnectableRuntime } from ".";
 
 const summarizingError = "summarizingError";
 
@@ -90,6 +91,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         private readonly internalsProvider: ISummarizerInternalsProvider,
         handleContext: IFluidHandleContext,
         public readonly summaryCollection: SummaryCollection,
+        private readonly runCoordinatorCreateFn:
+            (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>,
     ) {
         super();
         this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
@@ -142,7 +145,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             initSummarySeqNumber: this.runtime.deltaManager.initialSequenceNumber,
         });
 
-        const runCoordinator = await RunWhileConnectedCoordinator.create(this.runtime);
+        const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(this.runtime);
 
         // Wait for either external signal to cancel, or loss of connectivity.
         const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);

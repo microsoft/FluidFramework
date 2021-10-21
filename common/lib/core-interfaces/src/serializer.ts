@@ -40,7 +40,7 @@ export interface IFluidSerializer extends IProvideFluidSerializer {
      *
      * The decoded handles are implicitly bound to the handle context of this serializer.
      */
-    decode(input: any): any;
+    decode?(input: any): any;
 
     /**
      * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
