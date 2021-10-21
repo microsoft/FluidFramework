@@ -10,10 +10,16 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.51 Breaking changes
+
+- [SharedCell serialization](#sharedcell-serialization)
+
+### SharedCell serialization
+`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
+
 ## 0.50 Breaking changes
 
 - [OpProcessingController removed](#OpProcessingController-removed)
-- [SharedCell serialization](#sharedcell-serialization)
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
 - [get-container API changed](#get-container-api-changed)
 
@@ -21,9 +27,6 @@ There are a few steps you can take to write a good change note and avoid needing
 OpProcessingController has been deprecated for very long time. It's being removed in this release.
 Please use LoaderContainerTracker instead (see https://github.com/microsoft/FluidFramework/pull/7784 as an example of changes required)
 If you can't make this transition, you can always copy implementation of LoaderContainerTracker to your repo and maintain it. That said, it has bugs and tests using it are easily broken but subtle changes in reconnection logic, as evident from PRs #7753, #7393)
-
-### SharedCell serialization
-`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
 
 ### Expose isDirty flag in the FluidContainer
 The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
