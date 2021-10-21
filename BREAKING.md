@@ -14,6 +14,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
 - [OpProcessingController removed](#OpProcessingController-removed)
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
+- [Expose saved and dirty events in FluidContainer](#Expose-saved-and-dirty-events-in-FluidContainer)
 
 ### OpProcessingController removed
 OpProcessingController has been deprecated for very long time. It's being removed in this release.
@@ -22,6 +23,9 @@ If you can't make this transition, you can always copy implementation of LoaderC
 
 ### Expose isDirty flag in the FluidContainer
 The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
+
+### Expose saved and dirty events in FluidContainer
+The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.
 
 ## 0.49 Breaking changes
 - [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
