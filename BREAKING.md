@@ -15,6 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
 - [get-container API changed](#get-container-api-changed)
 - [SharedCell serialization](#sharedcell-serialization)
+- [Expose saved and dirty events in FluidContainer](#Expose-saved-and-dirty-events-in-FluidContainer)
 
 ### OpProcessingController removed
 OpProcessingController has been deprecated for very long time. It's being removed in this release.
@@ -30,6 +31,9 @@ The `get-container` API is widely used in multiple sample applications across th
 
 ### SharedCell serialization
 `SharedCell` serialization format has changed. Values stored from previous versions will be broken.
+
+### Expose saved and dirty events in FluidContainer
+The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.
 
 ## 0.49 Breaking changes
 - [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)

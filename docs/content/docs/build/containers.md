@@ -114,7 +114,7 @@ data is shared with other clients. This is an ideal time to create initial data 
 The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
 
 ```typescript {linenos=inline}
-const connected = container.connected();
+const connected = container.connected;
 
 container.on("disconnected", () => {
     // handle disconnected
@@ -134,7 +134,7 @@ The container object may be disposed to remove any server connections and clean 
 ```typescript {linenos=inline}
 container.dispose();
 
-const disposed = container.disposed();
+const disposed = container.disposed;
 
 container.on("disposed", () => {
     // handle event cleanup to prevent memory leaks
@@ -157,6 +157,26 @@ Note that a container is *not* considered dirty in the following cases:
 1. The container is in the *detached* state. Changes to a detached container are not sent to the service until the container is *attached*, but the container is not considered dirty because it is detached. Stated differently, a detached container will never be dirty.
 1. The container is being attached. While it is being attached, the container's outstanding operations are sent to the service. However, the container will not be dirty in this case. Once the container is attached, then further changes to it will cause it to become dirty.
 1. The network connection disconnects without any outstanding changes to the container. In this case, the container is not considered dirty because it has no local changes that haven't been sent to the service.
+
+### saved
+
+The container emits the saved event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
+
+```typescript {linenos=inline}
+container.on("saved", () => {
+    // allow the user to edit
+});
+```
+
+### dirty
+
+The container emits the dirty event to notify the caller that there are local changes that have not been acknowledged by the service yet and the document is still in a dirty state.
+
+```typescript {linenos=inline}
+container.on("dirty", () => {
+    // prevent the user from editing to avoid data loss
+});
+```
 
 ### Initial objects
 

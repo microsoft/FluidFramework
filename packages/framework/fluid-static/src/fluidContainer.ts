@@ -42,9 +42,30 @@ import { RootDataObject } from "./rootDataObject";
  * ```typescript
  * () => void;
  * ```
+ *
+ * ### "saved"
+ *
+ * The saved event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void
+ * ```
+ *
+ * ### "dirty"
+ *
+ * The dirty event is emitted when the `IFluidContainer` has local changes that have not yet
+ * been acknowledged by the service.
+ *
+ * #### Listener signature
+ *
+ * ```typescript
+ * () => void
+ * ```
  */
 export interface IFluidContainerEvents extends IEvent {
-    (event: "connected" | "dispose" | "disconnected", listener: () => void): void;
+    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
 }
 
 /**
@@ -118,6 +139,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     private readonly connectedHandler = () => this.emit("connected");
     private readonly disconnectedHandler = () => this.emit("disconnected");
     private readonly disposedHandler = () => this.emit("disposed");
+    private readonly savedHandler = () => this.emit("saved");
+    private readonly dirtyHandler = () => this.emit("dirty");
 
     public constructor(
         private readonly container: Container,
@@ -127,6 +150,8 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         container.on("connected", this.connectedHandler);
         container.on("closed", this.disposedHandler);
         container.on("disconnected", this.disconnectedHandler);
+        container.on("saved", this.savedHandler);
+        container.on("dirty", this.dirtyHandler);
     }
 
     /**
@@ -186,5 +211,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
         this.container.off("connected", this.connectedHandler);
         this.container.off("closed", this.disposedHandler);
         this.container.off("disconnected", this.disconnectedHandler);
+        this.container.off("saved", this.savedHandler);
+        this.container.off("dirty", this.dirtyHandler);
     }
 }
