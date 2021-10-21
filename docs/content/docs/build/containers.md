@@ -152,6 +152,14 @@ A container is considered dirty in the following cases:
 1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged changes will be lost if the container is closed.
 1. There is no network connection while making changes to the container. These changes cannot be acknowledged by the service until the network connection is restored.
 
+```typescript
+if(container.isDirty) {
+  container.on("saved", () => {
+    // allow the user to edit
+  });
+}
+```
+
 Note that a container is *not* considered dirty in the following cases:
 
 1. The container is in the *detached* state. Changes to a detached container are not sent to the service until the container is *attached*, but the container is not considered dirty because it is detached. Stated differently, a detached container will never be dirty.
