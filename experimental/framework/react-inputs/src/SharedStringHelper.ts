@@ -65,7 +65,7 @@ export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEve
      * within the given range.  Equivalent to doing the two operations sequentially.
      * Consider removing?
      */
-    public replaceText(text: string, start: number, end: number) {
+    public replaceText(text: string, start: number, end: number): void {
         this._sharedString.replaceText(start, end, text);
     }
 
