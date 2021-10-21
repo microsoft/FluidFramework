@@ -24,10 +24,10 @@
   },
   "dependencies": {
     "@fluid-example/key-value-cache": "^0.50.0",
-    "@fluidframework/container-definitions": "^0.40.0",
+    "@fluidframework/container-definitions": "^0.41.0-0",
     "@fluidframework/container-loader": "^0.50.0",
-    "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.40.0",
+    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/driver-definitions": "^0.41.0-0",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/routerlicious-driver": "^0.50.0",
     "@fluidframework/routerlicious-host": "^0.50.0",

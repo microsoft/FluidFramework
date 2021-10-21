@@ -13,6 +13,7 @@ import {
     IFluidCodeResolver,
     IResolvedFluidCodeDetails,
     isFluidBrowserPackage,
+    IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { Container, Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -30,6 +31,7 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-de
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser, createDataStoreFactory } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { IProvideFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -88,8 +90,9 @@ export type RouteOptions =
     | IOdspRouteOptions;
 
 function wrapWithRuntimeFactoryIfNeeded(packageJson: IFluidPackage, fluidModule: IFluidModule): IFluidModule {
-    if (fluidModule.fluidExport.IRuntimeFactory === undefined) {
-        const dataStoreFactory = fluidModule.fluidExport.IFluidDataStoreFactory;
+    const fluidExport: Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory> = fluidModule.fluidExport;
+    if (fluidExport.IRuntimeFactory === undefined) {
+        const dataStoreFactory = fluidExport.IFluidDataStoreFactory;
 
         const defaultFactory = createDataStoreFactory(packageJson.name, dataStoreFactory);
 

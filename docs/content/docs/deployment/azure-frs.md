@@ -82,7 +82,7 @@ Your Azure Function will generate the token for the given user that is signed us
 
 ## Managing containers
 
-The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in a _container schema_ that defines the container data model. For the
+The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in a *container schema* that defines the container data model. For the
 `getContainer` function, there is an additional parameter for the container `id` of the container you wish to
 fetch.
 
@@ -127,7 +127,7 @@ The `container` contains the Fluid data model and is service-agnostic. Any code 
 
 The `containerServices` object contains data that is specific to the Azure Fluid Relay. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 
-Let's take a look at how you can use the `audience` object to maintain an updated view of all the members currently in a container.
+The following code demonstrates how you can use the `audience` object to maintain an updated view of all the members currently in a container.
 
 ```javascript
 const { audience } = containerServices;

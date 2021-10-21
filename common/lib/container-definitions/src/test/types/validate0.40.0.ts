@@ -157,25 +157,25 @@ use_old_InterfaceDeclaration_ICodeAllowList(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_ICodeLoader():
     old.ICodeLoader;
 declare function use_current_InterfaceDeclaration_ICodeLoader(
     use: current.ICodeLoader);
 use_current_InterfaceDeclaration_ICodeLoader(
     get_old_InterfaceDeclaration_ICodeLoader());
+*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_ICodeLoader():
     current.ICodeLoader;
 declare function use_old_InterfaceDeclaration_ICodeLoader(
     use: old.ICodeLoader);
 use_old_InterfaceDeclaration_ICodeLoader(
     get_current_InterfaceDeclaration_ICodeLoader());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -229,25 +229,25 @@ use_old_InterfaceDeclaration_IContainer(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IContainerContext": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IContainerContext():
     old.IContainerContext;
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: current.IContainerContext);
 use_current_InterfaceDeclaration_IContainerContext(
     get_old_InterfaceDeclaration_IContainerContext());
+*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IContainerContext": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IContainerContext():
     current.IContainerContext;
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: old.IContainerContext);
 use_old_InterfaceDeclaration_IContainerContext(
     get_current_InterfaceDeclaration_IContainerContext());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -589,25 +589,25 @@ use_old_InterfaceDeclaration_IFluidCodeResolver(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IFluidModule": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IFluidModule():
     old.IFluidModule;
 declare function use_current_InterfaceDeclaration_IFluidModule(
     use: current.IFluidModule);
 use_current_InterfaceDeclaration_IFluidModule(
     get_old_InterfaceDeclaration_IFluidModule());
+*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IFluidModule": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IFluidModule():
     current.IFluidModule;
 declare function use_old_InterfaceDeclaration_IFluidModule(
     use: old.IFluidModule);
 use_old_InterfaceDeclaration_IFluidModule(
     get_current_InterfaceDeclaration_IFluidModule());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -853,25 +853,25 @@ use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IProvideRuntimeFactory": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IProvideRuntimeFactory():
     old.IProvideRuntimeFactory;
 declare function use_current_InterfaceDeclaration_IProvideRuntimeFactory(
     use: current.IProvideRuntimeFactory);
 use_current_InterfaceDeclaration_IProvideRuntimeFactory(
     get_old_InterfaceDeclaration_IProvideRuntimeFactory());
+*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IProvideRuntimeFactory": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IProvideRuntimeFactory():
     current.IProvideRuntimeFactory;
 declare function use_old_InterfaceDeclaration_IProvideRuntimeFactory(
     use: old.IProvideRuntimeFactory);
 use_old_InterfaceDeclaration_IProvideRuntimeFactory(
     get_current_InterfaceDeclaration_IProvideRuntimeFactory());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -973,25 +973,25 @@ use_old_VariableDeclaration_IRuntimeFactory(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IRuntimeFactory": {"forwardCompat": false}
-*/
 declare function get_old_InterfaceDeclaration_IRuntimeFactory():
     old.IRuntimeFactory;
 declare function use_current_InterfaceDeclaration_IRuntimeFactory(
     use: current.IRuntimeFactory);
 use_current_InterfaceDeclaration_IRuntimeFactory(
     get_old_InterfaceDeclaration_IRuntimeFactory());
+*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.40.0:
 * "InterfaceDeclaration_IRuntimeFactory": {"backCompat": false}
-*/
 declare function get_current_InterfaceDeclaration_IRuntimeFactory():
     current.IRuntimeFactory;
 declare function use_old_InterfaceDeclaration_IRuntimeFactory(
     use: old.IRuntimeFactory);
 use_old_InterfaceDeclaration_IRuntimeFactory(
     get_current_InterfaceDeclaration_IRuntimeFactory());
+*/
 
 /*
 * Validate forward compat by using old type in place of current type
