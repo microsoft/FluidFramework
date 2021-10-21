@@ -1230,7 +1230,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 if (this.lastInstruction === InstructionType.ClearCache) {
                     checkpointParams.clear = true;
                 }
-                this.checkpointContext.checkpoint(checkpointParams);
+                void this.checkpointContext.checkpoint(checkpointParams);
             },
             (error) => {
                 const errorMsg = `Could not send message to scriptorium`;
