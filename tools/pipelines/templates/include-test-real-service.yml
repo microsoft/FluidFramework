@@ -196,6 +196,8 @@ jobs:
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/azure-frs-tests/azure-client.tgz -C ${{ parameters.testWorkspace }}
+              ls ${{ parameters.testWorkspace }}
+              ls ${{ parameters.testWorkspace }}/test
               mv ${{ parameters.testWorkspace }}/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         # Install extra dependencies
