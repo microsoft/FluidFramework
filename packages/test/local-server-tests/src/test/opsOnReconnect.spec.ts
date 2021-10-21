@@ -191,7 +191,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", undefined /* batch */],
@@ -228,7 +228,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", false /* batch */],
@@ -268,7 +268,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", undefined /* batch */],
                 ["key4", "value4", undefined /* batch */],
@@ -499,7 +499,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
                 ["key4", "value4", true /* batch */],
@@ -545,7 +545,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
                 ["key4", "value4", true /* batch */],
@@ -583,7 +583,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
             ];
@@ -618,7 +618,7 @@ describe("Ops on Reconnect", () => {
             await loaderContainerTracker.ensureSynchronized();
 
             const expectedValues: [string, string, boolean | undefined][] = [
-                ["key1", "value1", true /* batch */],
+                ["key1", "value1", undefined /* batch */],
                 ["key2", "value2", undefined /* batch */],
                 ["key3", "value3", false /* batch */],
             ];
