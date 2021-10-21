@@ -13,8 +13,8 @@
         "createCosmosDBIndexes": false,
         "softDeletionRetentionPeriodMs": 60000,
         "offlineWindowMs": 60000,
-        "softDeletionEnabled": true,
-        "permanentDeletionEnabled": true,
+        "softDeletionEnabled": false,
+        "permanentDeletionEnabled": false,
         "deletionIntervalMs": 70000,
         "collectionNames": {
             "deltas": "deltas",

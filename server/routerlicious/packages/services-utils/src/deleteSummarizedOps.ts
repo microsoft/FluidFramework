@@ -5,6 +5,7 @@
 
 import { ICollection, IDocument } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import { FluidError, FluidErrorCode } from "./errorUtils";
 
 export async function deleteSummarizedOps(
     opCollection: ICollection<unknown>,
@@ -14,7 +15,9 @@ export async function deleteSummarizedOps(
     softDeletionEnabled: boolean,
     permanentOpsDeletionEnabled: boolean): Promise<void> {
         if (!softDeletionEnabled) {
-            return Promise.reject(new Error(`Operation deletion is not enabled`));
+            const error: FluidError = new Error(`Operation deletion is not enabled`);
+            error.code = FluidErrorCode.FeatureDisabled;
+            return Promise.reject(error);
         }
 
         const uniqueDocuments = await documentsCollection.aggregate(
