@@ -464,8 +464,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
 
-    private _closed: "notClosed" | "closing" | "closed" = "notClosed";
-
     private setAutoReconnectTime = performance.now();
 
     private readonly collabWindowTracker = new CollabWindowTracker(
@@ -535,7 +533,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        // return (this._closed !== "notClosed");
         return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
     }
 
@@ -782,7 +779,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.closed) {
             return;
         }
-        this._closed = "closing";
         this._lifecycleState = "closing";
 
         // Ensure that we raise all key events even if one of these throws
@@ -818,7 +814,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.emit("closed", error);
             this.removeAllListeners();
         } finally {
-            this._closed = "closed";
             this._lifecycleState = "closed";
         }
     }
