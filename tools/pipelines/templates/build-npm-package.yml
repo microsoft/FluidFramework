@@ -311,7 +311,7 @@ stages:
               ArtifactName: 'pack'
               publishLocation: 'Container'
 
-          - ${{ if eq(parameters.taskBuild, true) }}:
+          - ${{ if ne(parameters.taskBuild, 'false') }}:
             # Pack - Azure FRS Test Files
             - task: Bash@3
               displayName: Pack - Azure FRS Test Files
