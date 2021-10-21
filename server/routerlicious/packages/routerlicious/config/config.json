@@ -11,6 +11,11 @@
         "endpoint": "mongodb://mongodb:27017",
         "expireAfterSeconds": -1,
         "createCosmosDBIndexes": false,
+        "softDeletionRetentionPeriodMs": 60000,
+        "offlineWindowMs": 60000,
+        "softDeletionEnabled": true,
+        "permanentDeletionEnabled": true,
+        "deletionIntervalMs": 70000,
         "collectionNames": {
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
