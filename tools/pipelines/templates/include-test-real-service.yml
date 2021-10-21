@@ -201,6 +201,8 @@ jobs:
               mv $(Pipeline.Workspace)/azure-frs-tests/test* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               echo "---------------"
               ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              echo "---------------"
+              ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test/test
 
         # Install extra dependencies
         - task: Npm@1
