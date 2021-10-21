@@ -26,7 +26,7 @@ import {
 } from './internal_utils';
 import { concatTokenizedPath } from './data_binding_tree';
 import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from '../internal/constants';
-import { PropertyElement } from '../internal/property_element';
+import { PropertyElement } from '../internal/propertyElement';
 
 /**
  * _globalVisitIndex is to avoid callbacks being called twice. This works around bugs in getChangesToTokenizedPaths

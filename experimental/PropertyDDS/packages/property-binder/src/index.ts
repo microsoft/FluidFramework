@@ -15,7 +15,7 @@ import {
 import { forEachProperty } from './data_binder/internal_utils';
 import { SingletonDataBinding, StatelessDataBinding } from './data_binder/stateless_data_binding';
 import { DataBinderHandle } from './internal/dataBinderHandle';
-import { PropertyElement } from './internal/property_element';
+import { PropertyElement } from './internal/propertyElement';
 import { UpgradeType } from './internal/semvermap';
 
 import { IActivateDataBindingOptions } from './data_binder/IActivateDataBindingOptions';
