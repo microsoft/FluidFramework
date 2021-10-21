@@ -414,6 +414,24 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly logger: ITelemetryLogger;
 
     private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
+
+    private get loaded(): boolean {
+        return (this._lifecycleState !== "loading");
+    }
+
+    private markLoadingDone() {
+        // It's conceivable the container could be closed when this is called
+        // Only transition states if currently loading
+        if (this._lifecycleState === "loading")
+        {
+            this._lifecycleState = "loaded";
+        }
+    }
+
+    public get closed(): boolean {
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
+    }
+
     private _attachState = AttachState.Detached;
 
     private readonly _storage: ContainerStorageAdapter;
@@ -518,23 +536,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
-    }
-
-    public get doneLoading(): boolean {
-        return (this._lifecycleState !== "loading");
-    }
-
-    private markLoadingDone() {
-        // It's conceivable the container could be closed when this is called
-        // Only transition states if currently loading
-        if (this._lifecycleState === "loading")
-        {
-            this._lifecycleState = "loaded";
-        }
-    }
-
-    public get closed(): boolean {
-        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
     }
 
     public get id(): string {
@@ -696,7 +697,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         this.connectionStateHandler.on("connectionStateChanged", () => {
-            if (this.doneLoading) {
+            if (this.loaded) {
                 this.propagateConnectionState();
             }
         });
@@ -781,39 +782,41 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         if (this.closed) {
             return;
         }
-        this._lifecycleState = "closing";
-
-        // Ensure that we raise all key events even if one of these throws
-        try {
-            this._deltaManager.close(error);
-
-            this._protocolHandler?.close();
-
-            this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
-
-            assert(this.connectionState === ConnectionState.Disconnected,
-                0x0cf /* "disconnect event was not raised!" */);
-
-            this._storageService?.dispose();
-
-            // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
-            // about file, like file being overwritten in storage, but client having stale local cache.
-            // Driver need to ensure all caches are cleared on critical errors
-            this.service?.dispose(error);
-        } catch (exception) {
-            this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
-        }
-
-        this.logger.sendTelemetryEvent(
-            {
-                eventName: "ContainerClose",
-                category: error === undefined ? "generic" : "error",
-            },
-            error,
-        );
 
         try {
+            this._lifecycleState = "closing";
+
+            // Ensure that we raise all key events even if one of these throws
+            try {
+                this._deltaManager.close(error);
+
+                this._protocolHandler?.close();
+
+                this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+
+                assert(this.connectionState === ConnectionState.Disconnected,
+                    0x0cf /* "disconnect event was not raised!" */);
+
+                this._storageService?.dispose();
+
+                // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
+                // about file, like file being overwritten in storage, but client having stale local cache.
+                // Driver need to ensure all caches are cleared on critical errors
+                this.service?.dispose(error);
+            } catch (exception) {
+                this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+            }
+
+            this.logger.sendTelemetryEvent(
+                {
+                    eventName: "ContainerClose",
+                    category: error === undefined ? "generic" : "error",
+                },
+                error,
+            );
+
             this.emit("closed", error);
+
             this.removeAllListeners();
         } finally {
             this._lifecycleState = "closed";
