@@ -6,7 +6,7 @@
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import { ICollection, IDocument, IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
-import { deleteSummarizedOps, executeOnInterval } from "@fluidframework/server-services-utils";
+import { deleteSummarizedOps, executeOnInterval, FluidErrorCode } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
@@ -70,6 +70,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
             permanentDeletionEnabled),
         deletionIntervalMs,
         "deleteSummarizedOps",
+        undefined,
+        (error) => { return error.code === FluidErrorCode.FeatureDisabled; },
     );
 
     return new ScriptoriumLambdaFactory(mongoManager, opCollection);
