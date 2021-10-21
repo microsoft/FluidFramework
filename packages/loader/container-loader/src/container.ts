@@ -463,8 +463,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
 
-    private _closed = false;
-    private _doneClosing = false; // for logging, to distinguish between the top and bottom of close()
+    private _closed: "notClosed" | "closing" | "closed" = "notClosed";
 
     private setAutoReconnectTime = performance.now();
 
@@ -524,7 +523,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get closed(): boolean {
-        return this._closed;
+        return (this._closed !== "notClosed");
     }
 
     public get id(): string {
@@ -642,7 +641,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
                     containerLoaded: () => this.loaded,
-                    containerClosed: () => this._closed ? (this._doneClosing ? "closed" : "closing") : "notClosed",
+                    containerClosed: () => this._closed,
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -769,10 +768,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
-        if (this._closed) {
+        if (this.closed) {
             return;
         }
-        this._closed = true;
+        this._closed = "closing";
 
         // Ensure that we raise all key events even if one of these throws
         try {
@@ -803,11 +802,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             error,
         );
 
-        this.emit("closed", error);
-
-        this.removeAllListeners();
-
-        this._doneClosing = true;
+        try {
+            this.emit("closed", error);
+            this.removeAllListeners();
+        } finally {
+            this._closed = "closed";
+        }
     }
 
     public closeAndGetPendingLocalState(): string {
