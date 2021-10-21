@@ -12,11 +12,11 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
-    IFluidDataStoreChannel,
     IFluidDataStoreFactory,
     IFluidDataStoreRegistry,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
+import { waitForOpCatchUp } from "./waitForOpsCatchUp";
 
 interface IResponseException extends Error {
     errorFromRequestFluidObject: true;
@@ -117,9 +117,29 @@ export function createDataStoreFactory(
     };
 }
 
-export const waitAndCreateRootDataStore = async (
+export async function waitAndCreateRootDataStore(
     runtime: IContainerRuntime,
     pkg: string | string[],
     rootDataStoreId: string,
-): Promise<IFluidDataStoreChannel> =>
-    runtime.createRootDataStore(pkg, rootDataStoreId) as unknown as IFluidDataStoreChannel;
+): Promise<IFluidRouter> {
+    await waitForOpCatchUp(runtime);
+
+    try {
+        return await runtime.getRootDataStore(rootDataStoreId, false /* wait */);
+    } catch (error) {
+        if (error.code !== 404) {
+            throw error;
+        }
+
+        return runtime.createRootDataStore(pkg, rootDataStoreId);
+        /*
+        [TODO:aiacob] remove the above and enable the code below
+        after the alias function is added to the IContainerRuntime interface
+
+        const newDataStore = await runtime.createRootDataStore(pkg, rootDataStoreId)
+            as unknown as IFluidDataStoreChannel;
+        const aliasResult = await runtime.trySetDataStoreAlias(newDataStore, rootDataStoreId);
+        return aliasResult ? newDataStore : await runtime.getRootDataStore(rootDataStoreId);
+        */
+    }
+}
