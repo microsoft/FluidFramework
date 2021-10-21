@@ -1,5 +1,5 @@
 ---
-title: "Telemetry Si"
+title: "Telemetry Signals"
 draft: true
 area: telemetry
 cascade:
