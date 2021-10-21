@@ -150,6 +150,9 @@ The Fluid Framework sends events in the following categories:
 ### EventName
 
 This property contains a unique name for the event. The name may be namespaced, delimitted by a colon ':'.
+Additionally, some event names (not the namespaces) contain underscores '_', as a free-form subdivision of
+events into different related cases.  Once common example is `foo_start`, `foo_end` and `foo_cancel` for
+performance events.
 
 ### Customizing logged events
 
