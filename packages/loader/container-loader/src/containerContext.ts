@@ -265,7 +265,7 @@ export class ContainerContext implements IContainerContext {
         }
 
         const moduleWithDetails = await this._fluidModuleP;
-        const maybeCompareExport: Partial<Readonly<IProvideFluidCodeDetailsComparer>> =
+        const maybeCompareExport: Partial<IProvideFluidCodeDetailsComparer> | undefined =
             moduleWithDetails.module?.fluidExport;
         if (maybeCompareExport?.IFluidCodeDetailsComparer !== undefined) {
             comparers.push(maybeCompareExport.IFluidCodeDetailsComparer);
@@ -300,7 +300,7 @@ export class ContainerContext implements IContainerContext {
 
     private async getRuntimeFactory(): Promise<IRuntimeFactory> {
         const fluidExport: Partial<IProvideRuntimeFactory> | undefined =
-            (await this._fluidModuleP)?.module.fluidExport;
+            (await this._fluidModuleP).module?.fluidExport;
         const runtimeFactory = fluidExport?.IRuntimeFactory;
         if (runtimeFactory === undefined) {
             throw new Error(PackageNotFactoryError);
