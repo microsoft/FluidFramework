@@ -413,8 +413,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly logger: ITelemetryLogger;
 
-    private loaded = false;
-    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
     private _attachState = AttachState.Detached;
 
     private readonly _storage: ContainerStorageAdapter;
@@ -521,11 +520,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.forceReadonly(readonly);
     }
 
-    public get loadedState(): boolean {
+    public get doneLoading(): boolean {
         return (this._lifecycleState !== "loading");
     }
 
-    private readyForAttach() {
+    private markLoadingDone() {
+        // It's conceivable the container could be closed when this is called
+        // Only transition states if currently loading
         if (this._lifecycleState === "loading")
         {
             this._lifecycleState = "loaded";
@@ -694,7 +695,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         );
 
         this.connectionStateHandler.on("connectionStateChanged", () => {
-            if (this.loaded) {
+            if (this.doneLoading) {
                 this.propagateConnectionState();
             }
         });
@@ -854,11 +855,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (this._lifecycleState !== "loaded") {
-            throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
-        }
+        // if (this._lifecycleState !== "loaded") {
+        //     throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
+        // }
 
-        if (!this.loaded) {
+        if (!this.doneLoading) {
             throw new UsageError("containerMustBeLoadedBeforeAttaching");
         }
 
@@ -1316,8 +1317,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.propagateConnectionState();
 
         // Internal context is fully loaded at this point
-        this.loaded = true;
-        this.readyForAttach();
+        this.markLoadingDone();
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1400,8 +1400,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         this.propagateConnectionState();
 
-        this.loaded = true;
-        this.readyForAttach();
+        this.markLoadingDone();
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1427,8 +1426,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this.loaded = true;
-        this.readyForAttach();
+        this.markLoadingDone();
 
         this.propagateConnectionState();
     }
