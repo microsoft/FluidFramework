@@ -163,7 +163,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger cross-env mocha'
+          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger cross-env mocha @fluidframework/test-client-utils'
           customRegistry: 'useNpmrc'
 
       # Download artifact - Test files
@@ -187,12 +187,8 @@ jobs:
           targetType: 'inline'
           script: |
             mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-            ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist
             tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
-            echo "test"
-            ls ${{ parameters.testWorkspace }}/packages/framework/azure-client/dist/test/
             mv ${{ parameters.testWorkspace }}/packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-            ls ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
       # Run the tests
       - task: Npm@1
