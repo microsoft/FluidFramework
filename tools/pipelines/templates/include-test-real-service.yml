@@ -195,8 +195,8 @@ jobs:
             targetType: 'inline'
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/azure-frs-test/azure-client.tgz -C ${{ parameters.testWorkspace }}
-                mv ${{ parameters.testWorkspace }}/packages/framework/azure-client/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              tar -xvf $(Pipeline.Workspace)/azure-frs-tests/azure-client.tgz -C ${{ parameters.testWorkspace }}
+              mv ${{ parameters.testWorkspace }}/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         # Install extra dependencies
         - task: Npm@1

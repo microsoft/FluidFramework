@@ -311,22 +311,21 @@ stages:
               ArtifactName: 'pack'
               publishLocation: 'Container'
 
-        # Pack - testing for azure-client
-        - ${{ if ne(parameters.taskPack, false) }}:
+          # Pack - Azure FRS Test Files
           - task: Bash@3
-            displayName: pack azure frs tests
+            displayName: Pack - Azure FRS Test Files
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
-                mkdir $(Build.ArtifactStagingDirectory)/azure-frs-test/
-                tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-test/azure-client.tgz ./packages/framework/azure-client/dist/test
+                mkdir $(Build.ArtifactStagingDirectory)/azure-frs-tests/
+                cd ./packages/framework/azure-client/dist && tar -cvf $(Build.ArtifactStagingDirectory)/azure-frs-tests/azure-client.tgz ./test
 
           - task: PublishBuildArtifacts@1
-            displayName: Publish Artifact - pack azure frs tests
+            displayName: Publish Artifact - Azure FRS Test Files
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/azure-frs-test'
-              ArtifactName: 'pack-azure-frs-test'
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/azure-frs-tests'
+              ArtifactName: 'azure-frs-tests'
               publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis
