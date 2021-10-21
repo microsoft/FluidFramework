@@ -68,7 +68,7 @@ export enum ContainerMessageType {
     // (undocumented)
     FluidDataStoreOp = "component",
     // (undocumented)
-    SetStoreAlias = "SetStoreAlias"
+    SetRootDataStoreAlias = "setRootDataStoreAlias"
 }
 
 // @public
