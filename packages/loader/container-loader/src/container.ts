@@ -171,7 +171,7 @@ export enum ConnectionState {
 export async function waitContainerToCatchUp(container: Container) {
     // Make sure we stop waiting if container is closed.
     if (container.closed) {
-        throw new Error("Container is closed");
+        throw new UsageError("refusingToWaitForClosedContainer");
     }
 
     return new Promise<boolean>((accept, reject) => {
@@ -424,9 +424,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // Active chaincode and associated runtime
     private _storageService: IDocumentStorageService & IDisposable | undefined;
     private get storageService(): IDocumentStorageService  {
-        if (this._storageService === undefined) {
-            throw new Error("Attempted to access storageService before it was defined");
-        }
+        assert(this._storageService !== undefined, "Attempted to access storageService before it was defined");
         return this._storageService;
     }
 
@@ -437,16 +435,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private _context: ContainerContext | undefined;
     private get context() {
-        if (this._context === undefined) {
-            throw new Error("Attempted to access context before it was defined");
-        }
+        assert(this._context !== undefined, "Attempted to access context before it was defined");
         return this._context;
     }
     private _protocolHandler: ProtocolOpHandler | undefined;
     private get protocolHandler() {
-        if (this._protocolHandler === undefined) {
-            throw new Error("Attempted to access protocolHandler before it was defined");
-        }
+        assert(this._protocolHandler !== undefined, "Attempted to access protocolHandler before it was defined");
         return this._protocolHandler;
     }
 
@@ -700,7 +694,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.logger.sendErrorEvent({
                         eventName: "NoRealStorageInDetachedContainer",
                     });
-                    throw new Error("Real storage calls not allowed in Unattached container");
+                    throw new UsageError("noRealStorageInDetachedContainer");
                 }
                 return this.storageService;
             },
@@ -778,7 +772,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             this._protocolHandler?.close();
 
-            this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+            this._context?.dispose(error === undefined ? undefined : normalizeError(error) as Error);
 
             assert(this.connectionState === ConnectionState.Disconnected,
                 0x0cf /* "disconnect event was not raised!" */);
@@ -990,7 +984,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public setAutoReconnect(reconnect: boolean) {
         if (this.closed) {
-            throw new Error("Attempting to setAutoReconnect() a closed Container");
+            throw new UsageError("cannotSetAutoReconnectOnAClosedContainer");
         }
         const mode = reconnect ? ReconnectMode.Enabled : ReconnectMode.Disabled;
         const currentMode = this._deltaManager.reconnectMode;
@@ -1082,7 +1076,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
         if (!isFluidCodeDetails(codeDetails)) {
-            throw new Error("Provided codeDetails are not IFluidCodeDetails");
+            throw new UsageError("providedCodeDetailsAreNotIFluidCodeDetails");
         }
 
         if (this.codeLoader.IFluidCodeDetailsComparer) {
@@ -1090,7 +1084,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 codeDetails,
                 this.getCodeDetailsFromQuorum());
             if (comparision !== undefined && comparision <= 0) {
-                throw new Error("Proposed code details should be greater than the current");
+                throw new UsageError("proposedCodeDetailsShouldBeGreaterThanTheCurrent");
             }
         }
 
@@ -1231,7 +1225,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         pendingLocalState?: unknown,
     ) {
         if (this._resolvedUrl === undefined) {
-            throw new Error("Attempting to load without a resolved url");
+            throw new UsageError("attemptingToLoadWithNoResolvedUrl");
         }
         this.service = await this.serviceFactory.createDocumentService(this._resolvedUrl, this.subLogger);
 
@@ -1338,7 +1332,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // service, but caller does not know that (callers do expect container to be not closed on successful path
         // and listen only on "closed" event)
         if (this.closed) {
-            throw new Error("Container was closed while load()");
+            throw new GenericError("containerClosedDuringLoad");
         }
 
         return {
@@ -1909,7 +1903,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     ) {
         const codeDetails = this.getCodeDetailsFromQuorum();
         if (codeDetails === undefined) {
-            throw new Error("pkg should be provided in create flow!!");
+            // pkg should be provided in create flow!!
+            throw new GenericError("instantiateContextDetachedMissingCodeDetails");
         }
 
         await this.instantiateContext(
