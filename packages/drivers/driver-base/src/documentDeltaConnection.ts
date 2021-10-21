@@ -305,14 +305,6 @@ export class DocumentDeltaConnection
     }
 
     /**
-     * Sends get_clients signal to the server
-     */
-    public getClients(): void {
-        this.checkNotClosed();
-        this.submitCore("get_clients", []);
-    }
-
-    /**
      * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection.
      */
     public dispose() {
@@ -473,7 +465,7 @@ export class DocumentDeltaConnection
         this.socket.removeListener("signal", this.earlySignalHandler);
     }
 
-    public addConnectionListener(event: string, listener: (...args: any[]) => void) {
+    private addConnectionListener(event: string, listener: (...args: any[]) => void) {
         assert(!DocumentDeltaConnection.eventsAlwaysForwarded.includes(event),
             0x247 /* "Use addTrackedListener instead" */);
         assert(!DocumentDeltaConnection.eventsToForward.includes(event),

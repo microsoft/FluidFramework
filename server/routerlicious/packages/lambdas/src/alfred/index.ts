@@ -10,7 +10,6 @@ import {
     IConnected,
     IDocumentMessage,
     INack,
-    ISignalClient,
     ISignalMessage,
     MessageType,
     NackErrorType,
@@ -282,7 +281,11 @@ export function configureWebSocketServices(
                 });
             }
 
-            const clients = await getClients(claims.tenantId, claims.documentId);
+            const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
+                .catch(async (err) => {
+                    const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
+                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                });
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
@@ -548,26 +551,6 @@ export function configureWebSocketServices(
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
             }
             await Promise.all(removeP);
-        });
-
-        socket.on("get_clients", (clientId: string) => {
-            // Verify the user has subscription to the room.
-            const room = roomMap.get(clientId);
-            if (!room) {
-                const nackMessage = createNackMessage(400, NackErrorType.BadRequestError, "Nonexistent client");
-                socket.emit("nack", "", [nackMessage]);
-            } else {
-                getClients(room.tenantId, room.documentId).then(
-                    (clients) => {
-                        socket.emitToRoom(
-                            getRoomId(room),
-                            "connected_clients",
-                            clients);
-                    }).catch(async (err) => {
-                        const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
-                        return handleServerError(logger, errMsg, room.documentId, room.tenantId);
-                    });
-            }
         });
     });
 }

@@ -1888,48 +1888,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this.audienceHeartBeat.forEach((lastPingReceivedAt: Date, clientId: string) => {
             const diff = new Date().valueOf() - lastPingReceivedAt.valueOf();
             if (diff > this.beatInEveryNSecs * 5) {
-                // client Lost
-                this._deltaManager?.getClients();
-                return;
+                // client Lost, missed removeMember event.
+                this._audience.removeMember(clientId);
+                this.audienceHeartBeat.delete(clientId);
             }
         });
     }
 
     private enableHeartBeat() {
         setInterval(() => {
-            this._deltaManager.submitSignal("ping");
+            this._deltaManager.submitSignal({msg: "ping", client: this.client});
             this.validateAudienceHeartBeat();
         }, this.beatInEveryNSecs);
 
         // Listen for heartbeats
-        this._deltaManager?.addConnectionListener("signal", (msg: ISignalMessage) => {
-            if (msg.clientId !== null && msg.content === "ping") {
+        this._deltaManager.on("signal", (msg: ISignalMessage) => {
+            if (msg.clientId !== null && msg.content.msg === "ping") {
                 this.audienceHeartBeat.set(msg.clientId, new Date());
-            }
-        });
 
-        // Listen for audience list
-        this._deltaManager?.addConnectionListener("connected_clients", (clients: ISignalClient[]) => {
-            // In case client missed addMember event.
-            for (const client of clients) {
-                if (!this._audience.getMember(client.clientId)) {
-                    this._audience.addMember(client.clientId, client.client);
-                    this.audienceHeartBeat.set(client.clientId, new Date());
-                }
-            }
-
-            // In case client missed removeMember event.
-            for (const clientId of this._audience.getMembers().keys()) {
-                let hasClient: boolean = false;
-                for (const client of clients) {
-                    if (clientId === client.clientId) {
-                        hasClient = true;
-                        break;
-                    }
-                }
-                if (!hasClient) {
-                    this._audience.removeMember(clientId);
-                    this.audienceHeartBeat.delete(clientId);
+                // client missed addMember event.
+                if (!this._audience.getMember(msg.clientId)) {
+                    this._audience.addMember(msg.clientId, msg.content.client);
                 }
             }
         });

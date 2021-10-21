@@ -145,7 +145,6 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
     (event: "signal", listener: (message: ISignalMessage) => void);
     (event: "pong", listener: (latency: number) => void);
-    (event: "connected_clients", listener: (clients: ISignalClient[]) => void);
     (event: "error", listener: (error: any) => void);
 }
 
@@ -218,16 +217,6 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      * Submit a new signal to the server
      */
     submitSignal(message: any): void;
-
-    /**
-      * send get_clients signal to the server
-      */
-    getClients?(): void;
-
-    /**
-      * add listener to connection
-      */
-    addConnectionListener?(event: string, listener: (...args: any[]) => void): void;
 
     /**
      * Disconnects the given delta connection
