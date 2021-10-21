@@ -173,7 +173,7 @@ jobs:
           customRegistry: 'useNpmrc'
 
       # Download Test Files & Install Extra Dependencies
-      - ${{ if ne(parameters.downloadTestFiles, false) }}:
+      - ${{ if eq(parameters.downloadTestFiles, true) }}:
         # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
           displayName: Download test files
