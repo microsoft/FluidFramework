@@ -14,8 +14,9 @@ resources:
     source: Build - client packages
     trigger:
       branches:
-      - releases/*
-      - main
+        include:
+        - releases/*
+        - main
       paths:
         include:
         - packages/framework/azure-client

@@ -294,7 +294,7 @@ stages:
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
-                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*.tar
+                  npx lerna exec --no-private --no-sort --parallel -- if [ -f ./*.tar ]; then mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*.tar; fi
                 else
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
