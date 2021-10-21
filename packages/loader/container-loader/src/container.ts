@@ -855,16 +855,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        // if (this._lifecycleState !== "loaded") {
-        //     throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
-        // }
-
-        if (!this.doneLoading) {
-            throw new UsageError("containerMustBeLoadedBeforeAttaching");
-        }
-
-        if (this.closed) {
-            throw new UsageError("cannotAttachClosedContainer");
+        if (this._lifecycleState !== "loaded") {
+            throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
         }
 
         // If container is already attached or attach is in progress, throw an error.
