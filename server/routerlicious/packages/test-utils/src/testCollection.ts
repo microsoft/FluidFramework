@@ -11,6 +11,10 @@ export class TestCollection implements ICollection<any> {
     constructor(public collection: any[]) {
     }
 
+    public async aggregate(group: any, options?: any) {
+        throw new Error("Method not implemented.");
+    }
+
     public async find(query: any, sort: any): Promise<any[]> {
         return this.findInternal(query, sort);
     }
@@ -30,6 +34,20 @@ export class TestCollection implements ICollection<any> {
             return Promise.reject(new Error("Not found"));
         }
         _.extend(value, set);
+    }
+
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        const values = this.findInternal(filter);
+        try {
+            values.forEach((value) => {
+                if (!value) {
+                    throw new Error("Not found");
+                }
+                _.extend(value, set);
+            });
+        } catch (e) {
+            return Promise.reject(e);
+        }
     }
 
     public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
@@ -76,6 +94,10 @@ export class TestCollection implements ICollection<any> {
             this.removeOneInternal(value);
         });
         return values;
+    }
+
+    public async distinct(key: any, filter: any): Promise<any> {
+        throw new Error("Method not implemented.");
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

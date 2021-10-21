@@ -16,6 +16,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IRouterliciousDriverPolicies } from '@fluidframework/routerlicious-driver';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
+import { LocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { LocalDocumentServiceFactory } from '@fluidframework/local-driver';
 import { LocalResolver } from '@fluidframework/local-driver';
 import { OdspDocumentServiceFactory } from '@fluidframework/odsp-driver';
@@ -79,6 +80,7 @@ export interface IServiceEndpoint {
 export const LocalDriverApi: {
     version: string;
     LocalDocumentServiceFactory: typeof LocalDocumentServiceFactory;
+    LocalDeltaConnectionServer: typeof LocalDeltaConnectionServer;
     LocalResolver: typeof LocalResolver;
     createLocalResolverCreateNewRequest: typeof createLocalResolverCreateNewRequest;
 };
