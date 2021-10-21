@@ -730,7 +730,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
      */
     private readonly summaryManager?: SummaryManager;
-    private readonly summaryCollection?: SummaryCollection;
+    private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
@@ -950,28 +950,26 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         });
 
+        this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+
         // Only create a SummaryManager if summaries are enabled and we are not the summarizer client
         if (this.runtimeOptions.summaryOptions.generateSummaries === false) {
             this._logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
         } else {
-            this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
             const maxOpsSinceLastSummary = this.runtimeOptions.summaryOptions.maxOpsSinceLastSummary ?? 7000;
             const defaultAction = () => {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                if (this.summaryCollection!.opsSinceLastAck > maxOpsSinceLastSummary) {
+                if (this.summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
                     this.logger.sendErrorEvent({eventName: "SummaryStatus:Behind"});
                     // unregister default to no log on every op after falling behind
                     // and register summary ack handler to re-register this handler
                     // after successful summary
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.summaryCollection!.once(MessageType.SummaryAck, () => {
+                    this.summaryCollection.once(MessageType.SummaryAck, () => {
                         this.logger.sendTelemetryEvent({eventName: "SummaryStatus:CaughtUp"});
                         // we've caught up, so re-register the default action to monitor for
                         // falling behind, and unregister ourself
-                        this.summaryCollection?.on("default", defaultAction);
+                        this.summaryCollection.on("default", defaultAction);
                     });
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.summaryCollection!.off("default", defaultAction);
+                    this.summaryCollection.off("default", defaultAction);
                 }
             };
 
@@ -1895,7 +1893,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
-            const lastAck = this.summaryCollection?.latestAck;
+            const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
                 ? {
