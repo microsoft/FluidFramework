@@ -800,7 +800,8 @@ export class DeltaManager
 
             // Attempt the connection
             connectCore().then((connection) => {
-                assert(this.connectionP === undefined, 0x27a /* "this.connectionP has been reset on successful connection" */);
+                assert(this.connectionP === undefined,
+                    0x27a /* "this.connectionP has been reset on successful connection" */);
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1562,7 +1563,8 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read", 0x27c /* "effective connectionMode should be 'read' after downgrade" */);
+                assert(this.connectionMode === "read",
+                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
 
