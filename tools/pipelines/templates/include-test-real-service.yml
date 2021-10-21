@@ -174,7 +174,6 @@ jobs:
 
       # Download Test Files & Install Extra Dependencies
       - ${{ if eq(parameters.downloadTestFiles, true) }}:
-        # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
           displayName: Download test files
           inputs:
