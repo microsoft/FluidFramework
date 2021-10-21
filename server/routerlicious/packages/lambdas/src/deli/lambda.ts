@@ -379,7 +379,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
         this.checkpointInfo.rawMessagesSinceCheckpoint++;
         this.updateCheckpointMessages(rawMessage);
 
-        const checkpointReason = this.shouldCheckpoint();
+        const checkpointReason = this.getCheckpointReason();
         if (checkpointReason !== undefined) {
             // checkpoint the current up to date state
             this.checkpoint(checkpointReason);
@@ -1200,9 +1200,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     /**
-     * Checks if we should checkpoint now
+     * Determines a checkpoint reason based on some heuristics
+     * @returns a reason when it's time to checkpoint, or undefined if no checkpoint should be made
      */
-    private shouldCheckpoint(): DeliCheckpointReason | undefined {
+    private getCheckpointReason(): DeliCheckpointReason | undefined {
         const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
         if (!checkpointHeuristics.enable) {
             // always checkpoint since heuristics are disabled
@@ -1241,7 +1242,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         Promise.all([this.lastSendP, this.lastNoClientP]).then(
             () => {
-                if (this.lastInstruction === InstructionType.ClearCache) {
+                if (reason === DeliCheckpointReason.ClearCache) {
                     checkpointParams.clear = true;
                 }
                 void this.checkpointContext.checkpoint(checkpointParams);
