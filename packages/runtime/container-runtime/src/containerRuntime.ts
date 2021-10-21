@@ -1583,18 +1583,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
-    public async trySetDataStoreAlias(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
+    // [TODO:andre4i] Document and add to the IContainerRuntime interface
+    public async trySetRootDataStoreAlias(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
         assert(this.attachState === AttachState.Attached, "Trying to submit message while detached!");
+        // [TODO:andre4i] ensure that the datastore is actually root
+
         const message: IDataStoreAliasMessage = {
             id: dataStore.id,
             alias,
         };
 
         const aliasResult = await this.newAckBasedPromise<IDataStoreAliasMapping>((resolve) => {
-            // Send the resolve function as the localOpMetadata. This will be provided back to us when the
-            // op is ack'd.
             this.submit(ContainerMessageType.SetStoreAlias, message, resolve);
-            // If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
         }).catch(() => undefined);
 
         return aliasResult !== undefined && aliasResult.actualId === aliasResult.proposedId;

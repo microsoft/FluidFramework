@@ -56,7 +56,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         runtimeOf(dataObject).createRootDataStore(packageName, id);
 
     const aliasDataStore = async (dataObject: ITestFluidObject, dataStore: IFluidDataStoreChannel, alias: string) =>
-        (dataObject.context.containerRuntime as ContainerRuntime).trySetDataStoreAlias(dataStore, alias);
+        (dataObject.context.containerRuntime as ContainerRuntime).trySetRootDataStoreAlias(dataStore, alias);
 
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
         runtimeOf(dataObject).getRootDataStore(id);

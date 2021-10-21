@@ -138,7 +138,7 @@ export async function waitAndCreateRootDataStore(
 
         const newDataStore = await runtime.createRootDataStore(pkg, rootDataStoreId)
             as unknown as IFluidDataStoreChannel;
-        const aliasResult = await runtime.trySetDataStoreAlias(newDataStore, rootDataStoreId);
+        const aliasResult = await runtime.trySetRootDataStoreAlias(newDataStore, rootDataStoreId);
         return aliasResult ? newDataStore : await runtime.getRootDataStore(rootDataStoreId);
         */
     }
