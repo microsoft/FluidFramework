@@ -428,8 +428,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // It's conceivable the container could be closed when this is called
         // Only transition states if currently loading
-        if (this._lifecycleState === "loading")
-        {
+        if (this._lifecycleState === "loading") {
             this._lifecycleState = "loaded";
         }
     }
