@@ -6,6 +6,7 @@
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import { ICollection, IDocument, IPartitionLambdaFactory, MongoManager } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { deleteSummarizedOps, executeOnInterval, FluidErrorCode } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
@@ -36,6 +37,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         true);
 
     if (createCosmosDBIndexes) {
+        Lumberjack.info(`createcosmosdbindexes enabled ${createCosmosDBIndexes}`);
         await opCollection.createIndex({
             "operation.term": 1,
             "operation.sequenceNumber": 1,
@@ -58,6 +60,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
             );
         }
     }
+
+    Lumberjack.info(`Soft deletion enabled value is ${softDeletionEnabled}`);
 
     executeOnInterval(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return

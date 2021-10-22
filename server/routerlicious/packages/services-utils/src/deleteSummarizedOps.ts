@@ -15,7 +15,7 @@ export async function deleteSummarizedOps(
     softDeletionEnabled: boolean,
     permanentOpsDeletionEnabled: boolean): Promise<void> {
         if (!softDeletionEnabled) {
-            const error: FluidError = new Error(`Operation deletion is not enabled`);
+            const error: FluidError = new Error(`Operation deletion is not enabled ${softDeletionEnabled}`);
             error.code = FluidErrorCode.FeatureDisabled;
             return Promise.reject(error);
         }
@@ -23,6 +23,7 @@ export async function deleteSummarizedOps(
         const uniqueDocuments = await documentsCollection.aggregate(
             { _id: { documentId: "$documentId", tenantId: "$tenantId"}},
         ).toArray();
+        Lumberjack.info(`Unique docs length = ${uniqueDocuments.length}`);
 
         const currentEpochTime = new Date().getTime();
         const epochTimeBeforeOfflineWindow =  currentEpochTime - offlineWindowMs;
@@ -32,6 +33,7 @@ export async function deleteSummarizedOps(
             const lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
             try {
                 const lastSummarySequenceNumber = JSON.parse(doc.scribe).lastSummarySequenceNumber;
+                Lumberjack.info(`LastsummarySequenceNumber = ${lastSummarySequenceNumber}`);
 
                 // first "soft delete" operations older than the offline window, which have been summarised
                 // soft delete is done by setting a scheduled deletion time
@@ -57,6 +59,7 @@ export async function deleteSummarizedOps(
                     undefined);
 
                 if (permanentOpsDeletionEnabled) {
+                    Lumberjack.info(`Trying to permanently delete`);
                     // then permanently delete ops that have passed their retention period
                     // delete if current epoch time is greater than the scheduled deletion time of the op
                     await opCollection.deleteMany({
