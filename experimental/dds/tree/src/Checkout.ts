@@ -124,7 +124,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 		currentView: Snapshot,
 		onEditCommitted: EditCommittedHandler<GenericSharedTree<TChange>>
 	) {
-		super((error: unknown) => {
+		super((_event, error: unknown) => {
 			this.tree.emit('error', error);
 		});
 		this.tree = tree;
