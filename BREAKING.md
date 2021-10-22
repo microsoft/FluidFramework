@@ -11,10 +11,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.50 Breaking changes
-
 - [OpProcessingController removed](#OpProcessingController-removed)
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
 - [get-container API changed](#get-container-api-changed)
+- [SharedCell serialization](#sharedcell-serialization)
 - [Expose saved and dirty events in FluidContainer](#Expose-saved-and-dirty-events-in-FluidContainer)
 
 ### OpProcessingController removed
@@ -28,6 +28,9 @@ The `isDirty` flag is exposed onto the FluidContainer. The property is already e
 ### get-container API changed
 The signature of methods `getTinyliciousContainer` and `getFRSContainer` exported from the `get-container` package has been changed to accomodate the new container create flow. Both methods now return a tuple of the container instance and container ID associated with it. The `documentId` parameter is ignored when a new container is requested. Client applications need to use the ID returned by the API.
 The `get-container` API is widely used in multiple sample applications across the repository. All samples were refactored to reflect the change in the API. External samples consuming these methods should be updated accordingly.
+
+### SharedCell serialization
+`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
 
 ### Expose saved and dirty events in FluidContainer
 The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.
