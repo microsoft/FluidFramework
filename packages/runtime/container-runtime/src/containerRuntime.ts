@@ -1584,7 +1584,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     // [TODO:andre4i] Document and add to the IContainerRuntime interface
-    public async trySetRootDataStoreAlias(dataStore: IFluidDataStoreChannel, alias: string): Promise<boolean> {
+    public async trySetRootDataStoreAlias(
+        // [TODO:andre4i] Figure out a better interface for this,
+        // as it would be nice to have access to the supplied datastore id
+        dataStore: IFluidDataStoreChannel,
+        alias: string,
+    ): Promise<boolean> {
         assert(this.attachState === AttachState.Attached, "Trying to submit message while detached!");
         // [TODO:andre4i] ensure that the datastore is actually root
 
