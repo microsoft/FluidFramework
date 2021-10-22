@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
     LocalDocumentServiceFactory,
@@ -21,10 +21,14 @@ import {
     LoaderContainerTracker,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
+    timeoutAwait,
 } from "@fluidframework/test-utils";
 import { Container, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import { SummaryCollection } from "@fluidframework/container-runtime";
+import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import {generatePairwiseOptions} from "@fluidframework/test-pairwise-generator";
 
 describe("No Delta Stream", () => {
     const documentId = "localServerTest";
@@ -41,7 +45,7 @@ describe("No Delta Stream", () => {
     let deltaConnectionServer: ILocalDeltaConnectionServer;
     let loaderContainerTracker: LoaderContainerTracker;
 
-    async function createContainer(): Promise<IContainer> {
+    async function createContainer(): Promise<Container> {
         const loader = createLoader(
             [[codeDetails, factory]],
             new LocalDocumentServiceFactory(deltaConnectionServer),
@@ -50,11 +54,14 @@ describe("No Delta Stream", () => {
         const container = await createAndAttachContainer(
             codeDetails,
             loader,
-            createLocalResolverCreateNewRequest(documentId));
+            createLocalResolverCreateNewRequest(documentId)) as Container;
         return container;
     }
 
-    async function loadContainer(storageOnly: boolean, track = true): Promise<IContainer> {
+    async function loadContainer(storageOnly: boolean,
+        options?: {headers?: IRequestHeader},
+        track = true,
+    ): Promise<Container> {
         const service = new LocalDocumentServiceFactory(deltaConnectionServer, { storageOnly });
         const loader = createLoader(
             [[codeDetails, factory]],
@@ -67,20 +74,21 @@ describe("No Delta Stream", () => {
         // See issue #7426 - need better long term solution
         const container = await loader.resolve({
             url: documentLoadUrl,
-            headers: { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" }},
-        });
+            headers: options?.headers,
+        }) as Container;
+        container.resume();
         await loaderContainerTracker.ensureSynchronized();
         return container;
     }
 
     async function loadContainerWithDocServiceFactory(
         documentServiceFactory: IDocumentServiceFactory,
-    ): Promise<IContainer> {
+    ): Promise<Container> {
         const loader = createLoader(
             [[codeDetails, factory]],
             documentServiceFactory,
             new LocalResolver());
-        const container = await loader.resolve({ url: documentLoadUrl });
+        const container = await loader.resolve({ url: documentLoadUrl }) as Container;
         await loaderContainerTracker.ensureSynchronized();
         return container;
     }
@@ -109,7 +117,7 @@ describe("No Delta Stream", () => {
 
     it("Validate Properties on Loaded Container With No Delta Stream", async () => {
         // Load the Container that was created by the first client.
-        const container = await loadContainer(true) as Container;
+        const container = await loadContainer(true);
 
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
@@ -134,9 +142,9 @@ describe("No Delta Stream", () => {
     });
 
     it("doesn't affect normal containers", async () => {
-        await loadContainer(true) as Container;
-        const normalContainer1 = await loadContainer(false) as Container;
-        const normalContainer2 = await loadContainer(false) as Container;
+        await loadContainer(true);
+        const normalContainer1 = await loadContainer(false);
+        const normalContainer2 = await loadContainer(false);
         const normalDataObject1 = await requestFluidObject<ITestFluidObject>(normalContainer1, "default");
         const normalDataObject2 = await requestFluidObject<ITestFluidObject>(normalContainer2, "default");
         normalDataObject1.root.set("fluid", "great");
@@ -145,7 +153,7 @@ describe("No Delta Stream", () => {
         assert.strictEqual(await normalDataObject2.root.wait("fluid"), "great");
 
         const storageOnlyContainer = await loadContainer(true);
-        await waitContainerToCatchUp(storageOnlyContainer as Container);
+        await waitContainerToCatchUp(storageOnlyContainer);
         const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
         assert.strictEqual(await storageOnlyDataObject.root.wait("prague"), "a city in europe");
         assert.strictEqual(await storageOnlyDataObject.root.wait("fluid"), "great");
@@ -162,7 +170,7 @@ describe("No Delta Stream", () => {
                 return docService;
             });
         };
-        const container = await loadContainerWithDocServiceFactory(documentServiceFactory) as Container;
+        const container = await loadContainerWithDocServiceFactory(documentServiceFactory);
 
         assert.strictEqual(container.connected, true, "container.connected");
         assert.strictEqual(container.clientId, "storage-only client", "container.clientId");
@@ -201,7 +209,7 @@ describe("No Delta Stream", () => {
 
     for(const testConfig of testConfigs) {
         it.only(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async () => {
-            const normalContainer = await loadContainer(false) as Container;
+            const normalContainer = await loadContainer(false);
 
             const normalDataObject = await requestFluidObject<ITestFluidObject>(normalContainer, "default");
             const summaryCollection =
@@ -226,7 +234,7 @@ describe("No Delta Stream", () => {
 
             const storageOnlyContainer = await loadContainer(
                 true,
-                { headers: {[LoaderHeader.loadMode]: testConfig.loadOptions}}) as Container;
+                { headers: {[LoaderHeader.loadMode]: testConfig.loadOptions}});
 
             await timeoutAwait(waitContainerToCatchUp(storageOnlyContainer));
             const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
