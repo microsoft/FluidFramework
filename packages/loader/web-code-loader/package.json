@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@fluidframework/container-definitions": "^0.41.0-0",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {

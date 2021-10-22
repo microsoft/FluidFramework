@@ -18,7 +18,7 @@
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:gen": "npm run build:gen:typetests",
-    "build:gen:typetests": "fluid-type-validator -d .",
+    "build:gen:typetests": "echo skipped",
     "ci:build": "npm run build:gen && npm run build:compile",
     "ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "ci:test": "echo No test for this package",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.0",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/protocol-definitions": "^0.1025.0"
   },
   "devDependencies": {
