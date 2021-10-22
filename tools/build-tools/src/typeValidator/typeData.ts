@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ClassDeclaration, Node, Project, Scope, ts, Type, TypeChecker } from "ts-morph";
+import { Node, Project, ts, TypeChecker } from "ts-morph";
 import * as fs from "fs";
 import { getPackageDetails, PackageDetails } from "./packageJson";
 import { ClassData, decomposeClassDeclaration } from "./classDecomposition";
@@ -11,13 +11,17 @@ import { ClassData, decomposeClassDeclaration } from "./classDecomposition";
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
     typeData: TypeData[];
+    /**
+     * Associated type checker object for the package
+     */
+    typeChecker: TypeChecker;
 }
 
 export interface TypeData {
     readonly name: string;
     readonly kind: string;
     readonly node: Node;
-    readonly classData?: ClassData;
+    classData?: ClassData;
 }
 
 export function getFullTypeName(typeData: TypeData){
@@ -37,7 +41,7 @@ export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
     return false;
 }
 
-function getNodeTypeData(typeChecker: TypeChecker, node:Node, namespacePrefix?:string): TypeData[]{
+function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
 
     /*
         handles namespaces e.g.
@@ -51,7 +55,7 @@ function getNodeTypeData(typeChecker: TypeChecker, node:Node, namespacePrefix?:s
     if (Node.isNamespaceDeclaration(node)){
         const typeData: TypeData[]=[];
         for(const s of node.getStatements()){
-            typeData.push(...getNodeTypeData(typeChecker, s, node.getName()));
+            typeData.push(...getNodeTypeData(s, node.getName()));
         }
         return typeData;
     }
@@ -64,7 +68,7 @@ function getNodeTypeData(typeChecker: TypeChecker, node:Node, namespacePrefix?:s
     if(Node.isVariableStatement(node)){
         const typeData: TypeData[]=[];
         for(const dec of node.getDeclarations()){
-            typeData.push(...getNodeTypeData(typeChecker, dec, namespacePrefix));
+            typeData.push(...getNodeTypeData(dec, namespacePrefix));
         }
         return typeData
     }
@@ -80,16 +84,10 @@ function getNodeTypeData(typeChecker: TypeChecker, node:Node, namespacePrefix?:s
             ? `${namespacePrefix}.${node.getName()}`
             : node.getName()!;
 
-        let classData;
-        if (Node.isClassDeclaration(node)) {
-            classData = decomposeClassDeclaration(typeChecker, node);
-        }
-
         const typeData: TypeData[] = [{
             name,
             kind: node.getKindName(),
             node,
-            classData,
         }];
         return typeData;
     }
@@ -163,8 +161,6 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
         tsConfigFilePath: tsConfigPath,
     });
 
-    const typeChecker = project.getTypeChecker()
-
     const file = project.getSourceFile("index.ts")
     if(file == undefined){
         throw new Error("index.ts does not exist in package source.\nYou may need to install the package via npm install in the package dir.");
@@ -174,11 +170,12 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     const exportedDeclarations = file.getExportedDeclarations();
     for(const declarations of exportedDeclarations.values()){
         for(const dec of declarations){
-            typeData.push(...getNodeTypeData(typeChecker, dec));
+            typeData.push(...getNodeTypeData(dec));
         }
     }
     return {
         packageDetails,
         typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
+        typeChecker: project.getTypeChecker(),
     };
 }

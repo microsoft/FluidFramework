@@ -59,7 +59,6 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
     }
     node.getImplements().forEach((ex) => {
         const result = decomposeType(typeChecker, ex.getType());
-        ex.getType().compilerType.
         mergeIntoSet(replacedTypes, result.replacedTypes);
         requiredGenerics.merge(result.requiredGenerics);
         const typeName = typeToString(typeChecker, ex.getType()).replace(/[^\w]/g, "_");

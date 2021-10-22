@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DiagnosticCategory, Project } from "ts-morph";
+import { DiagnosticCategory, Node, Project, TypeChecker } from "ts-morph";
 import { PackageDetails } from "./packageJson";
-import { ClassData } from "./classDecomposition";
+import { ClassData, decomposeClassDeclaration } from "./classDecomposition";
 import {
     generateTypeDataForProject,
     getFullTypeName,
@@ -65,6 +65,10 @@ export function validatePackage(
             // Type has been removed, package requires major increment
             pkgIncrement |= BreakingIncrement.major;
         } else {
+            // Get the type data decomposition now that we need it
+            tryDecomposeTypeData(oldDetails.typeChecker, oldTypeData);
+            tryDecomposeTypeData(newDetails.typeChecker, newTypeData);
+
             // Check for major increment.  This may also tell us a minor increment is required
             // in some situations
             const typeIncrement = checkMajorIncrement(project, packageDir, oldTypeData, newTypeData);
@@ -93,6 +97,17 @@ export function validatePackage(
     });
 
     return [pkgIncrement, pkgBrokenTypes];
+}
+
+function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: TypeData): boolean {
+    if (typeData.classData !== undefined) {
+        return true;
+    } else if (Node.isClassDeclaration(typeData.node)) {
+        typeData.classData = decomposeClassDeclaration(typeChecker, typeData.node);
+    } else {
+        return false;
+    }
+    return true;
 }
 
 function checkMajorIncrement(
