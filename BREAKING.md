@@ -11,7 +11,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.51 Breaking changes
-- [OpProcessingController removed](#OpProcessingController-removed)
+- [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-property-has-been-deprecated-from-IConnectionDetails-and-IDocumentDeltaConnection)
+
+## `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
+`maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
 
 ## 0.50 Breaking changes
 - [OpProcessingController removed](#OpProcessingController-removed)

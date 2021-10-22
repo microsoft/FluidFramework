@@ -170,6 +170,13 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     existing: boolean;
 
     /**
+     * Maximum size of a message that can be sent to the server. Messages larger than this size must be chunked.
+     *
+     * @deprecated - please use `serviceConfiguration.maxMessageSize`
+     */
+     maxMessageSize: number;
+
+    /**
      * Protocol version being used with the service
      */
     version: string;

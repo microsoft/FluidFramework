@@ -25,6 +25,10 @@ export interface IConnectionDetails {
     mode: ConnectionMode;
     version: string;
     initialClients: ISignalClient[];
+    /**
+     * @deprecated - please use `serviceConfiguration.maxMessageSize`
+     */
+    maxMessageSize: number;
     serviceConfiguration: IClientConfiguration;
     /**
      * Last known sequence number to ordering service at the time of connection
