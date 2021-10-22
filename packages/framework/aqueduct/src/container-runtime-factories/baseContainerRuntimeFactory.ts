@@ -22,7 +22,11 @@ import {
     IProvideFluidDataStoreRegistry,
     NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { DependencyContainer, DependencyContainerRegistry } from "@fluidframework/synthesize";
+import {
+    DependencyContainer,
+    DependencyContainerRegistry,
+    IProvideFluidDependencySynthesizer,
+} from "@fluidframework/synthesize";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 /**
@@ -65,15 +69,12 @@ export class BaseContainerRuntimeFactory
         context: IContainerContext,
         existing: boolean,
     ): Promise<ContainerRuntime> {
-        const parentDependencyContainer = context.scope.IFluidDependencySynthesizer;
+        const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
+        const parentDependencyContainer = scope.IFluidDependencySynthesizer;
         const dc = new DependencyContainer(parentDependencyContainer);
         for (const entry of Array.from(this.providerEntries)) {
             dc.register(entry.type, entry.provider);
         }
-
-        // Create a scope object that passes through everything except for IFluidDependencySynthesizer
-        // which we will replace with the new one we just created.
-        const scope: any = context.scope;
         scope.IFluidDependencySynthesizer = dc;
 
         const runtime: ContainerRuntime = await ContainerRuntime.load(

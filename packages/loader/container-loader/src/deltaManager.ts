@@ -325,7 +325,7 @@ export class DeltaManager
      */
     public get connectionMode(): ConnectionMode {
         assert(!this.downgradedConnection || this.connection?.mode === "write",
-            "Did we forget to reset downgradedConnection on new connection?");
+            0x277 /* "Did we forget to reset downgradedConnection on new connection?" */);
         if (this.connection === undefined || this.downgradedConnection) {
             return "read";
         }
@@ -413,7 +413,7 @@ export class DeltaManager
      */
     public setAutoReconnect(mode: ReconnectMode): void {
         assert(mode !== ReconnectMode.Never && this._reconnectMode !== ReconnectMode.Never,
-            "API is not supported for non-connecting or closed container");
+            0x278 /* "API is not supported for non-connecting or closed container" */);
 
         this._reconnectMode = mode;
 
@@ -452,7 +452,7 @@ export class DeltaManager
 
         if (oldValue !== this.readonly) {
             assert(this._reconnectMode !== ReconnectMode.Never,
-                "API is not supported for non-connecting or closed container");
+                0x279 /* "API is not supported for non-connecting or closed container" */);
 
             let reconnect = false;
             if (this.readonly === true) {
@@ -713,6 +713,7 @@ export class DeltaManager
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
+            this.connectionP = Promise.resolve(connection); // to keep setupNewSuccessfulConnection happy
             this.setupNewSuccessfulConnection(connection, "read");
             return connection;
         }
@@ -794,13 +795,14 @@ export class DeltaManager
             const cleanupAndReject = (error) => {
                 this.connectionP = undefined;
                 this.removeListener("closed", cleanupAndReject);
+                // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
+                this.close(error);
                 reject(error);
             };
             this.on("closed", cleanupAndReject);
 
             // Attempt the connection
             connectCore().then((connection) => {
-                assert(this.connectionP === undefined, "this.connectionP has been reset on successful connection");
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1016,6 +1018,8 @@ export class DeltaManager
             return;
         }
         this.closed = true;
+        // Ensure that things like triggerConnect() will short circuit
+        this._reconnectMode = ReconnectMode.Never;
 
         this.closeAbortController.abort();
 
@@ -1142,6 +1146,9 @@ export class DeltaManager
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
+        assert(this.connectionP !== undefined || this.closed,
+            0x27f /* "reentrnacy may result in incorrect behavior" */);
+
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;
         if (disposable.disposed === true) {
@@ -1156,8 +1163,8 @@ export class DeltaManager
             return;
         }
 
-        this.connection = connection;
         this.connectionP = undefined;
+        this.connection = connection;
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
@@ -1278,7 +1285,7 @@ export class DeltaManager
             return false;
         }
 
-        assert(this.connectionP === undefined, "reentrnacy may result in incorrect behavior");
+        assert(this.connectionP === undefined, 0x27b /* "reentrancy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
@@ -1562,7 +1569,8 @@ export class DeltaManager
                 // We have been kicked out from quorum
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
                 this.downgradedConnection = true;
-                assert(this.connectionMode === "read", "effective connectionMode should be 'read' after downgrade");
+                assert(this.connectionMode === "read",
+                    0x27c /* "effective connectionMode should be 'read' after downgrade" */);
             }
         }
 

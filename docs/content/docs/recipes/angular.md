@@ -48,8 +48,8 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
     |Library |Description |
     |---|---|
-    |fluid&#x2011;framework |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
-    |fluidframework/tinylicious&#x2011;client |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
+    | `fluid-framework` |Contains the SharedMap [distributed data structure]({{< relref "dds.md" >}}) that synchronizes data across clients. *This object will hold the most recent timestamp update made by any client.*|
+    | `@fluidframework/tinylicious-client` |Defines the connection to a Fluid service server and defines the starting schema for the [Fluid container][].|
     {.table}
 
     Run the following command to install the libraries.
@@ -191,14 +191,15 @@ To ensure that both local and remote changes to the timestamp are reflected in t
     this.sharedTimestamp!.off('valueChanged', this.updateLocalTimestamp!);
     ```
 
-Now that we've defined how to get and synchronize our Fluid data, we need to tell Angular to call `getFluidData` and `syncData` when the application starts up and then store the result in component properties. So add the following code to the `ngOnInit` function we defined previously.
+    Now that we've defined how to get and synchronize our Fluid data, we need to tell Angular to call `getFluidData` and `syncData` when the application starts up and then store the result in component properties. So add the following code to the `ngOnInit` function we defined previously.
 
     ```js
     this.sharedTimestamp = await this.getFluidData();
     this.syncData();
     ```
 
-1.  In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
+1. In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
+
     - The `sharedTimestamp.set` method sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
     - All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
 
