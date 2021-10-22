@@ -295,7 +295,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            dataStore.channel.attachGraph();
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -322,7 +322,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            dataStore.channel.attachGraph();
             (channel as SharedMap).set(testKey, testValue);
         });
 

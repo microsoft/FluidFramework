@@ -128,7 +128,11 @@ class NoDeltaStream
     initialMessages: ISequencedDocumentMessage[] = [];
     initialSignals: ISignalMessage[] = [];
     initialClients: ISignalClient[] = [];
-    serviceConfiguration: IClientConfiguration = undefined as any;
+    serviceConfiguration: IClientConfiguration = {
+        maxMessageSize: 0,
+        blockSize: 0,
+        summary: undefined as any,
+    };
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
         this.emit("nack", this.clientId, messages.map((operation) => {
@@ -297,7 +301,6 @@ export class DeltaManager
 
     public get maxMessageSize(): number {
         return this.connection?.serviceConfiguration?.maxMessageSize
-            ?? this.connection?.maxMessageSize
             ?? DefaultChunkSize;
     }
 
@@ -634,7 +637,7 @@ export class DeltaManager
             existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
             get initialClients() { return connection.initialClients; },
-            maxMessageSize: connection.maxMessageSize,
+            maxMessageSize: connection.serviceConfiguration.maxMessageSize,
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
@@ -713,6 +716,7 @@ export class DeltaManager
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
+            this.connectionP = Promise.resolve(connection); // to keep setupNewSuccessfulConnection happy
             this.setupNewSuccessfulConnection(connection, "read");
             return connection;
         }
@@ -794,14 +798,14 @@ export class DeltaManager
             const cleanupAndReject = (error) => {
                 this.connectionP = undefined;
                 this.removeListener("closed", cleanupAndReject);
+                // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
+                this.close(error);
                 reject(error);
             };
             this.on("closed", cleanupAndReject);
 
             // Attempt the connection
             connectCore().then((connection) => {
-                assert(this.connectionP === undefined,
-                    0x27a /* "this.connectionP has been reset on successful connection" */);
                 this.removeListener("closed", cleanupAndReject);
                 resolve(connection);
             }).catch(cleanupAndReject);
@@ -1017,6 +1021,8 @@ export class DeltaManager
             return;
         }
         this.closed = true;
+        // Ensure that things like triggerConnect() will short circuit
+        this._reconnectMode = ReconnectMode.Never;
 
         this.closeAbortController.abort();
 
@@ -1143,6 +1149,9 @@ export class DeltaManager
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
+        assert(this.connectionP !== undefined || this.closed,
+            0x27f /* "reentrancy may result in incorrect behavior" */);
+
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;
         if (disposable.disposed === true) {
@@ -1157,8 +1166,8 @@ export class DeltaManager
             return;
         }
 
-        this.connection = connection;
         this.connectionP = undefined;
+        this.connection = connection;
 
         // Does information in scopes & mode matches?
         // If we asked for "write" and got "read", then file is read-only
@@ -1279,7 +1288,7 @@ export class DeltaManager
             return false;
         }
 
-        assert(this.connectionP === undefined, 0x27b /* "reentrnacy may result in incorrect behavior" */);
+        assert(this.connectionP === undefined, 0x27b /* "reentrancy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
