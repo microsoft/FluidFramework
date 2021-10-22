@@ -4,7 +4,7 @@
  */
 
 import { ClassDeclaration, Node, Scope, TypeChecker } from "ts-morph";
-import { decomposeType, decomposeTypes, typeToString } from "./typeDecomposition";
+import { decomposeType, decomposeTypes, GenericsInfo, typeToString } from "./typeDecomposition";
 
 /**
  * Total result of a class decomposition which may be reconstructed into an equivalent class
@@ -14,7 +14,7 @@ export interface ClassData {
     readonly typeParameters: string[];
     readonly properties: string[];
     readonly replacedTypes: Set<string>;
-    readonly requiredGenerics: Set<string>;
+    readonly requiredGenerics: GenericsInfo;
 }
 
 function mergeIntoSet<T>(into: Set<T>, from: Set<T>) {
@@ -40,7 +40,7 @@ function mergeIntoSet<T>(into: Set<T>, from: Set<T>) {
 export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassDeclaration): ClassData {
     const replacedTypes = new Set<string>();
     const replacedProperties: string[] = [];
-    const requiredGenerics = new Set<string>();
+    const requiredGenerics = new GenericsInfo();
     const typeParameters: string[] = [];
 
     node.getTypeParameters().forEach((tp) => {
@@ -49,17 +49,19 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
 
     // Convert extensions and implementations to properties for comparison because they
     // can't be replaced as string literal types
-    node.getExtends()?.getTypeArguments().forEach((tn) => {
-        const result = decomposeType(typeChecker, tn.getType());
+    const extendsExpr = node.getExtends();
+    if (extendsExpr !== undefined) {
+        const result = decomposeType(typeChecker, extendsExpr.getType());
         mergeIntoSet(replacedTypes, result.replacedTypes);
-        mergeIntoSet(requiredGenerics, result.requiredGenerics);
-        const typeName = typeToString(typeChecker, tn.getType()).replace(/[^\w]/g, "_");
+        requiredGenerics.merge(result.requiredGenerics);
+        const typeName = typeToString(typeChecker, extendsExpr.getType()).replace(/[^\w]/g, "_");
         replacedProperties.push(`__extends__${typeName}: ${result.typeAsString};`);
-    });
+    }
     node.getImplements().forEach((ex) => {
         const result = decomposeType(typeChecker, ex.getType());
+        ex.getType().compilerType.
         mergeIntoSet(replacedTypes, result.replacedTypes);
-        mergeIntoSet(requiredGenerics, result.requiredGenerics);
+        requiredGenerics.merge(result.requiredGenerics);
         const typeName = typeToString(typeChecker, ex.getType()).replace(/[^\w]/g, "_");
         replacedProperties.push(`__implements__${typeName}: ${result.typeAsString};`);
     });
@@ -95,7 +97,7 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
                     ", ",
                 );
                 mergeIntoSet(replacedTypes, typeArgsResult.replacedTypes);
-                mergeIntoSet(requiredGenerics, typeArgsResult.requiredGenerics);
+                requiredGenerics.merge(typeArgsResult.requiredGenerics);
                 typeArgsString = `<${typeArgsResult.typeAsString}>`;
             }
 
@@ -104,14 +106,14 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
             paramsString = member.getParameters().map((p) => {
                 const subResult = decomposeType(typeChecker, p.getType());
                 mergeIntoSet(replacedTypes, subResult.replacedTypes);
-                mergeIntoSet(requiredGenerics, subResult.requiredGenerics);
+                requiredGenerics.merge(subResult.requiredGenerics);
                 return `${p.getName()}: ${subResult.typeAsString}`;
             }).join(", ");
 
             // Handle return type
             const returnResult = decomposeType(typeChecker, member.getReturnType());
             mergeIntoSet(replacedTypes, returnResult.replacedTypes);
-            mergeIntoSet(requiredGenerics, returnResult.requiredGenerics);
+            requiredGenerics.merge(returnResult.requiredGenerics);
 
             // Other stuff
             const qToken = member.hasQuestionToken() ? "?" : "";
@@ -125,7 +127,7 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
             paramsString = member.getParameters().map((p) => {
                 const subResult = decomposeType(typeChecker, p.getType());
                 mergeIntoSet(replacedTypes, subResult.replacedTypes);
-                mergeIntoSet(requiredGenerics, subResult.requiredGenerics);
+                requiredGenerics.merge(subResult.requiredGenerics);
 
                 // Handle inline property declarations
                 const paramModifiers = p.getModifiers().map((val) => val.getText());
@@ -150,7 +152,7 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
         } else if (Node.isPropertyDeclaration(member)) {
             const result = decomposeType(typeChecker, member.getType());
             mergeIntoSet(replacedTypes, result.replacedTypes);
-            mergeIntoSet(requiredGenerics, result.requiredGenerics);
+            requiredGenerics.merge(result.requiredGenerics);
             const qToken = member.hasQuestionToken() ? "?" : "";
             const property = `${modifiers} ${propNamePrefix}${member.getName()}${qToken}: ${result.typeAsString};`;
 
@@ -159,7 +161,7 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
             // return type should always exist for a getter
             const result = decomposeType(typeChecker, member.getReturnType());
             mergeIntoSet(replacedTypes, result.replacedTypes);
-            mergeIntoSet(requiredGenerics, result.requiredGenerics);
+            requiredGenerics.merge(result.requiredGenerics);
             const getter = `${modifiers} get ${propNamePrefix}${member.getName()}(): ${result.typeAsString}`;
 
             replacedProperties.push(getter);
@@ -168,7 +170,7 @@ export function decomposeClassDeclaration(typeChecker: TypeChecker, node: ClassD
             const param = member.getParameters()[0];
             const paramResult = decomposeType(typeChecker, param.getType());
             mergeIntoSet(replacedTypes, paramResult.replacedTypes);
-            mergeIntoSet(requiredGenerics, paramResult.requiredGenerics);
+            requiredGenerics.merge(paramResult.requiredGenerics);
             const setter = `${modifiers} set ${propNamePrefix}${member.getName()}(${param.getName()}: ${paramResult.typeAsString});`;
 
             replacedProperties.push(setter);

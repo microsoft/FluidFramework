@@ -12,6 +12,7 @@ import {
     PackageAndTypeData,
     TypeData,
 } from "./typeData";
+import { GenericsInfo } from "./typeDecomposition";
 
 export enum BreakingIncrement {
     none = 0,
@@ -28,6 +29,7 @@ type BrokenTypes = Map<string, BreakingIncrement>;
  * TODO: ensure type replacement accounts for broken types from the same package when
  *      checked out of order
  * TODO: ensure namespaces work
+ * TODO: handle TS built-in types?
  * @param packageDetails
  * @param packageDir
  * @param brokenTypes
@@ -178,10 +180,15 @@ function buildClassTestFileMajor(
 ): string {
     const fileLines: string[] = [];
 
-    const requiredGenerics = new Set<string>(oldClassData.requiredGenerics);
-    newClassData.requiredGenerics.forEach((v) => requiredGenerics.add(v));
-    for (const generic of requiredGenerics) {
-        fileLines.push(`interface ${generic}<T> { myVar: T; };`);
+    const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
+    requiredGenerics.merge(newClassData.requiredGenerics);
+    for (const [generic, paramCount] of requiredGenerics) {
+        const numberArray = Array.from(Array(paramCount).keys());
+        const typeParams = numberArray.map((n) => `T${n} = any`).join(", ");
+        const typedProperties = numberArray.map((n) => `myVar${n}: T${n};`).join("\n");
+        fileLines.push(`interface ${generic}<${typeParams}> {`);
+        fileLines.push(typedProperties);
+        fileLines.push(`};`);
     }
 
     let oldTypeParameters = oldClassData.typeParameters.join(", ");
@@ -219,8 +226,8 @@ function buildClassTestFileMinor(
     fileLines.push(`    (<T>() => (T extends Y ? 1 : 2)) ? true : false;`);
     fileLines.push(`let trueVal: true = true;`);
 
-    const requiredGenerics = new Set<string>(oldClassData.requiredGenerics);
-    newClassData.requiredGenerics.forEach((v) => requiredGenerics.add(v));
+    const requiredGenerics = new GenericsInfo(oldClassData.requiredGenerics);
+    requiredGenerics.merge(newClassData.requiredGenerics);
     for (const generic of requiredGenerics) {
         fileLines.push(`interface ${generic}<T> { myVar: T; };`);
     }

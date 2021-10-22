@@ -17,8 +17,33 @@ export interface DecompositionResult {
     /**
      * Generic classes that are required for the class because
      * they can't be replaced without disrupting type structure
+     * Mapping is name to number of type params
      */
-    requiredGenerics: Set<string>,
+    requiredGenerics: GenericsInfo,
+}
+
+/**
+ * Class to track information on generic classes found during type decomposition
+ * Actual breaking change detection of those classes is handled where they are
+ * exported
+ */
+export class GenericsInfo extends Map<string, number> {
+    // TODO: add TS built-ins
+    // Should this check for the type in the imports/rest of file instead?  Seems
+    // kind of difficult given the different import methods, re-exports, etc.
+    static builtIns: string[] = ["Array", "Promise", "Map", "Set"];
+    set(key: string, value: number): this {
+        if (GenericsInfo.builtIns.findIndex((v) => v === key) !== -1) {
+            return this;
+        }
+
+        const oldValue = this.get(key) ?? 0;
+        return super.set(key, Math.max(value, oldValue));
+    }
+
+    merge(from: Map<string, number>) {
+        from.forEach((v, k) => this.set(k, v));
+    }
 }
 
 /**
@@ -37,7 +62,7 @@ function mergeResults(
     } else {
         into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
         from.replacedTypes.forEach((v) => into.replacedTypes!.add(v));
-        from.requiredGenerics.forEach((v) => into.requiredGenerics!.add(v));
+        into.requiredGenerics!.merge(from.requiredGenerics);
     }
 }
 
@@ -77,7 +102,7 @@ export function decomposeType(
     const result = {
         typeAsString: typeToString(checker, node),
         replacedTypes: new Set<string>(),
-        requiredGenerics: new Set<string>(),
+        requiredGenerics: new GenericsInfo(),
     };
     // console.log(`type as string: ${result.typeAsString}`)
 
@@ -110,11 +135,12 @@ export function decomposeType(
         return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
     } else {
         // handle type args/generics
-        if (node.getTypeArguments().length > 0) {
+        const typeArgs = node.getTypeArguments();
+        if (typeArgs.length > 0) {
             // Array shorthand (type[]) is handled by type arguments
-            const typeArgsResult = decomposeTypes(checker, node.getTypeArguments(), ", ");
+            const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
             const symbolName = checker.compilerObject.symbolToString(node.compilerType.getSymbol()!);
-            typeArgsResult.requiredGenerics.add(symbolName);
+            typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
             typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
             return typeArgsResult;
         } else {
