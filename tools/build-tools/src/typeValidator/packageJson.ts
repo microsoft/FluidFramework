@@ -48,7 +48,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
         throw new Error(`Package json does not exist: ${packagePath}`)
     }
 
-    let pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
+    const pkgJson: PackageJson = JSON.parse(fs.readFileSync(packagePath).toString());
 
     // normalize the version to remove any pre-release version info,
     // as we shouldn't change the type validation version for pre-release versions
@@ -57,6 +57,7 @@ export function getPackageDetails(packageDir: string): PackageDetails {
             pkgJson.version.substring(0, pkgJson.version.indexOf("-")) :
             pkgJson.version;
 
+    // if the packages has no type validation data, then initialize it
     if(pkgJson.typeValidation === undefined){
         pkgJson.typeValidation = {
             version: normalizedVersion,
