@@ -56,7 +56,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/driver-base": "^0.50.0",
-    "@fluidframework/driver-definitions": "^0.41.0-0",
+    "@fluidframework/driver-definitions": "^0.41.0",
     "@fluidframework/driver-utils": "^0.50.0",
     "@fluidframework/protocol-definitions": "^0.1025.0",
     "@fluidframework/routerlicious-driver": "^0.50.0",
