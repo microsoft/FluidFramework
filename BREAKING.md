@@ -10,6 +10,9 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.51 Breaking changes
+- [OpProcessingController removed](#OpProcessingController-removed)
+
 ## 0.50 Breaking changes
 - [OpProcessingController removed](#OpProcessingController-removed)
 - [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
