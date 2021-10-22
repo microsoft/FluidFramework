@@ -1015,6 +1015,8 @@ export class DeltaManager
             return;
         }
         this.closed = true;
+        // Ensure that things like triggerConnect() will short circuit
+        this._reconnectMode = ReconnectMode.Never;
 
         this.closeAbortController.abort();
 
@@ -1141,7 +1143,7 @@ export class DeltaManager
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
-        assert(this.connectionP !== undefined, "reentrnacy may result in incorrect behavior");
+        assert(this.connectionP !== undefined || this.closed, "reentrnacy may result in incorrect behavior");
         this.connectionP = undefined;
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
@@ -1279,7 +1281,7 @@ export class DeltaManager
             return false;
         }
 
-        assert(this.connectionP === undefined, 0x27b /* "reentrnacy may result in incorrect behavior" */);
+        assert(this.connectionP === undefined, 0x27b /* "reentrancy may result in incorrect behavior" */);
 
         const connection = this.connection;
         // Avoid any re-entrancy - clear object reference
