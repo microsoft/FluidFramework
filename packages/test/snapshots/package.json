@@ -57,7 +57,7 @@
     "@fluidframework/cell": "^0.50.0",
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/container-loader": "^0.50.0",
-    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/core-interfaces": "^0.40.0",
     "@fluidframework/counter": "^0.50.0",
     "@fluidframework/driver-definitions": "^0.41.0-0",
     "@fluidframework/driver-utils": "^0.50.0",
