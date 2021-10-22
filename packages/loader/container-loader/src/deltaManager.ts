@@ -1146,7 +1146,6 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
         assert(this.connectionP !== undefined || this.closed, "reentrnacy may result in incorrect behavior");
-        this.connectionP = undefined;
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;
@@ -1162,6 +1161,7 @@ export class DeltaManager
             return;
         }
 
+        this.connectionP = undefined;
         this.connection = connection;
 
         // Does information in scopes & mode matches?

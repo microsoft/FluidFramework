@@ -208,7 +208,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         assert.strictEqual(container.closed, false, "Container should not be closed");
         assert.strictEqual(errorRaised, false, "Error event should not be raised.");
         deltaConnection.removeAllListeners();
-        container.close();
     });
 
     it("Close called on container", async () => {
