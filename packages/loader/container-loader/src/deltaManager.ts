@@ -794,6 +794,8 @@ export class DeltaManager
             const cleanupAndReject = (error) => {
                 this.connectionP = undefined;
                 this.removeListener("closed", cleanupAndReject);
+                // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
+                this.close(error);
                 reject(error);
             };
             this.on("closed", cleanupAndReject);
