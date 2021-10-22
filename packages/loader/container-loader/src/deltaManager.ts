@@ -22,7 +22,7 @@ import {
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -787,26 +787,30 @@ export class DeltaManager
             return connection;
         };
 
+        const deferred = new Deferred<IDocumentDeltaConnection>();
+
         // This promise settles as soon as we know the outcome of the connection attempt
-        this.connectionP = new Promise((resolve, reject) => {
-            // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
+        // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (but in
+        // connectToDeltaStread() implementation - throwing exception vs. returning rejected promise) in
+        // synchronous way, we have this.connectionP setup for all the code to assert correctness of the flow.
+        this.connectionP = deferred.promise;
 
-            // Reject the connection promise if the DeltaManager gets closed during connection
-            const cleanupAndReject = (error) => {
-                this.connectionP = undefined;
-                this.removeListener("closed", cleanupAndReject);
-                // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
-                this.close(error);
-                reject(error);
-            };
-            this.on("closed", cleanupAndReject);
+        // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
+        // Reject the connection promise if the DeltaManager gets closed during connection
+        const cleanupAndReject = (error) => {
+            this.connectionP = undefined;
+            this.removeListener("closed", cleanupAndReject);
+            // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
+            this.close(error);
+            deferred.reject(error);
+        };
+        this.on("closed", cleanupAndReject);
 
-            // Attempt the connection
-            connectCore().then((connection) => {
-                this.removeListener("closed", cleanupAndReject);
-                resolve(connection);
-            }).catch(cleanupAndReject);
-        });
+        // Attempt the connection
+        connectCore().then((connection) => {
+            this.removeListener("closed", cleanupAndReject);
+            deferred.resolve(connection);
+        }).catch(cleanupAndReject);
 
         return this.connectionP;
     }
@@ -1147,7 +1151,8 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
         assert(this.connectionP !== undefined || this.closed,
-            0x27f /* "reentrnacy may result in incorrect behavior" */);
+            0x27f /* "reentrancy may result in incorrect behavior" */);
+        this.connectionP = undefined;
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;
@@ -1163,7 +1168,6 @@ export class DeltaManager
             return;
         }
 
-        this.connectionP = undefined;
         this.connection = connection;
 
         // Does information in scopes & mode matches?
