@@ -43,6 +43,10 @@ parameters:
 - name: testFileTarName
   type: string
 
+- name: extraDependencies
+  type: string
+  default: null
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -97,6 +101,7 @@ jobs:
               variant.flag=${{ variant.flags }}
               downloadTestFiles=${{ parameters.downloadTestFiles }}
               testFileTarName=${{ parameters.testFileTarName }}
+              extraDependencies=${{ parameters.extraDependencies }}
             "
 
       # Install
@@ -203,14 +208,15 @@ jobs:
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        # Install extra dependencies for test files
-        - task: Npm@1
-          displayName: 'npm install - extra dependencies for test files'
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
-            customCommand: 'install cross-env mocha @fluidframework/test-client-utils'
-            customRegistry: 'useNpmrc'
+        - ${{ if parameters.extraDependencies }}:
+          # Install extra dependencies for test files
+          - task: Npm@1
+            displayName: 'npm install - extra dependencies for test files'
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.testWorkspace }}
+              customCommand: 'install ${{ parameters.extraDependencies }}'
+              customRegistry: 'useNpmrc'
 
       # run the test
       - task: Npm@1
