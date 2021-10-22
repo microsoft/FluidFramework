@@ -95,6 +95,8 @@ jobs:
               testCommand=${{ parameters.testCommand }}
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
+              downloadTestFiles=${{ parameters.downloadTestFiles }}
+              testFileTarName=${{ parameters.testFileTarName }}
             "
 
       # Install
