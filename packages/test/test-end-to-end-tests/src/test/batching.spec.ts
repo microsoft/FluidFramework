@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerMessageType } from "@fluidframework/container-runtime";
+import { ContainerMessageType, isRuntimeMessage } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -48,7 +48,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
 
     function setupBatchMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
         dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
-            if (message.type === ContainerMessageType.FluidDataStoreOp) {
+            if (isRuntimeMessage(message)) {
                 receivedMessages.push(message);
             }
         });
@@ -68,6 +68,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
         assert.equal(batchBeginMetadata, true, "Batch begin metadata not found");
         assert.equal(batchEndMetadata, false, "Batch end metadata not found");
     }
+
+    const filterDatastoreOps = (messages: ISequencedDocumentMessage[]) => {
+        return messages.filter((m) => m.type === ContainerMessageType.FluidDataStoreOp);
+    };
 
     // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
     async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
@@ -120,10 +124,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
 
-                assert.equal(
-                    dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
-                assert.equal(
-                    dataObject2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
+                assert.equal(filterDatastoreOps(dataObject1BatchMessages).length, 4,
+                    "Incorrect number of messages received on local client");
+                assert.equal(filterDatastoreOps(dataObject2BatchMessages).length, 4,
+                    "Incorrect number of messages received on remote client");
 
                 verifyBatchMetadata(dataObject1BatchMessages);
                 verifyBatchMetadata(dataObject2BatchMessages);
@@ -220,10 +224,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
 
-                assert.equal(
-                    dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
-                assert.equal(
-                    dataObject2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
+                assert.equal(filterDatastoreOps(dataObject1BatchMessages).length, 4,
+                    "Incorrect number of messages received on local client");
+                assert.equal(filterDatastoreOps(dataObject2BatchMessages).length, 4,
+                    "Incorrect number of messages received on remote client");
 
                 verifyBatchMetadata(dataObject1BatchMessages);
                 verifyBatchMetadata(dataObject2BatchMessages);
@@ -245,10 +249,10 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
                 // Wait for the ops to get processed by both the containers.
                 await provider.ensureSynchronized();
 
-                assert.equal(
-                    dataObject1BatchMessages.length, 4, "Incorrect number of messages received on local client");
-                assert.equal(
-                    dataObject2BatchMessages.length, 4, "Incorrect number of messages received on remote client");
+                assert.equal(filterDatastoreOps(dataObject1BatchMessages).length, 4,
+                    "Incorrect number of messages received on local client");
+                assert.equal(filterDatastoreOps(dataObject2BatchMessages).length, 4,
+                    "Incorrect number of messages received on remote client");
 
                 verifyBatchMetadata(dataObject1BatchMessages);
                 verifyBatchMetadata(dataObject2BatchMessages);
