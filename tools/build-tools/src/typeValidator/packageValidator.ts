@@ -12,7 +12,7 @@ import {
     PackageAndTypeData,
     TypeData,
 } from "./typeData";
-import { GenericsInfo } from "./typeDecomposition";
+import { DecompositionResult, GenericsInfo } from "./typeDecomposition";
 
 export enum BreakingIncrement {
     none = 0,
@@ -21,6 +21,10 @@ export enum BreakingIncrement {
 };
 // TODO: correlate type name with exporting package to support name aliasing
 type BrokenTypes = Map<string, BreakingIncrement>;
+
+interface DecompositionTypeData extends TypeData {
+    classData?: ClassData,
+}
 
 /**
  * TODO: handle cross-package/transitive type breaks
@@ -51,23 +55,20 @@ export function validatePackage(
     const newTypeMap = new Map<string, TypeData>(newDetails.typeData.map((v) => [getFullTypeName(v), v]));
     const oldTypeMap = new Map<string, TypeData>(oldDetails.typeData.map((v) => [getFullTypeName(v), v]));
 
-    // Create a project for the package to use for test sources and checking diagnostics
-    let tsConfigPath =`${packageDir}/tsconfig.json`;
-    const project = new Project({
-        skipFileDependencyResolution: true,
-        tsConfigFilePath: tsConfigPath,
-    });
+    // Use the new version of the package for test sources and checking diagnostics
+    const project = newDetails.project;
 
     // Check old types first because these are the only ones that can cause a major increment
     for (const oldTypeData of oldDetails.typeData) {
-        const newTypeData = newTypeMap.get(getFullTypeName(oldTypeData));
+        oldTypeData as DecompositionTypeData;
+        const newTypeData = newTypeMap.get(getFullTypeName(oldTypeData)) as DecompositionTypeData | undefined;
         if (newTypeData === undefined) {
             // Type has been removed, package requires major increment
             pkgIncrement |= BreakingIncrement.major;
         } else {
             // Get the type data decomposition now that we need it
-            tryDecomposeTypeData(oldDetails.typeChecker, oldTypeData);
-            tryDecomposeTypeData(newDetails.typeChecker, newTypeData);
+            tryDecomposeTypeData(oldDetails.project.getTypeChecker(), oldTypeData);
+            tryDecomposeTypeData(newDetails.project.getTypeChecker(), newTypeData);
 
             // Check for major increment.  This may also tell us a minor increment is required
             // in some situations
@@ -99,7 +100,7 @@ export function validatePackage(
     return [pkgIncrement, pkgBrokenTypes];
 }
 
-function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: TypeData): boolean {
+function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: DecompositionTypeData): boolean {
     if (typeData.classData !== undefined) {
         return true;
     } else if (Node.isClassDeclaration(typeData.node)) {
@@ -113,8 +114,8 @@ function tryDecomposeTypeData(typeChecker: TypeChecker, typeData: TypeData): boo
 function checkMajorIncrement(
     project: Project,
     pkgDir: string,
-    oldTypeData: TypeData,
-    newTypeData: TypeData,
+    oldTypeData: DecompositionTypeData,
+    newTypeData: DecompositionTypeData,
 ): BreakingIncrement {
     // Check for major increment through transitivity then bivariant assignment
     console.log(oldTypeData.name);
@@ -152,8 +153,8 @@ function checkMajorIncrement(
 function checkMinorIncrement(
     project: Project,
     pkgDir: string,
-    oldTypeData: TypeData,
-    newTypeData: TypeData,
+    oldTypeData: DecompositionTypeData,
+    newTypeData: DecompositionTypeData,
 ): BreakingIncrement {
     // check for minor increment by comparing exact types
     let testFile = "";

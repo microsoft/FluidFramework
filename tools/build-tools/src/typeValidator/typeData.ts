@@ -3,25 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { Node, Project, ts, TypeChecker } from "ts-morph";
+import { Node, Project, ts } from "ts-morph";
 import * as fs from "fs";
 import { getPackageDetails, PackageDetails } from "./packageJson";
-import { ClassData, decomposeClassDeclaration } from "./classDecomposition";
 
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
     typeData: TypeData[];
-    /**
-     * Associated type checker object for the package
-     */
-    typeChecker: TypeChecker;
+    project: Project;
 }
 
 export interface TypeData {
     readonly name: string;
     readonly kind: string;
     readonly node: Node;
-    classData?: ClassData;
 }
 
 export function getFullTypeName(typeData: TypeData){
@@ -176,6 +171,6 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     return {
         packageDetails,
         typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
-        typeChecker: project.getTypeChecker(),
+        project,
     };
 }
