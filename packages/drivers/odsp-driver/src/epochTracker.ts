@@ -143,9 +143,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
-        const networkCallNumber = this.networkCallNumber++;
+        const requestStatsValue = this.formatRequestStatsValue();
         // Add epoch in fetch request.
-        const request = this.addEpochInRequest(url, fetchOptions, addInBody, networkCallNumber);
+        const request = this.addEpochInRequest(url, fetchOptions, addInBody, requestStatsValue);
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
@@ -155,8 +155,7 @@ export class EpochTracker implements IPersistedFileCache {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
                 ...response.commonSpoHeaders,
-                driverId: this.driverId,
-                networkCallNumber,
+                "X-RequestStats": requestStatsValue,
             };
             return response;
         } catch (error) {
@@ -183,9 +182,9 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ) {
-        const networkCallNumber = this.networkCallNumber++;
+        const requestStatsValue = this.formatRequestStatsValue();
         // Add epoch in fetch request.
-        const request = this.addEpochInRequest(url, fetchOptions, addInBody, networkCallNumber);
+        const request = this.addEpochInRequest(url, fetchOptions, addInBody, requestStatsValue);
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
@@ -195,8 +194,7 @@ export class EpochTracker implements IPersistedFileCache {
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
                 ...response.commonSpoHeaders,
-                driverId: this.driverId,
-                networkCallNumber,
+                "X-RequestStats": requestStatsValue,
             };
             return response;
         } catch (error) {
@@ -214,7 +212,7 @@ export class EpochTracker implements IPersistedFileCache {
         url: string,
         fetchOptions: RequestInit,
         addInBody: boolean,
-        networkCallNumber: number,
+        requestStatsValue: string,
     ): {url: string, fetchOptions: {[index: string]: any}} {
         if (this.fluidEpoch !== undefined) {
             if (addInBody) {
@@ -226,6 +224,7 @@ export class EpochTracker implements IPersistedFileCache {
                 assert(firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
                 const formBoundary = firstLine.substring(2);
                 body += `\r\nepoch=${this.fluidEpoch}\r\n`;
+                body += `\r\nX-RequestStats=${requestStatsValue}\r\n`;
                 body += `\r\n--${formBoundary}--`;
                 fetchOptions.body = body;
             } else {
@@ -239,6 +238,7 @@ export class EpochTracker implements IPersistedFileCache {
                     fetchOptions.headers = {
                         ...fetchOptions.headers,
                         "x-fluid-epoch": this.fluidEpoch,
+                        "X-RequestStats": requestStatsValue,
                     };
                 } else {
                     return {
@@ -247,19 +247,18 @@ export class EpochTracker implements IPersistedFileCache {
                             ...fetchOptions,
                             headers: {
                                 ...fetchOptions.headers,
-                                "X-RequestStats": `driverId=${
-                                    this.driverId}, RequestNumber=${networkCallNumber}`,
+                                "X-RequestStats": requestStatsValue,
                             },
                         },
                     };
                 }
             }
         }
-        fetchOptions.headers = {
-            ...fetchOptions.headers,
-            "X-RequestStats": `driverId=${this.driverId}, RequestNumber=${networkCallNumber}`,
-        };
         return { url, fetchOptions };
+    }
+
+    private formatRequestStatsValue() {
+        return `driverId=${this.driverId}, RequestNumber=${++this.networkCallNumber}`;
     }
 
     protected validateEpochFromResponse(
