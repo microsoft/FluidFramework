@@ -40,6 +40,9 @@ parameters:
   type: boolean
   default: false
 
+- name: testFileTarName
+  type: string
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -195,12 +198,12 @@ jobs:
             targetType: 'inline'
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/azure-client.test-files.tar -C $(Pipeline.Workspace)/test-files
+              tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        # Install extra dependencies
+        # Install extra dependencies for test files
         - task: Npm@1
-          displayName: 'npm install - extra dependencies'
+          displayName: 'npm install - extra dependencies for test files'
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}
