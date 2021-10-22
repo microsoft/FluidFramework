@@ -208,7 +208,7 @@ jobs:
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        - ${{ if ne(parameters.extraDependencies, null) }}:
+        - ${{ if ne(parameters.extraDependencies, 'null') }}:
           # Install extra dependencies for test files
           - task: Npm@1
             displayName: 'npm install - extra dependencies for test files'
