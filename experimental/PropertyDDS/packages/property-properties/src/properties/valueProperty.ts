@@ -2,37 +2,24 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const { BaseProperty } = require('./baseProperty');
-const { ChangeSet } = require('@fluid-experimental/property-changeset');
-const { MSG } = require('@fluid-experimental/property-common').constants;
+import { BaseProperty, IBasePropertyParams } from './baseProperty';
+import { ChangeSet } from '@fluid-experimental/property-changeset';
+import { constants } from '@fluid-experimental/property-common';
 
+const { MSG } = constants;
 /**
  * This class serves as a view to read, write and listen to changes in an
  * object's value field. To do this we simply keep a pointer to the object and
  * its associated data field that we are interested in. If no data field is
  * present this property will fail constructing.
  */
-export class ValueProperty extends BaseProperty {
+export class ValueProperty<T = any> extends BaseProperty {
+    protected _data: T = undefined;
+    private _castFunctor: any;
 
-    /**
-     * @virtual
-     * @param {Object=} in_params - the parameters
-     * @param {Object=} in_params.dataObj optional argument containing an object
-     *                  that should be used as the backing store of this value
-     *                  property
-     * @param {Object=} in_params.dataId optional argument must be provided when
-     *                  in_params.dataObj is passed. Must contain a valid member
-     *                  name of dataObj. This member will be used to set/get
-     *                  values of this value property
-     * @constructor
-     * @protected
-     * @extends property-properties.BaseProperty
-     * @alias property-properties.ValueProperty
-     * @category Value Properties
-     */
-    constructor(in_params) {
+
+    constructor(in_params: IBasePropertyParams) {
         super(in_params);
-        this._data = undefined;
     };
 
 
@@ -41,36 +28,36 @@ export class ValueProperty extends BaseProperty {
      *
      * TODO: Which semantics should flattening have? It stops at primitive types and collections?
      *
-     * @return {boolean} Is it a leaf with regard to flattening?
+     * @returns Is it a leaf with regard to flattening?
      */
-    _isFlattenLeaf() {
+    _isFlattenLeaf(): boolean {
         return true;
     };
 
 
     /**
      * returns the current value of ValueProperty
-     * @return {*} the current value
+     * @returns the current value
      */
-    getValue() {
+    getValue(): T {
         return this._data;
     };
 
     /**
      * Ensure the array dirty mask is also cleaned when cleaning the tree.
      *
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
+     * @param in_flags - The flags to clean, if none are supplied all
      *                                                                       will be removed
      */
-    cleanDirty(in_flags) {
+    cleanDirty(in_flags?: BaseProperty.MODIFIED_STATE_FLAGS) {
         this._cleanDirty(in_flags);
     };
 
     /**
-     * @param {*} in_value the new value
+     * @param in_value the new value
      * @throws if property is read only
      */
-    setValue(in_value) {
+    setValue(in_value: T) {
         this._checkIsNotReadOnly(true);
         this._setValue(in_value, true);
     };
@@ -78,13 +65,13 @@ export class ValueProperty extends BaseProperty {
     /**
      * Internal function to update the value of a property
      *
-     * @param {*} in_value the new value
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+     * @param in_value the new value
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
-     * @return {boolean} true if the value was actually changed
+     * @returns true if the value was actually changed
      */
-    _setValue(in_value, in_reportToView) {
+    _setValue(in_value: T, in_reportToView = true): boolean {
         // dirtiness check: setValue casts the input e.g. in an
         // int property 1.2 gets cast to 1, in a boolean property
         // false gets cast to 0,... so we first have to cast(set)
@@ -143,22 +130,22 @@ export class ValueProperty extends BaseProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for ValueProperty
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
-     * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
+     * @param in_dirtyOnly - Only include dirty entries in the serialization
+     * @param in_includeRootTypeid - Include the typeid of the root of the hierarchy - has no effect for ValueProperty
+     * @param in_dirtinessType - The type of dirtiness to use when reporting dirty changes.
+     * @param in_includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
      *
-     * @return {*} The serialized representation of this property
+     * @returns The serialized representation of this property
      * @private
      */
-    _serialize(in_dirtyOnly, in_includeRootTypeid,
-        in_dirtinessType, in_includeReferencedRepositories) {
+    _serialize(
+        in_dirtyOnly: boolean,
+        in_includeRootTypeid: boolean,
+        in_dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_includeReferencedRepositories: boolean = false
+    ) {
         if (in_dirtyOnly) {
             if (this._isDirty(in_dirtinessType)) {
                 return this._data;
@@ -173,21 +160,21 @@ export class ValueProperty extends BaseProperty {
     /**
      * Calls back the given function with a human-readable string
      * representation of the property.
-     * @param {string} indent - Leading spaces to create the tree representation
-     * @param {string} externalId - Name of the current property at the upper level.
+     * @param indent - Leading spaces to create the tree representation
+     * @param externalId - Name of the current property at the upper level.
      *                              Used for arrays.
-     * @param {function} printFct - Function to call for printing each property
+     * @param printFct - Function to call for printing each property
      */
-    _prettyPrint(indent, externalId, printFct) {
+    _prettyPrint(indent: string, externalId: string, printFct: (x: string) => void) {
         printFct(indent + externalId + this.getId() + ' (' + this.getTypeid() + '): ' + this.value);
     };
 
     /**
      * Return a JSON representation of the property.
-     * @return {object} A JSON representation of the property.
+     * @returns A JSON representation of the property.
      * @private
      */
-    _toJson() {
+    _toJson(): object {
         return {
             id: this.getId(),
             context: this._context,
@@ -197,11 +184,11 @@ export class ValueProperty extends BaseProperty {
         };
     };
 
-
     get value() {
-        return this.getValue.apply(this, arguments);
+        return this.getValue();
     }
-    set value(val) {
-        this.setValue.call(this, val);
+
+    set value(val: T) {
+        this.setValue(val);
     }
 }

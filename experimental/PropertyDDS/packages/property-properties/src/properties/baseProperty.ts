@@ -17,46 +17,8 @@ import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const BREAK_TRAVERSAL = 'BREAK';
 
-/**
- * Determines in which cases a reference will automatically be resolved
- */
-enum REFERENCE_RESOLUTION {
-    /** The resolution will always automatically follow references */
-    ALWAYS,
-    /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
-    NO_LEAFS,
-    /** References are never automatically resolved */
-    NEVER
-}
 
-/**
-  * Used to indicate the state of a property. These flags can be connected via OR.
-  */
-enum MODIFIED_STATE_FLAGS {
-    /** No changes to this property at the moment */
-    CLEAN,
-    /** The property is marked as changed in the currently pending ChangeSet */
-    PENDING_CHANGE,
-    /** The property has been modified and the result has not yet been reported to the application for scene updates */
-    DIRTY
-};
-
-/**
- * Token Types
- * @enum Object
- * Type of the token in the path string
- */
-const PATH_TOKENS = {
-    /** A / at the beginning of the path */
-    ROOT: { 'token': 'ROOT' },
-    /** A * that indicates a dereferencing operation */ // note: reversed!
-    REF: { 'token': 'REF' },
-    /** A ../ that indicates one step above the current path */
-    UP: { 'token': 'UP' }
-};
-
-
-interface IBasePropertyParams {
+export interface IBasePropertyParams {
     /** id of the property */
     id?: string,
     /** The type unique identifier */
@@ -81,7 +43,7 @@ interface ISerializeOptions {
     /** Include the typeid of the root of the hierarchy */
     includeRootTypeid?: boolean,
     /** The type of dirtiness to use when reporting dirty changes. */
-    dirtinessType?: MODIFIED_STATE_FLAGS,
+    dirtinessType?: BaseProperty.MODIFIED_STATE_FLAGS,
     /**
      * If this is set to true, the serialize
      * function will descend into referenced repositories. WARNING: if there are loops in the references
@@ -101,11 +63,11 @@ interface ISerializeOptions {
  * processed (in `applyChangeSet()` for example), it is NOT possible to prevent a property from being
  * created by a direct call to a function like `deserialize()` or `createProperty()`.
  *
- */
+    */
 export abstract class BaseProperty {
     protected _id: string | undefined;
     protected _isConstant: boolean = false;
-    protected _dirty: MODIFIED_STATE_FLAGS;
+    protected _dirty: BaseProperty.MODIFIED_STATE_FLAGS;
     protected _typeid: string;
     protected _parent: BaseProperty | undefined;
     protected _noDirtyInBase: boolean;
@@ -140,13 +102,10 @@ export abstract class BaseProperty {
         this._parent = undefined;
         // internal management
         if (!this._noDirtyInBase) {
-            this._dirty = MODIFIED_STATE_FLAGS.CLEAN;
+            this._dirty = BaseProperty.MODIFIED_STATE_FLAGS.CLEAN;
         }
     };
 
-    static MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS;
-    static REFERENCE_RESOLUTION = REFERENCE_RESOLUTION;
-    static PATH_TOKENS = PATH_TOKENS;
 
     get _context() {
         return 'single';
@@ -194,7 +153,7 @@ export abstract class BaseProperty {
      *
      * @param in_property - The parent property
      */
-    protected _setParent(in_property: BaseProperty) {
+    _setParent(in_property: BaseProperty) {
         this._parent = in_property;
 
         // If the property is dirty but not its parent, dirty the parent. In cases like named properties
@@ -269,7 +228,7 @@ export abstract class BaseProperty {
     };
 
     /**
-     * checks whether the property is dynamic (only properties inherting from NodeProperty are)
+     * checks whether the property is dynamic (only properties inheriting from NodeProperty are)
      * @returns True if it is a dynamic property.
      */
     isDynamic() {
@@ -290,10 +249,10 @@ export abstract class BaseProperty {
     _setDirty(
         in_reportToView = true,
         in_callingChild: BaseProperty = undefined,
-        in_flags: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE
+        in_flags: BaseProperty.MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS.DIRTY | BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE
     ) {
         if (in_flags === undefined) {
-            in_flags = MODIFIED_STATE_FLAGS.DIRTY | MODIFIED_STATE_FLAGS.PENDING_CHANGE;
+            in_flags = BaseProperty.MODIFIED_STATE_FLAGS.DIRTY | BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE;
         }
         var reportToView = in_reportToView;
         if (reportToView === undefined) {
@@ -319,7 +278,7 @@ export abstract class BaseProperty {
      * Sets the dirty flags for this property
      * @param in_flags - The dirty flags
      */
-    _setDirtyFlags(in_flags: MODIFIED_STATE_FLAGS) {
+    _setDirtyFlags(in_flags: BaseProperty.MODIFIED_STATE_FLAGS) {
         this._dirty = in_flags;
     };
 
@@ -327,7 +286,7 @@ export abstract class BaseProperty {
      * Gets the dirty flags for this property
      * @returns The dirty flags
      */
-    _getDirtyFlags(): MODIFIED_STATE_FLAGS {
+    _getDirtyFlags(): BaseProperty.MODIFIED_STATE_FLAGS {
         return this._dirty;
     };
 
@@ -452,12 +411,12 @@ export abstract class BaseProperty {
 
     /**
      * Removes the dirtiness flag from this property
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_flags] - The flags to clean, if none are supplied all
+     * @param in_flags- The flags to clean, if none are supplied all
      *                                                                       will be removed
      * @private
      */
-    _cleanDirty(in_flags) {
-        this._setDirtyFlags(in_flags === undefined ? MODIFIED_STATE_FLAGS.CLEAN :
+    _cleanDirty(in_flags?: BaseProperty.MODIFIED_STATE_FLAGS) {
+        this._setDirtyFlags(in_flags === undefined ? BaseProperty.MODIFIED_STATE_FLAGS.CLEAN :
             (this._getDirtyFlags() & ~in_flags));
     };
 
@@ -468,7 +427,7 @@ export abstract class BaseProperty {
      * @param in_flags - The flags to clean, if none are supplied all
      *                                                                       will be removed
      */
-    cleanDirty(in_flags: MODIFIED_STATE_FLAGS) {
+    cleanDirty(in_flags: BaseProperty.MODIFIED_STATE_FLAGS) {
         var dirtyChildren = this._getDirtyChildren(in_flags);
         for (const dirtyChild of dirtyChildren) {
             const child = this.get(
@@ -490,7 +449,7 @@ export abstract class BaseProperty {
      * @param  in_dirtinessType - The type of dirtiness to check for. By default this is DIRTY
      * @returns Is the property dirty?
      */
-    _isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
+    _isDirty(in_dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS.DIRTY): boolean {
         return !!(this._getDirtyFlags() & in_dirtinessType);
     };
 
@@ -509,7 +468,7 @@ export abstract class BaseProperty {
      * @returns True if the property has pending changes. False otherwise.
      */
     hasPendingChanges(): boolean {
-        return this._isDirty(MODIFIED_STATE_FLAGS.PENDING_CHANGE);
+        return this._isDirty(BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE);
     };
 
     /**
@@ -664,7 +623,7 @@ export abstract class BaseProperty {
      *
      * @returns the flat representation
      */
-    private _flatten(): object {
+    _flatten(): object {
         return { propertyNode: this };
     };
 
@@ -683,10 +642,10 @@ export abstract class BaseProperty {
 
     /**
      * Return a JSON representation of the properties and its children.
-     * @return {object} A JSON representation of the properties and its children.
+     * @returns A JSON representation of the properties and its children.
      * @private
      */
-    _toJson() {
+    _toJson(): object {
         var json = {
             id: this.getId(),
             context: this._context,
@@ -709,7 +668,7 @@ export abstract class BaseProperty {
         return [];
     }
 
-    get(id: string, params?: { referenceResolutionMode: REFERENCE_RESOLUTION }): BaseProperty | undefined {
+    get(id: string, params?: { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION }): BaseProperty | undefined {
         return undefined;
     }
 
@@ -735,10 +694,10 @@ export abstract class BaseProperty {
     /**
      * Repeatedly calls back the given function with human-readable string
      * representations of the property's sub-properties.
-     * @param {string} indent - Leading spaces to create the tree representation
-     * @param {function} printFct - Function to call for printing each property
+     * @param indent - Leading spaces to create the tree representation
+     * @param printFct - Function to call for printing each property
      */
-    _prettyPrintChildren(indent, printFct) {
+    _prettyPrintChildren(indent: string, printFct: (x: string) => void) {
         indent += '  ';
         var ids = this.getIds();
         for (var i = 0; i < ids.length; i++) {
@@ -750,16 +709,16 @@ export abstract class BaseProperty {
      * Returns the possible paths from the given from_property to this property. If multiple paths
      * through multiple repository references are possible, returns more than one path.
      *
-     * @param {property-properties.BaseProperty} in_fromProperty - The node from which the
+     * @param  in_fromProperty - The node from which the
      *     path is computed
      * @return {Array<string | undefined>} The paths between from_property and this property
      * will return an empty array if trying to get the path from a child repo to a parent repo.
      * @private
      */
-    _getPathsThroughRepoRef(in_fromProperty) {
-        var paths = [];
+    _getPathsThroughRepoRef(in_fromProperty: BaseProperty): string[] {
+        var paths: string[] = [];
         var that = this;
-        var referenceProps = [];
+        var referenceProps: BaseProperty[] = [];
         // get all reference properties in the referenceProps array
         this._getCheckoutView()._forEachCheckedOutRepository(function(repoInfo) {
             var keys = _.keys(repoInfo._referencedByPropertyInstanceGUIDs);
@@ -796,10 +755,7 @@ export abstract class BaseProperty {
                 }
             }
         }
-        if (paths.length > 0) {
-            return paths;
-        }
-        return [];
+        return paths;
     };
 
     /**
@@ -1027,7 +983,7 @@ export abstract class BaseProperty {
      *                   dirty
      * @returns The list of keys identifying the dirty children
      */
-    private _getDirtyChildren(in_flags: MODIFIED_STATE_FLAGS): string[] {
+    protected _getDirtyChildren(in_flags: BaseProperty.MODIFIED_STATE_FLAGS): string[] {
         return [];
     };
 
@@ -1122,7 +1078,7 @@ export abstract class BaseProperty {
     _serialize(
         in_dirtyOnly: boolean = false,
         in_includeRootTypeid: boolean = false,
-        in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
         in_includeReferencedRepositories: boolean = false
     ): object {
         return {};
@@ -1140,7 +1096,7 @@ export abstract class BaseProperty {
         var opts = {
             dirtyOnly: false,
             includeRootTypeid: false,
-            dirtinessType: MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+            dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
             includeReferencedRepositories: false
         };
         if (in_options !== undefined) {
@@ -1320,4 +1276,48 @@ export abstract class BaseProperty {
         return this._flatten();
     }
 
+}
+
+
+export namespace BaseProperty {
+    /**
+     * Determines in which cases a reference will automatically be resolved
+     */
+    export enum REFERENCE_RESOLUTION {
+        /** The resolution will always automatically follow references */
+        ALWAYS,
+        /** If a reference is the last entry during the path resolution, it will not automatically be resolved */
+        NO_LEAFS,
+        /** References are never automatically resolved */
+        NEVER
+    }
+
+    /**
+     * Used to indicate the state of a property. These flags can be connected via OR.
+     */
+    export enum MODIFIED_STATE_FLAGS {
+        /** No changes to this property at the moment */
+        CLEAN,
+        /** The property is marked as changed in the currently pending ChangeSet */
+        PENDING_CHANGE,
+        /** The property has been modified and the result has not yet been reported to the application for scene updates */
+        DIRTY
+    };
+
+    /**
+     * Token Types
+     * @enum Object
+     * Type of the token in the path string
+     */
+    export const PATH_TOKENS = {
+        /** A / at the beginning of the path */
+        ROOT: { 'token': 'ROOT' },
+        /** A * that indicates a dereferencing operation */ // note: reversed!
+        REF: { 'token': 'REF' },
+        /** A ../ that indicates one step above the current path */
+        UP: { 'token': 'UP' }
+    } as const;
+
+    type Keys = keyof typeof PATH_TOKENS;
+    export type PATH_TOKENS = typeof PATH_TOKENS[Keys];
 }

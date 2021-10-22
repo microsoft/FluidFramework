@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const _ = require('lodash');
-const { BaseProperty } = require('./baseProperty');
-const { ConsoleUtils, constants } = require('@fluid-experimental/property-common');
-const { PathHelper, ChangeSet } = require('@fluid-experimental/property-changeset');
-const { LazyLoadedProperties: Property } = require('./lazyLoadedProperties');
+import _ from 'lodash';
+import { BaseProperty, IBasePropertyParams } from './baseProperty';
+import { ConsoleUtils, constants } from '@fluid-experimental/property-common';
+import { PathHelper, ChangeSet } from '@fluid-experimental/property-changeset';
+import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
@@ -18,11 +18,15 @@ const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
  */
 
 export class AbstractStaticCollectionProperty extends BaseProperty {
+    _staticChildren: any;
+    _constantChildren: {};
+    ref: this;
+    value: any;
     /**
      * @param {Object=} in_params - the parameters
      * @protected
      */
-    constructor(in_params) {
+    constructor(in_params: IBasePropertyParams) {
         super(in_params);
 
         // internal management
@@ -47,13 +51,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @throws if an in_id is neither a string or an array of strings and numbers.
      * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
      */
-    get(in_ids, in_options) {
+    get(in_ids, in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}) {
         in_options = _.isObject(in_options) ? in_options : {};
         in_options.referenceResolutionMode =
             in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
                 in_options.referenceResolutionMode;
 
-        var prop = this;
+        var prop: any = this;
         if (typeof in_ids === 'string' ||
             typeof in_ids === 'number') {
             prop = this._get(in_ids);
@@ -246,7 +250,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
                 in_options.referenceResolutionMode;
 
-        var node = this;
+        var node: any = this;
 
         // Tokenize the path string
         var tokenTypes = [];
@@ -350,7 +354,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             if (property instanceof Property.ValueProperty || property instanceof Property.StringProperty) {
                 property.setValue(propertyValue);
             } else if (property instanceof BaseProperty && _.isObject(propertyValue)) {
-                property._setValues(propertyValue, in_typed, in_initial);
+                (property as AbstractStaticCollectionProperty)._setValues(propertyValue, in_typed, in_initial);
             } else if (property instanceof BaseProperty) {
                 const typeid = property.getTypeid();
                 throw new Error(MSG.SET_VALUES_PATH_PROPERTY + propertyKey + ', of type: ' + typeid);
@@ -358,7 +362,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                 throw new Error(MSG.SET_VALUES_PATH_INVALID + propertyKey);
             }
         }
-    };
+    } setValue(propertyValue: any) {
+        throw new Error('Method not implemented.');
+    }
+    ;
 
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
@@ -517,9 +524,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @param {string?}  in_pathFromTraversalStart - Path from the root of the traversal to this node
      * @protected
      */
-    _traverseStaticProperties(in_callback,
-        in_pathFromTraversalStart) {
-        in_pathFromTraversalStart = in_pathFromTraversalStart || '';
+    _traverseStaticProperties(
+        in_callback,
+        in_pathFromTraversalStart = ""
+    ) {
         var propertyKeys = _.keys(this._staticChildren);
         for (var i = 0; i < propertyKeys.length; i++) {
             var property = this._staticChildren[propertyKeys[i]];
@@ -567,7 +575,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         in_dirtinessType = in_dirtinessType === undefined ?
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE : in_dirtinessType;
 
-        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
 
             if (in_dirtyOnly && !in_node._isDirty(in_dirtinessType)) {
                 return;
@@ -618,7 +626,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         var changeSet = {};
 
         // Traverse all properties of this template
-        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
             // We do not deserialize base properties, since the traverseStatic function
             // already traverses recursively
             if (in_node.getTypeid() === 'ContainerProperty' && in_node.getContext() === 'single') {
@@ -668,7 +676,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @private
      */
     _flatten() {
-        var flattenedRepresentation = {};
+        var flattenedRepresentation: any = {};
         var keys = this._getIds();
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
