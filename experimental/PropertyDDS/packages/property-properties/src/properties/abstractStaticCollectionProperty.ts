@@ -5,8 +5,9 @@
 import _ from 'lodash';
 import { BaseProperty, IBasePropertyParams } from './baseProperty';
 import { ConsoleUtils, constants } from '@fluid-experimental/property-common';
-import { PathHelper, ChangeSet } from '@fluid-experimental/property-changeset';
+import { PathHelper, ChangeSet, SerializedChangeSet } from '@fluid-experimental/property-changeset';
 import { LazyLoadedProperties as Property } from './lazyLoadedProperties';
+import { ReferenceProperty, ValueProperty } from '..';
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
@@ -20,12 +21,8 @@ const { BREAK_TRAVERSAL, PATH_TOKENS } = BaseProperty;
 export class AbstractStaticCollectionProperty extends BaseProperty {
     _staticChildren: any;
     _constantChildren: {};
-    ref: this;
     value: any;
-    /**
-     * @param {Object=} in_params - the parameters
-     * @protected
-     */
+
     constructor(in_params: IBasePropertyParams) {
         super(in_params);
 
@@ -39,27 +36,28 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Returns the sub-property having the given name, or following the given paths, in this property.
      *
-     * @param  {string|number|array<string|number>} in_ids the ID or IDs of the property or an array of IDs
+     * @param in_ids - the ID or IDs of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .get(['position','x']) is equivalent to .get('position').get('x').
      *     If .get resolves to a ReferenceProperty, it will, by default, return the property that the
      *     ReferenceProperty refers to.
-     * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param in_options - parameter object
      *
      * @throws if an in_id is neither a string or an array of strings and numbers.
-     * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
+     * @returns The property you seek or undefined if none is found.
      */
-    get(in_ids, in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}) {
+    get(
+        in_ids: string | number | Array<string | number | BaseProperty.PATH_TOKENS> | BaseProperty.PATH_TOKENS,
+        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+    ): BaseProperty | undefined {
+
         in_options = _.isObject(in_options) ? in_options : {};
         in_options.referenceResolutionMode =
             in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
                 in_options.referenceResolutionMode;
 
         var prop: any = this;
-        if (typeof in_ids === 'string' ||
-            typeof in_ids === 'number') {
+        if (typeof in_ids === 'string' || typeof in_ids === 'number') {
             prop = this._get(in_ids);
             if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
                 if (prop instanceof Property.ReferenceProperty) {
@@ -77,8 +75,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                     mode = i !== in_ids.length - 1 ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
                         BaseProperty.REFERENCE_RESOLUTION.NEVER;
                 }
-                if (in_ids[i - 1] === PATH_TOKENS.REF ||
-                    in_ids[i + 1] === PATH_TOKENS.REF) {
+                if (in_ids[i - 1] === PATH_TOKENS.REF || in_ids[i + 1] === PATH_TOKENS.REF) {
                     mode = BaseProperty.REFERENCE_RESOLUTION.NEVER;
                 }
                 prop = prop.get(in_ids[i], { referenceResolutionMode: mode });
@@ -102,11 +99,11 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Returns the sub-property having the given name in this property.
      *
-     * @param  {string|number} in_id the id of the prop you wish to retrieve.
+     * @param in_id - the id of the prop you wish to retrieve.
      *
-     * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
+     * @returns The property you seek or undefined if none is found.
      */
-    _get(in_id) {
+    _get(in_id: string | number): BaseProperty | undefined {
         return this._staticChildren[in_id] || this._constantChildren[in_id];
     };
 
@@ -130,33 +127,35 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * A Guid is a unique identifier for a branch, commit or repository,
      * similar to a URN. Most functions in the API will us a URN but the
      * Guid is used to traverse the commit graph.
-     * @return {string} The GUID
+     * @returns The GUID
      */
-    getGuid() {
+    getGuid(): string {
         var guid = this.get('guid', { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        return guid ? guid.value : undefined;
+        return guid ? (guid as any).value : undefined;
     };
 
     /**
      * returns the value of a sub-property
      * This is a shortcut for .get(in_ids, in_options).getValue()
-     * @param  {string|number|array<string|number>} in_ids the ID or IDs of the property or an array of IDs
+     * @param in_ids - the ID or IDs of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .getValue(['position','x']) is equivalent to .get('position').get('x').getValue().
      *     If at any point .get resolves to a ReferenceProperty, it will, by default, return the property that the
      *     ReferenceProperty refers to.
-     * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param in_options - parameter object
+     * @param in_options.referenceResolutionMode - How should this function behave during reference resolution?
      * @throws if the in_ids does not resolve to a ValueProperty or StringProperty
      * @throws if in_ids is not a string or an array of strings or numbers.
-     * @return {*} The value of the given sub-property
+     * @returns The value of the given sub-property
      */
-    getValue(in_ids, in_options) {
+    getValue(
+        in_ids: string | number | Array<string | number>,
+        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+    ): any {
         var property = this.get(in_ids, in_options);
         ConsoleUtils.assert((property instanceof Property.ValueProperty || property instanceof Property.StringProperty),
             MSG.GET_VALUE_NOT_A_VALUE + in_ids);
-        return property.getValue();
+        return (property as ValueProperty).getValue();
     };
 
 
@@ -164,9 +163,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * Get all sub-properties of the current property.
      * Caller MUST NOT modify the properties.
      * If entries include References, it will return the reference (will not automatically resolve the reference)
-     * @return {Object.<property-properties.BaseProperty>} An object containing all the properties
+     * @returns An object containing all the properties
      */
-    getEntriesReadOnly() {
+    getEntriesReadOnly(): { [key: string]: BaseProperty } {
         /* Note that the implementation is voluntarily generic so that derived classes
             should not have to redefine this function. */
         var res = {};
@@ -181,18 +180,18 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Returns the name of all the sub-properties of this property.
      *
-     * @return {Array.<string>} An array of all the property ids
+     * @returns An array of all the property ids
      */
-    getIds() {
+    getIds(): string[] {
         return this._getIds();
     };
 
     /**
      * Returns the name of all the sub-properties of this property.
      *
-     * @return {Array.<string>} An array of all the property ids
+     * @returns An array of all the property ids
      */
-    _getIds() {
+    _getIds(): string[] {
         return Object.keys(this._staticChildren).concat(Object.keys(this._constantChildren));
     };
 
@@ -200,7 +199,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
 
     /**
      * Returns an object with all the nested values contained in this property
-     * @return {object} an object representing the values of your property
+     * @returns an object representing the values of your property
      * for example: {
      *   position: {
      *    x: 2,
@@ -208,7 +207,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      *   }
      * }
      */
-    getValues() {
+    getValues(): object {
         var ids = this._getIds();
         var result = {};
         for (var i = 0; i < ids.length; i++) {
@@ -216,9 +215,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             if (_.isUndefined(child)) {
                 result[ids[i]] = undefined;
             } else if (child._context === 'single' && child.isPrimitiveType()) {
-                result[ids[i]] = child.getValue();
+                result[ids[i]] = (child as ValueProperty).getValue();
             } else {
-                result[ids[i]] = child.getValues();
+                result[ids[i]] = (child as AbstractStaticCollectionProperty).getValues();
             }
         }
         return result;
@@ -227,30 +226,29 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Checks whether a property with the given name exists
      *
-     * @param {string} in_id - Name of the property
-     * @return {boolean} True if the property exists. Otherwise false.
+     * @param in_id - Name of the property
+     * @returns True if the property exists. Otherwise false.
      */
-    has(in_id) {
+    has(in_id: string | number): boolean {
         return this._get(in_id) !== undefined;
     };
 
     /**
      * Expand a path returning the property or value at the end.
      *
-     * @param {string} in_path the path
-     * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param in_path the path
+     * @param in_options - parameter object
+     * @param in_options.referenceResolutionMode - How should this function behave during reference resolution?
      * @throws if in_path is not a valid path
-     * @return {property-properties.BaseProperty|undefined|*} resolved path
+     * @returns resolved path
      */
-    resolvePath(in_path, in_options) {
-        in_options = in_options || {};
-        in_options.referenceResolutionMode =
-            in_options.referenceResolutionMode === undefined ? BaseProperty.REFERENCE_RESOLUTION.ALWAYS :
-                in_options.referenceResolutionMode;
+    resolvePath(
+        in_path: string,
+        in_options: { referenceResolutionMode?: BaseProperty.REFERENCE_RESOLUTION } = {}
+    ): BaseProperty | undefined {
+        in_options.referenceResolutionMode = in_options.referenceResolutionMode ?? BaseProperty.REFERENCE_RESOLUTION.ALWAYS;
 
-        var node: any = this;
+        var node: BaseProperty = this;
 
         // Tokenize the path string
         var tokenTypes = [];
@@ -287,7 +285,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                     if (node instanceof Property.ReferenceProperty) {
                         if (tokenTypes[i + 1] !== PathHelper.TOKEN_TYPES.DEREFERENCE_TOKEN) {
                             // recursive function to resolve nested reference properties
-                            node = node.ref;
+                            node = (node as ReferenceProperty).ref;
                         }
                     }
                 }
@@ -300,25 +298,25 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Returns the path segment for a child
      *
-     * @param {property-properties.BaseProperty} in_childNode - The child for which the path is returned
+     * @param in_childNode - The child for which the path is returned
      *
-     * @return {string} The path segment to resolve the child property under this property
+     * @returns The path segment to resolve the child property under this property
      * @protected
      */
-    _getPathSegmentForChildNode(in_childNode) {
+    _getPathSegmentForChildNode(in_childNode: BaseProperty): string {
         return PROPERTY_PATH_DELIMITER + PathHelper.quotePathSegmentIfNeeded(in_childNode.getId());
     };
 
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
-     * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
+     * @param in_segment - The path segment to resolve
+     * @param in_segmentType - The type of segment in the tokenized path
      *
-     * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
+     * @returns The child property that has been resolved
      * @protected
      */
-    _resolvePathSegment(in_segment, in_segmentType) {
+    _resolvePathSegment(in_segment: string, in_segmentType: PathHelper.TOKEN_TYPES): BaseProperty | undefined {
         // Base Properties only support paths separated via dots
         if (in_segmentType !== PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
             throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
@@ -334,13 +332,12 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
      * found in that object.
-     * @see {setValues}
-     * @param {object} in_values The object containing the nested values to assign
-     * @param {Bool} in_typed Whether the values are typed/polymorphic.
-     * @param {Bool} in_initial  - Whether we are setting default/initial values
+     * @param in_values - The object containing the nested values to assign
+     * @param in_typed - Whether the values are typed/polymorphic.
+     * @param in_initial  - Whether we are setting default/initial values
         or if the function is called directly with the values to set.
      */
-    _setValues(in_values, in_typed, in_initial) {
+    _setValues(in_values: object, in_typed: boolean, in_initial: boolean) {
         ConsoleUtils.assert(_.isObject(in_values), MSG.SET_VALUES_PARAM_NOT_OBJECT);
 
         var that = this;
@@ -352,7 +349,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             var property = that.get(propertyKey, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
 
             if (property instanceof Property.ValueProperty || property instanceof Property.StringProperty) {
-                property.setValue(propertyValue);
+                (property as ValueProperty).setValue(propertyValue);
             } else if (property instanceof BaseProperty && _.isObject(propertyValue)) {
                 (property as AbstractStaticCollectionProperty)._setValues(propertyValue, in_typed, in_initial);
             } else if (property instanceof BaseProperty) {
@@ -362,10 +359,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                 throw new Error(MSG.SET_VALUES_PATH_INVALID + propertyKey);
             }
         }
-    } setValue(propertyValue: any) {
-        throw new Error('Method not implemented.');
-    }
-    ;
+    };
 
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
@@ -380,12 +374,12 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * }
      * </pre>
      *
-     * @param {object} in_values The object containing the nested values to assign
+     * @param in_values - The object containing the nested values to assign
      * @throws if in_values is not an object (or in the case of ArrayProperty, an array)
      * @throws if one of the path in in_values does not correspond to a path in that property
      * @throws if one of the path to a value in in_values leads to a property in this property.
      */
-    setValues(in_values) {
+    setValues(in_values: object) {
         var checkoutView = this._getCheckoutView();
         if (checkoutView !== undefined) {
             checkoutView.pushNotificationDelayScope();
@@ -402,14 +396,14 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * This is an internal function, called by the PropertyFactory when instantiating a template and internally by the
      * NodeProperty. Adding children dynamically by the user is only allowed in the NodeProperty.
      *
-     * @param {property-properties.BaseProperty} in_property the property to append
-     * @param {boolean} in_allowChildMerges - Whether merging of children (nested properties) is allowed.
+     * @param in_property - the property to append
+     * @param in_allowChildMerges - Whether merging of children (nested properties) is allowed.
      *                                        This is used for extending inherited properties.
      * @protected
      * @throws {OVERWRITING_ID} - Thrown when adding a property with an existing id.
      * @throws {OVERRIDDING_INHERITED_TYPES} - Thrown when overriding inherited typed properties.
      */
-    _append(in_property, in_allowChildMerges) {
+    _append(in_property: BaseProperty, in_allowChildMerges: boolean) {
         var id = in_property.getId();
         if (this._staticChildren[id] === undefined) {
             this._staticChildren[id] = in_property;
@@ -440,10 +434,10 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     * This is an internal function that merges children of two properties.
     * This is used for extending inherited properties.
     *
-    * @param {property-properties.BaseProperty} in_property the property to merge its children (nested properties) with.
+    * @param in_property the property to merge its children (nested properties) with.
     * @protected
     */
-    _merge(in_property) {
+    _merge(in_property: AbstractStaticCollectionProperty) {
         var keys = Object.keys(in_property._staticChildren);
 
         for (var i = 0; i < keys.length; i++) {
@@ -459,7 +453,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         var rtn = [];
         var childKeys = _.keys(this._staticChildren);
         for (var i = 0; i < childKeys.length; i++) {
-            if ((this._get(childKeys[i])._isDirty(flags)) !== 0) {
+            if (this._get(childKeys[i])._isDirty(flags)) {
                 rtn.push(childKeys[i]);
             }
         }
@@ -470,13 +464,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Traverses the property hierarchy downwards until all child properties are reached
      *
-     * @param {Function} in_callback - Callback to invoke for each property. The traversal can be stopped
+     * @param in_callback - Callback to invoke for each property. The traversal can be stopped
      *                                 by returning BaseProperty.BREAK_TRAVERSAL
      * @throws if in_callback is not a function.
-     * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
+     * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
      *                            otherwise undefined
      */
-    traverseDown(in_callback) {
+    traverseDown(in_callback: (node: BaseProperty, pathFromTraversalStart: string) => void): string | undefined {
         ConsoleUtils.assert(_.isFunction(in_callback), MSG.CALLBACK_NOT_FCT);
         return this._traverse(in_callback, '');
     };
@@ -485,13 +479,16 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * Traverses all children in the child hierarchy
      * TODO: How should this behave for collections?
      *
-     * @param {function} in_callback             - Callback to invoke for every child
-     * @param {string} in_pathFromTraversalStart - Path from the root of the traversal to this node
-     * @return {string|undefined} Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
+     * @param in_callback - Callback to invoke for every child
+     * @param in_pathFromTraversalStart - Path from the root of the traversal to this node
+     * @return Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
      *                            otherwise undefined
      * @private
      */
-    _traverse(in_callback, in_pathFromTraversalStart) {
+    _traverse(
+        in_callback: (node: BaseProperty, pathFromTraversalStart: string) => void,
+        in_pathFromTraversalStart: string
+    ): string | undefined {
         if (in_pathFromTraversalStart) {
             in_pathFromTraversalStart += PROPERTY_PATH_DELIMITER;
         }
@@ -520,12 +517,12 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * Traverses all static properties (properties declared in the template and not added dynamically) in the
      * hierarchy below this node
      *
-     * @param {function} in_callback               - Callback to invoke for every property
-     * @param {string?}  in_pathFromTraversalStart - Path from the root of the traversal to this node
+     * @param  in_callback - Callback to invoke for every property
+     * @param in_pathFromTraversalStart - Path from the root of the traversal to this node
      * @protected
      */
     _traverseStaticProperties(
-        in_callback,
+        in_callback: (node: BaseProperty, pathFromTraversalStart: string) => void,
         in_pathFromTraversalStart = ""
     ) {
         var propertyKeys = _.keys(this._staticChildren);
@@ -549,24 +546,22 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Serialize the property into a changeSet
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
-     * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
+     * @param in_dirtyOnly - Only include dirty entries in the serialization
+     * @param in_includeRootTypeid- Include the typeid of the root of the hierarchy
+     * @param in_dirtinessType - The type of dirtiness to use when reporting dirty changes.
+     * @param in_includeReferencedRepositories - If this is set to true, the serialize
      *     function will descend into referenced repositories. WARNING: if there are loops in the references
      *     this can result in an infinite loop
      *
-     * @return {Object} The serialized representation of this property
+     * @returns The serialized representation of this property
      * @private
      */
-    _serialize(in_dirtyOnly,
-        in_includeRootTypeid,
-        in_dirtinessType,
-        in_includeReferencedRepositories) {
+    _serialize(
+        in_dirtyOnly: boolean,
+        in_includeRootTypeid: boolean,
+        in_dirtinessType = BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE,
+        in_includeReferencedRepositories = false
+    ): object {
 
         var serializedChildren = {};
         var childrenType;
@@ -612,16 +607,16 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Sets the property to the state in the given normalized changeset
      *
-     * @param { property-changeset.SerializedChangeSet} in_serializedObj - The serialized changeset to apply to this node. This
+     * @param in_serializedObj - The serialized changeset to apply to this node. This
      *     has to be an normalized change-set (only containing additions and property assignments. Deletes and Modify
      *     must not appear)
-     * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
-     * @return {property-changeset.SerializedChangeSet} ChangeSet with the changes that actually were performed during the
+     * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */
-    _deserialize(in_serializedObj, in_reportToView) {
+    _deserialize(in_serializedObj: SerializedChangeSet, in_reportToView = true): SerializedChangeSet {
 
         var changeSet = {};
 
@@ -672,11 +667,13 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * property of this name).
      * TODO: Do we want to have this feature or is it to dangerous?
      *
-     * @return {Object} the flat representation
+     * @returns the flat representation
      * @private
      */
-    _flatten() {
-        var flattenedRepresentation: any = {};
+    _flatten(this: AbstractStaticCollectionProperty): object {
+        var flattenedRepresentation = {
+            propertyNode: this
+        };
         var keys = this._getIds();
         for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
@@ -688,17 +685,15 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             }
         }
 
-        flattenedRepresentation.propertyNode = this;
-
         return flattenedRepresentation;
     };
 
     /**
      * Returns the number of children this node has
-     * @return {number} The number of children
+     * @returns The number of children
      * @private
      */
-    _getChildrenCount() {
+    _getChildrenCount(): number {
         return this._getIds().length;
     };
 
