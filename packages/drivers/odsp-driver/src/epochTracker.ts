@@ -258,7 +258,7 @@ export class EpochTracker implements IPersistedFileCache {
     }
 
     private formatRequestStatsValue() {
-        return `driverId=${this.driverId}, RequestNumber=${++this.networkCallNumber}`;
+        return `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
     }
 
     protected validateEpochFromResponse(
