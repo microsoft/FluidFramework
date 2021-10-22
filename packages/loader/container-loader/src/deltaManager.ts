@@ -1146,7 +1146,8 @@ export class DeltaManager
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
-        assert(this.connectionP !== undefined || this.closed, 0x27f /* "reentrnacy may result in incorrect behavior" */);
+        assert(this.connectionP !== undefined || this.closed,
+            0x27f /* "reentrnacy may result in incorrect behavior" */);
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;
