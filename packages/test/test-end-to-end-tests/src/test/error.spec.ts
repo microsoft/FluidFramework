@@ -22,7 +22,7 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 // REVIEW: enable compat testing?
 describeNoCompat("Errors Types", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const fileName = uuid();
+    let fileName: string;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
         provider = getTestObjectProvider();
@@ -36,6 +36,7 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
                 provider.documentServiceFactory,
             codeLoader: new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
         });
+        fileName = uuid();
         loaderContainerTracker.add(loader);
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         await container.attach(provider.driver.createCreateNewRequest(fileName));
