@@ -737,7 +737,7 @@ export class DeltaManager
                     connection = await docService.connectToDeltaStream(this.client);
 
                     if (connection.disposed) {
-                        // Nobody observed this connection, so drop it on the flor and retry.
+                        // Nobody observed this connection, so drop it on the floor and retry.
                         this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
                         connection = undefined;
                     }
