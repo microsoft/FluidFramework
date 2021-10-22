@@ -126,4 +126,15 @@ describe("generatePairwiseOptions",()=>{
             complexOptionsMatrix,
             complexValues);
     });
+
+    it("Generate single option matrix",()=>{
+        const optionsMatrix = {prop: ["a","b","c"]};
+        const values = generatePairwiseOptions(optionsMatrix);
+        validatePairsExhaustively(optionsMatrix, values);
+    });
+    it("Generate empty option matrix",()=>{
+        const optionsMatrix = {prop: [undefined]};
+        const values = generatePairwiseOptions(optionsMatrix);
+        validatePairsExhaustively(optionsMatrix, values);
+    });
 });

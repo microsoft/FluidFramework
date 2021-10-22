@@ -25,6 +25,7 @@ import {
     tokenFromResponse,
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
+    ShareLinkTypes,
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
@@ -105,11 +106,11 @@ export async function fetchHelper(
         const response = fetchResponse as any as Response;
         // Let's assume we can retry.
         if (!response) {
-            throwOdspNetworkError(`noResponseFromTheServer`, fetchIncorrectResponse);
+            throwOdspNetworkError("odspFetchErrorNoResponse", fetchIncorrectResponse);
         }
         if (!response.ok || response.status < 200 || response.status >= 300) {
             throwOdspNetworkError(
-                `Error ${response.status}`, response.status, response, await response.text());
+                `odspFetchError [${response.status}]`, response.status, response, await response.text());
         }
 
         const headers = headersToMap(response.headers);
@@ -140,10 +141,10 @@ export async function fetchHelper(
         // It could container PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
+        const failureCode = online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode;
         throwOdspNetworkError(
-            `fetchError`,
-            online === OnlineStatus.Offline ? offlineFetchFailureStatusCode : fetchFailureStatusCode,
-            undefined, // response
+            `odspFetchThrewError [${failureCode}]`,
+            failureCode,
         );
     });
 }
@@ -210,6 +211,12 @@ export interface INewFileInfo {
     driveId: string;
     filename: string;
     filePath: string;
+    /**
+     * application can request creation of a share link along with the creation of a new file
+     * by passing in an optional param to specify the kind of sharing link
+     * (at the time of adding this comment Sept/2021), odsp only supports csl
+     */
+    createLinkType?: ShareLinkTypes;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {

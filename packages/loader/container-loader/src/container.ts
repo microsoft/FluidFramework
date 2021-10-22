@@ -340,6 +340,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((res, rej) => {
+                container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
                 // always load unpaused with pending ops!
@@ -371,7 +372,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         onClosed(err);
                     });
             }),
-            { start: true, end: true, cancel: "generic" },
+            { start: true, end: true, cancel: "error" },
         );
     }
 
@@ -385,6 +386,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const container = new Container(
             loader,
             {});
+        container._lifecycleState = "loading";
         await container.createDetached(codeDetails);
         return container;
     }
@@ -401,6 +403,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             loader,
             {});
         const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+        container._lifecycleState = "loading";
         await container.rehydrateDetachedFromSnapshot(deserializedSummary);
         return container;
     }
@@ -413,7 +416,27 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly logger: ITelemetryLogger;
 
-    private loaded = false;
+    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
+
+    private get loaded(): boolean {
+        return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
+    }
+
+    private set loaded(t: boolean) {
+        assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
+        assert(this._lifecycleState !== "created", 0x27e /* "Must go through loading state before loaded" */);
+
+        // It's conceivable the container could be closed when this is called
+        // Only transition states if currently loading
+        if (this._lifecycleState === "loading") {
+            this._lifecycleState = "loaded";
+        }
+    }
+
+    public get closed(): boolean {
+        return (this._lifecycleState === "closing" || this._lifecycleState === "closed");
+    }
+
     private _attachState = AttachState.Detached;
 
     private readonly _storage: ContainerStorageAdapter;
@@ -462,8 +485,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private lastVisible: number | undefined;
     private readonly connectionStateHandler: ConnectionStateHandler;
-
-    private _closed = false;
 
     private setAutoReconnectTime = performance.now();
 
@@ -520,10 +541,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      */
     public forceReadonly(readonly: boolean) {
         this._deltaManager.forceReadonly(readonly);
-    }
-
-    public get closed(): boolean {
-        return this._closed;
     }
 
     public get id(): string {
@@ -640,7 +657,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerId: uuid(),
                     docId: () => this.id,
                     containerAttachState: () => this._attachState,
-                    containerLoaded: () => this.loaded,
+                    containerLifecycleState: () => this._lifecycleState,
+                    containerConnectionState: () => ConnectionState[this.connectionState],
                 },
                 // we need to be judicious with our logging here to avoid generting too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -677,7 +695,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this._deltaManager.logConnectionIssue({
                         eventName,
                         duration: performance.now() - this.connectionTransitionTimes[ConnectionState.Connecting],
-                        loaded: this.loaded,
                     });
                 },
             },
@@ -767,43 +784,48 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
-        if (this._closed) {
+        if (this.closed) {
             return;
         }
-        this._closed = true;
 
-        // Ensure that we raise all key events even if one of these throws
         try {
-            this._deltaManager.close(error);
+            this._lifecycleState = "closing";
 
-            this._protocolHandler?.close();
+            // Ensure that we raise all key events even if one of these throws
+            try {
+                this._deltaManager.close(error);
 
-            this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
+                this._protocolHandler?.close();
 
-            assert(this.connectionState === ConnectionState.Disconnected,
-                0x0cf /* "disconnect event was not raised!" */);
+                this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-            this._storageService?.dispose();
+                assert(this.connectionState === ConnectionState.Disconnected,
+                    0x0cf /* "disconnect event was not raised!" */);
 
-            // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
-            // about file, like file being overwritten in storage, but client having stale local cache.
-            // Driver need to ensure all caches are cleared on critical errors
-            this.service?.dispose(error);
-        } catch (exception) {
-            this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+                this._storageService?.dispose();
+
+                // Notify storage about critical errors. They may be due to disconnect between client & server knowledge
+                // about file, like file being overwritten in storage, but client having stale local cache.
+                // Driver need to ensure all caches are cleared on critical errors
+                this.service?.dispose(error);
+            } catch (exception) {
+                this.logger.sendErrorEvent({ eventName: "ContainerCloseException"}, exception);
+            }
+
+            this.logger.sendTelemetryEvent(
+                {
+                    eventName: "ContainerClose",
+                    category: error === undefined ? "generic" : "error",
+                },
+                error,
+            );
+
+            this.emit("closed", error);
+
+            this.removeAllListeners();
+        } finally {
+            this._lifecycleState = "closed";
         }
-
-        this.logger.sendTelemetryEvent(
-            {
-                eventName: "ContainerClose",
-                loaded: this.loaded,
-            },
-            error,
-        );
-
-        this.emit("closed", error);
-
-        this.removeAllListeners();
     }
 
     public closeAndGetPendingLocalState(): string {
@@ -842,12 +864,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async attach(request: IRequest): Promise<void> {
-        if (!this.loaded) {
-            throw new UsageError("containerMustBeLoadedBeforeAttaching");
-        }
-
-        if (this.closed) {
-            throw new UsageError("cannotAttachClosedContainer");
+        if (this._lifecycleState !== "loaded") {
+            throw new UsageError(`containerNotValidForAttach [${this._lifecycleState}]`);
         }
 
         // If container is already attached or attach is in progress, throw an error.
@@ -960,9 +978,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public async request(path: IRequest): Promise<IResponse> {
-        return PerformanceEvent.timedExecAsync(this.logger, { eventName: "Request" }, async () => {
-            return this.context.request(path);
-        });
+        return PerformanceEvent.timedExecAsync(
+            this.logger,
+            { eventName: "Request" },
+            async () => this.context.request(path),
+            { end: true, cancel: "error" },
+        );
     }
 
     public async snapshot(tagMessage: string, fullTree: boolean = false): Promise<void> {
@@ -1614,7 +1635,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * If it's not true, runtime is not in position to send ops.
      */
     private activeConnection() {
-        return this.connectionState === ConnectionState.Connected && this._deltaManager.connectionMode === "write";
+        const active = this.connectionState === ConnectionState.Connected &&
+            this._deltaManager.connectionMode === "write";
+
+        // Check for presence of current client in quorum for "write" connections - inactive clients
+        // would get leave op after some long timeout (5 min) and that should automatically transition
+        // state to "read" mode.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        assert(!active || this.getQuorum().getMember(this.clientId!) !== undefined,
+            0x276 /* "active connection not present in quorum" */);
+
+        return active;
     }
 
     private createDeltaManager() {

@@ -714,6 +714,11 @@ const PropertyError = {
         "properties. This value is not valid: ",
 
     /**
+     * If a property is a reference, it cannot be changed.
+     */
+    MODIFICATION_OF_REFERENCED_PROPERTY: "PR-142: Modifications of referenced properties are not allowed.",
+
+    /**
      * methods: Property.getValue
      * Property.getValue(in_ids) is a shortcut for Property.get(in_ids).getValue().
      * Property.get(in_ids) must resolve to a ValueProperty.

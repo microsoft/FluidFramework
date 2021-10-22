@@ -32,8 +32,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^0.39.7",
-    "@fluidframework/driver-definitions": "^0.40.0",
+    "@fluidframework/core-interfaces": "^0.40.0-0",
+    "@fluidframework/driver-definitions": "^0.41.0-0",
     "@fluidframework/odsp-driver": "^0.50.0",
     "@fluidframework/odsp-driver-definitions": "^0.50.0"
   },

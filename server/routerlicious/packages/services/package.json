@@ -53,6 +53,7 @@
     "@fluidframework/server-services-ordering-kafkanode": "^0.1033.0",
     "@fluidframework/server-services-ordering-rdkafka": "^0.1033.0",
     "@fluidframework/server-services-shared": "^0.1033.0",
+    "@fluidframework/server-services-telemetry": "^0.1033.0",
     "@fluidframework/server-services-utils": "^0.1033.0",
     "@socket.io/redis-emitter": "^4.1.0",
     "amqplib": "^0.8.0",
