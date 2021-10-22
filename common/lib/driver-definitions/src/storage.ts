@@ -174,7 +174,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
      *
      * @deprecated - please use `serviceConfiguration.maxMessageSize`
      */
-     maxMessageSize: number;
+    maxMessageSize: number;
 
     /**
      * Protocol version being used with the service
