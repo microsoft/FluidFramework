@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { v4 as uuid } from "uuid";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, DriverErrorType } from "@fluidframework/driver-definitions";
@@ -21,7 +22,7 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 // REVIEW: enable compat testing?
 describeNoCompat("Errors Types", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const fileName = "containerTest";
+    const fileName = uuid();
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
         provider = getTestObjectProvider();
@@ -61,11 +62,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
         return Container.load(
             loader,
             {
-                canReconnect: undefined,
-                clientDetailsOverride: undefined,
                 resolvedUrl: testResolved,
                 version: undefined,
-                loadMode: undefined,
             },
         );
     }
