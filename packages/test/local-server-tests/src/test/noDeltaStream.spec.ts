@@ -186,6 +186,62 @@ describe("No Delta Stream", () => {
         container.close();
     });
 
+    // eslint-disable-next-line no-constant-condition
+    const loadOptions: IContainerLoadMode[] = 0 === 0 ? [{}] :
+        generatePairwiseOptions<IContainerLoadMode>({
+                deltaConnection: [undefined, "none", "delayed"],
+                opsBeforeReturn: [undefined, "cached", "all"],
+            });
+
+    const testConfigs =
+        generatePairwiseOptions({
+            loadOptions,
+            waitForSummary: [true], // , false],
+        });
+
+    for(const testConfig of testConfigs) {
+        it.only(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async () => {
+            const normalContainer = await loadContainer(false) as Container;
+
+            const normalDataObject = await requestFluidObject<ITestFluidObject>(normalContainer, "default");
+            const summaryCollection =
+                new SummaryCollection(normalContainer.deltaManager, new TelemetryNullLogger());
+
+            for(let i = 0; i < 100; i++) {
+                normalDataObject.root.set(i.toString(), i);
+            }
+
+            if(testConfig.waitForSummary) {
+                let summary: boolean = false;
+                const summaryP = new Promise<boolean>(
+                    (res)=>{
+                        summaryCollection.once("summaryAck", ()=>res(true));
+                    });
+                while(!summary) {
+                    summary = await timeoutAwait<boolean>(
+                        summaryP,
+                        {reject: false, value: false});
+                }
+            }
+
+            const storageOnlyContainer = await loadContainer(
+                true,
+                { headers: {[LoaderHeader.loadMode]: testConfig.loadOptions}}) as Container;
+
+            await timeoutAwait(waitContainerToCatchUp(storageOnlyContainer));
+            const storageOnlyDataObject = await requestFluidObject<ITestFluidObject>(storageOnlyContainer, "default");
+            assert.strictEqual(
+                Array.from(storageOnlyDataObject.root.keys()).length,
+                Array.from(normalDataObject.root.keys()).length);
+
+            for(const key of normalDataObject.root.keys()) {
+                assert.strictEqual(
+                    storageOnlyDataObject.root.get(key),
+                    normalDataObject.root.get(key));
+            }
+        });
+    }
+
     afterEach(async () => {
         await deltaConnectionServer.webSocketServer.close();
     });
