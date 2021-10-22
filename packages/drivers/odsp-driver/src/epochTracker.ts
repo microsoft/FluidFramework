@@ -214,6 +214,7 @@ export class EpochTracker implements IPersistedFileCache {
         addInBody: boolean,
         requestStatsValue: string,
     ): {url: string, fetchOptions: {[index: string]: any}} {
+        let finalUrl = url;
         if (this.fluidEpoch !== undefined) {
             if (addInBody) {
                 // We use multi part form request for post body where we want to use this.
@@ -238,23 +239,22 @@ export class EpochTracker implements IPersistedFileCache {
                     fetchOptions.headers = {
                         ...fetchOptions.headers,
                         "x-fluid-epoch": this.fluidEpoch,
-                        "X-RequestStats": requestStatsValue,
                     };
                 } else {
-                    return {
-                        url: urlWithEpoch,
-                        fetchOptions: {
-                            ...fetchOptions,
-                            headers: {
-                                ...fetchOptions.headers,
-                                "X-RequestStats": requestStatsValue,
-                            },
-                        },
-                    };
+                    finalUrl = urlWithEpoch;
                 }
+                fetchOptions.headers = {
+                    ...fetchOptions.headers,
+                    "X-RequestStats": requestStatsValue,
+                };
             }
+        } else {
+            fetchOptions.headers = {
+                ...fetchOptions.headers,
+                "X-RequestStats": requestStatsValue,
+            };
         }
-        return { url, fetchOptions };
+        return { url: finalUrl, fetchOptions };
     }
 
     private formatRequestStatsValue() {
