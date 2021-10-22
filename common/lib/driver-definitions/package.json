@@ -43,7 +43,7 @@
     "@fluidframework/build-tools": "^0.2.40870",
     "@fluidframework/driver-definitions-0.39.8": "npm:@fluidframework/driver-definitions@0.39.8",
     "@fluidframework/driver-definitions-0.40.0": "npm:@fluidframework/driver-definitions@0.40.0",
-    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@typescript-eslint/eslint-plugin": "~4.14.0",
     "@typescript-eslint/parser": "~4.14.0",

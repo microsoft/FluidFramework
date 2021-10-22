@@ -45,7 +45,7 @@
     "@fluidframework/build-tools": "^0.2.40870",
     "@fluidframework/container-definitions-0.39.8": "npm:@fluidframework/container-definitions@0.39.8",
     "@fluidframework/container-definitions-0.40.0": "npm:@fluidframework/container-definitions@0.40.0",
-    "@fluidframework/eslint-config-fluid": "^0.24.0-0",
+    "@fluidframework/eslint-config-fluid": "^0.24.0",
     "@microsoft/api-extractor": "^7.16.1",
     "@types/mocha": "^8.2.2",
     "@types/node": "^12.19.0",
