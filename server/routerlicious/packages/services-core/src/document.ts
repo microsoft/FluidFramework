@@ -33,6 +33,7 @@ export interface IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
@@ -60,6 +61,9 @@ export interface IDeliState {
 
     // Sequence number at logOffset
     sequenceNumber: number;
+
+    // Rolling hash at sequenceNumber
+    expHash1: string;
 
     // Epoch of stream provider
     epoch: number;

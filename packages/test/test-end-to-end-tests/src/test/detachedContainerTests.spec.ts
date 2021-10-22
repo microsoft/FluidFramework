@@ -377,34 +377,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it("Fire ops during container attach for shared cell", async () => {
-        const op = { type: "setCell", value: { type: "Plain", value: "b" } };
-        const defPromise = new Deferred<void>();
-        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
-            assert.strictEqual(contents.contents.contents.content.address,
-                sharedCellId, "Address should be shared directory");
-            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
-                JSON.stringify(op), "Op should be same");
-            defPromise.resolve();
-            return 0;
-        };
-
-        // Get the root dataStore from the detached container.
-        const response = await container.request({ url: "/" });
-        const dataStore = response.value as ITestFluidObject;
-        const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
-
-        // Fire op before attaching the container
-        testChannel1.set("a");
-        const containerP = container.attach(request);
-
-        // Fire op after the summary is taken and before it is attached.
-        testChannel1.set("b");
-        await containerP;
-        await defPromise.promise;
-    });
-
     it("Fire ops during container attach for shared ink", async () => {
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -555,6 +527,35 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
         request = provider.driver.createCreateNewRequest(provider.documentId);
         loader = provider.makeTestLoader(testContainerConfig) as Loader;
+    });
+
+    // SharedCell op format had a breaking change. This should be moved back to compat tests in two versions.
+    it("Fire ops during container attach for shared cell", async () => {
+        const op = { type: "setCell", value: { value: "b" } };
+        const defPromise = new Deferred<void>();
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        (container.deltaManager as any).submit = (type, contents, batch, metadata) => {
+            assert.strictEqual(contents.contents.contents.content.address,
+                sharedCellId, "Address should be shared directory");
+            assert.strictEqual(JSON.stringify(contents.contents.contents.content.contents),
+                JSON.stringify(op), "Op should be same");
+            defPromise.resolve();
+            return 0;
+        };
+
+        // Get the root dataStore from the detached container.
+        const response = await container.request({ url: "/" });
+        const dataStore = response.value as ITestFluidObject;
+        const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
+
+        // Fire op before attaching the container
+        testChannel1.set("a");
+        const containerP = container.attach(request);
+
+        // Fire op after the summary is taken and before it is attached.
+        testChannel1.set("b");
+        await containerP;
+        await defPromise.promise;
     });
 
     it("Retry attaching detached container", async () => {
