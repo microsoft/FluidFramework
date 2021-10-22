@@ -184,8 +184,8 @@ jobs:
             preferTriggeringPipeline: true
             runVersion: latestFromBranch
             runBranch: $(Build.SourceBranch)
-            artifact: azure-frs-tests
-            path: $(Pipeline.Workspace)/azure-frs-tests
+            artifact: test-files
+            path: $(Pipeline.Workspace)/test-files
 
         # Unpack test files
         - task: Bash@3
@@ -195,8 +195,8 @@ jobs:
             targetType: 'inline'
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/azure-frs-tests/azure-client.tgz -C $(Pipeline.Workspace)/azure-frs-tests
-              mv $(Pipeline.Workspace)/azure-frs-tests/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              tar -xvf $(Pipeline.Workspace)/test-files/azure-client.test-files.tar -C $(Pipeline.Workspace)/test-files
+              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
         # Install extra dependencies
         - task: Npm@1

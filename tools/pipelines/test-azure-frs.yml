@@ -5,7 +5,19 @@
 
 name: $(Build.BuildId)
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - main
+    - release/*
+  paths:
+    include:
+    - packages/framework/azure-client
+    - packages/drivers/routerlicious-driver
+    # Add more dependencies of AzureClient here
+    - tools/pipelines/test-azure-frs.yml
+    - tools/pipelines/templates/include-test-real-service.yml
+
 pr: none
 
 resources:
@@ -17,13 +29,6 @@ resources:
         include:
         - releases/*
         - main
-      paths:
-        include:
-        - packages/framework/azure-client
-        - packages/drivers/routerlicious-driver
-        # Add more dependencies of AzureClient here
-        - tools/pipelines/test-azure-frs.yml
-        - tools/pipelines/templates/include-test-real-service.yml
 
 variables:
 - group: prague-key-vault
