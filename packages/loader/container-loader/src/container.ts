@@ -423,8 +423,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private set loaded(t: boolean) {
-        assert(t, "Setting loaded state to false is not supported");
-        assert(this._lifecycleState !== "created", "Must go through loading state before loaded");
+        assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
+        assert(this._lifecycleState !== "created", 0x27e /* "Must go through loading state before loaded" */);
 
         // It's conceivable the container could be closed when this is called
         // Only transition states if currently loading
