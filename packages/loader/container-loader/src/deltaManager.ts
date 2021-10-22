@@ -735,6 +735,12 @@ export class DeltaManager
                 try {
                     this.client.mode = requestedMode;
                     connection = await docService.connectToDeltaStream(this.client);
+
+                    if (connection.disposed) {
+                        // Nobody observed this connection, so drop it on the flor and retry.
+                        this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
+                        connection = undefined;
+                    }
                 } catch (origError) {
                     if (typeof origError === "object" && origError !== null &&
                         origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
@@ -1149,25 +1155,11 @@ export class DeltaManager
     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
-
         assert(this.connectionP !== undefined || this.closed,
             0x27f /* "reentrancy may result in incorrect behavior" */);
+        assert(!connection.disposed, "can't be disposed - Callers need to ensure that!");
+
         this.connectionP = undefined;
-
-        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
-        const disposable = connection as Partial<IDisposable>;
-        if (disposable.disposed === true) {
-            this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
-            // Note: not checking this.reconnectMode mode here as nobody ever observed this connection, so
-            // none of invariants is broken if reconnect happens.
-            this.triggerConnect({
-                reason: "early connection closure",
-                mode: requestedMode,
-                fetchOpsFromStorage: false,
-            });
-            return;
-        }
-
         this.connection = connection;
 
         // Does information in scopes & mode matches?
