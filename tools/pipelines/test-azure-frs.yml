@@ -14,7 +14,7 @@ trigger:
     include:
     - packages/framework/azure-client
     - packages/drivers/routerlicious-driver
-    # Add more dependencies of AzureClient here
+    # TODO: Add more dependencies of AzureClient here
     - tools/pipelines/test-azure-frs.yml
     - tools/pipelines/templates/include-test-real-service.yml
 
@@ -49,7 +49,7 @@ stages:
         testCommand: test:realsvc:azure
         downloadTestFiles: true
         testFileTarName: azure-client
-        # extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
+        extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
