@@ -713,6 +713,7 @@ export class DeltaManager
 
         if (docService.policies?.storageOnly === true) {
             const connection = new NoDeltaStream();
+            this.connectionP = Promise.resolve(connection); // to keep setupNewSuccessfulConnection happy
             this.setupNewSuccessfulConnection(connection, "read");
             return connection;
         }
