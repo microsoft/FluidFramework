@@ -437,45 +437,47 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        // if this is first connect, verify we are about to "resubmit" only stashed ops
-        if (!prevClientId) {
-            let csn = this.firstStashedCSN;
-            for (let i = 0; i < this.pendingStates.length; ++i) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const state = this.pendingStates.get(i)!;
-                if (state.type === "message") {
-                    assert(state.clientSequenceNumber === csn++,
-                        `expected ${csn - 1}, got ${state.clientSequenceNumber}`);
+        if (this.stashedCount > 0) {
+            // if this is first connect, verify we are about to "resubmit" only stashed ops
+            if (!prevClientId) {
+                let csn = this.firstStashedCSN;
+                for (let i = 0; i < this.pendingStates.length; ++i) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const state = this.pendingStates.get(i)!;
+                    if (state.type === "message") {
+                        assert(state.clientSequenceNumber === csn++,
+                            `expected ${csn - 1}, got ${state.clientSequenceNumber}`);
+                    }
                 }
+                assert(csn - this.firstStashedCSN === this.stashedCount,
+                    "unexpected message queued before first connect");
             }
-            assert(csn - this.firstStashedCSN === this.stashedCount,
-                "unexpected message queued before first connect");
-        }
 
-        // add a rejoin op so future clients provided with our stashed ops recognize them
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const firstState = this.pendingStates.peekFront()!;
-        if (!prevClientId && this.previousClientIds.size > 0) {
-            // No previous client ID implies first connect. If we have stashed ops w/ clientId, submit a rejoin op.
-            const clientId = Array.from(this.previousClientIds)[0];
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            this.pendingStates.unshift({
-                type: "message",
-                messageType: ContainerMessageType.Rejoin,
-                content: { clientId },
-            } as IPendingMessage);
-            ++pendingStatesCount;
-        } else if (firstState.type !== "message" || firstState.messageType !== ContainerMessageType.Rejoin) {
-            // if there is already a rejoin op in the queue, just resubmit same op under new client ID
-            // otherwise, add one to the queue
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            this.pendingStates.unshift({
-                type: "message",
-                messageType: ContainerMessageType.Rejoin,
-                content: { clientId: prevClientId },
-            } as IPendingMessage);
-            ++pendingStatesCount;
-        }
+            // add a rejoin op so future clients provided with our stashed ops recognize them
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const firstState = this.pendingStates.peekFront()!;
+            if (!prevClientId && this.previousClientIds.size > 0) {
+                // No previous client ID implies first connect. If we have stashed ops w/ clientId, submit a rejoin op.
+                const clientId = Array.from(this.previousClientIds)[0];
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                this.pendingStates.unshift({
+                    type: "message",
+                    messageType: ContainerMessageType.Rejoin,
+                    content: { clientId },
+                } as IPendingMessage);
+                ++pendingStatesCount;
+            } else if (firstState.type !== "message" || firstState.messageType !== ContainerMessageType.Rejoin) {
+                // if there is already a rejoin op in the queue, just resubmit same op under new client ID
+                // otherwise, add one to the queue
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                this.pendingStates.unshift({
+                    type: "message",
+                    messageType: ContainerMessageType.Rejoin,
+                    content: { clientId: prevClientId },
+                } as IPendingMessage);
+                ++pendingStatesCount;
+            }
+    }
 
         // Reset the pending message count because all these messages will be removed from the queue.
         this.pendingMessagesCount = 0;
