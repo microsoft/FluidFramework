@@ -20,15 +20,15 @@ export interface IServiceEndpoint {
 }
 
 const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
-        serviceEndpoint: {
-            hostUrl: "http://localhost:3000",
-            ordererUrl: "http://localhost:3003",
-            deltaStorageUrl: "http://localhost:3001",
-        },
-        tenantId: "fluid",
-        tenantSecret: "create-new-tenants-if-going-to-production",
-        driverPolicies,
-    });
+    serviceEndpoint: {
+        hostUrl: "http://localhost:3000",
+        ordererUrl: "http://localhost:3003",
+        deltaStorageUrl: "http://localhost:3001",
+    },
+    tenantId: "fluid",
+    tenantSecret: "create-new-tenants-if-going-to-production",
+    driverPolicies,
+});
 
 function getConfig(
     fluidHost?: string,
