@@ -128,7 +128,11 @@ class NoDeltaStream
     initialMessages: ISequencedDocumentMessage[] = [];
     initialSignals: ISignalMessage[] = [];
     initialClients: ISignalClient[] = [];
-    serviceConfiguration: IClientConfiguration = undefined as any;
+    serviceConfiguration: IClientConfiguration = {
+        maxMessageSize: 0,
+        blockSize: 0,
+        summary: undefined as any,
+    };
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
         this.emit("nack", this.clientId, messages.map((operation) => {
@@ -297,7 +301,6 @@ export class DeltaManager
 
     public get maxMessageSize(): number {
         return this.connection?.serviceConfiguration?.maxMessageSize
-            ?? this.connection?.maxMessageSize
             ?? DefaultChunkSize;
     }
 
@@ -634,7 +637,7 @@ export class DeltaManager
             existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
             get initialClients() { return connection.initialClients; },
-            maxMessageSize: connection.maxMessageSize,
+            maxMessageSize: connection.serviceConfiguration.maxMessageSize,
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
@@ -1147,7 +1150,7 @@ export class DeltaManager
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
 
         assert(this.connectionP !== undefined || this.closed,
-            0x27f /* "reentrnacy may result in incorrect behavior" */);
+            0x27f /* "reentrancy may result in incorrect behavior" */);
 
         // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
         const disposable = connection as Partial<IDisposable>;

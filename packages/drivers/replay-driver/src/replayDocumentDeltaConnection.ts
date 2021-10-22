@@ -201,7 +201,7 @@ export class ReplayDocumentDeltaConnection
             mode: "read",
             serviceConfiguration: {
                 blockSize: 64436,
-                maxMessageSize: 16 * 1024,
+                maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
                 summary: {
                     idleTime: 5000,
                     maxOps: 1000,
