@@ -158,17 +158,8 @@ export class RetriableGitManager implements IGitManager {
         return runWithRetry(
             api,
             callName,
-            (id: string) => this.refreshDelayInfo(id),
-            (id: string, retryInMs: number, err: any) => this.emitDelayInfo(id, retryInMs, err),
             this.logger,
+            {}, // progress
         );
-    }
-
-    private refreshDelayInfo(id: string): void {
-        return;
-    }
-
-    private emitDelayInfo(id: string, retryInMs: number, err: any): void {
-        return;
     }
 }

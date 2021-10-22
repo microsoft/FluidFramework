@@ -991,7 +991,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreRuntime);
 
         if (this.isRootDataStore) {
-            dataStoreRuntime.bindToContext();
+            dataStoreRuntime.attachGraph();
         }
     }
 

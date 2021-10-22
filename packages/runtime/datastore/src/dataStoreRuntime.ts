@@ -711,6 +711,9 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     }
 
     public getAttachSummary(): ISummaryTreeWithStats {
+        // back-compat 0.50: attachGraph() will be called when creating a root data store or when adding the handle
+        // of a non-root data store to an already bound DDS.
+        // To be removed when N >= 0.52
         this.attachGraph();
 
         const summaryBuilder = new SummaryTreeBuilder();

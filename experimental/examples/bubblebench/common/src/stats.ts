@@ -23,7 +23,7 @@ export class Stats {
 
         // Note: frameFps can be infinite if the delta from the previous frame is 0 ms.
         if (isFinite(frameFps)) {
-            if (frameFps < 24) {
+            if (frameFps < 18) {
                 this._glitchCount++;
             }
 
