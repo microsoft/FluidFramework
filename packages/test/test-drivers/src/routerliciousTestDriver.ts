@@ -60,7 +60,7 @@ function getLegacyConfigFromEnv() {
 function getEndpointConfigFromEnv(r11sEndpointName: string) {
     const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
     if (r11sEndpointName === "docker") {
-        const dockerDriverPolicies = configStr === undefined ? configStr : JSON.parse(configStr).driverpolicies;
+        const dockerDriverPolicies = configStr === undefined ? configStr : (JSON.parse(configStr)).driverPolicies;
         return dockerConfig(dockerDriverPolicies);
     }
     if (r11sEndpointName === "r11s" && configStr === undefined) {
