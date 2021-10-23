@@ -797,7 +797,7 @@ export class DeltaManager
 
         // This promise settles as soon as we know the outcome of the connection attempt
         // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (but in
-        // connectToDeltaStread() implementation - throwing exception vs. returning rejected promise) in
+        // connectToDeltaStream() implementation - throwing exception vs. returning rejected promise) in
         // synchronous way, we have this.connectionP setup for all the code to assert correctness of the flow.
         this.connectionP = deferred.promise;
 
