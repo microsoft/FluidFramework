@@ -21,6 +21,7 @@ import type { Response } from "express";
             response.status(successStatus).json(result);
         },
         (error) => {
+            console.log(`[TEST TEST TEST] handleResponse error: ${JSON.stringify(error)}`);
             response.status(errorStatus ?? error?.code ?? 400).json(error?.message ?? error);
         });
 }

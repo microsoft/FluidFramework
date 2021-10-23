@@ -121,7 +121,7 @@ export function create(
             tenantOrderer,
             tenantCustomData,
         );
-        handleResponse(tenantP, response);
+        handleResponse(tenantP, response, 400);
     });
 
     /**
