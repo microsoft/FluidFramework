@@ -835,10 +835,6 @@ export class DeltaManager
      * op is submitted.
      */
     public submit(type: MessageType, contents: any, batch = false, metadata?: any): number {
-        // TODO need to fail if gets too large
-        // const serializedContent = JSON.stringify(this.messageBuffer);
-        // const maxOpSize = this.context.deltaManager.maxMessageSize;
-
         if (this.readonly === true) {
             assert(this.readOnlyInfo.readonly === true, 0x1f0 /* "Unexpected mismatch in readonly" */);
             const error = new GenericError("deltaManagerReadonlySubmit", undefined /* error */, {

@@ -24,6 +24,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { MessageSizeValidator } from "./messageSizeValidator";
 
 // Local storage key to disable the BatchManager
 const batchManagerDisabledKey = "FluidDisableBatchManager";
@@ -84,6 +85,7 @@ export class DocumentDeltaConnection
     protected _disposed: boolean = false;
     protected readonly logger: ITelemetryLogger;
     protected readonly isBatchManagerDisabled: boolean = false;
+    protected messageSizeValidator: MessageSizeValidator | undefined;
 
     public get details(): IConnected {
         if (!this._details) {
@@ -259,6 +261,9 @@ export class DocumentDeltaConnection
     }
 
     protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+        // Only send telemetry for now
+        this.messageSizeValidator?.validate(messages);
+
         // Although the implementation here disconnects the socket and does not reuse it, other subclasses
         // (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
         // on the still-live socket.
@@ -445,6 +450,7 @@ export class DocumentDeltaConnection
             }, timeout + 2000);
         });
 
+        this.messageSizeValidator = new MessageSizeValidator(this.maxMessageSize, this.logger);
         assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
     }
 
