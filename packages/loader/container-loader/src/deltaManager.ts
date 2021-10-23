@@ -796,12 +796,11 @@ export class DeltaManager
             return connection;
         };
 
-        const deferred = new Deferred<IDocumentDeltaConnection>();
-
         // This promise settles as soon as we know the outcome of the connection attempt
-        // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (but in
+        // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (bug in
         // connectToDeltaStream() implementation - throwing exception vs. returning rejected promise) in
         // synchronous way, we have this.connectionP setup for all the code to assert correctness of the flow.
+        const deferred = new Deferred<IDocumentDeltaConnection>();
         this.connectionP = deferred.promise;
 
         // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
