@@ -4,6 +4,7 @@
  */
 
 import { IDocumentStorage } from "@fluidframework/server-services-core";
+import { defaultHash } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import { getParam } from "../../utils";
@@ -45,6 +46,7 @@ export function create(storage: IDocumentStorage): Router {
             summary,
             sequenceNumber,
             1,
+            defaultHash,
             values);
 
         createP.then(
