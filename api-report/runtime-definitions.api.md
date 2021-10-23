@@ -117,7 +117,9 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
+    attachGraph(): void;
     readonly attachState: AttachState;
+    // @deprecated (undocumented)
     bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
