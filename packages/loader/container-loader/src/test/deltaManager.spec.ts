@@ -11,7 +11,7 @@ import { IClient, IDocumentMessage, MessageType } from "@fluidframework/protocol
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
-import { CollabWindowTracker } from "../container";
+import { CollabWindowTracker } from "../collabWindowTracker";
 
 describe("Loader", () => {
     describe("Container Loader", () => {
