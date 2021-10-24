@@ -18,7 +18,7 @@ There are a few steps you can take to write a good change note and avoid needing
 `maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
 
 ### _createDataStoreWithProps and IFluidDataStoreChannel
-ContainerRuntime._createDataStoreWithProps() is made consistent with the rest of API (IContainerRuntimeBase._createDataStoreWithProps, all other create methods to create data store) and returns now only IFluidRouter. IFluidDataStoreChannel is internal communication mechanism between ContainerRuntime and data stores and should be used only for this purpose, by data store authors. It si not a public interface that should be exposed by data stores.
+ContainerRuntime._createDataStoreWithProps() is made consistent with the rest of API (same API on IContainerRuntimeBase interface, all other create methods to create data store) and returns now only IFluidRouter. IFluidDataStoreChannel is internal communication mechanism between ContainerRuntime and data stores and should be used only for this purpose, by data store authors. It is not a public interface that should be exposed by data stores.
 While casting IFluidRouter objects returned by various data store creation APIs to IFluidDataStoreChannel would continue to work in this release, this is not supported and will be taken away in next releases due to upcoming work in GC & named component creation space.
 
 ## 0.50 Breaking changes
