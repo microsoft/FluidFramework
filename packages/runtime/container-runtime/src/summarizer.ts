@@ -101,8 +101,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     public async run(
         onBehalfOf: string,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
-    {
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
         try {
             return await this.runCore(onBehalfOf, options);
         } catch (error) {
@@ -119,7 +118,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
      * the run promise, and also close the container.
      * @param reason - reason code for stopping
      */
-     public stop(reason: SummarizerStopReason) {
+    public stop(reason: SummarizerStopReason) {
         this.stopDeferred.resolve(reason);
     }
 
@@ -136,8 +135,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async runCore(
         onBehalfOf: string,
-        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason>
-    {
+        options?: Readonly<Partial<ISummarizerOptions>>): Promise<SummarizerStopReason> {
         // Initialize values and first ack (time is not exact)
         this.logger.sendTelemetryEvent({
             eventName: "RunningSummarizer",
@@ -284,7 +282,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     summaryLogger,
                 );
             } catch (error) {
-                summaryLogger.sendErrorEvent({ eventName: "HandleSummaryAckError", refSequenceNumber }, error);
+                summaryLogger.sendErrorEvent({
+                    eventName: "HandleSummaryAckError",
+                    referenceSequenceNumber: refSequenceNumber,
+                }, error);
             }
             refSequenceNumber++;
         }
