@@ -66,10 +66,6 @@ export class DocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaCon
     // (undocumented)
     protected readonly logger: ITelemetryLogger;
     get maxMessageSize(): number;
-    // Warning: (ae-forgotten-export) The symbol "MessageSizeValidator" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    protected messageSizeValidator: MessageSizeValidator | undefined;
     get mode(): ConnectionMode;
     // (undocumented)
     protected readonly queuedMessages: ISequencedDocumentMessage[];

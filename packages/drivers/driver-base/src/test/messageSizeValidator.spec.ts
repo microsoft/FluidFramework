@@ -49,7 +49,7 @@ describe("Message size validation", () => {
         const size = 4 * 1000;
         assert.equal(validator.validate([[generateMessageOfSize(size)]]), true);
         assert(logger.matchEvents([{
-            eventName: "LargeMessage25PercentOfMax",
+            eventName: "MessageSize25PcOfMax",
             category: "performance",
             value: size,
             max: maxMessageSizeInBytes,
@@ -60,7 +60,7 @@ describe("Message size validation", () => {
         const size = 6 * 1000;
         assert.equal(validator.validate([[generateMessageOfSize(size)]]), true);
         assert(logger.matchEvents([{
-            eventName: "LargeMessage50PercentOfMax",
+            eventName: "MessageSize50PcOfMax",
             category: "performance",
             value: size,
             max: maxMessageSizeInBytes,
@@ -71,7 +71,7 @@ describe("Message size validation", () => {
         const size = 10 * 1000;
         assert.equal(validator.validate([[generateMessageOfSize(size)]]), false);
         assert(logger.matchEvents([{
-            eventName: "LargeMessageLimitExceeded",
+            eventName: "MessageSizeLimitExceeded",
             category: "performance",
             value: size,
             max: maxMessageSizeInBytes,
@@ -87,7 +87,7 @@ describe("Message size validation", () => {
             ]),
             false);
         assert(logger.matchEvents([{
-            eventName: "LargeMessageLimitExceeded",
+            eventName: "MessageSizeLimitExceeded",
             category: "performance",
             value: size,
             max: maxMessageSizeInBytes,

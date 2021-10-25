@@ -450,7 +450,9 @@ export class DocumentDeltaConnection
             }, timeout + 2000);
         });
 
-        this.messageSizeValidator = new MessageSizeValidator(this.maxMessageSize, this.logger);
+        this.messageSizeValidator = new MessageSizeValidator(
+            this.maxMessageSize,
+            ChildLogger.create(this.logger, "MessageSizeValidator"));
         assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
     }
 

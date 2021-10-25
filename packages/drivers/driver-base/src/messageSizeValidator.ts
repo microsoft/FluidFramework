@@ -14,15 +14,15 @@ export class MessageSizeValidator {
         // event publishing.
         {
             counter: new ThresholdCounter(this.maxMessageSizeInBytes, this.logger),
-            eventName: "LargeMessageLimitExceeded",
+            eventName: "MessageSizeLimitExceeded",
         },
         {
             counter: new ThresholdCounter(this.maxMessageSizeInBytes / 2, this.logger),
-            eventName: "LargeMessage50PercentOfMax",
+            eventName: "MessageSize50PcOfMax",
         },
         {
             counter: new ThresholdCounter(this.maxMessageSizeInBytes / 4, this.logger),
-            eventName: "LargeMessage25PercentOfMax",
+            eventName: "MessageSize25PcOfMax",
         },
     ];
 
