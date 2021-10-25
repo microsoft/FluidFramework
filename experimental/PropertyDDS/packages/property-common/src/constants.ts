@@ -1371,6 +1371,8 @@ const ChangeSetError = {
     NOT_A_VALID_CONTEXT: "NOT_A_VALID_CONTEXT",
 
     MISSING_PRE_POST_CALLBACK: "Missing callback. Either pre- or postcallback must be provided.",
+
+    INVALID_CHANGESET: "Invalid changeset.",
 };
 
 const UtilsError = {

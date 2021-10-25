@@ -144,7 +144,7 @@ export namespace TypeIdHelper {
      *
      * @returns The combined typeid string
      */
-    export function createSerializationTypeId(in_typeid: string, in_context: string, in_enum: boolean): string { // in_enum
+    export function createSerializationTypeId(in_typeid: string, in_context: string, in_enum: boolean = false): string { // in_enum
         if (in_typeid === "BaseProperty") {
             // Special case for BaseProperties. These get represented as a collection
             // typeid without a child typeid. E.g. map<> instead of map<BaseProperty>

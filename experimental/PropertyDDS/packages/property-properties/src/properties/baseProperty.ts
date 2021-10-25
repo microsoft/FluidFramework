@@ -24,17 +24,17 @@ export interface IBasePropertyParams {
     /** The type unique identifier */
     typeid?: string,
     /** The length of the property. Only valid if the property is an array, otherwise the length defaults to 1 */
-    length: number,
+    length?: number,
     /** The type of property this template represents i.e. single, array, map, set. */
-    context: string,
+    context?: string,
 
     //TODO: UNUSED PARAMETER ??
     /** List of property templates that are used to define children properties */
-    properties: BaseProperty[],
+    properties?: BaseProperty[],
 
     //TODO: UNUSED PARAMETER ??
     /**  List of property template typeids that this PropertyTemplate inherits from */
-    inherits: string[]
+    inherits?: string[]
 }
 
 interface ISerializeOptions {
@@ -67,7 +67,7 @@ interface ISerializeOptions {
 export abstract class BaseProperty {
     protected _id: string | undefined;
     protected _isConstant: boolean = false;
-    protected _dirty: BaseProperty.MODIFIED_STATE_FLAGS;
+    protected _dirty: any;
     protected _typeid: string;
     protected _parent: BaseProperty | undefined;
     protected _noDirtyInBase: boolean;
@@ -124,6 +124,10 @@ export abstract class BaseProperty {
     getContext(): string {
         return this._context;
     };
+
+    getValues(): object {
+        return undefined;
+    }
 
     /**
      * Get the scope to which this property belongs to.
