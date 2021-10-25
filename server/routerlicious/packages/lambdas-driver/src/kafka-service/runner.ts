@@ -13,12 +13,14 @@ import {
     IPartitionLambdaFactory,
     IRunner,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
     private deferred: Deferred<void> | undefined;
     private partitionManager: PartitionManager | undefined;
     private stopped: boolean = false;
+    private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.KafkaRunner);
 
     constructor(
         private readonly factory: IPartitionLambdaFactory,
@@ -28,6 +30,7 @@ export class KafkaRunner implements IRunner {
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public start(logger: ILogger | undefined): Promise<void> {
         if (this.deferred) {
+            this.runnerMetric.error("Runner already started");
             throw new Error("Already started");
         }
 
@@ -40,24 +43,42 @@ export class KafkaRunner implements IRunner {
         });
 
         this.factory.on("error", (error) => {
+            this.runnerMetric.error("Kafka factory encountered an error", error);
             deferred.reject(error);
         });
 
         this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
+            const documentId = errorData?.documentId ?? "";
+            const tenantId = errorData?.tenantId ?? "";
+            const lumberProperties = getLumberBaseProperties(documentId, tenantId);
             const metadata = {
                 messageMetaData: {
-                    documentId: errorData?.documentId,
-                    tenantId: errorData?.tenantId,
+                    documentId,
+                    tenantId,
                 },
             };
 
+            this.runnerMetric.setProperties(lumberProperties);
+
             if (errorData && !errorData.restart) {
-                logger?.error("KakfaRunner encountered an error that is not configured to trigger restart.", metadata);
+                const errorMsg = "KakfaRunner encountered an error that is not configured to trigger restart";
+                logger?.error(errorMsg, metadata);
                 logger?.error(inspect(error), metadata);
+                if (!this.runnerMetric.isCompleted()) {
+                    this.runnerMetric.error(errorMsg, error);
+                } else {
+                    Lumberjack.error(errorMsg, lumberProperties, error);
+                }
             } else {
-                logger?.error("KakfaRunner encountered an error that will trigger a restart.", metadata);
+                const errorMsg = "KakfaRunner encountered an error that will trigger a restart";
+                logger?.error(errorMsg, metadata);
                 logger?.error(inspect(error), metadata);
+                if (!this.runnerMetric.isCompleted()) {
+                    this.runnerMetric.error(errorMsg, error);
+                } else {
+                    Lumberjack.error(errorMsg, lumberProperties, error);
+                }
                 deferred.reject(error);
             }
         });
@@ -92,5 +113,6 @@ export class KafkaRunner implements IRunner {
         // Mark ourselves done once the partition manager has stopped
         this.deferred.resolve();
         this.deferred = undefined;
+        this.runnerMetric.success("Kafka runner stopped");
     }
 }
