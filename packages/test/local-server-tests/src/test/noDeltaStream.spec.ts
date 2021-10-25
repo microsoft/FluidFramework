@@ -64,7 +64,6 @@ describe("No Delta Stream", () => {
             loaderContainerTracker.add(loader);
         }
 
-        // See issue #7426 - need better long term solution
         const container = await loader.resolve({
             url: documentLoadUrl,
         });
