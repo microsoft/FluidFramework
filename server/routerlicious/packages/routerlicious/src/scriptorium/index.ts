@@ -16,11 +16,11 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");
     const documentsCollectionName = config.get("mongo:collectionNames:documents");
     const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
-    const softDeletionRetentionPeriodMs = config.get("mongo:softDeletionRetentionPeriodMs");
-    const offlineWindowMs = config.get("mongo:offlineWindowMs");
+    const softDeletionRetentionPeriodMs = config.get("mongo:softDeletionRetentionPeriodMs") as number;
+    const offlineWindowMs = config.get("mongo:offlineWindowMs") as number;
     const softDeletionEnabled = config.get("mongo:softDeletionEnabled");
     const permanentDeletionEnabled = config.get("mongo:permanentDeletionEnabled");
-    const deletionIntervalMs = config.get("mongo:deletionIntervalMs");
+    const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
     const mongoFactory = new services.MongoDbFactory(mongoUrl);
     const mongoManager = new MongoManager(mongoFactory, false);
 
