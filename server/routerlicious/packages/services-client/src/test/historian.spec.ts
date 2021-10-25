@@ -36,7 +36,7 @@ describe("Historian", () => {
     };
     const mockBlob: git.IBlob = {
         content: "Hello, World!",
-        encoding: "utf8",
+        encoding: "utf-8",
         url: `${endpoint}/blob/${sha}`,
         sha,
         size: 20,
@@ -211,7 +211,7 @@ describe("Historian", () => {
         const url = getUrlWithToken(`/git/blobs`, initialCredentials);
         const blobParams: git.ICreateBlobParams = {
             content: "Hello, World",
-            encoding: "utf8",
+            encoding: "utf-8",
         };
         const response: git.ICreateBlobResponse = {
             sha,

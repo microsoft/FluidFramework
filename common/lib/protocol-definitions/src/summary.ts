@@ -21,12 +21,18 @@ export interface ISummaryCommitter {
     date: string;
 }
 
-export const enum SummaryType {
-    Tree = 1,
-    Blob = 2,
-    Handle = 3,
-    Attachment = 4,
+export namespace SummaryType {
+    export type Tree = 1;
+    export type Blob = 2;
+    export type Handle = 3;
+    export type Attachment = 4;
+
+    export const Tree: Tree = 1 as const;
+    export const Blob: Blob = 2 as const;
+    export const Handle: Handle = 3 as const;
+    export const Attachment: Attachment = 4 as const;
 }
+export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 

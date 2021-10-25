@@ -50,12 +50,14 @@ export enum OdspErrorType {
 
 /**
  * Base interface for all errors and warnings
+ * Superset of IDriverErrorBase, but with Odsp-specific errorType
  */
 export interface IOdspError {
     readonly errorType: OdspErrorType;
     readonly message: string;
     canRetry: boolean;
     online?: string;
+    serverEpoch?: string;
 }
 
 export type OdspError =

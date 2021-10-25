@@ -6,9 +6,13 @@
  * @fileoverview Iterator to iterate over array ChangeSets
  */
 
+
+ import isNumber from "lodash/isNumber";
+ import isString from "lodash/isString";
+
 // @ts-ignore
 import { constants } from "@fluid-experimental/property-common";
-import _ from "lodash";
+
 import { SerializedChangeSet } from "../changeset";
 import { ArrayIteratorOperationTypes } from "./operationTypes";
 
@@ -151,7 +155,7 @@ export class ArrayChangeSetIterator {
             type = ArrayChangeSetIterator.types.REMOVE;
             currentIndex = this._changeSet.remove[this._currentIndices.remove][0];
             let currentLength = this._changeSet.remove[this._currentIndices.remove][1];
-            if (!_.isNumber(currentLength)) {
+            if (!isNumber(currentLength)) {
                 currentLength = currentLength.length;
             }
 
@@ -213,7 +217,7 @@ export class ArrayChangeSetIterator {
                 this._op.operation = this._changeSet.remove[this._currentIndices.remove];
                 this._op.offset = this._currentOffset;
                 // Update the current offset. For a remove we have to decrement it by the number of the removed elements
-                var removedElements = _.isNumber(this._op.operation[1]) ? this._op.operation[1] : this._op.operation[1].length;
+                var removedElements = isNumber(this._op.operation[1]) ? this._op.operation[1] : this._op.operation[1].length;
                 this._lastOperationOffset -= removedElements;
 
                 // Shift the internal index
@@ -243,7 +247,7 @@ export class ArrayChangeSetIterator {
 
                         // build a partial modify and cut the remaining one:
                         const partialModify: arrayModifyList = [nextModify[0], undefined];
-                        if (_.isString(nextModify[1])) {
+                        if (isString(nextModify[1])) {
                             partialModify[1] = nextModify[1].substr(0, insertPosition - nextModify[0]);
                             nextModify[1] = nextModify[1].substr(insertPosition - nextModify[0]);
                         } else {

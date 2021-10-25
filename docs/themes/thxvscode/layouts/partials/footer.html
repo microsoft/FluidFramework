@@ -12,7 +12,7 @@
                     <script>
                         function followOnTwitter() {
                             var windowFeatures = "location=yes,height=600,width=550,scrollbars=yes,status=yes";
-                            var originalReferer = "&original_referer=" + document.URL;
+                            var originalReferer = "&original_referer=" + document.Permalink;
                             var screenName = "&screen_name={{.Site.Params.twitterHandle}}";
                             var URL = "https://twitter.com/intent/follow?" + originalReferer + screenName;
                             window.open(URL, "_blank", windowFeatures);

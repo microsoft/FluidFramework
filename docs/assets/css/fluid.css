@@ -168,10 +168,6 @@ footer {
     color: #6b5900;
 }
 
-.callout.warning .callout-title {
-    color: #b29400;
-}
-
 .callout.danger {
     background-color: #ffe6e6;
     border-color: #c00;

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedString } from "@fluidframework/sequence";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import React from "react";
 
 export interface ICollaborativeInputProps {
@@ -47,8 +47,8 @@ export class CollaborativeInput
 
     public componentDidMount() {
         // Sets an event listener so we can update our state as the value changes
-        this.props.sharedString.on("op", (op, local) => {
-            if (!local) {
+        this.props.sharedString.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+            if (!ev.isLocal) {
                 this.updateInputFromSharedString();
             }
         });

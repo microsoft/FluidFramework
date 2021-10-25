@@ -50,10 +50,9 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     // (undocumented)
     readonly id: string;
     readonly isDirty: boolean;
-    // @deprecated (undocumented)
-    isDocumentDirty(): boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated
     raiseContainerWarning(warning: ContainerWarning): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -70,7 +69,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
     (event: "codeDetailsProposed", listener: (codeDetails: IFluidCodeDetails, proposal: IPendingProposal) => void): any;
     // (undocumented)
-    (event: "dirtyDocument" | "dirty" | "disconnected" | "dispose" | "savedDocument" | "saved" | "attached", listener: () => void): any;
+    (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
     // (undocumented)

@@ -90,6 +90,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             provider.defaultCodeDetails,
             loader,
             provider.driver.createCreateNewRequest(provider.documentId));
+        provider.updateDocumentId(container1.resolvedUrl);
         url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
@@ -294,7 +295,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            dataStore.channel.attachGraph();
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -321,7 +322,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            dataStore.channel.attachGraph();
             (channel as SharedMap).set(testKey, testValue);
         });
 

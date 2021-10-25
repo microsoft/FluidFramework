@@ -6,8 +6,13 @@
 /**
  * @fileoverview In this file, we will test the functions of the property factory.
  */
+const _ = require('lodash');
+const { PropertyFactory } = require('..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset')
+const { Int64, Uint64 } = require('@fluid-experimental/property-common');
+const deepCopy = _.cloneDeep;
+
 describe('Reversible ChangeSets', function () {
-    var PropertyFactory, ChangeSet, deepCopy, Int64, Uint64, _;
 
     var testRevAndInvCS = function (initialProperty, modificationFunction,
         expectedRevCS, expectedAfterCS, expectedInverseCS) {
@@ -70,12 +75,6 @@ describe('Reversible ChangeSets', function () {
     };
 
     before(function () {
-        PropertyFactory = require('..').PropertyFactory;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        _ = require('lodash');
-        deepCopy = _.cloneDeep;
-        Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-        Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
 
         var TaskSubjectParentTemplate = {
             typeid: 'autodesk.tests:ChangeSetApplyAfterTask.parentTemplate-1.0.0',

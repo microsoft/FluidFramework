@@ -80,11 +80,13 @@
             "Other-Utils": {
                 "dot": false,
                 "packages": [
-                    "@fluidframework/odsp-doclib-utils"
+                    "@fluidframework/odsp-doclib-utils",
+                    "@fluidframework/azure-service-utils"
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "Driver-Utils"
+                    "Driver-Utils",
+                    "Server-Shared-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -99,7 +101,6 @@
             },
             "Telemetry-Utils": {
                 "packages": [
-                    "@fluid-internal/mock-logger",
                     "@fluidframework/telemetry-utils"
                 ],
                 "deps": [
@@ -287,6 +288,7 @@
             },
             "Server-Tools": {
                 "packages": [
+                    "@fluidframework/azure-local-service",
                     "tinylicious"
                 ],
                 "deps": [

@@ -72,6 +72,9 @@ export async function fetchJoinSession(
                     if (guestDisplayName) {
                         body.guestDisplayName = guestDisplayName;
                     }
+                    // IMPORTANT: Must set content-type header explicitly to application/json when request has body.
+                    // By default, request will use text/plain as content-type and will be rejected by backend.
+                    headers["Content-Type"] = "application/json";
                 }
 
                 const response = await runWithRetry(

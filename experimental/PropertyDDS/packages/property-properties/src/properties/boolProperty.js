@@ -2,30 +2,31 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Definition of the BooleanProperty class
  */
 
-const ValueProperty = require('./valueProperty');
-const _castFunctors = require('./primitiveTypeCasts');
+const { ValueProperty } = require('./valueProperty');
+const { _castFunctors } = require('./primitiveTypeCasts');
 
 /**
  * A primitive property for a boolean value
- * @param {Object=} in_params - the parameters
- * @constructor
- * @protected
- * @extends property-properties.ValueProperty
- * @alias property-properties.BoolProperty
- * @category Value Properties
  */
-var BoolProperty = function (in_params) {
-    ValueProperty.call(this, in_params);
-    // default for this property type is 'false'
-    this._data = false;
-};
-BoolProperty.prototype = Object.create(ValueProperty.prototype);
+export class BoolProperty extends ValueProperty {
 
-BoolProperty.prototype._typeid = 'Bool';
-BoolProperty.prototype._castFunctor = _castFunctors.Boolean;
+    /**
+     * @param in_params - the parameters
+     */
+    constructor(in_params) {
+        super({ ...in_params, typeid: 'Bool' });
+        // default for this property type is 'false'
+        this._data = false;
+    };
 
-module.exports = BoolProperty;
+    _castFunctor = _castFunctors.Boolean;
+
+}
+
+
+

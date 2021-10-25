@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { SignalManager } from "@fluid-experimental/data-objects";
 import {
     IFluidContainer,
     ContainerSchema,
-    SignalManager,
 } from "fluid-framework";
 import {
     TinyliciousClient,

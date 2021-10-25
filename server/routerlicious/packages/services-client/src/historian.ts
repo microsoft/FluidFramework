@@ -137,6 +137,10 @@ export class Historian implements IHistorian {
     public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         return this.restWrapper.post<IWriteSummaryResponse>(`/git/summaries`, summary, this.getQueryString());
     }
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        const headers = { "Soft-Delete": softDelete };
+        return this.restWrapper.delete(`/git/summaries`, this.getQueryString(), headers);
+    }
     public async getSummary(sha: string): Promise<IWholeFlatSummary> {
         return this.restWrapper.get<IWholeFlatSummary>(`/git/summaries/${sha}`, this.getQueryString());
     }

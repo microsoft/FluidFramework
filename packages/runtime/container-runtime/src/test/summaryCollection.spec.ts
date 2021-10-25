@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage, SummaryCollection } from "../summaryCollection";
 
 const summaryOp: ISummaryOpMessage = {

@@ -43,6 +43,6 @@ data:
             "minThrottleIntervalInMs": {{ .Values.historian.throttling.minThrottleIntervalInMs }}
         },
         "restGitService": {
-            "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }},
+            "disableGitCache": {{ .Values.historian.restGitService.disableGitCache }}
         }
     }

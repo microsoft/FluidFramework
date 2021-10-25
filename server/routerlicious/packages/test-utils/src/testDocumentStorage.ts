@@ -8,6 +8,7 @@ import { IGitCache, IGitManager } from "@fluidframework/server-services-client";
 import {
     IDatabaseManager,
     IDeliState,
+    IDocument,
     IDocumentDetails,
     IDocumentStorage,
     IScribe,
@@ -40,7 +41,7 @@ export class TestDocumentStorage implements IDocumentStorage {
     /**
      * Retrieves database details for the given document
      */
-    public async getDocument(tenantId: string, documentId: string): Promise<any> {
+    public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
         const collection = await this.databaseManager.getDocumentCollection();
         return collection.findOne({ documentId, tenantId });
     }
@@ -57,6 +58,7 @@ export class TestDocumentStorage implements IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
         values: [string, ICommittedProposal][],
     ): Promise<IDocumentDetails> {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -100,6 +102,7 @@ export class TestDocumentStorage implements IDocumentStorage {
         const deli: IDeliState = {
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
+            expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
             epoch: undefined,
@@ -121,6 +124,7 @@ export class TestDocumentStorage implements IDocumentStorage {
             },
             sequenceNumber,
             lastClientSummaryHead: undefined,
+            lastSummarySequenceNumber: 0,
         };
 
         const collection = await this.databaseManager.getDocumentCollection();

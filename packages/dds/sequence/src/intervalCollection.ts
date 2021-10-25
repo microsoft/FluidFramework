@@ -634,7 +634,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     /**
-     * @deprecated - This method only exists to support the deprecated IntervalCollection.delete(start, end).
+     * @deprecated This method only exists to support the deprecated IntervalCollection.delete(start, end).
      */
     public getLegacyInterval(start: number, end: number): TInterval | undefined {
         const transientInterval: TInterval = this.helpers.create(
@@ -940,7 +940,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /**
-     * @deprecated - delete by start/end position is deprecated. Please use removeIntervalById.
+     * @deprecated delete by start/end position is deprecated. Use removeIntervalById.
      */
     public delete(
         start: number,
@@ -1174,7 +1174,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /**
-     * @deprecated - IntervalCollectionView has been removed. Please refer to IntervalCollection directly.
+     * @deprecated IntervalCollectionView has been removed. Refer to IntervalCollection directly.
      */
     public async getView(onDeserialize?: DeserializeCallback): Promise<IntervalCollection<TInterval>> {
         if (!this.attached) {

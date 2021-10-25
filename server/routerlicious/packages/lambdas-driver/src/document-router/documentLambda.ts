@@ -81,7 +81,7 @@ export class DocumentLambda implements IPartitionLambda {
         let document = this.documents.get(routingKey);
         if (!document) {
             // Create a new context and begin tracking it
-            const documentContext = this.contextManager.createContext(message);
+            const documentContext = this.contextManager.createContext(boxcar, message);
 
             document = new DocumentPartition(
                 this.factory,

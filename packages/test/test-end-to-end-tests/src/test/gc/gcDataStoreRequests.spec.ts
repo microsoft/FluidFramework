@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -17,22 +16,14 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IAckedSummary, IContainerRuntimeOptions, SummaryCollection } from "@fluidframework/container-runtime";
-import { flattenRuntimeOptions } from "../flattenRuntimeOptions";
+import { TestDataObject } from "./mockSummarizerClient";
 
-class TestDataObject extends DataObject {
-    public get _root() {
-        return this.root;
-    }
-
-    public get _runtime() {
-        return this.runtime;
-    }
-
-    public get _context() {
-        return this.context;
-    }
-}
-
+/**
+ * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced
+ * by the time it is requested via this external app, we return a failure (404).
+ * Basically, for data stores that are unreferenced in the base snapshot that a container loads from, we return a
+ * failure (404) when they are requested with "externalRequest" flag in the request header.
+ */
 describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
@@ -63,7 +54,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         ],
         undefined,
         undefined,
-        flattenRuntimeOptions(runtimeOptions),
+        runtimeOptions,
     );
 
     let mainContainer: IContainer;
@@ -115,7 +106,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
@@ -150,7 +141,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
@@ -194,7 +185,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
-        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
+        const dataStore2 = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
@@ -226,7 +217,7 @@ describeFullCompat("GC Data Store Requests", (getTestObjectProvider) => {
             ],
             undefined,
             undefined,
-            flattenRuntimeOptions(gcDisabledRuntimeOptions),
+            gcDisabledRuntimeOptions,
         );
         const container2 = await loadContainer(summaryVersion, gcDisabledRuntimeFactory);
 

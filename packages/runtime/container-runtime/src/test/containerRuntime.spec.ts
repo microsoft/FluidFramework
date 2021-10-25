@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { MockLogger } from "@fluid-internal/mock-logger";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { DebugLogger, MockLogger } from "@fluidframework/telemetry-utils";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,

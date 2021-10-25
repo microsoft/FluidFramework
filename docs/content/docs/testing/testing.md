@@ -5,7 +5,7 @@ menuPosition: 3
 
 ## Overview
 
-Testing and automation are crucial to maintaining the quality and longevity of your code.  Internally, Fluid has a range of unit and integration tests powered by [Mocha](https://mochajs.org/), [Jest](https://jestjs.io/), [Puppeteer](https://github.com/puppeteer/puppeteer), and [webpack](https://webpack.js.org/).  Tests that need to run against a service are backed by [Tinylicious]({{< relref "tinylicious.md" >}}) or a test tenant of a [live service]({{< relref "service-options.md" >}}) such as [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
+Testing and automation are crucial to maintaining the quality and longevity of your code.  Internally, Fluid has a range of unit and integration tests powered by [Mocha](https://mochajs.org/), [Jest](https://jestjs.io/), [Puppeteer](https://github.com/puppeteer/puppeteer), and [webpack](https://webpack.js.org/).  Tests that need to run against a service are backed by [Tinylicious]({{< relref "tinylicious.md" >}}) or a test tenant of a [live service]({{< relref "service-options.md" >}}) such as [Azure Fluid Relay]({{< relref "azure-frs.md" >}}).
 
 This document will explain how to use these tools to get started with writing automation for Fluid applications against a service.  It will focus on interactions with the service rather than automation in general, and will not cover the automation tools themselves or scenarios that do not require a service.
 
@@ -35,7 +35,7 @@ The `test:tinylicious` script will start Tinylicious, wait until port 7070 respo
 
 ## Automation against Azure Fluid Relay
 
-Your automation can connect to a test tenant for Azure Fluid Relay in the same way as your production tenant and only needs the appropriate connection configuration. See [Connect to an Azure Fluid Relay service]({{< relref "azure-frs.md" >}}) for more details.
+Your automation can connect to a test tenant for Azure Fluid Relay in the same way as your production tenant and only needs the appropriate connection configuration. See [Connect to Azure Fluid Relay]({{< relref "azure-frs.md" >}}) for more details.
 
 ### Azure Fluid Relay as an abstraction for Tinylicious
 
@@ -47,17 +47,22 @@ const user = {
     name: "Test User",
 };
 const config = {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",
 };
+
+const clientProps = {
+  connection: config,
+}
+
 // This AzureClient instance connects to a local Tinylicious
-// instance rather than a live Azure Fluid Relay service
-const client = new AzureClient(config);
+// instance rather than a live Azure Fluid Relay
+const client = new AzureClient(clientProps);
 ```
 
-These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious.
+These values for `tenantId`, `orderer`, and `storage` correspond to those for Tinylicious, where `7070` is the default port for Tinylicious. `LOCAL_MODE_TENANT_ID` is imported from `@fluidframework/azure-client`.
 
 ## Automation example
 
@@ -77,12 +82,12 @@ function createAzureClient(): AzureClient {
         orderer: "https://myOrdererUrl",
         storage: "https://myStorageUrl",
     } : {
-        tenantId: "local",
+        tenantId: LOCAL_MODE_TENANT_ID,
         tokenProvider: new InsecureTokenProvider("fooBar", user),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new AzureClient(connectionConfig);
+    return new AzureClient({ connection:connectionConfig });
 }
 ```
 
@@ -101,12 +106,13 @@ describe("ClientTest", () => {
     });
 
     it("can create Azure container successfully", async () => {
-        const containerConfig: AzureContainerConfig = { id: documentId };
         const schema: ContainerSchema = {
-            name: documentId,
+            initialObjects: {
+              customMap: SharedMap
+            },
         };
 
-        const containerAndServices  = await client.createContainer(containerConfig, schema);
+        const containerAndServices  = await client.createContainer(schema);
     });
 });
 

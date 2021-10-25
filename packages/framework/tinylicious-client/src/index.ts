@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * The **tinylicious-client** package provides a simple and powerful way to consume collaborative Fluid data with the
+ * Tinylicious service.
+ *
+ * @packageDocumentation
+ */
+
 import { TinyliciousClient } from "./TinyliciousClient";
 
 export * from "./interfaces";

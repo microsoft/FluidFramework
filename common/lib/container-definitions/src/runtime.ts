@@ -28,10 +28,26 @@ import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError, ContainerWarning } from "./error";
 import { ILoader, ILoaderOptions } from "./loader";
 
-// Represents the attachment state of the entity.
+/**
+ * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
+ * service.  The transition from detached to attached state is a one-way transition.
+ */
 export enum AttachState {
+    /**
+     * In detached state, the data is only present on the local client's machine.  It has not yet been uploaded
+     * to the service.
+     */
     Detached = "Detached",
+
+    /**
+     * In attaching state, the data has started the upload to the service, but has not yet completed.
+     */
     Attaching = "Attaching",
+
+    /**
+     * In attached state, the data has completed upload to the service.  It can be accessed by other clients after
+     * reaching attached state.
+     */
     Attached = "Attached",
 }
 

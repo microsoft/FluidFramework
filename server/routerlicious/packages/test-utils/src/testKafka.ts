@@ -27,6 +27,13 @@ export class TestConsumer implements core.IConsumer {
         return true;
     }
 
+    /**
+     * Returns the offset of the latest consumsed message
+     */
+    public getLatestMessageOffset(partitionId: number): number | undefined {
+        return undefined;
+    }
+
     public async commitCheckpoint(partitionId: number, queuedMessage: core.IQueuedMessage): Promise<void> {
         // For now we assume a single partition for the test consumer
         assert(partitionId === 0);

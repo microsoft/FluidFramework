@@ -5,6 +5,7 @@
 
 import { execAsync } from "../common/utils";
 import * as path from "path";
+import * as semver from "semver";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -250,4 +251,9 @@ export async function runPolicyCheckWithFix(gitRepo: GitRepo){
         console.log("======================================================================================================");
         fatal(`Policy check needed to make modifications. Please create PR for the changes and merge before retrying.\n${afterPolicyCheckStatus}`);
     }
+}
+
+export function prereleaseSatisfies(packageVersion: string, range: string) {
+    // Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
+    return semver.satisfies(`${packageVersion}-zzz`, range)
 }

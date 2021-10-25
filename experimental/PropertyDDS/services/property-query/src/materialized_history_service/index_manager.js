@@ -5,7 +5,7 @@
 const _ = require('lodash');
 const asyncQueue =  require('async').queue;
 const Joi = require('joi');
-const { HashCalculator, OperationError } = require('@fluid-experimental/property-common');
+const { calculateHash, OperationError } = require('@fluid-experimental/property-common');
 const HTTPStatus = require('http-status');
 const { PathHelper, ArrayChangeSetIterator, Utils } = require('@fluid-experimental/property-changeset');
 const ModuleLogger = require('../server/utils/module_logger');
@@ -100,9 +100,7 @@ class IndexManager {
       batch = this._storage.startWriteBatch();
     }
 
-    const hashCalculator = new HashCalculator();
-    hashCalculator.pushString(params.name);
-    const indexGuid = hashCalculator.getHash();
+    const indexGuid = calculateHash(params.name);
     const guidGenerator = new DeterministicGuidGenerator(params.branchGuid, indexGuid);
     const rootNodeRef = this._btreeManager.createBTree(batch, {}, params.branchGuid, guidGenerator);
 

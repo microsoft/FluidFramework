@@ -39,13 +39,10 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
-// @public (undocumented)
+// @public
 export enum AttachState {
-    // (undocumented)
     Attached = "Attached",
-    // (undocumented)
     Attaching = "Attaching",
-    // (undocumented)
     Detached = "Detached"
 }
 
@@ -103,7 +100,7 @@ export interface IConnectionDetails {
     existing: boolean;
     // (undocumented)
     initialClients: ISignalClient[];
-    // (undocumented)
+    // @deprecated (undocumented)
     maxMessageSize: number;
     // (undocumented)
     mode: ConnectionMode;

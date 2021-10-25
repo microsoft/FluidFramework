@@ -156,7 +156,7 @@ export class Client {
     }
     /**
      * Annotates the range with the provided properties
-     * @param start - The inclusive start postition of the range to annotate
+     * @param start - The inclusive start position of the range to annotate
      * @param end - The exclusive end position of the range to annotate
      * @param props - The properties to annotate the range with
      * @param combiningOp - Specifies how to combine values for the property, such as "incr" for increment.
@@ -887,42 +887,32 @@ export class Client {
         resetOp: ops.IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): ops.IMergeTreeOp {
-        const trace = Trace.start();
-        try {
-            const opList: ops.IMergeTreeDeltaOp[] = [];
+        const opList: ops.IMergeTreeDeltaOp[] = [];
+        if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
+            if (Array.isArray(segmentGroup)) {
+                assert(resetOp.ops.length === segmentGroup.length,
+                    0x03a /* "Number of ops in 'resetOp' must match the number of segment groups provided." */);
 
-            if (resetOp.type === ops.MergeTreeDeltaType.GROUP) {
-                if (Array.isArray(segmentGroup)) {
-                    assert(resetOp.ops.length === segmentGroup.length,
-                        0x03a /* "Number of ops in 'resetOp' must match the number of segment groups provided." */);
-
-                    for (let i = 0; i < resetOp.ops.length; i++) {
-                        opList.push(
-                            ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
-                    }
-                } else {
-                    // A group op containing a single op will pass a direct reference to 'segmentGroup'
-                    // rather than an array of segment groups.  (See 'peekPendingSegmentGroups()')
-                    assert(resetOp.ops.length === 1,
-                        0x03b /* "Number of ops in 'resetOp' must match the number of segment groups provided." */);
-                    opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
+                for (let i = 0; i < resetOp.ops.length; i++) {
+                    opList.push(
+                        ...this.resetPendingDeltaToOps(resetOp.ops[i], segmentGroup[i]));
                 }
             } else {
-                assert((resetOp.type as any) !== ops.MergeTreeDeltaType.GROUP,
-                    0x03c /* "Reset op has 'group' delta type!" */);
-                assert(!Array.isArray(segmentGroup),
-                    0x03d /* "segmentGroup is array rather than singleton!" */);
-                opList.push(
-                    ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
+                // A group op containing a single op will pass a direct reference to 'segmentGroup'
+                // rather than an array of segment groups.  (See 'peekPendingSegmentGroups()')
+                assert(resetOp.ops.length === 1,
+                    0x03b /* "Number of ops in 'resetOp' must match the number of segment groups provided." */);
+                opList.push(...this.resetPendingDeltaToOps(resetOp.ops[0], segmentGroup));
             }
-            return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
-        } finally {
-            this.logger.sendPerformanceEvent({
-                eventName: "MergeTree:RegeneratePendingOp",
-                category: "performance",
-                duration: elapsedMicroseconds(trace),
-            });
+        } else {
+            assert((resetOp.type as any) !== ops.MergeTreeDeltaType.GROUP,
+                0x03c /* "Reset op has 'group' delta type!" */);
+            assert(!Array.isArray(segmentGroup),
+                0x03d /* "segmentGroup is array rather than singleton!" */);
+            opList.push(
+                ...this.resetPendingDeltaToOps(resetOp, segmentGroup));
         }
+        return opList.length === 1 ? opList[0] : OpBuilder.createGroupOp(...opList);
     }
 
     public createTextHelper() {

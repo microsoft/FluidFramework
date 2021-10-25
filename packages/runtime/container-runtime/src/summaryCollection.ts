@@ -226,6 +226,14 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
             (this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber);
     }
 
+    public addOpListener(listener: () => void) {
+        this.deltaManager.on("op", listener);
+    }
+
+    public removeOpListener(listener: () => void) {
+        this.deltaManager.off("op", listener);
+    }
+
     public constructor(
         private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         private readonly logger: ITelemetryLogger,

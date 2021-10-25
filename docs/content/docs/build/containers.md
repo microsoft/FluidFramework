@@ -30,7 +30,6 @@ This example schema defines two initial objects, `layout` and `text`, and declar
 
 ```typescript
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -44,7 +43,7 @@ const schema = {
 Containers are created from the service-specific client's `createContainer` function. Your code must provide a configuration that is specific to the service and a schema object that defines the container schema. About this code note:
 
 - `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `containerServices`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+- It is a good practice to deconstruct the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example of the use of the latter, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 ```typescript {linenos=inline,hl_lines=[7,8]}
 const schema = {
@@ -86,7 +85,6 @@ const containerId = await container.attach();
 ### Loading a container
 
 To load the container created in the above section your code calls the client's `getContainer` method. The call must pass the `id` of the container to load as well as the exact same schema definition used when creating the container. The same container schema is required on all subsequent loads or the container will not be loaded correctly.
-schema is required on all subsequent loads or the container will not be loaded correctly.
 
 Note that when loading an existing container, the container is already attached.
 
@@ -116,7 +114,7 @@ data is shared with other clients. This is an ideal time to create initial data 
 The container exposes the connected state of the client and emits connected and disconnected events to notify the caller if the underlying connection is disrupted. Fluid will by default attempt to reconnect in case of lost/intermittent connectivity.
 
 ```typescript {linenos=inline}
-const connected = container.connected();
+const connected = container.connected;
 
 container.on("disconnected", () => {
     // handle disconnected
@@ -136,10 +134,47 @@ The container object may be disposed to remove any server connections and clean 
 ```typescript {linenos=inline}
 container.dispose();
 
-const disposed = container.disposed();
+const disposed = container.disposed;
 
 container.on("disposed", () => {
     // handle event cleanup to prevent memory leaks
+});
+```
+
+### isDirty
+
+A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service. Closing the container while `isDirty === true` will result in the loss of any operations that have not yet been acknowledged by the service. Closing the container while true will result in the loss of these local changes.
+
+You should always check the `isDirty` flag before closing the container or navigating away from the page.
+
+A container is considered dirty in the following cases:
+
+1. The container has local changes that have not yet been acknowledged by the service. These unacknowledged changes will be lost if the container is closed.
+1. There is no network connection while making changes to the container. These changes cannot be acknowledged by the service until the network connection is restored.
+
+Note that a container is *not* considered dirty in the following cases:
+
+1. The container is in the *detached* state. Changes to a detached container are not sent to the service until the container is *attached*, but the container is not considered dirty because it is detached. Stated differently, a detached container will never be dirty.
+1. The container is being attached. While it is being attached, the container's outstanding operations are sent to the service. However, the container will not be dirty in this case. Once the container is attached, then further changes to it will cause it to become dirty.
+1. The network connection disconnects without any outstanding changes to the container. In this case, the container is not considered dirty because it has no local changes that haven't been sent to the service.
+
+### saved
+
+The container emits the saved event to notify the caller that all the local changes have been acknowledged by the service and the document is marked as clean.
+
+```typescript {linenos=inline}
+container.on("saved", () => {
+    // allow the user to edit
+});
+```
+
+### dirty
+
+The container emits the dirty event to notify the caller that there are local changes that have not been acknowledged by the service yet and the document is still in a dirty state.
+
+```typescript {linenos=inline}
+container.on("dirty", () => {
+    // prevent the user from editing to avoid data loss
 });
 ```
 
@@ -150,7 +185,6 @@ These shared objects are exposed via the `initialObjects` property on the contai
 
 ```typescript {linenos=inline}
 const schema = {
-    name: "example-container",
     initialObjects: {
         layout: SharedMap,
         text: SharedString
@@ -190,12 +224,6 @@ First, if your application loads two different experiences that have different u
 A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
-{{% callout tip %}}
-
-Use the `name` property on the container to help manage multiple containers.
-
-{{% /callout %}}
-
 ## Container services
 
 When you load a container, the Fluid service will also return a service-specific *services* object. This object contains
@@ -211,17 +239,13 @@ references to useful services you can use to build richer apps. An example of a 
 
 <!-- Classes and interfaces -->
 
-[ContainerRuntimeFactoryWithDefaultDataStore]: {{< relref "containerruntimefactorywithdefaultdatastore.md" >}}
-[DataObject]: {{< relref "dataobject.md" >}}
-[DataObjectFactory]: {{< relref "dataobjectfactory.md" >}}
-[PureDataObject]: {{< relref "puredataobject.md" >}}
-[PureDataObjectFactory]: {{< relref "puredataobjectfactory.md" >}}
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedNumberSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedObjectSequence]: {{< relref "sequences.md#sharedobjectsequence-and-sharednumbersequence" >}}
 [SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "/docs/data-structures/task-manager.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->

@@ -99,7 +99,7 @@ class BlobCache {
         if (this.blobCacheTimeout !== undefined) {
             // If we already have an outstanding timer, just signal that we should defer the clear
             this.deferBlobCacheClear = true;
-        } else {
+        } else if (this.purgeEnabled) {
             // If we don't have an outstanding timer, set a timer
             // When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
             const clearCacheOrDefer = () => {
@@ -114,10 +114,8 @@ class BlobCache {
                     // We want to optimize both - memory footprint and number of future requests to storage.
                     // Note that Container can realize data store or DDS on-demand at any point in time, so we do not
                     // control when blobs will be used.
-                    if (this.purgeEnabled) {
-                        this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
-                        this._blobCache.clear();
-                    }
+                    this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+                    this._blobCache.clear();
                 }
             };
             this.blobCacheTimeout = setTimeout(clearCacheOrDefer, this.blobCacheTimeoutDuration);
@@ -423,17 +421,29 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                         const snapshotP = this.fetchSnapshot(hostSnapshotOptions);
 
-                        const promiseRaceWinner = await promiseRaceWithWinner([cachedSnapshotP, snapshotP]);
+                        // Ensure that failures on both paths are ignored initially.
+                        // I.e. if cache fails for some reason, we will proceed with network result.
+                        // And vice versa - if (for example) client is offline and network request fails first, we
+                        // do want to attempt to succeed with cached data!
+                        const promiseRaceWinner = await promiseRaceWithWinner([
+                            cachedSnapshotP.catch(() => undefined),
+                            snapshotP.catch(() => undefined),
+                        ]);
                         cachedSnapshot = promiseRaceWinner.value;
+                        method = promiseRaceWinner.index === 0 ? "cache" : "network";
 
                         if (cachedSnapshot === undefined) {
-                            cachedSnapshot = await snapshotP;
+                            // if network failed -> wait for cache ( then return network failure)
+                            // If cache returned empty or failed -> wait for network (success of failure)
+                            if (promiseRaceWinner.index === 1) {
+                                cachedSnapshot = await cachedSnapshotP;
+                                method = "cache";
+                            }
+                            if (cachedSnapshot === undefined) {
+                                cachedSnapshot = await snapshotP;
+                                method = "network";
+                            }
                         }
-                        else {
-                            snapshotP.catch(() => {});
-                        }
-
-                        method = promiseRaceWinner.index === 0 && promiseRaceWinner.value !== undefined ? "cache" : "network";
                     } else {
                         // Note: There's a race condition here - another caller may come past the undefined check
                         // while the first caller is awaiting later async code in this block.
@@ -448,7 +458,9 @@ export class OdspDocumentStorageService implements IDocumentStorageService {
                     }
                     event.end({ method });
                     return cachedSnapshot;
-                });
+                },
+                {end: true, cancel: "error"},
+            );
 
             // Successful call, redirect future calls to getVersion only!
             this.firstVersionCall = false;

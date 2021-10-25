@@ -22,7 +22,7 @@ import {
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { Container, DeltaManager, waitContainerToCatchUp } from "@fluidframework/container-loader";
+import { Container, waitContainerToCatchUp } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 
@@ -117,11 +117,9 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
-        const deltaManager = container.deltaManager as DeltaManager;
+        const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
         assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
-        assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
-        assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
         assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
         assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");
@@ -172,11 +170,9 @@ describe("No Delta Stream", () => {
         assert.strictEqual(container.readonlyPermissions, true, "container.readonlyPermissions");
         assert.ok(container.readOnlyInfo.readonly, "container.storageOnly");
 
-        const deltaManager = container.deltaManager as DeltaManager;
+        const deltaManager = container.deltaManager;
         assert.strictEqual(deltaManager.active, false, "deltaManager.active");
         assert.strictEqual(deltaManager.readonly, true, "deltaManager.readonly");
-        assert.strictEqual(deltaManager.readonlyPermissions, true, "deltaManager.readonlyPermissions");
-        assert.strictEqual(deltaManager.connectionMode, "read", "deltaManager.connectionMode");
         assert.ok(deltaManager.readOnlyInfo.readonly, "deltaManager.readOnlyInfo.readonly");
         assert.ok(deltaManager.readOnlyInfo.permissions, "deltaManager.readOnlyInfo.permissions");
         assert.ok(deltaManager.readOnlyInfo.storageOnly, "deltaManager.readOnlyInfo.storageOnly");

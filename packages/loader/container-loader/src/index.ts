@@ -3,6 +3,20 @@
  * Licensed under the MIT License.
  */
 
-export * from "./container";
-export * from "./deltaManager";
-export * from "./loader";
+export {
+    ConnectionState,
+    Container,
+    IContainerLoadOptions,
+    IContainerConfig,
+    waitContainerToCatchUp,
+} from "./container";
+export {
+    ICodeDetailsLoader,
+    IDetachedBlobStorage,
+    IFluidModuleWithDetails,
+    ILoaderOptions,
+    ILoaderProps,
+    ILoaderServices,
+    Loader,
+    RelativeLoader,
+} from "./loader";

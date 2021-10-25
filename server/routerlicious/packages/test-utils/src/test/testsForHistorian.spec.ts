@@ -40,7 +40,7 @@ describe("Test for Historian", () => {
         const gitManager = new GitManager(historian);
         const blob1: ICreateBlobParams = {
             content: "content",
-            encoding: "utf8",
+            encoding: "utf-8",
         };
         const blob2: ICreateBlobParams = {
             content: fromUtf8ToBase64(blob1.content),

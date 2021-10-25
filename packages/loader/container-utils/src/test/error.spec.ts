@@ -6,9 +6,8 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluid-internal/mock-logger";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
-import { isILoggingError, LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, LoggingError, MockLogger, normalizeError } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { CreateProcessingError, DataProcessingError, GenericError, wrapError, wrapErrorAndLog } from "../error";
 

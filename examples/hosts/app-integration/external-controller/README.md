@@ -71,7 +71,7 @@ const connectionConfig: AzureConnectionConfig = useAzure ? {
     orderer: "ENTER-ORDERER-URL-HERE",
     storage: "ENTER-STORAGE-URL-HERE",
 } : {
-    tenantId: "local",
+    tenantId: LOCAL_MODE_TENANT_ID,
     tokenProvider: new InsecureTokenProvider("fooBar", user),
     orderer: "http://localhost:7070",
     storage: "http://localhost:7070",

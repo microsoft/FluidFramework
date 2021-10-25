@@ -20,8 +20,8 @@ describe('Test Int64Property', function () {
         PropertyFactory = require('../..').PropertyFactory;
         BaseProperty = require('../..').BaseProperty;
         ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
-        Uint64 = require('@fluid-experimental/property-common').Datastructures.Uint64;
+        Int64 = require('@fluid-experimental/property-common').Int64;
+        Uint64 = require('@fluid-experimental/property-common').Uint64;
         MSG = require('@fluid-experimental/property-common').constants.MSG
 
         TestInt64ArrayTemplate = {

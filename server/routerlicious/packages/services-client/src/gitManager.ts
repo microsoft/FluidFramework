@@ -119,7 +119,7 @@ export class GitManager implements IGitManager {
         return this.historian.getContent(path, commit);
     }
 
-    public createBlob(content: string, encoding: string): Promise<resources.ICreateBlobResponse> {
+    public createBlob(content: string, encoding: "utf-8" |"base64"): Promise<resources.ICreateBlobResponse> {
         const blob: resources.ICreateBlobParams = {
             content,
             encoding,
@@ -143,6 +143,10 @@ export class GitManager implements IGitManager {
 
     public async createSummary(summary: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
         return this.historian.createSummary(summary);
+    }
+
+    public async deleteSummary(softDelete: boolean): Promise<void> {
+        return this.historian.deleteSummary(softDelete);
     }
 
     public async getSummary(sha: string): Promise<IWholeFlatSummary> {

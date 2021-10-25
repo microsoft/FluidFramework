@@ -18,6 +18,7 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // (undocumented)
     enableRedeemFallback?: boolean;
+    enableShareLinkWithCreate?: boolean;
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
     // (undocumented)
@@ -66,6 +67,8 @@ export interface IOdspError {
     readonly message: string;
     // (undocumented)
     online?: string;
+    // (undocumented)
+    serverEpoch?: string;
 }
 
 // @public (undocumented)
@@ -89,7 +92,8 @@ export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     hashedDocumentId: string;
     // (undocumented)
     odspResolvedUrl: true;
-    // (undocumented)
+    shareLinkInfo?: ShareLinkInfoType;
+    // @deprecated (undocumented)
     sharingLinkToRedeem?: string;
     // (undocumented)
     summarizer: boolean;
@@ -167,6 +171,22 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
     siteUrl: string;
+}
+
+// @public
+export interface ShareLinkInfoType {
+    createLink?: {
+        type?: ShareLinkTypes;
+        link?: string;
+        error?: any;
+    };
+    sharingLinkToRedeem?: string;
+}
+
+// @public
+export enum ShareLinkTypes {
+    // (undocumented)
+    csl = "csl"
 }
 
 // @public

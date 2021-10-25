@@ -13,6 +13,7 @@ import {
     ISignalMessage,
     MessageType,
     NackErrorType,
+    ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
     canSummarize,
@@ -27,7 +28,9 @@ import * as core from "@fluidframework/server-services-core";
 import {
     BaseTelemetryProperties,
     CommonProperties,
+    LumberEventName,
     Lumberjack,
+    getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
     createRoomJoinMessage,
@@ -36,6 +39,8 @@ import {
     getRandomInt,
     generateClientId,
 } from "../utils";
+
+const summarizerClientType = "summarizer";
 
 interface IRoom {
 
@@ -63,14 +68,9 @@ const getMessageMetadata = (documentId: string, tenantId: string) => ({
     tenantId,
 });
 
-const getLumberProperties = (documentId: string, tenantId: string) => ({
-    [BaseTelemetryProperties.tenantId]: tenantId,
-    [BaseTelemetryProperties.documentId]: documentId,
-});
-
 const handleServerError = async (logger: core.ILogger, errorMessage: string, documentId: string, tenantId: string) => {
     logger.error(errorMessage, { messageMetaData: getMessageMetadata(documentId, tenantId) });
-    Lumberjack.error(errorMessage, getLumberProperties(documentId, tenantId));
+    Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
     // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject({ code: 500, message: "Failed to connect client to document." });
 };
@@ -174,14 +174,9 @@ export function configureWebSocketServices(
 
         const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
-        function isWriter(scopes: string[], existing: boolean, mode: ConnectionMode): boolean {
+        function isWriter(scopes: string[], mode: ConnectionMode): boolean {
             if (hasWriteAccess(scopes)) {
-                // New document needs a writer to boot.
-                if (!existing) {
-                    return true;
-                } else {
-                    return mode === "write";
-                }
+                return mode === "write";
             } else {
                 return false;
             }
@@ -256,8 +251,14 @@ export function configureWebSocketServices(
             // Todo: should all the client details come from the claims???
             // we are still trusting the users permissions and type here.
             const messageClient: Partial<IClient> = message.client ? message.client : {};
+            const isSummarizer = messageClient.details?.type === summarizerClientType;
             messageClient.user = claims.user;
             messageClient.scopes = claims.scopes;
+
+            // Do not give SummaryWrite scope to clients that are not summarizers
+            if (!isSummarizer) {
+                messageClient.scopes = claims.scopes.filter((scope) => scope !== ScopeType.SummaryWrite);
+            }
 
             // back-compat: remove cast to any once new definition of IClient comes through.
             (messageClient as any).timestamp = connectedTimestamp;
@@ -280,19 +281,11 @@ export function configureWebSocketServices(
                 });
             }
 
-            const detailsP = storage.getOrCreateDocument(claims.tenantId, claims.documentId)
-                .catch(async (err) => {
-                    const errMsg = `Failed to get or create document. Error: ${safeStringify(err, undefined, 2)}`;
-                    return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-                });
-
-            const clientsP = clientManager.getClients(claims.tenantId, claims.documentId)
+            const clients = await clientManager.getClients(claims.tenantId, claims.documentId)
                 .catch(async (err) => {
                     const errMsg = `Failed to get clients. Error: ${safeStringify(err, undefined, 2)}`;
                     return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                 });
-
-            const [details, clients] = await Promise.all([detailsP, clientsP]);
 
             if (clients.length > maxNumberOfClientsPerDocument) {
                 // eslint-disable-next-line prefer-promise-reject-errors
@@ -320,14 +313,14 @@ export function configureWebSocketServices(
             }
 
             let connectedMessage: IConnected;
-            if (isWriter(messageClient.scopes, details.existing, message.mode)) {
+            if (isWriter(messageClient.scopes, message.mode)) {
                 const orderer = await orderManager.getOrderer(claims.tenantId, claims.documentId)
                     .catch(async (err) => {
                         const errMsg = `Failed to get orderer manager. Error: ${safeStringify(err, undefined, 2)}`;
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
                     });
 
-                const connection = await orderer.connect(socket, clientId, messageClient as IClient, details)
+                const connection = await orderer.connect(socket, clientId, messageClient as IClient)
                     .catch(async (err) => {
                         const errMsg = `Failed to connect to orderer. Error: ${safeStringify(err, undefined, 2)}`;
                         return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
@@ -341,7 +334,7 @@ export function configureWebSocketServices(
                     logger.error(`Disconnecting socket on connection error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
                     Lumberjack.error(
                         `Disconnecting socket on connection error`,
-                        getLumberProperties(connection.documentId, connection.tenantId),
+                        getLumberBaseProperties(connection.documentId, connection.tenantId),
                         error,
                     );
                     clearExpirationTimer();
@@ -360,7 +353,7 @@ export function configureWebSocketServices(
                 connectedMessage = {
                     claims,
                     clientId,
-                    existing: details.existing,
+                    existing: true,
                     maxMessageSize: connection.maxMessageSize,
                     mode: "write",
                     serviceConfiguration: {
@@ -378,7 +371,7 @@ export function configureWebSocketServices(
                 connectedMessage = {
                     claims,
                     clientId,
-                    existing: details.existing,
+                    existing: true,
                     maxMessageSize: 1024, // Readonly client can't send ops.
                     mode: "read",
                     serviceConfiguration: {
@@ -407,6 +400,9 @@ export function configureWebSocketServices(
         // Note connect is a reserved socket.io word so we use connect_document to represent the connect request
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         socket.on("connect_document", async (connectionMessage: IConnect) => {
+            const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
+            connectMetric.setProperties(getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId));
+
             connectDocument(connectionMessage).then(
                 (message) => {
                     socket.emit("connect_document_success", message.connection);
@@ -417,16 +413,17 @@ export function configureWebSocketServices(
                             "signal",
                             createRoomJoinMessage(message.connection.clientId, message.details));
                     }
+
+                    connectMetric.setProperties({
+                        [CommonProperties.clientId]: message.connection.clientId,
+                        [CommonProperties.clientCount]: message.connection.initialClients.length + 1,
+                        [CommonProperties.clientType]: message.details.details?.type,
+                    });
+                    connectMetric.success(`Connect document successful`);
                 },
                 (error) => {
-                    const messageMetaData = getMessageMetadata(connectionMessage.id, connectionMessage.tenantId);
-                    logger.error(`Connect Document error: ${safeStringify(error, undefined, 2)}`, { messageMetaData });
-                    Lumberjack.error(
-                        `Connect Document error`,
-                        getLumberProperties(connectionMessage.id, connectionMessage.tenantId),
-                        error,
-                    );
                     socket.emit("connect_document_error", error);
+                    connectMetric.error(`Connect document failed`, error);
                 });
         });
 
@@ -527,7 +524,7 @@ export function configureWebSocketServices(
                 logger.info(`Disconnect of ${clientId}`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId}`,
-                    getLumberProperties(connection.documentId, connection.tenantId),
+                    getLumberBaseProperties(connection.documentId, connection.tenantId),
                 );
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 connection.disconnect();
@@ -539,7 +536,7 @@ export function configureWebSocketServices(
                 logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
                 Lumberjack.info(
                     `Disconnect of ${clientId} from room`,
-                    getLumberProperties(room.documentId, room.tenantId),
+                    getLumberBaseProperties(room.documentId, room.tenantId),
                 );
                 removeP.push(clientManager.removeClient(room.tenantId, room.documentId, clientId));
                 socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));

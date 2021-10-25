@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes } from "@fluidframework/odsp-driver-definitions";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";
@@ -127,5 +127,77 @@ describe("Create New Utils Tests", () => {
                 );
         const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
         test(snapshot);
+    });
+
+    it("Should save share link information received during createNewFluidFile", async () => {
+        const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
+        const driveId = "driveId";
+        const itemId = "itemId";
+        const createLinkType = ShareLinkTypes.csl;
+        const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
+        const resolvedUrl = ({ siteUrl, driveId, itemId, odspResolvedUrl: true } as any) as IOdspResolvedUrl;
+        // use null logger here as we expect errors
+        const epochTracker = new EpochTracker(
+            createUtLocalCache(),
+            {
+                docId: hashedDocumentId,
+                resolvedUrl,
+            },
+            new TelemetryNullLogger());
+
+        const newFileParams: INewFileInfo = {
+            driveId,
+            siteUrl: "https://www.localhost.xxx",
+            filePath: "path",
+            filename: "filename",
+            createLinkType,
+        };
+
+        const fileEntry: IFileEntry = {
+            docId: hashedDocumentId,
+            resolvedUrl,
+        };
+
+        // Test that sharing link is set appropriately when it is received in the response from ODSP
+        const mockSharingLink = "mockSharingLink";
+        let odspResolvedUrl = await mockFetchOk(
+                async () =>createNewFluidFile(
+                    async (_options) => "token",
+                    newFileParams,
+                    new TelemetryNullLogger(),
+                    createSummary(),
+                    epochTracker,
+                    fileEntry,
+                    false,
+                ),
+                { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined},
+                { "x-fluid-epoch": "epoch1" },
+                );
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink,{
+            type:createLinkType,
+            link: mockSharingLink,
+            error: undefined,
+        });
+
+        // Test that error message is set appropriately when it is received in the response from ODSP
+        const mockError = "mockError";
+        odspResolvedUrl = await mockFetchOk(
+            async () =>createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                false,
+            ),
+            { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError},
+            { "x-fluid-epoch": "epoch1" },
+            );
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink,{
+            type:createLinkType,
+            link: undefined,
+            error: mockError,
+        });
     });
 });

@@ -10,6 +10,9 @@ export interface IDeliServerConfiguration {
     // Enables nack messages logic
     enableNackMessages: boolean;
 
+    // Enables hashing of sequenced ops
+    enableOpHashing: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -60,6 +63,10 @@ export interface IDeliSummaryNackMessagesServerConfiguration {
     // the op count since the last summary exceeds this limit
     enable: boolean;
 
+    // Check the summary nack messages state when starting up
+    // It will potentionally reset the nackMessages flag
+    checkOnStartup: boolean;
+
     // Amount of ops since the last summary before starting to nack
     maxOps: number;
 
@@ -109,9 +116,6 @@ export interface IServerConfiguration {
     // Enable adding a traces array to operation messages
     enableTraces: boolean;
 
-    // Enable lambda metrics using the Lumber telemetry framework
-    enableLambdaMetrics: boolean;
-
     // Enable metrics using the Lumber telemetry framework
     enableLumberMetrics: boolean;
 }
@@ -120,7 +124,6 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     blockSize: 64436,
     maxMessageSize: 16 * 1024,
     enableTraces: true,
-    enableLambdaMetrics: false,
     enableLumberMetrics: true,
     summary: {
         idleTime: 5000,
@@ -130,6 +133,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
     deli: {
         enableNackMessages: true,
+        enableOpHashing: true,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,
@@ -141,6 +145,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         },
         summaryNackMessages: {
             enable: false,
+            checkOnStartup: false,
             maxOps: 5000,
             nackContent: {
                 code: 429,

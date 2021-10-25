@@ -17,7 +17,7 @@ describe('Int64MapProperty', function () {
         PropertyFactory = require('../..').PropertyFactory;
         BaseProperty = require('../..').BaseProperty;
         ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-        Int64 = require('@fluid-experimental/property-common').Datastructures.Int64;
+        Int64 = require('@fluid-experimental/property-common').Int64;
 
         // Register a template with a set property for the tests
         var TestPropertyTemplate = {

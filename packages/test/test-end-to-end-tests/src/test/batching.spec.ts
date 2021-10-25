@@ -329,11 +329,7 @@ describeFullCompat("Batching", (getTestObjectProvider) => {
     describe("Document Dirty State", () => {
         // Verifies that the document dirty state for the given document is as expected.
         function verifyDocumentDirtyState(dataStore: ITestFluidObject, expectedState: boolean) {
-            let dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
-            // back-compat: 0.35: remove in future versions
-            if (dirty === undefined) {
-                dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDocumentDirty();
-            }
+            const dirty = (dataStore.context.containerRuntime as IContainerRuntime).isDirty;
             assert.equal(dirty, expectedState, "The document dirty state is not as expected");
         }
 

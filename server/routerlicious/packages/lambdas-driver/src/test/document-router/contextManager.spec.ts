@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage, ILogger, IContextErrorData } from "@fluidframework/server-services-core";
+import {
+    IContext,
+    IQueuedMessage,
+    ILogger,
+    IContextErrorData,
+    IRoutingKey,
+} from "@fluidframework/server-services-core";
 import { TestKafka, DebugLogger } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import { DocumentContextManager } from "../../document-router/contextManager";
@@ -30,10 +36,16 @@ describe("document-router", () => {
         let offset0: IQueuedMessage, offset5: IQueuedMessage, offset10: IQueuedMessage,
             offset12: IQueuedMessage, offset15: IQueuedMessage, offset20: IQueuedMessage,
             offset25: IQueuedMessage;
+        let routingKey: IRoutingKey;
 
         beforeEach(async () => {
             testContext = new TestContext();
             testContextManager = new DocumentContextManager(testContext);
+
+            routingKey = {
+                tenantId: "test-tenant-id",
+                documentId: "test-document-id",
+            };
 
             offset0 = TestKafka.createdQueuedMessage(0);
             offset5 = TestKafka.createdQueuedMessage(5);
@@ -48,7 +60,7 @@ describe("document-router", () => {
             it("Should be able to create and then track a document context", () => {
                 // Create an initial context
                 testContextManager.setHead(offset0);
-                const context = testContextManager.createContext(offset0);
+                const context = testContextManager.createContext(routingKey, offset0);
                 testContextManager.setTail(offset0);
 
                 // Move the head offset and update the context to match
@@ -64,17 +76,17 @@ describe("document-router", () => {
             it("Should be able to create and track multiple document contexts", () => {
                 // Create an initial context
                 testContextManager.setHead(offset0);
-                const context0 = testContextManager.createContext(offset0);
+                const context0 = testContextManager.createContext(routingKey, offset0);
                 testContextManager.setTail(offset0);
 
                 // And then a second one
                 testContextManager.setHead(offset5);
-                const context1 = testContextManager.createContext(offset5);
+                const context1 = testContextManager.createContext(routingKey, offset5);
                 testContextManager.setTail(offset5);
 
                 // Third context
                 testContextManager.setHead(offset10);
-                const context2 = testContextManager.createContext(offset10);
+                const context2 = testContextManager.createContext(routingKey, offset10);
                 testContextManager.setTail(offset10);
 
                 // Offset should still be unset
@@ -118,7 +130,7 @@ describe("document-router", () => {
             it("Should correctly compute the checkpointed offset after contexts switch pending work state", () => {
                 // Create an initial context
                 testContextManager.setHead(offset0);
-                const context = testContextManager.createContext(offset0);
+                const context = testContextManager.createContext(routingKey, offset0);
                 testContextManager.setTail(offset0);
 
                 // Checkpoint the main context at a later point - having it no longer have pending work
@@ -146,7 +158,7 @@ describe("document-router", () => {
             it("Should ignore contexts without pending work", () => {
                 // Create an initial context
                 testContextManager.setHead(offset0);
-                const context = testContextManager.createContext(offset0);
+                const context = testContextManager.createContext(routingKey, offset0);
                 context.checkpoint(offset0);
                 testContextManager.setTail(offset0);
 
@@ -161,7 +173,7 @@ describe("document-router", () => {
             it("Should not checkpoint until the starting offset changes", () => {
                 // Create an initial context and verify no change to the checkpoint offset
                 testContextManager.setHead(offset0);
-                testContextManager.createContext(offset0);
+                testContextManager.createContext(routingKey, offset0);
                 testContextManager.setTail(offset0);
                 assert.equal(testContext.offset, -1);
 
@@ -173,7 +185,7 @@ describe("document-router", () => {
 
             it("Should emit an error if a created context emits an error", async () => {
                 testContextManager.setHead(offset0);
-                const context = testContextManager.createContext(offset0);
+                const context = testContextManager.createContext(routingKey, offset0);
                 testContextManager.setTail(offset0);
 
                 return new Promise<void>((resolve, reject) => {

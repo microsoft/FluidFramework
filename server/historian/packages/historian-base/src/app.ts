@@ -16,6 +16,7 @@ import split = require("split");
 import * as winston from "winston";
 import { bindCorrelationId } from "@fluidframework/server-services-utils";
 import { CommonProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, ITenantService } from "./services";
 import { getTenantIdFromRequest } from "./utils";
@@ -36,6 +37,18 @@ export function create(
     asyncLocalStorage?: AsyncLocalStorage<string>) {
     // Express app configuration
     const app: express.Express = express();
+
+    // initialize RestLess server translation
+    const restLessMiddleware: () => express.RequestHandler = () => {
+        const restLessServer = new RestLessServer();
+        return (req, res, next) => {
+            restLessServer
+                .translate(req)
+                .then(() => next())
+                .catch(next);
+        };
+    };
+    app.use(restLessMiddleware());
 
     const loggerFormat = config.get("logger:morganFormat");
     if (loggerFormat === "json") {

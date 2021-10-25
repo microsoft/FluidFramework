@@ -18,7 +18,7 @@ import {
     SummaryReader,
     SummaryWriter,
 } from "@fluidframework/server-lambdas";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
     DefaultServiceConfiguration,
     IContext,
@@ -53,12 +53,14 @@ const DefaultScribe: IScribe = {
     minimumSequenceNumber: -1,
     protocolState: undefined,
     sequenceNumber: -1,
+    lastSummarySequenceNumber: 0,
 };
 
 const DefaultDeli: IDeliState = {
     clients: undefined,
     durableSequenceNumber: 0,
     epoch: 0,
+    expHash1: defaultHash,
     logOffset: -1,
     sequenceNumber: 0,
     term: 1,

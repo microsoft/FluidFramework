@@ -1,5 +1,7 @@
 ---
 title: "Fluid Framework"
+aliases:
+  - /playground/
 ---
 
 {{< jumbotron

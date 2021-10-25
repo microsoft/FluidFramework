@@ -16,15 +16,14 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { flattenRuntimeOptions } from "./flattenRuntimeOptions";
 
 const testContainerConfig: ITestContainerConfig = {
-    runtimeOptions: flattenRuntimeOptions({
+    runtimeOptions: {
         summaryOptions: {
             initialSummarizerDelayMs: 20,
             summaryConfigOverrides: { maxOps: 1 },
         },
-    }),
+    },
     registry: [["sharedString", SharedString.getFactory()]],
 };
 
@@ -52,8 +51,12 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 
 describeFullCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        // Currently FRS does not support blob API.
+        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+            this.skip();
+        }
     });
 
     it("attach sends an op", async function() {
@@ -190,10 +193,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         const container = await provider.makeTestContainer(testContainerConfig);
         const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
 
-        (container.deltaManager as any)._inbound.pause();
-
         const blobOpP = new Promise<void>((res) => container.deltaManager.on("submitOp", (op) => {
             if (op.contents.includes("blobAttach")) {
+                (container.deltaManager as any)._inbound.pause();
                 res();
             }
         }));
@@ -204,6 +206,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     });
 });
 
+// TODO: #7684
 const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string => {
     assert(provider.driver.type === "odsp");
     assert(itemId);
@@ -216,8 +219,12 @@ const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string
 // tests above when the LTS version is bumped > 0.47
 describeNoCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        // Currently FRS does not support blob API.
+        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+            this.skip();
+        }
     });
 
     it("works in detached container", async function() {

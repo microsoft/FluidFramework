@@ -13,7 +13,10 @@ const excludedTypography = [
 ];
 
 const excludedWords = [
+    "Azure Fluid Relay service",
+    "Azure Relay Service",
     "FRS",
+    "`Tinylicious`",
 ]
 
 const clamp = (number, min, max) => {
@@ -109,7 +112,9 @@ module.exports = {
         "proper-names": { // MD044
             "code_blocks": false,
             "names": [
-                "Azure Fluid Relay service",
+                "Azure AD",
+                "Azure Active Directory",
+                "Azure Fluid Relay",
                 "Fluid container",
                 "Fluid containers",
                 "Fluid Framework",
@@ -119,7 +124,9 @@ module.exports = {
                 "npm",
                 "Routerlicious",
                 "Tinylicious",
-                "tinylicious.md", // Without this entry, markdownlint incorrectly flags "tinylicious.md" as an improper spelling of "Tinylicious".
+                // Without the following entries, markdownlint incorrectly flags various correct usages of tinylicious.
+                "tinylicious.md",
+                "tinylicious-client",
             ]
         }
     },

@@ -5,9 +5,15 @@
 
 import { IThrottlerResponse } from "@fluidframework/server-services-core";
 import { TestThrottleStorageManager } from "@fluidframework/server-test-utils";
+import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import assert from "assert";
 import Sinon from "sinon";
 import { ThrottlerHelper } from "../throttlerHelper";
+
+const lumberjackEngine = new TestEngine1();
+if (!Lumberjack.isSetupCompleted()) {
+    Lumberjack.setup([lumberjackEngine]);
+}
 
 describe("ThrottlerHelper", () => {
     beforeEach(() => {

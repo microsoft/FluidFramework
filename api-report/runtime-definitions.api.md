@@ -117,7 +117,9 @@ export interface IEnvelope {
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
+    attachGraph(): void;
     readonly attachState: AttachState;
+    // @deprecated (undocumented)
     bindToContext(): void;
     getAttachSummary(): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -296,6 +298,7 @@ export interface ISummarizerNodeConfig {
 // @public (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
+    readonly maxUnreferencedDurationMs?: number;
 }
 
 // @public

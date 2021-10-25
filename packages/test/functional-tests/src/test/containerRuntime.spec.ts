@@ -11,7 +11,8 @@ import {
     ISequencedDocumentMessage,
     MessageType,
 } from "@fluidframework/protocol-definitions";
-import { DeltaManager } from "@fluidframework/container-loader";
+// eslint-disable-next-line import/no-internal-modules
+import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { ScheduleManager, DeltaScheduler } from "@fluidframework/container-runtime";
 

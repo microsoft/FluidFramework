@@ -166,19 +166,25 @@ export class RemoteChannelContext implements IChannelContext {
         // this as long as we support old attach messages
         if (attributes === undefined) {
             if (this.attachMessageType === undefined) {
-                // TODO: Properly Tag potential PII content #1920
+                // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelTypeNotAvailable", {
                     channelId: this.id,
-                    dataStoreId: this.dataStoreContext.id,
+                    dataStoreId: {
+                        value: this.dataStoreContext.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                 });
             }
             factory = this.registry.get(this.attachMessageType);
             if (factory === undefined) {
-                // TODO: Properly Tag potential PII content #1920
+                // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
                     channelId: this.id,
-                    dataStoreId: this.dataStoreContext.id,
+                    dataStoreId: {
+                        value: this.dataStoreContext.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: this.attachMessageType,
                 });
@@ -187,10 +193,13 @@ export class RemoteChannelContext implements IChannelContext {
         } else {
             factory = this.registry.get(attributes.type);
             if (factory === undefined) {
-                // TODO: Properly Tag potential PII content #1920
+                // TODO: dataStoreId may require a different tag from PackageData #7488
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
                     channelId: this.id,
-                    dataStoreId: this.dataStoreContext.id,
+                    dataStoreId: {
+                        value: this.dataStoreContext.id,
+                        tag: TelemetryDataTag.PackageData,
+                    },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: attributes.type,
                 });

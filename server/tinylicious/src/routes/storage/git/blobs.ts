@@ -15,7 +15,7 @@ export async function createBlob(
     authorization: string,
     body: ICreateBlobParams,
 ): Promise<ICreateBlobResponse> {
-    const buffer = Buffer.from(body.content, body.encoding as BufferEncoding);
+    const buffer = Buffer.from(body.content, body.encoding);
 
     const sha = await git.writeObject({
         dir: utils.getGitDir(store, tenantId),

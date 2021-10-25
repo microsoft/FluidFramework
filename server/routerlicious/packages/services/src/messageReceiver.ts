@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { ITaskMessage, ITaskMessageReceiver } from "@fluidframework/server-services-core";
 import * as amqp from "amqplib";
 import * as winston from "winston";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 class RabbitmqReceiver implements ITaskMessageReceiver {
     private readonly events = new EventEmitter();
@@ -23,6 +24,7 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
         this.channel = await this.connection.createChannel();
         await this.channel.assertQueue(this.taskQueueName, { durable: true });
         winston.info(`Rabbitmq task channel ready to receive!`);
+        Lumberjack.info(`Rabbitmq task channel ready to receive!`);
 
         // We don't need to ack the task messages since they will be part of next help message if unacked.
         // TODO: Reject messages and make sure the sender knows.

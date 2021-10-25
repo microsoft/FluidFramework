@@ -43,6 +43,24 @@ export function create(
         return service.createSummary(params);
     }
 
+    async function deleteSummary(
+        tenantId: string,
+        authorization: string,
+        softDelete: boolean): Promise<boolean[]> {
+        const service = await utils.createGitService(
+            tenantId,
+            authorization,
+            tenantService,
+            cache,
+            asyncLocalStorage,
+            true);
+        const deletionPs = [service.deleteSummary(softDelete)];
+        if (!softDelete) {
+            deletionPs.push(tenantService.deleteFromCache(tenantId, utils.parseToken(tenantId, authorization)));
+        }
+        return Promise.all(deletionPs);
+    }
+
     router.get("/repos/:ignored?/:tenantId/git/summaries/:sha",
         throttle(throttler, winston, commonThrottleOptions),
         (request, response, next) => {
@@ -53,7 +71,8 @@ export function create(
             utils.handleResponse(
                 summaryP,
                 response,
-                useCache);
+                // Browser caching for summary data should be disabled for now.
+                false);
     });
 
     router.post("/repos/:ignored?/:tenantId/git/summaries",
@@ -66,6 +85,21 @@ export function create(
                 response,
                 false,
                 201);
+    });
+
+    router.delete("/repos/:ignored?/:tenantId/git/summaries",
+        throttle(throttler, winston, commonThrottleOptions),
+        (request, response, next) => {
+            const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
+            const summaryP = deleteSummary(
+                request.params.tenantId,
+                request.get("Authorization"),
+                softDelete);
+
+            utils.handleResponse(
+                summaryP,
+                response,
+                false);
     });
 
     return router;

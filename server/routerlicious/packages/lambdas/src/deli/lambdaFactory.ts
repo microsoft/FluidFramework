@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -38,6 +38,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
         clients: undefined,
         durableSequenceNumber: 0,
         epoch,
+        expHash1: defaultHash,
         logOffset: -1,
         sequenceNumber: 0,
         term: 1,
@@ -80,6 +81,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
             dbObject = await this.collection.findOne({ documentId, tenantId });
+            // Check if the document was deleted prior.
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
@@ -87,7 +89,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             throw error;
         }
 
-        if (!dbObject) {
+        if (!dbObject || dbObject.scheduledDeletionTime) {
             // Temporary guard against failure until we figure out what causing this to trigger.
             return new NoOpLambda(context);
         }
@@ -121,7 +123,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    context.log?.info(`Deli checkpoint from summary: 
+                    context.log?.info(`Deli checkpoint from summary:
                         ${ JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {

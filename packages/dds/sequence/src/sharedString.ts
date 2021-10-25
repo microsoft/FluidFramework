@@ -14,10 +14,25 @@ import { SharedStringFactory } from "./sequenceFactory";
  * Fluid object interface describing access methods on a SharedString
  */
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
+    /**
+     * Inserts the text at the position.
+     * @param pos - The position to insert the text at
+     * @param text - The text to insert
+     * @param props - The properties of text
+     */
     insertText(pos: number, text: string, props?: MergeTree.PropertySet);
 
+    /**
+     * Inserts a marker at the position.
+     * @param pos - The position to insert the marker at
+     * @param refType - The reference type of the marker
+     * @param props - The properties of the marker
+     */
     insertMarker(pos: number, refType: MergeTree.ReferenceType, props?: MergeTree.PropertySet);
 
+    /**
+     * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
+     */
     posFromRelativePos(relativePos: MergeTree.IRelativePosition);
 }
 
@@ -25,7 +40,7 @@ export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker;
 
 /**
  * The Shared String is a specialized data structure for handling collaborative
- *  text. It is based on a more general Sequence data structure but has
+ * text. It is based on a more general Sequence data structure but has
  * additional features that make working with text easier.
  *
  * In addition to text, a Shared String can also contain markers. Markers can be
@@ -35,8 +50,7 @@ export type SharedStringSegment = MergeTree.TextSegment | MergeTree.Marker;
  */
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     /**
-     * Create a new shared string
-     *
+     * Create a new shared string.
      * @param runtime - data store runtime the new shared string belongs to
      * @param id - optional name of the shared string
      * @returns newly create shared string (but not attached yet)
@@ -47,7 +61,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
     /**
      * Get a factory for SharedString to register with the data store.
-     *
      * @returns a factory that creates and load SharedString
      */
     public static getFactory() {
@@ -66,9 +79,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Inserts a marker at a relative postition
-     *
-     * @param relativePos1 - The relative postition to insert the marker at
+     * Inserts a marker at a relative position.
+     * @param relativePos1 - The relative position to insert the marker at
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
@@ -89,11 +101,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Inserts a marker at the postition
-     *
-     * @param pos - The postition to insert the marker at
-     * @param refType - The reference type of the marker
-     * @param props - The properties of the marker
+     * {@inheritDoc ISharedString.insertMarker}
      */
     public insertMarker(
         pos: number,
@@ -112,9 +120,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Inserts the text at the postition
-     *
-     * @param relativePos1 - The relative postition to insert the text at
+     * Inserts the text at the position.
+     * @param relativePos1 - The relative position to insert the text at
      * @param text - The text to insert
      * @param props - The properties of text
      */
@@ -132,11 +139,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Inserts the text at the postition
-     *
-     * @param pos - The  postition to insert the text at
-     * @param text - The text to insert
-     * @param props - The properties of text
+     * {@inheritDoc ISharedString.insertText}
      */
     public insertText(pos: number, text: string, props?: MergeTree.PropertySet) {
         const segment = new MergeTree.TextSegment(text);
@@ -149,9 +152,9 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
             this.submitSequenceMessage(insertOp);
         }
     }
+
     /**
      * Replaces a range with the provided text.
-     *
      * @param start - The inclusive start of the range to replace
      * @param end - The exclusive end of the range to replace
      * @param text - The text to replace the range with
@@ -161,14 +164,18 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         this.replaceRange(start, end, MergeTree.TextSegment.make(text, props));
     }
 
+    /**
+     * Removes the text in the given range.
+     * @param start - The inclusive start of the range to remove
+     * @param end - The exclusive end of the range to replace
+     * @returns the message sent.
+     */
     public removeText(start: number, end: number) {
         return this.removeRange(start, end);
     }
 
     /**
-     * Annotates the marker with the provided properties
-     * and calls the callback on concensus.
-     *
+     * Annotates the marker with the provided properties and calls the callback on consensus.
      * @param marker - The marker to annotate
      * @param props - The properties to annotate the marker with
      * @param consensusCallback - The callback called when consensus is reached
@@ -184,8 +191,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     }
 
     /**
-     * Annotates the marker with the provided properties
-     *
+     * Annotates the marker with the provided properties.
      * @param marker - The marker to annotate
      * @param props - The properties to annotate the marker with
      * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
@@ -208,21 +214,31 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
     }
+
+    /**
+     * Retrieve text from the SharedString in string format.
+     * @param start - The starting index of the text to retrieve, or 0 if omitted.
+     * @param end - The ending index of the text to retrieve, or the end of the string if omitted
+     * @returns The requested text content as a string.
+     */
     public getText(start?: number, end?: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "", start, end);
     }
+
     /**
-     * Adds spaces for markers and handles, so that position calculations account for them
+     * Adds spaces for markers and handles, so that position calculations account for them.
      */
     public getTextWithPlaceholders() {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
     }
+
     public getTextRangeWithPlaceholders(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
+
     public getTextRangeWithMarkers(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);

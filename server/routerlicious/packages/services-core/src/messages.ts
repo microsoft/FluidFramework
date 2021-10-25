@@ -13,16 +13,17 @@ import {
 import { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
-export const RawOperationType: string = "RawOperation";
+export const RawOperationType = "RawOperation";
 
 // String identifying the sequenced operation message
-export const SequencedOperationType: string = "SequencedOperation";
+export const SequencedOperationType = "SequencedOperation";
 
-export const NackOperationType: string = "Nack";
+// String identifying nack messages
+export const NackOperationType = "Nack";
 
 export const SystemType: string = "System";
 
-export const BoxcarType: string = "boxcar";
+export const BoxcarType = "boxcar";
 
 /**
  * Base class for messages placed on the distributed log
@@ -40,6 +41,17 @@ export enum SystemOperations {
     Leave,
 }
 
+/**
+ * Object that indicates a specific session/document in the system
+ */
+export interface IRoutingKey {
+    // The tenant id
+    tenantId: string;
+
+    // The document id
+    documentId: string;
+}
+
 export interface ISystemMessage extends IMessage {
     // Id of the service sending the message
     id: string;
@@ -54,13 +66,7 @@ export interface ISystemMessage extends IMessage {
 /**
  * Message relating to an object
  */
-export interface IObjectMessage extends IMessage {
-    // The tenant the message is intended for
-    tenantId: string;
-
-    // The object the message is intended for
-    documentId: string;
-
+export interface IObjectMessage extends IMessage, IRoutingKey {
     // The client who submitted the message
     clientId: string | null;
 
@@ -81,6 +87,9 @@ export interface IUpdateReferenceSequenceNumberMessage extends IObjectMessage {
  * Raw message inserted into the event hub queue
  */
 export interface IRawOperationMessage extends IObjectMessage {
+    // The type of the message
+    type: typeof RawOperationType;
+
     // The message that was submitted
     operation: IDocumentMessage;
 }
@@ -88,32 +97,24 @@ export interface IRawOperationMessage extends IObjectMessage {
 /**
  * A group of IRawOperationMessage objects. Used in receiving batches of ops from Kafka.
  */
-export interface IRawOperationMessageBatch {
+export interface IRawOperationMessageBatch extends IRoutingKey {
     // Some ordered index to distinguish different batches. In the Kafka context, it is the Kafka offset.
     index: number;
-
-    // The tenant the message is intended for
-    tenantId: string;
-
-    // The object the message is intended for
-    documentId: string;
 
     contents: IRawOperationMessage[];
 }
 
 // Need to change this name - it isn't necessarily ticketed
-export interface ITicketedMessage extends IMessage {
-    // The tenant the message is intended for
-    tenantId: string;
-
-    // The object the message is intended for
-    documentId: string;
+export interface ITicketedMessage extends IMessage, IRoutingKey {
 }
 
 /**
  * Message sent when a raw operation is nacked
  */
 export interface INackMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof NackOperationType;
+
     // The client that is being NACKed
     clientId: string;
 
@@ -129,11 +130,17 @@ export interface INackMessage extends ITicketedMessage {
  * A sequenced operation
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof SequencedOperationType;
+
     // The sequenced operation
     operation: ISequencedDocumentMessage;
 }
 
 export interface IBoxcarMessage extends ITicketedMessage {
+    // The type of the message
+    type: typeof BoxcarType;
+
     contents: IMessage[];
 }
 

@@ -29,7 +29,7 @@
                 aria-label="Current Page: Documentation for FluidFramework" {{ end }}>Overview</a>
         </li>
 
-        {{- range .Site.Menus.section }}
+        {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
             {{ $isCurrentArea := (eq $menuArea $area) }}
 
@@ -66,9 +66,9 @@
             </li>
             {{- end -}}
         {{- end }}
-
-        <hr/>
-
+    </ul>
+    <hr/>
+    <ul class="nav">
         <li {{ if $in_api_section }} class="active" {{ end }}>
             <a class="docs-home" href="/docs/apis/" {{ if $in_api_section }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
@@ -132,7 +132,7 @@
     <h4>Topics</h4>
     <select id="small-nav-dropdown">
         <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
-        {{- range .Site.Menus.section }}
+        {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
 
             {{- if ne .URL "" -}}

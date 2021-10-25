@@ -49,14 +49,14 @@ describe("Big Matrix", function() {
         let matrix1: SharedMatrix;
         let matrix2: SharedMatrix;
         let dataStoreRuntime1: MockFluidDataStoreRuntime;
-        let containterRuntimeFactory: MockContainerRuntimeFactory;
+        let containerRuntimeFactory: MockContainerRuntimeFactory;
 
         beforeEach(async () => {
-            containterRuntimeFactory = new MockContainerRuntimeFactory();
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
 
             // Create and connect the first SharedMatrix.
             dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-            const containerRuntime1 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
             const services1: IChannelServices = {
                 deltaConnection: containerRuntime1.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -66,7 +66,7 @@ describe("Big Matrix", function() {
 
             // Create and connect the second SharedMatrix.
             const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-            const containerRuntime2 = containterRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2: IChannelServices = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
                 objectStorage: new MockStorage(),
@@ -79,7 +79,7 @@ describe("Big Matrix", function() {
             matrix1.insertRows(0, Const.excelMaxRows);
             matrix1.insertCols(0, Const.excelMaxCols);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
         });
@@ -91,7 +91,7 @@ describe("Big Matrix", function() {
             setCorners(matrix1);
             checkCorners(matrix1);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             checkCorners(matrix2);
         });
@@ -102,7 +102,7 @@ describe("Big Matrix", function() {
 
             expectSize(matrix1, Const.excelMaxRows, Const.excelMaxCols);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
 
@@ -113,7 +113,7 @@ describe("Big Matrix", function() {
 
             expectSize(matrix1, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
         });
@@ -123,7 +123,7 @@ describe("Big Matrix", function() {
             matrix1.insertCols(0, Const.excelMaxCols);
             expectSize(matrix1, Const.excelMaxRows, Const.excelMaxCols);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, Const.excelMaxRows, Const.excelMaxCols);
 
@@ -132,7 +132,7 @@ describe("Big Matrix", function() {
 
             expectSize(matrix1, 0, 0);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, 0, 0);
         });
@@ -144,7 +144,7 @@ describe("Big Matrix", function() {
             setCorners(matrix1);
             checkCorners(matrix1);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             checkCorners(matrix2);
 
@@ -155,7 +155,7 @@ describe("Big Matrix", function() {
 
             expectSize(matrix1, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, Const.excelMaxRows - 2, Const.excelMaxCols - 2);
         });
@@ -167,7 +167,7 @@ describe("Big Matrix", function() {
             setCorners(matrix1);
             checkCorners(matrix1);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             checkCorners(matrix2);
 
@@ -176,7 +176,7 @@ describe("Big Matrix", function() {
 
             expectSize(matrix1, 0, 0);
 
-            containterRuntimeFactory.processAllMessages();
+            containerRuntimeFactory.processAllMessages();
 
             expectSize(matrix2, 0, 0);
         });

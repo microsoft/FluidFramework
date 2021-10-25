@@ -1,8 +1,99 @@
+## Adding breaking change notes
+
+Notes on breaking and otherwise interesting changes go here.  They will be reviewed and published along with each release.  Published changelogs may be found on the docs site at fluidframework.com.
+
+### Writing a change note
+
+There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
+- Provide a concise title.  It should make clear what the topic of the change is.
+- Ensure the affected packages are named or clearly identifiable within the body.
+- Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
+- Consider providing code examples as part of guidance for non-trivial changes.
+
+## 0.51 Breaking changes
+- [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
+- [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)
+- [Deprecated `Loader._create` is removed](#deprecated-loadercreate-is-removed)
+- [Stop exporting internal class `CollabWindowTracker` ](#stop-exporting-internal-class-collabwindowtracker)
+
+### `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
+`maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
+
+### _createDataStoreWithProps and IFluidDataStoreChannel
+ContainerRuntime._createDataStoreWithProps() is made consistent with the rest of API (same API on IContainerRuntimeBase interface, all other create methods to create data store) and returns now only IFluidRouter. IFluidDataStoreChannel is internal communication mechanism between ContainerRuntime and data stores and should be used only for this purpose, by data store authors. It is not a public interface that should be exposed by data stores.
+While casting IFluidRouter objects returned by various data store creation APIs to IFluidDataStoreChannel would continue to work in this release, this is not supported and will be taken away in next releases due to upcoming work in GC & named component creation space.
+
+### Deprecated `Loader._create` is removed
+Removing API `Loader._create` from `@fluidframework/container-loader`, which was an interim replacement of the Loader constructor API change in version 0.28.
+Use the Loader constructor with the `ILoaderProps` instead.
+
+### Stop exporting internal class `CollabWindowTracker`
+`CollabWindowTracker` is an internal implementation for `@fluidframework/container-loader` and should never been exported.
+
+## 0.50 Breaking changes
+- [OpProcessingController removed](#opprocessingcontroller-removed)
+- [Expose isDirty flag in the FluidContainer](#expose-isdirty-flag-in-the-fluidcontainer)
+- [get-container API changed](#get-container-api-changed)
+- [SharedCell serialization](#sharedcell-serialization)
+- [Expose saved and dirty events in FluidContainer](#expose-saved-and-dirty-events-in-fluidcontainer)
+- [Deprecated bindToContext in IFluidDataStoreChannel](#Deprecated-bindToContext-in-IFluidDataStoreChannel)
+
+### OpProcessingController removed
+OpProcessingController has been deprecated for very long time. It's being removed in this release.
+Please use LoaderContainerTracker instead (see https://github.com/microsoft/FluidFramework/pull/7784 as an example of changes required)
+If you can't make this transition, you can always copy implementation of LoaderContainerTracker to your repo and maintain it. That said, it has bugs and tests using it are easily broken but subtle changes in reconnection logic, as evident from PRs #7753, #7393)
+
+### Expose isDirty flag in the FluidContainer
+The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
+
+### get-container API changed
+The signature of methods `getTinyliciousContainer` and `getFRSContainer` exported from the `get-container` package has been changed to accomodate the new container create flow. Both methods now return a tuple of the container instance and container ID associated with it. The `documentId` parameter is ignored when a new container is requested. Client applications need to use the ID returned by the API.
+The `get-container` API is widely used in multiple sample applications across the repository. All samples were refactored to reflect the change in the API. External samples consuming these methods should be updated accordingly.
+
+### SharedCell serialization
+`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
+
+### Expose saved and dirty events in FluidContainer
+The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.
+
+### Deprecated bindToContext in IFluidDataStoreChannel
+bindToContext in IFluidDataStoreChannel has been deprecated. This should not be used to explicitly bind data stores. Root data stores will automatically be bound to container. Non-root data stores will be bound when their handles are stored in an already bound DDS.
+
+## 0.49 Breaking changes
+- [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
+- [Removed deltaManager.ts from @fluidframework/container-loader export](#deltamanager-removed-from-fluid-framework-export)
+- [Container class protected function resumeInternal made private](#resumeinternal-made-private)
+- [url removed from ICreateBlobResponsee](#url-removed-from-ICreateBlobResponse)
+- [encoding type change](#encoding-type-change)
+
+### Deprecated dirty document events and property removed from ContainerRuntime
+The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
+
+### DeltaManager removed from fluid-framework export
+The `DeltaManager` class, the `IConnectionArgs` interface, the `IDeltaManagerInternalEvents` interface, and the `ReconnectedMode` enum have been removed from `@fluidframework/container-loader` package exports. Instead of `DeltaManager`, `IDeltaManager` should be used where appropriate.
+
+### resumeInternal made private
+The `protected` function `resumeInternal` under the class `Container` has been made `private`.
+
+### `url` removed from ICreateBlobResponse
+The unused `url` property of `ICreateBlobResponse` in `@fluidframework/protocol-definitions` has been removed
+
+### `encoding` type change
+The `encoding` property of `IBlob` in `@fluidframework/protocol-definitions` has changed type from `string` to `"utf-8" | "base64"` to match the only supported values.
+
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
+- [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
+- [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
 
 ### client-api package removed
 The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
+
+### SignalManager removed from fluid-framework export
+The `SignalManager` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package.  This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`.  Users should instead import the classes from the `@fluid-experimental/data-objects` package.
+
+### MockLogger removed from @fluidframework/test-runtime-utils
+MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
 
 ## 0.47 Breaking changes
 - [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
@@ -14,7 +105,6 @@ The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been
 - [tinylicious and azure clients createContainer now detached](#tinylicious-and-azure-clients-createContainer-now-detached)
 - [container id is returned from new attach() and not exposed on the container](#container-id-is-returned-from-new-attach-and-not-exposed-on-the-container)
 - [AzureClient initialization as a singular config](#AzureClient-initialization-as-a-singular-config)
-- [MockLogger removed from @fluidframework/test-runtime-utils](#MockLogger-removed-from-@fluidframework/test-runtime-utils)
 
 ### Property removed from IFluidDataStoreContext
 - the `existing` property from `IFluidDataStoreContext` (and `FluidDataStoreContext`) has been removed.
@@ -110,9 +200,6 @@ const config = {
 }
 const client = new AzureClient(config);
 ```
-
-## MockLogger removed from @fluidframework/test-runtime-utils
-MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
 
 ## 0.46 Breaking changes
 - [@fluid-experimental/fluid-framework package name changed](#fluid-experimentalfluid-framework-package-name-changed)
