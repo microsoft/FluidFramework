@@ -31,6 +31,7 @@ export interface IOpProcessingController {
 }
 
 export interface ITestObjectProvider {
+    createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(
         packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
         options?: ITestLoaderOptions,
@@ -145,7 +146,7 @@ export class TestObjectProvider {
     constructor(
         public readonly LoaderConstructor: typeof Loader,
         public readonly driver: ITestDriver,
-        private readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
+        public readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint,
     ) {
         this._documentIdStrategy = getDocumentIdStrategy(driver.type);
     }
