@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/property-proxy";
-export const pkgVersion = "0.50.0";
+export const pkgVersion = "0.50.1";
