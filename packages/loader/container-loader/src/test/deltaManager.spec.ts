@@ -11,7 +11,7 @@ import { IClient, IDocumentMessage, MessageType } from "@fluidframework/protocol
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
-import { CollabWindowTracker } from "../container";
+import { CollabWindowTracker } from "../collabWindowTracker";
 
 describe("Loader", () => {
     describe("Container Loader", () => {
@@ -34,7 +34,15 @@ describe("Loader", () => {
             async function startDeltaManager(reconnectAllowed = true) {
                 const service = new MockDocumentService(
                     undefined,
-                    () => deltaConnection,
+                    () => {
+                        // Always create new connection, as reusing old closed connection
+                        // Forces DM into infinite reconnection loop.
+                        deltaConnection = new MockDocumentDeltaConnection(
+                            "test",
+                            (messages) => emitter.emit(submitEvent, messages),
+                        );
+                        return deltaConnection;
+                    },
                 );
                 const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
 
@@ -74,6 +82,7 @@ describe("Loader", () => {
 
             async function emitSequentialOps(type: MessageType = MessageType.Operation, count = 1) {
                 for (let num = 0; num < count; ++num) {
+                    assert(!deltaConnection.disposed, "disposed");
                     deltaConnection.emitOp(docId, [{
                         clientId: "Some client ID",
                         clientSequenceNumber: ++clientSeqNumber,
@@ -104,10 +113,6 @@ describe("Loader", () => {
                 emitter = new EventEmitter();
                 immediateNoOp = false;
 
-                deltaConnection = new MockDocumentDeltaConnection(
-                    "test",
-                    (messages) => emitter.emit(submitEvent, messages),
-                );
                 clientSeqNumber = 0;
             });
 

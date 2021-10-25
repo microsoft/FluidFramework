@@ -1,5 +1,0 @@
-.cache-loader/
-node_modules/
-dist/
-nyc/
-*.tsbuildinfo

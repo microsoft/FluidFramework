@@ -12,5 +12,6 @@ export class NetworkError extends Error {
         message: string,
     ) {
         super(message);
+        this.name = "NetworkError";
     }
 }
