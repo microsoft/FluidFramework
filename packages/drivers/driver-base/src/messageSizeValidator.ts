@@ -8,18 +8,21 @@ import { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ThresholdCounter } from "@fluidframework/telemetry-utils";
 
 export class MessageSizeValidator {
-    private readonly messageSizeCounters = [
+    private readonly messageSizeCountersWithEvents = [
+        // The order here matters, in order to save telemetry quota.
+        // The first counter to exceed its limit will short-circuit
+        // event publishing.
         {
-            counter: new ThresholdCounter(this.maxMessageSizeInBytes / 4, this.logger),
-            eventName: "LargeMessage25PercentOfMax",
+            counter: new ThresholdCounter(this.maxMessageSizeInBytes, this.logger),
+            eventName: "LargeMessageLimitExceeded",
         },
         {
             counter: new ThresholdCounter(this.maxMessageSizeInBytes / 2, this.logger),
             eventName: "LargeMessage50PercentOfMax",
         },
         {
-            counter: new ThresholdCounter(this.maxMessageSizeInBytes, this.logger),
-            eventName: "LargeMessageLimitExceeded",
+            counter: new ThresholdCounter(this.maxMessageSizeInBytes / 4, this.logger),
+            eventName: "LargeMessage25PercentOfMax",
         },
     ];
 
@@ -29,8 +32,16 @@ export class MessageSizeValidator {
     ) {
     }
 
-    private track(sizeInBytes: number) {
-        this.messageSizeCounters.forEach((x) => x.counter.sendIfMultiple(x.eventName, sizeInBytes));
+    private async track(sizeInBytes: number): Promise<void> {
+        return new Promise<void>((resolve) => {
+            for (const x of this.messageSizeCountersWithEvents) {
+                if (x.counter.send(x.eventName, sizeInBytes)) {
+                    break;
+                }
+            }
+
+            resolve();
+        });
     }
 
     public validate(messages: IDocumentMessage[][]): boolean {
@@ -41,11 +52,11 @@ export class MessageSizeValidator {
             }
         }
 
-        this.track(sizeInBytes);
+        this.track(sizeInBytes).catch(() => { });
         return sizeInBytes < this.maxMessageSizeInBytes;
     }
 
-    private static sizeInBytes(message: IDocumentMessage): number {
+    public static sizeInBytes(message: IDocumentMessage): number {
         const { contents, ...restOfObject } = message;
         // `contents` is already stringified. Re-stringifying the whole message will
         // lead to additional escape characters which will increase the size artificially.

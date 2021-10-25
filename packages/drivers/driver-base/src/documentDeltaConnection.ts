@@ -85,7 +85,7 @@ export class DocumentDeltaConnection
     protected _disposed: boolean = false;
     protected readonly logger: ITelemetryLogger;
     protected readonly isBatchManagerDisabled: boolean = false;
-    protected messageSizeValidator: MessageSizeValidator | undefined;
+    private messageSizeValidator: MessageSizeValidator | undefined;
 
     public get details(): IConnected {
         if (!this._details) {

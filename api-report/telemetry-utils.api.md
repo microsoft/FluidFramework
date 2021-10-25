@@ -243,8 +243,8 @@ export class TelemetryUTLogger implements ITelemetryLogger {
 // @public
 export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLogger, thresholdMultiple?: number);
-    send(eventName: string, value: number): void;
-    sendIfMultiple(eventName: string, value: number): void;
+    send(eventName: string, value: number): boolean;
+    sendIfMultiple(eventName: string, value: number): boolean;
     }
 
 

@@ -19,14 +19,17 @@ export class ThresholdCounter {
     /**
      * Sends the value if it's above the threshold.
      */
-    public send(eventName: string, value: number) {
+    public send(eventName: string, value: number): boolean {
         if (value < this.threshold) {
-            return;
+            return false;
         }
+
         this.logger.sendPerformanceEvent({
             eventName,
             value,
         });
+
+        return true;
     }
 
     /**
@@ -36,7 +39,7 @@ export class ThresholdCounter {
      * To be used in scenarios where we'd like to record a
      * threshold violation while reducing telemetry noise.
      */
-    public sendIfMultiple(eventName: string, value: number) {
+    public sendIfMultiple(eventName: string, value: number): boolean {
         if (value === this.thresholdMultiple) {
             this.logger.sendPerformanceEvent({
                 eventName,
@@ -44,6 +47,9 @@ export class ThresholdCounter {
             });
             // reduce number of "multiple" events.
             this.thresholdMultiple = this.thresholdMultiple * 2;
+            return true;
         }
+
+        return false;
     }
 }
