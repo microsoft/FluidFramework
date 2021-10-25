@@ -14,6 +14,7 @@ import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
 import { getHashedDocumentId } from "../odspPublicUtils";
+import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
 
 describe("Odsp Create Container Test", () => {
@@ -38,6 +39,8 @@ describe("Odsp Create Container Test", () => {
     const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
         async (_options) => "token",
         async (_options) => "token",
+        new LocalPersistentCache(2000),
+        { snapshotOptions : { timeout : 2000 }},
     );
 
     const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {

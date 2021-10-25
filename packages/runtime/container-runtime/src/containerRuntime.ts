@@ -1558,7 +1558,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         props?: any,
         id = uuid(),
         isRoot = false,
-    ): Promise<IFluidDataStoreChannel> {
+    ): Promise<IFluidRouter> {
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {

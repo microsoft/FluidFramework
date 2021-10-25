@@ -156,7 +156,7 @@ describe("No Delta Stream", () => {
         const createDocServ = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
         documentServiceFactory.createDocumentService = async (...args) => {
             return createDocServ(...args).then((docService) => {
-                docService.connectToDeltaStream = async () => {
+                docService.connectToDeltaStream = () => {
                     throw new DeltaStreamConnectionForbiddenError("asdf");
                 };
                 return docService;

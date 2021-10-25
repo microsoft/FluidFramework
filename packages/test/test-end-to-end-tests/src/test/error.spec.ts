@@ -4,57 +4,73 @@
  */
 
 import { strict as assert } from "assert";
-import {
-    ContainerErrorType,
-    LoaderHeader,
-} from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
-import { IRequest } from "@fluidframework/core-interfaces";
-import {
-    IFluidResolvedUrl,
-    IDocumentServiceFactory,
-    DriverErrorType,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
-import {
-    createOdspNetworkError,
-} from "@fluidframework/odsp-doclib-utils";
+import { v4 as uuid } from "uuid";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { Container, ILoaderProps, Loader } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory, DriverErrorType } from "@fluidframework/driver-definitions";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
-    createDocumentId,
     LocalCodeLoader,
     LoaderContainerTracker,
     ITestObjectProvider,
+    TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Errors Types", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    let urlResolver: IUrlResolver;
-    let testRequest: IRequest;
-    let testResolved: IFluidResolvedUrl;
-    let documentServiceFactory: IDocumentServiceFactory;
-    let codeLoader: LocalCodeLoader;
-    let loader: Loader;
+    let fileName: string;
     const loaderContainerTracker = new LoaderContainerTracker();
     before(() => {
         provider = getTestObjectProvider();
     });
+
+    beforeEach(async () => {
+        const loader = new Loader({
+            logger: provider.logger,
+            urlResolver: provider.urlResolver,
+            documentServiceFactory:
+                provider.documentServiceFactory,
+            codeLoader: new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
+        });
+        fileName = uuid();
+        loaderContainerTracker.add(loader);
+        const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+        await container.attach(provider.driver.createCreateNewRequest(fileName));
+    });
+
     afterEach(() => {
         loaderContainerTracker.reset();
     });
 
+    async function loadContainer(props?: Partial<ILoaderProps>) {
+        const loader = new Loader({
+            ...props,
+            logger: provider.logger,
+            urlResolver: props?.urlResolver ?? provider.urlResolver,
+            documentServiceFactory:
+                props?.documentServiceFactory ?? provider.documentServiceFactory,
+            codeLoader: props?.codeLoader ??
+                new LocalCodeLoader([[provider.defaultCodeDetails, new TestFluidObjectFactory([])]]),
+        });
+        loaderContainerTracker.add(loader);
+        const requestUrl = await provider.driver.createContainerUrl(fileName);
+        const testResolved = await loader.services.urlResolver.resolve({ url: requestUrl });
+        ensureFluidResolvedUrl(testResolved);
+        return Container.load(
+            loader,
+            {
+                resolvedUrl: testResolved,
+                version: undefined,
+            },
+        );
+    }
+
     it("GeneralError Test", async () => {
-        const id = createDocumentId();
-        // Setup
-
-        urlResolver = provider.urlResolver;
-        testRequest = { url: await provider.driver.createContainerUrl(id) };
-        testResolved =
-            await urlResolver.resolve(testRequest) as IFluidResolvedUrl;
-        documentServiceFactory = provider.documentServiceFactory;
-
+        const documentServiceFactory = provider.documentServiceFactory;
         const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
         mockFactory.createDocumentService = async (resolvedUrl) => {
             const service = await documentServiceFactory.createDocumentService(resolvedUrl);
@@ -63,28 +79,8 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
             return service;
         };
 
-        codeLoader = new LocalCodeLoader([]);
-
-        loader = new Loader({
-            urlResolver,
-            documentServiceFactory: mockFactory,
-            codeLoader,
-            logger: provider.logger,
-        });
-        loaderContainerTracker.add(loader);
-
         try {
-            await Container.load(
-                loader,
-                {
-                    canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
-                    clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-                    resolvedUrl: testResolved,
-                    version: testRequest.headers?.[LoaderHeader.version] ?? undefined,
-                    loadMode: testRequest.headers?.[LoaderHeader.loadMode],
-                },
-            );
-
+            await loadContainer({ documentServiceFactory: mockFactory });
             assert.fail("Error expected");
         } catch (error) {
             assert(

@@ -1,5 +1,0 @@
-This demo is all Greek to me.
-That’s ok, this demo is all Spanish to me.
-An intelligent agent begins by connecting to the document as a coauthor.
-It then listens to changes and sends them to Azure Cognitive Services for translation.
-The translations are then written back into the document creating an augmentation loop.

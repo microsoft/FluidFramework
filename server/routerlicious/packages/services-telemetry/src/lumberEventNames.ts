@@ -17,9 +17,10 @@ export enum LumberEventName {
     UnitTestEvent = "UnitTestEvent",
 
     // Lambdas
-    DeliHandler = "DeliHandler",
-    ScribeHandler = "ScribeHandler",
     ClientSummary = "ClientSummary",
+    DeliHandler = "DeliHandler",
+    KafkaRunner = "KafkaRunner",
+    ScribeHandler = "ScribeHandler",
     ServiceSummary = "ServiceSummary",
     SummaryReader = "SummaryReader",
 
