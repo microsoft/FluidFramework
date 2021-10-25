@@ -17,6 +17,17 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
         this.collectionName = `${namespace}-${name}`;
     }
 
+    public aggregate(group: any, options?: any): any {
+        throw new Error("Method Not Implemented");
+    }
+
+    public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
+        throw new Error("Method Not Implemented");
+    }
+    public async distinct(key: any, query: any): Promise<any> {
+        throw new Error("Method Not Implemented");
+    }
+
     /**
      * {@inheritDoc @fluidframework/server-services-core#ICollection.find}
      *
