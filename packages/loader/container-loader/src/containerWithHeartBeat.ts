@@ -9,8 +9,9 @@ import { Loader } from "./loader";
 import { Container, IContainerConfig} from "./container";
 
 /**
- * This class wraps the actual storage and make sure no wrong apis are called according to
- * container attach state.
+ * This class wraps extends actual Container and manages heart-beat over Audience also update Audience
+ * in case we are not listening from any client for 5 continuous heart-beats or we started getting heart-beat
+ * from a client who is not present in Audience.
  */
 export class ContainerWithHeartBeat extends Container {
     private readonly beatInEveryNSecs: number = 30000; // 30 secs
