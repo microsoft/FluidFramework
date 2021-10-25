@@ -155,7 +155,7 @@ A container is considered dirty in the following cases:
 ```typescript {linenos=inline}
 if(container.isDirty) {
   container.on("saved", () => {
-    // allow the user to edit
+    // safe to close the container
   });
 }
 ```
