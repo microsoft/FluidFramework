@@ -72,7 +72,7 @@ export interface OrderedEditSet<TChange> {
 
 /**
  * Information used to populate an edit log.
- * @internal
+ * @public
  */
 export interface EditLogSummary<TChange> {
 	/**
@@ -90,7 +90,7 @@ export interface EditLogSummary<TChange> {
 /**
  * EditHandles are used to load edit chunks stored outside of the EditLog.
  * Can be satisfied by IFluidHandle<ArrayBufferLike>.
- * @internal
+ * @public
  */
 export interface EditHandle {
 	readonly get: () => Promise<ArrayBufferLike>;
@@ -150,7 +150,7 @@ interface EditChunk<TChange> {
 
 /**
  * Either a chunk of edits or a handle that can be used to load that chunk.
- * @internal
+ * @public
  */
 export type EditChunkOrHandle<TChange> = EditHandle | readonly EditWithoutId<TChange>[];
 

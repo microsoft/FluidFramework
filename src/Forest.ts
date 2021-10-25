@@ -15,6 +15,8 @@ type Optional<T> = {
 
 /**
  * A node that can be contained within a Forest.
+ *
+ * @public
  */
 export interface ForestNode extends NodeData {
 	readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
@@ -26,6 +28,8 @@ interface ForestNodeWithParentage extends ForestNode, Optional<ParentData> {
 
 /**
  * Information about a ForestNode's parent
+ *
+ * @public
  */
 export interface ParentData {
 	readonly parentId: NodeId;
@@ -58,6 +62,8 @@ interface ForestState {
 /**
  * An immutable forest of ForestNode.
  * Enforces single parenting, and allows querying the parent.
+ *
+ * @public
  */
 export class Forest {
 	/**

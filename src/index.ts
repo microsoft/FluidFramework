@@ -18,7 +18,7 @@
 
 export { initialTree } from './InitialTree';
 export { TreeNodeHandle } from './TreeNodeHandle';
-export { Delta } from './Forest';
+export { Delta, Forest, ForestNode, ParentData } from './Forest';
 export { sharedTreeAssertionErrorType, isSharedTreeEvent, comparePayloads, Result } from './Common';
 export * from './Identifiers';
 export { OrderedEditSet, EditLogSummary, EditHandle, EditChunkOrHandle } from './EditLog';

@@ -8,5 +8,44 @@
 		"enabled": true,
 		"reportFolder": "../../api-reports",
 		"reportTempFolder": "<projectFolder>/_api-extractor-temp"
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			"default": {
+				"logLevel": "error",
+				"addToApiReportFile": false // This is add to file XOR report to console. We wish to report error to console.
+			},
+
+			"ae-forgotten-export": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			"ae-incompatible-release-tags": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+
+			"ae-unresolved-inheritdoc-reference": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+			"ae-unresolved-inheritdoc-base": {
+				"logLevel": "error",
+				"addToApiReportFile": false
+			},
+
+			// We do not use underscores for naming of internal members
+			"ae-internal-missing-underscore": {
+				"logLevel": "none",
+				"addToApiReportFile": false
+			}
+		},
+
+		"tsdocMessageReporting": {
+			"default": {
+				"logLevel": "error",
+				"addToApiReportFile": false // This is add to file XOR report to console. We wish to report error to console.
+			}
+		}
 	}
 }
