@@ -11,8 +11,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - Consider providing code examples as part of guidance for non-trivial changes.
 
 ## 0.51 Breaking changes
-- [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxMessageSize-property-has-been-deprecated-from-IConnectionDetails-and-IDocumentDeltaConnection)
-- [_createDataStoreWithProps and IFluidDataStoreChannel](#_createDataStoreWithProps-and-IFluidDataStoreChannel)
+- [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
+- [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)
+- [Deprecated `Loader._create` is removed](#deprecated-loadercreate-is-removed)
+- [Stop exporting internal class `CollabWindowTracker` ](#stop-exporting-internal-class-collabwindowtracker)
 
 ### `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
 `maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
@@ -21,12 +23,19 @@ There are a few steps you can take to write a good change note and avoid needing
 ContainerRuntime._createDataStoreWithProps() is made consistent with the rest of API (same API on IContainerRuntimeBase interface, all other create methods to create data store) and returns now only IFluidRouter. IFluidDataStoreChannel is internal communication mechanism between ContainerRuntime and data stores and should be used only for this purpose, by data store authors. It is not a public interface that should be exposed by data stores.
 While casting IFluidRouter objects returned by various data store creation APIs to IFluidDataStoreChannel would continue to work in this release, this is not supported and will be taken away in next releases due to upcoming work in GC & named component creation space.
 
+### Deprecated `Loader._create` is removed
+Removing API `Loader._create` from `@fluidframework/container-loader`, which was an interim replacement of the Loader constructor API change in version 0.28.
+Use the Loader constructor with the `ILoaderProps` instead.
+
+### Stop exporting internal class `CollabWindowTracker`
+`CollabWindowTracker` is an internal implementation for `@fluidframework/container-loader` and should never been exported.
+
 ## 0.50 Breaking changes
-- [OpProcessingController removed](#OpProcessingController-removed)
-- [Expose isDirty flag in the FluidContainer](#Expose-isDirty-flag-in-the-FluidContainer)
+- [OpProcessingController removed](#opprocessingcontroller-removed)
+- [Expose isDirty flag in the FluidContainer](#expose-isdirty-flag-in-the-fluidcontainer)
 - [get-container API changed](#get-container-api-changed)
 - [SharedCell serialization](#sharedcell-serialization)
-- [Expose saved and dirty events in FluidContainer](#Expose-saved-and-dirty-events-in-FluidContainer)
+- [Expose saved and dirty events in FluidContainer](#expose-saved-and-dirty-events-in-fluidcontainer)
 - [Deprecated bindToContext in IFluidDataStoreChannel](#Deprecated-bindToContext-in-IFluidDataStoreChannel)
 
 ### OpProcessingController removed
