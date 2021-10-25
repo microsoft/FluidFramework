@@ -87,6 +87,10 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     // True if GC is disabled for this node. If so, do not track GC specific state for a summary.
     private readonly gcDisabled: boolean;
 
+    // Keeps track of whether we logged an use-after-free error. This is temporary since the error is too noisy.
+    // To be removed once this item is completed - https://github.com/microsoft/FluidFramework/issues/7895.
+    private useAfterFreeErrorLogged: boolean = false;
+
     /**
      * Do not call constructor directly.
      * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
@@ -428,11 +432,20 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
     public recordChange(op: ISequencedDocumentMessage): void {
         // If the node is changed after it is inactive, log an error as this may mean use-after-delete.
-        this.logErrorIfInactive("inactiveObjectChanged");
+        // Currently, we only log this error once per node per session as it's too noisy.
+        if (!this.useAfterFreeErrorLogged && this.logErrorIfInactive("inactiveObjectChanged")) {
+            this.useAfterFreeErrorLogged = true;
+        }
         super.recordChange(op);
     }
 
-    private logErrorIfInactive(eventName: string, currentTimestampMs?: number) {
+    /**
+     * Logs an error event if the node is inactive. This is used to identify cases where an inactive object is used.
+     * @param eventName - The name of the event to log.
+     * @param currentTimestampMs - The current time stamp. Used to report how long the object has been inactive.
+     * @returns true if we logged an error, false otherwise.
+     */
+    private logErrorIfInactive(eventName: string, currentTimestampMs?: number): boolean {
         if (this.inactive) {
             assert(
                 this.unreferencedTimestampMs !== undefined,
@@ -442,7 +455,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
                 unreferencedDuratonMs: (currentTimestampMs ?? Date.now()) - this.unreferencedTimestampMs,
                 maxUnreferencedDurationMs: this.maxUnreferencedDurationMs,
             });
+            return true;
         }
+        return false;
     }
 
     /**
