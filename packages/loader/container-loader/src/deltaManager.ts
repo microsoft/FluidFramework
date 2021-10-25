@@ -22,7 +22,7 @@ import {
     IThrottlingWarning,
     ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, Deferred, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import { TelemetryLogger, safeRaiseEvent, logIfFalse, normalizeError } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -128,7 +128,11 @@ class NoDeltaStream
     initialMessages: ISequencedDocumentMessage[] = [];
     initialSignals: ISignalMessage[] = [];
     initialClients: ISignalClient[] = [];
-    serviceConfiguration: IClientConfiguration = undefined as any;
+    serviceConfiguration: IClientConfiguration = {
+        maxMessageSize: 0,
+        blockSize: 0,
+        summary: undefined as any,
+    };
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
         this.emit("nack", this.clientId, messages.map((operation) => {
@@ -297,7 +301,6 @@ export class DeltaManager
 
     public get maxMessageSize(): number {
         return this.connection?.serviceConfiguration?.maxMessageSize
-            ?? this.connection?.maxMessageSize
             ?? DefaultChunkSize;
     }
 
@@ -634,7 +637,7 @@ export class DeltaManager
             existing: connection.existing,
             checkpointSequenceNumber: connection.checkpointSequenceNumber,
             get initialClients() { return connection.initialClients; },
-            maxMessageSize: connection.maxMessageSize,
+            maxMessageSize: connection.serviceConfiguration.maxMessageSize,
             mode: connection.mode,
             serviceConfiguration: connection.serviceConfiguration,
             version: connection.version,
@@ -735,6 +738,12 @@ export class DeltaManager
                 try {
                     this.client.mode = requestedMode;
                     connection = await docService.connectToDeltaStream(this.client);
+
+                    if (connection.disposed) {
+                        // Nobody observed this connection, so drop it on the floor and retry.
+                        this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
+                        connection = undefined;
+                    }
                 } catch (origError) {
                     if (typeof origError === "object" && origError !== null &&
                         origError?.errorType === DeltaStreamConnectionForbiddenError.errorType) {
@@ -788,25 +797,28 @@ export class DeltaManager
         };
 
         // This promise settles as soon as we know the outcome of the connection attempt
-        this.connectionP = new Promise((resolve, reject) => {
-            // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
+        // Set it upfront, such that if connection is established (NoDeltaConnection) or rejected (bug in
+        // connectToDeltaStream() implementation - throwing exception vs. returning rejected promise) in
+        // synchronous way, we have this.connectionP setup for all the code to assert correctness of the flow.
+        const deferred = new Deferred<IDocumentDeltaConnection>();
+        this.connectionP = deferred.promise;
 
-            // Reject the connection promise if the DeltaManager gets closed during connection
-            const cleanupAndReject = (error) => {
-                this.connectionP = undefined;
-                this.removeListener("closed", cleanupAndReject);
-                // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
-                this.close(error);
-                reject(error);
-            };
-            this.on("closed", cleanupAndReject);
+        // Regardless of how the connection attempt concludes, we'll clear the promise and remove the listener
+        // Reject the connection promise if the DeltaManager gets closed during connection
+        const cleanupAndReject = (error) => {
+            this.connectionP = undefined;
+            this.removeListener("closed", cleanupAndReject);
+            // This error came from some logic error in this file. Fail-fast to learn and fix the issue faster
+            this.close(error);
+            deferred.reject(error);
+        };
+        this.on("closed", cleanupAndReject);
 
-            // Attempt the connection
-            connectCore().then((connection) => {
-                this.removeListener("closed", cleanupAndReject);
-                resolve(connection);
-            }).catch(cleanupAndReject);
-        });
+        // Attempt the connection
+        connectCore().then((connection) => {
+            this.removeListener("closed", cleanupAndReject);
+            deferred.resolve(connection);
+        }).catch(cleanupAndReject);
 
         return this.connectionP;
     }
@@ -1145,23 +1157,9 @@ export class DeltaManager
     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
-
         assert(this.connectionP !== undefined || this.closed,
-            0x27f /* "reentrnacy may result in incorrect behavior" */);
-
-        // back-compat: added in 0.45. Make it unconditional (i.e. use connection.disposable) in some future.
-        const disposable = connection as Partial<IDisposable>;
-        if (disposable.disposed === true) {
-            this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
-            // Note: not checking this.reconnectMode mode here as nobody ever observed this connection, so
-            // none of invariants is broken if reconnect happens.
-            this.triggerConnect({
-                reason: "early connection closure",
-                mode: requestedMode,
-                fetchOpsFromStorage: false,
-            });
-            return;
-        }
+            0x27f /* "reentrancy may result in incorrect behavior" */);
+        assert(!connection.disposed, "can't be disposed - Callers need to ensure that!");
 
         this.connectionP = undefined;
         this.connection = connection;
