@@ -143,8 +143,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     subLogger: TelemetryLogger;
     // (undocumented)
-    timestamp: number;
-    // (undocumented)
     static version: string;
 }
 
