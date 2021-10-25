@@ -19,9 +19,6 @@ async function  runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T>
 }
 
 describe("runWithRetry Tests", () => {
-    const voidRefreshDelayInfo = () => {};
-    const voidEmitDelayInfo = () => {};
-
     const logger = new TelemetryNullLogger();
 
     it("Should succeed at first time", async () => {
@@ -32,17 +29,17 @@ describe("runWithRetry Tests", () => {
             return true;
         };
 
-        let refreshDelayInfoTimes: number = 0;
         let emitDelayInfoTimes: number = 0;
         success = await runWithFastSetTimeout(async () => runWithRetry(
             api,
             "test",
-            () => { refreshDelayInfoTimes += 1; },
-            () => { emitDelayInfoTimes += 1; },
-            logger));
+            logger,
+            {
+                retry: () => { emitDelayInfoTimes += 1; },
+            },
+            ));
         assert.strictEqual(retryTimes, 0, "Should succeed at first time");
         assert.strictEqual(success, true, "Retry should succeed ultimately");
-        assert.strictEqual(refreshDelayInfoTimes, 0, "Should not refresh delay at first time");
         assert.strictEqual(emitDelayInfoTimes, 0, "Should not emit delay at first time");
     });
 
@@ -61,17 +58,17 @@ describe("runWithRetry Tests", () => {
             return true;
         };
 
-        let refreshDelayInfoTimes: number = 0;
         let emitDelayInfoTimes: number = 0;
         success = await runWithFastSetTimeout(async () => runWithRetry(
             api,
             "test",
-            () => { refreshDelayInfoTimes += 1; },
-            () => { emitDelayInfoTimes += 1; },
-            logger));
+            logger,
+            {
+                retry: () => { emitDelayInfoTimes += 1; },
+            },
+        ));
         assert.strictEqual(retryTimes, 0, "Should keep retrying until success");
         assert.strictEqual(success, true, "Retry should succeed ultimately");
-        assert.strictEqual(refreshDelayInfoTimes, 1, "Should refresh delay once");
         assert.strictEqual(emitDelayInfoTimes, maxTries, "Should emit delay at each try");
     });
 
@@ -94,7 +91,7 @@ describe("runWithRetry Tests", () => {
             return true;
         };
         success = await runWithFastSetTimeout(
-            async () => runWithRetry(api, "test", voidRefreshDelayInfo, voidEmitDelayInfo, logger));
+            async () => runWithRetry(api, "test", logger, {}));
         assert.strictEqual(timerFinished, true, "Timer should be destroyed");
         assert.strictEqual(retryTimes, 0, "Should retry once");
         assert.strictEqual(success, true, "Retry should succeed ultimately");
@@ -114,7 +111,7 @@ describe("runWithRetry Tests", () => {
         };
         try {
             success = await runWithFastSetTimeout(
-                async () => runWithRetry(api, "test", voidRefreshDelayInfo, voidEmitDelayInfo, logger));
+                async () => runWithRetry(api, "test", logger, {}));
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should retry");
         assert.strictEqual(success, true, "Should succeed as retry should be successful");
@@ -134,7 +131,7 @@ describe("runWithRetry Tests", () => {
         };
         try {
             success = await runWithFastSetTimeout(
-                async () => runWithRetry(api, "test", voidRefreshDelayInfo, voidEmitDelayInfo, logger));
+                async () => runWithRetry(api, "test", logger, {}));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -154,7 +151,7 @@ describe("runWithRetry Tests", () => {
         };
         try {
             success = await runWithFastSetTimeout(
-                async () => runWithRetry(api, "test", voidRefreshDelayInfo, voidEmitDelayInfo, logger));
+                async () => runWithRetry(api, "test", logger, {}));
             assert.fail("Should not succeed");
         } catch (error) {}
         assert.strictEqual(retryTimes, 0, "Should not retry");
@@ -177,11 +174,9 @@ describe("runWithRetry Tests", () => {
             success = await runWithFastSetTimeout(async ()=> runWithRetry(
                 api,
                 "test",
-                voidRefreshDelayInfo,
-                voidEmitDelayInfo,
                 logger,
-                () => {
-                    throw new Error("disposed");
+                {
+                    retry: () => { throw new Error("disposed"); },
                 },
             ));
             assert.fail("Should not succeed");
