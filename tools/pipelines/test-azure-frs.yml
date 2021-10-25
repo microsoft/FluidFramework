@@ -13,8 +13,10 @@ trigger:
   paths:
     include:
     - packages/framework/azure-client
+    - packages/framework/loader/container-loader
+    - packages/framework/fluid-static
     - packages/drivers/routerlicious-driver
-    # TODO: Add more dependencies of AzureClient here
+    - packages/dds/map
     - tools/pipelines/test-azure-frs.yml
     - tools/pipelines/templates/include-test-real-service.yml
 
