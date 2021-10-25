@@ -49,8 +49,8 @@ export class KafkaRunner implements IRunner {
 
         this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
         this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
-            const documentId = errorData?.documentId ? errorData.documentId : "";
-            const tenantId = errorData?.tenantId ? errorData.tenantId : "";
+            const documentId = errorData?.documentId ?? "";
+            const tenantId = errorData?.tenantId ?? "";
             const lumberProperties = getLumberBaseProperties(documentId, tenantId);
             const metadata = {
                 messageMetaData: {
@@ -66,7 +66,7 @@ export class KafkaRunner implements IRunner {
                 logger?.error(errorMsg, metadata);
                 logger?.error(inspect(error), metadata);
                 if (!this.runnerMetric.isCompleted()) {
-                    this.runnerMetric.error(errorMsg, inspect(error));
+                    this.runnerMetric.error(errorMsg, error);
                 } else {
                     Lumberjack.error(errorMsg, lumberProperties, error);
                 }
@@ -75,7 +75,7 @@ export class KafkaRunner implements IRunner {
                 logger?.error(errorMsg, metadata);
                 logger?.error(inspect(error), metadata);
                 if (!this.runnerMetric.isCompleted()) {
-                    this.runnerMetric.error(errorMsg, inspect(error));
+                    this.runnerMetric.error(errorMsg, error);
                 } else {
                     Lumberjack.error(errorMsg, lumberProperties, error);
                 }
