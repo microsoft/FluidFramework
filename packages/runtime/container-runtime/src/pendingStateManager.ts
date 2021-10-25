@@ -467,19 +467,21 @@ export class PendingStateManager implements IDisposable {
             }
         }
 
-        // add a rejoin op so future clients provided with our stashed pending ops can recognize them
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const firstState = this.pendingStates.peekFront()!;
-        if (firstState.type !== "message" || firstState.messageType !== ContainerMessageType.Rejoin) {
-            // if there is already a rejoin op in the queue, just resubmit same op under new client ID
-            // otherwise, add one to the queue
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            this.pendingStates.unshift({
-                type: "message",
-                messageType: ContainerMessageType.Rejoin,
-                content: { clientId: prevClientId },
-            } as IPendingMessage);
-            ++pendingStatesCount;
+        if (prevClientId) {
+            // add a rejoin op so future clients provided with our stashed pending ops can recognize them
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const firstState = this.pendingStates.peekFront()!;
+            if (firstState.type !== "message" || firstState.messageType !== ContainerMessageType.Rejoin) {
+                // if there is already a rejoin op in the queue, just resubmit same op under new client ID
+                // otherwise, add one to the queue
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                this.pendingStates.unshift({
+                    type: "message",
+                    messageType: ContainerMessageType.Rejoin,
+                    content: { clientId: prevClientId },
+                } as IPendingMessage);
+                ++pendingStatesCount;
+            }
         }
 
         // Reset the pending message count because all these messages will be removed from the queue.
