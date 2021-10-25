@@ -47,10 +47,6 @@ parameters:
   type: stepList
   default: []
 
-- name: packTestFiles
-  type: boolean
-  default: false
-
 # These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
 - name: additionalTests
   type: stepList
