@@ -319,9 +319,6 @@ const getCodeProposal =
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
-    private readonly beatInEveryNSecs: number = 30000; // 30 secs
-    // eslint-disable-next-line @typescript-eslint/prefer-readonly
-    private audienceHeartBeat: Map<string, Date> = new Map();
 
     /**
      * Load an existing container.
@@ -434,9 +431,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
-    private readonly _deltaManager: DeltaManager;
+    protected readonly _deltaManager: DeltaManager;
     private service: IDocumentService | undefined;
-    private readonly _audience: Audience;
+    protected readonly _audience: Audience;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -464,7 +461,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
-    private readonly connectionStateHandler: ConnectionStateHandler;
+    protected readonly connectionStateHandler: ConnectionStateHandler;
 
     private _closed = false;
 
@@ -1591,7 +1588,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return pkg as IFluidCodeDetails;
     }
 
-    private get client(): IClient {
+    protected get client(): IClient {
         const client: IClient = this.options?.client !== undefined
             ? (this.options.client as IClient)
             : {
@@ -1658,10 +1655,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             for (const priorClient of details.initialClients ?? []) {
                 this._audience.addMember(priorClient.clientId, priorClient.client);
-                this.audienceHeartBeat.set(priorClient.clientId, new Date());
             }
-
-            this.enableHeartBeat();
         });
 
         deltaManager.on("disconnect", (reason: string) => {
@@ -1865,53 +1859,21 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.submitSignal(JSON.stringify(message));
     }
 
-    private processSignal(message: ISignalMessage) {
+    protected processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null) {
             const innerContent = message.content as { content: any; type: string };
             if (innerContent.type === MessageType.ClientJoin) {
                 const newClient = innerContent.content as ISignalClient;
                 this._audience.addMember(newClient.clientId, newClient.client);
-                this.audienceHeartBeat.set(newClient.clientId, new Date());
             } else if (innerContent.type === MessageType.ClientLeave) {
                 const leftClientId = innerContent.content as string;
                 this._audience.removeMember(leftClientId);
-                this.audienceHeartBeat.delete(leftClientId);
             }
         } else {
             const local = this.clientId === message.clientId;
             this.context.processSignal(message, local);
         }
-    }
-
-    private validateAudienceHeartBeat() {
-        this.audienceHeartBeat.forEach((lastPingReceivedAt: Date, clientId: string) => {
-            const diff = new Date().valueOf() - lastPingReceivedAt.valueOf();
-            if (diff > this.beatInEveryNSecs * 5) {
-                // client Lost, missed removeMember event.
-                this._audience.removeMember(clientId);
-                this.audienceHeartBeat.delete(clientId);
-            }
-        });
-    }
-
-    private enableHeartBeat() {
-        setInterval(() => {
-            this._deltaManager.submitSignal({msg: "ping", client: this.client});
-            this.validateAudienceHeartBeat();
-        }, this.beatInEveryNSecs);
-
-        // Listen for heartbeats
-        this._deltaManager.on("signal", (msg) => {
-            if (msg.clientId !== null && msg.content.msg === "ping") {
-                this.audienceHeartBeat.set(msg.clientId, new Date());
-
-                // client missed addMember event.
-                if (!this._audience.getMember(msg.clientId)) {
-                    this._audience.addMember(msg.clientId, msg.content.client);
-                }
-            }
-        });
     }
 
     /**
