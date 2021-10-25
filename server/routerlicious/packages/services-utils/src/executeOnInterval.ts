@@ -29,7 +29,7 @@ export function executeOnInterval(
                     onErrorFn(error);
                 }
                 if (shouldTerminateOnError !== undefined && shouldTerminateOnError(error)) {
-                    Lumberjack.info(`Terminating job on error for ${callName}`);
+                    Lumberjack.info(`Terminating job on error ${error} for ${callName}`);
                     scheduledJob.kill();
                     return;
                 }
