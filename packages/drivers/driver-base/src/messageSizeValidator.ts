@@ -35,7 +35,7 @@ export class MessageSizeValidator {
     private async track(sizeInBytes: number): Promise<void> {
         return new Promise<void>((resolve) => {
             for (const x of this.messageSizeCountersWithEvents) {
-                if (x.counter.send(x.eventName, sizeInBytes)) {
+                if (x.counter.send(x.eventName, sizeInBytes, { max: this.maxMessageSizeInBytes })) {
                     break;
                 }
             }

@@ -28,10 +28,11 @@ const generateMessageOfSize = (size: number): IDocumentMessage => {
 describe("Message size validation", () => {
     let logger: MockLogger;
     let validator: MessageSizeValidator;
+    const maxMessageSizeInBytes = 10 * 1000;
 
     beforeEach(() => {
         logger = new MockLogger();
-        validator = new MessageSizeValidator(10 * 1000 /* maxMessageSizeInBytes = 10kb */, logger);
+        validator = new MessageSizeValidator(maxMessageSizeInBytes, logger);
     });
 
     it("Should succeed when message is lower than 25% of max - single", () => {
@@ -51,6 +52,7 @@ describe("Message size validation", () => {
             eventName: "LargeMessage25PercentOfMax",
             category: "performance",
             value: size,
+            max: maxMessageSizeInBytes,
         }]));
     });
 
@@ -61,6 +63,7 @@ describe("Message size validation", () => {
             eventName: "LargeMessage50PercentOfMax",
             category: "performance",
             value: size,
+            max: maxMessageSizeInBytes,
         }]));
     });
 
@@ -71,6 +74,7 @@ describe("Message size validation", () => {
             eventName: "LargeMessageLimitExceeded",
             category: "performance",
             value: size,
+            max: maxMessageSizeInBytes,
         }]));
     });
 
@@ -86,6 +90,7 @@ describe("Message size validation", () => {
             eventName: "LargeMessageLimitExceeded",
             category: "performance",
             value: size,
+            max: maxMessageSizeInBytes,
         }]));
     });
 });
