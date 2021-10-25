@@ -13,17 +13,18 @@ export function isOdspHostname(server: string) {
 }
 
 export function isPushChannelHostname(server: string) {
-    return server === "localhost:3000" || (server.includes(".push") && server.endsWith(".svc.ms"));
+    return server.includes(".push") && server.endsWith(".svc.ms");
 }
 
 export function getAadUrl(server: string) {
-    if (isPushChannelHostname(server)) {
-        // special case for local / pushchannel testing
-        // if the SPO url is pushchannel, use the pushchannel AAD mock
-        if (server === "localhost:3000") {
-            return `http://localhost:3000`;
-        }
+    // special case for local / pushchannel testing
+    if (server === "localhost" || server.startsWith("localhost:")) {
+        // localhost will not be https
+        return `http://${server}`;
+    }
 
+    if (isPushChannelHostname(server)) {
+        // if the SPO url is pushchannel, use the pushchannel AAD mock
         return getSiteUrl(server);
     }
 
