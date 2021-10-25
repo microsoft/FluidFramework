@@ -183,6 +183,8 @@ jobs:
           customRegistry: 'useNpmrc'
 
       # Download Test Files & Install Extra Dependencies
+      # These steps are intended to include extra dependencies that are not available as
+      # part of the normal package .tgz installed previously in the pipeline.
       - ${{ if eq(parameters.downloadTestFiles, true) }}:
         # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
