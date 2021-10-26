@@ -3,8 +3,11 @@
 {{- partial "head.html" . -}}
 
 <body>
+    {{- if .Site.Params.cookies -}}
     <!-- EU Cookie Compliance JS -->
     <script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
+    {{- end -}}
+
     <div id="main">
         {{- partial "header.html" . -}}
         <div {{ if .IsHome}}class="home" {{ end}}>

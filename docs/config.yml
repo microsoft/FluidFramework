@@ -11,6 +11,7 @@ permalinks:
 
 params:
   appInsightKey: ""  # This is provided by the build system as an env variable
+  cookies: false
   customCSS: ["css/fluid.css", "css/tango.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
