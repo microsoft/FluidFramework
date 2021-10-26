@@ -461,7 +461,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private _dirtyContainer = false;
 
     private lastVisible: number | undefined;
-    protected readonly connectionStateHandler: ConnectionStateHandler;
+    private readonly connectionStateHandler: ConnectionStateHandler;
 
     private _closed = false;
 
