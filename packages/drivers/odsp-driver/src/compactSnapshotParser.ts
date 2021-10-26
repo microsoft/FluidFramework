@@ -122,11 +122,11 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const records = getAndValidateNodeProps(root,
         ["mrv", "cv", "snapshot", "blobs", "deltas"]);
 
-    assertBlobCoreInstance(records.minReadVersion, "minReadVersion should be of BlobCore type");
-    assertBlobCoreInstance(records.createVersion, "createVersion should be of BlobCore type");
-    assert(snapshotMinReadVersion >= records.minReadVersion.toString(),
+    assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
+    assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
+    assert(snapshotMinReadVersion >= records.mrv.toString(),
         0x20f /* "Driver min read version should >= to server minReadVersion" */);
-    assert(records.createVersion.toString() >= snapshotMinReadVersion,
+    assert(records.cv.toString() >= snapshotMinReadVersion,
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
 
     assertNodeCoreInstance(records.snapshot, "Snapshot should be of type NodeCore");
