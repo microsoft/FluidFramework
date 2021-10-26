@@ -120,7 +120,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const root = builder.getNode(0);
 
     const records = getAndValidateNodeProps(root,
-        ["minReadVersion", "createVersion", "snapshot", "blobs", "deltas"]);
+        ["mrv", "cv", "snapshot", "blobs", "deltas"]);
 
     assertBlobCoreInstance(records.minReadVersion, "minReadVersion should be of BlobCore type");
     assertBlobCoreInstance(records.createVersion, "createVersion should be of BlobCore type");

@@ -17,9 +17,9 @@ import { addBoolProperty, addNumberProperty, addStringProperty, NodeCore } from 
  * @param latestSequenceNumber - latest seq number of the container.
 */
 function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number) {
-    addStringProperty(node, "minReadVersion", snapshotMinReadVersion);
-    addStringProperty(node, "createVersion", snapshotMinReadVersion);
-    addNumberProperty(node, "latestSequenceNumber", latestSequenceNumber);
+    addStringProperty(node, "mrv", snapshotMinReadVersion);
+    addStringProperty(node, "cv", snapshotMinReadVersion);
+    addNumberProperty(node, "lsn", latestSequenceNumber);
 }
 
 /**
