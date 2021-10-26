@@ -59,7 +59,7 @@ export interface IOdspTestLoginInfo {
     // (undocumented)
     password: string;
     // (undocumented)
-    server: string;
+    siteUrl: string;
     // (undocumented)
     supportsBrowserAuth?: boolean;
     // (undocumented)
