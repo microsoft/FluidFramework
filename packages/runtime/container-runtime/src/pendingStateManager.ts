@@ -71,7 +71,7 @@ export class PendingStateManager implements IDisposable {
     private readonly pendingStates = new Deque<IPendingState>();
     private readonly initialStates: Deque<IPendingState>;
     private readonly previousClientIds = new Set<string>();
-    private firstStashedCSN = -1;
+    private readonly firstStashedCSN: number = -1;
     private stashedCount = 0;
     private readonly disposeOnce = new Lazy<void>(() => {
         this.initialStates.clear();
@@ -279,22 +279,22 @@ export class PendingStateManager implements IDisposable {
             return { localAck: false, localOpMetadata: undefined };
         }
 
+        // this message was a pending op that was actually sent successfully
+        const isOriginalClientId = message.clientId === Array.from(this.previousClientIds)[0] &&
+            message.clientSequenceNumber >= this.firstStashedCSN;
+        // this message is a pending or stashed op that was resubmitted
+        const isNewClientId = Array.from(this.previousClientIds).indexOf(message.clientId) > 0;
+
         // if this is an ack for a stashed op, dequeue one message.
         // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
-        const isOriginalClient = message.clientId === Array.from(this.previousClientIds)[0] &&
-            message.clientSequenceNumber === this.firstStashedCSN;
-        // rejoin op CSN = 1, resubmitted stashed/pending ops CSN >= 2
-        const isNewClient = this.previousClientIds.has(message.clientId) && message.clientSequenceNumber >= 2;
-
-        if (isOriginalClient || isNewClient) {
+        if (isOriginalClientId || isNewClientId) {
             while (!this.pendingStates.isEmpty()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const nextState = this.pendingStates.shift()!;
                 // if it's not a message just drop it and keep looking
                 if (nextState.type === "message") {
-                    this.assertOpMatch(nextState, message, isOriginalClient);
+                    this.assertOpMatch(nextState, message, isOriginalClientId);
                     --this.stashedCount;
-                    ++this.firstStashedCSN;
                     return { localAck: true, localOpMetadata: nextState.localOpMetadata };
                 }
             }
@@ -307,11 +307,13 @@ export class PendingStateManager implements IDisposable {
         return { localAck: false, localOpMetadata: undefined };
     }
 
-    private assertOpMatch(state: IPendingMessage, message: ISequencedDocumentMessage, isOriginalClient: boolean) {
+    private assertOpMatch(state: IPendingMessage, message: ISequencedDocumentMessage, isOriginalClientId: boolean) {
         assert(message.type === state.messageType, "different message type");
+        assert(message.clientSequenceNumber === state.clientSequenceNumber || !isOriginalClientId,
+            "client sequence number doesn't match");
         switch(message.type) {
             case ContainerMessageType.Attach:
-                if (!isOriginalClient) {
+                if (!isOriginalClientId) {
                     assert(message.metadata?.opId, "no opId");
                     assert(message.metadata.opId === state.opMetadata?.opId, "opId doesn't match");
                 }
@@ -469,25 +471,13 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        if (this.stashedCount > 0) {
-            // if this is first connect, verify we are about to "resubmit" only stashed ops
-            if (!prevClientId) {
-                let csn = this.firstStashedCSN;
-                for (let i = 0; i < this.pendingStates.length; ++i) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const state = this.pendingStates.get(i)!;
-                    if (state.type === "message") {
-                        assert(state.clientSequenceNumber === csn++,
-                            `expected ${csn - 1}, got ${state.clientSequenceNumber}`);
-                    }
-                }
-                assert(csn - this.firstStashedCSN === this.stashedCount,
-                    "unexpected message queued before first connect");
-            }
+        if (!prevClientId && this.stashedCount > 0) {
+            // this is first connect, verify we are about to "resubmit" only stashed ops
+            assert(this.pendingStates.toArray().filter((s) => s.type === "message").length === this.stashedCount,
+                "unexpected message queued before first connect");
 
             // send rejoin op with stashed client ID if we have it
-            if (!prevClientId && this.previousClientIds.size > 0) {
-                // No previous client ID implies first connect. If we have stashed ops w/ clientId, submit a rejoin op.
+            if (this.previousClientIds.size > 0) {
                 const clientId = Array.from(this.previousClientIds)[0];
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 this.pendingStates.unshift({
