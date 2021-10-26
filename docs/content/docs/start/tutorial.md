@@ -41,7 +41,7 @@ const containerSchema = {
 const root = document.getElementById("root")
 ```
 
-\* To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay service]({{< relref "azure-frs.md" >}}).
+\* To create a Fluid application that can be deployed to Azure, check out the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}).
 
 ## Create a Fluid container
 
@@ -122,7 +122,7 @@ function renderDiceRoller(diceMap, elem) {
     const dice = elem.querySelector(".dice");
 
     rollButton.onclick = () => updateDice(Math.floor(Math.random() * 6)+1);
-    
+
     const updateDice = (value) => {
         // Unicode 0x2680-0x2685 are the sides of a die (⚀⚁⚂⚃⚄⚅).
         dice.textContent = String.fromCodePoint(0x267f + value);

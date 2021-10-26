@@ -17,8 +17,12 @@ export enum LumberEventName {
     UnitTestEvent = "UnitTestEvent",
 
     // Lambdas
+    ClientSummary = "ClientSummary",
     DeliHandler = "DeliHandler",
+    KafkaRunner = "KafkaRunner",
     ScribeHandler = "ScribeHandler",
+    ServiceSummary = "ServiceSummary",
+    SummaryReader = "SummaryReader",
 
     // Reliability
     SessionResult = "SessionResult",
@@ -27,4 +31,5 @@ export enum LumberEventName {
 
     // Miscellaneous
     ConnectDocument = "ConnectDocument",
+    HttpRequest = "HttpRequest",
 }

@@ -5,10 +5,10 @@
 /* globals sinon */
 /* eslint-disable no-unused-expressions */
 
-const PropertyFactory = require('..').PropertyFactory;
-const MSG = require('@fluid-experimental/property-common').constants.MSG
-const generateGUID = require('@fluid-experimental/property-common').GuidUtils.generateGUID;
-const StringProperty = require('../properties/stringProperty');
+const { PropertyFactory } = require('..');
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { generateGUID } = require('@fluid-experimental/property-common').GuidUtils;
+const { StringProperty } = require('../properties/stringProperty');
 
 describe('PropertyFactory', function () {
     beforeEach(() => {

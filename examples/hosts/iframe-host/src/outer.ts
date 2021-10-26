@@ -5,11 +5,9 @@
 
 import * as Comlink from "comlink";
 import { fluidExport as TodoContainer } from "@fluid-example/todo";
-import {
-    getTinyliciousContainer,
-    InsecureTinyliciousUrlResolver,
-} from "@fluid-experimental/get-container";
+import { getTinyliciousContainer } from "@fluid-experimental/get-container";
 import { IFluidObject } from "@fluidframework/core-interfaces";
+import { InsecureTinyliciousUrlResolver } from "@fluidframework/tinylicious-driver";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { HTMLViewAdapter } from "@fluidframework/view-adapters";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
@@ -127,7 +125,7 @@ async function loadOuterLogDiv(
 async function loadOuterDataStoreDiv(
     dataStoreDivId: string,
 ): Promise<void> {
-    const container = await getTinyliciousContainer(
+    const [container] = await getTinyliciousContainer(
         getDocumentId(),
         TodoContainer,
         // The container is always expected to have been created here
@@ -135,10 +133,10 @@ async function loadOuterDataStoreDiv(
     );
 
     const dataStoreDiv = document.getElementById(dataStoreDivId) as HTMLDivElement;
-    getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
+    getFluidObjectAndRender(container, dataStoreDiv).catch(() => { });
     // Handle the code upgrade scenario (which fires contextChanged)
     container.on("contextChanged", (value) => {
-        getFluidObjectAndRender(container, dataStoreDiv).catch(() => {});
+        getFluidObjectAndRender(container, dataStoreDiv).catch(() => { });
     });
 }
 

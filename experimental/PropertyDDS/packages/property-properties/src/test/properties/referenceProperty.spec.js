@@ -10,20 +10,19 @@
  *                 /src/properties/referenceArrayProperty.js,
  *                 /src/properties/referenceMapProperty.js
  */
+const { PropertyFactory } = require('../..');
+const { ReferenceProperty } = require('../../properties/referenceProperty');
+const { ReferenceMapProperty } = require('../../properties/referenceMapProperty');
+const { ReferenceArrayProperty } = require('../../properties/referenceArrayProperty');
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+const { BaseProperty } = require('../..');
+const { MSG } = require('@fluid-experimental/property-common').constants;
 
 describe('Reference Properties', function () {
-    var PropertyFactory, ReferenceProperty, ReferenceMapProperty, ReferenceArrayProperty, ChangeSet,
-        BaseProperty, dereferenceToken, MSG;
+    var dereferenceToken;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('../..').PropertyFactory;
-        ReferenceProperty = require('../../properties/referenceProperty');
-        ReferenceMapProperty = require('../../properties/referenceMapProperty');
-        ReferenceArrayProperty = require('../../properties/referenceArrayProperty');
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet;
-        BaseProperty = require('../..').BaseProperty;
-        MSG = require('@fluid-experimental/property-common').constants.MSG;
+
         dereferenceToken = BaseProperty.PATH_TOKENS.REF;
 
         // A template that contains all types of reference properties

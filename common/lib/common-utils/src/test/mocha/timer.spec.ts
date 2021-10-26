@@ -278,7 +278,7 @@ describe("Timers", () => {
 
             timer.clear();
             await flushPromises();
-            assert(resolveResult === "timerCancelled", "Run promise should be resolved as cancel");
+            assert(resolveResult === "cancel", "Run promise should be resolved as cancel");
 
             await tickAndFlush(1);
             assert.strictEqual(runCount, 0, "Should not run after cleared");

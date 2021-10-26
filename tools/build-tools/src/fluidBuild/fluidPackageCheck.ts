@@ -481,10 +481,10 @@ export class FluidPackageCheck {
 
     private static readonly commonConfig = "@fluidframework/build-common/ts-common-config.json";
 
-    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any) {
+    private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any, configFile: string) {
         let changed = false;
         if (configJson.extends !== this.commonConfig) {
-            this.logWarn(pkg, `tsc config not extending ts-common-config.json`, fix);
+            this.logWarn(pkg, `${configFile}: tsc config not extending ts-common-config.json`, fix);
             if (fix) {
                 configJson.extends = this.commonConfig;
                 changed = true;
@@ -500,7 +500,7 @@ export class FluidPackageCheck {
                     loaded = true;
                     for (const option in configJson.compilerOptions) {
                         if (configJson.compilerOptions[option] === commonConfigJson.compilerOptions[option]) {
-                            this.logWarn(pkg, `duplicate compilerOptions ${option}: ${configJson.compilerOptions[option]}`, fix);
+                            this.logWarn(pkg, `${configFile}: duplicate compilerOptions - ${option}: ${configJson.compilerOptions[option]}`, fix);
                             if (fix) {
                                 delete configJson.compilerOptions[option];
                                 changed = true;
@@ -511,7 +511,7 @@ export class FluidPackageCheck {
             }
 
             if (!loaded) {
-                this.logWarn(pkg, `can't find ${this.commonConfig}`, false);
+                this.logWarn(pkg, `${configFile}: can't find ${this.commonConfig}`, false);
             }
         }
         return changed;
@@ -532,7 +532,7 @@ export class FluidPackageCheck {
             }
 
             let changed = false;
-            if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+            if (await this.checkTsConfigExtend(pkg, fix, configJson, configFile)) {
                 changed = true;
             }
 
@@ -594,7 +594,7 @@ export class FluidPackageCheck {
         let configJson;
         let changed = false;
         configJson = TscUtils.readConfigFile(configFile);
-        if (await this.checkTsConfigExtend(pkg, fix, configJson)) {
+        if (await this.checkTsConfigExtend(pkg, fix, configJson, configFile)) {
             changed = true;
         }
         if (!configJson.compilerOptions) {

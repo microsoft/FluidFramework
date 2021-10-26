@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
-import { IClient} from "@fluidframework/protocol-definitions";
+import { IClient, ISnapshotTree} from "@fluidframework/protocol-definitions";
 import { GitManager, Historian } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -17,6 +17,7 @@ import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
 import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
+import { ICache } from "./cache";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
@@ -33,6 +34,8 @@ export class DocumentService implements api.IDocumentService {
         protected tenantId: string,
         protected documentId: string,
         private readonly driverPolicies: IRouterliciousDriverPolicies,
+        private readonly blobCache: ICache<ArrayBufferLike>,
+        private readonly snapshotTreeCache: ICache<ISnapshotTree>,
     ) {
     }
 
@@ -63,9 +66,7 @@ export class DocumentService implements api.IDocumentService {
         const historian = new Historian(
             this.gitUrl,
             true,
-            // Disable caching of storage requests until we implement non-URL-based caching
-            // when using WholeSummaries, because we cannot gurantee that a summary sha is unique to the document.
-            this.driverPolicies.enableWholeSummaryUpload,
+            false,
             storageRestWrapper);
         const gitManager = new GitManager(historian);
         const documentStorageServicePolicies: api.IDocumentStorageServicePolicies = {
@@ -80,7 +81,9 @@ export class DocumentService implements api.IDocumentService {
             gitManager,
             this.logger,
             documentStorageServicePolicies,
-            this.driverPolicies);
+            this.driverPolicies,
+            this.blobCache,
+            this.snapshotTreeCache);
         return this.documentStorageService;
     }
 

@@ -124,7 +124,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
-        this.sendTelemetryEventCore({ ...event, category: "generic"}, error);
+        this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
     }
 
     /**
@@ -169,7 +169,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
         const perfEvent = {
             ...event,
-            category: event.category ? event.category : "performance",
+            category: event.category ?? "performance",
         };
 
         this.sendTelemetryEventCore(perfEvent, error);

@@ -21,7 +21,7 @@ export {
  */
 export interface AzureClientProps {
     /**
-     * Configuration for establishing a connection with the Azure Relay Service.
+     * Configuration for establishing a connection with the Azure Fluid Relay.
      */
     readonly connection: AzureConnectionConfig,
     /**
@@ -31,7 +31,7 @@ export interface AzureClientProps {
 }
 
 /**
- * Parameters for establishing a connection with the Azure Fluid Relay service.
+ * Parameters for establishing a connection with the Azure Fluid Relay.
  */
 export interface AzureConnectionConfig {
     /**
@@ -54,7 +54,7 @@ export interface AzureConnectionConfig {
 
 /**
  * AzureContainerServices is returned by the AzureClient alongside a FluidContainer.
- * It holds the functionality specifically tied to the Azure Fluid Relay service, and how the data stored in
+ * It holds the functionality specifically tied to the Azure Fluid Relay, and how the data stored in
  * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,
  * will not be included here but rather on the FluidContainer class itself.

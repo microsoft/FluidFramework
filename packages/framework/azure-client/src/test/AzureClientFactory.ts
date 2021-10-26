@@ -9,31 +9,28 @@ import {
     AzureClient,
     LOCAL_MODE_TENANT_ID,
 } from "..";
+import { createAzureTokenProvider } from "./AzureTokenFactory";
 
-// This function will detemine if local or remote mode is required (based on FLUID_CLIENT),
+// This function will determine if local or remote mode is required (based on FLUID_CLIENT),
 // and return a new AzureClient instance based on the mode by setting the Connection config
 // accordingly.
 export function createAzureClient(): AzureClient {
     const useAzure = process.env.FLUID_CLIENT === "azure";
-    const tenantId = useAzure ? process.env.fluid__webpack__tenantId as string : "frs-client-tenant";
-    const tenantKey = useAzure ? process.env.fluid__webpack__tenantKey as string : "";
-    const user = generateUser();
+    const tenantId = useAzure ? process.env.azure__fluid__relay__service__tenantId as string : "frs-client-tenant";
 
-    // use AzureClient remote mode will run against live Azure Relay Service.
+    // use AzureClient remote mode will run against live Azure Fluid Relay.
     // Default to running Tinylicious for PR validation
     // and local testing so it's not hindered by service availability
     const connectionProps = useAzure ? {
         tenantId,
-        tokenProvider: new InsecureTokenProvider(
-            tenantKey, user,
-        ),
-        orderer: "https://alfred.eus-1.canary.frs.azure.com",
-        storage: "https://historian.eus-1.canary.frs.azure.com",
+        tokenProvider: createAzureTokenProvider(),
+        orderer: "https://alfred.westus2.fluidrelay.azure.com",
+        storage: "https://historian.westus2.fluidrelay.azure.com",
     } : {
         tenantId: LOCAL_MODE_TENANT_ID,
-        tokenProvider: new InsecureTokenProvider("fooBar", user),
+        tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
         orderer: "http://localhost:7070",
         storage: "http://localhost:7070",
     };
-    return new AzureClient({ connection:connectionProps });
+    return new AzureClient({ connection: connectionProps });
 }

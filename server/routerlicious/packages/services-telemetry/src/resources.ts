@@ -6,6 +6,7 @@
 import { serializeError } from "serialize-error";
 import { Lumber } from "./lumber";
 import { LumberEventName } from "./lumberEventNames";
+import { Lumberjack } from "./lumberjack";
 
 export enum LogLevel {
     Error,
@@ -47,11 +48,15 @@ export enum CommonProperties {
     sequenceNumber = "sequenceNumber",
     checkpointOffset = "checkpointOffset",
 
-    // Summary related properties
+    // Summary properties
     clientSummarySuccess = "clientSummarySuccess",
     serviceSummarySuccess = "serviceSummarySuccess",
     maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
     lastSummarySequenceNumber = "lastSummarySequenceNumber",
+
+    // Logtail properties
+    minLogtailSequenceNumber = "minLogtailSequenceNumber",
+    maxLogtailSequenceNumber = "maxLogtailSequenceNumber",
 
     // Request properties
     statusCode = "statusCode",
@@ -59,6 +64,20 @@ export enum CommonProperties {
     // Miscellaneous properties
     restart = "restart",
     telemetryGroupName = "telemetryGroupName",
+}
+
+export enum ThrottlingTelemetryProperties {
+    // Use throttleId as key
+    key = "key",
+
+    // Throttle reason
+    reason = "reason",
+
+    // Retry after in seconds
+    retryAfterInSeconds = "retryAfterInSeconds",
+
+    // Log throttleOptions.weight
+    weight = "weight",
 }
 
 export enum SessionState {
@@ -113,3 +132,19 @@ export function handleError(eventName: LumberEventName, errMsg: string, engineLi
         errLumber.error(errMsg, err);
     }
 }
+
+// Helper method to add commonly used Lumber properties
+export const getLumberBaseProperties = (documentId: string, tenantId: string) => ({
+    [BaseTelemetryProperties.tenantId]: tenantId,
+    [BaseTelemetryProperties.documentId]: documentId,
+});
+
+// Helper method to log HTTP metadata
+export const logRequestMetric = (messageMetaData) => {
+    const restProperties = new Map(Object.entries(messageMetaData));
+    restProperties.set(CommonProperties.telemetryGroupName, messageMetaData.eventName);
+    const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest, restProperties);
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    messageMetaData.status.startsWith("2") ? httpMetric.success("Request successful")
+        : httpMetric.error("Request failed");
+};

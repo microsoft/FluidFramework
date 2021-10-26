@@ -11,3 +11,4 @@
  */
 
 export { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+export { generateTestUser } from "./generateTestUser";

@@ -6,9 +6,8 @@
 import { ILoader } from "@fluidframework/container-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedString } from "@fluidframework/sequence";
+import { ISharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
 // eslint-disable-next-line import/no-internal-modules
 import queue from "async/queue";
 
@@ -262,12 +261,14 @@ export async function typeChunk(
             processCounter.increment(time);
         });
 
-        a.ss.on("op", (message: ISequencedDocumentMessage, local) => {
+        a.ss.on("sequenceDelta", (ev: SequenceDeltaEvent) => {
+            const message = ev.opArgs.sequencedMessage;
             totalOps++;
-            if (message.traces &&
+            if (message !== undefined &&
+                message.traces &&
                 message.clientSequenceNumber &&
                 message.clientSequenceNumber > 100 &&
-                local) {
+                ev.isLocal) {
                 ackCounter.increment(1);
                 // Wait for at least one cycle
                 if (ackCounter.elapsed() > samplingRate) {

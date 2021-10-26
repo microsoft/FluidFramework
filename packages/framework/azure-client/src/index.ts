@@ -4,7 +4,7 @@
  */
 
 /**
- * A simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
+ * A simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay.
  *
  * @packageDocumentation
  */

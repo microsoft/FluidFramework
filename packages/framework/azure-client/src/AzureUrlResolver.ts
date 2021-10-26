@@ -11,7 +11,7 @@ import {
     IUrlResolver,
 } from "@fluidframework/driver-definitions";
 
-// Implementation of a URL resolver to resolve documents stored using the Azure Relay Service
+// Implementation of a URL resolver to resolve documents stored using the Azure Fluid Relay
 // based off of the orderer and storage URLs provide. The token provider here can be a
 // InsecureTokenProvider for basic scenarios or more robust, secure providers that fulfill the
 // ITokenProvider interface

@@ -34,13 +34,14 @@ import {
     LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
+    getLumberBaseProperties,
     Lumber,
     LumberEventName,
     Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
-import { getLumberProperties, createSessionMetric, logCommonSessionEndMetrics } from "../utils";
+import { createSessionMetric, logCommonSessionEndMetrics } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
 
@@ -229,7 +230,8 @@ export class ScribeLambda implements IPartitionLambda {
                                             },
                                         },
                                     );
-                                    Lumberjack.info(summaryResult, getLumberProperties(this.documentId, this.tenantId));
+                                    Lumberjack.info(summaryResult,
+                                        getLumberBaseProperties(this.documentId, this.tenantId));
                                 } else {
                                     const nackMessage = summaryResponse.message as ISummaryNack;
                                     await this.sendSummaryNack(nackMessage);
@@ -244,14 +246,14 @@ export class ScribeLambda implements IPartitionLambda {
                                             },
                                         },
                                     );
-                                    Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId));
+                                    Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId));
                                     this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                                 }
                             }
                         } catch (ex) {
                             const errorMsg = `Client summary failure @${value.operation.sequenceNumber}`;
                             this.context.log?.error(`${errorMsg} Exception: ${inspect(ex)}`);
-                            Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), ex);
+                            Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), ex);
                             this.revertProtocolState(prevState.protocolState, prevState.pendingOps);
                             // If this flag is set, we should ignore any storage specific error and move forward
                             // to process the next message.
@@ -307,7 +309,7 @@ export class ScribeLambda implements IPartitionLambda {
                                         },
                                     },
                                 );
-                                Lumberjack.info(summaryResult, getLumberProperties(this.documentId, this.tenantId));
+                                Lumberjack.info(summaryResult, getLumberBaseProperties(this.documentId, this.tenantId));
                             }
                         } catch (ex) {
                             const errorMsg = `Service summary failure @${operation.sequenceNumber}`;
@@ -323,7 +325,7 @@ export class ScribeLambda implements IPartitionLambda {
                                             tenantId: this.tenantId,
                                         },
                                     });
-                                Lumberjack.error(errorMsg, getLumberProperties(this.documentId, this.tenantId), ex);
+                                Lumberjack.error(errorMsg, getLumberBaseProperties(this.documentId, this.tenantId), ex);
                             } else {
                                 throw ex;
                             }
@@ -403,7 +405,7 @@ export class ScribeLambda implements IPartitionLambda {
                             tenantId: this.tenantId,
                         },
                     });
-                Lumberjack.error(`Protocol error`, getLumberProperties(this.documentId, this.tenantId), error);
+                Lumberjack.error(`Protocol error`, getLumberBaseProperties(this.documentId, this.tenantId), error);
                 throw new Error(`Protocol error ${error} for ${this.documentId} ${this.tenantId}`);
             }
         }

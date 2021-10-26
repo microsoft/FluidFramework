@@ -8,15 +8,14 @@
  * @fileoverview In this file, we will test the map property
  *    object described in /src/properties/mapProperty.js
  */
+const { PropertyFactory } = require('../..');
+const { BaseProperty } = require('../..');
+const { ChangeSet } = require('@fluid-experimental/property-changeset')
 
 describe('ValueMapProperty', function () {
-    var PropertyFactory, BaseProperty, ChangeSet, myNode, Uint32Map;
+    var myNode, Uint32Map;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('../..').PropertyFactory;
-        BaseProperty = require('../..').BaseProperty;
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
 
         // Register a template with a set property for the tests
         var TestPropertyTemplate = {

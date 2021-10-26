@@ -38,17 +38,8 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
-import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
-
-// @public (undocumented)
-export class CollabWindowTracker {
-    constructor(submit: (type: MessageType, contents: any) => void, activeConnection: () => boolean, NoopTimeFrequency?: number, NoopCountFrequency?: number);
-    scheduleSequenceNumberUpdate(message: ISequencedDocumentMessage, immediateNoOp: boolean): void;
-    // (undocumented)
-    stopSequenceNumberUpdate(): void;
-    }
 
 // @public (undocumented)
 export enum ConnectionState {
@@ -200,8 +191,6 @@ export interface ILoaderServices {
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
-    // @deprecated (undocumented)
-    static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeDetailsLoader | ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
     // (undocumented)
     createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)

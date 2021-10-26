@@ -283,12 +283,14 @@ stages:
               script: |
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
+                mkdir $(Build.ArtifactStagingDirectory)/test-files/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
                   npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
+                  npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
                 else
                   npm pack --unsafe-perm
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
@@ -309,6 +311,13 @@ stages:
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
               ArtifactName: 'pack'
+              publishLocation: 'Container'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - Test Files
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
+              ArtifactName: 'test-files'
               publishLocation: 'Container'
 
         # Collect/publish/run bundle analysis

@@ -1,9 +1,9 @@
 ---
-title: Connect to an Azure Fluid Relay service
+title: Connect to Azure Fluid Relay
 menuPosition: 2
 ---
 
-Azure Fluid Relay service is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
+Azure Fluid Relay is a cloud-hosted Fluid service. You can connect your Fluid application to an Azure Fluid Relay instance using the `AzureClient` in the `@fluidframework/azure-client` package. `AzureClient` handles the logic of connecting your [Fluid container]({{< relref "containers.md" >}}) to the service while keeping the container object itself service-agnostic. You can use one instance of this client to manage multiple containers.
 
 The sections below will explain how to use `AzureClient` in your own application.
 
@@ -82,7 +82,7 @@ Your Azure Function will generate the token for the given user that is signed us
 
 ## Managing containers
 
-The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in a _container schema_ that defines the container data model. For the
+The `AzureClient` API exposes `createContainer` and `getContainer` functions to create and get containers respectively. Both functions take in a *container schema* that defines the container data model. For the
 `getContainer` function, there is an additional parameter for the container `id` of the container you wish to
 fetch.
 
@@ -125,9 +125,9 @@ Calls to `createContainer` and `getContainer` return two values: a `container` -
 
 The `container` contains the Fluid data model and is service-agnostic. Any code you write against this container object returned by the `AzureClient` is reusable with the client for another service. An example of this is if you prototyped your scenario using `TinyliciousClient`, then all of your code interacting with the shared objects within the Fluid container can be reused when moving to using `AzureClient`.
 
-The `containerServices` object contains data that is specific to the Azure Fluid Relay service. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
+The `containerServices` object contains data that is specific to the Azure Fluid Relay. This object contains an `audience` value that can be used to manage the roster of users that are currently connected to the container.
 
-Let's take a look at how you can use the `audience` object to maintain an updated view of all the members currently in a container.
+The following code demonstrates how you can use the `audience` object to maintain an updated view of all the members currently in a container.
 
 ```javascript
 const { audience } = containerServices;
@@ -194,7 +194,7 @@ Alongside the user ID, name and additional details, `AzureMember` objects also h
 
 These functions and events can be combined to present a real-time view of the users in the current session.
 
-**Congratulations!** You have now successfully connected your Fluid container to the Azure Fluid Relay service and
+**Congratulations!** You have now successfully connected your Fluid container to the Azure Fluid Relay and
 fetched back user details for the members in your collaborative session!
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->

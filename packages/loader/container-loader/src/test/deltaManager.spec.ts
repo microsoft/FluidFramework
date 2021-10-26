@@ -11,7 +11,7 @@ import { IClient, IDocumentMessage, MessageType } from "@fluidframework/protocol
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
-import { CollabWindowTracker } from "../container";
+import { CollabWindowTracker } from "../collabWindowTracker";
 
 describe("Loader", () => {
     describe("Container Loader", () => {
@@ -31,7 +31,45 @@ describe("Loader", () => {
             // Stash the real setTimeout because sinon fake timers will hijack it.
             const realSetTimeout = setTimeout;
 
-            async function startDeltaManager() {
+            async function startDeltaManager(reconnectAllowed = true) {
+                const service = new MockDocumentService(
+                    undefined,
+                    () => {
+                        // Always create new connection, as reusing old closed connection
+                        // Forces DM into infinite reconnection loop.
+                        deltaConnection = new MockDocumentDeltaConnection(
+                            "test",
+                            (messages) => emitter.emit(submitEvent, messages),
+                        );
+                        return deltaConnection;
+                    },
+                );
+                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
+
+                deltaManager = new DeltaManager(
+                    () => service,
+                    client as IClient,
+                    logger,
+                    reconnectAllowed,
+                    () => false,
+                );
+
+                const tracker = new CollabWindowTracker(
+                    (type: MessageType, contents: any) => {
+                        deltaManager.submit(type, contents);
+                        // CollabWindowTracker expects every op submitted (including noops) to result in this call:
+                        tracker.stopSequenceNumberUpdate();
+                    },
+                    () => true,
+                    expectedTimeout,
+                    noopCountFrequency,
+                );
+
+                await deltaManager.attachOpHandler(0, 0, 1, {
+                    process: (message) => tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
+                    processSignal() { },
+                });
+
                 await deltaManager.connect({ reason: "test" });
             }
 
@@ -44,6 +82,7 @@ describe("Loader", () => {
 
             async function emitSequentialOps(type: MessageType = MessageType.Operation, count = 1) {
                 for (let num = 0; num < count; ++num) {
+                    assert(!deltaConnection.disposed, "disposed");
                     deltaConnection.emitOp(docId, [{
                         clientId: "Some client ID",
                         clientSequenceNumber: ++clientSeqNumber,
@@ -74,40 +113,7 @@ describe("Loader", () => {
                 emitter = new EventEmitter();
                 immediateNoOp = false;
 
-                deltaConnection = new MockDocumentDeltaConnection(
-                    "test",
-                    (messages) => emitter.emit(submitEvent, messages),
-                );
                 clientSeqNumber = 0;
-                const service = new MockDocumentService(
-                    undefined,
-                    () => deltaConnection,
-                );
-                const client: Partial<IClient> = { mode: "write", details: { capabilities: { interactive: true } } };
-
-                deltaManager = new DeltaManager(
-                    () => service,
-                    client as IClient,
-                    logger,
-                    false,
-                    () => false,
-                );
-
-                const tracker = new CollabWindowTracker(
-                    (type: MessageType, contents: any) => {
-                        deltaManager.submit(type, contents);
-                        // CollabWindowTracker expects every op submitted (including noops) to result in this call:
-                        tracker.stopSequenceNumberUpdate();
-                    },
-                    () => true,
-                    expectedTimeout,
-                    noopCountFrequency,
-                );
-
-                await deltaManager.attachOpHandler(0, 0, 1, {
-                    process: (message) => tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
-                    processSignal() { },
-                });
             });
 
             afterEach(() => {
@@ -251,7 +257,7 @@ describe("Loader", () => {
                 });
 
                 it("Shouldn't raise readonly event when container was already readonly", async () => {
-                    await startDeltaManager();
+                    await startDeltaManager(false /* startDeltaManager */);
 
                     // Closing underlying connection makes container readonly
                     deltaConnection.close();

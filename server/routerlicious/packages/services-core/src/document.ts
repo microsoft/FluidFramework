@@ -33,6 +33,7 @@ export interface IDocumentStorage {
         summary: ISummaryTree,
         sequenceNumber: number,
         term: number,
+        initialHash: string,
         values: [string, ICommittedProposal][]): Promise<IDocumentDetails>;
 }
 
@@ -60,6 +61,9 @@ export interface IDeliState {
 
     // Sequence number at logOffset
     sequenceNumber: number;
+
+    // Rolling hash at sequenceNumber
+    expHash1: string;
 
     // Epoch of stream provider
     epoch: number;
@@ -117,6 +121,6 @@ export interface IDocument {
     deli: string;
 
     // Timestamp of when this document and related data will be hard deleted.
-    // The document is soft deleted if a deletion timestamp is present.
-    deletionTime?: string;
+    // The document is soft deleted if a scheduled deletion timestamp is present.
+    scheduledDeletionTime?: string;
 }

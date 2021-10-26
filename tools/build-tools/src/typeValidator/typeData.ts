@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { Node, Project } from "ts-morph";
+import { Node, Project, ts } from "ts-morph";
 import * as fs from "fs";
 import { getPackageDetails, PackageDetails } from "./packageJson";
 
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
     typeData: TypeData[];
+    project: Project;
 }
 
-export interface TypeData{
+export interface TypeData {
     readonly name: string;
-    readonly typeParams: string | undefined;
-    readonly deprecated: boolean;
-    readonly internal: boolean;
-    readonly needsTypeof: boolean;
     readonly kind: string;
+    readonly node: Node;
 }
 
-function hasDocTag(node: Node, tagName: "deprecated" | "internal"){
-    if(Node.isJSDocableNode(node)) {
-        for(const doc of node.getJsDocs()){
+export function getFullTypeName(typeData: TypeData){
+    return `${typeData.kind}_${typeData.name}`
+}
+
+export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
+    if(Node.isJSDocableNode(data.node)) {
+        for(const doc of data.node.getJsDocs()){
             for(const tag of doc.getTags()){
                 if(tag.getTagName() === tagName){
                     return true;
@@ -66,54 +68,84 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         return typeData
     }
 
-    if(Node.isClassDeclaration(node)
+    if (Node.isClassDeclaration(node)
         || Node.isEnumDeclaration(node)
         || Node.isInterfaceDeclaration(node)
         || Node.isTypeAliasDeclaration(node)
-        || Node.isVariableDeclaration(node)){
-
+        || Node.isVariableDeclaration(node)
+        || Node.isFunctionDeclaration(node)
+    ) {
         const name = namespacePrefix !== undefined
             ? `${namespacePrefix}.${node.getName()}`
             : node.getName()!;
 
-        let typeParams: string | undefined;
-        if(Node.isInterfaceDeclaration(node) || Node.isTypeAliasDeclaration(node)){
-            // it's really hard to build the right type for a generic,
-            // so for now we'll just pass any, as it will always work
-            if(node.getTypeParameters().length > 0){
-                typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
-            }
-        }
-
-        const needsTypeof = Node.isVariableDeclaration(node) || Node.isFunctionDeclaration(node);
-
-        const deprecated = hasDocTag(node, "deprecated");
-        const internal = hasDocTag(node, "internal");
-
-        return [{
+        const typeData: TypeData[] = [{
             name,
-            deprecated,
-            internal,
-            typeParams,
-            needsTypeof,
             kind: node.getKindName(),
+            node,
         }];
+        return typeData;
     }
-
 
     throw new Error(`Unknown Export Kind: ${node.getKindName()}`)
 }
 
+export function toTypeString(prefix: string, typeData: TypeData){
+    const node = typeData.node;
+    let typeParams: string | undefined;
+    if(Node.isInterfaceDeclaration(node)
+        || Node.isTypeAliasDeclaration(node)
+        || Node.isClassDeclaration(node)
+    ){
+        // does the type take generics that don't have defaults?
+        if(node.getTypeParameters().length > 0
+            && node.getTypeParameters().some((tp)=>tp.getDefault() === undefined)
+        ){
+            // it's really hard to build the right type for a generic,
+            // so for now we'll just pass any, as it will always work
+            typeParams = `<${node.getTypeParameters().map(()=>"any").join(",")}>`;
+        }
+    }
+
+    const typeStringBase =`${prefix}.${typeData.name}${typeParams ?? ""}`;
+    switch(node.getKind()){
+        case ts.SyntaxKind.ClassDeclaration:
+            // turn the class into a type by not omitting anything
+            // this will expose all public props, and validate the
+            // interfaces matches
+            return `Omit<${typeStringBase},"">`;
+
+        case ts.SyntaxKind.VariableDeclaration:
+        case ts.SyntaxKind.FunctionDeclaration:
+            // turn variables and functions into types
+            return `typeof ${typeStringBase}`;
+
+        default:
+            return typeStringBase;
+    }
+}
+
+function tryFindDependencyPath(packageDir: string, dependencyName: string) {
+    // for lerna mono-repos we may need to look for the hoisted packages
+    //
+    let testPath = packageDir;
+    while(!fs.existsSync(`${testPath}/node_modules/${dependencyName}/package.json`)
+        && !fs.existsSync(`${testPath}/lerna.json`
+    )){
+        testPath += "/.."
+    }
+    return `${testPath}/node_modules/${dependencyName}`
+}
 
 export function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): PackageAndTypeData {
 
     const basePath = dependencyName === undefined
         ? packageDir
-        : `${packageDir}/node_modules/${dependencyName}`;
+        : tryFindDependencyPath(packageDir, dependencyName);
 
-    const tsConfigPath =`${basePath}/tsconfig.json`
+    const tsConfigPath =`${basePath}/tsconfig.json`;
 
-    if(!fs.existsSync(tsConfigPath)){
+    if (!fs.existsSync(tsConfigPath)) {
         throw new Error(`Tsconfig json does not exist: ${tsConfigPath}.\nYou may need to install the package via npm install in the package dir.`)
     }
 
@@ -139,5 +171,6 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     return {
         packageDetails,
         typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
+        project,
     };
 }

@@ -5,6 +5,12 @@
 ```ts
 
 import { InsecureTokenProvider } from '@fluidframework/test-runtime-utils';
+import { IUser } from '@fluidframework/protocol-definitions';
+
+// @public
+export const generateTestUser: () => IUser & {
+    name: string;
+};
 
 export { InsecureTokenProvider }
 

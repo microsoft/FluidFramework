@@ -13,6 +13,7 @@ import {
     compatVersions,
     driver,
     r11sEndpointName,
+    tenantIndex,
     baseVersion,
     reinstall,
 } from "./compatOptions";
@@ -32,8 +33,8 @@ interface CompatConfig {
 
 // N, N - 1, and N - 2
 const defaultVersions = [0, -1, -2];
-// we are currently supporting 0.39 long-term
-const LTSVersions = ["^0.39.0"];
+// we are currently supporting 0.45 long-term
+const LTSVersions = ["^0.45.0"];
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
     if (compatVersion === 0) {
@@ -136,6 +137,7 @@ if (compatVersions) {
 }
 process.env.fluid__test__driver = driver;
 process.env.fluid__test__r11sEndpointName = r11sEndpointName;
+process.env.fluid__test__tenantIndex = tenantIndex.toString();
 process.env.fluid__test__baseVersion = baseVersion;
 
 let configList: CompatConfig[] = [];
@@ -195,6 +197,7 @@ function describeCompat(
                             version: config.driver,
                             config: {
                                 r11s: { r11sEndpointName },
+                                odsp: { tenantIndex },
                             },
                         },
                         config.containerRuntime,

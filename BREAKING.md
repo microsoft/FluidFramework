@@ -10,6 +10,55 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+## 0.51 Breaking changes
+- [`maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection](#maxmessagesize-property-has-been-deprecated-from-iconnectiondetails-and-idocumentdeltaconnection)
+- [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)
+- [Deprecated `Loader._create` is removed](#deprecated-loadercreate-is-removed)
+- [Stop exporting internal class `CollabWindowTracker` ](#stop-exporting-internal-class-collabwindowtracker)
+
+### `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
+`maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
+
+### _createDataStoreWithProps and IFluidDataStoreChannel
+ContainerRuntime._createDataStoreWithProps() is made consistent with the rest of API (same API on IContainerRuntimeBase interface, all other create methods to create data store) and returns now only IFluidRouter. IFluidDataStoreChannel is internal communication mechanism between ContainerRuntime and data stores and should be used only for this purpose, by data store authors. It is not a public interface that should be exposed by data stores.
+While casting IFluidRouter objects returned by various data store creation APIs to IFluidDataStoreChannel would continue to work in this release, this is not supported and will be taken away in next releases due to upcoming work in GC & named component creation space.
+
+### Deprecated `Loader._create` is removed
+Removing API `Loader._create` from `@fluidframework/container-loader`, which was an interim replacement of the Loader constructor API change in version 0.28.
+Use the Loader constructor with the `ILoaderProps` instead.
+
+### Stop exporting internal class `CollabWindowTracker`
+`CollabWindowTracker` is an internal implementation for `@fluidframework/container-loader` and should never been exported.
+
+## 0.50 Breaking changes
+- [OpProcessingController removed](#opprocessingcontroller-removed)
+- [Expose isDirty flag in the FluidContainer](#expose-isdirty-flag-in-the-fluidcontainer)
+- [get-container API changed](#get-container-api-changed)
+- [SharedCell serialization](#sharedcell-serialization)
+- [Expose saved and dirty events in FluidContainer](#expose-saved-and-dirty-events-in-fluidcontainer)
+- [Deprecated bindToContext in IFluidDataStoreChannel](#Deprecated-bindToContext-in-IFluidDataStoreChannel)
+
+### OpProcessingController removed
+OpProcessingController has been deprecated for very long time. It's being removed in this release.
+Please use LoaderContainerTracker instead (see https://github.com/microsoft/FluidFramework/pull/7784 as an example of changes required)
+If you can't make this transition, you can always copy implementation of LoaderContainerTracker to your repo and maintain it. That said, it has bugs and tests using it are easily broken but subtle changes in reconnection logic, as evident from PRs #7753, #7393)
+
+### Expose isDirty flag in the FluidContainer
+The `isDirty` flag is exposed onto the FluidContainer. The property is already exposed on the Container and it is just piped up to the FluidContainer.
+
+### get-container API changed
+The signature of methods `getTinyliciousContainer` and `getFRSContainer` exported from the `get-container` package has been changed to accomodate the new container create flow. Both methods now return a tuple of the container instance and container ID associated with it. The `documentId` parameter is ignored when a new container is requested. Client applications need to use the ID returned by the API.
+The `get-container` API is widely used in multiple sample applications across the repository. All samples were refactored to reflect the change in the API. External samples consuming these methods should be updated accordingly.
+
+### SharedCell serialization
+`SharedCell` serialization format has changed. Values stored from previous versions will be broken.
+
+### Expose saved and dirty events in FluidContainer
+The `saved` and `dirty` container events are exposed onto the FluidContainer. The events are emitted on the Container already.
+
+### Deprecated bindToContext in IFluidDataStoreChannel
+bindToContext in IFluidDataStoreChannel has been deprecated. This should not be used to explicitly bind data stores. Root data stores will automatically be bound to container. Non-root data stores will be bound when their handles are stored in an already bound DDS.
+
 ## 0.49 Breaking changes
 - [Deprecated dirty document events and property removed from ContainerRuntime](#deprecated-dirty-document-events-and-property-removed-from-containerruntime)
 - [Removed deltaManager.ts from @fluidframework/container-loader export](#deltamanager-removed-from-fluid-framework-export)

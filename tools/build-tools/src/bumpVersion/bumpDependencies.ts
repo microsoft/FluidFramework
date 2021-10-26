@@ -149,7 +149,7 @@ async function bumpPackageDependencies(
         if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
             const depVersion = dep.rangeSpec;
             const dependencies = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;
-            if (release ? dependencies[name] === `${depVersion}-0` : dependencies[name] !== depVersion) {
+            if (release ? dependencies[name].startsWith(`${depVersion}-`) : dependencies[name] !== depVersion) {
                 if (changedVersion) {
                     changedVersion.add(dep.pkg, depVersion);
                 }

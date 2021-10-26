@@ -12,20 +12,17 @@
  *    described in /src/utils.js
  */
 
+const _ = require('lodash');
+const { PropertyFactory } = require('..');
+const { BaseProperty } = require('..');
+const { NodeProperty } = require('../properties/nodeProperty');
+const { Utils } = require('@fluid-experimental/property-changeset');
+const { MSG } = require('@fluid-experimental/property-common').constants;
+const { ChangeSet } = require('@fluid-experimental/property-changeset');
+
 describe('Utils', function () {
-    var PropertyFactory, BaseProperty, NodeProperty, Utils, _, MSG, ChangeSet;
 
     before(function () {
-        // Get all the objects we need in this test here.
-        PropertyFactory = require('..').PropertyFactory;
-        BaseProperty = require('..').BaseProperty;
-        NodeProperty = require('../properties/nodeProperty');
-        Utils = require('@fluid-experimental/property-changeset').Utils;
-        _ = require('lodash');
-        MSG = require('@fluid-experimental/property-common').constants.MSG
-        ChangeSet = require('@fluid-experimental/property-changeset').ChangeSet
-
-
         var TaskStatus = {
             // inherits : 'Enum',
             typeid: 'autodesk.test:utils.spec.task.status-1.0.0'
