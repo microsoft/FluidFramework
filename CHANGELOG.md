@@ -1,5 +1,17 @@
 # Change Log
 
+## 12.7.1
+
+* refactor: Update build to fail on invalid API configurations and fixed existing inconsistencies
+  * Associated pull request: [35465](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35465)
+  * Commit: [d7ecdd85b4f2b519548cbadebd47e70655655a6d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/d7ecdd85b4f2b519548cbadebd47e70655655a6d)
+* feat: copies all package api rollups to top level directory, triggers doc publishing pipeline based on changes
+  * Associated pull request: [35409](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35409)
+  * Commit: [bf68f9e6f0dac55cd08272f58aaf8a8dc9343107](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/bf68f9e6f0dac55cd08272f58aaf8a8dc9343107)
+* fix: Resolve LogViewer memory leak
+  * Associated pull request: [35342](https://dev.azure.com/intentional/intent/_git/typescript-pipe/pullrequest/35342)
+  * Commit: [6013412fc4819e1dcd46ceae7d75a8c33fd6e16d](https://dev.azure.com/intentional/intent/_git/typescript-pipe/commit/6013412fc4819e1dcd46ceae7d75a8c33fd6e16d)
+
 ## 12.4.1
 
 * build: Update fluid framework to version 0.49.2
