@@ -36,12 +36,9 @@ parameters:
   type: boolean
   default: false
 
-- name: downloadTestFiles
-  type: boolean
-  default: false
-
 - name: testFileTarName
   type: string
+  default: null
 
 - name: extraDependencies
   type: string
@@ -99,7 +96,6 @@ jobs:
               testCommand=${{ parameters.testCommand }}
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
-              downloadTestFiles=${{ parameters.downloadTestFiles }}
               testFileTarName=${{ parameters.testFileTarName }}
               extraDependencies=${{ parameters.extraDependencies }}
             "
@@ -185,7 +181,7 @@ jobs:
       # Download Test Files & Install Extra Dependencies
       # These steps are intended to include extra dependencies that are not available as
       # part of the normal package .tgz installed previously in the pipeline.
-      - ${{ if eq(parameters.downloadTestFiles, true) }}:
+      - ${{ if ne(parameters.testFileTarName, 'null') }}:
         # Download Artifact - Test Files
         - task: DownloadPipelineArtifact@2
           displayName: Download test files
