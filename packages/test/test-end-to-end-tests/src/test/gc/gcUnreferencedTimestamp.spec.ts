@@ -210,4 +210,37 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
     // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
     // waits for those summaries to be ack'd. This may take a while.
     }).timeout(20000);
+
+    /**
+     * This scenario is currently broken. Re-enable test once the following item is completed -
+     * https://github.com/microsoft/FluidFramework/issues/7924
+     */
+    it.skip(`updates unreferenced timestamp when data store transitions between` +
+       `unreferenced -> referenced -> unreferenced between summaries`, async () => {
+        const summarizerClient = await getNewSummarizer();
+
+        // Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
+        const newDataStore = await dataObjectFactory.createInstance(mainDataStore.containerRuntime);
+        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        await provider.ensureSynchronized();
+
+        // Mark the data store as unreferenced by deleting its handle from the DDS and validate that it now has an
+        // unreferenced timestamp.
+        mainDataStore._root.delete("newDataStore");
+        const unrefTimestamp1 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
+        assert(unrefTimestamp1 !== undefined, `data store should have unreferenced timestamp after being unreferenced`);
+
+        // Store the data store's handle in the referenced DDS again and the delete it again. The data store will
+        // transition from unreferened -> referenced -> unreferenced before the next summary happens. The data store
+        // will still be unreferenced but the unreferenced timestamp should update.
+        mainDataStore._root.set("newDataStore", newDataStore.handle);
+        await provider.ensureSynchronized();
+        mainDataStore._root.delete("newDataStore");
+
+        const unrefTimestamp2 = await getDataStoreUnreferencedTimestamp(summarizerClient, newDataStore.id);
+        assert(unrefTimestamp2 !== undefined, `data store should still have unreferenced timestamp`);
+        assert(unrefTimestamp2 > unrefTimestamp1, `new timestamp should be greater that the previous one`);
+    // This test has increased timeout because it waits for multiple summaries to be uploaded to server. It then also
+    // waits for those summaries to be ack'd. This may take a while.
+    }).timeout(20000);
 });
