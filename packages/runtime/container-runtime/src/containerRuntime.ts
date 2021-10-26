@@ -2188,7 +2188,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.dataStores.resubmitDataStoreOp(content, localOpMetadata);
                 break;
             case ContainerMessageType.Attach:
-                this.submit(type, content, localOpMetadata);
+                this.submit(type, content, localOpMetadata, opMetadata);
                 break;
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);

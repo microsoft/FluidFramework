@@ -406,6 +406,27 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         setCounts.map((setCount, i) => assert.strictEqual(setCount, 1, `${i} not set exactly once`));
     });
 
+    it("attach op resubmitted by second container", async () => {
+        const stashedOps = await getPendingOps(provider, false, async (container, d, map) => {
+            const runtime = (container as any).context.runtime as IContainerRuntime;
+
+            const router = await runtime.createDataStore(["default"]);
+            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+
+            const channel = dataStore.runtime.createChannel("whatever", "https://graph.microsoft.com/types/map");
+            assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
+
+            (await channel.handle.get() as SharedObject).bindToContext();
+            dataStore.channel.attachGraph();
+            (channel as SharedMap).set(testKey, testValue);
+        });
+
+        await loader.resolve({ url }, stashedOps);
+        await provider.ensureSynchronized();
+        await loader.resolve({ url }, stashedOps);
+        await provider.ensureSynchronized();
+    });
+
     it("correctly handles reconnect and resubmit on original container", async () => {
         const setCounts = Array(lots).fill(0);
         map1.on("valueChanged", (changed) => ++setCounts[changed.key]);

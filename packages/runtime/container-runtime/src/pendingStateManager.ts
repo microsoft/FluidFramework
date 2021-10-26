@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { v4 as uuid } from "uuid";
 import { IDisposable } from "@fluidframework/common-definitions";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -11,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import Deque from "double-ended-queue";
-import { ContainerRuntime, ContainerMessageType } from "./containerRuntime";
+import { ContainerRuntime, ContainerMessageType, isRuntimeMessage } from "./containerRuntime";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -161,6 +162,10 @@ export class PendingStateManager implements IDisposable {
             opMetadata,
         };
 
+        if (type === ContainerMessageType.Attach && opMetadata?.opId === undefined) {
+            pendingMessage.opMetadata = { ...opMetadata, opId: uuid() };
+        }
+
         this.pendingStates.push(pendingMessage);
 
         this.pendingMessagesCount++;
@@ -270,6 +275,10 @@ export class PendingStateManager implements IDisposable {
      * Listens for ACKs of stashed ops
      */
     private processRemoteMessage(message: ISequencedDocumentMessage) {
+        if (!isRuntimeMessage(message)) {
+            return { localAck: false, localOpMetadata: undefined };
+        }
+
         // if this is an ack for a stashed op, dequeue one message.
         // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
         const isOriginalClient = message.clientId === Array.from(this.previousClientIds)[0] &&
@@ -283,6 +292,7 @@ export class PendingStateManager implements IDisposable {
                 const nextState = this.pendingStates.shift()!;
                 // if it's not a message just drop it and keep looking
                 if (nextState.type === "message") {
+                    this.assertOpMatch(nextState, message, isOriginalClient);
                     --this.stashedCount;
                     ++this.firstStashedCSN;
                     return { localAck: true, localOpMetadata: nextState.localOpMetadata };
@@ -295,6 +305,28 @@ export class PendingStateManager implements IDisposable {
         }
 
         return { localAck: false, localOpMetadata: undefined };
+    }
+
+    private assertOpMatch(state: IPendingMessage, message: ISequencedDocumentMessage, isOriginalClient: boolean) {
+        assert(message.type === state.messageType, "different message type");
+        switch(message.type) {
+            case ContainerMessageType.Attach:
+                if (!isOriginalClient) {
+                    assert(message.metadata?.opId, "no opId");
+                    assert(message.metadata.opId === state.opMetadata?.opId, "opId doesn't match");
+                }
+                break;
+            case ContainerMessageType.FluidDataStoreOp:
+                assert(message.contents.address === state.content.address, "address doesn't match");
+                break;
+            case ContainerMessageType.BlobAttach:
+                // todo: assert we have blob storage, assert blob IDs match, remove blob from blob storage since it made
+                // it through successfully
+                break;
+            case ContainerMessageType.Rejoin:
+            default:
+                throw new Error(`${message.type} not expected`);
+        }
     }
 
     /**
@@ -466,6 +498,8 @@ export class PendingStateManager implements IDisposable {
                 ++pendingStatesCount;
             }
         }
+
+        this.previousClientIds.clear();
 
         if (prevClientId) {
             // add a rejoin op so future clients provided with our stashed pending ops can recognize them
