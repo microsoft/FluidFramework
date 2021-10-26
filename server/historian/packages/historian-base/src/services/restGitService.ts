@@ -18,7 +18,7 @@ import {
     IWholeFlatSummary,
     IWholeSummaryPayloadType,
 } from "@fluidframework/server-services-client";
-import { ITenantStorage } from "@fluidframework/server-services-core";
+import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
@@ -196,11 +196,11 @@ export class RestGitService {
         const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
-        if ((summaryResponse as IWholeFlatSummary).trees !== undefined) {
+        if (summaryParams.type === "container" && (summaryResponse as IWholeFlatSummary).trees !== undefined) {
             // Cache the written summary for future retrieval. If this fails, next summary retrieval
             // will receive an older version, but that is OK. Client will catch up with ops.
             this.setCache<IWholeFlatSummary>(
-                this.getSummaryCacheKey("container"),
+                this.getSummaryCacheKey(summaryParams.type),
                 (summaryResponse as IWholeFlatSummary));
         } else {
             // Delete previous summary from cache so next summary retrieval is forced to go to the service.
@@ -405,7 +405,13 @@ export class RestGitService {
     private setCache<T>(key: string, value: T): void {
         if (this.cache) {
             // Attempt to cache to Redis - log any errors but don't fail
-            this.cache.set(key, value).catch((error) => {
+            runWithRetry(
+                async () => this.cache.set(key, value),
+                "RestGitService.setCache",
+                3,
+                1000,
+                winston,
+            ).catch((error) => {
                 winston.error(`Error caching ${key} to redis`, error);
                 Lumberjack.error(`Error caching ${key} to redis`, this.lumberProperties, error);
             });
