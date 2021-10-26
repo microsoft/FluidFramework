@@ -68,13 +68,3 @@ export class LeaderElection {
         console.log(`New leader: ${this.leaderId}`);
     }
 }
-
-// The leader should periodically send messages in a timed manner.
-
-// Electing the leader
-// Since we have the audience, everyone should know who the leader is.
-//
-// If there are no other clients, do not elect a leader or promote self to leader or wait for other clients
-// Have a client ranking system.
-// Client speaks out and waits for replies from other clients.
-// If all replies are in agreement, promote self to leader, and begin sending messages.
