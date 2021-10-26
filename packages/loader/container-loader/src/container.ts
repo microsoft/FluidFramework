@@ -431,9 +431,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
-    protected readonly _deltaManager: DeltaManager;
+    private readonly _deltaManager: DeltaManager;
     private service: IDocumentService | undefined;
-    protected readonly _audience: Audience;
+    private readonly _audience: Audience;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -1588,7 +1588,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return pkg as IFluidCodeDetails;
     }
 
-    protected get client(): IClient {
+    private get client(): IClient {
         const client: IClient = this.options?.client !== undefined
             ? (this.options.client as IClient)
             : {
@@ -1859,7 +1859,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._deltaManager.submitSignal(JSON.stringify(message));
     }
 
-    protected processSignal(message: ISignalMessage) {
+    private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null) {
             const innerContent = message.content as { content: any; type: string };

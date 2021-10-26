@@ -3,5 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export * from "./container";
-export * from "./loader";
+module.exports = {
+    "extends": [
+        "@fluidframework/eslint-config-fluid/eslint7"
+    ],
+    "rules": {}
+}
