@@ -193,12 +193,19 @@ export class RestGitService {
     }
 
     public async createSummary(summaryParams: IWholeSummaryPayload): Promise<IWriteSummaryResponse> {
-        const summaryResponse = await this.post<IWholeFlatSummary>(
+        const summaryResponse = await this.post<IWholeFlatSummary | IWriteSummaryResponse>(
             `/repos/${this.getRepoPath()}/git/summaries`,
              summaryParams);
-        // Cache the written summary for future retrieval. If this fails, next summary retrieval
-        // will receive an older version, but that is OK. Client will catch up with ops.
-        this.setCache(this.getSummaryCacheKey("container"), summaryResponse);
+        if ((summaryResponse as IWholeFlatSummary).trees !== undefined) {
+            // Cache the written summary for future retrieval. If this fails, next summary retrieval
+            // will receive an older version, but that is OK. Client will catch up with ops.
+            this.setCache<IWholeFlatSummary>(
+                this.getSummaryCacheKey("container"),
+                (summaryResponse as IWholeFlatSummary));
+        } else {
+            // Delete previous summary from cache so next summary retrieval is forced to go to the service.
+            this.deleteFromCache(this.getSummaryCacheKey(summaryParams.type));
+        }
         return { id: summaryResponse.id };
     }
 
