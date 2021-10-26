@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { IClient, ISignalMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import {
+    IClient,
+    ISignalMessage,
+    MessageType,
+    ISequencedDocumentMessage,
+    IDocumentMessage,
+ } from "@fluidframework/protocol-definitions";
 import { IFluidAudienceWithHeartBeat } from "./interfaces";
 
 /**
@@ -15,23 +21,27 @@ import { IFluidAudienceWithHeartBeat } from "./interfaces";
 export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienceWithHeartBeat {
     private readonly frequency: number;
     private readonly audienceHeartBeat: Map<string, Date> = new Map();
-    private readonly container: IContainer;
+    private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     private readonly audience: IAudience ;
     private timer: any = undefined;
 
     /**
      * Creates a AudienceWithHeartBeat object.
-     * @param container - runtime Container.
+     * @param deltaManager - Delta Manager.
+     * @param audience - Audience.
      * @param frequency - heartbeat frequency in milliseconds.
      */
-    constructor(container: IContainer, audience: IAudience, frequency: number = 30000) {
+    constructor(
+        deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+        audience: IAudience,
+        frequency: number = 30000) {
         super();
         audience.getMembers().forEach((client: IClient, clientId: string) => {
             this.audienceHeartBeat.set(clientId, new Date());
         });
 
         this.frequency = frequency;
-        this.container = container;
+        this.deltaManager = deltaManager;
         this.audience = audience;
     }
 
@@ -44,12 +54,12 @@ export class AudienceWithHeartBeat extends EventEmitter implements IFluidAudienc
      */
     public enableHeartBeat() {
         this.timer = setInterval(() => {
-            this.container.deltaManager.submitSignal("ping");
+            this.deltaManager.submitSignal("ping");
             this.validateAudienceHeartBeat();
         }, this.frequency);
 
         // Listen for heartbeats
-        this.container.deltaManager.on("signal", (msg: ISignalMessage) => {
+        this.deltaManager.on("signal", (msg: ISignalMessage) => {
             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
             if (this.timer !== undefined && msg.clientId && msg.content === "ping") {
                 this.audienceHeartBeat.set(msg.clientId, new Date());
