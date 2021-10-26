@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
     BlobCore,
@@ -11,6 +11,8 @@ import {
     codeToBytesMap,
     integerBytesToCodeMap,
     MarkerCodes,
+    MarkerCodesEnd,
+    MarkerCodesStart,
     NodeCore,
     TreeBuilder,
 } from "./zipItDataRepresentationUtils";
@@ -113,19 +115,34 @@ const constStringBytesToCodeMap = {
     return res;
 }
 
+/**
+ * Implementation of serialization of blobs in buffer with Marker Codes etc.
+ * @param buffer - Buffer to serialize to.
+ * @param blob - blob to be serialized.
+ * @param dictionary - Const strings dictionary to be used while serializing.
+ */
 function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<string, number>) {
     const data = blob.buffer;
-    const lengthLen = calcLength(data.length);
+    const lengthOfDataLen = calcLength(data.length);
     if (blob.constString) {
         const content = blob.toString();
         let id = dictionary.get(content);
+        let idLength: number;
         if (id === undefined) {
             id = dictionary.size + 1;
+            idLength = calcLength(id);
             dictionary.set(content, id);
-            const code = lengthLen > 1 ? MarkerCodes.ConstStringDeclareBig : MarkerCodes.ConstStringDeclare;
+            let code: number;
+            if (lengthOfDataLen > 1 || idLength > 1) {
+                code = MarkerCodes.ConstStringDeclareBig;
+            } else {
+                code = MarkerCodes.ConstStringDeclare;
+            }
             // Write marker code for const string.
             buffer.write(code);
 
+            assert(codeToBytesMap[code] >= lengthOfDataLen, "Length of data len should fit in the bytes from the map");
+            assert(codeToBytesMap[code] >= idLength, "Length of id should fit in the bytes from the map");
             // Assign and write id for const string.
             buffer.write(id, codeToBytesMap[code]);
             // Write length of const string.
@@ -135,17 +152,20 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<stri
                 buffer.write(element);
             }
         }
-        const idLength = calcLength(id);
+        idLength = calcLength(id);
         // Write Marker Code
-        buffer.write(constStringBytesToCodeMap[idLength]);
+        const markerCode = constStringBytesToCodeMap[idLength];
+        assert(markerCode !== undefined && Number.isInteger(markerCode), "Length should correspond to marker code");
+        buffer.write(markerCode);
         // Write id of const string
         buffer.write(id, idLength);
     } else {
         // Write Marker code.
-        buffer.write(blob.useUtf8Code ? utf8StringBytesToCodeMap[lengthLen] : binaryBytesToCodeMap[lengthLen]);
+        buffer.write(blob.useUtf8Code ?
+            utf8StringBytesToCodeMap[lengthOfDataLen] : binaryBytesToCodeMap[lengthOfDataLen]);
         // Write actual data if length greater than 0, otherwise Marker Code is enough.
-        if (lengthLen > 0) {
-            buffer.write(data.length, lengthLen);
+        if (lengthOfDataLen > 0) {
+            buffer.write(data.length, lengthOfDataLen);
             for (const element of data) {
                 buffer.write(element);
             }
@@ -154,29 +174,40 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<stri
 }
 
 /**
- * Implementation of serialization of buffer with Marker Codes etc.
- * @param buffer - Buffer to serialize.
+ * Implementation of serialization of nodes with Marker Codes etc.
+ * @param buffer - Buffer to serialize to.
+ * @param nodeCore - Node to be serialized.
+ * @param dictionary - Const strings dictionary to be used while serializing.
  */
 function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: Map<string, number>) {
     for (const child of nodeCore.nodes) {
         if (child instanceof NodeCore) {
             // For a tree node start and end with set/list start and end marker codes.
-            buffer.write(child.type === "set" ? MarkerCodes.SetStart : MarkerCodes.ListStart);
+            const startCode = MarkerCodesStart[child.type];
+            const endCode = MarkerCodesEnd[child.type];
+            assert(startCode !== undefined, "Start code should not undefined");
+            assert(endCode !== undefined, "End code should not undefined");
+            buffer.write(startCode);
             serializeNodeCore(buffer, child, dictionary);
-            buffer.write(child.type === "set" ? MarkerCodes.SetEnd : MarkerCodes.ListEnd);
+            buffer.write(endCode);
         } else if (child instanceof BlobCore) {
             serializeBlob(buffer, child, dictionary);
         } else if (typeof child === "number") {
             // Calculate length in which integer will be stored
             const len = calcLength(child);
             // Write corresponding Marker code for length of integer.
-            buffer.write(integerBytesToCodeMap[len]);
+            const markerCode = integerBytesToCodeMap[len];
+            assert(markerCode !== undefined && Number.isInteger(markerCode),
+                "Length should correspond to marker code");
+            buffer.write(markerCode);
             // Write actual number if greater than 0, otherwise Marker Code is enough.
             if (len > 0) {
                 buffer.write(child, len);
             }
         } else if (typeof child === "boolean") {
             buffer.write(boolToCodeMap[child ? 1 : 0]);
+        } else {
+            unreachableCase(child, "Unsupported node type");
         }
     }
 }

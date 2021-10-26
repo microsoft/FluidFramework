@@ -51,9 +51,11 @@ const snapshotTree: ISnapshotTree = {
                                     },
                             },
                         },
+                        unreferenced: true,
                     },
                     ".blobs": { blobs: {}, commits: {}, trees: {} },
                 },
+                unreferenced: true,
         },
     },
 };

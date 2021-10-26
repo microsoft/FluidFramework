@@ -30,7 +30,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
         assert(node1.toString() === node2.toString(), "Blob contents not same");
     } else if (typeof node1 === "number") {
         assert(Number.isInteger(node1), "Content 1 should be an integer");
-        assert(Number.isInteger(node1), "Content 2 should be an integer");
+        assert(Number.isInteger(node2), "Content 2 should be an integer");
         assert.strictEqual(node1, node2, "Number should be equal");
     } else if (typeof node1 === "boolean") {
         assert(typeof node2 === "boolean", "Content2 should be boolean");

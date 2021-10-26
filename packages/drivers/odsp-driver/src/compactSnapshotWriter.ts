@@ -84,7 +84,6 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
 function writeSnapshotSection(
     rootNode: NodeCore,
     snapshotTree: ISnapshotTree,
-    blobs: Map<string, ArrayBuffer>,
     snapshotSequenceNumber: number,
 ) {
     rootNode.addString("snapshot", true);
@@ -98,9 +97,6 @@ function writeSnapshotSection(
 
     // Add Trees
     writeTreeSection(snapshotNode, snapshotTree);
-
-    // Add Blobs
-    writeBlobsSection(snapshotNode, blobs);
 }
 
 /**
@@ -142,9 +138,11 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): R
     writeSnapshotSection(
         rootNode,
         snapshotContents.snapshotTree,
-        snapshotContents.blobs,
         snapshotContents.sequenceNumber,
     );
+
+    // Add Blobs
+    writeBlobsSection(rootNode, snapshotContents.blobs);
 
     // Then write the ops node.
     writeOpsSection(rootNode, ops);

@@ -20,7 +20,6 @@ import {
 export const snapshotMinReadVersion = "1.0";
 
 interface ISnapshotSection {
-    blobs: Map<string, ArrayBuffer>,
     snapshotTree: ISnapshotTree,
     sequenceNumber: number,
 }
@@ -80,7 +79,7 @@ function readTreeSection(node: NodeCore) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
             snapshotTree.trees[path] = readTreeSection(records.children);
         }
-        if (snapshotTree.unreferenced !== undefined) {
+        if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
             const unreferenced = records.unreferenced.valueOf();
             assert(unreferenced, "Unreferenced if present should be true");
@@ -96,10 +95,9 @@ function readTreeSection(node: NodeCore) {
  */
 function readSnapshotSection(node: NodeCore): ISnapshotSection {
     const records = getAndValidateNodeProps(node,
-        ["snapshotId", "sequenceNumber", "treeNodes", "blobs"]);
+        ["snapshotId", "sequenceNumber", "treeNodes"]);
 
     assertNodeCoreInstance(records.treeNodes, "TreeNodes should be of type NodeCore");
-    assertNodeCoreInstance(records.blobs, "TreeBlobs should be of type NodeCore");
     assertNumberInstance(records.sequenceNumber, "sequenceNumber should be of type number");
     assertBlobCoreInstance(records.snapshotId, "snapshotId should be BlobCore");
     const snapshotTree: ISnapshotTree = readTreeSection(records.treeNodes);
@@ -107,7 +105,6 @@ function readSnapshotSection(node: NodeCore): ISnapshotSection {
     const sequenceNumber = records.sequenceNumber.valueOf();
     return {
         sequenceNumber,
-        blobs: readBlobSection(records.blobs),
         snapshotTree,
     };
 }
@@ -123,7 +120,7 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
     const root = builder.getNode(0);
 
     const records = getAndValidateNodeProps(root,
-        ["minReadVersion", "createVersion", "snapshot", "deltas"]);
+        ["minReadVersion", "createVersion", "snapshot", "blobs", "deltas"]);
 
     assertBlobCoreInstance(records.minReadVersion, "minReadVersion should be of BlobCore type");
     assertBlobCoreInstance(records.createVersion, "createVersion should be of BlobCore type");
@@ -133,10 +130,12 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
         0x210 /* "Snapshot should be created with minReadVersion or above" */);
 
     assertNodeCoreInstance(records.snapshot, "Snapshot should be of type NodeCore");
+    assertNodeCoreInstance(records.blobs, "TreeBlobs should be of type NodeCore");
     assertNodeCoreInstance(records.deltas, "Deltas should be of type NodeCore");
 
     return {
         ...readSnapshotSection(records.snapshot),
+        blobs: readBlobSection(records.blobs),
         ops: readOpsSection(records.deltas),
     };
 }

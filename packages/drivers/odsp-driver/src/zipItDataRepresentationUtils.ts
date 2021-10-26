@@ -16,12 +16,6 @@ import { ReadBuffer } from "./ReadBufferUtils";
  * Control codes used by tree serialization / decentralization code. Same as on server.
  */
 export enum MarkerCodes {
-    ListStart = 49,
-    ListEnd = 50,
-
-    SetStart = 51,
-    SetEnd = 52,
-
     BoolTrue = 11,  // value = true
     BoolFalse = 12, // value = false
 
@@ -51,6 +45,22 @@ export enum MarkerCodes {
     BinarySingle16 = 34,     // unsigned-16-bit little-endian length, follows by bytes of length
     BinarySingle32 = 35,     // unsigned-32-bit little-endian length, follows by bytes of length
     BinarySingle64 = 36,     // unsigned-64-bit little-endian length, follows by bytes of length
+}
+
+/**
+ * Control codes used by tree serialization / decentralization code. They mark the start of sections.
+ */
+export enum MarkerCodesStart {
+    "list" = 49,
+    "set" = 51,
+}
+
+/**
+ * Control codes used by tree serialization / decentralization code. They mark the end of sections.
+ */
+export enum MarkerCodesEnd {
+    "list" = 50,
+    "set" = 52,
 }
 
 /**
@@ -248,6 +258,7 @@ export const addBoolProperty = (node: NodeCore, a: string, b: boolean) =>
  * 1. Node (sub-tree)
  * 2. binary blob
  * 3. integer
+ * 4. boolean
  */
 export type NodeTypes = NodeCore | BlobCore | number | boolean;
 
@@ -343,9 +354,9 @@ export class NodeCore {
             let childValue: NodeTypes | undefined;
             const code = buffer.read();
             switch (code) {
-                case MarkerCodes.ListStart:
-                case MarkerCodes.SetStart: {
-                    childValue = new NodeCore(code === MarkerCodes.SetStart ? "set" : "list");
+                case MarkerCodesStart.list:
+                case MarkerCodesStart.set: {
+                    childValue = new NodeCore(code === MarkerCodesStart.set ? "set" : "list");
                     this.children.push(childValue);
                     childValue.load(buffer, dictionary);
                     break;
@@ -408,8 +419,8 @@ export class NodeCore {
                 case MarkerCodes.BoolFalse:
                     this.children.push(false);
                     break;
-                case MarkerCodes.ListEnd:
-                case MarkerCodes.SetEnd:
+                case MarkerCodesEnd.list:
+                case MarkerCodesEnd.set:
                     return;
                 default:
                     throw new Error(`Invalid code: ${code}`);
