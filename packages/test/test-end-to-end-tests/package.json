@@ -99,6 +99,7 @@
     "@fluidframework/telemetry-utils": "^0.51.0",
     "@fluidframework/test-driver-definitions": "^0.51.0",
     "@fluidframework/test-loader-utils": "^0.51.0",
+    "@fluidframework/test-pairwise-generator": "^0.51.0",
     "@fluidframework/test-runtime-utils": "^0.51.0",
     "@fluidframework/test-utils": "^0.51.0",
     "@fluidframework/test-version-utils": "^0.51.0",
