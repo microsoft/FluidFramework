@@ -100,24 +100,11 @@ export const codeToBytesMap = {
     36: 8,
 };
 
-/**
- * This contains mapping of number of bytes to Marker Codes representing the corresponding Integer.
-*/
-export const integerBytesToCodeMap = {
-    0: 1,
-    1: 3,
-    2: 5,
-    4: 7,
-    8: 9,
-};
-
-/**
- * This contains mapping of boolean to Marker Codes representing the corresponding bool value.
-*/
-export const boolToCodeMap = {
-    0: 12, // false
-    1: 11, // true
-};
+export function getValueSafely(map: {[index: number]: number}, key: number) {
+    const val = map[key];
+    assert(val !== undefined, `key= ${key} must exist in the map`);
+    return val;
+}
 
 export function getAndValidateNodeProps(node: NodeCore, props: string[], enforceAllProps = true) {
     const propSet = new Set(props);
@@ -361,12 +348,11 @@ export class NodeCore {
                     childValue.load(buffer, dictionary);
                     break;
                 }
-
                 case MarkerCodes.ConstStringDeclare:
                 case MarkerCodes.ConstStringDeclareBig:
                 {
-                    const stringId = buffer.read(codeToBytesMap[code]);
-                    const constString = BlobShallowCopy.read(buffer, codeToBytesMap[code], true);
+                    const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
+                    const constString = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), true);
                     dictionary[stringId] = constString;
                     break;
                 }
@@ -374,7 +360,7 @@ export class NodeCore {
                 case MarkerCodes.ConstString16Id:
                 case MarkerCodes.ConstString32Id:
                 {
-                    const stringId = buffer.read(codeToBytesMap[code]);
+                    const stringId = buffer.read(getValueSafely(codeToBytesMap, code));
                     childValue = dictionary[stringId];
                     this.children.push(childValue);
                     break;
@@ -389,7 +375,7 @@ export class NodeCore {
                 case MarkerCodes.BinarySingle32:
                 case MarkerCodes.BinarySingle64:
                 {
-                    childValue = BlobShallowCopy.read(buffer, codeToBytesMap[code], false);
+                    childValue = BlobShallowCopy.read(buffer, getValueSafely(codeToBytesMap, code), false);
                     this.children.push(childValue);
                     break;
                 }
@@ -409,7 +395,7 @@ export class NodeCore {
                 case MarkerCodes.Int32:
                 case MarkerCodes.Int64:
                 {
-                    childValue = buffer.read(codeToBytesMap[code]);
+                    childValue = buffer.read(getValueSafely(codeToBytesMap, code));
                     this.children.push(childValue);
                     break;
                 }

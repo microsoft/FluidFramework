@@ -7,9 +7,8 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
     BlobCore,
-    boolToCodeMap,
     codeToBytesMap,
-    integerBytesToCodeMap,
+    getValueSafely,
     MarkerCodes,
     MarkerCodesEnd,
     MarkerCodesStart,
@@ -95,6 +94,25 @@ const constStringBytesToCodeMap = {
 };
 
 /**
+ * This contains mapping of number of bytes to Marker Codes representing the corresponding Integer.
+*/
+const integerBytesToCodeMap = {
+    0: 1,
+    1: 3,
+    2: 5,
+    4: 7,
+    8: 9,
+};
+
+/**
+ * This contains mapping of boolean to Marker Codes representing the corresponding bool value.
+*/
+const boolToCodeMap = {
+    0: 12, // false
+    1: 11, // true
+};
+
+/**
  * Calculate how many bytes are required to encode an integer. This is always multiple of 2.
  * So if 6 bytes are required to store an integer than it will return 8.
  * @param num - number to encode.
@@ -140,29 +158,28 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<stri
             }
             // Write marker code for const string.
             buffer.write(code);
-
-            assert(codeToBytesMap[code] >= lengthOfDataLen, "Length of data len should fit in the bytes from the map");
-            assert(codeToBytesMap[code] >= idLength, "Length of id should fit in the bytes from the map");
+            const bytes = getValueSafely(codeToBytesMap, code);
+            assert(bytes >= lengthOfDataLen, "Length of data len should fit in the bytes from the map");
+            assert(bytes >= idLength, "Length of id should fit in the bytes from the map");
             // Assign and write id for const string.
-            buffer.write(id, codeToBytesMap[code]);
+            buffer.write(id, bytes);
             // Write length of const string.
-            buffer.write(data.length, codeToBytesMap[code]);
+            buffer.write(data.length, bytes);
             // Write const string data.
             for (const element of data) {
                 buffer.write(element);
             }
+        } else {
+            idLength = calcLength(id);
         }
-        idLength = calcLength(id);
         // Write Marker Code
-        const markerCode = constStringBytesToCodeMap[idLength];
-        assert(markerCode !== undefined && Number.isInteger(markerCode), "Length should correspond to marker code");
-        buffer.write(markerCode);
+        buffer.write(getValueSafely(constStringBytesToCodeMap, idLength));
         // Write id of const string
         buffer.write(id, idLength);
     } else {
         // Write Marker code.
-        buffer.write(blob.useUtf8Code ?
-            utf8StringBytesToCodeMap[lengthOfDataLen] : binaryBytesToCodeMap[lengthOfDataLen]);
+        buffer.write(blob.useUtf8Code ? getValueSafely(utf8StringBytesToCodeMap, lengthOfDataLen)
+            : getValueSafely(binaryBytesToCodeMap, lengthOfDataLen));
         // Write actual data if length greater than 0, otherwise Marker Code is enough.
         if (lengthOfDataLen > 0) {
             buffer.write(data.length, lengthOfDataLen);
@@ -196,16 +213,13 @@ function serializeNodeCore(buffer: WriteBuffer, nodeCore: NodeCore, dictionary: 
             // Calculate length in which integer will be stored
             const len = calcLength(child);
             // Write corresponding Marker code for length of integer.
-            const markerCode = integerBytesToCodeMap[len];
-            assert(markerCode !== undefined && Number.isInteger(markerCode),
-                "Length should correspond to marker code");
-            buffer.write(markerCode);
+            buffer.write(getValueSafely(integerBytesToCodeMap, len));
             // Write actual number if greater than 0, otherwise Marker Code is enough.
             if (len > 0) {
                 buffer.write(child, len);
             }
         } else if (typeof child === "boolean") {
-            buffer.write(boolToCodeMap[child ? 1 : 0]);
+            buffer.write(getValueSafely(boolToCodeMap, child ? 1 : 0));
         } else {
             unreachableCase(child, "Unsupported node type");
         }
