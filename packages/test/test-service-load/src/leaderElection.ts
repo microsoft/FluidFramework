@@ -21,34 +21,42 @@ export class LeaderElection {
         this.container.on("signal", (signal: ISignalMessage) => this.handleSignal(signal));
         this.container.audience.on("removeMember", (clientId) => {
             if(clientId === this.leaderId) {
-                this.electNewLeader();
+                this.electNewLeader("Leader was removed from the audience.");
             }
         });
 
-        setInterval(() => {
+        const interval = setInterval(() => {
             if (this.leaderId === this.container.clientId) {
                 this.container.deltaManager.submitSignal({event: "leaderMessage", isLeader: true});
                 this.lastPinged = new Date();
                 console.log(`Leader with client id: ${this.leaderId} sending ping at ${Date.now}.`);
             }else if(this.leaderId === undefined) {
-                this.electNewLeader();
+                this.electNewLeader("Leader is undefined");
             }else {
                 const current = new Date();
                 if(this.lastPinged === undefined || current.getTime() - this.lastPinged?.getTime() > this.leaderWait) {
-                    this.electNewLeader();
+                    this.electNewLeader("Not recieving leader messages.");
                 }
             }
         }, this.beatInEveryNSecs);
+
+        this.container.on("closed", () => {
+            clearInterval(interval);
+        });
     }
 
     private handleSignal(signal: ISignalMessage) {
         // eslint-disable-next-line no-null/no-null
         if(signal.clientId !== null && signal.content.event === "leaderMessage") {
             if(signal.content.isLeader as boolean) {
-                console.log(`Client id: ${this.container.clientId} 
+                if(this.leaderId === signal.clientId) {
+                    console.log(`Expected leader message recieved: ${this.leaderId}`);
+                }else{
+                    console.log(`Client id: ${this.container.clientId} 
                     recieving ping at ${Date.now} 
                     from ${signal.clientId} 
                     expecting leader ${this.leaderId}.`);
+                }
                 this.leaderId = signal.clientId;
                 this.lastPinged = new Date();
             }else{
@@ -57,7 +65,7 @@ export class LeaderElection {
         }
     }
 
-    private electNewLeader() {
+    private electNewLeader(reason: string) {
         let newLeaderId = this.container.clientId;
         this.container.audience.getMembers().forEach((member) => {
             if(newLeaderId === undefined || newLeaderId > member.user.id) {
@@ -65,6 +73,6 @@ export class LeaderElection {
             }
         });
         this.leaderId = newLeaderId;
-        console.log(`New leader: ${this.leaderId}`);
+        console.log(`New leader elected: ${this.leaderId}, reason: ${reason}`);
     }
 }
