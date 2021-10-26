@@ -15,13 +15,6 @@ import { DiceRollerContainerRuntimeFactory } from "./containerCode";
 // on the page's URL format deeper in the system, so you're free to change this however you'd like.
 // Additionally, I'm choosing to create a new document when navigating directly to http://localhost:8080 -- this is
 // also open for customization.
-let createNew = false;
-if (window.location.hash.length === 0) {
-    createNew = true;
-    window.location.hash = Date.now().toString();
-}
-const documentId = window.location.hash.substring(1);
-document.title = documentId;
 
 // In this app, we are assuming our container code is capable of providing a default mountable view.  This is up to
 // how the container code is authored though (e.g. if the container code is data-only and does not bundle views).
@@ -67,8 +60,19 @@ async function mountDefaultFluidObjectFromContainer(container: IContainer): Prom
 
 // Just a helper function to kick things off.  Making it async allows us to use await.
 async function start(): Promise<void> {
+    // when the document ID is not provided, create a new one.
+    const shouldCreateNew = location.hash.length === 0;
+    const documentId = !shouldCreateNew ? window.location.hash.substring(1) : "";
+
     // Get the container to use.  Associate the data with the provided documentId, and run the provided code within.
-    const container = await getTinyliciousContainer(documentId, DiceRollerContainerRuntimeFactory, createNew);
+    const [container, containerId] = await getTinyliciousContainer(
+        documentId, DiceRollerContainerRuntimeFactory, shouldCreateNew,
+    );
+
+    // update the browser URL and the window title with the actual container ID
+    location.hash = containerId;
+    document.title = containerId;
+
     await mountDefaultFluidObjectFromContainer(container);
     // Setting "fluidStarted" is just for our test automation
     // eslint-disable-next-line @typescript-eslint/dot-notation

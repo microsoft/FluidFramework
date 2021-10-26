@@ -10,6 +10,9 @@ export interface IDeliServerConfiguration {
     // Enables nack messages logic
     enableNackMessages: boolean;
 
+    // Enables hashing of sequenced ops
+    enableOpHashing: boolean;
+
     // Expire clients after this amount of inactivity
     clientTimeout: number;
 
@@ -130,6 +133,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
     },
     deli: {
         enableNackMessages: true,
+        enableOpHashing: true,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
         noOpConsolidationTimeout: 250,

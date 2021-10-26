@@ -75,14 +75,17 @@ export enum DataObjectFactoryType {
 }
 
 export interface ITestContainerConfig {
-    // TestFluidDataObject instead of PrimedDataStore
+    /** TestFluidDataObject instead of PrimedDataStore */
     fluidDataObjectType?: DataObjectFactoryType,
 
-    // And array of channel name and DDS factory pair to create on container creation time
+    /** An array of channel name and DDS factory pair to create on container creation time */
     registry?: ChannelFactoryRegistry,
 
-    // Container runtime options for the container instance
+    /** Container runtime options for the container instance */
     runtimeOptions?: IContainerRuntimeOptions,
+
+    /** Loader options for the loader used to create containers */
+    loaderOptions?: ITestLoaderOptions,
 }
 
 // new interface to help inject custom loggers to tests
@@ -136,7 +139,7 @@ export class TestObjectProvider {
 
     /**
      * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
-     * @param createFluidEntryPoint - callback to create a fluidEntryPoint, with an optiona; set of channel name
+     * @param createFluidEntryPoint - callback to create a fluidEntryPoint, with an optional set of channel name
      * and factory for TestFluidObject
      */
     constructor(
@@ -189,8 +192,7 @@ export class TestObjectProvider {
     }
 
     /**
-     * Create a loader.  Container created/loaded thru this loader will not be automatically added
-     * to the OpProcessingController, and will need to be added manually if needed.
+     * Create a loader. Containers created/loaded through this loader will be added to the OpProcessingController.
      *
      * Only the version of the loader will vary based on compat config. The version of
      * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
@@ -250,15 +252,14 @@ export class TestObjectProvider {
     }
 
     /**
-     * Make a test loader.  Container created/loaded thru this loader will not be automatically added
-     * to the OpProcessingController, and will need to be added manually if needed.
+     * Make a test loader. Containers created/loaded through this loader will be added to the OpProcessingController.
      * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
      * @param testContainerConfig - optional configuring the test Container
      */
     public makeTestLoader(testContainerConfig?: ITestContainerConfig, detachedBlobStorage?: IDetachedBlobStorage) {
         return this.createLoader(
             [[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
-            undefined,
+            testContainerConfig?.loaderOptions,
             detachedBlobStorage,
         );
     }

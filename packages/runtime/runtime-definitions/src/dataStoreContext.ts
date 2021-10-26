@@ -158,10 +158,17 @@ export interface IFluidDataStoreChannel extends
     readonly attachState: AttachState;
 
     /**
+     * @deprecated - This is an internal method that should not be exposed. attachGraph() should instead be called
+     * to bind the runtime to the container and attach any bound handles.
      * Called to bind the runtime to the container.
      * If the container is not attached to storage, then this would also be unknown to other clients.
      */
     bindToContext(): void;
+
+    /**
+     * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
+     */
+    attachGraph(): void;
 
     /**
      * Retrieves the summary used as part of the initial summary message

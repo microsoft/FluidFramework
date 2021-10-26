@@ -274,30 +274,6 @@ export class Loader implements IHostLoader {
     public readonly services: ILoaderServices;
     private readonly logger: ITelemetryLogger;
 
-    /**
-     * @deprecated use constructor with loader props
-     */
-    public static _create(
-        resolver: IUrlResolver | IUrlResolver[],
-        documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
-        codeLoader: ICodeDetailsLoader | ICodeLoader,
-        options: ILoaderOptions,
-        scope: IFluidObject,
-        proxyLoaderFactories: Map<string, IProxyLoaderFactory>,
-        logger?: ITelemetryBaseLogger,
-    ) {
-        return new Loader(
-            {
-                urlResolver: MultiUrlResolver.create(resolver),
-                documentServiceFactory: MultiDocumentServiceFactory.create(documentServiceFactory),
-                codeLoader,
-                options,
-                scope,
-                proxyLoaderFactories,
-                logger,
-            });
-    }
-
     constructor(loaderProps: ILoaderProps) {
         const scope = { ...loaderProps.scope };
         if (loaderProps.options?.provideScopeLoader !== false) {

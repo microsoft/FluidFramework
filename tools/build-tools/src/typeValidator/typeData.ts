@@ -10,12 +10,17 @@ import { getPackageDetails, PackageDetails } from "./packageJson";
 export interface PackageAndTypeData{
     packageDetails: PackageDetails;
     typeData: TypeData[];
+    project: Project;
 }
 
-export interface TypeData{
+export interface TypeData {
     readonly name: string;
     readonly kind: string;
     readonly node: Node;
+}
+
+export function getFullTypeName(typeData: TypeData){
+    return `${typeData.kind}_${typeData.name}`
 }
 
 export function hasDocTag(data: TypeData, tagName: "deprecated" | "internal"){
@@ -63,22 +68,23 @@ function getNodeTypeData(node:Node, namespacePrefix?:string): TypeData[]{
         return typeData
     }
 
-    if(Node.isClassDeclaration(node)
+    if (Node.isClassDeclaration(node)
         || Node.isEnumDeclaration(node)
         || Node.isInterfaceDeclaration(node)
         || Node.isTypeAliasDeclaration(node)
         || Node.isVariableDeclaration(node)
-        || Node.isFunctionDeclaration(node)){
-
+        || Node.isFunctionDeclaration(node)
+    ) {
         const name = namespacePrefix !== undefined
             ? `${namespacePrefix}.${node.getName()}`
             : node.getName()!;
 
-        return [{
+        const typeData: TypeData[] = [{
             name,
             kind: node.getKindName(),
             node,
         }];
+        return typeData;
     }
 
     throw new Error(`Unknown Export Kind: ${node.getKindName()}`)
@@ -137,9 +143,9 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
         ? packageDir
         : tryFindDependencyPath(packageDir, dependencyName);
 
-    const tsConfigPath =`${basePath}/tsconfig.json`
+    const tsConfigPath =`${basePath}/tsconfig.json`;
 
-    if(!fs.existsSync(tsConfigPath)){
+    if (!fs.existsSync(tsConfigPath)) {
         throw new Error(`Tsconfig json does not exist: ${tsConfigPath}.\nYou may need to install the package via npm install in the package dir.`)
     }
 
@@ -165,5 +171,6 @@ export function generateTypeDataForProject(packageDir: string, dependencyName: s
     return {
         packageDetails,
         typeData: typeData.sort((a,b)=>a.name.localeCompare(b.name)),
+        project,
     };
 }

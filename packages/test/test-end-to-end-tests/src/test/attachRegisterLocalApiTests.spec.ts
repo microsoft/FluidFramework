@@ -108,7 +108,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
         const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-        dataStore2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.attachGraph();
 
         assert(dataStore2.runtime.attachState !== AttachState.Detached,
             createTestStatementForAttachedDetached("DataStore2", true));
@@ -135,7 +135,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
 
         // Now register the channel
         (await channel.handle.get() as SharedObject).bindToContext();
-        dataStore2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.attachGraph();
 
         assert(dataStore2.runtime.attachState !== AttachState.Detached,
             createTestStatementForAttachedDetached("DataStore2", true));
@@ -186,7 +186,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
         const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-        dataStore2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.attachGraph();
 
         const rootOfDataStore2 = await dataStore2.runtime.getChannel("root") as SharedMap;
         const testChannelOfDataStore2 = await dataStore2.runtime.getChannel("test1");
@@ -218,7 +218,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
         const channel = dataStore2.runtime.createChannel("test1", "https://graph.microsoft.com/types/map");
         assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
-        dataStore2RuntimeChannel.bindToContext();
+        dataStore2RuntimeChannel.attachGraph();
 
         (await channel.handle.get() as SharedObject).bindToContext();
         assert.strictEqual(channel.handle.isAttached, true,
@@ -279,7 +279,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             testChannel2OfDataStore2.set("test1handle", channel1.handle);
 
             // Now attach the dataStore2. Currently this will end up in infinite loop.
-            dataStore2RuntimeChannel.bindToContext();
+            dataStore2RuntimeChannel.attachGraph();
             assert.strictEqual(testChannel1OfDataStore2.handle.isAttached, true,
                 createTestStatementForAttachedDetached("Test Channel 1", true));
             assert.strictEqual(testChannel2OfDataStore2.handle.isAttached, true,
@@ -550,7 +550,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             await createDetachedContainerAndGetRootDataStore();
         const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
         const dataStore1 = peerDataStore1.peerDataStore as TestFluidObject;
-        peerDataStore1.peerDataStoreRuntimeChannel.bindToContext();
+        peerDataStore1.peerDataStoreRuntimeChannel.attachGraph();
 
         const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
         const dataStore2 = peerDataStore2.peerDataStore as TestFluidObject;
@@ -591,7 +591,7 @@ describeNoCompat(`Attach/Bind Api Tests For Attached Container`, (getTestObjectP
             await createDetachedContainerAndGetRootDataStore();
         const peerDataStore1 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
         const dataStore1 = peerDataStore1.peerDataStore as TestFluidObject;
-        peerDataStore1.peerDataStoreRuntimeChannel.bindToContext();
+        peerDataStore1.peerDataStoreRuntimeChannel.attachGraph();
 
         const peerDataStore2 = await createPeerDataStore(defaultDataStore.context.containerRuntime);
         const dataStore2 = peerDataStore2.peerDataStore as TestFluidObject;
