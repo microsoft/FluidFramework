@@ -27,8 +27,8 @@ export enum MarkerCodes {
     ConstString8Id = 17,     // unsigned-8-bit little-endian const string id follows
     ConstString16Id = 18,    // unsigned-16-bit little-endian const string id follows
     ConstString32Id = 19,    // unsigned-32-bit little-endian const string id follows
-    ConstStringDeclare = 20,
-    ConstStringDeclareBig = 21,
+    ConstStringDeclare = 20, // Code for declaring a const string with size <= 1 byte
+    ConstStringDeclareBig = 21, // Code for declaring a const string with size > 1 byte. It is represented in 4 bytes.
 
     Int0 = 1,   // value = 0
     UInt8 = 3,  // unsigned-8-bit little-endian follows
