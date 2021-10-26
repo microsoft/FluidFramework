@@ -65,7 +65,7 @@ export class OdspDeltaStorageService {
             // So adding some timeout to ensure we retry again in hope of faster success.
             // Please see https://github.com/microsoft/FluidFramework/issues/6997 for details.
             const abort = new AbortController();
-            setTimeout(() => abort.abort(), 30000);
+            const timer = setTimeout(() => abort.abort(), 30000);
 
             const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
                 baseUrl,
@@ -77,6 +77,7 @@ export class OdspDeltaStorageService {
                 },
                 "ops",
             );
+            clearTimeout(timer);
             const deltaStorageResponse = response.content;
             let messages: ISequencedDocumentMessage[];
             if (deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]) {
