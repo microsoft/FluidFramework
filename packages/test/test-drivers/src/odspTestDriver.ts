@@ -152,11 +152,11 @@ export class OdspTestDriver implements ITestDriver {
         let tenantName: string;
         if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
             // it's already a site url
-            siteUrl = emailServer;
             tenantName = new URL(emailServer).hostname;
+            siteUrl = emailServer;
         } else {
-            siteUrl = `https://${emailServer}.sharepoint.com`;
             tenantName = emailServer.substr(0, emailServer.indexOf("."));
+            siteUrl = `https://${tenantName}.sharepoint.com`;
         }
 
         // force isolateSocketCache because we are using different users in a single context
