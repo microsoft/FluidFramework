@@ -42,6 +42,7 @@ parameters:
 
 - name: testFileTarName
   type: string
+  default: null
 
 - name: extraDependencies
   type: string
