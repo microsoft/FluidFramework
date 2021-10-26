@@ -7,6 +7,7 @@ import fs from "fs";
 import commander from "commander";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { createTestDriver, initialize} from "./utils";
+import { ILoadTestConfig } from "./testConfigFile";
 
 interface ITestUserConfig {
     /* key/value description:
@@ -83,7 +84,14 @@ async function createDocs(
         process.env.login__odsp__test__accounts = createLoginEnv(userName, password);
         const testDriver = await createTestDriver(driver, seed, undefined, true);
         for (let i: number = urls.length; i < docCount; i++) {
-            const url = await initialize(testDriver, seed);
+            const profile: ILoadTestConfig = {
+                numClients: 0,
+                opRatePerMin: 0,
+                progressIntervalMs: 0,
+                readWriteCycleMs: 0,
+                totalSendCount: 0,
+            };
+            const url = await initialize(testDriver, seed, profile, true);
             if (url === undefined || url === "") {
                 throw Error("Invalid URL");
             }

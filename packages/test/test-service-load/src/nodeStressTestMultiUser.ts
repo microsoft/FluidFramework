@@ -115,7 +115,7 @@ async function orchestratorProcess(
         // Create a new file if a testId wasn't provided
         url = args.testId !== undefined
             ? await testDriver.createContainerUrl(args.testId)
-            : await initialize(testDriver, seed);
+            : await initialize(testDriver, seed, profile, args.verbose === true);
     }
 
     telemetryClient.setCommonProperty("url", url);
