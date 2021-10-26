@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/audience-heartbeat";
-export const pkgVersion = "0.0.1";
+export const pkgVersion = "0.50.0";
