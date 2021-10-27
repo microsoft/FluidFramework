@@ -197,8 +197,8 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
         assert.strictEqual(locator?.itemId, itemId, "Item id should be equal");
         assert.strictEqual(locator?.dataStorePath, dataStorePath, "DataStore path should be equal");
         assert.strictEqual(locator?.siteUrl, siteUrl, "SiteUrl should be equal");
-        assert.strictEqual(locator?.deepLinkInfo, deepLinkInfo, "SiteUrl should be equal");
-        assert.strictEqual(locator?.upToDateMarker, upToDateMarker, "SiteUrl should be equal");
+        assert.strictEqual(locator?.deepLinkInfo, deepLinkInfo, "DeepLinkInfo should be equal");
+        assert.strictEqual(locator?.upToDateMarker, upToDateMarker, "UpToDateMarker should be equal");
     });
 
     it("Check nav param removal for share link", async () => {
