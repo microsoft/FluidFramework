@@ -122,7 +122,7 @@ export class PendingStateManager implements IDisposable {
         this.initialStates = new Deque<IPendingState>(initialState?.pendingStates ?? []);
 
         if (initialState) {
-            if (initialState?.clientId !== undefined) {
+            if (initialState?.clientId) {
                 this.previousClientIds.add(initialState.clientId);
             }
             // get stashed op count and client sequence number of first op
@@ -288,6 +288,7 @@ export class PendingStateManager implements IDisposable {
         // if this is an ack for a stashed op, dequeue one message.
         // we should have seen its ref seq num by now and the DDS should be ready for it to be ACKed
         if (isOriginalClientId || isNewClientId) {
+            assert(this.clientId === undefined, "multiple clients connected with stashed ops");
             while (!this.pendingStates.isEmpty()) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const nextState = this.pendingStates.shift()!;
@@ -476,6 +477,10 @@ export class PendingStateManager implements IDisposable {
             assert(this.pendingStates.toArray().filter((s) => s.type === "message").length === this.stashedCount,
                 "unexpected message queued before first connect");
 
+            Array.from(this.previousClientIds).map((id) =>
+                assert(this.containerRuntime.getQuorum().getMember(id) === undefined,
+                    "client with stashed ops already connected"));
+
             // send rejoin op with stashed client ID if we have it
             if (this.previousClientIds.size > 0) {
                 const clientId = Array.from(this.previousClientIds)[0];
@@ -488,8 +493,6 @@ export class PendingStateManager implements IDisposable {
                 ++pendingStatesCount;
             }
         }
-
-        this.previousClientIds.clear();
 
         if (prevClientId) {
             // add a rejoin op so future clients provided with our stashed pending ops can recognize them
