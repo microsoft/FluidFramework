@@ -44,6 +44,14 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
         await opCollection.createIndex({
             "operation.sequenceNumber": 1,
         }, false);
+
+        await opCollection.createIndex({
+            "operation.timestamp": 1,
+        }, false);
+
+        await opCollection.createIndex({
+            scheduledDeletionTime: 1,
+        }, false);
     }
 
     if (mongoExpireAfterSeconds > 0) {
