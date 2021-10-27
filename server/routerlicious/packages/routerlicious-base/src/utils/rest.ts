@@ -21,6 +21,12 @@ import type { Response } from "express";
             response.status(successStatus).json(result);
         },
         (error) => {
-            response.status(errorStatus ?? error?.code ?? 400).json(error?.message ?? error);
+            if (error?.name === "NetworkError") {
+                response
+                    .status(errorStatus ?? error.code ?? 400)
+                    .json(error.message ?? error);
+            } else {
+                response.status(errorStatus ?? 400).json(error?.message ?? error);
+            }
         });
 }

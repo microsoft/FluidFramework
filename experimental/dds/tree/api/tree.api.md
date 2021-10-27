@@ -98,7 +98,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
     // @internal (undocumented)
     hasOpenEdit(): boolean;
     protected hintKnownEditingResult(edit: Edit<TChange>, result: ValidEditingResult<TChange>): void;
-    protected abstract readonly latestCommittedView: Snapshot;
+    protected abstract get latestCommittedView(): Snapshot;
     openEdit(): void;
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     readonly tree: GenericSharedTree<TChange>;

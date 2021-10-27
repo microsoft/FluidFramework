@@ -385,13 +385,13 @@ use_current_InterfaceDeclaration_ICreateBlobResponse(
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ICreateBlobResponse": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ICreateBlobResponse():
     current.ICreateBlobResponse;
 declare function use_old_InterfaceDeclaration_ICreateBlobResponse(
     use: old.ICreateBlobResponse);
 use_old_InterfaceDeclaration_ICreateBlobResponse(
     get_current_InterfaceDeclaration_ICreateBlobResponse());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -684,6 +684,30 @@ use_old_InterfaceDeclaration_IQuorum(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
+* "RemovedInterfaceDeclaration_IQuorumEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IQuorumEvents():
+    old.IQuorumEvents;
+declare function use_current_RemovedInterfaceDeclaration_IQuorumEvents(
+    use: current.IQuorumEvents);
+use_current_RemovedInterfaceDeclaration_IQuorumEvents(
+    get_old_InterfaceDeclaration_IQuorumEvents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
+* "RemovedInterfaceDeclaration_IQuorumEvents": {"backCompat": false}
+*/
+declare function get_current_RemovedInterfaceDeclaration_IQuorumEvents():
+    current.IQuorumEvents;
+declare function use_old_InterfaceDeclaration_IQuorumEvents(
+    use: old.IQuorumEvents);
+use_old_InterfaceDeclaration_IQuorumEvents(
+    get_current_RemovedInterfaceDeclaration_IQuorumEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISequencedClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedClient():
@@ -949,25 +973,25 @@ use_old_InterfaceDeclaration_ISummaryAck(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryAttachment": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ISummaryAttachment():
     old.ISummaryAttachment;
 declare function use_current_InterfaceDeclaration_ISummaryAttachment(
     use: current.ISummaryAttachment);
 use_current_InterfaceDeclaration_ISummaryAttachment(
     get_old_InterfaceDeclaration_ISummaryAttachment());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryAttachment": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ISummaryAttachment():
     current.ISummaryAttachment;
 declare function use_old_InterfaceDeclaration_ISummaryAttachment(
     use: old.ISummaryAttachment);
 use_old_InterfaceDeclaration_ISummaryAttachment(
     get_current_InterfaceDeclaration_ISummaryAttachment());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -997,25 +1021,25 @@ use_old_InterfaceDeclaration_ISummaryAuthor(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryBlob": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ISummaryBlob():
     old.ISummaryBlob;
 declare function use_current_InterfaceDeclaration_ISummaryBlob(
     use: current.ISummaryBlob);
 use_current_InterfaceDeclaration_ISummaryBlob(
     get_old_InterfaceDeclaration_ISummaryBlob());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryBlob": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ISummaryBlob():
     current.ISummaryBlob;
 declare function use_old_InterfaceDeclaration_ISummaryBlob(
     use: old.ISummaryBlob);
 use_old_InterfaceDeclaration_ISummaryBlob(
     get_current_InterfaceDeclaration_ISummaryBlob());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1093,25 +1117,25 @@ use_old_InterfaceDeclaration_ISummaryContent(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryHandle": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ISummaryHandle():
     old.ISummaryHandle;
 declare function use_current_InterfaceDeclaration_ISummaryHandle(
     use: current.ISummaryHandle);
 use_current_InterfaceDeclaration_ISummaryHandle(
     get_old_InterfaceDeclaration_ISummaryHandle());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryHandle": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ISummaryHandle():
     current.ISummaryHandle;
 declare function use_old_InterfaceDeclaration_ISummaryHandle(
     use: old.ISummaryHandle);
 use_old_InterfaceDeclaration_ISummaryHandle(
     get_current_InterfaceDeclaration_ISummaryHandle());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1189,25 +1213,25 @@ use_old_InterfaceDeclaration_ISummaryTokenClaims(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryTree": {"forwardCompat": false}
+*/
 declare function get_old_InterfaceDeclaration_ISummaryTree():
     old.ISummaryTree;
 declare function use_current_InterfaceDeclaration_ISummaryTree(
     use: current.ISummaryTree);
 use_current_InterfaceDeclaration_ISummaryTree(
     get_old_InterfaceDeclaration_ISummaryTree());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "InterfaceDeclaration_ISummaryTree": {"backCompat": false}
+*/
 declare function get_current_InterfaceDeclaration_ISummaryTree():
     current.ISummaryTree;
 declare function use_old_InterfaceDeclaration_ISummaryTree(
     use: old.ISummaryTree);
 use_old_InterfaceDeclaration_ISummaryTree(
     get_current_InterfaceDeclaration_ISummaryTree());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1501,97 +1525,97 @@ use_old_EnumDeclaration_ScopeType(
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_SummaryObject": {"forwardCompat": false}
+*/
 declare function get_old_TypeAliasDeclaration_SummaryObject():
     old.SummaryObject;
 declare function use_current_TypeAliasDeclaration_SummaryObject(
     use: current.SummaryObject);
 use_current_TypeAliasDeclaration_SummaryObject(
     get_old_TypeAliasDeclaration_SummaryObject());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_SummaryObject": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_SummaryObject():
     current.SummaryObject;
 declare function use_old_TypeAliasDeclaration_SummaryObject(
     use: old.SummaryObject);
 use_old_TypeAliasDeclaration_SummaryObject(
     get_current_TypeAliasDeclaration_SummaryObject());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_SummaryTree": {"forwardCompat": false}
+*/
 declare function get_old_TypeAliasDeclaration_SummaryTree():
     old.SummaryTree;
 declare function use_current_TypeAliasDeclaration_SummaryTree(
     use: current.SummaryTree);
 use_current_TypeAliasDeclaration_SummaryTree(
     get_old_TypeAliasDeclaration_SummaryTree());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_SummaryTree": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_SummaryTree():
     current.SummaryTree;
 declare function use_old_TypeAliasDeclaration_SummaryTree(
     use: old.SummaryTree);
 use_old_TypeAliasDeclaration_SummaryTree(
     get_current_TypeAliasDeclaration_SummaryTree());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
-* "EnumDeclaration_SummaryType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_SummaryType": {"forwardCompat": false}
+*/
 declare function get_old_EnumDeclaration_SummaryType():
     old.SummaryType;
-declare function use_current_EnumDeclaration_SummaryType(
+declare function use_current_RemovedEnumDeclaration_SummaryType(
     use: current.SummaryType);
-use_current_EnumDeclaration_SummaryType(
+use_current_RemovedEnumDeclaration_SummaryType(
     get_old_EnumDeclaration_SummaryType());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
-* "EnumDeclaration_SummaryType": {"backCompat": false}
-declare function get_current_EnumDeclaration_SummaryType():
+* "RemovedEnumDeclaration_SummaryType": {"backCompat": false}
+*/
+declare function get_current_RemovedEnumDeclaration_SummaryType():
     current.SummaryType;
 declare function use_old_EnumDeclaration_SummaryType(
     use: old.SummaryType);
 use_old_EnumDeclaration_SummaryType(
-    get_current_EnumDeclaration_SummaryType());
-*/
+    get_current_RemovedEnumDeclaration_SummaryType());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_SummaryTypeNoHandle": {"forwardCompat": false}
+*/
 declare function get_old_TypeAliasDeclaration_SummaryTypeNoHandle():
     old.SummaryTypeNoHandle;
 declare function use_current_TypeAliasDeclaration_SummaryTypeNoHandle(
     use: current.SummaryTypeNoHandle);
 use_current_TypeAliasDeclaration_SummaryTypeNoHandle(
     get_old_TypeAliasDeclaration_SummaryTypeNoHandle());
-*/
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken.0.1024.0:
 * "TypeAliasDeclaration_SummaryTypeNoHandle": {"backCompat": false}
+*/
 declare function get_current_TypeAliasDeclaration_SummaryTypeNoHandle():
     current.SummaryTypeNoHandle;
 declare function use_old_TypeAliasDeclaration_SummaryTypeNoHandle(
     use: old.SummaryTypeNoHandle);
 use_old_TypeAliasDeclaration_SummaryTypeNoHandle(
     get_current_TypeAliasDeclaration_SummaryTypeNoHandle());
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

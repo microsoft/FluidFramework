@@ -36,6 +36,7 @@ async function execAsync(command) {
         exec(command,  (err, stdout, stderr) => {
             if (err) {
                 rej(err);
+                return;
             }
             if (stderr) {
                 console.log(stderr + stdout);
