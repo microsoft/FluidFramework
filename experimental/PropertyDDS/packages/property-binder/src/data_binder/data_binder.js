@@ -8,9 +8,9 @@ import { DataBindingRegistry } from './data_binding_registry';
 import { DataBindingTree, ArrayNode, concatTokenizedPath } from './data_binding_tree';
 import { ModificationContext } from './modification_context';
 import { RemovalContext } from './removal_context';
-import StatelessDataBindingWrapper from '../internal/stateless_data_binding_wrapper';
-import { DataBinderHandle } from '../internal/data_binder_handle';
-import { PropertyElement } from '../internal/property_element.js';
+import StatelessDataBindingWrapper from '../internal/statelessDataBindingWrapper';
+import { DataBinderHandle } from '../internal/dataBinderHandle';
+import { PropertyElement } from '../internal/propertyElement';
 import { SemverMap, UpgradeType } from '../internal/semvermap';
 
 import {
@@ -29,7 +29,7 @@ import { IActivateDataBindingOptions } from './IActivateDataBindingOptions'; /* 
 /* eslint-disable-next-line no-unused-vars */
 import { IDefineRepresentationOptions, representationGenerator } from './IDefineRepresentationOptions';
 import { IRegisterOnPathOptions } from './IRegisterOnPathOptions'; /* eslint-disable-line no-unused-vars */
-import { ActivationQueryCacheHelper } from '../internal/activation_query_cache_helper';
+import { ActivationQueryCacheHelper } from '../internal/activationQueryCacheHelper';
 
 /**
  * @hidden

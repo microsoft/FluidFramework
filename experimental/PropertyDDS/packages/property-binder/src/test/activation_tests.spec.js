@@ -9,7 +9,7 @@ import { catchConsoleErrors } from './catch_console_errors';
 
 import { DataBinding } from '../../src/data_binder/data_binding';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
-import { ActivationQueryCacheHelper } from '../../src/internal/activation_query_cache_helper';
+import { ActivationQueryCacheHelper } from '../../src/internal/activationQueryCacheHelper';
 import { MockSharedPropertyTree } from './mock_shared_property_tree'
 
 /**
