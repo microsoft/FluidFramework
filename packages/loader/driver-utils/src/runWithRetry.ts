@@ -54,7 +54,7 @@ export async function runWithRetry<T>(
         } catch (err) {
             // If it is not retriable, then just throw the error.
             if (!canRetryOnError(err)) {
-                logger.sendErrorEvent({
+                logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_cancel`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
