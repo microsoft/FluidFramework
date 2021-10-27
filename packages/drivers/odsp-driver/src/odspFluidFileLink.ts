@@ -16,6 +16,8 @@ const fluidDataStorePathParamName = "c";
 const fluidAppNameParamName = "a";
 const fluidContainerPackageNameParamName = "p";
 const fluidFileVersionParamName = "v";
+const fluidDeepLinkInfoParamName = "l";
+const fluidUpToDateMarkerParamName = "u";
 
 /**
  * Transforms given Fluid data store locator into string that can be embedded into url
@@ -42,6 +44,14 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
     if (locator.fileVersion) {
         locatorSerialized += `&${fluidFileVersionParamName}=${
             encodeURIComponent(locator.fileVersion)}`;
+    }
+    if (locator.deepLinkInfo) {
+        locatorSerialized += `&${fluidDeepLinkInfoParamName}=${
+            encodeURIComponent(locator.deepLinkInfo)}`;
+    }
+    if (locator.upToDateMarker) {
+        locatorSerialized += `&${fluidUpToDateMarkerParamName}=${
+            encodeURIComponent(locator.upToDateMarker)}`;
     }
 
     return fromUtf8ToBase64(locatorSerialized);
@@ -72,6 +82,9 @@ function decodeOdspFluidDataStoreLocator(
     const appName = locatorInfo.get(fluidAppNameParamName) ?? undefined;
     const containerPackageName = locatorInfo.get(fluidContainerPackageNameParamName) ?? undefined;
     const fileVersion = locatorInfo.get(fluidFileVersionParamName) ?? undefined;
+    const deepLinkInfo = locatorInfo.get(fluidDeepLinkInfoParamName) ?? undefined;
+    const upToDateMarker = locatorInfo.get(fluidUpToDateMarkerParamName) ?? undefined;
+
     // "" is a valid value for dataStorePath so simply check for absence of the param;
     // the rest of params must be present and non-empty
     if (!sitePath || !driveId || !itemId || dataStorePath === null) {
@@ -97,6 +110,8 @@ function decodeOdspFluidDataStoreLocator(
         appName,
         containerPackageName,
         fileVersion,
+        deepLinkInfo,
+        upToDateMarker,
     };
 }
 

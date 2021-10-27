@@ -25,6 +25,12 @@ export function createOdspUrl(
     if (l.fileVersion) {
         odspUrl += `&fileVersion=${encodeURIComponent(l.fileVersion)}`;
     }
+    if (l.deepLinkInfo) {
+        odspUrl += `&deepLinkInfo=${encodeURIComponent(l.deepLinkInfo)}`;
+    }
+    if (l.upToDateMarker) {
+        odspUrl += `&upToDateMarker=${encodeURIComponent(l.upToDateMarker)}`;
+    }
 
     return odspUrl;
 }

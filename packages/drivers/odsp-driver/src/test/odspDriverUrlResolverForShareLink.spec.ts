@@ -25,6 +25,8 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
     const dataStorePath = "dataStorePath";
     const fileName = "fileName";
     const fileVersion = "173.0";
+    const deepLinkInfo = "someDeepLinkInfo";
+    const upToDateMarker = "1234";
     const sharelink = "https://microsoft.sharepoint-df.com/site/SHARELINK";
     const urlsWithNavParams = [
         // Base64 encoded and then URI encoded string: d=driveId&f=fileId&c=dataStorePath&s=siteUrl&fluid=1&v=173.0
@@ -188,13 +190,15 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 
     it("Encode and decode nav param", async () => {
         const encodedUrl = new URL(sharelink);
-        storeLocatorInOdspUrl(encodedUrl, { siteUrl, driveId, itemId, dataStorePath });
+        storeLocatorInOdspUrl(encodedUrl, { siteUrl, driveId, itemId, dataStorePath, deepLinkInfo, upToDateMarker });
 
         const locator = getLocatorFromOdspUrl(encodedUrl);
         assert.strictEqual(locator?.driveId, driveId, "Drive id should be equal");
         assert.strictEqual(locator?.itemId, itemId, "Item id should be equal");
         assert.strictEqual(locator?.dataStorePath, dataStorePath, "DataStore path should be equal");
         assert.strictEqual(locator?.siteUrl, siteUrl, "SiteUrl should be equal");
+        assert.strictEqual(locator?.deepLinkInfo, deepLinkInfo, "SiteUrl should be equal");
+        assert.strictEqual(locator?.upToDateMarker, upToDateMarker, "SiteUrl should be equal");
     });
 
     it("Check nav param removal for share link", async () => {

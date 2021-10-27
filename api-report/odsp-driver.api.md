@@ -129,7 +129,11 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     // (undocumented)
     dataStorePath: string;
     // (undocumented)
+    deepLinkInfo?: string;
+    // (undocumented)
     fileVersion?: string;
+    // (undocumented)
+    upToDateMarker?: string;
 }
 
 // @public
