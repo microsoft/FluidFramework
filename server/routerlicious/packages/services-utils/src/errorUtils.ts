@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-export interface FluidError extends Error {
-    code?: FluidErrorCode;
+export class FluidServiceError extends Error {
+    code: FluidServiceErrorCode;
+    constructor(message: string, errorCode: FluidServiceErrorCode) {
+        super(message);
+        this.code = errorCode;
+    }
 }
 
-export enum FluidErrorCode {
+export enum FluidServiceErrorCode {
     FeatureDisabled,
 }
