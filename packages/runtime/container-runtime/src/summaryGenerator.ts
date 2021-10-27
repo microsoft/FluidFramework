@@ -239,6 +239,7 @@ export class SummaryGenerator {
                 refreshLatestAck,
                 summaryLogger: logger,
                 cancellationToken,
+                summaryCount,
             });
 
             // Cumulatively add telemetry properties based on how far generateSummary went.

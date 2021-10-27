@@ -36,6 +36,7 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
+    performance,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -640,6 +641,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             requestHandler,
             storage,
         );
+
+        logger.sendTelemetryEvent({
+            eventName: "load",
+            createTimeStamp: ,
+            createVersion:,
+            summaryCount:
+        })
 
         return runtime;
     }
