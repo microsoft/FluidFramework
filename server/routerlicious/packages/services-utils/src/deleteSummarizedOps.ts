@@ -28,6 +28,8 @@ export async function deleteSummarizedOps(
         const currentEpochTime = new Date().getTime();
         const epochTimeBeforeOfflineWindow =  currentEpochTime - offlineWindowMs;
         const scheduledDeletionEpochTime = currentEpochTime + softDeleteRetentionPeriodMs;
+        Lumberjack.info(`Current epoch time ${currentEpochTime}
+        scheduledDeletionEpochTime ${scheduledDeletionEpochTime}`);
 
         for (const doc of uniqueDocuments) {
             const lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
