@@ -15,19 +15,6 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
         super();
     }
 
-    /*
-    private defaultErrorHandler(event, error) {
-        // Some listener threw an error, we'll try emitting that error via the error event
-        // But not if we're already dealing with the error event, in that case just let the error be thrown
-        if (event === "error") {
-            throw error;
-        }
-
-        // Note: This will throw if no listeners are registered for the error event
-        super.emit("error", error);
-    }
-    */
-
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
         try {
             return super.emit(event, ...args);

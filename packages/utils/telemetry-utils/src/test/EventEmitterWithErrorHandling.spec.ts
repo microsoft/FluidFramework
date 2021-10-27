@@ -6,11 +6,17 @@
 import { strict as assert } from "assert";
 import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling";
 
-function defaultErrorHandler(event, error) {
-    throw error;
-}
-
 describe("EventEmitterWithErrorHandling", () => {
+    let errorHandlerCalled = false;
+    function defaultErrorHandler(event, error) {
+        errorHandlerCalled = true;
+        throw error;
+    }
+
+    beforeEach(() => {
+        errorHandlerCalled = false;
+    });
+
     it("forwards events", ()=> {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
         let passedArg: number | undefined;
@@ -18,6 +24,7 @@ describe("EventEmitterWithErrorHandling", () => {
 
         emitter.emit("foo", 3);
         assert.strictEqual(passedArg, 3);
+        assert.strictEqual(errorHandlerCalled, false);
     });
     it("forwards error event", ()=> {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
@@ -26,8 +33,9 @@ describe("EventEmitterWithErrorHandling", () => {
 
         emitter.emit("error", 3);
         assert.strictEqual(passedArg, 3);
+        assert.strictEqual(errorHandlerCalled, false);
     });
-    it("converts exception in listener to error event, some other listeners succeed", ()=> {
+    it("error thrown from listener is handled, some other listeners succeed", ()=> {
         const emitter = new EventEmitterWithErrorHandling((event, error: any) => {
             passedErrorMsg = error.message;
             passedEventArg = error.eventArg;
@@ -57,7 +65,7 @@ describe("EventEmitterWithErrorHandling", () => {
         assert.strictEqual(earlyListenerCallCount, 1);
         assert.strictEqual(lateListenerCallCount, 0);
     });
-    it("emitting error event when unhandled will throw", ()=> {
+    it("emitting error event when unhandled will invoke handler", ()=> {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
         try {
             const error = new Error("No one is listening");
@@ -67,55 +75,7 @@ describe("EventEmitterWithErrorHandling", () => {
         } catch (error) {
             assert.strictEqual(error.message, "No one is listening");
             assert.strictEqual(error.prop, 4);
-        }
-    });
-    it("if error listener throws, new exception is thrown, some other listeners succeed", ()=> {
-        const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
-        let earlyListenerCallCount: number = 0;
-        let earlyListenerErrorMsg: string = "";
-        let delinquentListenerCallCount: number = 0;
-        let lateListenerCallCount: number = 0;
-        // Innocent bystander - early (registered before throwing one)
-        emitter.on("error", (error) => {
-            ++earlyListenerCallCount;
-            earlyListenerErrorMsg = error.message;
-        });
-        // The delinquent
-        emitter.on("error", (_error) => {
-            ++delinquentListenerCallCount;
-            const listenerError = new Error("error listener throws"); // Such a bummer!
-            throw listenerError;
-        });
-        // Innocent bystander - late (registered after throwing one)
-        emitter.on("error", (_error) => {
-            ++lateListenerCallCount;
-        });
-
-        try {
-            emitter.emit("error", new Error("original error"));
-            assert.fail("previous line should throw");
-        } catch (error) {
-            assert.strictEqual(error.message, "error listener throws", "error thrown from listener expected");
-        }
-        assert.strictEqual(earlyListenerCallCount, 1, "early error listener should be called once");
-        assert.strictEqual(earlyListenerErrorMsg, "original error", "early error listener should get original error");
-        assert.strictEqual(delinquentListenerCallCount, 1, "delinquent error listener should be called once");
-        assert.strictEqual(lateListenerCallCount, 0, "late error listener not expected to be called");
-    });
-    it("exception in listener will be thrown if no error listener", ()=> {
-        const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler);
-        emitter.on("foo", (arg) => {
-            const error = new Error("foo listener throws");
-            Object.assign(error, { eventArg: arg });
-            throw error;
-        });
-
-        try {
-            emitter.emit("foo", 3);  // listener above will throw. Expect error listener to be invoked but then throw
-            assert.fail("previous line should throw");
-        } catch (error) {
-            assert.strictEqual(error.message, "foo listener throws");
-            assert.strictEqual(error.eventArg, 3);
+            assert.strictEqual(errorHandlerCalled, true);
         }
     });
 });
