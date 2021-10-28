@@ -45,6 +45,7 @@ docker-compose restart gitrest
 1. Start Routerlicious by following instructions within
    `server/routerlicious/README.md`.
 1. Run `npm run start:dev` from gitrest.
+1. Troubleshooting: if you see gitrest errors like `Repo does not exist /home/node/documents/fluid/fluid`, run `docker-compose restart` from within `server/routerlicious`.
 
 ## Testing
 
