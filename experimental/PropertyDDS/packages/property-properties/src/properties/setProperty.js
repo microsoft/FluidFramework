@@ -84,7 +84,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
      * @return {string} The typeid
      */
-    getFullTypeid(in_hideCollection) {
+    getFullTypeid(in_hideCollection = false) {
         if (in_hideCollection) {
             return this._typeid;
         } else {

@@ -8,6 +8,7 @@ export * from "./auth";
 export * from "./conversion";
 export * from "./deleteSummarizedOps";
 export * from "./dns";
+export * from "./errorUtils";
 export * from "./executeOnInterval";
 export * from "./generateNames";
 export * from "./logger";

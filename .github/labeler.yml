@@ -37,9 +37,6 @@
 "area: framework":
   - packages/framework/**
 
-"area: host":
-  - packages/hosts/**
-
 "area: loader":
   - packages/loader/**
 

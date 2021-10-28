@@ -130,7 +130,7 @@ export class RunningSummarizer implements IDisposable {
                 this.logger.sendErrorEvent({
                     eventName: "SummaryAckWaitTimeout",
                     maxAckWaitTime,
-                    refSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
+                    referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
                     summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
                     timePending: Date.now() - this.heuristicData.lastAttempt.summaryTime,
                 });
@@ -140,7 +140,7 @@ export class RunningSummarizer implements IDisposable {
             if (this.pendingAckTimer.hasTimer) {
                 this.logger.sendTelemetryEvent({
                     eventName: "MissingSummaryAckFoundByOps",
-                    refSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
+                    referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
                     summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
                 });
                 this.pendingAckTimer.clear();

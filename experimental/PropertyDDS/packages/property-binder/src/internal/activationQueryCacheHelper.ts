@@ -7,6 +7,18 @@ import { TypeIdHelper } from '@fluid-experimental/property-changeset';
 
 import * as _ from 'underscore';
 import { getLocalOrRemoteSchema } from '../data_binder/internal_utils';
+import { DataBinder } from '..';
+import { ExtractedContext } from '@fluid-experimental/property-changeset/dist/helpers/typeidHelper';
+
+export interface ActivationType {
+    activationSplitType: ExtractedContext;
+    bindingType: string;
+}
+
+export interface TypeCacheEntry {
+    rule: ActivationType,
+    definition: any,
+}
 
 /**
  * The ActivationQueryCacheHelper is a helper class to be able to cache whether there is the _possibility_ of
@@ -18,13 +30,25 @@ import { getLocalOrRemoteSchema } from '../data_binder/internal_utils';
  * @hidden
  */
 export class ActivationQueryCacheHelper {
+  _activations: ActivationType[];
+
+  _dataBinder: DataBinder;
+
+  _workspace: any;
+
+  _childrenCache: {};
+
+  _hierarchyCache: {};
+
+  _typeCache: Record<string, TypeCacheEntry[]> | {};
+
   /**
    * Constructor of the helper.
    *
-   * @param {Object[]} in_activations - the activations that are being performed
-   * @param {DataBinder} in_dataBinder - the databinder instance
+   * @param in_activations - the activations that are being performed
+   * @param in_dataBinder - the databinder instance
    */
-  constructor(in_activations, in_dataBinder) {
+  constructor(in_activations: ActivationType[], in_dataBinder: DataBinder) {
     this._activations = in_activations;
     this._dataBinder = in_dataBinder;
     this._workspace = in_dataBinder.getWorkspace();
@@ -37,10 +61,10 @@ export class ActivationQueryCacheHelper {
    * Returns true if there is a chance that one of our relevant types might be found in one of the children
    * properties of a property of the given typeid.
    *
-   * @param {string} in_typeid - the typeid for which we are interested
-   * @return {boolean} true if the given type may occur in the children subhierarchies
+   * @param in_typeid - the typeid for which we are interested
+   * @returns true if the given type may occur in the children subhierarchies
    */
-  childrenMayHaveBindings(in_typeid) {
+  childrenMayHaveBindings(in_typeid: string): boolean {
     let entry = this._childrenCache[in_typeid];
     if (entry === undefined) {
       // New type. Determine if there is potentially a type of interest in the subhierarchy.
@@ -93,11 +117,11 @@ export class ActivationQueryCacheHelper {
    * Returns true if there is a chance that one of the properties in the hierarchy of the given types may
    * potentially contain a databinding, _including_ the root.
    *
-   * @param {string} in_typeid - the typeid for which we are interested
-   * @return {boolean} true if a databinding may occur in the subhierarchy of a property of the given type,
+   * @param in_typeid - the typeid for which we are interested
+   * @returns true if a databinding may occur in the subhierarchy of a property of the given type,
    *   including the root
    */
-  hierarchyMayHaveBindings(in_typeid) {
+  hierarchyMayHaveBindings(in_typeid: string): boolean {
     let entry = this._hierarchyCache[in_typeid];
     if (entry === undefined) {
       // New type
@@ -124,11 +148,11 @@ export class ActivationQueryCacheHelper {
   /**
    * Return whether the root of the hierarchy defined by the type provided has a binding.
    *
-   * @param {string} in_typeid - the typeid for which we are interested
+   * @param in_typeid - the typeid for which we are interested
    *
-   * @return {boolean} true if the root of the type (children not checked) has a binding
+   * @returns The root of the type that (children not checked) has a binding otherwise undefined
    */
-  typeRootBindings(in_typeid) {
+  typeRootBindings(in_typeid: string): TypeCacheEntry[] {
     let entry = this._typeCache[in_typeid];
     if (entry === undefined) {
       // New type
@@ -141,8 +165,11 @@ export class ActivationQueryCacheHelper {
         // Get all the definitions for this typeid, and then filter them for ones that are activated.
         const definitions = this._dataBinder._registry.getApplicableBindingDefinitions(
           in_typeid, rule.bindingType, this._workspace
-        ).filter((definition) => {
-          return this._dataBinder._activationAppliesToTypeId(
+        ).filter((definition: { splitType: ExtractedContext })=> {
+          // @TODO This method can be changed to be a static method. Only reason it's a class member, is that
+          // in HFDM inheritsFrom needed the workspace to test inheritance against remote schemas. Now, we don't
+          // support this case.
+          return (this._dataBinder as any)._activationAppliesToTypeId(
             rule.activationSplitType,
             propertySplitType,
             definition.splitType
@@ -166,11 +193,11 @@ export class ActivationQueryCacheHelper {
   /**
    * Get the direct inherits of the given typeid
    *
-   * @param {string} in_typeid - the typeid from which we want to get the inherited types
+   * @param in_typeid - the typeid from which we want to get the inherited types
    *
-   * @return {string[]} all the inheriting types
+   * @returns all the inheriting types
    */
-  _getInheritedTypes(in_typeid) {
+  _getInheritedTypes(in_typeid: string): string[] {
     const newInheritedTemplates = getLocalOrRemoteSchema(in_typeid, this._workspace);
     let inherited = (newInheritedTemplates && newInheritedTemplates.inherits) || [];
 
@@ -185,10 +212,10 @@ export class ActivationQueryCacheHelper {
   /**
    * Returns true if the context is a collection context
    *
-   * @param {{context: string, typeid: string}} in_splitType - the split type to check
-   * @return {boolean} true if the type provided is a collection
+   * @param in_splitType - the split type to check
+   * @returns true if the type provided is a collection
    */
-  _isCollectionType(in_splitType) {
+  _isCollectionType(in_splitType: ExtractedContext): boolean {
     return in_splitType.context === 'array' || in_splitType.context === 'map' || in_splitType.context === 'set';
   }
 }
