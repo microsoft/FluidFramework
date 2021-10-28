@@ -83,6 +83,7 @@ import {
     IPendingProposal,
     SummaryType,
     ISummaryContent,
+    IQuorumProposals,
 } from "@fluidframework/protocol-definitions";
 import {
     ChildLogger,
@@ -222,7 +223,7 @@ export async function waitContainerToCatchUp(container: Container) {
 
 const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    (quorum: IQuorum) => quorum.get("code") ?? quorum.get("code2");
+    (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     public static version = "^0.1.0";
