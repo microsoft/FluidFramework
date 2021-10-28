@@ -142,7 +142,7 @@ describe("Tests for Epoch Tracker", () => {
         };
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
-            // This will set the initial epoch value in epoch tracker.
+        // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         try {
             await mockFetchOk(
@@ -156,14 +156,14 @@ describe("Tests for Epoch Tracker", () => {
         assert.strictEqual(success, false, "Fetching should fail!!");
     });
 
-    it("Check client corelationID on spoCommonHeaders in unsuccessful fetch case", async () => {
+    it("Check client corelationID on spoCommonHeaders in successful fetch case", async () => {
         const cacheEntry1: IEntry = {
             key:"key1",
             type: "snapshot",
         };
         epochTracker.setEpoch("epoch1", true, "test");
         await epochTracker.put(cacheEntry1, "val1");
-            // This will set the initial epoch value in epoch tracker.
+        // This will set the initial epoch value in epoch tracker.
         await epochTracker.get(cacheEntry1);
         const response = await mockFetchOk(
                 async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
