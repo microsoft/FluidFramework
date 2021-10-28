@@ -9,7 +9,7 @@
 import { DataBinding } from './data_binding'; /* eslint-disable-line no-unused-vars */
 import { BaseProperty } from '@fluid-experimental/property-properties'; /* eslint-disable-line no-unused-vars */
 import { BaseContext } from './base_context';
-import { PropertyElement } from '../internal/property_element';
+import { PropertyElement } from '../internal/propertyElement';
 
 /**
  * Provides the contextual information for the onModify callbacks.

@@ -4,6 +4,7 @@
  */
 
 import { IOdspAuthRequestInfo } from "./odspAuth";
+import { getSiteUrl } from "./odspDocLibUtils";
 import { throwOdspNetworkError } from "./odspErrorUtils";
 import { getAsync, putAsync } from "./odspRequest";
 
@@ -66,9 +67,9 @@ export async function getDriveItemByRootFileName(
     let getDriveItemUrl;
     if (driveId !== undefined && driveId !== "") {
         const encodedDrive = encodeURIComponent(driveId);
-        getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drives/${encodedDrive}/root:${path}:`;
+        getDriveItemUrl = `${getSiteUrl(server)}${accountPath}/_api/v2.1/drives/${encodedDrive}/root:${path}:`;
     } else {
-        getDriveItemUrl = `https://${server}${accountPath}/_api/v2.1/drive/root:${path}:`;
+        getDriveItemUrl = `${getSiteUrl(server)}${accountPath}/_api/v2.1/drive/root:${path}:`;
     }
     return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
@@ -99,7 +100,7 @@ export async function getDriveItemByServerRelativePath(
     }
     const path = `/${pathParts.join("/")}`;
     const driveId = await getDriveId(server, account, library, authRequestInfo);
-    const getDriveItemUrl = `https://${server}/_api/v2.1/drives/${driveId}/root:${path}:`;
+    const getDriveItemUrl = `${getSiteUrl(server)}/_api/v2.1/drives/${driveId}/root:${path}:`;
     return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
@@ -109,7 +110,7 @@ export async function getDriveItemFromDriveAndItem(
     item: string,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveItem> {
-    const url = `https://${server}/_api/v2.1/drives/${drive}/items/${item}`;
+    const url = `${getSiteUrl(server)}/_api/v2.1/drives/${drive}/items/${item}`;
     return getDriveItem(url, authRequestInfo, false);
 }
 
@@ -119,7 +120,7 @@ export async function getChildrenByDriveItem(
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveItem[]> {
     if (!driveItem.isFolder) { return []; }
-    let url = `https://${server}/_api/v2.1/drives/${driveItem.driveId}/items/${driveItem.itemId}/children`;
+    let url = `${getSiteUrl(server)}/_api/v2.1/drives/${driveItem.driveId}/items/${driveItem.itemId}/children`;
     let children: any[] = [];
     do {
         const response = await getAsync(url, authRequestInfo);
@@ -167,14 +168,13 @@ export async function getDriveId(
     library: string | undefined,
     authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<string> {
-    if (library === undefined)
-    {
+    if (library === undefined) {
         const drive = await getDefaultDrive(server, account, authRequestInfo);
         return drive.id;
     }
     const drives = await getDrives(server, account, authRequestInfo);
     const accountPath = account ? `/${account}` : "";
-    const drivePath = encodeURI(`https://${server}${accountPath}/${library}`);
+    const drivePath = encodeURI(`${getSiteUrl(server)}${accountPath}/${library}`);
     const index = drives.findIndex((value) => value.webUrl === drivePath);
     if (index === -1) {
         throw Error(`Drive ${drivePath} not found.`);
@@ -209,7 +209,7 @@ async function getDriveResponse(
     authRequestInfo: IOdspAuthRequestInfo,
 ) {
     const accountPath = account ? `/${account}` : "";
-    const getDriveUrl = `https://${server}${accountPath}/_api/v2.1/${routeTail}`;
+    const getDriveUrl = `${getSiteUrl(server)}${accountPath}/_api/v2.1/${routeTail}`;
     const response = await getAsync(getDriveUrl, authRequestInfo);
     if (response.status !== 200) {
         throwOdspNetworkError("failedToGetDriveResponse", response.status, response, undefined, { route: routeTail });

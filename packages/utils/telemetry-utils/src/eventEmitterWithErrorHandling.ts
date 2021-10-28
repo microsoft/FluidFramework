@@ -11,22 +11,8 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  * Any exception thrown by "error" listeners will propagate to the caller.
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
-    private readonly errorHandler: (eventName: EventEmitterEventType, error: any) => void;
-
-    constructor(errorHandler?: (eventName: EventEmitterEventType, error: any) => void) {
+    constructor(private readonly  errorHandler: (eventName: EventEmitterEventType, error: any) => void) {
         super();
-        this.errorHandler = errorHandler ?? this.defaultErrorHandler.bind(this);
-    }
-
-    private defaultErrorHandler(event, error) {
-        // Some listener threw an error, we'll try emitting that error via the error event
-        // But not if we're already dealing with the error event, in that case just let the error be thrown
-        if (event === "error") {
-            throw error;
-        }
-
-        // Note: This will throw if no listeners are registered for the error event
-        super.emit("error", error);
     }
 
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {

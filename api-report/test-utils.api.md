@@ -132,6 +132,8 @@ export interface ITestObjectProvider {
     // (undocumented)
     createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions): Promise<IContainer>;
     // (undocumented)
+    createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
+    // (undocumented)
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ITestLoaderOptions, detachedBlobStorage?: IDetachedBlobStorage): IHostLoader;
     // (undocumented)
     defaultCodeDetails: IFluidCodeDetails;
@@ -236,6 +238,8 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 export class TestObjectProvider {
     constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     createContainer(entryPoint: fluidEntryPoint, options?: ITestLoaderOptions): Promise<IContainer>;
+    // (undocumented)
+    readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, options?: ITestLoaderOptions, detachedBlobStorage?: IDetachedBlobStorage): Loader;
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
@@ -267,7 +271,10 @@ export class TestObjectProvider {
     }
 
 // @public (undocumented)
-export function timeoutPromise<T = void>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T | void>;
+export function timeoutAwait<T = void>(promise: PromiseLike<T>, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
+
+// @public (undocumented)
+export function timeoutPromise<T = void>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void, timeoutOptions?: TimeoutWithError | TimeoutWithValue<T>): Promise<T>;
 
 // @public (undocumented)
 export interface TimeoutWithError {
@@ -286,7 +293,7 @@ export interface TimeoutWithValue<T = void> {
     // (undocumented)
     reject: false;
     // (undocumented)
-    value?: T;
+    value: T;
 }
 
 

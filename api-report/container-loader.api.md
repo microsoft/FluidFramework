@@ -191,8 +191,6 @@ export interface ILoaderServices {
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
-    // @deprecated (undocumented)
-    static _create(resolver: IUrlResolver | IUrlResolver[], documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[], codeLoader: ICodeDetailsLoader | ICodeLoader, options: ILoaderOptions, scope: IFluidObject, proxyLoaderFactories: Map<string, IProxyLoaderFactory>, logger?: ITelemetryBaseLogger): Loader;
     // (undocumented)
     createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<Container>;
     // (undocumented)
