@@ -45,7 +45,7 @@ export const disconnectedEventName = "disconnected";
 
 // @public
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
-    constructor(errorHandler: (eventName: EventEmitterEventType, error: any) => void);
+    constructor(errorHandler: (eventName: EventEmitterEventType, error: IFluidErrorBase) => void, defaultErrorSource: string);
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     }
@@ -68,6 +68,7 @@ export const hasErrorInstanceId: (x: any) => x is {
 // @public
 export interface IFluidErrorAnnotations {
     errorCodeIfNone?: string;
+    errorSourceIfNone?: string;
     props?: ITelemetryProperties;
 }
 
@@ -75,6 +76,7 @@ export interface IFluidErrorAnnotations {
 export interface IFluidErrorBase extends Readonly<Partial<Error>> {
     addTelemetryProperties: (props: ITelemetryProperties) => void;
     readonly errorInstanceId: string;
+    readonly errorSource?: string;
     readonly errorType: string;
     readonly fluidErrorCode: string;
     getTelemetryProperties(): ITelemetryProperties;

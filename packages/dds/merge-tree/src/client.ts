@@ -567,6 +567,7 @@ export class Client {
                     "RangeOutOfBounds",
                     {
                         usageError: true,
+                        errorSource: "ddsUser",
                         end,
                         invalidPositions: invalidPositions.toString(),
                         length,

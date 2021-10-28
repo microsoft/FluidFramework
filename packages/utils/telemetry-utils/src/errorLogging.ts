@@ -86,6 +86,7 @@ class SimpleFluidError implements IFluidErrorBase {
 
     readonly errorType: string;
     readonly fluidErrorCode: string;
+    readonly errorSource?: string;
     readonly message: string;
     readonly stack?: string;
     readonly name?: string;
@@ -99,6 +100,7 @@ class SimpleFluidError implements IFluidErrorBase {
     ) {
         this.errorType = errorProps.errorType;
         this.fluidErrorCode = errorProps.fluidErrorCode;
+        this.errorSource = errorProps.errorSource;
         this.message = errorProps.message;
         this.stack = errorProps.stack;
         this.name = errorProps.name;
@@ -152,6 +154,7 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
+        errorSource: annotations.errorSourceIfNone,
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
         stack: stack ?? generateStack(),
