@@ -15,6 +15,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [_createDataStoreWithProps and IFluidDataStoreChannel](#createdatastorewithprops-and-ifluiddatastorechannel)
 - [Deprecated `Loader._create` is removed](#deprecated-loadercreate-is-removed)
 - [Stop exporting internal class `CollabWindowTracker` ](#stop-exporting-internal-class-collabwindowtracker)
+- [UpgradeManager removed](#UpgradeManager-removed)
 
 ### `maxMessageSize` property has been deprecated from IConnectionDetails and IDocumentDeltaConnection
 `maxMessageSize` is redundant and will be removed soon. Please use the `serviceConfiguration.maxMessageSize` property instead.
@@ -29,6 +30,9 @@ Use the Loader constructor with the `ILoaderProps` instead.
 
 ### Stop exporting internal class `CollabWindowTracker`
 `CollabWindowTracker` is an internal implementation for `@fluidframework/container-loader` and should never been exported.
+
+### UpgradeManager removed
+External access to Quorum proposals is planned to be deprecated.  `UpgradeManager` from the `@fluidframework/base-host` package is being removed as a result.  To upgrade code, instead use the `Container` API `proposeCodeDetails`.
 
 ## 0.50 Breaking changes
 - [OpProcessingController removed](#opprocessingcontroller-removed)

@@ -5,7 +5,6 @@
 ```ts
 
 import { Container } from '@fluidframework/container-loader';
-import { EventEmitter } from 'events';
 import { ICodeAllowList } from '@fluidframework/container-definitions';
 import { IDetachedBlobStorage } from '@fluidframework/container-loader';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -15,9 +14,6 @@ import { IFluidModule } from '@fluidframework/container-definitions';
 import { IFluidObject } from '@fluidframework/core-interfaces';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProxyLoaderFactory } from '@fluidframework/container-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
 
@@ -52,27 +48,6 @@ export interface IBaseHostConfig {
     scope?: IFluidObject;
     // (undocumented)
     urlResolver: IUrlResolver;
-}
-
-// @public (undocumented)
-export interface IUpgradeFnConfig {
-    clients?: number;
-    maxTime?: number;
-    opTime?: number;
-}
-
-// @public (undocumented)
-export interface IUpgradeRuntime {
-    // (undocumented)
-    getQuorum(): IQuorum;
-    // (undocumented)
-    on(event: "op", listener: (message: ISequencedDocumentMessage) => void): this;
-}
-
-// @public (undocumented)
-export class UpgradeManager extends EventEmitter {
-    constructor(runtime: IUpgradeRuntime, logger?: ITelemetryBaseLogger);
-    upgrade(code: IFluidCodeDetails, highPriority?: boolean, upgradeFn?: (runtime: IUpgradeRuntime) => Promise<string>, upgradeFnConfig?: IUpgradeFnConfig): Promise<boolean>;
 }
 
 

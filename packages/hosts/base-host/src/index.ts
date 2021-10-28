@@ -5,4 +5,3 @@
 
 export * from "./host";
 export * from "./hostConfig";
-export * from "./utils";
