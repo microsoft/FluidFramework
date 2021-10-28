@@ -18,7 +18,7 @@ import {
     IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { PerformanceEvent, isValidLegacyError } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, isValidLegacyError, normalizeError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
@@ -147,10 +147,9 @@ export class EpochTracker implements IPersistedFileCache {
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorelationId);
         let epochFromResponse: string | undefined;
-        try {
-            const response = await this.rateLimiter.schedule(
-                async () => fetchAndParseAsJSONHelper<T>(url, fetchOptions),
-            );
+        return this.rateLimiter.schedule(
+            async () => fetchAndParseAsJSONHelper<T>(url, fetchOptions),
+        ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
@@ -158,21 +157,19 @@ export class EpochTracker implements IPersistedFileCache {
                 "X-RequestStats": clientCorelationId,
             };
             return response;
-        } catch (error) {
+        }).catch(async (error) => {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
             // to mark it as epoch error.
             if (epochFromResponse === undefined) {
                 epochFromResponse = (error as IOdspError).serverEpoch;
             }
-            let finalError = error;
-            await this.checkForEpochError(error, epochFromResponse, fetchType).catch((epochError) => {
-                finalError = epochError;
-            });
-            if (typeof finalError === "object" && finalError !== null) {
-                finalError["X-RequestStats"] = clientCorelationId;
-            }
-            throw finalError;
-        }
+            await this.checkForEpochError(error, epochFromResponse, fetchType);
+            throw error;
+        }).catch((error) => {
+            const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw fluidError;
+        });
     }
 
     /**
@@ -192,10 +189,9 @@ export class EpochTracker implements IPersistedFileCache {
         // Add epoch in fetch request.
         this.addEpochInRequest(fetchOptions, addInBody, clientCorelationId);
         let epochFromResponse: string | undefined;
-        try {
-            const response = await this.rateLimiter.schedule(
-                async () => fetchArray(url, fetchOptions),
-            );
+        return this.rateLimiter.schedule(
+            async () => fetchArray(url, fetchOptions),
+        ).then((response) => {
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
@@ -203,21 +199,19 @@ export class EpochTracker implements IPersistedFileCache {
                 "X-RequestStats": clientCorelationId,
             };
             return response;
-        } catch (error) {
+        }).catch(async (error) => {
             // Get the server epoch from error in case we don't have it as if undefined we won't be able
             // to mark it as epoch error.
             if (epochFromResponse === undefined) {
                 epochFromResponse = (error as IOdspError).serverEpoch;
             }
-            let finalError = error;
-            await this.checkForEpochError(error, epochFromResponse, fetchType).catch((epochError) => {
-                finalError = epochError;
-            });
-            if (typeof finalError === "object" && finalError !== null) {
-                finalError["X-RequestStats"] = clientCorelationId;
-            }
-            throw finalError;
-        }
+            await this.checkForEpochError(error, epochFromResponse, fetchType);
+            throw error;
+        }).catch((error) => {
+            const fluidError = normalizeError(error, {props: {"X-RequestStats": clientCorelationId}});
+            // eslint-disable-next-line @typescript-eslint/no-throw-literal
+            throw fluidError;
+        });
     }
 
     private addEpochInRequest(
