@@ -143,19 +143,19 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ): Promise<IOdspResponse<T>> {
-        const requestStatsValue = this.formatRequestStatsValue();
+        const clientCorelationId = this.formatClientCorelationId();
         // Add epoch in fetch request.
-        const request = this.addEpochInRequest(url, fetchOptions, addInBody, requestStatsValue);
+        this.addEpochInRequest(fetchOptions, addInBody, clientCorelationId);
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
-                async () => fetchAndParseAsJSONHelper<T>(request.url, request.fetchOptions),
+                async () => fetchAndParseAsJSONHelper<T>(url, fetchOptions),
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
                 ...response.commonSpoHeaders,
-                "X-RequestStats": requestStatsValue,
+                "X-RequestStats": clientCorelationId,
             };
             return response;
         } catch (error) {
@@ -164,8 +164,14 @@ export class EpochTracker implements IPersistedFileCache {
             if (epochFromResponse === undefined) {
                 epochFromResponse = (error as IOdspError).serverEpoch;
             }
-            await this.checkForEpochError(error, epochFromResponse, fetchType);
-            throw error;
+            let finalError = error;
+            await this.checkForEpochError(error, epochFromResponse, fetchType).catch((epochError) => {
+                finalError = epochError;
+            });
+            if (typeof finalError === "object" && finalError !== null) {
+                finalError["X-RequestStats"] = clientCorelationId;
+            }
+            throw finalError;
         }
     }
 
@@ -182,19 +188,19 @@ export class EpochTracker implements IPersistedFileCache {
         fetchType: FetchType,
         addInBody: boolean = false,
     ) {
-        const requestStatsValue = this.formatRequestStatsValue();
+        const clientCorelationId = this.formatClientCorelationId();
         // Add epoch in fetch request.
-        const request = this.addEpochInRequest(url, fetchOptions, addInBody, requestStatsValue);
+        this.addEpochInRequest(fetchOptions, addInBody, clientCorelationId);
         let epochFromResponse: string | undefined;
         try {
             const response = await this.rateLimiter.schedule(
-                async () => fetchArray(request.url, request.fetchOptions),
+                async () => fetchArray(url, fetchOptions),
             );
             epochFromResponse = response.headers.get("x-fluid-epoch");
             this.validateEpochFromResponse(epochFromResponse, fetchType);
             response.commonSpoHeaders = {
                 ...response.commonSpoHeaders,
-                "X-RequestStats": requestStatsValue,
+                "X-RequestStats": clientCorelationId,
             };
             return response;
         } catch (error) {
@@ -203,61 +209,63 @@ export class EpochTracker implements IPersistedFileCache {
             if (epochFromResponse === undefined) {
                 epochFromResponse = (error as IOdspError).serverEpoch;
             }
-            await this.checkForEpochError(error, epochFromResponse, fetchType);
-            throw error;
+            let finalError = error;
+            await this.checkForEpochError(error, epochFromResponse, fetchType).catch((epochError) => {
+                finalError = epochError;
+            });
+            if (typeof finalError === "object" && finalError !== null) {
+                finalError["X-RequestStats"] = clientCorelationId;
+            }
+            throw finalError;
         }
     }
 
     private addEpochInRequest(
-        url: string,
         fetchOptions: RequestInit,
         addInBody: boolean,
-        requestStatsValue: string,
-    ): {url: string, fetchOptions: {[index: string]: any}} {
-        let finalUrl = url;
-        if (this.fluidEpoch !== undefined) {
-            if (addInBody) {
-                // We use multi part form request for post body where we want to use this.
-                // So extract the form boundary to mark the end of form.
-                let body = fetchOptions.body;
-                assert(typeof body === "string", 0x21d /* "body is not string" */);
-                const firstLine = body.split("\r\n")[0];
-                assert(firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
-                const formBoundary = firstLine.substring(2);
-                body += `\r\nepoch=${this.fluidEpoch}\r\n`;
-                body += `\r\nX-RequestStats=${requestStatsValue}\r\n`;
-                body += `\r\n--${formBoundary}--`;
-                fetchOptions.body = body;
-            } else {
-                const [mainUrl, queryString] = url.split("?");
-                const searchParams = new URLSearchParams(queryString);
-                searchParams.append("epoch", this.fluidEpoch);
-                const urlWithEpoch = `${mainUrl}?${searchParams.toString()}`;
-                if (urlWithEpoch.length > 2048) {
-                    // Add in headers if the length becomes greater than 2048
-                    // as ODSP has limitation for queries of length more that 2048.
-                    fetchOptions.headers = {
-                        ...fetchOptions.headers,
-                        "x-fluid-epoch": this.fluidEpoch,
-                    };
-                } else {
-                    finalUrl = urlWithEpoch;
-                }
+        clientCorelationId: string,
+    ) {
+        if (addInBody) {
+            const headers: {[key: string]: string} = {};
+            headers["X-RequestStats"] = clientCorelationId;
+            if (this.fluidEpoch !== undefined) {
+                headers["x-fluid-epoch"] = this.fluidEpoch;
+            }
+            this.addParamInBody(fetchOptions, headers);
+        } else {
+            const addHeader = (key: string, val: string) => {
                 fetchOptions.headers = {
                     ...fetchOptions.headers,
-                    "X-RequestStats": requestStatsValue,
                 };
-            }
-        } else {
-            fetchOptions.headers = {
-                ...fetchOptions.headers,
-                "X-RequestStats": requestStatsValue,
+                assert(fetchOptions.headers !== undefined, "Headers should be present now");
+                fetchOptions.headers[key] = val;
             };
+            addHeader("X-RequestStats", clientCorelationId);
+            if (this.fluidEpoch !== undefined) {
+                addHeader("x-fluid-epoch", this.fluidEpoch);
+            }
         }
-        return { url: finalUrl, fetchOptions };
     }
 
-    private formatRequestStatsValue() {
+    private addParamInBody(fetchOptions: RequestInit, headers: {[key: string]: string}) {
+        // We use multi part form request for post body where we want to use this.
+        // So extract the form boundary to mark the end of form.
+        const body = fetchOptions.body;
+        assert(typeof body === "string", 0x21d /* "body is not string" */);
+        const splitBody = body.split("\r\n");
+        const firstLine = splitBody.shift();
+        assert(firstLine !== undefined && firstLine.startsWith("--"), 0x21e /* "improper boundary format" */);
+        const formParams = [firstLine];
+        Object.entries(headers).forEach(([key, value]) => {
+            formParams.push(`${key}: ${value}`);
+        });
+        splitBody.forEach((value: string) => {
+            formParams.push(value);
+        });
+        fetchOptions.body = formParams.join("\r\n");
+    }
+
+    private formatClientCorelationId() {
         return `driverId=${this.driverId}, RequestNumber=${this.networkCallNumber++}`;
     }
 
