@@ -18,6 +18,18 @@ module:
   - source: ../packages/dds/sequence/README.md
     target: content/docs/sequence-readme.md
 
+  # SVG icons from the @vscode/codicons package
+  - source: node_modules/@vscode/codicons/src/icons/bug.svg
+    target: static/codicons/bug.svg
+  - source: node_modules/@vscode/codicons/src/icons/comment-discussion.svg
+    target: static/codicons/comment-discussion.svg
+  - source: node_modules/@vscode/codicons/src/icons/edit.svg
+    target: static/codicons/edit.svg
+  - source: node_modules/@vscode/codicons/src/icons/rss.svg
+    target: static/codicons/rss.svg
+  - source: node_modules/@vscode/codicons/src/icons/twitter.svg
+    target: static/codicons/twitter.svg
+
 permalinks:
   page: "/:slug"
   post: "/:year/:month/:title"
