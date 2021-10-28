@@ -5,6 +5,7 @@ theme: "thxvscode"
 title: "Fluid Framework"
 titleCaseStyle: "Chicago"
 
+# Hugo modules enable mapping content from outside the Hugo folder
 module:
   noVendor: "github.com/**"
   hugoVersion:
@@ -17,6 +18,9 @@ module:
     target: content
   - source: ../packages/dds/sequence/README.md
     target: content/docs/sequence-readme.md
+
+  - source: static
+    target: static
 
   # SVG icons from the @vscode/codicons package
   - source: node_modules/@vscode/codicons/src/icons/bug.svg
