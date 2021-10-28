@@ -97,9 +97,11 @@ footer {
     background-size: 64px 64px;
 }
 
-.cta-icon.stack-overflow {
-    background-image: url("/images/so-icon.svg");
+.cta-icon.gh-discussions {
+    background-image: url("/codicons/comment-discussion.svg");
     background-size: 64px 64px;
+    /* helpful codepen for recoloring SVGs: https://codepen.io/sosuke/pen/Pjoqqp */
+    filter: invert(100%);
 }
 
 .cta-icon.issues {
