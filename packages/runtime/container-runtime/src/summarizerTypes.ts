@@ -101,7 +101,7 @@ export interface ISummarizeOptions {
     readonly fullTree?: boolean,
     /** True to ask the server what the latest summary is first; defaults to false */
     readonly refreshLatestAck?: boolean,
-    readonly summaryCount: number,
+    readonly summaryCount?: number,
 }
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {

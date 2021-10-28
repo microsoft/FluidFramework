@@ -642,13 +642,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             storage,
         );
 
-        logger.sendTelemetryEvent({
-            eventName: "load",
-            createTimeStamp: ,
-            createVersion:,
-            summaryCount:
-        })
-
         return runtime;
     }
 
@@ -802,6 +795,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly createDocRuntimeVersion: string;
     // This is the time stamp of when doc is first created
     private readonly createDocTimeStamp: number;
+    // This is the counter of summary
+    private summaryCount: number;
     // This is the source of truth for whether GC sweep phase should run or not.
     private readonly shouldRunSweep: boolean;
 
@@ -848,6 +843,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return metadata.createDocTimeStamp ?? performance.now();
     }
 
+    private getSummaryCount(metadata?: IContainerRuntimeMetadata): number {
+        // if(!metadata) {
+        //     return 0;
+        // }
+        return metadata?.summaryCount ?? 0;
+    }
+
     private constructor(
         private readonly context: IContainerContext,
         private readonly registry: IFluidDataStoreRegistry,
@@ -874,6 +876,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         this.createDocRuntimeVersion = existing ? this.getCreateVersion(metadata) : pkgVersion;
         this.createDocTimeStamp = existing ? this.getTimeStamp(metadata) : performance.now();
+        this.summaryCount = existing ? this.getSummaryCount(metadata) : 0;
 
         // Default to false for now.
         this.latestSummaryGCVersion = prevSummaryGCVersion ??
@@ -1097,6 +1100,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
+
+        this.logger.sendTelemetryEvent({
+            eventName: "containerCreatedInfo",
+            createTimeStamp: this.createDocTimeStamp,
+            createVersion: this.createDocRuntimeVersion,
+            summaryCount: this.summaryCount,
+        });
     }
 
     public dispose(error?: Error): void {
@@ -1236,6 +1246,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             message: extractSummaryMetadataMessage(this.deltaManager.lastMessage) ?? this.baseSummaryMessage,
             createDocRuntimeVersion: this.createDocRuntimeVersion,
             createDocTimeStamp: this.createDocTimeStamp,
+            summaryCount: this.summaryCount,
         };
     }
 
@@ -1818,6 +1829,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
         const { fullTree, refreshLatestAck, summaryLogger } = options;
+        this.summaryCount = options.summaryCount ?? 0;
         if (refreshLatestAck) {
             const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryLogger, undefined, { all: { safeSummary: true } }));
