@@ -142,14 +142,6 @@
                     "Container-Utils"
                 ]
             },
-            "BaseHost": {
-                "packages": [
-                    "@fluidframework/base-host"
-                ],
-                "deps": [
-                    "Loader"
-                ]
-            },
             "HostUtils": {
                 "dev": true,
                 "packages": [
