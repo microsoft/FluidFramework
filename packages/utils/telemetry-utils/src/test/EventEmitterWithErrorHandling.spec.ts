@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling";
+import { isFluidError } from "../fluidErrorBase";
 
 describe("EventEmitterWithErrorHandling", () => {
     let errorHandlerCalled = false;
@@ -38,10 +39,12 @@ describe("EventEmitterWithErrorHandling", () => {
     it("error thrown from listener is handled, some other listeners succeed", ()=> {
         const emitter = new EventEmitterWithErrorHandling((event, error: any) => {
             passedErrorMsg = error.message;
-            passedEventArg = error.eventArg;
-        }, "errorSource");
+            passedEventName = event;
+            assert(isFluidError(error) && error.errorSource === "someErrorSource");
+            assert(error.getTelemetryProperties().mishandledEvent === event);
+        }, "someErrorSource");
         let passedErrorMsg: string | undefined;
-        let passedEventArg: number | undefined;
+        let passedEventName: string | symbol | undefined;
         let earlyListenerCallCount: number = 0;
         let lateListenerCallCount: number = 0;
         // Innocent bystander - early (registered before throwing one)
@@ -49,10 +52,8 @@ describe("EventEmitterWithErrorHandling", () => {
             ++earlyListenerCallCount;
         });
         // The delinquent
-        emitter.on("foo", (arg) => {
-            const error = new Error("foo listener throws");
-            Object.assign(error, { eventArg: arg });
-            throw error;
+        emitter.on("foo", (_arg) => {
+            throw new Error("foo listener throws");
         });
         // Innocent bystander - late (registered after throwing one)
         emitter.on("foo", (_arg) => {
@@ -61,7 +62,7 @@ describe("EventEmitterWithErrorHandling", () => {
 
         emitter.emit("foo", 3);  // listener above will throw. Expect error listener to be invoked
         assert.strictEqual(passedErrorMsg, "foo listener throws");
-        assert.strictEqual(passedEventArg, 3);
+        assert.strictEqual(passedEventName, "foo");
         assert.strictEqual(earlyListenerCallCount, 1);
         assert.strictEqual(lateListenerCallCount, 0);
     });
@@ -69,12 +70,16 @@ describe("EventEmitterWithErrorHandling", () => {
         const emitter = new EventEmitterWithErrorHandling(defaultErrorHandler, "errorSource");
         try {
             const error = new Error("No one is listening");
-            Object.assign(error, { prop: 4 });
+            Object.assign(error, { prop: 4 }); // This will be dropped by normalizeError
             emitter.emit("error", error, 3);  // the extra args (e.g. 3 here) are dropped
             assert.fail("previous line should throw");
         } catch (error) {
+            assert(isFluidError(error));
             assert.strictEqual(error.message, "No one is listening");
-            assert.strictEqual(error.prop, 4);
+            assert.strictEqual(error.errorSource, "errorSource");
+            assert.strictEqual(error.getTelemetryProperties().mishandledEvent, "error");
+            assert.strictEqual((error as any).prop, undefined,
+                "Normalized error will not retain props besides message/stack");
             assert.strictEqual(errorHandlerCalled, true);
         }
     });
