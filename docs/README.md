@@ -212,7 +212,6 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `clean` | Remove all generated files. |
-| `copyfiles` | `copyfiles _replacements/ content/` |
 | `ditaa` | Run the local copy of ditaa. |
 | `ditaa:default` | --- |
 | `ditaa:win32` | --- |
