@@ -31,7 +31,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
             return super.emit(event, ...args);
         } catch (error) {
             const normalizedError = normalizeError(error, {
-                errorSourceIfNone: this.defaultErrorSource,
+                errorSourceIfUnknown: this.defaultErrorSource,
                 props: typeof event === "string" ? { mishandledEvent: event } : undefined,
             });
 

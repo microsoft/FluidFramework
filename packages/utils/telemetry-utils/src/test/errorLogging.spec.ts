@@ -370,7 +370,7 @@ class TestFluidError implements IFluidErrorBase {
 const annotationCases: IFluidErrorAnnotations[] = new Array(8).fill(0).map((_, i) =>
     ({
         errorCodeIfNone: (i & 1) ? "fooErrorCode" : undefined,
-        errorSourceIfNone: (i & 2) ? "fooErrorSource" : undefined,
+        errorSourceIfUnknown: (i & 2) ? "fooErrorSource" : undefined,
         props: (i & 4) ? { foo: "bar", one: 1, u: undefined, t: true } : undefined,
     }));
 
@@ -394,7 +394,7 @@ describe("normalizeError", () => {
                 assert.equal(normalizedError, legacyError, "normalize should yield the same error as passed in");
                 assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
                 assert.equal(normalizedError.fluidErrorCode, expectedErrorCode, "errorCode should be patched properly");
-                assert.equal(normalizedError.errorSource, annotations.errorSourceIfNone, "errorSource should be patched properly");
+                assert.equal(normalizedError.errorSource, annotations.errorSourceIfUnknown, "errorSource should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
                 if (annotations.props !== undefined) {
                     assert(legacyError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
@@ -569,12 +569,12 @@ describe("normalizeError", () => {
             expected.withExpectedTelemetryProps({
                 ...annotations.props,
                 fluidErrorCode: expectedErrorCode,
-                errorSource: annotations.errorSourceIfNone,
+                errorSource: annotations.errorSourceIfUnknown,
             });
 
             assert.strictEqual(actual.errorType, expected.errorType, "errorType should match");
             assert.strictEqual(actual.fluidErrorCode, expectedErrorCode, "fluidErrorCode should match");
-            assert.strictEqual(actual.errorSource, annotations.errorSourceIfNone, "errorSource should match");
+            assert.strictEqual(actual.errorSource, annotations.errorSourceIfUnknown, "errorSource should match");
             assert.strictEqual(actual.message, expected.message, "message should match");
             assert.strictEqual(actual.name, expected.name, "name should match");
 

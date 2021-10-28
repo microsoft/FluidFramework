@@ -77,7 +77,7 @@ export interface IFluidErrorAnnotations {
     /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
     errorCodeIfNone?: string;
     /** errorSource to use on the normalized error if not already present */
-    errorSourceIfNone?: string;
+    errorSourceIfUnknown?: string;
 }
 
 /** Simplest possible implementation of IFluidErrorBase */
@@ -144,7 +144,7 @@ export function normalizeError(
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
-        patchLegacyError(error, annotations.errorCodeIfNone, annotations.errorSourceIfNone);
+        patchLegacyError(error, annotations.errorCodeIfNone, annotations.errorSourceIfUnknown);
     }
 
     if (isFluidError(error)) {
@@ -157,7 +157,7 @@ export function normalizeError(
     const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
     const fluidError: IFluidErrorBase = new SimpleFluidError({
         errorType: "genericError", // Match Container/Driver generic error type
-        errorSource: annotations.errorSourceIfNone,
+        errorSource: annotations.errorSourceIfUnknown,
         fluidErrorCode: annotations.errorCodeIfNone ?? "none",
         message,
         stack: stack ?? generateStack(),
