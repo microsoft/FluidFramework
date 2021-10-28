@@ -563,6 +563,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
     }
 
+    // @deprecated Warnings are being deprecated
     public raiseContainerWarning(warning: ContainerWarning): void {
         this.containerRuntime.raiseContainerWarning(warning);
     }
@@ -990,7 +991,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreRuntime);
 
         if (this.isRootDataStore) {
-            dataStoreRuntime.bindToContext();
+            dataStoreRuntime.attachGraph();
         }
     }
 

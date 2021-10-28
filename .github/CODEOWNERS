@@ -16,7 +16,6 @@ api-report/                                                               @micro
 # Internal API reports. The packages listed here are not considered part of the public API.
 /docs/PACKAGES.md                                                         @microsoft/fluid-cr-internal-api
 api-report/aqueduct.api.md                                                @microsoft/fluid-cr-internal-api
-api-report/base-host.api.md                                               @microsoft/fluid-cr-internal-api
 api-report/cell.api.md                                                    @microsoft/fluid-cr-internal-api
 api-report/container-loader.api.md                                        @microsoft/fluid-cr-internal-api
 api-report/container-runtime-definitions.api.md                           @microsoft/fluid-cr-internal-api

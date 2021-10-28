@@ -74,7 +74,7 @@ export class TestClient extends Client {
         return client2;
     }
 
-    public mergeTree: MergeTree;
+    declare public mergeTree: MergeTree;
 
     public readonly checkQ: Collections.List<string> = Collections.ListMakeHead<string>();
     // eslint-disable-next-line max-len

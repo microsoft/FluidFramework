@@ -52,6 +52,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: ILoaderOptions;
+    // @deprecated
     raiseContainerWarning(warning: ContainerWarning): void;
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)

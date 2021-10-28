@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
 import {
     createLocalResolverCreateNewRequest,
@@ -64,10 +64,8 @@ describe("No Delta Stream", () => {
             loaderContainerTracker.add(loader);
         }
 
-        // See issue #7426 - need better long term solution
         const container = await loader.resolve({
             url: documentLoadUrl,
-            headers: { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" }},
         });
         await loaderContainerTracker.ensureSynchronized();
         return container;

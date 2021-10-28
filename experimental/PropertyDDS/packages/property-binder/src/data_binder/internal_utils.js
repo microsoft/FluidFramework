@@ -9,8 +9,8 @@ import _ from 'underscore';
 import { PropertyFactory } from '@fluid-experimental/property-properties';
 import { PathHelper, TypeIdHelper, ArrayChangeSetIterator} from '@fluid-experimental/property-changeset';
 import { ModificationContext } from './modification_context';
-import { getOrInsertDefaultInNestedObjects } from '../external/utils/nested_object_helpers';
-import { DataBinderHandle } from '../internal/data_binder_handle';
+import { getOrInsertDefaultInNestedObjects } from '../external/utils/nestedObjectHelpers';
+import { DataBinderHandle } from '../internal/dataBinderHandle';
 import { RESOLVE_NEVER, RESOLVE_ALWAYS } from '../internal/constants';
 
 /**

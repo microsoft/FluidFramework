@@ -106,6 +106,7 @@ export interface IContainerRuntime extends
 
     /**
      * Used to raise an unrecoverable error on the runtime.
+     * @deprecated Warnings are being deprecated
      */
     raiseContainerWarning(warning: ContainerWarning): void;
 

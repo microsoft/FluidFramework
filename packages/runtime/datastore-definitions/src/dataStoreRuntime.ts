@@ -119,6 +119,7 @@ export interface IFluidDataStoreRuntime extends
 
     /**
      * Errors raised by distributed data structures
+     * @deprecated Warnings are being deprecated
      */
     raiseContainerWarning(warning: ContainerWarning): void;
 }

@@ -6,7 +6,7 @@
 import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IClient, IQuorum, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 // helper types for recursive readonly.
@@ -97,7 +97,7 @@ export class OrderedClientCollection
     constructor(
         logger: ITelemetryLogger,
         deltaManager: Pick<IDeltaManager<unknown, unknown>, "lastSequenceNumber">,
-        quorum: Pick<IQuorum, "getMembers" | "on">,
+        quorum: Pick<IQuorumClients, "getMembers" | "on">,
     ) {
         super();
         this.logger = ChildLogger.create(logger, "OrderedClientCollection");

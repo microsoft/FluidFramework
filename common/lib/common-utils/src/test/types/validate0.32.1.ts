@@ -10,8 +10,8 @@ import * as old from "@fluidframework/common-utils-0.32.1";
 import * as current from "../../index";
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_assert": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_assert():
@@ -22,8 +22,8 @@ use_current_FunctionDeclaration_assert(
     get_old_FunctionDeclaration_assert());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_assert": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_assert():
@@ -34,8 +34,8 @@ use_old_FunctionDeclaration_assert(
     get_current_FunctionDeclaration_assert());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_BaseTelemetryNullLogger():
@@ -46,8 +46,8 @@ use_current_ClassDeclaration_BaseTelemetryNullLogger(
     get_old_ClassDeclaration_BaseTelemetryNullLogger());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_BaseTelemetryNullLogger": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_BaseTelemetryNullLogger():
@@ -58,8 +58,8 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
     get_current_ClassDeclaration_BaseTelemetryNullLogger());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_BatchManager": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_BatchManager():
@@ -70,8 +70,8 @@ use_current_ClassDeclaration_BatchManager(
     get_old_ClassDeclaration_BatchManager());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_BatchManager": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_BatchManager():
@@ -82,8 +82,8 @@ use_old_ClassDeclaration_BatchManager(
     get_current_ClassDeclaration_BatchManager());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Buffer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Buffer():
@@ -94,8 +94,8 @@ use_current_ClassDeclaration_Buffer(
     get_old_ClassDeclaration_Buffer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Buffer": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Buffer():
@@ -106,8 +106,8 @@ use_old_ClassDeclaration_Buffer(
     get_current_ClassDeclaration_Buffer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_bufferToString": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_bufferToString():
@@ -118,8 +118,8 @@ use_current_VariableDeclaration_bufferToString(
     get_old_VariableDeclaration_bufferToString());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_bufferToString": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_bufferToString():
@@ -130,8 +130,8 @@ use_old_VariableDeclaration_bufferToString(
     get_current_VariableDeclaration_bufferToString());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Deferred": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Deferred():
@@ -142,8 +142,8 @@ use_current_ClassDeclaration_Deferred(
     get_old_ClassDeclaration_Deferred());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Deferred": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Deferred():
@@ -154,8 +154,8 @@ use_old_ClassDeclaration_Deferred(
     get_current_ClassDeclaration_Deferred());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_delay": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_delay():
@@ -166,8 +166,8 @@ use_current_VariableDeclaration_delay(
     get_old_VariableDeclaration_delay());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_delay": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_delay():
@@ -178,8 +178,8 @@ use_old_VariableDeclaration_delay(
     get_current_VariableDeclaration_delay());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_doIfNotDisposed": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_doIfNotDisposed():
@@ -190,8 +190,8 @@ use_current_FunctionDeclaration_doIfNotDisposed(
     get_old_FunctionDeclaration_doIfNotDisposed());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_doIfNotDisposed": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_doIfNotDisposed():
@@ -202,8 +202,8 @@ use_old_FunctionDeclaration_doIfNotDisposed(
     get_current_FunctionDeclaration_doIfNotDisposed());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_EventEmitterEventType": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_EventEmitterEventType():
@@ -214,8 +214,8 @@ use_current_TypeAliasDeclaration_EventEmitterEventType(
     get_old_TypeAliasDeclaration_EventEmitterEventType());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_EventEmitterEventType": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_EventEmitterEventType():
@@ -226,8 +226,8 @@ use_old_TypeAliasDeclaration_EventEmitterEventType(
     get_current_TypeAliasDeclaration_EventEmitterEventType());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_EventForwarder": {"forwardCompat": false}
 declare function get_old_ClassDeclaration_EventForwarder():
     Omit<old.EventForwarder,"">;
@@ -238,8 +238,8 @@ use_current_ClassDeclaration_EventForwarder(
 */
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_EventForwarder": {"backCompat": false}
 declare function get_current_ClassDeclaration_EventForwarder():
     Omit<current.EventForwarder,"">;
@@ -250,8 +250,8 @@ use_old_ClassDeclaration_EventForwarder(
 */
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_extractLogSafeErrorProperties": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_extractLogSafeErrorProperties():
@@ -262,8 +262,8 @@ use_current_FunctionDeclaration_extractLogSafeErrorProperties(
     get_old_FunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_extractLogSafeErrorProperties": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_extractLogSafeErrorProperties():
@@ -274,8 +274,8 @@ use_old_FunctionDeclaration_extractLogSafeErrorProperties(
     get_current_FunctionDeclaration_extractLogSafeErrorProperties());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_fromBase64ToUtf8": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_fromBase64ToUtf8():
@@ -286,8 +286,8 @@ use_current_VariableDeclaration_fromBase64ToUtf8(
     get_old_VariableDeclaration_fromBase64ToUtf8());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_fromBase64ToUtf8": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_fromBase64ToUtf8():
@@ -298,8 +298,8 @@ use_old_VariableDeclaration_fromBase64ToUtf8(
     get_current_VariableDeclaration_fromBase64ToUtf8());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_fromUtf8ToBase64": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_fromUtf8ToBase64():
@@ -310,8 +310,8 @@ use_current_VariableDeclaration_fromUtf8ToBase64(
     get_old_VariableDeclaration_fromUtf8ToBase64());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_fromUtf8ToBase64": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_fromUtf8ToBase64():
@@ -322,8 +322,8 @@ use_old_VariableDeclaration_fromUtf8ToBase64(
     get_current_VariableDeclaration_fromUtf8ToBase64());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_gitHashFile": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_gitHashFile():
@@ -334,8 +334,8 @@ use_current_FunctionDeclaration_gitHashFile(
     get_old_FunctionDeclaration_gitHashFile());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_gitHashFile": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_gitHashFile():
@@ -346,8 +346,8 @@ use_old_FunctionDeclaration_gitHashFile(
     get_current_FunctionDeclaration_gitHashFile());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_hashFile": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_hashFile():
@@ -358,8 +358,8 @@ use_current_FunctionDeclaration_hashFile(
     get_old_FunctionDeclaration_hashFile());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_hashFile": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_hashFile():
@@ -370,8 +370,8 @@ use_old_FunctionDeclaration_hashFile(
     get_current_FunctionDeclaration_hashFile());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Heap": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Heap():
@@ -382,8 +382,8 @@ use_current_ClassDeclaration_Heap(
     get_old_ClassDeclaration_Heap());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Heap": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Heap():
@@ -394,8 +394,8 @@ use_old_ClassDeclaration_Heap(
     get_current_ClassDeclaration_Heap());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IComparer():
@@ -406,8 +406,8 @@ use_current_InterfaceDeclaration_IComparer(
     get_old_InterfaceDeclaration_IComparer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IComparer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IComparer():
@@ -418,8 +418,8 @@ use_old_InterfaceDeclaration_IComparer(
     get_current_InterfaceDeclaration_IComparer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IHeapNode": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IHeapNode():
@@ -430,8 +430,8 @@ use_current_InterfaceDeclaration_IHeapNode(
     get_old_InterfaceDeclaration_IHeapNode());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IHeapNode": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IHeapNode():
@@ -442,8 +442,8 @@ use_old_InterfaceDeclaration_IHeapNode(
     get_current_InterfaceDeclaration_IHeapNode());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IPromiseTimer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPromiseTimer():
@@ -454,8 +454,8 @@ use_current_InterfaceDeclaration_IPromiseTimer(
     get_old_InterfaceDeclaration_IPromiseTimer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IPromiseTimer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IPromiseTimer():
@@ -466,8 +466,8 @@ use_old_InterfaceDeclaration_IPromiseTimer(
     get_current_InterfaceDeclaration_IPromiseTimer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IPromiseTimerResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IPromiseTimerResult():
@@ -478,8 +478,8 @@ use_current_InterfaceDeclaration_IPromiseTimerResult(
     get_old_InterfaceDeclaration_IPromiseTimerResult());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IPromiseTimerResult": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IPromiseTimerResult():
@@ -490,8 +490,8 @@ use_old_InterfaceDeclaration_IPromiseTimerResult(
     get_current_InterfaceDeclaration_IPromiseTimerResult());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IRange": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRange():
@@ -502,8 +502,8 @@ use_current_InterfaceDeclaration_IRange(
     get_old_InterfaceDeclaration_IRange());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IRange": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRange():
@@ -514,8 +514,8 @@ use_old_InterfaceDeclaration_IRange(
     get_current_InterfaceDeclaration_IRange());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IRangeTrackerSnapshot": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRangeTrackerSnapshot():
@@ -526,8 +526,8 @@ use_current_InterfaceDeclaration_IRangeTrackerSnapshot(
     get_old_InterfaceDeclaration_IRangeTrackerSnapshot());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_IRangeTrackerSnapshot": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_IRangeTrackerSnapshot():
@@ -538,8 +538,8 @@ use_old_InterfaceDeclaration_IRangeTrackerSnapshot(
     get_current_InterfaceDeclaration_IRangeTrackerSnapshot());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_IsoBuffer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IsoBuffer():
@@ -550,8 +550,8 @@ use_current_VariableDeclaration_IsoBuffer(
     get_old_VariableDeclaration_IsoBuffer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_IsoBuffer": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_IsoBuffer():
@@ -562,8 +562,8 @@ use_old_VariableDeclaration_IsoBuffer(
     get_current_VariableDeclaration_IsoBuffer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IsoBuffer():
@@ -574,8 +574,8 @@ use_current_TypeAliasDeclaration_IsoBuffer(
     get_old_TypeAliasDeclaration_IsoBuffer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_IsoBuffer": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IsoBuffer():
@@ -586,8 +586,8 @@ use_old_TypeAliasDeclaration_IsoBuffer(
     get_current_TypeAliasDeclaration_IsoBuffer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_IsomorphicPerformance": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_IsomorphicPerformance():
@@ -598,8 +598,8 @@ use_current_TypeAliasDeclaration_IsomorphicPerformance(
     get_old_TypeAliasDeclaration_IsomorphicPerformance());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_IsomorphicPerformance": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_IsomorphicPerformance():
@@ -610,8 +610,8 @@ use_old_TypeAliasDeclaration_IsomorphicPerformance(
     get_current_TypeAliasDeclaration_IsomorphicPerformance());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_ITimer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITimer():
@@ -622,8 +622,8 @@ use_current_InterfaceDeclaration_ITimer(
     get_old_InterfaceDeclaration_ITimer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_ITimer": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITimer():
@@ -634,8 +634,8 @@ use_old_InterfaceDeclaration_ITimer(
     get_current_InterfaceDeclaration_ITimer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITraceEvent():
@@ -646,8 +646,8 @@ use_current_InterfaceDeclaration_ITraceEvent(
     get_old_InterfaceDeclaration_ITraceEvent());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_ITraceEvent": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_ITraceEvent():
@@ -658,8 +658,8 @@ use_old_InterfaceDeclaration_ITraceEvent(
     get_current_InterfaceDeclaration_ITraceEvent());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Lazy": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Lazy():
@@ -670,8 +670,8 @@ use_current_ClassDeclaration_Lazy(
     get_old_ClassDeclaration_Lazy());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Lazy": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Lazy():
@@ -682,8 +682,8 @@ use_old_ClassDeclaration_Lazy(
     get_current_ClassDeclaration_Lazy());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_LazyPromise": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_LazyPromise():
@@ -694,8 +694,8 @@ use_current_ClassDeclaration_LazyPromise(
     get_old_ClassDeclaration_LazyPromise());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_LazyPromise": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_LazyPromise():
@@ -706,8 +706,8 @@ use_old_ClassDeclaration_LazyPromise(
     get_current_ClassDeclaration_LazyPromise());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_NumberComparer": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_NumberComparer():
@@ -718,8 +718,8 @@ use_current_VariableDeclaration_NumberComparer(
     get_old_VariableDeclaration_NumberComparer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_NumberComparer": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_NumberComparer():
@@ -730,8 +730,8 @@ use_old_VariableDeclaration_NumberComparer(
     get_current_VariableDeclaration_NumberComparer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_performance": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_performance():
@@ -742,8 +742,8 @@ use_current_VariableDeclaration_performance(
     get_old_VariableDeclaration_performance());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_performance": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_performance():
@@ -754,8 +754,8 @@ use_old_VariableDeclaration_performance(
     get_current_VariableDeclaration_performance());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_PromiseCache": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_PromiseCache():
@@ -766,8 +766,8 @@ use_current_ClassDeclaration_PromiseCache(
     get_old_ClassDeclaration_PromiseCache());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_PromiseCache": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_PromiseCache():
@@ -778,8 +778,8 @@ use_old_ClassDeclaration_PromiseCache(
     get_current_ClassDeclaration_PromiseCache());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_PromiseCacheExpiry": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_PromiseCacheExpiry():
@@ -790,8 +790,8 @@ use_current_TypeAliasDeclaration_PromiseCacheExpiry(
     get_old_TypeAliasDeclaration_PromiseCacheExpiry());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_PromiseCacheExpiry": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_PromiseCacheExpiry():
@@ -802,8 +802,8 @@ use_old_TypeAliasDeclaration_PromiseCacheExpiry(
     get_current_TypeAliasDeclaration_PromiseCacheExpiry());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_PromiseCacheOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_PromiseCacheOptions():
@@ -814,8 +814,8 @@ use_current_InterfaceDeclaration_PromiseCacheOptions(
     get_old_InterfaceDeclaration_PromiseCacheOptions());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "InterfaceDeclaration_PromiseCacheOptions": {"backCompat": false}
 */
 declare function get_current_InterfaceDeclaration_PromiseCacheOptions():
@@ -826,8 +826,8 @@ use_old_InterfaceDeclaration_PromiseCacheOptions(
     get_current_InterfaceDeclaration_PromiseCacheOptions());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_PromiseTimer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_PromiseTimer():
@@ -838,8 +838,8 @@ use_current_ClassDeclaration_PromiseTimer(
     get_old_ClassDeclaration_PromiseTimer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_PromiseTimer": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_PromiseTimer():
@@ -850,8 +850,8 @@ use_old_ClassDeclaration_PromiseTimer(
     get_current_ClassDeclaration_PromiseTimer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_RangeTracker": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RangeTracker():
@@ -862,8 +862,8 @@ use_current_ClassDeclaration_RangeTracker(
     get_old_ClassDeclaration_RangeTracker());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_RangeTracker": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RangeTracker():
@@ -874,8 +874,8 @@ use_old_ClassDeclaration_RangeTracker(
     get_current_ClassDeclaration_RangeTracker());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_RateLimiter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RateLimiter():
@@ -886,8 +886,8 @@ use_current_ClassDeclaration_RateLimiter(
     get_old_ClassDeclaration_RateLimiter());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_RateLimiter": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_RateLimiter():
@@ -898,8 +898,8 @@ use_old_ClassDeclaration_RateLimiter(
     get_current_ClassDeclaration_RateLimiter());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_safelyParseJSON": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_safelyParseJSON():
@@ -910,8 +910,8 @@ use_current_FunctionDeclaration_safelyParseJSON(
     get_old_FunctionDeclaration_safelyParseJSON());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_safelyParseJSON": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_safelyParseJSON():
@@ -922,8 +922,8 @@ use_old_FunctionDeclaration_safelyParseJSON(
     get_current_FunctionDeclaration_safelyParseJSON());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_stringToBuffer": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_stringToBuffer():
@@ -934,8 +934,8 @@ use_current_FunctionDeclaration_stringToBuffer(
     get_old_FunctionDeclaration_stringToBuffer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_stringToBuffer": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_stringToBuffer():
@@ -946,8 +946,8 @@ use_old_FunctionDeclaration_stringToBuffer(
     get_current_FunctionDeclaration_stringToBuffer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TelemetryNullLogger():
@@ -958,8 +958,8 @@ use_current_ClassDeclaration_TelemetryNullLogger(
     get_old_ClassDeclaration_TelemetryNullLogger());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_TelemetryNullLogger": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TelemetryNullLogger():
@@ -970,8 +970,8 @@ use_old_ClassDeclaration_TelemetryNullLogger(
     get_current_ClassDeclaration_TelemetryNullLogger());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Timer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Timer():
@@ -982,8 +982,8 @@ use_current_ClassDeclaration_Timer(
     get_old_ClassDeclaration_Timer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Timer": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Timer():
@@ -994,8 +994,8 @@ use_old_ClassDeclaration_Timer(
     get_current_ClassDeclaration_Timer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_toUtf8": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_toUtf8():
@@ -1006,8 +1006,8 @@ use_current_VariableDeclaration_toUtf8(
     get_old_VariableDeclaration_toUtf8());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "VariableDeclaration_toUtf8": {"backCompat": false}
 */
 declare function get_current_VariableDeclaration_toUtf8():
@@ -1018,8 +1018,8 @@ use_old_VariableDeclaration_toUtf8(
     get_current_VariableDeclaration_toUtf8());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Trace": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Trace():
@@ -1030,8 +1030,8 @@ use_current_ClassDeclaration_Trace(
     get_old_ClassDeclaration_Trace());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_Trace": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_Trace():
@@ -1042,8 +1042,8 @@ use_old_ClassDeclaration_Trace(
     get_current_ClassDeclaration_Trace());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_TypedEventEmitter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TypedEventEmitter():
@@ -1054,8 +1054,8 @@ use_current_ClassDeclaration_TypedEventEmitter(
     get_old_ClassDeclaration_TypedEventEmitter());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "ClassDeclaration_TypedEventEmitter": {"backCompat": false}
 */
 declare function get_current_ClassDeclaration_TypedEventEmitter():
@@ -1066,8 +1066,8 @@ use_old_ClassDeclaration_TypedEventEmitter(
     get_current_ClassDeclaration_TypedEventEmitter());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_TypedEventTransform": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_TypedEventTransform():
@@ -1078,8 +1078,8 @@ use_current_TypeAliasDeclaration_TypedEventTransform(
     get_old_TypeAliasDeclaration_TypedEventTransform());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "TypeAliasDeclaration_TypedEventTransform": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_TypedEventTransform():
@@ -1090,8 +1090,8 @@ use_old_TypeAliasDeclaration_TypedEventTransform(
     get_current_TypeAliasDeclaration_TypedEventTransform());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer():
@@ -1102,8 +1102,8 @@ use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
     get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer():
@@ -1114,8 +1114,8 @@ use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
     get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_Uint8ArrayToString": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_Uint8ArrayToString():
@@ -1126,8 +1126,8 @@ use_current_FunctionDeclaration_Uint8ArrayToString(
     get_old_FunctionDeclaration_Uint8ArrayToString());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_Uint8ArrayToString": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_Uint8ArrayToString():
@@ -1138,8 +1138,8 @@ use_old_FunctionDeclaration_Uint8ArrayToString(
     get_current_FunctionDeclaration_Uint8ArrayToString());
 
 /*
-* validate forward compat by using old type in place of current type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_unreachableCase": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_unreachableCase():
@@ -1150,8 +1150,8 @@ use_current_FunctionDeclaration_unreachableCase(
     get_old_FunctionDeclaration_unreachableCase());
 
 /*
-* validate back compat by using current type in place of old type
-* to disable, add in package.json under typeValidation.broken.0.32.1:
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken.0.32.1:
 * "FunctionDeclaration_unreachableCase": {"backCompat": false}
 */
 declare function get_current_FunctionDeclaration_unreachableCase():

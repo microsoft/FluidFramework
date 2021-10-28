@@ -39,7 +39,7 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
     public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
         const id = this.size.toString();
         this.blobs.set(id, content);
-        return { id };
+        return { id, url: "" };
     }
 
     public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -51,8 +51,12 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 
 describeFullCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        // Currently FRS does not support blob API.
+        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+            this.skip();
+        }
     });
 
     it("attach sends an op", async function() {
@@ -215,8 +219,12 @@ const getUrlFromItemId = (itemId: string, provider: ITestObjectProvider): string
 // tests above when the LTS version is bumped > 0.47
 describeNoCompat("blobs", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    beforeEach(async () => {
+    beforeEach(async function() {
         provider = getTestObjectProvider();
+        // Currently FRS does not support blob API.
+        if (provider.driver.type === "r11s" && provider.driver.endpointName === "frs") {
+            this.skip();
+        }
     });
 
     it("works in detached container", async function() {

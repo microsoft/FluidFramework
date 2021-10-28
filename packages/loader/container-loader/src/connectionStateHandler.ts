@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { ConnectionMode, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { EventEmitterWithErrorHandling, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { ConnectionState } from "./container";
 
@@ -18,22 +18,16 @@ export interface IConnectionStateHandler {
     shouldClientJoinWrite: () => boolean,
     maxClientLeaveWaitTime: number | undefined,
     logConnectionIssue: (eventName: string) => void,
+    connectionStateChanged: () => void,
 }
 
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-/**
- * Events emitted by the ConnectionStateHandler.
- */
-export interface IConnectionStateHandlerEvents extends IEvent {
-    (event: "connectionStateChanged", listener: () => void);
-}
-
 const JoinOpTimer = 45000;
 
-export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConnectionStateHandlerEvents> {
+export class ConnectionStateHandler {
     private _connectionState = ConnectionState.Disconnected;
     private _pendingClientId: string | undefined;
     private _clientId: string | undefined;
@@ -62,7 +56,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
         private readonly handler: IConnectionStateHandler,
         private readonly logger: ITelemetryLogger,
     ) {
-        super();
         this.prevClientLeftTimer = new Timer(
             // Default is 90 sec for which we are going to wait for its own "leave" message.
             this.handler.maxClientLeaveWaitTime ?? 90000,
@@ -163,7 +156,6 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
     public receivedConnectEvent(
         connectionMode: ConnectionMode,
         details: IConnectionDetails,
-        opsBehind?: number,
     ) {
         const oldState = this._connectionState;
         this._connectionState = ConnectionState.Connecting;
@@ -243,7 +235,7 @@ export class ConnectionStateHandler extends EventEmitterWithErrorHandling<IConne
             }
         }
 
-        this.emit("connectionStateChanged");
+        this.handler.connectionStateChanged();
 
         // Report telemetry after we set client id!
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
