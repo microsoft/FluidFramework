@@ -126,7 +126,7 @@ export abstract class Checkout<TChange> extends EventEmitterWithErrorHandling<IC
 	) {
 		super((_event, error: unknown) => {
 			this.tree.emit('error', error);
-		}, 'ddsUser');
+		}, 'ddsUser' /* defaultErrorSource */);
 		this.tree = tree;
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;
