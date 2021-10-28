@@ -108,7 +108,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
         protected runtime: IFluidDataStoreRuntime,
         public readonly attributes: IChannelAttributes)
     {
-        super((eventName, error) => this.runtime.raiseContainerWarning(error));
+        super((eventName, error) => this.runtime.raiseContainerWarning(error), "ddsUser");
 
         this.handle = new SharedObjectHandle(
             this,

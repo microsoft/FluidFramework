@@ -76,6 +76,8 @@ export interface IFluidErrorAnnotations {
     props?: ITelemetryProperties;
     /** fluidErrorCode to mention if error isn't already an IFluidErrorBase */
     errorCodeIfNone?: string;
+    /** errorSource to use on the normalized error if not already present */
+    errorSourceIfNone?: string;
 }
 
 /** Simplest possible implementation of IFluidErrorBase */

@@ -4,6 +4,8 @@
  */
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common-utils";
+import { normalizeError } from "./errorLogging";
+import { IFluidErrorBase } from "./fluidErrorBase";
 
 /**
  * Event Emitter helper class
@@ -11,7 +13,16 @@ import { TypedEventEmitter, EventEmitterEventType } from "@fluidframework/common
  * Any exception thrown by "error" listeners will propagate to the caller.
  */
 export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> extends TypedEventEmitter<TEvent> {
-    constructor(private readonly  errorHandler: (eventName: EventEmitterEventType, error: any) => void) {
+    /**
+     * Set up the error handling in case an event handler throws
+     * @param errorHandler - Callback to pass the thrown error to (error will be normalized/annotated first)
+     * @param defaultErrorSource - Describes where an error thrown by an event handler originates,
+     * for use as @see IFluidErrorBase.errorSource.
+     */
+    constructor(
+        private readonly  errorHandler: (eventName: EventEmitterEventType, error: IFluidErrorBase) => void,
+        private readonly defaultErrorSource: string,
+    ) {
         super();
     }
 
@@ -19,7 +30,12 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
         try {
             return super.emit(event, ...args);
         } catch (error) {
-            this.errorHandler(event, error);
+            const normalizedError = normalizeError(error, {
+                errorSourceIfNone: this.defaultErrorSource,
+                props: typeof event === "string" ? { mishandledEvent: event } : undefined,
+            });
+
+            this.errorHandler(event, normalizedError);
             return true;
         }
     }
