@@ -118,14 +118,17 @@ class SimpleFluidError implements IFluidErrorBase {
     }
 }
 
-/** For backwards compatibility with pre-fluidErrorCode valid errors */
-function patchWithErrorCode(
+/** For backwards compatibility with pre-IFluidErrorBase valid errors */
+function patchLegacyError(
     legacyError: Omit<IFluidErrorBase, "fluidErrorCode">,
     errorCode: string = "<error predates fluidErrorCode>",
+    errorSource?: string,
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { fluidErrorCode?: string } = legacyError as any;
+    const patchMe: { -readonly [P in "fluidErrorCode" | "errorSource"]: IFluidErrorBase[P] | undefined; } =
+        legacyError as any;
     if (patchMe.fluidErrorCode === undefined) {
         patchMe.fluidErrorCode = errorCode;
+        patchMe.errorSource = errorSource;
     }
 }
 
@@ -141,7 +144,7 @@ export function normalizeError(
 ): IFluidErrorBase {
     // Back-compat, while IFluidErrorBase is rolled out
     if (isValidLegacyError(error)) {
-        patchWithErrorCode(error, annotations.errorCodeIfNone);
+        patchLegacyError(error, annotations.errorCodeIfNone, annotations.errorSourceIfNone);
     }
 
     if (isFluidError(error)) {

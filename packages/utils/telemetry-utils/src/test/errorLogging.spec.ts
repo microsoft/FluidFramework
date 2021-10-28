@@ -394,7 +394,7 @@ describe("normalizeError", () => {
                 assert.equal(normalizedError, legacyError, "normalize should yield the same error as passed in");
                 assert.equal(normalizedError.errorType, "et1", "errorType should be unchanged");
                 assert.equal(normalizedError.fluidErrorCode, expectedErrorCode, "errorCode should be patched properly");
-                assert.equal(normalizedError.errorSource, undefined, "errorSource should not be added to valid legacy errors");
+                assert.equal(normalizedError.errorSource, annotations.errorSourceIfNone, "errorSource should be patched properly");
                 assert.equal(normalizedError.message, "m1", "message should be unchanged");
                 if (annotations.props !== undefined) {
                     assert(legacyError.atpStub.calledWith(annotations.props), "addTelemetryProperties should have been called");
