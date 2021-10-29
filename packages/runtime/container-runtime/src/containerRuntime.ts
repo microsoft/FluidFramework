@@ -1280,15 +1280,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
     }
 
-    /**
-     * @deprecated in 0.14, use dispose() to stop the runtime.
-     * Remove after IRuntime definition no longer includes it.
-     */
-    public async stop(): Promise<{snapshot?: never, state?: never}> {
-        this.dispose(new Error("ContainerRuntimeStopped"));
-        throw new Error("Stop is no longer supported, use dispose to stop the runtime");
-    }
-
     private replayPendingStates() {
         // We need to be able to send ops to replay states
         if (!this.canSendOps()) { return; }
