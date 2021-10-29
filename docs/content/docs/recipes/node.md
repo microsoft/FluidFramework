@@ -1,5 +1,5 @@
 ---
-title: Using Fluid with NodeJs
+title: Using Fluid with NodeJS
 menuPosition: 3
 author: sdeshpande3
 aliases:
@@ -8,15 +8,11 @@ aliases:
 
 In this tutorial, you'll learn about using the Fluid Framework by building a simple application in NodeJS that enables connected clients to generate random numbers and display the result of any changes to the shared state.  You'll also learn how to connect the Fluid data layer in [Node](https://nodejs.org/).
 
-To jump ahead into the finished demo, check out the [React demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/node-demo).
+To jump ahead into the finished demo, check out the [Node demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/node-demo).
 
-The following image shows the random values generated open in four terminals....
+The following image shows the random number generated open in four terminals after every one second.
 
-<!-- image -->
-
-The following image shows the same two clients one second later. Note that the value has updated to the very same time in four terminals.
-
-<!-- image -->
+![Four terminals with the Random Number app open in them.](https://user-images.githubusercontent.com/46719950/139499122-76edb832-50ec-4c92-b6b7-06869e9bef9f.png)
 
 {{< callout note >}}
 
@@ -56,6 +52,12 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
    import { TinyliciousClient } from "@fluidframework/tinylicious-client";
    import { SharedMap } from "fluid-framework";
    import readlineAsync from "readline-async";
+
+   async function start() {
+
+   }
+
+   start().catch(console.error());
    ```
 
 ### Move Fluid data to the terminal
@@ -67,7 +69,7 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 
         // TODO 1: Configure the container.
         // TODO 2: Get the container from the Fluid service.
-        // TODO 3: Return the Fluid timestamp object.
+        // TODO 3: Return the Fluid random number object.
     }
     ```
 
@@ -97,12 +99,27 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
 1. Replace `TODO 3` with the following code.
 
     ```js
-    return container.initialObjects;
+    return container.initialObjects.sharedRandomNumber;
     ```
 
-### Get the Fluid data on application startup
-
 ### Keep the terminal synchronized with the Fluid data
+
+   ```js
+   function loadCli(map) {
+       // Set a timer to update the random number every 1 second
+       const newRandomNumber = () => {
+           map.set("randomNumberKey", Math.floor(Math.random() * 100) + 1);
+       };
+       setInterval(newRandomNumber, 1000);
+
+       // Listen for updates and print changes to the random number
+       const updateConsole = () => {
+           console.log("Value: ", map.get("randomNumberKey"));
+       }
+       updateConsole();
+       map.on("valueChanged", updateConsole);
+   }
+   ```
 
 ## Start the Fluid server and run the application
 
