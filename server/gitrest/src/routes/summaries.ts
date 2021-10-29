@@ -7,7 +7,10 @@ import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
+    IGetRefParamsExternal,
     IWholeFlatSummary,
+    IWholeFlatSummaryBlob,
+    IWholeFlatSummaryTreeEntry,
     IWholeSummaryBlob,
     IWholeSummaryPayload,
     IWholeSummaryTree,
@@ -19,19 +22,101 @@ import {
 } from "@fluidframework/server-services-client";
 import { Router } from "express";
 import { Provider } from "nconf";
-import { RepositoryManager } from "../utils";
+import { IExternalStorageManager } from "../externalStorageManager";
+import { getReadParams, RepositoryManager } from "../utils";
 /* eslint-disable import/no-internal-modules */
-import { createBlob } from "./git/blobs";
-import { createTree } from "./git/trees";
+import { createBlob, getBlob } from "./git/blobs";
+import { createTree, getTreeRecursive } from "./git/trees";
+import { getCommits } from "./repository/commits";
 /* eslint-enable import/no-internal-modules */
 import { handleResponse } from "./utils";
+
+interface IRepositoryInformation {
+    repoManager: RepositoryManager;
+    owner: string;
+    repo: string;
+}
+
+async function getSummaryBlob(repoInfo: IRepositoryInformation, sha: string): Promise<IWholeFlatSummaryBlob> {
+    const blob = await getBlob(
+        repoInfo.repoManager,
+        repoInfo.owner,
+        repoInfo.repo,
+        sha,
+    );
+    return {
+        content: blob.content,
+        encoding: blob.encoding === "base64" ? "base64" : "utf-8",
+        id: blob.sha,
+        size: blob.size,
+    };
+}
+
+async function getFlatSummary(repoInfo: IRepositoryInformation, sha: string): Promise<IWholeFlatSummary> {
+    const rawTree = await getTreeRecursive(
+        repoInfo.repoManager,
+        repoInfo.owner,
+        repoInfo.repo,
+        sha);
+    const wholeFlatSummaryTreeEntries: IWholeFlatSummaryTreeEntry[] = [];
+    const wholeFlatSummaryBlobPs: Promise<IWholeFlatSummaryBlob>[] = [];
+    rawTree.tree.forEach((treeEntry) => {
+        if (treeEntry.type === "blob") {
+            wholeFlatSummaryTreeEntries.push({
+                type: "blob",
+                id: treeEntry.sha,
+                path: treeEntry.path,
+            });
+            wholeFlatSummaryBlobPs.push(
+                getSummaryBlob(
+                    repoInfo,
+                    treeEntry.sha,
+                ),
+            );
+        } else {
+            wholeFlatSummaryTreeEntries.push({
+                type: "tree",
+                path: treeEntry.path,
+            });
+        }
+    });
+    const wholeFlatSummaryBlobs = await Promise.all(wholeFlatSummaryBlobPs);
+    return {
+        id: rawTree.sha,
+        trees: [
+            {
+                id: rawTree.sha,
+                entries: wholeFlatSummaryTreeEntries,
+                // We don't store sequence numbers in git
+                sequenceNumber: -1,
+            },
+        ],
+        blobs: wholeFlatSummaryBlobs,
+    };
+}
 
 export async function getSummary(
     repoManager: RepositoryManager,
     owner: string,
     repo: string,
-    sha: string): Promise<IWholeFlatSummary> {
-    throw new NetworkError(501, "Not Implemented");
+    sha: string,
+    documentId: string,
+    externalStorageReadParams: IGetRefParamsExternal | undefined,
+    externalStorageManager: IExternalStorageManager): Promise<IWholeFlatSummary> {
+    let versionId = sha;
+    if (sha === "latest") {
+        const versions = await getCommits(
+            repoManager,
+            owner,
+            repo,
+            documentId,
+            1,
+            externalStorageReadParams,
+            externalStorageManager,
+        );
+        versionId = versions[0].commit.tree.sha;
+    }
+    return getFlatSummary({ repoManager, repo, owner}, versionId);
 }
 
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
@@ -58,12 +143,6 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
         };
     }
     throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
-}
-
-interface IRepositoryInformation {
-    repoManager: RepositoryManager;
-    owner: string;
-    repo: string;
 }
 
 async function writeSummaryTreeCore(
@@ -143,7 +222,11 @@ export async function deleteSummary(
     throw new NetworkError(501, "Not Implemented");
 }
 
-export function create(store: Provider, repoManager: RepositoryManager): Router {
+export function create(
+    store: Provider,
+    repoManager: RepositoryManager,
+    externalStorageManager: IExternalStorageManager,
+): Router {
     const router: Router = Router();
 
     /**
@@ -151,8 +234,22 @@ export function create(store: Provider, repoManager: RepositoryManager): Router 
      * If sha is "latest", returns latest summary for owner/repo.
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", (request, response) => {
+        const storageRoutingId: string = request.get("Storage-Routing-Id");
+        const [,documentId] = storageRoutingId.split(":");
+        if (!documentId) {
+            handleResponse(Promise.reject(new NetworkError(400, "Invalid Storage-Routing-Id header")), response);
+            return;
+        }
         handleResponse(
-            getSummary(repoManager, request.params.owner, request.params.repo, request.params.sha),
+            getSummary(
+                repoManager,
+                request.params.owner,
+                request.params.repo,
+                request.params.sha,
+                documentId,
+                getReadParams(request.query?.config),
+                externalStorageManager,
+            ),
             response,
         );
     });

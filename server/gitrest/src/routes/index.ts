@@ -53,6 +53,6 @@ export function create(
             commits: repositoryCommits.create(store, repoManager, externalStorageManager),
             contents: contents.create(store, repoManager),
         },
-        summaries: summaries.create(store, repoManager),
+        summaries: summaries.create(store, repoManager, externalStorageManager),
     };
 }
