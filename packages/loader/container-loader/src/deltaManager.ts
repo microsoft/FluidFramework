@@ -896,7 +896,7 @@ export class DeltaManager
         const message: IDocumentMessage = {
             clientSequenceNumber: ++this.clientSequenceNumber,
             contents: JSON.stringify(contents),
-            metadata,
+            metadata: JSON.stringify(metadata),
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             traces,
             type,
@@ -1553,6 +1553,10 @@ export class DeltaManager
             && message.type !== MessageType.ClientLeave
         ) {
             message.contents = JSON.parse(message.contents);
+        }
+
+        if (message.metadata !== undefined && typeof message.metadata === "string") {
+            message.metadata = JSON.parse(message.metadata);
         }
 
         if (message.type === MessageType.ClientLeave) {
